@@ -1,0 +1,23 @@
+
+.classpath
+
+.project
+
+*.prefs
+
+/Danganronpa Extract/*
+/Danganronpa Extract ORIGINAL/*
+/Danganronpa Extract Modded/*
+/mods/Togami Mod/*
+/SamplePak/*
+
+*.class
+*.wad
+
+*.txt
+
+*.pak
+
+*.lin
+
+backup.dr1
