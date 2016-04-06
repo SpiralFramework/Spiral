@@ -21,11 +21,10 @@ public class DanganModding {
 
 	public static LinkedList<DRFile> files = new LinkedList<DRFile>();
 
-	public static void extract(File wad) throws Throwable{
+	public static void extract(File wad, File extractDir, PrintStream out) throws Throwable{
 		long start = System.currentTimeMillis();
 
 		DataInputStream in = new DataInputStream(new FileInputStream(wad));
-		PrintStream out = new PrintStream(new File("Files.txt"));
 
 		boolean agar = readString(in, 4).equalsIgnoreCase("AGAR");
 		long major = readInt(in);
@@ -36,8 +35,7 @@ public class DanganModding {
 
 		long files = readInt(in);
 
-		System.out.println((agar ? "AbstractGames .WAD" : "UNKNOWN") + " v" + major + "." + minor + " with " + header + " bytes of header");
-		System.out.println("Files: " + files);
+		out.println((agar ? "AbstractGames .WAD" : "UNKNOWN") + " v" + major + "." + minor + " with " + header + " bytes of header");
 		
 		out.println("Files: " + files);
 		
@@ -46,24 +44,21 @@ public class DanganModding {
 			String name = readString(in, (int) nameLen);
 			long size = readLong(in);
 			long offset = readLong(in);
-			System.out.println("File: " + name + " (" + nameLen + " chars), " + size + "B and " + offset + "B from start");
 			out.println("File: " + name + " (" + nameLen + " chars), " + size + "B and " + offset + "B from start");
 
 			DanganModding.files.add(new DRFile(name, size, offset));
 		}
 
-		System.out.println("Now reading DIRs");
+		out.println("Now reading DIRs");
 
 		long numDirs = readInt(in);
 
-		System.out.println(numDirs + " directories");
 		out.println(numDirs + " directories");
 
 		for(int i = 0; i < numDirs; i++){
 			long nameLen = readInt(in);
 			String name = readString(in, (int) nameLen);
 			long numEntries = readInt(in);
-			System.out.println("Dir: " + name + " (" + nameLen + " chars), " + numEntries + " entries");
 			out.println("Dir: " + name + " (" + nameLen + " chars), " + numEntries + " entries");
 
 			for(int j = 0; j < numEntries; j++){
@@ -71,12 +66,14 @@ public class DanganModding {
 				String entryName = readString(in, (int) entryNameLen);
 				boolean file = in.read() == 0;
 
-				System.out.println("\tEntry: " + entryName + " (" + entryNameLen + " chars), " + (file ? "is a file" : " is a directory"));
 				out.println("\tEntry: " + entryName + " (" + entryNameLen + " chars), " + (file ? "is a file" : " is a directory"));
 			}
 		}
 
-		System.out.println("Extracting All...");
+		out.println("Extracting All...");
+		
+		if(!extractDir.exists())
+			extractDir.mkdir();
 
 		for(int i = 0; i < DanganModding.files.size(); i++){
 			DRFile drfile = DanganModding.files.get(i);
@@ -84,9 +81,9 @@ public class DanganModding {
 			byte[] data = new byte[(int) drfile.size];
 			in.read(data);
 
-			File dirs = new File("Danganronpa Extract" + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()));
+			File dirs = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()));
 			dirs.mkdirs();
-			File output = new File("Danganronpa Extract" + File.separator + drfile.name);
+			File output = new File(extractDir.getAbsolutePath() + File.separator + drfile.name);
 
 			FileOutputStream fos = new FileOutputStream(output);
 			fos.write(data);
@@ -101,7 +98,7 @@ public class DanganModding {
 		long seconds = time / 1000 % 60;
 		long millis = time % 1000;
 
-		System.out.println("Took " + minutes + " minutes, " + seconds + " seconds and " + millis + " milliseconds.");
+		out.println("Took " + minutes + " minutes, " + seconds + " seconds and " + millis + " milliseconds.");
 	}
 
 	public static HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>> Opcodes = new HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>>();
@@ -181,11 +178,11 @@ public class DanganModding {
 		Opcodes.put("DR2", dr2);
 	};
 	
-	public static void makeWad(File wadDir) throws IOException{
+	public static void makeWad(File newWad, File wadDir, PrintStream pOut) throws IOException{
 		if(!wadDir.exists())
 			throw new IOException("WAD Directory does not exist");
 
-		FileOutputStream out = new FileOutputStream("dr1_data.wad");
+		FileOutputStream out = new FileOutputStream(newWad);
 
 		out.write("AGAR".getBytes());
 		int major = 1;
@@ -204,7 +201,7 @@ public class DanganModding {
 
 		long fileCount = files.size();
 
-		System.out.println("Files: " + fileCount);
+		pOut.println("Files: " + fileCount);
 
 		writeInt(out, fileCount);
 
@@ -222,7 +219,7 @@ public class DanganModding {
 			offset += len;
 		}
 
-		System.out.println("Wrote: FileData");
+		pOut.println("Wrote: FileData");
 
 		LinkedList<File> dirs = new LinkedList<File>();
 		dirs.add(wadDir);
@@ -249,7 +246,7 @@ public class DanganModding {
 			}
 		}
 
-		System.out.println("Wrote: Directory Structure");
+		pOut.println("Wrote: Directory Structure");
 
 		for(File f : files){
 			FileInputStream in = new FileInputStream(f);
@@ -259,7 +256,7 @@ public class DanganModding {
 
 			out.write(data);
 
-			System.out.println("Wrote File: " + f);
+			pOut.println("Wrote File: " + f);
 		}
 
 		out.close();

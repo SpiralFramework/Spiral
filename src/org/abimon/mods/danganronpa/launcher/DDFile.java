@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Enumeration;
@@ -17,6 +18,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.abimon.omnis.io.Data;
+import org.abimon.omnis.io.EmptyOutputStream;
 import org.abimon.omnis.io.VirtualDirectory;
 import org.abimon.omnis.io.VirtualFile;
 
@@ -30,7 +32,7 @@ public class DDFile {
 	long minor = 0;
 	long header = 0;
 	long readOffset = 12;
-	
+
 	File wadFile;
 
 	public DDFile(File wadFile) throws IOException{
@@ -43,12 +45,12 @@ public class DDFile {
 		major = readInt(in);
 		minor = readInt(in);
 		header = readInt(in);
-		
-		readOffset = 20 + header;
-		
+
 		in.skip(header);
 
 		long files = readInt(in);
+
+		readOffset = 20 + header;
 
 		for(int i = 0; i < files; i++){
 			long nameLen = readInt(in);
@@ -105,7 +107,7 @@ public class DDFile {
 			else
 				System.out.println(vDir + " is missing a parent!");
 		}
-		
+
 		System.out.println(readOffset + " and chill");
 
 		long end = System.currentTimeMillis();
@@ -150,124 +152,140 @@ public class DDFile {
 			wadIn.close();
 			backupWadOut.close();
 		}
-
-		FileOutputStream out = new FileOutputStream(newWad);
-
-		out.write(agar ? "AGAR".getBytes() : "UNKN".getBytes());
-
-		writeInt(out, major);
-		writeInt(out, minor);
-		writeInt(out, header);
-
-		byte[] headerData = new byte[(int) header];
-		new Random().nextBytes(headerData);
-		out.write(headerData);
-
-		LinkedList<VirtualFile> files = directory.getAllSubFiles();
-
-		@SuppressWarnings("unchecked")
-		LinkedList<VirtualFile> copy = (LinkedList<VirtualFile>) files.clone();
+		long maxMemory = Runtime.getRuntime().maxMemory();
+		/* Maximum amount of memory the JVM will attempt to use */
+		System.out.println("Maximum memory (bytes): " + (maxMemory == Long.MAX_VALUE ? "no limit" : maxMemory));
 
 
-		for(VirtualFile file : copy){
-			String name = file.toString().substring(1);
-			DRFile drf = fileStructure.get(name);
-			if(drf == null || file instanceof VirtualDirectory)
-				files.remove(file);
-		}
+		if(maxMemory / 1000000000 > 3){
+			FileOutputStream out = new FileOutputStream(newWad);
 
-		long fileCount = files.size();
+			out.write("AGAR".getBytes());
 
-		System.out.println("Files: " + fileCount);
+			writeInt(out, major);
+			writeInt(out, minor);
+			writeInt(out, header);
 
-		writeInt(out, fileCount);
+			byte[] headerData = new byte[(int) header];
+			new Random().nextBytes(headerData);
+			out.write(headerData);
 
-		long offset = 0;
+			LinkedList<VirtualFile> files = directory.getAllSubFiles();
 
-		for(VirtualFile f : files){
-			String name = f.toString().substring(1);
-			DRFile drf = fileStructure.get(name);
-			if(drf == null || f instanceof VirtualDirectory)
-				continue;
-			writeInt(out, name.length());
-			out.write(name.getBytes());
-			write(out, drf.size, 8);
-			write(out, offset, 8);
-			offset += drf.size;
-		}
+			@SuppressWarnings("unchecked")
+			LinkedList<VirtualFile> copy = (LinkedList<VirtualFile>) files.clone();
 
-		System.out.println("Wrote: FileData");
 
-		LinkedList<VirtualDirectory> dirs = directory.getAllSubDirs();
-		
-		System.out.println(dirs.size());
-		System.out.println(dirs);
-
-		writeInt(out, dirs.size());
-
-		for(VirtualDirectory dir : dirs){
-			String name = dir.toString().substring(Math.min(dir.toString().length(), 1));
-			writeInt(out, name.length());
-			out.write(name.getBytes());
-			LinkedList<VirtualFile> sub = dir.subfiles;
-			writeInt(out, sub.size());
-
-			for(VirtualFile f : sub){
-				String entryName = f.getName();
-				writeInt(out, entryName.length());
-				out.write(entryName.getBytes());
-				out.write(f instanceof VirtualDirectory ? 1 : 0);
-			}
-		}
-
-		System.out.println("Wrote: Directory Structure");
-
-		HashMap<String, ZipFile> patches = new HashMap<String, ZipFile>();
-
-		for(ZipFile f : modsToAdd){
-			if(f == null)
-				continue;
-			Enumeration<? extends ZipEntry> entries = f.entries();
-			ZipEntry entry = null;
-
-			while(entries.hasMoreElements() && (entry = entries.nextElement()) != null){
-				String name = entry.getName();
-
-				if(!name.endsWith(".info"))
-					patches.put(name, f);
-			}
-		}
-
-		System.out.println("Writing: Files");
-
-		for(VirtualFile f : files){
-			String name = f.toString().substring(1);
-
-			DRFile file = fileStructure.get(name);
-			if(file == null)
-				continue;
-			InputStream in = null;
-
-			if(patches.containsKey(name)){
-				in = patches.get(name).getInputStream(new ZipEntry(name));
-
-				System.out.println("Patching through " + name + " which is " + file.size + " bytes");
-			}
-			else //Vanilla File, or no patch is present
-			{
-				in = new FileInputStream(backupWadFile);
-				in.skip(readOffset);
-				in.skip(file.originalOffset);
+			for(VirtualFile file : copy){
+				String name = file.toString().substring(1);
+				DRFile drf = fileStructure.get(name);
+				if(drf == null || file instanceof VirtualDirectory)
+					files.remove(file);
 			}
 
-			byte[] data = new byte[(int) file.size];
-			in.read(data);
-			out.write(data, 0, (int) file.size);
+			long fileCount = files.size();
 
-			in.close();
+			System.out.println("Files: " + fileCount);
+
+			writeInt(out, fileCount);
+
+			long offset = 0;
+
+			for(VirtualFile f : files){
+				String name = f.toString().substring(1);
+				DRFile drf = fileStructure.get(name);
+				if(drf == null || f instanceof VirtualDirectory)
+					continue;
+				writeInt(out, name.length());
+				out.write(name.getBytes());
+				write(out, drf.size, 8);
+				write(out, offset, 8);
+				offset += drf.size;
+			}
+
+			System.out.println("Wrote: FileData");
+
+			LinkedList<VirtualDirectory> dirs = directory.getAllSubDirs();
+
+			System.out.println(dirs.size());
+			System.out.println(dirs);
+
+			writeInt(out, dirs.size());
+
+			for(VirtualDirectory dir : dirs){
+				String name = dir.toString().substring(Math.min(dir.toString().length(), 1));
+				writeInt(out, name.length());
+				out.write(name.getBytes());
+				LinkedList<VirtualFile> sub = dir.subfiles;
+				writeInt(out, sub.size());
+
+				for(VirtualFile f : sub){
+					String entryName = f.getName();
+					writeInt(out, entryName.length());
+					out.write(entryName.getBytes());
+					out.write(f instanceof VirtualDirectory ? 1 : 0);
+				}
+			}
+
+			System.out.println("Wrote: Directory Structure");
+
+		}
+		else{
+
+			HashMap<String, ZipFile> patches = new HashMap<String, ZipFile>();
+
+			for(ZipFile f : modsToAdd){
+				if(f == null)
+					continue;
+				Enumeration<? extends ZipEntry> entries = f.entries();
+				ZipEntry entry = null;
+
+				while(entries.hasMoreElements() && (entry = entries.nextElement()) != null){
+					String name = entry.getName();
+
+					if(!name.endsWith(".info") && !name.endsWith("/") && !name.startsWith("__") && !name.contains(".DS_Store"))
+						patches.put(name, f);
+				}
+			}
+
+			try{
+				System.out.println("Extracting files...");
+
+				long millis = System.currentTimeMillis();
+
+				File dir = new File("tmp");			
+				DanganModding.extract(backupWadFile, dir, new PrintStream(new EmptyOutputStream()));
+
+				long timeTaken = System.currentTimeMillis() - millis;
+				
+				System.out.println("Finished extracting (" + timeTaken / 1000 + " s)");
+
+				System.out.println("Writing modded files");
+				
+				for(String s : patches.keySet()){
+					File moddedFile = new File(dir, s);
+					
+					System.out.println(moddedFile);
+					
+					FileOutputStream out = new FileOutputStream(moddedFile);
+					InputStream in = patches.get(s).getInputStream(new ZipEntry(s));
+					
+					byte[] data = new byte[in.available()];
+					in.read(data);
+					out.write(data);
+					
+					in.close();
+					out.close();
+				}
+				
+				DanganModding.makeWad(wadFile, dir, new PrintStream(new EmptyOutputStream()));
+			}
+			catch(Throwable th){
+				th.printStackTrace();
+			}
+
 		}
 
-		out.close();
 	}
 
 	/** Note: Do NOT use this UNLESS you're confident you're not patching much data in */
@@ -275,20 +293,58 @@ public class DDFile {
 
 	}
 
-	public byte[] read(String name) throws IOException{
+	public byte[] read(String fileName) throws IOException{
 
-		if(fileStructure.containsKey(name)){
-			DRFile file = fileStructure.get(name);
+		if(fileStructure.containsKey(fileName)){
+			DRFile file = fileStructure.get(fileName);
 
-			FileInputStream in = new FileInputStream(wadFile);
+			DataInputStream in = new DataInputStream(new FileInputStream(wadFile));
 
-			in.skip(file.offset);
+			boolean agar = readString(in, 4).equalsIgnoreCase("AGAR");
+			long major = readInt(in);
+			long minor = readInt(in);
+			long header = readInt(in);
 
-			byte[] data = new byte[(int) file.size];
-			in.read(data);
-			in.close();
+			in.skip(header);
 
-			return data;
+			long files = readInt(in);
+
+			LinkedList<DRFile> fileList = new LinkedList<DRFile>();
+
+			for(int i = 0; i < files; i++){
+				long nameLen = readInt(in);
+				String name = readString(in, (int) nameLen);
+				long size = readLong(in);
+				long offset = readLong(in);
+
+				fileList.add(new DRFile(name, size, offset));
+			}
+
+			long numDirs = readInt(in);
+
+			for(int i = 0; i < numDirs; i++){
+				long nameLen = readInt(in);
+				String name = readString(in, (int) nameLen);
+				long numEntries = readInt(in);
+
+				for(int j = 0; j < numEntries; j++){
+					long entryNameLen = readInt(in);
+					String entryName = readString(in, (int) entryNameLen);
+					boolean fileOrNot = in.read() == 0;
+				}
+			}
+
+			for(int i = 0; i < files; i++){
+
+				DRFile drfile = fileList.get(i);
+				if(drfile.name.equals(fileName)){
+					byte[] data = new byte[(int) drfile.size];
+					in.read(data);
+					return data;
+				}
+
+				in.skip((int) drfile.size);
+			}
 		}
 
 		return new byte[0];

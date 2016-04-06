@@ -139,7 +139,7 @@ public class DanganLauncher {
 			}
 			else if(action.equalsIgnoreCase("extract")){
 				try{
-					DanganModding.extract(wadFileDR1);
+					DanganModding.extract(wadFileDR1, new File("Danganronpa Extract"), System.out);
 				}
 				catch(Throwable th){}
 			}
@@ -226,8 +226,6 @@ public class DanganLauncher {
 
 									if(!name.endsWith(".info") && !name.endsWith("/") && !name.startsWith("__") && !name.contains(".DS_Store"))
 										files.add(name);
-
-									System.out.println(name);
 								}
 
 								//Then, create a backup mod file, or edit the one we already have

@@ -21,3 +21,5 @@
 *.lin
 
 backup.dr1
+
+tmp/*
