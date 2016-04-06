@@ -22,6 +22,7 @@ public class DanganModding {
 	public static LinkedList<DRFile> files = new LinkedList<DRFile>();
 
 	public static void extract(File wad, File extractDir, PrintStream out) throws Throwable{
+		files.clear();
 		long start = System.currentTimeMillis();
 
 		DataInputStream in = new DataInputStream(new FileInputStream(wad));
@@ -78,12 +79,14 @@ public class DanganModding {
 		for(int i = 0; i < DanganModding.files.size(); i++){
 			DRFile drfile = DanganModding.files.get(i);
 
+			out.println("Extracting " + drfile.name);
+			
 			byte[] data = new byte[(int) drfile.size];
 			in.read(data);
 
-			File dirs = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()));
+			File dirs = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()).replace("/", File.separator).replace("\\", File.separator));
 			dirs.mkdirs();
-			File output = new File(extractDir.getAbsolutePath() + File.separator + drfile.name);
+			File output = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.replace("/", File.separator).replace("\\", File.separator));
 
 			FileOutputStream fos = new FileOutputStream(output);
 			fos.write(data);
@@ -181,7 +184,7 @@ public class DanganModding {
 	public static void makeWad(File newWad, File wadDir, PrintStream pOut) throws IOException{
 		if(!wadDir.exists())
 			throw new IOException("WAD Directory does not exist");
-
+		files.clear();
 		FileOutputStream out = new FileOutputStream(newWad);
 
 		out.write("AGAR".getBytes());

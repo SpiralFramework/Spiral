@@ -264,7 +264,7 @@ public class DDFile {
 				System.out.println("Writing modded files");
 				
 				for(String s : patches.keySet()){
-					File moddedFile = new File(dir, s);
+					File moddedFile = new File(dir, s.replace("/", File.separator).replace("\\", File.separator));
 					
 					System.out.println(moddedFile);
 					

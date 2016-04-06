@@ -29,7 +29,11 @@ public class DanganLauncher {
 		if(!modsDir.exists())
 			modsDir.mkdir();
 
-		if(EnumOS.determineOS() == EnumOS.WINDOWS){}
+		if(EnumOS.determineOS() == EnumOS.WINDOWS){
+			wadFileDR1 = new File("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Danganronpa Trigger Happy Havoc\\dr1_data.wad");
+			if(!wadFileDR1.exists())
+				wadFileDR1 = new File("C:\\Program Files\\Steam\\steamapps\\common\\Danganronpa Trigger Happy Havoc\\dr1_data.wad");
+		}
 		else if(EnumOS.determineOS() == EnumOS.MACOSX)
 			wadFileDR1 = new File(EnumOS.determineOS().getStorageLocation("Steam") + "/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad");
 
