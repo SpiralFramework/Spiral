@@ -21,6 +21,7 @@ import org.abimon.omnis.io.Data;
 import org.abimon.omnis.io.EmptyOutputStream;
 import org.abimon.omnis.io.VirtualDirectory;
 import org.abimon.omnis.io.VirtualFile;
+import org.abimon.omnis.util.General;
 
 public class DDFile {
 
@@ -270,15 +271,33 @@ public class DDFile {
 					FileOutputStream out = new FileOutputStream(moddedFile);
 					InputStream in = patches.get(s).getInputStream(new ZipEntry(s));
 					
-					byte[] data = new byte[in.available()];
-					in.read(data);
-					out.write(data);
+					byte[] buffer = new byte[65536];
+					while(true){
+						int read = in.read(buffer);
+						if(read <= 0)
+							break;
+						out.write(buffer, 0, read);
+					}
 					
 					in.close();
 					out.close();
 				}
 				
 				DanganModding.makeWad(wadFile, dir, new PrintStream(new EmptyOutputStream()));
+				
+				LinkedList<File> files = General.iterate(dir, false);
+				for(File f : files)
+					f.delete();
+				
+				while(true){
+					LinkedList<File> remainingDirs = General.iterate(dir, true);
+					if(remainingDirs.size() == 0)
+						break;
+					for(File f : remainingDirs)
+						f.delete();
+				}
+				
+				dir.delete();
 			}
 			catch(Throwable th){
 				th.printStackTrace();
