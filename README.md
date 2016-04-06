@@ -37,6 +37,7 @@ Current Plan:
 * Get basic mod installation working
 * Get unpacking and repacking of .pak files working
 * Get decompiling and recompiling of .lin files working
+* Implement custom Spiral scripting format
 * Find a way to directly pull data from the .wad file, rather than having to unpack the entire .wad file
 
 # Credit
