@@ -17,7 +17,7 @@ public class ScriptEntry {
 	
 	public String toString(){
 		if(text != null)
-			return "Text[" + text + "]";
+			return "Text[" + text.replace((char) 0 + "", "") + "]";
 		String name = DanganModding.Opcodes.get("DR1").containsKey(opCode) && DanganModding.Opcodes.get("DR1").get(opCode).getKey() != null ? DanganModding.Opcodes.get("DR1").get(opCode).getKey() : "0x" + Integer.toHexString(opCode).toUpperCase();
 		return name + Arrays.toString(args);
 	}

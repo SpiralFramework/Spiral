@@ -1,6 +1,7 @@
 package org.abimon.mods.danganronpa.launcher;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +17,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
+
+import org.abimon.omnis.io.Data;
+import org.abimon.omnis.io.ZipData;
 
 public class DanganModding {
 
@@ -37,9 +41,9 @@ public class DanganModding {
 		long files = readInt(in);
 
 		out.println((agar ? "AbstractGames .WAD" : "UNKNOWN") + " v" + major + "." + minor + " with " + header + " bytes of header");
-		
+
 		out.println("Files: " + files);
-		
+
 		for(int i = 0; i < files; i++){
 			long nameLen = readInt(in);
 			String name = readString(in, (int) nameLen);
@@ -72,25 +76,32 @@ public class DanganModding {
 		}
 
 		out.println("Extracting All...");
-		
+
 		if(!extractDir.exists())
 			extractDir.mkdir();
 
 		for(int i = 0; i < DanganModding.files.size(); i++){
-			DRFile drfile = DanganModding.files.get(i);
+			try{
+				DRFile drfile = DanganModding.files.get(i);
 
-			out.println("Extracting " + drfile.name);
-			
-			byte[] data = new byte[(int) drfile.size];
-			in.read(data);
+				out.println("Extracting " + drfile.name);
 
-			File dirs = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()).replace("/", File.separator).replace("\\", File.separator));
-			dirs.mkdirs();
-			File output = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.replace("/", File.separator).replace("\\", File.separator));
+				byte[] data = new byte[(int) drfile.size];
+				in.read(data);
 
-			FileOutputStream fos = new FileOutputStream(output);
-			fos.write(data);
-			fos.close();
+				File dirs = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.substring(0, drfile.name.length() - drfile.name.split("/")[drfile.name.split("/").length - 1].length()).replace("/", File.separator).replace("\\", File.separator));
+				dirs.mkdirs();
+				File output = new File(extractDir.getAbsolutePath() + File.separator + drfile.name.replace("/", File.separator).replace("\\", File.separator));
+
+				FileOutputStream fos = new FileOutputStream(output);
+				fos.write(data);
+				fos.close();
+
+				data = null;
+			}
+			catch(Throwable th){
+				th.printStackTrace();
+			}
 		}
 
 		long end = System.currentTimeMillis();
@@ -180,7 +191,7 @@ public class DanganModding {
 		Opcodes.put("DR1", dr1);
 		Opcodes.put("DR2", dr2);
 	};
-	
+
 	public static void makeWad(File newWad, File wadDir, PrintStream pOut) throws IOException{
 		if(!wadDir.exists())
 			throw new IOException("WAD Directory does not exist");
@@ -245,7 +256,7 @@ public class DanganModding {
 				writeInt(out, entryName.length());
 				out.write(entryName.getBytes());
 				out.write(f.isFile() ? 0 : 1);
-				
+
 			}
 		}
 
@@ -296,11 +307,11 @@ public class DanganModding {
 
 		return files;
 	}
-
-	public static void linHandling() throws IOException{
-		File sampleLin = new File("SampleLin.lin");
-
-		DataInputStream din = new DataInputStream(new FileInputStream(sampleLin));
+	public static Data linHandling(File lin) throws IOException{
+		return linHandling(new Data(lin));
+	}
+	public static Data linHandling(Data lin) throws IOException{
+		DataInputStream din = new DataInputStream(lin.getAsInputStream());
 
 		LinkedList<ScriptEntry> entries = new LinkedList<ScriptEntry>();
 
@@ -314,10 +325,7 @@ public class DanganModding {
 		if(type == 2){ //Text
 			textBlock = readInt(din);
 			size = readInt(din);
-
-			System.out.println("TextBlock: " + textBlock + ", with size " + size);
-
-			DataInputStream in = new DataInputStream(new FileInputStream(sampleLin));
+			DataInputStream in = new DataInputStream(lin.getAsInputStream());
 
 			byte[] data = new byte[in.available()];
 			in.read(data);
@@ -329,7 +337,6 @@ public class DanganModding {
 					i++;
 					ScriptEntry entry = new ScriptEntry();
 					entry.opCode = data[i];
-					System.out.println("OpCode: 0x" + Integer.toHexString(entry.opCode));
 
 					int argCount = Opcodes.get("DR1").containsKey(entry.opCode) ? Opcodes.get("DR1").get(entry.opCode).getValue() : -1;
 
@@ -357,8 +364,6 @@ public class DanganModding {
 				}
 				else
 				{
-					System.err.println("Got: " + data[i]);
-					// EOF?
 					while (i < textBlock)
 					{
 						if (data[i] != 0x00)
@@ -373,13 +378,13 @@ public class DanganModding {
 		}
 
 		int textEntries = (int) readInt(din);
-		
-		DataInputStream in = new DataInputStream(new FileInputStream(sampleLin));
+
+		DataInputStream in = new DataInputStream(lin.getAsInputStream());
 
 		byte[] data = new byte[in.available()];
 		in.readFully(data);
 		in.close();
-		
+
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 
 		LinkedList<Integer> textIDs = new LinkedList<Integer>();
@@ -392,17 +397,17 @@ public class DanganModding {
 				int textID = first << 8 | second;
 
 				textIDs.add(textID);
-				
+
 				bin.reset();
 				bin.skip(textBlock + (textID + 1) * 4);
 				int textPos = (int) readInt(bin);
-				
+
 				bin.reset();
 				bin.skip(textBlock + (textID + 2) * 4);
 				int nextTextPos = (int) readInt(bin);
 				if(textID == textEntries - 1)
 					nextTextPos = (int) (size - textBlock);
-				
+
 				bin.reset();
 				bin.skip(textBlock + textPos);
 				entries.get(i).text = readString(bin, nextTextPos - textPos);
@@ -414,18 +419,24 @@ public class DanganModding {
 		}
 
 		din.close();
-		
-		PrintStream out = new PrintStream("SampleLin.txt");
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		PrintStream out = new PrintStream(baos);
 		for(ScriptEntry entry : entries){
 			out.println(entry);
 		}
 		out.close();
+		entries = null;
+		return new Data(baos.toByteArray());
 	}
 
-	public static void pakExtraction() throws IOException {
-		File samplePak = new File("SamplePak.pak");
+	public static ZipData pakExtraction(File pak) throws IOException {
+		return pakExtraction(new Data(pak));
+	}
 
-		DataInputStream din = new DataInputStream(new FileInputStream(samplePak));
+	public static ZipData pakExtraction(Data pak) throws IOException {
+
+		DataInputStream din = new DataInputStream(pak.getAsInputStream());
 
 		byte[] ddata = new byte[din.available()];
 		din.readFully(ddata);
@@ -440,33 +451,27 @@ public class DanganModding {
 		for(int i = 0; i < numFiles; i++){
 			offsets[i] = readInt(in);
 		}
-		offsets[(int) numFiles] = samplePak.length();
+		offsets[(int) numFiles] = pak.size();
 
-		File dir = new File("SamplePak");
-		dir.mkdir();
+		ZipData zipData = new ZipData();
 
 		for(int i = 0; i < numFiles; i++){
-			File f = new File(dir.getAbsolutePath() + File.separator + i);
-			if(!f.exists())
-				f.createNewFile();
-			FileOutputStream fos = new FileOutputStream(f);
 			byte[] data = Arrays.copyOfRange(ddata, (int) offsets[i], (int) offsets[i+1]);
-
-			System.out.println(new String(data) + "\n" + Arrays.toString(data));
-			fos.write(data);
-			fos.close();
+			zipData.put(Integer.toString(i), new Data(data));
 		}
 
 		in.close();
+		return zipData;
 	}
 
 	public static String readString(InputStream in, int len) throws IOException{
-		byte[] data = new byte[len];
+		byte[] data = new byte[Math.max(0, len)];
 		in.read(data);
-		
-		return new String(data);
+		String s = new String(data);
+		data = null;
+		return s;
 	}
-	
+
 	public static String readString(InputStream in, int len, String encoding) throws IOException{
 		ByteBuffer buf = ByteBuffer.allocate(len);
 		for(int i = 0; i < len; i++)
@@ -499,7 +504,7 @@ public class DanganModding {
 
 		return Long.parseLong(s, 2);
 	}
-	
+
 	public static void writeInt(OutputStream out, long num){
 		write(out, num, 4);
 	}
@@ -517,6 +522,126 @@ public class DanganModding {
 			}
 		}
 		catch(Throwable th){}
+	}
+
+	public static Data compileLin(Data lin) throws IOException {
+		DataInputStream din = new DataInputStream(lin.getAsInputStream());
+
+		LinkedList<ScriptEntry> entries = new LinkedList<ScriptEntry>();
+		//
+		//		long type = readInt(din);
+		//		long headerSpace = readInt(din);
+
+		ByteArrayOutputStream byteOS = new ByteArrayOutputStream();
+		writeInt(byteOS, 2);
+		writeInt(byteOS, 0);
+
+		long textBlock = 0;
+		long size = 0;
+		textBlock = readInt(din);
+		size = readInt(din);
+		DataInputStream in = new DataInputStream(lin.getAsInputStream());
+
+		byte[] data = new byte[in.available()];
+		in.read(data);
+
+		in.close();
+
+		//		for(int i = (int) headerSpace; i < textBlock; i++){
+		//			if(data[i] == 0x70){
+		//				i++;
+		//				ScriptEntry entry = new ScriptEntry();
+		//				entry.opCode = data[i];
+		//
+		//				int argCount = Opcodes.get("DR1").containsKey(entry.opCode) ? Opcodes.get("DR1").get(entry.opCode).getValue() : -1;
+		//
+		//				if(argCount == -1){
+		//					LinkedList<Byte> args = new LinkedList<Byte>();
+		//					while (data[i + 1] != 0x70)
+		//					{
+		//						args.add(data[i + 1]);
+		//						i++;
+		//					}
+		//					entry.setArgs(args.toArray(new Byte[0]));
+		//					entries.add(entry);
+		//					continue;
+		//				}
+		//				else
+		//				{
+		//					entry.args = new byte[argCount];
+		//					for (int a = 0; a < entry.args.length; a++)
+		//					{
+		//						entry.args[a] = data[i + 1];
+		//						i++;
+		//					}
+		//					entries.add(entry);
+		//				}
+		//			}
+		//			else
+		//			{
+		//				while (i < textBlock)
+		//				{
+		//					if (data[i] != 0x00)
+		//					{
+		//						System.err.println("[read] error: expected 0x70, got 0x" + data[i] + ".");
+		//					}
+		//					i++;
+		//				}
+		//				break;
+		//			}
+		//		}
+
+		//		int textEntries = (int) readInt(din);
+		//
+		//		DataInputStream in = new DataInputStream(lin.getAsInputStream());
+		//
+		//		byte[] data = new byte[in.available()];
+		//		in.readFully(data);
+		//		in.close();
+
+		ByteArrayInputStream bin = new ByteArrayInputStream(data);
+
+		LinkedList<Integer> textIDs = new LinkedList<Integer>();
+		for(int i = 0; i < entries.size(); i++)
+		{
+			if(entries.get(i).opCode == 0x02)
+			{
+				byte first = entries.get(i).args[0];
+				byte second = entries.get(i).args[1];
+				int textID = first << 8 | second;
+
+				textIDs.add(textID);
+
+				bin.reset();
+				bin.skip(textBlock + (textID + 1) * 4);
+				int textPos = (int) readInt(bin);
+
+				bin.reset();
+				bin.skip(textBlock + (textID + 2) * 4);
+				int nextTextPos = (int) readInt(bin);
+				//				if(textID == textEntries - 1)
+				//					nextTextPos = (int) (size - textBlock);
+
+				bin.reset();
+				bin.skip(textBlock + textPos);
+				entries.get(i).text = readString(bin, nextTextPos - textPos);
+			}
+			else
+			{
+				entries.get(i).text = null;
+			}
+		}
+
+		din.close();
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		PrintStream out = new PrintStream(baos);
+		for(ScriptEntry entry : entries){
+			out.println(entry);
+		}
+		out.close();
+		entries = null;
+		return new Data(baos.toByteArray());
 	}
 
 }

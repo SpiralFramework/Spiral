@@ -1,5 +1,6 @@
 package org.abimon.mods.danganronpa.launcher;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -263,8 +264,11 @@ public class DDFile {
 
 				System.out.println("Writing modded files");
 				
+				ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
+				
 				for(String s : patches.keySet()){
-					File moddedFile = new File(dir, s.replace("/", File.separator).replace("\\", File.separator));
+					
+					File moddedFile = new File(dir, s.replace("/", File.separator).replace("\\", File.separator).replace(".lin.txt", ".lin"));
 					
 					System.out.println(moddedFile);
 					
@@ -276,7 +280,15 @@ public class DDFile {
 						int read = in.read(buffer);
 						if(read <= 0)
 							break;
-						out.write(buffer, 0, read);
+						bufferOS.write(buffer, 0, read);
+					}
+					
+					if(s.endsWith(".lin.txt")){
+						Data data = DanganModding.compileLin(null);
+						
+					}
+					else{
+						out.write(bufferOS.toByteArray());
 					}
 					
 					in.close();

@@ -18,6 +18,7 @@ import javax.swing.JFileChooser;
 
 import org.abimon.omnis.io.filefilters.FileExtensionFilter;
 import org.abimon.omnis.util.EnumOS;
+import org.abimon.omnis.util.General;
 
 public class DanganLauncher {
 	static Scanner in;
@@ -143,7 +144,21 @@ public class DanganLauncher {
 			}
 			else if(action.equalsIgnoreCase("extract")){
 				try{
-					DanganModding.extract(wadFileDR1, new File("Danganronpa Extract"), System.out);
+					File dir = new File("Danganronpa Extract");
+					LinkedList<File> files = General.iterate(dir, false);
+					for(File f : files)
+						f.delete();
+					
+					while(true){
+						LinkedList<File> remainingDirs = General.iterate(dir, true);
+						if(remainingDirs.size() == 0)
+							break;
+						for(File f : remainingDirs)
+							f.delete();
+					}
+					
+					dir.delete();
+					DanganModding.extract(wadFileDR1, dir, System.out);
 				}
 				catch(Throwable th){}
 			}
