@@ -17,11 +17,13 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.abimon.omnis.io.Data;
 import org.abimon.omnis.io.EmptyOutputStream;
 import org.abimon.omnis.io.VirtualDirectory;
 import org.abimon.omnis.io.VirtualFile;
+import org.abimon.omnis.io.ZipData;
 import org.abimon.omnis.util.General;
 
 public class DDFile {
@@ -159,7 +161,7 @@ public class DDFile {
 		System.out.println("Maximum memory (bytes): " + (maxMemory == Long.MAX_VALUE ? "no limit" : maxMemory));
 
 
-		if(maxMemory / 1000000000 > 3){
+		if(maxMemory / 1000000000 > 4){
 			FileOutputStream out = new FileOutputStream(newWad);
 
 			out.write("AGAR".getBytes());
@@ -255,26 +257,37 @@ public class DDFile {
 
 				long millis = System.currentTimeMillis();
 
-				File dir = new File("tmp");			
-				DanganModding.extract(backupWadFile, dir, new PrintStream(new EmptyOutputStream()));
+				File dir = new File("tmp");		
+				if(!dir.exists())
+					DanganModding.extract(backupWadFile, dir, new PrintStream(new EmptyOutputStream()));
 
 				long timeTaken = System.currentTimeMillis() - millis;
-				
+
 				System.out.println("Finished extracting (" + timeTaken / 1000 + " s)");
 
 				System.out.println("Writing modded files");
-				
+
 				ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
-				
+
+				File backupFile = new File("mods" + File.separator + "backup.dr1");
+				ZipData zipData = new ZipData();
+
+				if(backupFile.exists())
+					zipData = new ZipData(new Data(backupFile));
+
+
 				for(String s : patches.keySet()){
-					
+
 					File moddedFile = new File(dir, s.replace("/", File.separator).replace("\\", File.separator).replace(".lin.txt", ".lin"));
-					
-					System.out.println(moddedFile);
-					
+
+					if(moddedFile.exists() && !zipData.containsKey(moddedFile.toString().replace('\\', '/')))
+						zipData.put(moddedFile.toString().replace('\\', '/'), new Data(moddedFile));
+
+					System.out.println("Patching " + moddedFile);
+
 					FileOutputStream out = new FileOutputStream(moddedFile);
 					InputStream in = patches.get(s).getInputStream(new ZipEntry(s));
-					
+
 					byte[] buffer = new byte[65536];
 					while(true){
 						int read = in.read(buffer);
@@ -282,34 +295,35 @@ public class DDFile {
 							break;
 						bufferOS.write(buffer, 0, read);
 					}
-					
-					if(s.endsWith(".lin.txt")){
-						Data data = DanganModding.compileLin(null);
-						
-					}
-					else{
-						out.write(bufferOS.toByteArray());
-					}
-					
+
+					out.write(bufferOS.toByteArray());
+
 					in.close();
 					out.close();
 				}
-				
-				DanganModding.makeWad(wadFile, dir, new PrintStream(new EmptyOutputStream()));
-				
-				LinkedList<File> files = General.iterate(dir, false);
-				for(File f : files)
-					f.delete();
-				
-				while(true){
-					LinkedList<File> remainingDirs = General.iterate(dir, true);
-					if(remainingDirs.size() == 0)
-						break;
-					for(File f : remainingDirs)
-						f.delete();
-				}
-				
-				dir.delete();
+
+				if(!zipData.isEmpty())
+					zipData.writeToFile(backupFile);
+
+				System.out.println("Making WAD file...");
+
+				DanganModding.makeWad(wadFile, dir, System.out, false);
+
+				System.out.println("Finished WAD File.");
+
+				//				LinkedList<File> files = General.iterate(dir, false);
+				//				for(File f : files)
+				//					f.delete();
+				//
+				//				while(true){
+				//					LinkedList<File> remainingDirs = General.iterate(dir, true);
+				//					if(remainingDirs.size() == 0)
+				//						break;
+				//					for(File f : remainingDirs)
+				//						f.delete();
+				//				}
+				//
+				//				dir.delete();
 			}
 			catch(Throwable th){
 				th.printStackTrace();
