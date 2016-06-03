@@ -2,10 +2,10 @@ package org.abimon.mods.danganronpa.launcher;
 
 public class DRFile {
 	
-	String name;
-	long size = 0L;
-	long offset = 0L;
-	long originalOffset = 0L;
+	public String name;
+	public long size = 0L;
+	public long offset = 0L;
+	public long originalOffset = 0L;
 	
 	public DRFile(String name, long size, long offset){
 		this.name = name;

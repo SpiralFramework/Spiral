@@ -1,379 +1,467 @@
 package org.abimon.mods.danganronpa.launcher;
 
-import java.io.BufferedReader;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+
+import javax.swing.JFrame;
+
+import org.abimon.mods.danganronpa.launcher.windows.InstallFrame;
+import org.abimon.mods.danganronpa.launcher.windows.ProgressFrame;
+import org.abimon.mods.danganronpa.launcher.windows.SettingsFrame;
+import org.abimon.omnis.io.Data;
+import org.abimon.omnis.io.EmptyOutputStream;
+import org.abimon.omnis.io.ZipData;
+import org.abimon.omnis.ludus.Ludus;
+import org.abimon.omnis.util.EnumOS;
+import org.abimon.omnis.util.General;
+import org.abimon.omnis.util.SteamAppIDs;
+import org.abimon.omnis.util.SteamProtocol;
+
+import java.awt.BorderLayout;
+
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
+import com.jgoodies.forms.layout.FormLayout;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.RowSpec;
+import com.jgoodies.forms.layout.FormSpecs;
+
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import javax.swing.JFileChooser;
-
-import org.abimon.omnis.io.Data;
-import org.abimon.omnis.io.MultiOutputStream;
-import org.abimon.omnis.io.ZipData;
-import org.abimon.omnis.io.filefilters.FileExtensionFilter;
-import org.abimon.omnis.util.EnumOS;
-import org.abimon.omnis.util.General;
+import java.net.Socket;
+import java.util.Date;
+import java.awt.event.ActionEvent;
 
 public class DanganLauncher {
-	static Scanner in;
-	static File modsDir = new File("mods");
-	static File wadFileDR1;
-	static File wadFileDR2;
 
-	public static void main(String[] args) throws Throwable{
-		if(!modsDir.exists())
-			modsDir.mkdir();
+	private JFrame frame;
+	private JFrame openFrame;
+
+	public static File modsDir = new File("mods");
+	public static File wadFileDR1;
+	public static File wadFileDR2;
+
+	public static ProgressFrame progress = null;
+
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		Ludus.registerDataPool(new File("resources"));
+		Ludus.registerDataPool(DanganModding.class.getClassLoader());
+
+		try{
+			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Ludus.getData("DorBlue.ttf").getAsInputStream()));
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Ludus.getData("debug_menu.ttf").getAsInputStream()));
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Ludus.getData("goodbyeDespair.ttf").getAsInputStream()));
+		}
+		catch(Throwable th){
+		}
 
 		if(EnumOS.determineOS() == EnumOS.WINDOWS){
 			wadFileDR1 = new File("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Danganronpa Trigger Happy Havoc\\dr1_data.wad");
 			if(!wadFileDR1.exists())
 				wadFileDR1 = new File("C:\\Program Files\\Steam\\steamapps\\common\\Danganronpa Trigger Happy Havoc\\dr1_data.wad");
+
+			wadFileDR2 = new File("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Danganronpa 2 Goodbye Despair\\dr2_data.wad");
+			if(!wadFileDR2.exists())
+				wadFileDR2 = new File("C:\\Program Files\\Steam\\steamapps\\common\\Danganronpa 2 Goodbye Despair\\dr2_data.wad");
 		}
-		else if(EnumOS.determineOS() == EnumOS.MACOSX)
+		else if(EnumOS.determineOS() == EnumOS.MACOSX){
 			wadFileDR1 = new File(EnumOS.determineOS().getStorageLocation("Steam") + "/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad");
+			wadFileDR2 = new File(EnumOS.determineOS().getStorageLocation("Steam") + "/steamapps/common/Danganronpa 2 Goodbye Despair/Danganronpa2.app/Contents/resources/dr2_data.wad");
 
-		if(!wadFileDR1.exists()){
-			JFileChooser jfc = new JFileChooser();
-
-			jfc.setFileFilter(new FileExtensionFilter("wad"));
-			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			int option = jfc.showDialog(null, "Patch");
-
-			if(option == JFileChooser.APPROVE_OPTION){
-				wadFileDR1 = jfc.getSelectedFile();
+			try{
+				new Socket("localhost", 11038).close();
 			}
-
-			if(wadFileDR1.getName().endsWith(".app")){
-				wadFileDR1 = new File(wadFileDR1, "Contents/Resources/dr1_data.wad");
-			}
-			if(!wadFileDR1.exists()){
-				System.exit(0);
-			}
-
-		}
-
-		in = new Scanner(System.in);
-		while(in != null){
-			handleActions();
-		}
-	}
-
-	public static void handleActions(){
-		try{
-			System.out.println("Action (copy all, install, parse, backup, restore, extract, extract lin, extract pak, compile, compile lin, compile pak)");
-			System.out.print("> ");
-			String action = in.nextLine().trim();
-
-			if(action.equalsIgnoreCase("install"))
-				installMods();
-			else if(action.equalsIgnoreCase("copy all")){
-				System.out.print("File Format: ");
-				String format = in.nextLine().trim();
-				
-				File copyDir = new File("Copy" + File.separator + format);
-				if(!copyDir.exists())
-					copyDir.mkdirs();
-				
-				LinkedList<File> files = General.iterate(new File("Danganronpa Extract"), false);
-				for(File f : files)
-					if(f.getName().endsWith("." + format)){
-						System.out.println("Copied " + f);
-						File copy = new File(copyDir, f.getName());
-						Data data = new Data(f);
-						data.write(copy);
+			catch(Throwable th){
+				File applications = new File("/Applications/");
+				File execute = new File(applications, "MacOSXNotifier.app/Contents/MacOS/MacOSXNotifier");
+				if(execute.exists()){
+					try{
+						execute.setExecutable(true);
+						Runtime.getRuntime().exec(execute.getAbsolutePath());
 					}
-			}
-			else if(action.equalsIgnoreCase("replace sprites")){
-				System.out.print("Sprites to copy: ");
-				String spriteset = in.nextLine();
-				System.out.print("Sprites to replace: ");
-				String replace = in.nextLine();
-				System.out.print("Sprites Dir: ");
-				File spriteDir = new File(in.nextLine());
-				
-				for(File f : spriteDir.listFiles()){
-					if(f.getName().matches("bustup_" + replace + "_\\d\\d\\.tga")){
-						File replacing = new File(f.getAbsolutePath().replace(replace, spriteset));
-						if(!replacing.exists())
-							replacing = new File(f.getAbsolutePath().substring(0, f.getAbsolutePath().length() - 6) + "00.tga");
-						System.out.println("Replacing " + f + " with " + replacing);
-						
-						Data data = new Data(replacing);
-						data.write(f);
-					}
+					catch(Throwable the){}
 				}
-			}
-			else if(action.equalsIgnoreCase("backup")){
-				try{
-					File backupLoc = new File(wadFileDR1.getAbsolutePath().replace("dr1_data.wad", "dr1_data.backup"));
+				else{
+					int option = JOptionPane.showConfirmDialog(null, "A custom notification server is available, to give extra information about SPIRAL's installation process. Would you like to install this now?", "Notifications", JOptionPane.YES_NO_OPTION);
 
-					if(backupLoc.exists()){
-						System.err.println("Backup already exists.");
-						return;
-					}
-					backupLoc.createNewFile();
+					if(option == JOptionPane.YES_OPTION){
+						try{
+							ZipData notifierData = new ZipData(Ludus.getData("Notifier.zip"));
+							notifierData.extract(applications);
 
-					FileOutputStream out = new FileOutputStream(backupLoc);
-					FileInputStream in = new FileInputStream(wadFileDR1);
+							JOptionPane.showMessageDialog(null, "Successfully installed. Running now...");
 
-					long filesize = in.available();
-					long written = 0;
-
-					byte[] buffer = new byte[65536];
-					while(true){
-						int read = in.read(buffer);
-						if(read <= 0)
-							break;
-						out.write(buffer, 0, read);
-						written += read;
-						System.out.println(written + "/~" + filesize);
-					}
-
-					out.close();
-					in.close();
-
-					System.out.println("Backup complete!");
-				}
-				catch(Throwable th){
-					th.printStackTrace();
-				}
-			}
-			else if(action.equalsIgnoreCase("restore")){
-				try{
-					File backupLoc = new File(wadFileDR1.getAbsolutePath().replace("dr1_data.wad", "dr1_data.backup"));
-
-					if(!backupLoc.exists()){
-						System.err.println("Backup doesn't exist.");
-						return;
-					}
-					
-					System.out.println(backupLoc);
-
-					FileOutputStream out = new FileOutputStream(wadFileDR1);
-					FileInputStream in = new FileInputStream(backupLoc);
-					
-					long filesize = in.available();
-					long written = 0;
-
-					byte[] buffer = new byte[65536];
-					while(true){
-						int read = in.read(buffer);
-						if(read <= 0)
-							break;
-						out.write(buffer, 0, read);
-						written += read;
-						System.out.println(written + "/~" + filesize);
-					}
-
-					out.close();
-					in.close();
-
-					System.out.println("Restore complete!");
-				}
-				catch(Throwable th){
-					th.printStackTrace();
-				}
-			}
-			else if(action.equalsIgnoreCase("extract")){
-				try{
-					File dir = new File("Danganronpa Extract");
-					LinkedList<File> files = General.iterate(dir, false);
-					for(File f : files)
-						f.delete();
-					
-					while(true){
-						LinkedList<File> remainingDirs = General.iterate(dir, true);
-						if(remainingDirs.size() == 0)
-							break;
-						for(File f : remainingDirs)
-							System.out.println("Tried deleting " + f + ": " + f.delete());
-					}
-					
-					dir.delete();
-					File log = new File(System.currentTimeMillis() + ".txt");
-					DanganModding.extract(wadFileDR1, dir, new PrintStream(new MultiOutputStream(System.out, new FileOutputStream(log))));
-				}
-				catch(Throwable th){
-					th.printStackTrace();
-				}
-			}
-			else if(action.equalsIgnoreCase("compile")){
-				try{
-					File dir = new File("Danganronpa Extract");
-					DanganModding.makeWad(wadFileDR1, dir, System.out, false);
-				}
-				catch(Throwable th){
-					th.printStackTrace();
-				}
-			}
-			else if(action.equalsIgnoreCase("extract lin")){
-				System.out.print("LIN File Location: ");
-				String loc = in.nextLine();
-				File lin = new File(loc);
-
-				File log = new File(System.currentTimeMillis() + ".txt");
-				Data linData = DanganModding.linHandling(lin, new PrintStream(new MultiOutputStream(System.out, new FileOutputStream(log))));
-				linData.write(new File(lin.getAbsolutePath() + ".txt"));
-				linData = null;
-				System.out.println("Wrote Text Data!");
-			}
-			else if(action.equalsIgnoreCase("compile lin")){
-				System.out.print("Text File Location: ");
-				String loc = in.nextLine();
-				File lin = new File(loc);
-				
-				Data linData = DanganModding.compileLin(new Data(lin));
-				linData.write(new File(lin.getAbsolutePath().replace(".txt", "")));
-				linData = null;
-				System.out.println("Wrote LIN Data!");
-			}
-			else if(action.equalsIgnoreCase("extract pak")){
-				System.out.print("PAK File Location: ");
-				String loc = in.nextLine();
-				File pak = new File(loc);
-				
-				ZipData pakData = DanganModding.pakExtraction(new Data(pak));
-				pakData.writeToFile(new File(pak.getAbsolutePath() + ".zip"));
-				pakData = null;
-				System.out.println("Wrote ZIP Data");
-			}
-			else if(action.equalsIgnoreCase("compile pak")){
-				System.out.print("ZIP File Location: ");
-				String loc = in.nextLine();
-				File pak = new File(loc);
-				
-				Data pakData = DanganModding.compilePak(new ZipData(new Data(pak)));
-				pakData.write(new File(pak.getAbsolutePath().replace(".zip", "")));
-				pakData = null;
-				System.out.println("Wrote PAK Data");
-			}
-			else if(action.equalsIgnoreCase("view")){
-				DDFile file = new DDFile(wadFileDR1);
-				file.getClass();
-			}
-			else if(action.equalsIgnoreCase("exit")){
-				in.close();
-				in = null;
-			}
-			else
-				System.out.println(action);
-		}
-		catch(Throwable th){
-			th.printStackTrace();
-		}
-	}
-	
-//	private static void extractLin() throws IOException, InterruptedException {
-//		LinkedList<File> files = General.iterate(new File("Danganronpa Extract"), false);
-//		
-//		File f = null;
-//		for(int i = 0; i < files.size(); i++){
-//			f = files.get(i);
-//			
-//			if(f.getName().endsWith(".lin")){
-//				DanganModding.linHandling(f).write(new File(f.getAbsolutePath() + ".txt"));
-//				System.out.println("Extracting " + f.getName());
-//			}
-//		}
-//	}
-
-	public static void installMods(){
-		HashMap<String, File> mods = new HashMap<String, File>();
-		for(File f : modsDir.listFiles()){
-			String name = f.getName();
-			if(name.endsWith(".dr1"))
-				mods.put(f.getName().substring(0, f.getName().length() - 4).trim(), f);
-		}
-
-		if(mods.isEmpty())
-			System.out.println("No mods available!");
-		else{
-			System.out.println("Available Mods: ");
-			for(String mod : mods.keySet())
-				System.out.println("\t" + mod);
-
-			while(true){
-				try{
-					System.out.print("> ");
-					String line = in.nextLine().trim();
-					String action = line.split("\\s+")[0].trim();
-					String[] params = line.split("\\s+");
-					if(action.equalsIgnoreCase("info")){
-						File mod = mods.get(params[1].trim());
-						if(mod == null)
-							System.err.println("No such mod with name " + params[1].trim());
-						else{
-							ZipFile zip = new ZipFile(mod.getAbsolutePath());
-
-							BufferedReader bin = new BufferedReader(new InputStreamReader(zip.getInputStream(new ZipEntry("mod.info"))));
-
-							String name = bin.readLine();
-							String auth = bin.readLine();
-							String desc = bin.readLine();
-
-							System.out.println();
-
-							System.out.println("Name       	: " + name);
-							System.out.println("Author     	: " + auth);
-							System.out.println("Description	: " + desc);
-
-							System.out.println();
-
-							zip.close();
-							bin.close();
+							execute.setExecutable(true);
+							Runtime.getRuntime().exec(execute.getAbsolutePath());
+						}
+						catch(Throwable the){
+							JOptionPane.showMessageDialog(null, "An error occured with the installation: " + the.getMessage());
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							the.printStackTrace(new PrintStream(baos));
+							try{
+								new Data(baos.toByteArray()).write(new File("Crash Log - " + General.formatDate(new Date(), "dd-mm (min-ss).log")));
+							}
+							catch(Throwable wtf){
+								JOptionPane.showMessageDialog(null, "An error occured while logging the error: " + wtf.getMessage());
+							}
 						}
 					}
-					else if(action.equalsIgnoreCase("install")){
+				}
+			}
+		}
 
-						File mod = mods.get(params[1].trim());
-						if(mod == null)
-							System.err.println("No such mod with name " + params[1].trim());
-						else{
-							ZipFile zip = new ZipFile(mod.getAbsolutePath());
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					DanganLauncher window = new DanganLauncher();
+					window.frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
 
-							System.out.println("Would you like to install " + params[1].trim());
+	/**
+	 * Create the application.
+	 */
+	public DanganLauncher() {
+		initialize();
+	}
 
-							boolean cont = in.nextLine().toLowerCase().charAt(0) == 'y';
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void initialize() {
+		frame = new JFrame();
+		frame.setBounds(100, 100, 494, 409);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
-							if(cont){
+		JPanel panel = new JPanel();
+		frame.getContentPane().add(panel, BorderLayout.CENTER);
+		panel.setLayout(new FormLayout(new ColumnSpec[] {
+				FormSpecs.GROWING_BUTTON_COLSPEC,
+				ColumnSpec.decode("center:max(55dlu;pref):grow"),
+				FormSpecs.GROWING_BUTTON_COLSPEC,},
+				new RowSpec[] {
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						RowSpec.decode("29px"),
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.GLUE_ROWSPEC,}));
 
-								DDFile wad = new DDFile(wadFileDR1);
-								//Find all files to replace
-								LinkedList<String> files = new LinkedList<String>();
+		JLabel lblSpiralFramework = new JLabel("SPIRAL Framework");
+		panel.add(lblSpiralFramework, "2, 1, center, fill");
 
-								Enumeration<? extends ZipEntry> entries = zip.entries();
-								ZipEntry entry = null;
+		JButton btnInstallMods = new JButton("Install Mods");
+		panel.add(btnInstallMods, "2, 3, fill, center");
+		btnInstallMods.addActionListener(new ActionListener(){
 
-								while(entries.hasMoreElements() && (entry = entries.nextElement()) != null){
-									String name = entry.getName();
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(openFrame != null)
+					openFrame.setVisible(false);
+				openFrame = new InstallFrame();
+				openFrame.setVisible(true);
+			}
 
-									if(!name.endsWith(".info") && !name.endsWith("/") && !name.startsWith("__") && !name.contains(".DS_Store"))
-										files.add(name);
-								}
+		});
 
-								for(String s : files)
-									wad.changeFile(s, s, zip.getEntry(s).getSize());
-								wad.write(wadFileDR1, zip);
+		JButton btnBackup = new JButton("Backup");
+		panel.add(btnBackup, "2, 5, fill, default");
+		btnBackup.addActionListener(new ActionListener(){
+			File wadFile = null;
+
+			public void actionPerformed(ActionEvent e){
+				try{
+					JsonObject json;
+					try{
+						Data jsonData = new Data(new File(".spiral_settings"));
+						JsonElement element = new JsonParser().parse(jsonData.getAsString());
+						if(element.isJsonObject())
+							json = element.getAsJsonObject();
+						else
+							json = new JsonObject();
+					}
+					catch(Throwable th){
+						json = new JsonObject();
+					}
+
+					if(json.has("game")){
+						String game = json.get("game").getAsString();
+
+						if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+							wadFile = DanganLauncher.wadFileDR1;
+						if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+							wadFile = DanganLauncher.wadFileDR2;
+						if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+							wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+						if(wadFile != null && wadFile.exists()){
+							try{
+
+								progress = new ProgressFrame("Backing Up WAD", "Backing Up...");
+
+								new Thread(){
+									public void run(){
+										try{
+											FileOutputStream out = new FileOutputStream(new File(wadFile.getAbsolutePath().replace(".wad", ".wad.backup")));
+											FileInputStream in = new FileInputStream(wadFile);
+
+											long filesize = in.available();
+											long written = 0;
+
+											byte[] buffer = new byte[65536];
+											while(true){
+												int read = in.read(buffer);
+												if(read <= 0)
+													break;
+												out.write(buffer, 0, read);
+												written += read;
+												filesize = ((long) written) + ((long) in.available());
+												progress.updateProgress((written * 100 / filesize));
+											}
+
+											out.close();
+											in.close();
+										}
+										catch(Throwable th){}
+									}
+
+								}.start();
+							}
+							catch(Throwable th){
+								th.printStackTrace();
+							}
+						}
+					}
+					else{
+						JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+				}
+				catch(Throwable th){}
+			}
+		});
+
+		JButton btnRestore = new JButton("Restore");
+		panel.add(btnRestore, "2, 6, fill, center");
+		btnRestore.addActionListener(new ActionListener(){
+			File wadFile = null;
+
+			public void actionPerformed(ActionEvent e){
+				try{
+					JsonObject json;
+					try{
+						Data jsonData = new Data(new File(".spiral_settings"));
+						JsonElement element = new JsonParser().parse(jsonData.getAsString());
+						if(element.isJsonObject())
+							json = element.getAsJsonObject();
+						else
+							json = new JsonObject();
+					}
+					catch(Throwable th){
+						json = new JsonObject();
+					}
+
+					if(json.has("game")){
+						String game = json.get("game").getAsString();
+
+						if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+							wadFile = DanganLauncher.wadFileDR1;
+						if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+							wadFile = DanganLauncher.wadFileDR2;
+						if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+							wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+						if(wadFile != null && wadFile.exists()){
+							try{
+
+								progress = new ProgressFrame("Restoring File", "Restoring...");
+
+								new Thread(){
+									public void run(){
+										try{
+											FileOutputStream out = new FileOutputStream(wadFile);
+											FileInputStream in = new FileInputStream(new File(wadFile.getAbsolutePath().replace(".wad", ".wad.backup")));
+
+											long filesize = in.available();
+											long written = 0;
+
+											byte[] buffer = new byte[65536];
+											while(true){
+												int read = in.read(buffer);
+												if(read <= 0)
+													break;
+												out.write(buffer, 0, read);
+												written += read;
+												filesize = ((long) written) + ((long) in.available());
+												progress.updateProgress((written * 100 / filesize));
+											}
+
+											out.close();
+											in.close();
+										}
+										catch(Throwable th){}
+									}
+
+								}.start();
+							}
+							catch(Throwable th){
+								th.printStackTrace();
+							}
+						}
+					}
+					else{
+						JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+				}
+				catch(Throwable th){}
+			}
+		});
+
+		JButton btnCompile = new JButton("Compile");
+		//btnCompile.setEnabled(false);
+		btnCompile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				DanganLauncher.progress = new ProgressFrame("Danganronpa Compilation", "Beginning Compilation");
+				new Thread(){
+					public void run(){
+						try{
+							File dir = new File("Danganronpa Extract");
+							DanganModding.makeWad(wadFileDR1, dir, new PrintStream(new EmptyOutputStream()), false);
+						}
+						catch(Throwable th){}
+					}
+				}.start();
+
+			}
+		});
+		panel.add(btnCompile, "2, 7, fill, center");
+
+		JButton btnExtractFiles = new JButton("Extract Files");
+		panel.add(btnExtractFiles, "2, 8, fill, center");
+		btnExtractFiles.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				DanganLauncher.progress = new ProgressFrame("Danganronpa Extraction", "Beginning Extraction");
+				new Thread(){
+					public void run(){
+						try{
+							JsonObject json;
+							try{
+								Data jsonData = new Data(new File(".spiral_settings"));
+								JsonElement element = new JsonParser().parse(jsonData.getAsString());
+								if(element.isJsonObject())
+									json = element.getAsJsonObject();
+								else
+									json = new JsonObject();
+							}
+							catch(Throwable th){
+								json = new JsonObject();
 							}
 
-							zip.close();
+							if(json.has("game")){
+								String game = json.get("game").getAsString();
+
+								File wadFile = null;
+
+								if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+									wadFile = DanganLauncher.wadFileDR1;
+								if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+									wadFile = DanganLauncher.wadFileDR2;
+								if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+									wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+								if(wadFile != null && wadFile.exists()){
+									File dir = new File(wadFile.getName().replace(".wad", "") + " Extract");
+									DanganModding.extract(wadFile, dir, System.out);
+								}
+							}
+							else{
+								JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+								return;
+							}
 						}
+						catch(Throwable th){}
 					}
-					else if(action.equalsIgnoreCase("exit"))
-						break;
+				}.start();
+			}
+		});
+
+		JButton btnNonstopDebates = new JButton("NONSTOP DEBATES");
+		panel.add(btnNonstopDebates, "2, 10, fill, default");
+		btnNonstopDebates.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				try{
+					File dat = new File("Danganronpa Extract/Dr1/data/us/bin/nonstop_06_001.dat");
+					File txt = new File("Danganronpa Extract/Dr1/data/us/bin/nonstop_06_001.dat.txt");
+					DanganModding.extractNonstop(new Data(dat)).write(txt);
+					//DanganModding.packNonstop(new Data(txt)).write(dat);
 				}
 				catch(Throwable th){
 					th.printStackTrace();
 				}
 			}
-		}
+		});
+
+		JButton btnOpenGame = new JButton("Open Game");
+		panel.add(btnOpenGame, "2, 11, fill, default");
+		btnOpenGame.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				SteamProtocol.openGame(SteamAppIDs.DANGANRONPA_TRIGGER_HAPPY_HAVOC);
+			}
+		});
+
+		JButton btnSettings = new JButton("Settings");
+		panel.add(btnSettings, "2, 13, fill, center");
+		btnSettings.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(openFrame != null)
+					openFrame.setVisible(false);
+				openFrame = new SettingsFrame();
+				openFrame.setVisible(true);
+			}
+
+		});
+
+		JButton btnClose = new JButton("Close");
+		panel.add(btnClose, "2, 15");
+		btnClose.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				System.exit(0);
+			}
+		});
+
+
 	}
 }

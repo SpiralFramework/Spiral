@@ -1,7 +1,12 @@
 package org.abimon.mods.danganronpa.launcher;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,31 +16,40 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
+import org.abimon.mods.danganronpa.launcher.windows.InstallFrame;
 import org.abimon.omnis.io.Data;
 import org.abimon.omnis.io.EmptyOutputStream;
+import org.abimon.omnis.io.MarkableFileInputStream;
+import org.abimon.omnis.io.TGAWriter;
 import org.abimon.omnis.io.VirtualDirectory;
 import org.abimon.omnis.io.VirtualFile;
 import org.abimon.omnis.io.ZipData;
+import org.abimon.omnis.ludus.Ludus;
 import org.abimon.omnis.util.General;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class DDFile {
 
-	HashMap<String, DRFile> fileStructure = new HashMap<String, DRFile>();
-	VirtualDirectory directory = new VirtualDirectory("");
+	public HashMap<String, DRFile> fileStructure = new HashMap<String, DRFile>();
+	public VirtualDirectory directory = new VirtualDirectory("");
 
 	boolean agar = false;
 	long major = 0;
 	long minor = 0;
 	long header = 0;
-	long readOffset = 12;
+
+	MarkableFileInputStream in;
 
 	File wadFile;
 
@@ -43,7 +57,7 @@ public class DDFile {
 		long start = System.currentTimeMillis();
 
 		this.wadFile = wadFile;
-		DataInputStream in = new DataInputStream(new FileInputStream(wadFile));
+		in = new MarkableFileInputStream(new FileInputStream(wadFile));
 
 		agar = readString(in, 4).equalsIgnoreCase("AGAR");
 		major = readInt(in);
@@ -54,8 +68,6 @@ public class DDFile {
 
 		long files = readInt(in);
 
-		readOffset = 20 + header;
-
 		for(int i = 0; i < files; i++){
 			long nameLen = readInt(in);
 			String name = readString(in, (int) nameLen);
@@ -63,7 +75,6 @@ public class DDFile {
 			long offset = readLong(in);
 
 			fileStructure.put(name, new DRFile(name, size, offset));
-			readOffset += 4 + nameLen + 8 + 8;
 		}
 
 		System.out.println("Now reading DIRs");
@@ -75,7 +86,6 @@ public class DDFile {
 		long nameLen = readInt(in);
 		String name = readString(in, (int) nameLen);
 		long numEntries = readInt(in);
-		readOffset += 12 + nameLen;
 
 		for(int j = 0; j < numEntries; j++){
 			long entryNameLen = readInt(in);
@@ -83,14 +93,12 @@ public class DDFile {
 			boolean file = in.read() == 0;
 
 			directory.addSubFile(file ? new VirtualFile(entryName) : new VirtualDirectory(entryName));
-			readOffset += 4 + entryNameLen + 1;
 		}
 
 		for(int i = 1; i < numDirs; i++){
 			nameLen = readInt(in);
 			name = readString(in, (int) nameLen);
 			numEntries = readInt(in);
-			readOffset += 4 + nameLen + 4;
 
 			VirtualFile search = this.directory.search("/" + name);
 			VirtualDirectory vDir = search instanceof VirtualDirectory && search != null ? (VirtualDirectory) search : new VirtualDirectory(name);
@@ -100,7 +108,6 @@ public class DDFile {
 				String entryName = readString(in, (int) entryNameLen);
 				boolean file = in.read() == 0;
 
-				readOffset += 4 + entryNameLen + 1;
 				vDir.addSubFile(file ? new VirtualFile(entryName) : new VirtualDirectory(entryName));
 			}
 
@@ -108,11 +115,15 @@ public class DDFile {
 				vDir.getParent().removeSubFile(vDir.getName());
 				vDir.getParent().addSubFile(vDir);
 			}
-			else
+			else{
 				System.out.println(vDir + " is missing a parent!");
+				this.directory.addSubFile(vDir);
+			}
 		}
 
-		System.out.println(readOffset + " and chill");
+		in.mark(-1);
+
+		System.out.println("Mark: " + in.getMark());
 
 		long end = System.currentTimeMillis();
 
@@ -131,206 +142,383 @@ public class DDFile {
 		this.directory.addSubFileWithPath(new VirtualFile(name), fullPath);
 	}
 
-	public void write(File newWad, ZipFile... modsToAdd) throws IOException{
+	public void write(File newWad, String[] modsToRemove, ZipFile... modsToAdd) throws IOException{
+		DanganLauncher.progress.updateProgress(5, "Detecting Patches...");
 
-		File backupWadFile = new File(wadFile.getAbsolutePath().replace(".wad", ".wad.backup"));
-		if(!backupWadFile.exists()){
-			System.out.println("Making a backup...");
+		JsonArray installedMods = fileStructure.containsKey("installed_mods.json") ? new Data(read("installed_mods.json")).getAsJsonArray() : new JsonArray();
 
-			FileInputStream wadIn = new FileInputStream(wadFile);
-			FileOutputStream backupWadOut = new FileOutputStream(backupWadFile);
+		HashMap<String, ZipFile> patches = new HashMap<String, ZipFile>();
 
-			long filesize = wadIn.available();
-			long written = 0;
+		for(ZipFile f : modsToAdd){
+			if(f == null)
+				continue;
+			Enumeration<? extends ZipEntry> entries = f.entries();
+			ZipEntry entry = null;
 
-			byte[] buffer = new byte[8192];
-			while(true){
-				int read = wadIn.read(buffer);
-				if(read <= 0)
-					break;
-				backupWadOut.write(buffer, 0, read);
-				written += read;
-				System.out.println(written + "/~" + filesize);
-			}
+			JsonObject mod = new JsonObject();
+			JsonArray modFiles = new JsonArray();
 
-			wadIn.close();
-			backupWadOut.close();
-		}
-		long maxMemory = Runtime.getRuntime().maxMemory();
-		/* Maximum amount of memory the JVM will attempt to use */
-		System.out.println("Maximum memory (bytes): " + (maxMemory == Long.MAX_VALUE ? "no limit" : maxMemory));
+			while(entries.hasMoreElements() && (entry = entries.nextElement()) != null){
+				String name = entry.getName();
 
+				if(!name.endsWith("/") && !name.startsWith("__") && !name.contains(".DS_Store")){
+					if(name.endsWith(".info")){
+						Data data = new Data(f.getInputStream(entry));
 
-		if(maxMemory / 1000000000 > 4){
-			FileOutputStream out = new FileOutputStream(newWad);
+						JsonObject modProperties = data.getAsJsonObject();
 
-			out.write("AGAR".getBytes());
-
-			writeInt(out, major);
-			writeInt(out, minor);
-			writeInt(out, header);
-
-			byte[] headerData = new byte[(int) header];
-			new Random().nextBytes(headerData);
-			out.write(headerData);
-
-			LinkedList<VirtualFile> files = directory.getAllSubFiles();
-
-			@SuppressWarnings("unchecked")
-			LinkedList<VirtualFile> copy = (LinkedList<VirtualFile>) files.clone();
-
-
-			for(VirtualFile file : copy){
-				String name = file.toString().substring(1);
-				DRFile drf = fileStructure.get(name);
-				if(drf == null || file instanceof VirtualDirectory)
-					files.remove(file);
-			}
-
-			long fileCount = files.size();
-
-			System.out.println("Files: " + fileCount);
-
-			writeInt(out, fileCount);
-
-			long offset = 0;
-
-			for(VirtualFile f : files){
-				String name = f.toString().substring(1);
-				DRFile drf = fileStructure.get(name);
-				if(drf == null || f instanceof VirtualDirectory)
-					continue;
-				writeInt(out, name.length());
-				out.write(name.getBytes());
-				write(out, drf.size, 8);
-				write(out, offset, 8);
-				offset += drf.size;
-			}
-
-			System.out.println("Wrote: FileData");
-
-			LinkedList<VirtualDirectory> dirs = directory.getAllSubDirs();
-
-			System.out.println(dirs.size());
-			System.out.println(dirs);
-
-			writeInt(out, dirs.size());
-
-			for(VirtualDirectory dir : dirs){
-				String name = dir.toString().substring(Math.min(dir.toString().length(), 1));
-				writeInt(out, name.length());
-				out.write(name.getBytes());
-				LinkedList<VirtualFile> sub = dir.subfiles;
-				writeInt(out, sub.size());
-
-				for(VirtualFile f : sub){
-					String entryName = f.getName();
-					writeInt(out, entryName.length());
-					out.write(entryName.getBytes());
-					out.write(f instanceof VirtualDirectory ? 1 : 0);
-				}
-			}
-
-			System.out.println("Wrote: Directory Structure");
-
-		}
-		else{
-
-			HashMap<String, ZipFile> patches = new HashMap<String, ZipFile>();
-
-			for(ZipFile f : modsToAdd){
-				if(f == null)
-					continue;
-				Enumeration<? extends ZipEntry> entries = f.entries();
-				ZipEntry entry = null;
-
-				while(entries.hasMoreElements() && (entry = entries.nextElement()) != null){
-					String name = entry.getName();
-
-					if(!name.endsWith(".info") && !name.endsWith("/") && !name.startsWith("__") && !name.contains(".DS_Store"))
+						mod.addProperty("name", modProperties.get("name").getAsString());
+						mod.addProperty("version", modProperties.get("version").getAsString());
+					}
+					else{
 						patches.put(name, f);
+						modFiles.add(name);
+					}
 				}
 			}
+
+			if(!mod.has("name")){
+				File file = new File(f.getName());
+				mod.addProperty("name", file.getName().substring(0, file.getName().lastIndexOf('.')));
+			}
+
+			if(!mod.has("version")){
+				File file = new File(f.getName());
+				mod.addProperty("version", file.length() < 1000 * 10 ? new Data(file).getAsMD5Hash() : new Data(file.getAbsolutePath()).getAsMD5Hash());
+			}
+
+			mod.add("files", modFiles);
+
+			installedMods.add(mod);
+		}
+
+		try{
+			JsonObject settingsJson = new JsonObject();
 
 			try{
-				System.out.println("Extracting files...");
+				Data jsonData = new Data(new File(".spiral_settings"));
+				JsonElement element = new JsonParser().parse(jsonData.getAsString());
+				if(element.isJsonObject())
+					settingsJson = element.getAsJsonObject();
+			}
+			catch(Throwable th){}
 
-				long millis = System.currentTimeMillis();
+			HashMap<String, Data> patching = new HashMap<String, Data>();
 
-				File dir = new File("tmp");		
-				if(!dir.exists())
-					DanganModding.extract(backupWadFile, dir, new PrintStream(new EmptyOutputStream()));
+			File backupFile = new File("mods" + File.separator + "backup.drs");
+			ZipData zipData = new ZipData();
 
-				long timeTaken = System.currentTimeMillis() - millis;
+			System.out.println(backupFile.exists() + ":" + fileStructure.containsKey("installed_mods.json"));
 
-				System.out.println("Finished extracting (" + timeTaken / 1000 + " s)");
+			if(backupFile.exists()){
+				zipData = new ZipData(new Data(backupFile));
 
-				System.out.println("Writing modded files");
+				if(fileStructure.containsKey("installed_mods.json")){
+					JsonArray mods = new Data(read("installed_mods.json")).getAsJsonArray();
 
-				ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
+					for(JsonElement elem : mods){
+						JsonObject modJson = elem.getAsJsonObject();
 
-				File backupFile = new File("mods" + File.separator + "backup.dr1");
-				ZipData zipData = new ZipData();
+						String modID = modJson.get("name").getAsString() + " v" + modJson.get("version").getAsString();
+						for(String id : modsToRemove){
+							if(id.equalsIgnoreCase(modID)){
+								if(modJson.has("files")){
+									JsonArray files = modJson.get("files").getAsJsonArray();
+									for(JsonElement fileElem : files){
+										String name = fileElem.getAsString();
+										if(zipData.containsKey(name))
+											patches.put(name, new ZipFile(backupFile));
+										else
+											patching.put(name, new Data(new byte[0]));
 
-				if(backupFile.exists())
-					zipData = new ZipData(new Data(backupFile));
-
-
-				for(String s : patches.keySet()){
-
-					File moddedFile = new File(dir, s.replace("/", File.separator).replace("\\", File.separator).replace(".lin.txt", ".lin"));
-
-					if(moddedFile.exists() && !zipData.containsKey(moddedFile.toString().replace('\\', '/')))
-						zipData.put(moddedFile.toString().replace('\\', '/'), new Data(moddedFile));
-
-					System.out.println("Patching " + moddedFile);
-
-					FileOutputStream out = new FileOutputStream(moddedFile);
-					InputStream in = patches.get(s).getInputStream(new ZipEntry(s));
-
-					byte[] buffer = new byte[65536];
-					while(true){
-						int read = in.read(buffer);
-						if(read <= 0)
-							break;
-						bufferOS.write(buffer, 0, read);
+										if(name.endsWith(".tga.png")){
+											String trueName = name.replace(".tga.png", ".tga");
+											if(zipData.containsKey(trueName))
+												patches.put(trueName, new ZipFile(backupFile));
+											else
+												patching.put(trueName, new Data(new byte[0]));
+										}
+										if(name.endsWith(".pak.zip")){
+											String trueName = name.replace(".pak.zip", ".pak");
+											if(zipData.containsKey(trueName))
+												patches.put(trueName, new ZipFile(backupFile));
+											else
+												patching.put(trueName, new Data(new byte[0]));
+										}
+										if(name.equalsIgnoreCase("people.json")){
+											System.out.println("Attempting to retrieve tex from " + zipData.keySet());
+											String trueName = "Dr1/data/us/cg/tex_cmn_name.pak";
+											if(zipData.containsKey(trueName))
+												patches.put(trueName, new ZipFile(backupFile));
+											else
+												patching.put(trueName, new Data(new byte[0]));
+										}
+										System.out.println(name);
+									}
+								}
+								installedMods.remove(modJson);
+							}
+						}
 					}
+				}
+			}
 
-					out.write(bufferOS.toByteArray());
+			File tmpDir = new File("tmp");
 
-					in.close();
+			DanganLauncher.progress.updateProgress(10, "Writing WAD to disk...");
+			DanganModding.sendNotification("Mod Installation", "Writing WAD to disk...");
+
+			float perFile = 20.0f / fileStructure.keySet().size();
+			float fileNum = 0.0f;
+
+			for(String s : fileStructure.keySet()){
+				fileNum += perFile;
+				DanganLauncher.progress.updateProgress(10 + fileNum, "Writing " + s.substring(0, Math.min(s.length(), 32)) + (s.length() > 32 ? "..." : ""));
+				File dirs = new File(tmpDir, s.substring(0, Math.max(0, s.lastIndexOf('/'))));
+				dirs.mkdirs();
+
+				File f = new File(tmpDir, s);
+
+				if(s.endsWith("aglogo.tga")){
+					if(Ludus.hasData("spirallogo.tga.png"))
+						Ludus.getData("spirallogo.tga.png").write(f);
+				}
+				else{
+					FileOutputStream out = new FileOutputStream(f);
+					out.write(read(s));
 					out.close();
 				}
-
-				if(!zipData.isEmpty())
-					zipData.writeToFile(backupFile);
-
-				System.out.println("Making WAD file...");
-
-				DanganModding.makeWad(wadFile, dir, System.out, false);
-
-				System.out.println("Finished WAD File.");
-
-				//				LinkedList<File> files = General.iterate(dir, false);
-				//				for(File f : files)
-				//					f.delete();
-				//
-				//				while(true){
-				//					LinkedList<File> remainingDirs = General.iterate(dir, true);
-				//					if(remainingDirs.size() == 0)
-				//						break;
-				//					for(File f : remainingDirs)
-				//						f.delete();
-				//				}
-				//
-				//				dir.delete();
-			}
-			catch(Throwable th){
-				th.printStackTrace();
 			}
 
+			DanganLauncher.progress.updateProgress(30, "Writing patches to disk...");
+			DanganModding.sendNotification("Mod Installation", "Writing patches to disk...");
+
+			File modList = new File(tmpDir, "installed_mods.json");
+			new Data(installedMods.toString()).write(modList);
+			
+			System.out.println("Patches: " + patches.keySet());
+			System.out.println("Patching: " + patching.keySet());
+
+			for(String s : patches.keySet()){
+				if(s.equalsIgnoreCase("people.json")){
+					JsonArray array = new JsonParser().parse(new Data(patches.get(s).getInputStream(new ZipEntry(s))).getAsString()).getAsJsonArray();
+
+					BufferedImage buf = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+					Font font = new Font("Goodbye Despair", Font.PLAIN, 28);
+
+					if(settingsJson.has("name_font")){
+						GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+						for(Font f : ge.getAllFonts())
+							if(f.getName().equalsIgnoreCase(settingsJson.get("name_font").getAsString())){
+								font = f.deriveFont(56.0f);
+								break;
+							}
+					}
+
+					Graphics g = buf.getGraphics();
+					while(true){
+						g.setFont(font);
+						FontMetrics metrics = g.getFontMetrics();
+						if(metrics.getStringBounds("Makoto Naegi", g).getHeight() > 25)
+							font = font.deriveFont(font.getSize2D() - 1.0f);
+						else
+							break;
+					}
+
+					FontMetrics metrics = g.getFontMetrics();
+
+					ZipData entries = DanganModding.pakExtraction(new Data(read("Dr1/data/us/cg/tex_cmn_name.pak")));
+
+					for(JsonElement elem : array){
+						JsonObject json = elem.getAsJsonObject();
+
+						String name = json.get("name").getAsString();
+						int index = json.get("index").getAsInt();
+
+						if(json.has("aliases")){}
+						else{
+							String initials = "";
+
+							for(String n : name.split("\\s+"))
+								if(n.length() >= 1)
+									initials += n.charAt(0);
+
+							DanganModding.characterIDs.put(initials, index);
+							DanganModding.characterIDs.put(name, index);
+							DanganModding.characterIDs.put(name.split("\\s+")[0], index);
+						}
+
+						if(json.has("sprites")){
+							JsonObject sprites = json.getAsJsonObject("sprites");
+
+							HashMap<String, Integer> emotionSet = new HashMap<String, Integer>();
+
+							for(Entry<String, JsonElement> emotion : sprites.entrySet()){
+								emotionSet.put(emotion.getKey(), emotion.getValue().getAsInt());
+							}
+
+							DanganModding.emotions.put(index, emotionSet);
+						}
+
+						Rectangle2D size = metrics.getStringBounds(name, g);
+
+						BufferedImage img = new BufferedImage((int) size.getWidth(), (int) size.getHeight(), BufferedImage.TYPE_INT_ARGB);
+						Graphics nameG = img.getGraphics();
+						nameG.setFont(font);
+						nameG.setColor(Color.WHITE);
+						nameG.drawString(name, 0, (int) (img.getHeight()/3*2.5f));
+
+						entries.put(index + ".png", new Data(img));
+					}
+
+					if(!zipData.containsKey("Dr1/data/us/cg/tex_cmn_name.pak"))
+						zipData.put("Dr1/data/us/cg/tex_cmn_name.pak", new Data(read("Dr1/data/us/cg/tex_cmn_name.pak")));
+					DanganModding.compilePak(entries).write(new File(tmpDir, "Dr1/data/us/cg/tex_cmn_name.pak"));
+				}
+				else{
+					if(s.endsWith(".lin.txt")){
+						System.out.println("Compiling " + s);
+						Data data = DanganModding.compileLin(new Data(patches.get(s).getInputStream(new ZipEntry(s))));
+						patches.remove(s);
+						data.write(new File(tmpDir, s.replace(".lin.txt", ".lin")));
+						if(!zipData.containsKey(s.replace(".lin.txt", ".lin")))
+							zipData.put(s.replace(".lin.txt", ".lin"), new Data(read(s.replace(".lin.txt", ".lin"))));
+					}
+					else if(s.endsWith(".pak.zip")){
+
+						System.out.println("Packing " + s);
+						ZipData zip = new ZipData(new Data(patches.get(s).getInputStream(new ZipEntry(s))));
+						Data compiledPak = DanganModding.compilePak(zip);
+						patches.remove(s);
+						compiledPak.write(new File(tmpDir, s.replace(".pak.zip", ".pak")));
+						if(!zipData.containsKey(s.replace(".pak.zip", ".pak")))
+							zipData.put(s.replace(".pak.zip", ".pak"), new Data(read(s.replace(".pak.zip", ".pak"))));
+					}
+					else if(s.endsWith(".tga.png")){
+						System.out.println("Decrypting " + s);
+						Data data = new Data(TGAWriter.writeImage(new Data(patches.get(s).getInputStream(new ZipEntry(s))).getAsImage()));
+						patches.remove(s);
+						data.write(new File(tmpDir, s.replace(".tga.png", ".tga")));
+						if(!zipData.containsKey(s.replace(".tga.png", ".tga")))
+							zipData.put(s.replace(".tga.png", ".tga"), new Data(read(s.replace(".tga.png", ".tga"))));
+					}
+					else if(fileStructure.containsKey(s)){
+						new Data(patches.get(s).getInputStream(new ZipEntry(s))).write(new File(tmpDir, s));
+						zipData.put(s, new Data(read(s)));
+					}
+					else
+						new Data(patches.get(s).getInputStream(new ZipEntry(s))).write(new File(tmpDir, s));
+				}
+			}
+
+			for(String s : patching.keySet()){
+				System.out.println("Patching: " + s);
+				File f = new File(tmpDir, s);
+				if(patching.get(s).length() == 0)
+					f.delete();
+				else
+					patching.get(s).write(f);
+			}
+
+			if(!zipData.isEmpty()){
+				JsonObject json = new JsonObject();
+				json.addProperty("name", "DanganBackup (Don't Manually Install)");
+				json.addProperty("version", General.formatDate(new Date(), "yyyy.mm.dd"));
+				zipData.put("backup_mod.info", new Data(json.toString()));
+				zipData.writeToFile(backupFile);
+			}
+
+			//TODO: Write Header, Count Files
+
+			//			FileOutputStream out = new FileOutputStream(tmp);
+			//
+			//			out.write("AGAR".getBytes());
+			//
+			//			writeInt(out, major);
+			//			writeInt(out, minor);
+			//			writeInt(out, header);
+			//
+			//			byte[] headerData = new byte[(int) header];
+			//			new Random().nextBytes(headerData);
+			//			out.write(headerData);
+			//
+			//			LinkedList<File> files = General.iterate(tmpDir, false);
+			//
+			//			long fileCount = files.size();
+			//			System.out.println("Files: " + fileCount);
+			//			writeInt(out, fileCount);
+			//
+			//			long offset = 0;	
+			//
+			//			for(File f : files){
+			//				Data d = new Data(f);
+			//				String name = f.getAbsolutePath().replace(tmpDir.getAbsolutePath() + File.separator, "");
+			//				writeInt(out, name.length());
+			//				out.write(name.getBytes());
+			//				write(out, d.size(), 8);
+			//				write(out, offset, 8);
+			//				offset += d.size();
+			//				d = null;
+			//			}
+			//			System.out.println("Wrote: File Data");
+			//
+			//			//TODO: Directory Count
+			//
+			//			LinkedList<File> dirs = General.iterateDirs(tmpDir);
+			//
+			//			writeInt(out, dirs.size());
+			//
+			//			for(File dir : dirs){
+			//				String name = dir.getName();
+			//				if(name.equalsIgnoreCase("tmp"))
+			//					name = "";
+			//				writeInt(out, name.length());
+			//				out.write(name.getBytes());
+			//				LinkedList<File> sub = new LinkedList<File>();
+			//				for(File f : dir.listFiles())
+			//					if(!f.getName().startsWith("."))
+			//						sub.add(f);
+			//				writeInt(out, sub.size());
+			//
+			//				for(File f : sub){
+			//					String entryName = f.getName().replace('\\', '/');
+			//					writeInt(out, entryName.length());
+			//					out.write(entryName.getBytes());
+			//					out.write(f.isFile() ? 0 : 1);
+			//				}
+			//			}
+			//
+			//			System.out.println("Wrote: Directory Structure");
+			//
+			//			for(File f : files){
+			//				System.out.println("Writing " + f.getAbsolutePath().replace(tmpDir.getAbsolutePath() + File.separator, ""));
+			//				out.write(new Data(f).getData());
+			//				f.delete();
+			//			}
+			//
+			//			out.close();
+			//
+			//			FileInputStream tin = new FileInputStream(tmp);
+			//			FileOutputStream don = new FileOutputStream(newWad);
+			//
+			//			long filesize = tin.available();
+			//			long written = 0;
+			//
+			//			byte[] buffer = new byte[65536];
+			//			while(true){
+			//				int read = tin.read(buffer);
+			//				if(read <= 0)
+			//					break;
+			//				don.write(buffer, 0, read);
+			//				written += read;
+			//				System.out.println(written + "/~" + filesize);
+			//			}
+
+			DanganModding.makeWad(newWad, tmpDir, new PrintStream(new EmptyOutputStream()), true);
 		}
-
+		catch(Throwable th){
+			th.printStackTrace();
+		}
 	}
 
 	/** Note: Do NOT use this UNLESS you're confident you're not patching much data in */
@@ -342,54 +530,11 @@ public class DDFile {
 
 		if(fileStructure.containsKey(fileName)){
 			DRFile file = fileStructure.get(fileName);
-
-			DataInputStream in = new DataInputStream(new FileInputStream(wadFile));
-
-			boolean agar = readString(in, 4).equalsIgnoreCase("AGAR");
-			long major = readInt(in);
-			long minor = readInt(in);
-			long header = readInt(in);
-
-			in.skip(header);
-
-			long files = readInt(in);
-
-			LinkedList<DRFile> fileList = new LinkedList<DRFile>();
-
-			for(int i = 0; i < files; i++){
-				long nameLen = readInt(in);
-				String name = readString(in, (int) nameLen);
-				long size = readLong(in);
-				long offset = readLong(in);
-
-				fileList.add(new DRFile(name, size, offset));
-			}
-
-			long numDirs = readInt(in);
-
-			for(int i = 0; i < numDirs; i++){
-				long nameLen = readInt(in);
-				String name = readString(in, (int) nameLen);
-				long numEntries = readInt(in);
-
-				for(int j = 0; j < numEntries; j++){
-					long entryNameLen = readInt(in);
-					String entryName = readString(in, (int) entryNameLen);
-					boolean fileOrNot = in.read() == 0;
-				}
-			}
-
-			for(int i = 0; i < files; i++){
-
-				DRFile drfile = fileList.get(i);
-				if(drfile.name.equals(fileName)){
-					byte[] data = new byte[(int) drfile.size];
-					in.read(data);
-					return data;
-				}
-
-				in.skip((int) drfile.size);
-			}
+			in.reset();
+			in.skip(file.offset);
+			byte[] data = new byte[(int) file.size];
+			in.read(data);
+			return data;
 		}
 
 		return new byte[0];
