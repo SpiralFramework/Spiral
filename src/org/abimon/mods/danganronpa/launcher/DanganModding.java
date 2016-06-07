@@ -28,7 +28,6 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
-import org.abimon.mods.danganronpa.launcher.windows.InstallFrame;
 import org.abimon.omnis.io.Data;
 import org.abimon.omnis.io.TGAReader;
 import org.abimon.omnis.io.TGAWriter;
@@ -1424,7 +1423,7 @@ public class DanganModding {
 	}
 
 	public static String readString(InputStream in, int len, String encoding) throws IOException{
-		byte[] data = new byte[Math.min(Math.max(0, len), 8192)];
+		byte[] data = new byte[len];
 		in.read(data);
 		String s = new String(data, encoding);
 		data = null;

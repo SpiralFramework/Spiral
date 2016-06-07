@@ -356,10 +356,43 @@ public class DanganLauncher {
 				new Thread(){
 					public void run(){
 						try{
-							File dir = new File("Danganronpa Extract");
-							DanganModding.makeWad(wadFileDR1, dir, new PrintStream(new EmptyOutputStream()), false);
+							JsonObject json;
+							try{
+								Data jsonData = new Data(new File(".spiral_settings"));
+								JsonElement element = new JsonParser().parse(jsonData.getAsString());
+								if(element.isJsonObject())
+									json = element.getAsJsonObject();
+								else
+									json = new JsonObject();
+							}
+							catch(Throwable th){
+								json = new JsonObject();
+							}
+
+							if(json.has("game")){
+								String game = json.get("game").getAsString();
+
+								File wadFile = null;
+
+								if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+									wadFile = DanganLauncher.wadFileDR1;
+								if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+									wadFile = DanganLauncher.wadFileDR2;
+								if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+									wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+								if(wadFile != null && wadFile.exists()){
+									File dir = new File(wadFile.getName().replace(".wad", "") + " Extract");
+									DanganModding.makeWad(wadFile, dir, new PrintStream(new EmptyOutputStream()), false);
+								}
+							}
+							else{
+								JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+								return;
+							}
 						}
-						catch(Throwable th){}
+						catch(Throwable th){
+						}
 					}
 				}.start();
 

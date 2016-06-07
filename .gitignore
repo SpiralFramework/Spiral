@@ -5,10 +5,6 @@
 
 *.prefs
 
-/Danganronpa Extract/*
-/Danganronpa Extract ORIGINAL/*
-/Danganronpa Extract Modded/*
-Danganronpa Extract Keyboard/*
 tmp/*
 /mods/Togami Mod/*
 /SamplePak/*
@@ -32,3 +28,5 @@ jgoodies-forms-1.8.0.jar
 miglayout15-swing.jar
 
 miglayout-src.zip
+
+dr*Extract/*
