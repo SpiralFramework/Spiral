@@ -36,6 +36,8 @@ import org.abimon.omnis.ludus.Ludus;
 import org.abimon.omnis.net.Website;
 import org.abimon.omnis.util.General;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -67,6 +69,8 @@ public class DanganModding {
 		}
 	}
 
+	public static boolean isDR1 = true;
+	
 	public static void extract(File wad, File extractDir, PrintStream out) throws Throwable{
 		sendNotification("Extraction", "Begun Extraction to " + extractDir);
 		if(DanganLauncher.progress != null)
@@ -121,6 +125,8 @@ public class DanganModding {
 		for(int i = 0; i < numDirs; i++){
 			long nameLen = readInt(in);
 			String name = readString(in, (int) nameLen);
+			if(name.equalsIgnoreCase("Dr2"))
+				isDR1 = false;
 			long numEntries = readInt(in);
 			out.println("Dir: " + name + " (" + nameLen + " chars), " + numEntries + " entries");
 			if(DanganLauncher.progress != null)
@@ -182,7 +188,7 @@ public class DanganModding {
 				}
 				else if(drfile.name.endsWith(".dat") && drfile.name.contains("nonstop")){
 					Data nonstopData = DanganModding.extractNonstop(new Data(data));
-					nonstopData.write(new File(output.getAbsolutePath() + ".txt"));
+					nonstopData.write(new File(output.getAbsolutePath() + ".json"));
 				}
 				else{
 					FileOutputStream fos = new FileOutputStream(output);
@@ -214,6 +220,8 @@ public class DanganModding {
 	public static HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>> Opcodes = new HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>>();
 	public static HashMap<String, Integer> characterIDs = new HashMap<String, Integer>();
 	public static HashMap<Integer, HashMap<String, Integer>> emotions = new HashMap<Integer, HashMap<String, Integer>>();
+	public static HashMap<String, Integer> musicNames = new HashMap<String, Integer>();
+	public static HashMap<String, Integer> animations = new HashMap<String, Integer>();
 	public static HashMap<String, Integer> evidenceMap = new HashMap<String, Integer>();
 	public static HashMap<Integer, String> nonstopOpCodes = new HashMap<Integer, String>();
 
@@ -359,12 +367,16 @@ public class DanganModding {
 		nonstopOpCodes.put(25, "Voice");
 		nonstopOpCodes.put(27, "Chapter");
 	};
-
+	
 	//TODO: Make WAD
 	public static void makeWad(File newWad, File wadDir, PrintStream pOut, boolean tmp) throws IOException{
 		if(!wadDir.exists())
 			throw new IOException("WAD Directory does not exist");
-
+		
+		for(File f : wadDir.listFiles())
+			if(f.getName().startsWith("Dr2"))
+				isDR1 = false;
+		
 		if(DanganLauncher.progress != null)
 			DanganLauncher.progress.updateProgress(40, "Beginning WAD Compilation...");
 		sendNotification("Mod Installation", "Beginning WAD Compilation");
@@ -413,7 +425,7 @@ public class DanganModding {
 
 			FontMetrics metrics = g.getFontMetrics();
 
-			File tex = new File(wadDir, "Dr1" + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + "tex_cmn_name.pak.zip");
+			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + "tex_cmn_name.pak.zip");
 
 			ZipData entries = new ZipData(new Data(tex));
 
@@ -442,7 +454,7 @@ public class DanganModding {
 					HashMap<String, Integer> emotionSet = new HashMap<String, Integer>();
 
 					for(Entry<String, JsonElement> emotion : sprites.entrySet()){
-						emotionSet.put(emotion.getKey(), emotion.getValue().getAsInt());
+						emotionSet.put(emotion.getKey().toLowerCase(), emotion.getValue().getAsInt());
 					}
 
 					emotions.put(index, emotionSet);
@@ -462,15 +474,30 @@ public class DanganModding {
 			entries.write(tex);
 		}
 
+		File music = new File(wadDir, "music.json");
+		if(music.exists()){
+			JsonObject json = new Data(music).getAsJsonObject();
+
+			for(Entry<String, JsonElement> entry : json.entrySet())
+				DanganModding.musicNames.put(entry.getKey(), entry.getValue().getAsInt());
+		}
+
+		File animations = new File(wadDir, "animations.json");
+		if(animations.exists()){
+			JsonObject json = new Data(animations).getAsJsonObject();
+
+			for(Entry<String, JsonElement> entry : json.entrySet())
+				DanganModding.animations.put(entry.getKey(), entry.getValue().getAsInt());
+		}
 
 		File evidence = new File(wadDir, "evidence.json");
 		if(evidence.exists()){
 			JsonArray evidenceArray = new JsonParser().parse(new Data(evidence).getAsString()).getAsJsonArray();
 
-			File evidenceNames = new File(wadDir, "Dr1" + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "06_KotodamaName.pak.zip");
-			File evidenceDesc1 = new File(wadDir, "Dr1" + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "07_KotodamaDesc1.pak.zip");
-			File evidenceDesc2 = new File(wadDir, "Dr1" + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "08_KotodamaDesc2.pak.zip");
-			File evidenceDesc3 = new File(wadDir, "Dr1" + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "09_KotodamaDesc3.pak.zip");
+			File evidenceNames = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "06_KotodamaName.pak.zip");
+			File evidenceDesc1 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "07_KotodamaDesc1.pak.zip");
+			File evidenceDesc2 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "08_KotodamaDesc2.pak.zip");
+			File evidenceDesc3 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "09_KotodamaDesc3.pak.zip");
 
 			ZipData names = new ZipData(evidenceNames);
 			ZipData desc1 = new ZipData(evidenceDesc1);
@@ -632,8 +659,8 @@ public class DanganModding {
 				data.write(decrypted);
 				files.set(i, decrypted);
 			}
-			if(f.getName().endsWith(".dat.txt") && f.getName().contains("nonstop")){
-				File nonstop = new File(f.getAbsolutePath().replace(".dat.txt", ".dat"));
+			if(f.getName().endsWith(".dat.json") && f.getName().contains("nonstop")){
+				File nonstop = new File(f.getAbsolutePath().replace(".dat.json", ".dat"));
 				if(nonstop.exists() && nonstop.lastModified() >= f.lastModified()){
 					files.set(i, null);
 					continue;
@@ -815,7 +842,7 @@ public class DanganModding {
 					ScriptEntry entry = new ScriptEntry();
 					entry.opCode = data[i];
 
-					int argCount = Opcodes.get("DR1").containsKey(entry.opCode) ? Opcodes.get("DR1").get(entry.opCode).getValue() : -1;
+					int argCount = Opcodes.get((isDR1 ? "DR1" : "DR2")).containsKey(entry.opCode) ? Opcodes.get((isDR1 ? "DR1" : "DR2")).get(entry.opCode).getValue() : -1;
 
 					if(argCount == -1){
 						LinkedList<Integer> args = new LinkedList<Integer>();
@@ -861,7 +888,8 @@ public class DanganModding {
 		LinkedList<Integer> textIDs = new LinkedList<Integer>();
 		for(int i = 0; i < entries.size(); i++)
 		{
-			if(entries.get(i).opCode == 0x02)
+			String name = Opcodes.get(isDR1 ? "DR1" : "DR2").get(entries.get(i).opCode).getKey();
+			if(name != null && name.equalsIgnoreCase("Text"))
 			{
 				int first = entries.get(i).args[0];
 				int second = entries.get(i).args[1];
@@ -920,12 +948,12 @@ public class DanganModding {
 
 			entries.write(0x70);
 			byte opCode = -1;
-			for(byte code : Opcodes.get("DR1").keySet()){
+			for(byte code : Opcodes.get((isDR1 ? "DR1" : "DR2")).keySet()){
 				if(s.startsWith("0x" + Integer.toHexString(code).toUpperCase() + "{")){
 					opCode = code;
 					break;
 				}
-				else if(Opcodes.get("DR1").get(code).getKey() != null && s.startsWith(Opcodes.get("DR1").get(code).getKey())){
+				else if(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey())){
 					opCode = code;
 					break;
 				}
@@ -1057,17 +1085,39 @@ public class DanganModding {
 
 				newLin += "TrialCamera{" + charID + ", 0, " + movement + "}";
 			}
+			else if(s.toLowerCase().startsWith("[flash") || s.toLowerCase().startsWith("[ani")){
+				s = s.replace("[", "").replace("]", "");
+				String file = s.split(":", 3)[1].trim();
+				String frame = s.split(":", 3).length == 3 ? s.split(":", 3)[2] : "255";
+				
+				int fileNum = animations.containsKey(file.trim()) ? animations.get(file.trim()) : 0;
+				
+				newLin += "Animation{" + fileNum / 256 + "," + fileNum % 256 + ",0,0,0,0,0," + frame;
+			}
+			else if(s.toLowerCase().startsWith("[music") || s.toLowerCase().startsWith("[bgm")){
+				s = s.replace("[", "").replace("]", "");
+				String song = s.split(":", 2)[1].trim();
+
+				int music = musicNames.containsKey(song.trim()) ? musicNames.get(song.trim()) : Integer.parseInt(song.replaceAll("\\D", ""));
+
+				newLin += "Music{" + music + ",100,0}";
+			}
 			else if(s.startsWith("[Sprite:")){
 				s = s.replace("[", "").replace("]", "");
 				String person = s.split(":", 3)[1].trim();
 				if(person.equalsIgnoreCase("Clear"))
 					newLin += "Sprite{0, 0, 0, 1, 2}";
 				else{
-					String spriteNum = s.split(":", 3)[2].trim();
-
 					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+					
+					String sprite = s.split(":", 3)[2].trim();
 
-					newLin += "Sprite{0, " + charID + ", " + spriteNum + ", 1, 2}";
+					HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
+
+					if(emotion.containsKey(sprite.toLowerCase()))
+						sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
+
+					newLin += "Sprite{0, " + charID + ", " + sprite + ", 1, 2}";
 				}
 			}else if(s.startsWith("[TrialSprite:")){
 				s = s.replace("[", "").replace("]", "");
@@ -1077,7 +1127,12 @@ public class DanganModding {
 				else{
 					String spriteNum = s.split(":", 3)[2].trim();
 
-					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
+
+					HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
+
+					if(emotion.containsKey(spriteNum.toLowerCase()))
+						spriteNum = Integer.toString(emotion.get(spriteNum.toLowerCase()));
 
 					newLin += "Sprite{0, " + charID + ", " + spriteNum + ", 0, 0}";
 				}
@@ -1096,7 +1151,7 @@ public class DanganModding {
 					text = text + "<CLT>";
 				}
 
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
 
 				HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
 
@@ -1123,7 +1178,7 @@ public class DanganModding {
 					text = text + "<CLT>";
 				}
 
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
 
 				HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
 
@@ -1176,15 +1231,15 @@ public class DanganModding {
 					text = text + "<CLT>";
 				}
 
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
 
 				newLin += "0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
 				newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
 				textCount++;
 			}
 			else{
-				for(byte code : Opcodes.get("DR1").keySet()){
-					if(Opcodes.get("DR1").get(code).getKey() != null && s.startsWith(Opcodes.get("DR1").get(code).getKey())){
+				for(byte code : Opcodes.get((isDR1 ? "DR1" : "DR2")).keySet()){
+					if(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey())){
 						newLin += s;
 						break;
 					}
@@ -1199,8 +1254,14 @@ public class DanganModding {
 		return compileLin(new Data(newLin));
 	}
 
+	public static Gson gson = null;
+
 	//TODO: Nonstop
 	public static Data extractNonstop(Data nonstop) throws IOException{
+
+		if(gson == null)
+			gson = new GsonBuilder().setPrettyPrinting().create();
+
 		InputStream in = nonstop.getAsInputStream();
 
 		long seconds = read(in, 2) * 2;
@@ -1210,61 +1271,62 @@ public class DanganModding {
 
 		System.out.println("Seconds: " + seconds + ", Sections: " + sections + ", bps: " + bytesPerSec);
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		PrintStream out = new PrintStream(baos);
+		JsonObject debate = new JsonObject();
 
-		out.println("Time{" + seconds + "}");
+		debate.addProperty("Time", seconds);
+
+		JsonArray text = new JsonArray();
 
 		for(int i = 0; i < sections; i++){
+			JsonObject json = new JsonObject();
 			for(int j = 0; j < bytesPerSec / 2; j++){
-				out.println((nonstopOpCodes.containsKey(j) ? nonstopOpCodes.get(j) : "0x" + Integer.toHexString(j).toUpperCase())+ "{" + (int) read(in, 2) + "}");
+				json.addProperty((nonstopOpCodes.containsKey(j) ? nonstopOpCodes.get(j) : "0x" + Integer.toHexString(j).toUpperCase()), (int) read(in, 2));
 			}
+			text.add(json);
 		}
 
-		return new Data(baos.toByteArray());
+		debate.add("text", text);
+
+		return new Data(gson.toJson(debate));
 	}
 
 	public static Data packNonstop(Data nonstop) throws IOException{
-		String[] lines = nonstop.getAsStringArray();
 
-		int perSeg = lines[0].equalsIgnoreCase("[DR2]") ? 0x44 : 0x3C;
+		JsonObject json = nonstop.getAsJsonObject();
 
-		int count = 0;
-		for(String s : lines)
-			if(s.startsWith("TextID"))
-				count++;
+		int perSeg = (json.has("DR2") ? json.get("DR2").getAsBoolean() : false) ? 0x44 : 0x3C;
+
+		int count = json.getAsJsonArray("text").size();
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		write(baos, Integer.parseInt(lines[0].split("\\{")[1].split("\\}")[0]) / 2, 2);
+		write(baos, json.get("Time").getAsInt(), 2);
 		write(baos, count, 2);
 
 		int[] tmpData = null;
 
-		for(String s : lines){
-			if(s.startsWith("TextID")){
-				if(tmpData != null){
-					for(int i : tmpData)
-						if(i != -1)
-							write(baos, i, 2);
-				}
+		JsonArray lines = json.getAsJsonArray("text");
+
+		for(JsonElement e : lines){
+			JsonObject obj = e.getAsJsonObject();
+			for(Entry<String, JsonElement> entry : obj.entrySet()){
+				
 				tmpData = new int[perSeg];
-				for(int i = 0; i < tmpData.length; i++)
-					tmpData[i] = -1;
-				tmpData[0] = Integer.parseInt(s.split("\\{")[1].split("\\}")[0]);
-			}
-			int code = Integer.parseInt(s.split("\\{")[1].split("\\}")[0]);
-			for(int i = 0; i < perSeg; i++){
-				String key = nonstopOpCodes.containsKey(i) ? nonstopOpCodes.get(i) : "0x" + Integer.toHexString(i).toUpperCase();
-				if(s.startsWith(key)){
-					tmpData[i] = code;
-					break;
+				
+				String s = entry.getKey();
+				int code = entry.getValue().getAsInt();
+				for(int i = 0; i < perSeg; i++){
+					String key = nonstopOpCodes.containsKey(i) ? nonstopOpCodes.get(i) : "0x" + Integer.toHexString(i).toUpperCase();
+					if(s.startsWith(key)){
+						tmpData[i] = code;
+						break;
+					}
 				}
+
+				for(int i : tmpData)
+					if(i != -1)
+						write(baos, i, 2);
 			}
 		}
-
-		for(int i : tmpData)
-			if(i != -1)
-				write(baos, i, 2);
 
 		return new Data(baos.toByteArray());
 	}
