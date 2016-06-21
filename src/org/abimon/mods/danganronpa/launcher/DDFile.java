@@ -379,7 +379,6 @@ public class DDFile {
 					if(s.endsWith(".lin.txt")){
 						System.out.println("Compiling " + s);
 						Data data = DanganModding.compileLin(new Data(patches.get(s).getInputStream(new ZipEntry(s))));
-						patches.remove(s);
 						data.write(new File(tmpDir, s.replace(".lin.txt", ".lin")));
 						if(!zipData.containsKey(s.replace(".lin.txt", ".lin")))
 							zipData.put(s.replace(".lin.txt", ".lin"), new Data(read(s.replace(".lin.txt", ".lin"))));
@@ -389,7 +388,6 @@ public class DDFile {
 						System.out.println("Packing " + s);
 						ZipData zip = new ZipData(new Data(patches.get(s).getInputStream(new ZipEntry(s))));
 						Data compiledPak = DanganModding.compilePak(zip);
-						patches.remove(s);
 						compiledPak.write(new File(tmpDir, s.replace(".pak.zip", ".pak")));
 						if(!zipData.containsKey(s.replace(".pak.zip", ".pak")))
 							zipData.put(s.replace(".pak.zip", ".pak"), new Data(read(s.replace(".pak.zip", ".pak"))));
@@ -397,7 +395,6 @@ public class DDFile {
 					else if(s.endsWith(".tga.png")){
 						System.out.println("Decrypting " + s);
 						Data data = new Data(TGAWriter.writeImage(new Data(patches.get(s).getInputStream(new ZipEntry(s))).getAsImage()));
-						patches.remove(s);
 						data.write(new File(tmpDir, s.replace(".tga.png", ".tga")));
 						if(!zipData.containsKey(s.replace(".tga.png", ".tga")))
 							zipData.put(s.replace(".tga.png", ".tga"), new Data(read(s.replace(".tga.png", ".tga"))));

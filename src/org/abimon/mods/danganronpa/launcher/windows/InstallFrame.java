@@ -108,6 +108,7 @@ public class InstallFrame extends JFrame {
 				String name = f.getName().substring(0, f.getName().lastIndexOf('.'));
 				String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();;
 
+				System.out.println(f);
 				ZipData zData = new ZipData(f);
 				for(String key : zData.keySet())
 					if(key.endsWith(".info")){

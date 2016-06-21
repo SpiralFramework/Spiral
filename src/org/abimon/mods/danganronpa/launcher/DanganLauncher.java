@@ -7,6 +7,7 @@ import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
 
 import org.abimon.mods.danganronpa.launcher.windows.InstallFrame;
+import org.abimon.mods.danganronpa.launcher.windows.PackFrame;
 import org.abimon.mods.danganronpa.launcher.windows.ProgressFrame;
 import org.abimon.mods.danganronpa.launcher.windows.SettingsFrame;
 import org.abimon.omnis.io.Data;
@@ -40,6 +41,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Date;
 import java.awt.event.ActionEvent;
 
@@ -58,6 +60,7 @@ public class DanganLauncher {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		
 		Ludus.registerDataPool(new File("resources"));
 		Ludus.registerDataPool(DanganModding.class.getClassLoader());
 
@@ -160,22 +163,24 @@ public class DanganLauncher {
 				FormSpecs.GROWING_BUTTON_COLSPEC,
 				ColumnSpec.decode("center:max(55dlu;pref):grow"),
 				FormSpecs.GROWING_BUTTON_COLSPEC,},
-				new RowSpec[] {
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC,
-						RowSpec.decode("29px"),
-						FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.DEFAULT_ROWSPEC,
-						FormSpecs.RELATED_GAP_ROWSPEC,
-						FormSpecs.GLUE_ROWSPEC,}));
+			new RowSpec[] {
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				RowSpec.decode("29px"),
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.DEFAULT_ROWSPEC,
+				FormSpecs.RELATED_GAP_ROWSPEC,
+				FormSpecs.GLUE_ROWSPEC,}));
 
 		JLabel lblSpiralFramework = new JLabel("SPIRAL Framework");
 		panel.add(lblSpiralFramework, "2, 1, center, fill");
@@ -399,9 +404,66 @@ public class DanganLauncher {
 			}
 		});
 		panel.add(btnCompile, "2, 7, fill, center");
+		
+		JButton btnPackMod = new JButton("Pack Mod");
+		panel.add(btnPackMod, "2, 9, fill, default");
+		btnPackMod.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				DanganLauncher.progress = new ProgressFrame("Danganronpa Mod Packing", "Beginning Detection");
+				new Thread(){
+					public void run(){
+						try{
+							JsonObject json;
+							try{
+								Data jsonData = new Data(new File(".spiral_settings"));
+								JsonElement element = new JsonParser().parse(jsonData.getAsString());
+								if(element.isJsonObject())
+									json = element.getAsJsonObject();
+								else
+									json = new JsonObject();
+							}
+							catch(Throwable th){
+								json = new JsonObject();
+							}
+
+							if(json.has("game")){
+								String game = json.get("game").getAsString();
+
+								File wadFile = null;
+
+								if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+									wadFile = DanganLauncher.wadFileDR1;
+								if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+									wadFile = DanganLauncher.wadFileDR2;
+								if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+									wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+								wadFile = new File(wadFile.getAbsolutePath().replace(".wad", ".wad.backup"));
+								
+								if(wadFile != null && wadFile.exists()){
+									File dir = new File(wadFile.getName().replace(".wad.backup", "") + " Extract");
+									File[] changedFiles = DanganModding.detectChangesFromWad(wadFile, dir, new PrintStream(new EmptyOutputStream()), false);
+									Arrays.sort(changedFiles);
+									openFrame = new PackFrame(dir, changedFiles);
+									openFrame.setVisible(true);
+								}
+							}
+							else{
+								JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+								return;
+							}
+						}
+						catch(Throwable th){
+							th.printStackTrace();
+						}
+					}
+				}.start();
+			}
+		});
 
 		JButton btnExtractFiles = new JButton("Extract Files");
-		panel.add(btnExtractFiles, "2, 8, fill, center");
+		panel.add(btnExtractFiles, "2, 10, fill, center");
 		btnExtractFiles.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				DanganLauncher.progress = new ProgressFrame("Danganronpa Extraction", "Beginning Extraction");
@@ -435,7 +497,7 @@ public class DanganLauncher {
 
 								if(wadFile != null && wadFile.exists()){
 									File dir = new File(wadFile.getName().replace(".wad", "") + " Extract");
-									DanganModding.extract(wadFile, dir, System.out);
+									DanganModding.extract(wadFile, dir, new PrintStream(new EmptyOutputStream()));
 								}
 							}
 							else{
@@ -450,12 +512,12 @@ public class DanganLauncher {
 		});
 
 		JButton btnNonstopDebates = new JButton("NONSTOP DEBATES");
-		panel.add(btnNonstopDebates, "2, 10, fill, default");
+		panel.add(btnNonstopDebates, "2, 12, fill, default");
 		btnNonstopDebates.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				try{
-					File dat = new File("Danganronpa Extract/Dr1/data/us/bin/nonstop_06_001.dat");
-					File txt = new File("Danganronpa Extract/Dr1/data/us/bin/nonstop_06_001.dat.txt");
+					File dat = new File("dr1_data Extract/Dr1/data/us/bin/nonstop_01_001.dat");
+					File txt = new File("dr1_data Extract/Dr1/data/us/bin/nonstop_01_001.dat.json");
 					DanganModding.extractNonstop(new Data(dat)).write(txt);
 					//DanganModding.packNonstop(new Data(txt)).write(dat);
 				}
@@ -466,7 +528,7 @@ public class DanganLauncher {
 		});
 
 		JButton btnOpenGame = new JButton("Open Game");
-		panel.add(btnOpenGame, "2, 11, fill, default");
+		panel.add(btnOpenGame, "2, 13, fill, default");
 		btnOpenGame.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				SteamProtocol.openGame(SteamAppIDs.DANGANRONPA_TRIGGER_HAPPY_HAVOC);
@@ -474,7 +536,7 @@ public class DanganLauncher {
 		});
 
 		JButton btnSettings = new JButton("Settings");
-		panel.add(btnSettings, "2, 13, fill, center");
+		panel.add(btnSettings, "2, 15, fill, center");
 		btnSettings.addActionListener(new ActionListener(){
 
 			@Override
@@ -488,7 +550,7 @@ public class DanganLauncher {
 		});
 
 		JButton btnClose = new JButton("Close");
-		panel.add(btnClose, "2, 15");
+		panel.add(btnClose, "2, 17");
 		btnClose.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				System.exit(0);

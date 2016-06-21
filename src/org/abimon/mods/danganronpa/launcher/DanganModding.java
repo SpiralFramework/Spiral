@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.Socket;
 import java.net.URLEncoder;
 import java.util.AbstractMap;
@@ -60,7 +61,7 @@ public class DanganModding {
 	public static void sendNotification(String subtitle, String message){
 		try{
 			if(NOTIFICATION_SERVER){
-				Website website = new Website("localhost:11038/notifications?name=Spiral&desc=" + URLEncoder.encode(message, "UTF-8") + "&subtitle=" + URLEncoder.encode(subtitle, "UTF-8"));// + "&iconurl=" + URLEncoder.encode(SPIRAL_URL, "UTF-8"));
+				Website website = new Website("localhost:11038/notifications?name=Spiral&desc=" + URLEncoder.encode(message, "UTF-8") + "&subtitle=" + URLEncoder.encode(subtitle, "UTF-8") + (new Website(SPIRAL_URL).canConnect() ? ("&iconurl=" + URLEncoder.encode(SPIRAL_URL, "UTF-8")) : ""));
 				website.retrieveContent();
 			}
 		}
@@ -70,7 +71,7 @@ public class DanganModding {
 	}
 
 	public static boolean isDR1 = true;
-	
+
 	public static void extract(File wad, File extractDir, PrintStream out) throws Throwable{
 		sendNotification("Extraction", "Begun Extraction to " + extractDir);
 		if(DanganLauncher.progress != null)
@@ -165,8 +166,13 @@ public class DanganModding {
 
 
 				if(drfile.name.endsWith("aglogo.tga")){
-					if(Ludus.hasData("resources/spirallogo.tga.png"))
-						Ludus.getData("resources/spirallogo.tga.png").write(output);
+					if(Ludus.hasData("spirallogo.tga.png"))
+						Ludus.getData("spirallogo.tga.png").write(output);
+					else{
+						FileOutputStream fos = new FileOutputStream(output);
+						fos.write(data);
+						fos.close();
+					}
 				}
 				else if(drfile.name.endsWith(".lin")){
 					Data linData = DanganModding.linHandling(new Data(data), out);
@@ -211,6 +217,12 @@ public class DanganModding {
 		long seconds = time / 1000 % 60;
 		long millis = time % 1000;
 
+		File timestamp = new File(extractDir, ".timestamp");
+		if(timestamp.exists())
+			timestamp.setLastModified(System.currentTimeMillis());
+		else
+			timestamp.createNewFile();
+
 		out.println("Took " + minutes + " minutes, " + seconds + " seconds and " + millis + " milliseconds.");
 		sendNotification("Extraction", "Extraction complete");
 		if(DanganLauncher.progress != null)
@@ -233,22 +245,22 @@ public class DanganModding {
 		dr1.put((byte) 0x00, new AbstractMap.SimpleEntry<String, Integer>("TextCount", 2));
 		dr1.put((byte) 0x01, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
 		dr1.put((byte) 0x02, new AbstractMap.SimpleEntry<String, Integer>("Text", 2));
-		dr1.put((byte) 0x03, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
-		dr1.put((byte) 0x04, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
+		dr1.put((byte) 0x03, new AbstractMap.SimpleEntry<String, Integer>("CLT", 1));
+		dr1.put((byte) 0x04, new AbstractMap.SimpleEntry<String, Integer>("Filter", 4));
 		dr1.put((byte) 0x05, new AbstractMap.SimpleEntry<String, Integer>("Movie", 2));
 		dr1.put((byte) 0x06, new AbstractMap.SimpleEntry<String, Integer>("Animation", 8));
 		dr1.put((byte) 0x08, new AbstractMap.SimpleEntry<String, Integer>("Voice", 5));
 		dr1.put((byte) 0x09, new AbstractMap.SimpleEntry<String, Integer>("Music", 3));
 		dr1.put((byte) 0x0A, new AbstractMap.SimpleEntry<String, Integer>("Sound", 3));
-		dr1.put((byte) 0x0B, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
+		dr1.put((byte) 0x0B, new AbstractMap.SimpleEntry<String, Integer>("SoundB", 2));
 		dr1.put((byte) 0x0C, new AbstractMap.SimpleEntry<String, Integer>("SetTruthBullet", 2));
 		dr1.put((byte) 0x0D, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
 		dr1.put((byte) 0x0E, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
-		dr1.put((byte) 0x0F, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
-		dr1.put((byte) 0x10, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
+		dr1.put((byte) 0x0F, new AbstractMap.SimpleEntry<String, Integer>("SetTitle", 3));
+		dr1.put((byte) 0x10, new AbstractMap.SimpleEntry<String, Integer>("SetReportInfo", 3));
 		dr1.put((byte) 0x11, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
 		dr1.put((byte) 0x14, new AbstractMap.SimpleEntry<String, Integer>("TrialCamera", 3));
-		dr1.put((byte) 0x15, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
+		dr1.put((byte) 0x15, new AbstractMap.SimpleEntry<String, Integer>("LoadMap", 3));
 		dr1.put((byte) 0x19, new AbstractMap.SimpleEntry<String, Integer>("GoToScript", 3));
 		dr1.put((byte) 0x1A, new AbstractMap.SimpleEntry<String, Integer>("StopScript", 0));
 		dr1.put((byte) 0x1B, new AbstractMap.SimpleEntry<String, Integer>("RunScript", 3));
@@ -259,24 +271,26 @@ public class DanganModding {
 		dr1.put((byte) 0x21, new AbstractMap.SimpleEntry<String, Integer>("Speaker", 1));
 		dr1.put((byte) 0x22, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
 		dr1.put((byte) 0x23, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
-		dr1.put((byte) 0x25, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
-		dr1.put((byte) 0x26, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
-		dr1.put((byte) 0x27, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
-		dr1.put((byte) 0x29, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
-		dr1.put((byte) 0x2A, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
-		dr1.put((byte) 0x2B, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
+		dr1.put((byte) 0x25, new AbstractMap.SimpleEntry<String, Integer>("ChangeUI", 2));
+		dr1.put((byte) 0x26, new AbstractMap.SimpleEntry<String, Integer>("SetFlag", 3));
+		dr1.put((byte) 0x27, new AbstractMap.SimpleEntry<String, Integer>("CharacterResponse", 1));
+		dr1.put((byte) 0x29, new AbstractMap.SimpleEntry<String, Integer>("ObjectResponse", 1));
+		dr1.put((byte) 0x2A, new AbstractMap.SimpleEntry<String, Integer>("SetLabel", 2));
+		dr1.put((byte) 0x2B, new AbstractMap.SimpleEntry<String, Integer>("Choice", 1));
 		dr1.put((byte) 0x2C, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
 		dr1.put((byte) 0x2E, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
 		dr1.put((byte) 0x2F, new AbstractMap.SimpleEntry<String, Integer>(null, 10));
-		dr1.put((byte) 0x30, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
+		dr1.put((byte) 0x30, new AbstractMap.SimpleEntry<String, Integer>("ShowBackground", 3));
 		dr1.put((byte) 0x32, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
 		dr1.put((byte) 0x33, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
-		dr1.put((byte) 0x34, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
+		dr1.put((byte) 0x34, new AbstractMap.SimpleEntry<String, Integer>("GotoLabel", 2));
+		dr1.put((byte) 0x35, new AbstractMap.SimpleEntry<String, Integer>("Check Flag A", -1));
+		dr1.put((byte) 0x36, new AbstractMap.SimpleEntry<String, Integer>("Check Flag B", -1));
 		dr1.put((byte) 0x38, new AbstractMap.SimpleEntry<String, Integer>(null, -1));
 		dr1.put((byte) 0x39, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
 		dr1.put((byte) 0x3A, new AbstractMap.SimpleEntry<String, Integer>("WaitInput", 0));
 		dr1.put((byte) 0x3B, new AbstractMap.SimpleEntry<String, Integer>("WaitFrame", 0));
-		dr1.put((byte) 0x3C, new AbstractMap.SimpleEntry<String, Integer>(null, 0));
+		dr1.put((byte) 0x3C, new AbstractMap.SimpleEntry<String, Integer>("FlagCheckEnd", 0));
 		dr1.put((byte) 0x4B, new AbstractMap.SimpleEntry<String, Integer>("WaitInputDR2", -1));
 		dr1.put((byte) 0x4C, new AbstractMap.SimpleEntry<String, Integer>("WaitFrameDR2", 0));
 		dr1.put((byte) 0x4D, new AbstractMap.SimpleEntry<String, Integer>(null, -1));
@@ -315,15 +329,69 @@ public class DanganModding {
 		characterIDs.put("Junko Enoshima", 13);
 		characterIDs.put("Chihiro Fujisaki", 14);
 		characterIDs.put("Monokuma", 15);
+		characterIDs.put("Monobear", 15);
 		characterIDs.put("Real Junko Enoshima", 16);
 		characterIDs.put("Alter Ego", 17);
 		characterIDs.put("Genocider Syo", 18);
-		characterIDs.put("Jim Kirigiri", 19);
+		characterIDs.put("Jin Kirigiri", 19);
 		characterIDs.put("Makoto's Mum", 20);
 		characterIDs.put("Makoto's Dad", 21);
 		characterIDs.put("Komaru Naegi", 22);
 		characterIDs.put("Kiyondo Ishida", 23);
 		characterIDs.put("Daiya Owada", 24);
+		characterIDs.put("MN", 0);
+		characterIDs.put("KI", 1);
+		characterIDs.put("BT", 2);
+		characterIDs.put("MO", 3);
+		characterIDs.put("LK", 4);
+		characterIDs.put("HY", 5);
+		characterIDs.put("YH", 6);
+		characterIDs.put("SM", 7);
+		characterIDs.put("KK", 8);
+		characterIDs.put("AA", 9);
+		characterIDs.put("TF", 10);
+		characterIDs.put("SO", 11);
+		characterIDs.put("CL", 12);
+		characterIDs.put("JE", 13);
+		characterIDs.put("CF", 14);
+		characterIDs.put("MK", 15);
+		characterIDs.put("RJE", 16);
+		characterIDs.put("AE", 17);
+		characterIDs.put("GS", 18);
+		characterIDs.put("JK", 19);
+		characterIDs.put("MM", 20);
+		characterIDs.put("MD", 21);
+		characterIDs.put("KN", 22);
+		characterIDs.put("DO", 24);
+
+		characterIDs.put("Hajime Hinata", 0);
+		characterIDs.put("Izuru Kamukura", 0);
+		characterIDs.put("Nagito Komaeda", 1);
+		characterIDs.put("Byakuya Togami", 2);
+		characterIDs.put("Byakuya Twogami", 2);
+		characterIDs.put("Imposter", 2);
+		characterIDs.put("Impostor", 2);
+		characterIDs.put("Gundham Tanaka", 3);
+		characterIDs.put("Gundam Tanaka", 3);
+		characterIDs.put("Kazuichi Souda", 4);
+		characterIDs.put("Kazuichi Soda", 4);
+		characterIDs.put("Teruteru Hanamura", 5);
+		characterIDs.put("Nekomaru Nidai", 6);
+		characterIDs.put("Fuyuhiko Kuzuryu", 7);
+		characterIDs.put("Fuyuhiko Kuzuryuu", 7);
+		characterIDs.put("Akane Owari", 8);
+		characterIDs.put("Chiaki Nanami", 9);
+		characterIDs.put("Sonia Nevermind", 10);
+		characterIDs.put("Hiyoko Saionji", 11);
+		characterIDs.put("Bitch", 11);
+		characterIDs.put("Mahiru Koizumi", 12);
+		characterIDs.put("Mikan Tsumiki", 13);
+		characterIDs.put("Ibuki Mioda", 14);
+		characterIDs.put("Peko Pekoyama", 15);
+		characterIDs.put("Monomi", 17);
+		characterIDs.put("Usami", 17);
+		characterIDs.put("Mechamaru Nidai", 19);
+		characterIDs.put("Real Byakuya Togami", 22);
 		characterIDs.put("MN", 0);
 		characterIDs.put("KI", 1);
 		characterIDs.put("BT", 2);
@@ -367,16 +435,29 @@ public class DanganModding {
 		nonstopOpCodes.put(25, "Voice");
 		nonstopOpCodes.put(27, "Chapter");
 	};
-	
+
+	private static File workingDir = null;
+
 	//TODO: Make WAD
 	public static void makeWad(File newWad, File wadDir, PrintStream pOut, boolean tmp) throws IOException{
+		internalCounter = 0;
+		workingDir = wadDir;
 		if(!wadDir.exists())
 			throw new IOException("WAD Directory does not exist");
-		
+
 		for(File f : wadDir.listFiles())
 			if(f.getName().startsWith("Dr2"))
 				isDR1 = false;
-		
+
+		if(!isDR1){
+			characterIDs.put("Monokuma", 16);
+			characterIDs.put("Monobear", 16);
+			characterIDs.put("Real Junko Enoshima", 18);
+			characterIDs.put("Makoto Naegi", 20);
+			characterIDs.put("Kyoko Kirigiri", 21);
+			characterIDs.put("Alter Ego", 24);
+		}
+
 		if(DanganLauncher.progress != null)
 			DanganLauncher.progress.updateProgress(40, "Beginning WAD Compilation...");
 		sendNotification("Mod Installation", "Beginning WAD Compilation");
@@ -782,6 +863,334 @@ public class DanganModding {
 		out.close();
 	}
 
+	//TODO: Detect Changes
+	public static File[] detectChangesFromWad(File checkWad, File wadDir, PrintStream pOut, boolean tmp) throws IOException{
+		internalCounter = 0;
+		workingDir = wadDir;
+		if(!wadDir.exists())
+			throw new IOException("WAD Directory does not exist");
+
+		for(File f : wadDir.listFiles())
+			if(f.getName().startsWith("Dr2"))
+				isDR1 = false;
+		
+		File autoinclude = new File(wadDir, "autoinclude.txt");
+
+		String includeRegex = autoinclude.exists() ? new Data(autoinclude).getAsString() : "";
+		
+		if(DanganLauncher.progress != null)
+			DanganLauncher.progress.updateProgress(00, "Beginning WAD Compilation...");
+		sendNotification("Mod Packing", "Beginning WAD Compilation");
+
+		JsonObject settingsJson = new JsonObject();
+
+		try{
+			Data jsonData = new Data(new File(".spiral_settings"));
+			JsonElement element = new JsonParser().parse(jsonData.getAsString());
+			if(element.isJsonObject())
+				settingsJson = element.getAsJsonObject();
+		}
+		catch(Throwable th){}
+
+		File people = new File(wadDir, "people.json");
+		if(people.exists()){
+
+			characterIDs.clear();
+
+			characterIDs.put("???", 30);
+			characterIDs.put("Narrator", 31);
+
+			JsonArray array = new JsonParser().parse(new Data(people).getAsString()).getAsJsonArray();
+
+			BufferedImage buf = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+			Font font = new Font("Goodbye Despair", Font.PLAIN, 28);
+
+			if(settingsJson.has("name_font")){
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				for(Font f : ge.getAllFonts())
+					if(f.getName().equalsIgnoreCase(settingsJson.get("name_font").getAsString())){
+						font = f.deriveFont(56.0f);
+						break;
+					}
+			}
+
+			Graphics g = buf.getGraphics();
+			while(true){
+				g.setFont(font);
+				FontMetrics metrics = g.getFontMetrics();
+				if(metrics.getStringBounds("Makoto Naegi", g).getHeight() > 25)
+					font = font.deriveFont(font.getSize2D() - 1.0f);
+				else
+					break;
+			}
+
+			FontMetrics metrics = g.getFontMetrics();
+
+			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + "tex_cmn_name.pak.zip");
+
+			ZipData entries = new ZipData(new Data(tex));
+
+			for(JsonElement elem : array){
+				JsonObject json = elem.getAsJsonObject();
+
+				String name = json.get("name").getAsString();
+				int index = json.get("index").getAsInt();
+
+				if(json.has("aliases")){}
+				else{
+					String initials = "";
+
+					for(String n : name.split("\\s+"))
+						if(n.length() >= 1)
+							initials += n.charAt(0);
+
+					characterIDs.put(initials, index);
+					characterIDs.put(name, index);
+					characterIDs.put(name.split("\\s+")[0], index);
+				}
+
+				if(json.has("sprites")){
+					JsonObject sprites = json.getAsJsonObject("sprites");
+
+					HashMap<String, Integer> emotionSet = new HashMap<String, Integer>();
+
+					for(Entry<String, JsonElement> emotion : sprites.entrySet()){
+						emotionSet.put(emotion.getKey().toLowerCase(), emotion.getValue().getAsInt());
+					}
+
+					emotions.put(index, emotionSet);
+				}
+
+				Rectangle2D size = metrics.getStringBounds(name, g);
+
+				BufferedImage img = new BufferedImage((int) size.getWidth(), (int) size.getHeight(), BufferedImage.TYPE_INT_ARGB);
+				Graphics nameG = img.getGraphics();
+				nameG.setFont(font);
+				nameG.setColor(Color.WHITE);
+				nameG.drawString(name, 0, (int) (img.getHeight()/3*2.5f));
+
+				entries.put(index + ".png", new Data(img));
+			}
+
+			entries.write(tex);
+		}
+
+		File music = new File(wadDir, "music.json");
+		if(music.exists()){
+			JsonObject json = new Data(music).getAsJsonObject();
+
+			for(Entry<String, JsonElement> entry : json.entrySet())
+				DanganModding.musicNames.put(entry.getKey(), entry.getValue().getAsInt());
+		}
+
+		File animations = new File(wadDir, "animations.json");
+		if(animations.exists()){
+			JsonObject json = new Data(animations).getAsJsonObject();
+
+			for(Entry<String, JsonElement> entry : json.entrySet())
+				DanganModding.animations.put(entry.getKey(), entry.getValue().getAsInt());
+		}
+
+		File evidence = new File(wadDir, "evidence.json");
+		if(evidence.exists()){
+			JsonArray evidenceArray = new JsonParser().parse(new Data(evidence).getAsString()).getAsJsonArray();
+
+			File evidenceNames = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "06_KotodamaName.pak.zip");
+			File evidenceDesc1 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "07_KotodamaDesc1.pak.zip");
+			File evidenceDesc2 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "08_KotodamaDesc2.pak.zip");
+			File evidenceDesc3 = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "script" + File.separator + "09_KotodamaDesc3.pak.zip");
+
+			ZipData names = new ZipData(evidenceNames);
+			ZipData desc1 = new ZipData(evidenceDesc1);
+			ZipData desc2 = new ZipData(evidenceDesc2);
+			ZipData desc3 = new ZipData(evidenceDesc3);
+
+			for(JsonElement elem : evidenceArray){
+				JsonObject json = elem.getAsJsonObject();
+
+				String name 				= json.get("name").getAsString();
+				String id 					= json.has("id") ? json.get("id").getAsString() : name;
+				String desc 				= json.has("desc") ? General.splitEveryXCharacters(json.get("desc").getAsString(), 30) : "";
+				String descUpdated 			= json.has("desc_1") ? General.splitEveryXCharacters(json.get("desc_1").getAsString(), 30) : "";
+				String descUpdatedUpdated 	= json.has("desc_2") ? General.splitEveryXCharacters(json.get("desc_2").getAsString(), 30) : "";
+				int index 					= json.get("index").getAsInt();
+				int def						= json.has("default") ? json.get("default").getAsInt() : 1;
+
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				byte[] txtDataStr = name.getBytes("UTF-16LE");
+				byte[] txtData = new byte[txtDataStr.length + 2];
+
+				txtData[0] = (byte) 0xFF;
+				txtData[1] = (byte) 0xFE;
+
+				for(int i = 0; i < txtDataStr.length; i++)
+					txtData[i+2] = txtDataStr[i];
+
+				out.write(txtData);
+				out.write(0);
+				out.write(0);
+
+				names.put(index + ".txt", new Data(out.toByteArray()));
+				out.reset();
+
+				txtDataStr = desc.getBytes("UTF-16LE");
+				txtData = new byte[txtDataStr.length + 2];
+
+				txtData[0] = (byte) 0xFF;
+				txtData[1] = (byte) 0xFE;
+
+				for(int i = 0; i < txtDataStr.length; i++)
+					txtData[i+2] = txtDataStr[i];
+
+				out.write(txtData);
+				out.write(0);
+				out.write(0);
+
+				desc1.put(index + ".txt", new Data(out.toByteArray()));
+				out.reset();
+
+				txtDataStr = descUpdated.getBytes("UTF-16LE");
+				txtData = new byte[txtDataStr.length + 2];
+
+				txtData[0] = (byte) 0xFF;
+				txtData[1] = (byte) 0xFE;
+
+				for(int i = 0; i < txtDataStr.length; i++)
+					txtData[i+2] = txtDataStr[i];
+
+				out.write(txtData);
+				out.write(0);
+				out.write(0);
+
+				desc2.put(index + ".txt", new Data(out.toByteArray()));
+				out.reset();
+
+				txtDataStr = descUpdatedUpdated.getBytes("UTF-16LE");
+				txtData = new byte[txtDataStr.length + 2];
+
+				txtData[0] = (byte) 0xFF;
+				txtData[1] = (byte) 0xFE;
+
+				for(int i = 0; i < txtDataStr.length; i++)
+					txtData[i+2] = txtDataStr[i];
+
+				out.write(txtData);
+				out.write(0);
+				out.write(0);
+
+				desc3.put(index + ".txt", new Data(out.toByteArray()));
+				out.reset();
+
+				evidenceMap.put(id, index | def << 8);
+			}
+
+			names.write(evidenceNames);
+			desc1.write(evidenceDesc1);
+			desc2.write(evidenceDesc2);
+			desc3.write(evidenceDesc3);
+		}
+		files.clear();
+
+		LinkedList<File> files = iterate(wadDir, false);
+
+		if(DanganLauncher.progress != null)
+			DanganLauncher.progress.updateProgress(10, "Removing packed files...");
+		DanganModding.sendNotification("Mod Packing", "Removing packed files...");
+
+		long timestamp = new File(wadDir, ".timestamp").exists() ? new File(wadDir, ".timestamp").lastModified() : 0L;
+
+		for(int i = 0; i < files.size(); i++){
+			File f = files.get(i);
+
+			String name = f.getAbsolutePath().replace(wadDir.getAbsolutePath() + File.separator, "");
+
+			pOut.println("Handling: " + f.getName());
+
+			if(f.lastModified() < timestamp && !name.matches(includeRegex))
+				files.set(i, null);
+			if(f.getName().endsWith(".lin")){
+				files.set(i, null);
+			}
+			if(f.getName().endsWith(".pak")){
+				files.set(i, null);
+			}
+			if(f.getName().endsWith(".tga")){
+				files.set(i, null);
+			}
+			if(f.getName().endsWith(".dat") && f.getName().contains("nonstop")){
+				files.set(i, null);
+			}
+		}
+
+		while(files.remove(null));
+
+		DDFile wad = new DDFile(checkWad);
+
+		LinkedList<File> changedFiles = new LinkedList<File>();
+
+		float perFile = 90.0f / files.size();
+		float prev = 10.0f;
+
+		for(File f : files){
+			try{
+				String name = f.getAbsolutePath().replace(wadDir.getAbsolutePath() + File.separator, "");
+
+				prev += perFile;
+				if(DanganLauncher.progress != null)
+					DanganLauncher.progress.updateProgress(prev, "Checking " + name);
+
+				if(wad.fileStructure.containsKey(name)){
+					Data fileData = new Data(f);
+					Data wadData = new Data(wad.read(name));
+
+					if(!fileData.equals(wadData))
+						changedFiles.add(f);
+				}
+				else if(name.endsWith(".lin.txt") && wad.fileStructure.containsKey(name.replace(".lin.txt", ".lin"))){
+					Data fileData = new Data(f);
+					Data wadData = DanganModding.linHandling(new Data(wad.read(name.replace(".lin.txt", ".lin"))), pOut);
+
+					if(!fileData.equals(wadData))
+						changedFiles.add(f);
+				}
+				else if(name.endsWith(".pak.zip") && wad.fileStructure.containsKey(name.replace(".pak.zip", ".pak"))){
+					Data fileData = new Data(f);
+					Data wadData = DanganModding.pakExtraction(new Data(wad.read(name.replace(".pak.zip", ".pak"))));
+
+					if(!fileData.equals(wadData))
+						changedFiles.add(f);
+				}
+				else if(name.endsWith(".tga.png") && wad.fileStructure.containsKey(name.replace(".tga.png", ".tga"))){
+					Data fileData = new Data(f);
+					BufferedImage img = TGAReader.readImage(wad.read(name.replace(".tga.png", ".tga")));
+					Data wadData = new Data(img);
+
+					if(!fileData.equals(wadData))
+						changedFiles.add(f);
+				}
+				else if(name.endsWith(".dat.json") && name.contains("nonstop") && wad.fileStructure.containsKey(name.replace(".dat.json", ".dat"))){
+					Data fileData = new Data(f);
+					Data wadData = DanganModding.extractNonstop(new Data(wad.read(name.replace(".dat.json", ".dat"))));
+
+					if(!fileData.equals(wadData))
+						changedFiles.add(f);
+				}
+				else
+					changedFiles.add(f);
+			}
+			catch(Throwable th){
+				th.printStackTrace();
+				System.err.println(f.getAbsolutePath());
+			}
+		}
+
+		if(DanganLauncher.progress != null)
+			DanganLauncher.progress.updateProgress(100, "Finished!");
+		sendNotification("Mod Packing", "Finished!");
+
+		return changedFiles.toArray(new File[0]);
+	}
+
 	public static LinkedList<File> iterate(File dir, boolean addDirs){
 		LinkedList<File> files = new LinkedList<File>();
 
@@ -826,7 +1235,7 @@ public class DanganModding {
 		long type = readIntNorm(din);
 		long headerSpace = readIntNorm(din);
 		if(type == 1){ //Not Text
-
+			System.out.println("Hmmm: " + type);
 		}
 		long textBlock = 0;
 		long size = 0;
@@ -872,7 +1281,7 @@ public class DanganModding {
 					{
 						if (data[i] != 0x00)
 						{
-							System.err.println("[read] error: expected 0x70, got 0x" + data[i] + ".");
+							//System.err.println("[read] error: expected 0x70, got 0x" + data[i] + ".");
 						}
 						i++;
 					}
@@ -888,7 +1297,7 @@ public class DanganModding {
 		LinkedList<Integer> textIDs = new LinkedList<Integer>();
 		for(int i = 0; i < entries.size(); i++)
 		{
-			String name = Opcodes.get(isDR1 ? "DR1" : "DR2").get(entries.get(i).opCode).getKey();
+			String name = Opcodes.get(isDR1 ? "DR1" : "DR2").containsKey(entries.get(i).opCode) ? Opcodes.get(isDR1 ? "DR1" : "DR2").get(entries.get(i).opCode).getKey() : "";
 			if(name != null && name.equalsIgnoreCase("Text"))
 			{
 				int first = entries.get(i).args[0];
@@ -1062,191 +1471,461 @@ public class DanganModding {
 		return new Data(out.toByteArray());
 	}
 
+	public static String[] split(String s, String delimiter, int cap){
+		LinkedList<String> strings = new LinkedList<String>();
+
+		for(String str : s.split(delimiter + "(?![^\\[]*\\])", cap)){
+			if(str.startsWith("\""))
+				str = str.substring(1);
+			if(str.endsWith("\""))
+				str = str.substring(0, str.length() - 1);
+			strings.add(str);
+		}
+
+		return strings.toArray(new String[0]);
+	}
+
+	private static int internalCounter = 0;
+	private static int base = 11037;
+
 	//TODO: Compile Spiral Lin
 	private static Data compileSpiralLin(Data data) {
 		String newLin = "";
 
 		int textCount = 0;
+		int state = 0;
+
+		String longText = "";
+		boolean handlingLong = false;
+
 		for(String s : data.getAsStringArray("\n")){
-			s = s.trim();
-			if(s.equalsIgnoreCase("SPIRAL"))
-				continue;
-			if(s.startsWith("0x"))
-				newLin += s;
-			else if(s.startsWith("[SetupTextUI]")){
-				newLin += "0x22{1, 0, 1}\n0x25{11, 1}\n0x22{0, 1, 24}\n0x25{0, 1}\n0x25{51, 1}\n0x25{1, 1}";
-			}
-			else if(s.startsWith("[TrialCam:") || s.startsWith("[TrialCamera:")){
-				s = s.replace("[", "").replace("]", "");
-				String person = s.split(":", 3)[1].trim();
-				String movement = s.split(":", 3).length == 3 ? s.split(":", 3)[2] : "14";
+			try{
+				s = s.trim();
+				if(handlingLong){
+					if(s.equalsIgnoreCase("[Text:End]")){
 
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+						BufferedImage img = new BufferedImage(960, 544, BufferedImage.TYPE_INT_ARGB);
 
-				newLin += "TrialCamera{" + charID + ", 0, " + movement + "}";
-			}
-			else if(s.toLowerCase().startsWith("[flash") || s.toLowerCase().startsWith("[ani")){
-				s = s.replace("[", "").replace("]", "");
-				String file = s.split(":", 3)[1].trim();
-				String frame = s.split(":", 3).length == 3 ? s.split(":", 3)[2] : "255";
-				
-				int fileNum = animations.containsKey(file.trim()) ? animations.get(file.trim()) : 0;
-				
-				newLin += "Animation{" + fileNum / 256 + "," + fileNum % 256 + ",0,0,0,0,0," + frame;
-			}
-			else if(s.toLowerCase().startsWith("[music") || s.toLowerCase().startsWith("[bgm")){
-				s = s.replace("[", "").replace("]", "");
-				String song = s.split(":", 2)[1].trim();
+						Graphics g = img.getGraphics();
+						g.setFont(new Font("Goodbye Despair", Font.PLAIN, 28));
 
-				int music = musicNames.containsKey(song.trim()) ? musicNames.get(song.trim()) : Integer.parseInt(song.replaceAll("\\D", ""));
+						int xBoundaries = 20;
+						int yBoundaries = 10;
 
-				newLin += "Music{" + music + ",100,0}";
-			}
-			else if(s.startsWith("[Sprite:")){
-				s = s.replace("[", "").replace("]", "");
-				String person = s.split(":", 3)[1].trim();
-				if(person.equalsIgnoreCase("Clear"))
-					newLin += "Sprite{0, 0, 0, 1, 2}";
-				else{
+						LinkedList<String> lines = new LinkedList<String>();
+						String phrase = "";
+
+						FontMetrics m = g.getFontMetrics();
+
+						Font current = g.getFont();
+
+						for(String line : longText.split("\n")){
+							for(String str : split(line, "\\s+", -1)){
+								if(str.toLowerCase().startsWith("[font")){
+									str = str.trim().replace("[", "").replace("]", "");
+									current = new Font(str.split(":")[1], str.split(":").length == 4 ? str.split(":")[3].equalsIgnoreCase("bold") ? Font.BOLD : str.split(":")[3].equalsIgnoreCase("italic") ? Font.ITALIC : Font.PLAIN : Font.PLAIN, str.split(":").length >= 3 ? Integer.parseInt(str.split(":")[2].replaceAll("\\D", "")) : g.getFont().getSize());
+									g.setFont(current);
+									m = g.getFontMetrics();
+									str = "[" + str + "]";
+								}
+								if(!(str.startsWith("[") && str.endsWith("]")))
+									if(m.getStringBounds(phrase.replaceAll("\\[.*\\:.*\\]", "") + str, g).getWidth() > (img.getWidth() - (xBoundaries * 2))){
+										for(String p : phrase.split("\n"))
+											lines.add(p);
+										phrase = "";
+									}
+								phrase += str + " ";
+							}
+
+							lines.add(phrase);
+							phrase = "";
+						}
+
+						g.setFont(new Font("Goodbye Despair", Font.PLAIN, 28));
+						m = g.getFontMetrics();
+
+						int y = yBoundaries;
+
+						Color lastUsed = g.getColor();
+						Color lastUsedOverlay = new Color(0, 0, 0, 0);
+						BufferedImage lastUsedImg = new BufferedImage(img.getHeight(), img.getWidth(), BufferedImage.TYPE_INT_ARGB);
+						Font lastUsedFont = g.getFont();
+
+						for(String tmp : lines){
+
+							String[] processing = new String[]{tmp, null};
+							for(String line : processing){
+								if(line == null)
+									continue;
+								int x = xBoundaries;
+								if(!line.replaceAll("\\[.*\\:.*\\]", "").trim().isEmpty())
+									y += m.getStringBounds(line, g).getHeight();
+
+								if((y + yBoundaries) >= img.getHeight()){
+									try{
+										ZipData template = new ZipData(Ludus.getDataUnsafe("textTemplate.zip"));
+
+										template.put("1.png", new Data(img));
+
+										File f = new File(workingDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "flash" + File.separator + "fla_" + (internalCounter + base) + ".pak.zip");
+										template.write(f);
+										DanganModding.compilePak(template).write(new File(f.getAbsolutePath().replace(".pak.zip", ".pak")));
+									}
+									catch(Throwable th){
+										th.printStackTrace();
+									}
+
+									newLin += "Animation{" + (internalCounter + base) / 256 + "," + (internalCounter + base) % 256 + ",0,0,0,0,0,3}";
+									newLin += "ChangeUI{1,0}Text{}WaitFrame{}\n0x3{0}\nWaitInput{}\nChangeUI{1,1}";
+									internalCounter++;
+
+									img = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+									g = img.getGraphics();
+
+									g.setColor(lastUsedOverlay);
+
+									g.drawImage(lastUsedImg, 0, 0, img.getWidth(), img.getHeight(), null);
+									g.fillRect(0, 0, img.getWidth(), img.getHeight());
+
+									g.setFont(lastUsedFont);
+									g.setColor(lastUsed);
+
+									x = xBoundaries;
+									y = yBoundaries;
+
+									y += m.getStringBounds(line, g).getHeight();
+								}
+
+								for(String str : split(line, "\\s+", -1)){
+									try{
+										if(str.toLowerCase().startsWith("[font")){
+											str = str.trim().replace("[", "").replace("]", "");
+											current = new Font(str.split(":")[1], str.split(":").length == 4 ? str.split(":")[3].equalsIgnoreCase("bold") ? Font.BOLD : str.split(":")[3].equalsIgnoreCase("italic") ? Font.ITALIC : Font.PLAIN : Font.PLAIN, str.split(":").length >= 3 ? Integer.parseInt(str.split(":")[2].replaceAll("\\D", "")) : g.getFont().getSize());
+											g.setFont(current);
+											m = g.getFontMetrics();
+											lastUsedFont = current;
+										}
+										else if(str.toLowerCase().startsWith("[colo")){
+											String colourComponent = str.replace("[", "").replace("]", "").split(":")[1];
+
+											try{
+												Field field = Color.class.getField(colourComponent.toUpperCase().replaceAll("\\s+", "_"));
+												g.setColor((Color) field.get(null));
+											}
+											catch(Throwable th){
+												int rc = Integer.parseInt(colourComponent.split(":", 2)[0]);
+												int gc = Integer.parseInt(colourComponent.split(":").length >= 2 ? colourComponent.split(":")[1] : "0");
+												int bc = Integer.parseInt(colourComponent.split(":").length >= 3 ? colourComponent.split(":")[2] : "0");
+												int ac = Integer.parseInt(colourComponent.split(":").length >= 4 ? colourComponent.split(":")[3] : "255");
+												g.setColor(new Color(rc, gc, bc, ac));
+											}
+
+											lastUsed = g.getColor();
+										}
+										else if(str.toLowerCase().startsWith("[overlay")){
+											Color color = g.getColor();
+											if(str.contains(":")){
+												String colourComponent = str.replace("[", "").replace("]", "").split(":", 2)[1];
+
+												try{
+													Field field = Color.class.getField(colourComponent.toUpperCase().replaceAll("\\s+", "_"));
+													color = ((Color) field.get(null));
+												}
+												catch(Throwable th){
+													int rc = Integer.parseInt(colourComponent.split(":")[0]);
+													int gc = Integer.parseInt(colourComponent.split(":").length >= 2 ? colourComponent.split(":")[1] : "0");
+													int bc = Integer.parseInt(colourComponent.split(":").length >= 3 ? colourComponent.split(":")[2] : "0");
+													int ac = Integer.parseInt(colourComponent.split(":").length >= 4 ? colourComponent.split(":")[3] : "255");
+													color = (new Color(rc, gc, bc, ac));
+												}
+											}
+
+											Color orig = g.getColor();
+											g.setColor(color);
+											g.fillRect(0, 0, img.getWidth(), img.getHeight());
+											g.setColor(orig);
+
+											lastUsedOverlay = color;
+
+											//										System.out.println(new Color(img.getRGB(0, 0)));
+											//										
+											//										for(int imgX = 0; imgX < img.getWidth(); imgX++)
+											//											for(int imgY = 0; imgY < img.getHeight(); imgY++){
+											//												Color existing = new Color(img.getRGB(imgX, imgY), true);
+											//												int newRed = existing.getRed() - (color.getAlpha() * ((256-color.getRed())/256));
+											//												int newGreen = existing.getGreen() - (color.getAlpha() * ((256-color.getGreen())/256));
+											//												int newBlue = existing.getBlue() - (color.getAlpha() * ((256-color.getBlue())/256));
+											//												
+											//												int newAlpha = (int) (existing.getAlpha() * 1 + (color.getAlpha() / 256.0f));
+											//												
+											//												img.setRGB(imgX, imgY, new Color(Math.min(newRed & 0xFF, 255), Math.min(newGreen & 0xFF, 255), Math.min(newBlue & 0xFF, 255), Math.min(newAlpha & 0xFF, 255)).getRGB());
+											//											}
+											//										
+											//										System.out.println(new Color(img.getRGB(0, 0)));
+										}
+										else if(str.toLowerCase().startsWith("[back")){
+											String path = str.trim().replace("[", "]").replace("]", "").split(":")[1].replace("/", File.separator).replace("\\", File.separator);
+											File backingImage = new File(DanganModding.workingDir, path);
+											//if(!backingImage.exists())
+
+											BufferedImage backImg = new Data(backingImage).getAsImage();
+
+											g.drawImage(backImg, 0, 0, img.getWidth(), img.getHeight(), null);
+
+											lastUsedImg = backImg;
+										}
+										else if(str.toLowerCase().startsWith("[im")){
+
+											System.out.println(y);
+											String[] comps = str.trim().replace("[", "]").replace("]", "").split(":");
+											String path = comps[1].replace("/", File.separator).replace("\\", File.separator);
+											File backingImage = new File(DanganModding.workingDir, path);
+											//if(!backingImage.exists())
+
+											BufferedImage backImg = new Data(backingImage).getAsImage();
+
+											int width = comps.length >= 3 ? Integer.parseInt(comps[2]) : backImg.getWidth();
+											int height = comps.length >= 4 ? Integer.parseInt(comps[3]) : backImg.getHeight();
+
+											if((y + height + yBoundaries) >= img.getHeight()){
+												processing[1] = line.substring(line.indexOf(str));
+												break;
+											}
+
+											g.drawImage(backImg, x, y, width, height, null);
+
+											x += width;
+											y += height;
+										}
+										else{
+											g.drawString(str + " ", x, y);
+											x += m.getStringBounds(str + " ", g).getWidth();
+										}
+									}
+									catch(Throwable th){
+										th.printStackTrace();
+									}
+								}
+							}
+						}
+
+						try{
+							ZipData template = new ZipData(Ludus.getDataUnsafe("textTemplate.zip"));
+
+							template.put("1.png", new Data(img));
+
+							File f = new File(workingDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "flash" + File.separator + "fla_" + (internalCounter + base) + ".pak.zip");
+							template.write(f);
+							DanganModding.compilePak(template).write(new File(f.getAbsolutePath().replace(".pak.zip", ".pak")));
+						}
+						catch(Throwable th){
+							th.printStackTrace();
+						}
+
+						newLin += "Animation{" + (internalCounter + base) / 256 + "," + (internalCounter + base) % 256 + ",0,0,0,0,0,3}";
+						newLin += "ChangeUI{1,0}Text{}WaitFrame{}\n0x3{0}\nWaitInput{}\nChangeUI{1,1}";
+						handlingLong = false;
+						longText = "";
+						internalCounter++;
+					}
+					else
+						longText += s + "\n";
+					continue;
+				}
+				if(s.equalsIgnoreCase("SPIRAL"))
+					continue;
+				if(s.startsWith("0x"))
+					newLin += s;
+				else if(s.startsWith("[SetTrial]"))
+					state = 1;
+				else if(s.equalsIgnoreCase("[Text:Start]"))
+					handlingLong = true;
+				else if(s.startsWith("[SetupTextUI]")){
+					newLin += "0x22{1, 0, 1}\n0x22{0, 1, 24}\nChangeUI{11, 1}\nChangeUI{0, 1}\nChangeUI{51, 1}\nChangeUI{1, 1}\nChangeUI{9, 1}";
+				}
+				else if(s.startsWith("[TrialCam:") || s.startsWith("[TrialCamera:")){
+					s = s.replace("[", "").replace("]", "");
+					String person = s.split(":", 3)[1].trim();
+					String movement = s.split(":", 3).length == 3 ? s.split(":", 3)[2] : "14";
+
 					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
-					
-					String sprite = s.split(":", 3)[2].trim();
+
+					newLin += "TrialCamera{" + charID + ", 0, " + movement + "}";
+				}
+				else if(s.toLowerCase().startsWith("[flash") || s.toLowerCase().startsWith("[ani")){
+					s = s.replace("[", "").replace("]", "");
+					String file = s.split(":", 3)[1].trim();
+					String frame = s.split(":", 3).length == 3 ? s.split(":", 3)[2] : "255";
+
+					int fileNum = animations.containsKey(file.trim()) ? animations.get(file.trim()) : 0;
+
+					newLin += "Animation{" + fileNum / 256 + "," + fileNum % 256 + ",0,0,0,0,0," + frame + "}";
+				}
+				else if(s.toLowerCase().startsWith("[music") || s.toLowerCase().startsWith("[bgm")){
+					s = s.replace("[", "").replace("]", "");
+					String song = s.split(":", 2)[1].trim();
+
+					int music = musicNames.containsKey(song.trim()) ? musicNames.get(song.trim()) : Integer.parseInt(song.replaceAll("\\D", ""));
+
+					newLin += "Music{" + music + ",100,0}";
+				}
+				else if(s.startsWith("[Sprite:")){
+					s = s.replace("[", "").replace("]", "");
+					String person = s.split(":", 3)[1].trim();
+					if(person.equalsIgnoreCase("Clear"))
+						newLin += "Sprite{0, 0, 0, 1, 2}";
+					else{
+						int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+
+						String sprite = s.split(":", 3)[2].trim();
+
+						HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
+
+						if(emotion.containsKey(sprite.toLowerCase()))
+							sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
+
+						newLin += "Sprite{0, " + charID + ", " + sprite + ", 1, 2}";
+					}
+				}else if(s.startsWith("[TrialSprite:")){
+					s = s.replace("[", "").replace("]", "");
+					String person = s.split(":", 3)[1].trim();
+					if(person.equalsIgnoreCase("Clear"))
+						newLin += "Sprite{0, 0, 0, 0, 0}";
+					else{
+						String spriteNum = s.split(":", 3)[2].trim();
+
+						int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
+
+						HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
+
+						if(emotion.containsKey(spriteNum.toLowerCase()))
+							spriteNum = Integer.toString(emotion.get(spriteNum.toLowerCase()));
+
+						newLin += "Sprite{0, " + charID + ", " + spriteNum + ", 0, 0}";
+					}
+				}
+				else if(s.matches(".*\\:.*\\:.*\\:.*")){
+					String person = s.split(":", 4)[0];
+					String sprite = s.split(":", 4)[1];
+					String camera = s.split(":", 4)[2];
+					String text = s.split(":", 4)[3].replace("<br>", "\n").trim();
+
+					boolean self = person.contains("(To Self)");
+					if(self){
+						person = person.replace("(To Self)", "");
+						text = "<CLT 4>" + text;
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text + "<CLT>";
+					}
+					else
+						text = text.replace("<bold>", "<CLT 3>").replace("</bold>", "<CLT>");
+
+					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
 
 					HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
 
 					if(emotion.containsKey(sprite.toLowerCase()))
 						sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
 
-					newLin += "Sprite{0, " + charID + ", " + sprite + ", 1, 2}";
+					if(state == 1)
+						if(!camera.equalsIgnoreCase("-1"))
+							newLin += "TrialCamera{" + charID + ", 0, " + camera.trim() + "}\n";
+					newLin += "Sprite{0, " + charID + ", " + sprite + ", 0, 0}\n0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
+					newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
+					textCount++;
 				}
-			}else if(s.startsWith("[TrialSprite:")){
-				s = s.replace("[", "").replace("]", "");
-				String person = s.split(":", 3)[1].trim();
-				if(person.equalsIgnoreCase("Clear"))
-					newLin += "Sprite{0, 0, 0, 0, 0}";
-				else{
-					String spriteNum = s.split(":", 3)[2].trim();
+				else if(s.matches(".*\\:.*\\:.*")){
+
+					String person = s.split(":", 3)[0];
+					String sprite = s.split(":", 3)[1];
+					String text = s.split(":", 3)[2].replace("<br>", "\n").trim();
+
+					boolean self = person.contains("(To Self)");
+					if(self){
+						person = person.replace("(To Self)", "");
+						text = "<CLT 4>" + text;
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text + "<CLT>";
+					}
+					else
+						text = text.replace("<bold>", "<CLT 3>").replace("</bold>", "<CLT>");
 
 					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
 
 					HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
 
-					if(emotion.containsKey(spriteNum.toLowerCase()))
-						spriteNum = Integer.toString(emotion.get(spriteNum.toLowerCase()));
+					if(emotion.containsKey(sprite.toLowerCase()))
+						sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
 
-					newLin += "Sprite{0, " + charID + ", " + spriteNum + ", 0, 0}";
+					if(state == 1)
+						if(!newLin.split("\n")[newLin.split("\n").length-1].matches("TrialCamera\\{.*\\}")){
+							boolean done = false;
+							for(int i = newLin.split("\n").length - 1; i >= 0; i--)
+								if(newLin.split("\n")[i].startsWith("Speaker{")){
+									if(newLin.split("\n")[i].startsWith("Speaker{" + charID))
+										done = true;
+									break;
+								}
+							if(!done)
+								newLin += "TrialCamera{" + charID + ", 0, 14}\n";
+						}
+					newLin += "Sprite{0, " + charID + ", " + sprite + ", 1, 2}\n0x3{4}\nSpeaker{" + charID + "}\n";
+					LinkedList<String> lines = new LinkedList<String>();
+					String tmp = "";
+					for(String str : text.split(" ")){
+						if((tmp + str).length() >= 60){
+							lines.add(tmp.trim());
+							tmp = "";
+						}
+						tmp += str + " ";
+					}
+
+					if(!tmp.trim().isEmpty())
+						lines.add(tmp.trim());
+					newLin += "Text{";
+					for(int i = 0; i < lines.size(); i++){
+						if(i > 0 && i % 3 == 0)
+							newLin += "}\nWaitFrame{}\n0x3{0}\nWaitInput{}\nText{";
+						newLin += lines.get(i).trim() + "\n";
+					}
+
+					newLin += "}WaitFrame{}\n0x3{0}\nWaitInput{}";
+					textCount++;
 				}
-			}
-			else if(s.matches(".*\\:.*\\:.*\\:.*")){
-				String person = s.split(":", 4)[0];
-				String sprite = s.split(":", 4)[1];
-				String camera = s.split(":", 4)[2];
-				String text = s.split(":", 4)[3].replace("<br>", "\n");
+				else if(s.matches(".*\\:.*")){
+					String person = s.split(":", 2)[0];
+					String text = s.split(":", 2)[1].replace("<br>", "\n").trim();
 
-				boolean self = person.contains("(To Self)");
-				if(self){
-					person = person.replace("(To Self)", "");
-					text = "<CLT 4>" + text;
-					text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
-					text = text + "<CLT>";
+					boolean self = person.contains("(To Self)");
+					if(self){
+						person = person.replace("(To Self)", "");
+						text = "<CLT 4>" + text;
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text + "<CLT>";
+					}
+					else
+						text = text.replace("<bold>", "<CLT 3>").replace("</bold>", "<CLT>");
+
+					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
+
+					newLin += "0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
+					newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
+					textCount++;
 				}
-
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
-
-				HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
-
-				if(emotion.containsKey(sprite.toLowerCase()))
-					sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
-
-				if(!camera.equalsIgnoreCase("-1"))
-					newLin += "TrialCamera{" + charID + ", 0, " + camera.trim() + "}\n";
-				newLin += "Sprite{0, " + charID + ", " + sprite + ", 0, 0}\n0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
-				newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
-				textCount++;
-			}
-			else if(s.matches(".*\\:.*\\:.*")){
-
-				String person = s.split(":", 3)[0];
-				String sprite = s.split(":", 3)[1];
-				String text = s.split(":", 3)[2].replace("<br>", "\n");
-
-				boolean self = person.contains("(To Self)");
-				if(self){
-					person = person.replace("(To Self)", "");
-					text = "<CLT 4>" + text;
-					text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
-					text = text + "<CLT>";
-				}
-
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
-
-				HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
-
-				if(emotion.containsKey(sprite.toLowerCase()))
-					sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
-
-				if(!newLin.split("\n")[newLin.split("\n").length-1].matches("TrialCamera\\{.*\\}")){
-					boolean done = false;
-					for(int i = newLin.split("\n").length - 1; i >= 0; i--)
-						if(newLin.split("\n")[i].startsWith("Speaker{")){
-							if(newLin.split("\n")[i].startsWith("Speaker{" + charID))
-								done = true;
+				else{
+					for(byte code : Opcodes.get((isDR1 ? "DR1" : "DR2")).keySet()){
+						if(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey())){
+							newLin += s;
 							break;
 						}
-					if(!done)
-						newLin += "TrialCamera{" + charID + ", 0, 14}\n";
-				}
-				newLin += "Sprite{0, " + charID + ", " + sprite + ", 0, 0}\n0x3{4}\nSpeaker{" + charID + "}\n";
-				LinkedList<String> lines = new LinkedList<String>();
-				String tmp = "";
-				for(String str : text.split(" ")){
-					if((tmp + str).length() >= 60){
-						lines.add(tmp.trim());
-						tmp = "";
-					}
-					tmp += str + " ";
-				}
-
-				if(!tmp.trim().isEmpty())
-					lines.add(tmp.trim());
-				newLin += "Text{";
-				for(int i = 0; i < lines.size(); i++){
-					if(i > 0 && i % 3 == 0)
-						newLin += "}\nWaitFrame{}\n0x3{0}\nWaitInput{}\nText{";
-					newLin += lines.get(i).trim() + "\n";
-				}
-
-				newLin += "}WaitFrame{}\n0x3{0}\nWaitInput{}";
-				textCount++;
-			}
-			else if(s.matches(".*\\:.*")){
-				String person = s.split(":", 2)[0];
-				String text = s.split(":", 2)[1].replace("<br>", "\n");
-
-				boolean self = person.contains("(To Self)");
-				if(self){
-					person = person.replace("(To Self)", "");
-					text = "<CLT 4>" + text;
-					text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
-					text = text + "<CLT>";
-				}
-
-				int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : person.matches("\\d+") ? Integer.parseInt(person.trim()) : characterIDs.get("???");
-
-				newLin += "0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
-				newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
-				textCount++;
-			}
-			else{
-				for(byte code : Opcodes.get((isDR1 ? "DR1" : "DR2")).keySet()){
-					if(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey())){
-						newLin += s;
-						break;
 					}
 				}
-			}
 
-			newLin += "\n";
+				newLin += "\n";
+			}
+			catch(Throwable th){
+				th.printStackTrace();
+			}
 		}
 
 		newLin = "0x0{" + textCount % 256 + "," + textCount / 256 + "}\n" + newLin.trim() + "\nStopScript{}\nStopScript{}";
@@ -1268,8 +1947,6 @@ public class DanganModding {
 
 		int sections = (int) read(in, 2);
 		int bytesPerSec = (nonstop.size() - 4) / sections;
-
-		System.out.println("Seconds: " + seconds + ", Sections: " + sections + ", bps: " + bytesPerSec);
 
 		JsonObject debate = new JsonObject();
 
@@ -1308,10 +1985,12 @@ public class DanganModding {
 
 		for(JsonElement e : lines){
 			JsonObject obj = e.getAsJsonObject();
+			tmpData = new int[perSeg];
+
+			for(int i = 0; i < tmpData.length; i++)
+				tmpData[i] = -1;
+
 			for(Entry<String, JsonElement> entry : obj.entrySet()){
-				
-				tmpData = new int[perSeg];
-				
 				String s = entry.getKey();
 				int code = entry.getValue().getAsInt();
 				for(int i = 0; i < perSeg; i++){
@@ -1321,11 +2000,11 @@ public class DanganModding {
 						break;
 					}
 				}
-
-				for(int i : tmpData)
-					if(i != -1)
-						write(baos, i, 2);
 			}
+
+			for(int i : tmpData)
+				if(i != -1)
+					write(baos, i, 2);
 		}
 
 		return new Data(baos.toByteArray());
@@ -1365,7 +2044,7 @@ public class DanganModding {
 				alreadyParsed = true;
 			}
 			else{
-				//Try reading as tga
+				//Try reading as targa
 				try{
 					if(!alreadyParsed){
 						BufferedImage img = TGAReader.readImage(tmpData);
