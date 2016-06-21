@@ -1,0 +1,14 @@
+{
+	"meta/people.json":{
+		"name":"People",
+		"desc":"A JSON array of the people in the game."
+	},
+	"DrCommon/data/all/cg/aglogo.tga":{
+		"name":"Abstraction Games Logo",
+		"desc":"The logo for Abstraction Games.\nSPIRAL makes it all green and pretty."
+	},
+	"Dr1/data/us/flash/fla_718.pak":{
+		"name":"Kiyotaka Ishimaru's Introduction",
+		"desc":"Note: May not be Kiyotaka's Introduction"
+	}
+}

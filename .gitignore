@@ -6,8 +6,8 @@
 *.prefs
 
 tmp/*
-/mods/Togami Mod/*
-/SamplePak/*
+mods/*
+Processing/*
 
 *.class
 *.wad
@@ -29,8 +29,14 @@ miglayout15-swing.jar
 
 miglayout-src.zip
 
-dr*Extract/*
+dr*Extract*/*
 
 .spiral_settings
 
 Spiral.jar
+
+hs_err_pid2973.log
+
+Composition.pages
+
+Ibuki Intro.zip
