@@ -2,18 +2,12 @@
 Spiral is a Danganronpa Modding Framework written in Java
 
 # Usage
-Run Spiral through a command line using java -jar Spiral.jar
+Double click the JAR file, and it brings up a launcher. Fancy, isn't it?
 
-To install a mod, type 'install', then 'install <mod>' to install a mod, or 'info <mod>' to learn more about the mod. 
-
-You can exit the install prompt using 'exit'
-
-To backup the .wad file, type 'backup', and to restore a backup, type 'restore'.
-
-To extract the .wad file to make mods, type 'extract'.
+You'll need to specify the game you're using first, through the "Settings" button.
 
 # Mods
-Mods are basically .zip files renamed to .dr1, and are put in a 'mods' folder.
+Mods are basically .zip files renamed to .drs, and are put in a 'mods' folder.
 
 Include a mod.info file with the format of:
 
@@ -34,11 +28,12 @@ Installing mods takes around 1 to 1 and a half minutes.
 # Roadmap
 Current Plan:
 
-* Get basic mod installation working
-* Get unpacking and repacking of .pak files working
-* Get decompiling and recompiling of .lin files working
-* Implement custom Spiral scripting format
-* Find a way to directly pull data from the .wad file, rather than having to unpack the entire .wad file
+* Syntax: [X] = Done, [I] = Implementing, [ ] = Not Done
+* [X] Get basic mod installation working
+* [X] Get unpacking and repacking of .pak files working
+* [X] Get decompiling and recompiling of .lin files working
+* [I] Implement custom Spiral scripting format
+* [ ] Mod deletion
 
 # Credit
 Primary credit goes to https://github.com/AdmiralCurtiss/HyoutaTools and https://github.com/TcT2k/HLMWadExplorer for providing the basis of this program.
