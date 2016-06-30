@@ -8,6 +8,8 @@ Double click the JAR file, and it brings up a launcher. Fancy, isn't it?
 
 You'll need to specify the game you're using first, through the "Settings" button.
 
+Also: USE THE BACKUP BUTTON! It backs up the wad file in under a minute, so do that before doing anything else. It saves you however long for redownloading.
+
 # Mods
 Mods are basically .zip files renamed to .drs, and are put in a 'mods' folder.
 
