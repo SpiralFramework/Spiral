@@ -178,6 +178,10 @@ public class DanganModding {
 					Data linData = DanganModding.linHandling(new Data(data), out);
 					linData.write(new File(output.getAbsolutePath() + ".txt"));
 					linData = null;
+
+					FileOutputStream fos = new FileOutputStream(output);
+					fos.write(data);
+					fos.close();
 				}
 				else if(drfile.name.endsWith(".pak")){
 					ZipData pakData = DanganModding.pakExtraction(new Data(data));
@@ -232,6 +236,7 @@ public class DanganModding {
 	public static HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>> Opcodes = new HashMap<String, HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>>();
 	public static HashMap<String, Integer> characterIDs = new HashMap<String, Integer>();
 	public static HashMap<Integer, HashMap<String, Integer>> emotions = new HashMap<Integer, HashMap<String, Integer>>();
+	public static HashMap<Integer, HashMap<String, Integer>> barks = new HashMap<Integer, HashMap<String, Integer>>();
 	public static HashMap<String, Integer> musicNames = new HashMap<String, Integer>();
 	public static HashMap<String, Integer> animations = new HashMap<String, Integer>();
 	public static HashMap<String, Integer> evidenceMap = new HashMap<String, Integer>();
@@ -295,10 +300,62 @@ public class DanganModding {
 		dr1.put((byte) 0x4C, new AbstractMap.SimpleEntry<String, Integer>("WaitFrameDR2", 0));
 		dr1.put((byte) 0x4D, new AbstractMap.SimpleEntry<String, Integer>(null, -1));
 
+		dr2.put((byte) 0x00, new AbstractMap.SimpleEntry<String, Integer>("TextCount", 2));
 		dr2.put((byte) 0x01, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
-		dr2.put((byte) 0x14, new AbstractMap.SimpleEntry<String, Integer>(null, 6));
+		dr2.put((byte) 0x02, new AbstractMap.SimpleEntry<String, Integer>("Text", 2));
+		dr2.put((byte) 0x03, new AbstractMap.SimpleEntry<String, Integer>("CLT", 1));
+		dr2.put((byte) 0x04, new AbstractMap.SimpleEntry<String, Integer>("Filter", 4));
+		dr2.put((byte) 0x05, new AbstractMap.SimpleEntry<String, Integer>("Movie", 2));
+		dr2.put((byte) 0x06, new AbstractMap.SimpleEntry<String, Integer>("Animation", 8));
+		dr2.put((byte) 0x08, new AbstractMap.SimpleEntry<String, Integer>("Voice", 5));
+		dr2.put((byte) 0x09, new AbstractMap.SimpleEntry<String, Integer>("Music", 3));
+		dr2.put((byte) 0x0A, new AbstractMap.SimpleEntry<String, Integer>("Sound", 3));
+		dr2.put((byte) 0x0B, new AbstractMap.SimpleEntry<String, Integer>("SoundB", 2));
+		dr2.put((byte) 0x0C, new AbstractMap.SimpleEntry<String, Integer>("SetTruthBullet", 2));
+		dr2.put((byte) 0x0D, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
+		dr2.put((byte) 0x0E, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
+		dr2.put((byte) 0x0F, new AbstractMap.SimpleEntry<String, Integer>("SetTitle", 3));
+		dr2.put((byte) 0x10, new AbstractMap.SimpleEntry<String, Integer>("SetReportInfo", 3));
+		dr2.put((byte) 0x11, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
+		dr2.put((byte) 0x14, new AbstractMap.SimpleEntry<String, Integer>("TrialCamera", 6));
+		dr2.put((byte) 0x15, new AbstractMap.SimpleEntry<String, Integer>("LoadMap", 4));
+		dr2.put((byte) 0x19, new AbstractMap.SimpleEntry<String, Integer>("GoToScript", 5));
+		dr2.put((byte) 0x1A, new AbstractMap.SimpleEntry<String, Integer>("StopScript", 0));
+		dr2.put((byte) 0x1B, new AbstractMap.SimpleEntry<String, Integer>("RunScript", 5));
+		dr2.put((byte) 0x1C, new AbstractMap.SimpleEntry<String, Integer>(null, 0));
+		dr2.put((byte) 0x1E, new AbstractMap.SimpleEntry<String, Integer>("Sprite", 5));
+		dr2.put((byte) 0x1F, new AbstractMap.SimpleEntry<String, Integer>(null, 7));
+		dr2.put((byte) 0x20, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
+		dr2.put((byte) 0x21, new AbstractMap.SimpleEntry<String, Integer>("Speaker", 1));
+		dr2.put((byte) 0x22, new AbstractMap.SimpleEntry<String, Integer>(null, 3));
+		dr2.put((byte) 0x23, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
+		dr2.put((byte) 0x25, new AbstractMap.SimpleEntry<String, Integer>("ChangeUI", 2));
+		dr2.put((byte) 0x26, new AbstractMap.SimpleEntry<String, Integer>("SetFlag", 3));
+		dr2.put((byte) 0x27, new AbstractMap.SimpleEntry<String, Integer>("CharacterResponse", 1));
+		dr2.put((byte) 0x29, new AbstractMap.SimpleEntry<String, Integer>("ObjectResponse", 0xD));
+		dr2.put((byte) 0x2A, new AbstractMap.SimpleEntry<String, Integer>("SetLabel", 0xC));
+		dr2.put((byte) 0x2B, new AbstractMap.SimpleEntry<String, Integer>("Choice", 1));
+		dr2.put((byte) 0x2C, new AbstractMap.SimpleEntry<String, Integer>(null, 2));
+		dr2.put((byte) 0x2E, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
+		dr2.put((byte) 0x2F, new AbstractMap.SimpleEntry<String, Integer>(null, 10));
+		dr2.put((byte) 0x30, new AbstractMap.SimpleEntry<String, Integer>("ShowBackground", 2));
+		dr2.put((byte) 0x32, new AbstractMap.SimpleEntry<String, Integer>(null, 1));
+		dr2.put((byte) 0x33, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
+		dr2.put((byte) 0x34, new AbstractMap.SimpleEntry<String, Integer>("GotoLabel", 1));
+		dr2.put((byte) 0x35, new AbstractMap.SimpleEntry<String, Integer>("Check Flag A", -1));
+		dr2.put((byte) 0x36, new AbstractMap.SimpleEntry<String, Integer>("Check Flag B", -1));
+		dr2.put((byte) 0x38, new AbstractMap.SimpleEntry<String, Integer>(null, -1));
+		dr2.put((byte) 0x39, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
+		dr2.put((byte) 0x3A, new AbstractMap.SimpleEntry<String, Integer>("WaitInput", 0));
+		dr2.put((byte) 0x3B, new AbstractMap.SimpleEntry<String, Integer>("WaitFrame", 0));
+		dr2.put((byte) 0x3C, new AbstractMap.SimpleEntry<String, Integer>("FlagCheckEnd", 0));
+		dr2.put((byte) 0x4B, new AbstractMap.SimpleEntry<String, Integer>("WaitInputDR2", -1));
+		dr2.put((byte) 0x4C, new AbstractMap.SimpleEntry<String, Integer>("WaitFrameDR2", 0));
+		dr2.put((byte) 0x4D, new AbstractMap.SimpleEntry<String, Integer>(null, -1));
+
 		dr2.put((byte) 0x15, new AbstractMap.SimpleEntry<String, Integer>(null, 4));
 		dr2.put((byte) 0x19, new AbstractMap.SimpleEntry<String, Integer>("LoadScript", 5));
+		dr2.put((byte) 0x1A, new AbstractMap.SimpleEntry<String, Integer>("StopScript", 0));
 		dr2.put((byte) 0x1B, new AbstractMap.SimpleEntry<String, Integer>(null, 5));
 		dr2.put((byte) 0x29, new AbstractMap.SimpleEntry<String, Integer>(null, 0xD));
 		dr2.put((byte) 0x2A, new AbstractMap.SimpleEntry<String, Integer>(null, 0xC));
@@ -383,15 +440,32 @@ public class DanganModding {
 		characterIDs.put("Chiaki Nanami", 9);
 		characterIDs.put("Sonia Nevermind", 10);
 		characterIDs.put("Hiyoko Saionji", 11);
-		characterIDs.put("Bitch", 11);
 		characterIDs.put("Mahiru Koizumi", 12);
 		characterIDs.put("Mikan Tsumiki", 13);
 		characterIDs.put("Ibuki Mioda", 14);
-		characterIDs.put("Peko Pekoyama", 15);
 		characterIDs.put("Monomi", 17);
 		characterIDs.put("Usami", 17);
 		characterIDs.put("Mechamaru Nidai", 19);
 		characterIDs.put("Real Byakuya Togami", 22);
+
+		characterIDs.put("Hajime", 0);
+		characterIDs.put("Nagito", 1);
+		characterIDs.put("Byakuya", 2);
+		characterIDs.put("Gundham", 3);
+		characterIDs.put("Gundam", 3);
+		characterIDs.put("Kazuichi", 4);
+		characterIDs.put("Teruteru", 5);
+		characterIDs.put("Nekomaru", 6);
+		characterIDs.put("Fuyuhiko", 7);
+		characterIDs.put("Akane", 8);
+		characterIDs.put("Chiaki", 9);
+		characterIDs.put("Sonia", 10);
+		characterIDs.put("Hiyoko", 11);
+		characterIDs.put("Bitch", 11);
+		characterIDs.put("Mahiru", 12);
+		characterIDs.put("Mikan", 13);
+		characterIDs.put("Ibuki", 14);
+
 		characterIDs.put("MN", 0);
 		characterIDs.put("KI", 1);
 		characterIDs.put("BT", 2);
@@ -407,7 +481,6 @@ public class DanganModding {
 		characterIDs.put("CL", 12);
 		characterIDs.put("JE", 13);
 		characterIDs.put("CF", 14);
-		characterIDs.put("MK", 15);
 		characterIDs.put("RJE", 16);
 		characterIDs.put("AE", 17);
 		characterIDs.put("GS", 18);
@@ -449,13 +522,148 @@ public class DanganModding {
 			if(f.getName().startsWith("Dr2"))
 				isDR1 = false;
 
+		characterIDs.clear();
+
 		if(!isDR1){
+			characterIDs.put("Hajime Hinata", 0);
+			characterIDs.put("Izuru Kamukura", 0);
+			characterIDs.put("Nagito Komaeda", 1);
+			characterIDs.put("Byakuya Togami", 2);
+			characterIDs.put("Byakuya Twogami", 2);
+			characterIDs.put("Imposter", 2);
+			characterIDs.put("Impostor", 2);
+			characterIDs.put("Gundham Tanaka", 3);
+			characterIDs.put("Gundam Tanaka", 3);
+			characterIDs.put("Kazuichi Souda", 4);
+			characterIDs.put("Kazuichi Soda", 4);
+			characterIDs.put("Teruteru Hanamura", 5);
+			characterIDs.put("Nekomaru Nidai", 6);
+			characterIDs.put("Fuyuhiko Kuzuryu", 7);
+			characterIDs.put("Fuyuhiko Kuzuryuu", 7);
+			characterIDs.put("Akane Owari", 8);
+			characterIDs.put("Chiaki Nanami", 9);
+			characterIDs.put("Sonia Nevermind", 10);
+			characterIDs.put("Hiyoko Saionji", 11);
+			characterIDs.put("Mahiru Koizumi", 12);
+			characterIDs.put("Mikan Tsumiki", 13);
+			characterIDs.put("Ibuki Mioda", 14);
+			characterIDs.put("Monomi", 17);
+			characterIDs.put("Usami", 17);
+			characterIDs.put("Mechamaru Nidai", 19);
+			characterIDs.put("Real Byakuya Togami", 22);
+
+			characterIDs.put("Hajime", 0);
+			characterIDs.put("Nagito", 1);
+			characterIDs.put("Byakuya", 2);
+			characterIDs.put("Gundham", 3);
+			characterIDs.put("Gundam", 3);
+			characterIDs.put("Kazuichi", 4);
+			characterIDs.put("Teruteru", 5);
+			characterIDs.put("Nekomaru", 6);
+			characterIDs.put("Fuyuhiko", 7);
+			characterIDs.put("Akane", 8);
+			characterIDs.put("Chiaki", 9);
+			characterIDs.put("Sonia", 10);
+			characterIDs.put("Hiyoko", 11);
+			characterIDs.put("Bitch", 11);
+			characterIDs.put("Mahiru", 12);
+			characterIDs.put("Mikan", 13);
+			characterIDs.put("Ibuki", 14);
+
+			characterIDs.put("MN", 0);
+			characterIDs.put("KI", 1);
+			characterIDs.put("BT", 2);
+			characterIDs.put("MO", 3);
+			characterIDs.put("LK", 4);
+			characterIDs.put("HY", 5);
+			characterIDs.put("YH", 6);
+			characterIDs.put("SM", 7);
+			characterIDs.put("KK", 8);
+			characterIDs.put("AA", 9);
+			characterIDs.put("TF", 10);
+			characterIDs.put("SO", 11);
+			characterIDs.put("CL", 12);
+			characterIDs.put("JE", 13);
+			characterIDs.put("CF", 14);
+			characterIDs.put("RJE", 16);
+			characterIDs.put("AE", 17);
+			characterIDs.put("GS", 18);
+			characterIDs.put("JK", 19);
+			characterIDs.put("MM", 20);
+			characterIDs.put("MD", 21);
+			characterIDs.put("KN", 22);
+			characterIDs.put("DO", 24);
+
+			characterIDs.put("???", 30);
+			characterIDs.put("Narrator", 31);
+			characterIDs.put("Peko Pekoyama", 15);
+			characterIDs.put("Peko", 15);
+			characterIDs.put("MK", 15);
 			characterIDs.put("Monokuma", 16);
 			characterIDs.put("Monobear", 16);
 			characterIDs.put("Real Junko Enoshima", 18);
 			characterIDs.put("Makoto Naegi", 20);
 			characterIDs.put("Kyoko Kirigiri", 21);
 			characterIDs.put("Alter Ego", 24);
+			characterIDs.put("???", 41);
+			characterIDs.put("Narrator", 42);
+			characterIDs.put("None", 63);
+		}
+		else{
+			characterIDs.put("Makoto Naegi", 0);
+			characterIDs.put("Kiyotaka Ishimaru", 1);
+			characterIDs.put("Byakuya Togami", 2);
+			characterIDs.put("Mondo Owada", 3);
+			characterIDs.put("Leon Kuwata", 4);
+			characterIDs.put("Hifumi Yamada", 5);
+			characterIDs.put("Yasuhiro Hagakure", 6);
+			characterIDs.put("Sayaka Maizono", 7);
+			characterIDs.put("Kyoko Kirigiri", 8);
+			characterIDs.put("Aoi Asahina", 9);
+			characterIDs.put("Toko Fukawa", 10);
+			characterIDs.put("Sakura Ogami", 11);
+			characterIDs.put("Celeste", 12);
+			characterIDs.put("Junko Enoshima", 13);
+			characterIDs.put("Chihiro Fujisaki", 14);
+			characterIDs.put("Monokuma", 15);
+			characterIDs.put("Monobear", 15);
+			characterIDs.put("Real Junko Enoshima", 16);
+			characterIDs.put("Alter Ego", 17);
+			characterIDs.put("Genocider Syo", 18);
+			characterIDs.put("Jin Kirigiri", 19);
+			characterIDs.put("Makoto's Mum", 20);
+			characterIDs.put("Makoto's Dad", 21);
+			characterIDs.put("Komaru Naegi", 22);
+			characterIDs.put("Kiyondo Ishida", 23);
+			characterIDs.put("Daiya Owada", 24);
+			characterIDs.put("MN", 0);
+			characterIDs.put("KI", 1);
+			characterIDs.put("BT", 2);
+			characterIDs.put("MO", 3);
+			characterIDs.put("LK", 4);
+			characterIDs.put("HY", 5);
+			characterIDs.put("YH", 6);
+			characterIDs.put("SM", 7);
+			characterIDs.put("KK", 8);
+			characterIDs.put("AA", 9);
+			characterIDs.put("TF", 10);
+			characterIDs.put("SO", 11);
+			characterIDs.put("CL", 12);
+			characterIDs.put("JE", 13);
+			characterIDs.put("CF", 14);
+			characterIDs.put("MK", 15);
+			characterIDs.put("RJE", 16);
+			characterIDs.put("AE", 17);
+			characterIDs.put("GS", 18);
+			characterIDs.put("JK", 19);
+			characterIDs.put("MM", 20);
+			characterIDs.put("MD", 21);
+			characterIDs.put("KN", 22);
+			characterIDs.put("DO", 24);
+
+			characterIDs.put("???", 30);
+			characterIDs.put("Narrator", 31);
+			characterIDs.put("None", 63);
 		}
 
 		if(DanganLauncher.progress != null)
@@ -474,11 +682,6 @@ public class DanganModding {
 
 		File people = new File(wadDir, "people.json");
 		if(people.exists()){
-
-			characterIDs.clear();
-
-			characterIDs.put("???", 30);
-			characterIDs.put("Narrator", 31);
 
 			JsonArray array = new JsonParser().parse(new Data(people).getAsString()).getAsJsonArray();
 
@@ -506,7 +709,7 @@ public class DanganModding {
 
 			FontMetrics metrics = g.getFontMetrics();
 
-			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + "tex_cmn_name.pak.zip");
+			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + (isDR1 ? "tex_cmn_name.pak.zip" : "chara_name.pak.zip"));
 
 			ZipData entries = new ZipData(new Data(tex));
 
@@ -541,15 +744,29 @@ public class DanganModding {
 					emotions.put(index, emotionSet);
 				}
 
-				Rectangle2D size = metrics.getStringBounds(name, g);
+				if(json.has("barks")){
+					JsonObject barks = json.getAsJsonObject("barks");
 
-				BufferedImage img = new BufferedImage((int) size.getWidth(), (int) size.getHeight(), BufferedImage.TYPE_INT_ARGB);
-				Graphics nameG = img.getGraphics();
-				nameG.setFont(font);
-				nameG.setColor(Color.WHITE);
-				nameG.drawString(name, 0, (int) (img.getHeight()/3*2.5f));
+					HashMap<String, Integer> barkSet = new HashMap<String, Integer>();
 
-				entries.put(index + ".png", new Data(img));
+					for(Entry<String, JsonElement> bark : barks.entrySet()){
+						barkSet.put(bark.getKey().toLowerCase(), bark.getValue().getAsInt());
+					}
+
+					DanganModding.barks.put(index, barkSet);
+				}
+
+				if(json.has("redraw") && json.get("redraw").getAsBoolean()){
+					Rectangle2D size = metrics.getStringBounds(name, g);
+
+					BufferedImage img = new BufferedImage((int) size.getWidth(), (int) size.getHeight(), BufferedImage.TYPE_INT_ARGB);
+					Graphics nameG = img.getGraphics();
+					nameG.setFont(font);
+					nameG.setColor(Color.WHITE);
+					nameG.drawString(name, 0, (int) (img.getHeight()/3*2.5f));
+
+					entries.put(index + ".png", new Data(img));
+				}
 			}
 
 			entries.write(tex);
@@ -865,6 +1082,7 @@ public class DanganModding {
 
 	//TODO: Detect Changes
 	public static File[] detectChangesFromWad(File checkWad, File wadDir, PrintStream pOut, boolean tmp) throws IOException{
+
 		internalCounter = 0;
 		workingDir = wadDir;
 		if(!wadDir.exists())
@@ -873,11 +1091,155 @@ public class DanganModding {
 		for(File f : wadDir.listFiles())
 			if(f.getName().startsWith("Dr2"))
 				isDR1 = false;
-		
+
+		characterIDs.clear();
+
+		if(!isDR1){
+			characterIDs.put("Hajime Hinata", 0);
+			characterIDs.put("Izuru Kamukura", 0);
+			characterIDs.put("Nagito Komaeda", 1);
+			characterIDs.put("Byakuya Togami", 2);
+			characterIDs.put("Byakuya Twogami", 2);
+			characterIDs.put("Imposter", 2);
+			characterIDs.put("Impostor", 2);
+			characterIDs.put("Gundham Tanaka", 3);
+			characterIDs.put("Gundam Tanaka", 3);
+			characterIDs.put("Kazuichi Souda", 4);
+			characterIDs.put("Kazuichi Soda", 4);
+			characterIDs.put("Teruteru Hanamura", 5);
+			characterIDs.put("Nekomaru Nidai", 6);
+			characterIDs.put("Fuyuhiko Kuzuryu", 7);
+			characterIDs.put("Fuyuhiko Kuzuryuu", 7);
+			characterIDs.put("Akane Owari", 8);
+			characterIDs.put("Chiaki Nanami", 9);
+			characterIDs.put("Sonia Nevermind", 10);
+			characterIDs.put("Hiyoko Saionji", 11);
+			characterIDs.put("Mahiru Koizumi", 12);
+			characterIDs.put("Mikan Tsumiki", 13);
+			characterIDs.put("Ibuki Mioda", 14);
+			characterIDs.put("Monomi", 17);
+			characterIDs.put("Usami", 17);
+			characterIDs.put("Mechamaru Nidai", 19);
+			characterIDs.put("Real Byakuya Togami", 22);
+
+			characterIDs.put("Hajime", 0);
+			characterIDs.put("Nagito", 1);
+			characterIDs.put("Byakuya", 2);
+			characterIDs.put("Gundham", 3);
+			characterIDs.put("Gundam", 3);
+			characterIDs.put("Kazuichi", 4);
+			characterIDs.put("Teruteru", 5);
+			characterIDs.put("Nekomaru", 6);
+			characterIDs.put("Fuyuhiko", 7);
+			characterIDs.put("Akane", 8);
+			characterIDs.put("Chiaki", 9);
+			characterIDs.put("Sonia", 10);
+			characterIDs.put("Hiyoko", 11);
+			characterIDs.put("Bitch", 11);
+			characterIDs.put("Mahiru", 12);
+			characterIDs.put("Mikan", 13);
+			characterIDs.put("Ibuki", 14);
+
+			characterIDs.put("MN", 0);
+			characterIDs.put("KI", 1);
+			characterIDs.put("BT", 2);
+			characterIDs.put("MO", 3);
+			characterIDs.put("LK", 4);
+			characterIDs.put("HY", 5);
+			characterIDs.put("YH", 6);
+			characterIDs.put("SM", 7);
+			characterIDs.put("KK", 8);
+			characterIDs.put("AA", 9);
+			characterIDs.put("TF", 10);
+			characterIDs.put("SO", 11);
+			characterIDs.put("CL", 12);
+			characterIDs.put("JE", 13);
+			characterIDs.put("CF", 14);
+			characterIDs.put("RJE", 16);
+			characterIDs.put("AE", 17);
+			characterIDs.put("GS", 18);
+			characterIDs.put("JK", 19);
+			characterIDs.put("MM", 20);
+			characterIDs.put("MD", 21);
+			characterIDs.put("KN", 22);
+			characterIDs.put("DO", 24);
+
+			characterIDs.put("???", 30);
+			characterIDs.put("Narrator", 31);
+			characterIDs.put("Peko Pekoyama", 15);
+			characterIDs.put("Peko", 15);
+			characterIDs.put("MK", 15);
+			characterIDs.put("Monokuma", 16);
+			characterIDs.put("Monobear", 16);
+			characterIDs.put("Real Junko Enoshima", 18);
+			characterIDs.put("Makoto Naegi", 20);
+			characterIDs.put("Kyoko Kirigiri", 21);
+			characterIDs.put("Alter Ego", 24);
+			characterIDs.put("???", 41);
+			characterIDs.put("Narrator", 42);
+			characterIDs.put("None", 63);
+		}
+		else{
+			characterIDs.put("Makoto Naegi", 0);
+			characterIDs.put("Kiyotaka Ishimaru", 1);
+			characterIDs.put("Byakuya Togami", 2);
+			characterIDs.put("Mondo Owada", 3);
+			characterIDs.put("Leon Kuwata", 4);
+			characterIDs.put("Hifumi Yamada", 5);
+			characterIDs.put("Yasuhiro Hagakure", 6);
+			characterIDs.put("Sayaka Maizono", 7);
+			characterIDs.put("Kyoko Kirigiri", 8);
+			characterIDs.put("Aoi Asahina", 9);
+			characterIDs.put("Toko Fukawa", 10);
+			characterIDs.put("Sakura Ogami", 11);
+			characterIDs.put("Celeste", 12);
+			characterIDs.put("Junko Enoshima", 13);
+			characterIDs.put("Chihiro Fujisaki", 14);
+			characterIDs.put("Monokuma", 15);
+			characterIDs.put("Monobear", 15);
+			characterIDs.put("Real Junko Enoshima", 16);
+			characterIDs.put("Alter Ego", 17);
+			characterIDs.put("Genocider Syo", 18);
+			characterIDs.put("Jin Kirigiri", 19);
+			characterIDs.put("Makoto's Mum", 20);
+			characterIDs.put("Makoto's Dad", 21);
+			characterIDs.put("Komaru Naegi", 22);
+			characterIDs.put("Kiyondo Ishida", 23);
+			characterIDs.put("Daiya Owada", 24);
+			characterIDs.put("MN", 0);
+			characterIDs.put("KI", 1);
+			characterIDs.put("BT", 2);
+			characterIDs.put("MO", 3);
+			characterIDs.put("LK", 4);
+			characterIDs.put("HY", 5);
+			characterIDs.put("YH", 6);
+			characterIDs.put("SM", 7);
+			characterIDs.put("KK", 8);
+			characterIDs.put("AA", 9);
+			characterIDs.put("TF", 10);
+			characterIDs.put("SO", 11);
+			characterIDs.put("CL", 12);
+			characterIDs.put("JE", 13);
+			characterIDs.put("CF", 14);
+			characterIDs.put("MK", 15);
+			characterIDs.put("RJE", 16);
+			characterIDs.put("AE", 17);
+			characterIDs.put("GS", 18);
+			characterIDs.put("JK", 19);
+			characterIDs.put("MM", 20);
+			characterIDs.put("MD", 21);
+			characterIDs.put("KN", 22);
+			characterIDs.put("DO", 24);
+
+			characterIDs.put("???", 30);
+			characterIDs.put("Narrator", 31);
+			characterIDs.put("None", 63);
+		}
+
 		File autoinclude = new File(wadDir, "autoinclude.txt");
 
 		String includeRegex = autoinclude.exists() ? new Data(autoinclude).getAsString() : "";
-		
+
 		if(DanganLauncher.progress != null)
 			DanganLauncher.progress.updateProgress(00, "Beginning WAD Compilation...");
 		sendNotification("Mod Packing", "Beginning WAD Compilation");
@@ -926,7 +1288,7 @@ public class DanganModding {
 
 			FontMetrics metrics = g.getFontMetrics();
 
-			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + "tex_cmn_name.pak.zip");
+			File tex = new File(wadDir, (isDR1 ? "Dr1" : "Dr2") + File.separator + "data" + File.separator + "us" + File.separator + "cg" + File.separator + (isDR1 ? "tex_cmn_name.pak.zip" : "chara_name.pak.zip"));
 
 			ZipData entries = new ZipData(new Data(tex));
 
@@ -1234,14 +1596,20 @@ public class DanganModding {
 
 		long type = readIntNorm(din);
 		long headerSpace = readIntNorm(din);
-		if(type == 1){ //Not Text
-			System.out.println("Hmmm: " + type);
-		}
+
 		long textBlock = 0;
 		long size = 0;
-		if(type == 2){ //Text
+		if(type == 1){ //Not Text
+			size = readIntNorm(din);
+			textBlock = size;
+		}
+		else if(type == 2){
 			textBlock = readIntNorm(din);
 			size = readIntNorm(din);
+		}
+
+		{
+
 
 			byte[] data = lin.toArray();
 
@@ -1255,7 +1623,7 @@ public class DanganModding {
 
 					if(argCount == -1){
 						LinkedList<Integer> args = new LinkedList<Integer>();
-						while (data[i + 1] != 0x70)
+						while (i+1 < data.length && data[i + 1] != 0x70)
 						{
 							args.add(data[i + 1] & 0xFF);
 							i++;
@@ -1281,7 +1649,7 @@ public class DanganModding {
 					{
 						if (data[i] != 0x00)
 						{
-							//System.err.println("[read] error: expected 0x70, got 0x" + data[i] + ".");
+							System.err.println("[read] error: expected 0x70, got 0x" + data[i] + ".");
 						}
 						i++;
 					}
@@ -1362,7 +1730,7 @@ public class DanganModding {
 					opCode = code;
 					break;
 				}
-				else if(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey())){
+				else if(Opcodes.get((isDR1 ? "DR1" : "DR2")).containsKey(code) && Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() != null && s.startsWith(Opcodes.get((isDR1 ? "DR1" : "DR2")).get(code).getKey() + "{")){
 					opCode = code;
 					break;
 				}
@@ -1376,18 +1744,19 @@ public class DanganModding {
 			}
 			entries.write(opCode);
 
-			if(opCode != 0x02 && opCode != 0x0C && s.split("\\{").length > 1){
+			String name = Opcodes.get((isDR1 ? "DR1" : "DR2")).containsKey(opCode) && Opcodes.get((isDR1 ? "DR1" : "DR2")).get(opCode).getKey() != null ? Opcodes.get((isDR1 ? "DR1" : "DR2")).get(opCode).getKey() : "";
+			if(!name.equalsIgnoreCase("Text") && !name.equalsIgnoreCase("SetTruthBullet") && s.split("\\{").length > 1){
 				String[] params = s.split("\\{")[1].split(",");
 				for(int i = 0; i < params.length; i++){
 					try{
 						entries.write(Integer.parseInt(params[i].trim()));
 					}
 					catch(Throwable th){
-						System.err.println(params[i]);
+						System.err.println(params[i] + ":" + s);
 					}
 				}
 			}
-			else if(opCode == 0x0C){
+			else if(name.equalsIgnoreCase("SetTruthBullet")){
 				String truthBullet = s.substring(15).trim();
 				if(evidenceMap.containsKey(truthBullet)){
 					int evidence = evidenceMap.get(truthBullet);
@@ -1407,7 +1776,7 @@ public class DanganModding {
 					}
 				}
 			}
-			else if(opCode == 0x02){
+			else if(name.equalsIgnoreCase("Text")){
 				int arg0 = textLine / 256;
 				int arg1 = textLine % 256;
 				entries.write(arg0);
@@ -1771,22 +2140,45 @@ public class DanganModding {
 				}
 				else if(s.startsWith("[Sprite:")){
 					s = s.replace("[", "").replace("]", "");
-					String person = s.split(":", 3)[1].trim();
-					if(person.equalsIgnoreCase("Clear"))
-						newLin += "Sprite{0, 0, 0, 1, 2}";
-					else{
-						int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+					String person = s.split(":")[1].trim();
+					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
 
-						String sprite = s.split(":", 3)[2].trim();
+					String sprite = s.split(":")[2].trim();
+
+					if(sprite.equalsIgnoreCase("Clear"))
+						newLin += "Sprite{0, 0, 99, 1, 2}";
+					else if(sprite.equalsIgnoreCase("Hide"))
+						newLin += "Sprite{0, 0, 99, 4, 2}";
+					else{
+
+						String spriteState = s.split(":").length > 3 ? s.split(":")[3] : "1";
+						String spriteType = s.split(":").length > 4 ? s.split(":")[4] : "2";
 
 						HashMap<String, Integer> emotion = emotions.getOrDefault(charID, new HashMap<String, Integer>());
 
 						if(emotion.containsKey(sprite.toLowerCase()))
 							sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
 
-						newLin += "Sprite{0, " + charID + ", " + sprite + ", 1, 2}";
+						newLin += "Sprite{0, " + charID + ", " + sprite + ", " + spriteState.trim() + ", " + spriteType.trim() + "}";
 					}
-				}else if(s.startsWith("[TrialSprite:")){
+				}
+				else if(s.startsWith("[Bark:") || s.startsWith("[Voice:")){
+					s = s.replace("[", "").replace("]", "");
+					String person = s.split(":")[1].trim();
+					int charID = characterIDs.containsKey(person.trim()) ? characterIDs.get(person.trim()) : characterIDs.get("???");
+
+					String bark = s.split(":")[2].trim();
+
+					String volume = s.split(":").length > 3 ? s.split(":")[3] : "100";
+
+					HashMap<String, Integer> barkSet = barks.getOrDefault(charID, new HashMap<String, Integer>());
+
+					if(barkSet.containsKey(bark.toLowerCase()))
+						bark = Integer.toString(barkSet.get(bark.toLowerCase()));
+
+					newLin += "Voice{" + charID + ", 99, 0, " + bark + ", " + volume + "}";
+				}
+				else if(s.startsWith("[TrialSprite:")){
 					s = s.replace("[", "").replace("]", "");
 					String person = s.split(":", 3)[1].trim();
 					if(person.equalsIgnoreCase("Clear"))
@@ -1804,6 +2196,13 @@ public class DanganModding {
 						newLin += "Sprite{0, " + charID + ", " + spriteNum + ", 0, 0}";
 					}
 				}
+				else if(s.startsWith("[Wait")){
+					int frames = s.indexOf(":") == -1 ? 1 : Integer.parseInt(s.replaceAll("\\D", ""));
+
+					for(int i = 0; i < frames; i++)
+						newLin += "WaitFrame{}\n";
+					newLin = newLin.trim();
+				}
 				else if(s.matches(".*\\:.*\\:.*\\:.*")){
 					String person = s.split(":", 4)[0];
 					String sprite = s.split(":", 4)[1];
@@ -1814,7 +2213,7 @@ public class DanganModding {
 					if(self){
 						person = person.replace("(To Self)", "");
 						text = "<CLT 4>" + text;
-						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT 4>");
 						text = text + "<CLT>";
 					}
 					else
@@ -1827,10 +2226,19 @@ public class DanganModding {
 					if(emotion.containsKey(sprite.toLowerCase()))
 						sprite = Integer.toString(emotion.get(sprite.toLowerCase()));
 
-					if(state == 1)
+					if(state == 1){
 						if(!camera.equalsIgnoreCase("-1"))
 							newLin += "TrialCamera{" + charID + ", 0, " + camera.trim() + "}\n";
-					newLin += "Sprite{0, " + charID + ", " + sprite + ", 0, 0}\n0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
+					}
+					else{ //Audio Bark Time
+						if(!camera.equalsIgnoreCase("-1") && !camera.equalsIgnoreCase("none")){
+							HashMap<String, Integer> barkSet = barks.getOrDefault(charID, new HashMap<String, Integer>());
+							if(barkSet.containsKey(camera.toLowerCase()))
+								newLin += "Voice{" + charID + ", 99, 0, " + Integer.toString(barkSet.get(camera.toLowerCase())) + ", 100}\n";
+						}
+					}
+
+					newLin += (sprite.equalsIgnoreCase("none") ? "" : "Sprite{0, " + charID + ", " + sprite + ", 1, 2}\n") + "0x3{4}\nSpeaker{" + charID + "}\n" + "Text{" + text + "}\n";
 					newLin += "WaitFrame{}\n0x3{0}\nWaitInput{}";
 					textCount++;
 				}
@@ -1844,7 +2252,7 @@ public class DanganModding {
 					if(self){
 						person = person.replace("(To Self)", "");
 						text = "<CLT 4>" + text;
-						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT 4>");
 						text = text + "<CLT>";
 					}
 					else
@@ -1897,10 +2305,22 @@ public class DanganModding {
 					String text = s.split(":", 2)[1].replace("<br>", "\n").trim();
 
 					boolean self = person.contains("(To Self)");
+					boolean narrator = person.contains("(As Narrator)");
 					if(self){
 						person = person.replace("(To Self)", "");
 						text = "<CLT 4>" + text;
-						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT4>");
+						text = text.replace("<bold>", "<CLT><CLT 3>").replace("</bold>", "<CLT><CLT 4>");
+						text = text + "<CLT>";
+					}
+					else if(narrator){
+						person = person.replace("(As Narrator)", "");
+						text = "<CLT 6>" + text;
+						text = text.replace("<bold>", "<CLT><CLT 6>").replace("</bold>", "<CLT><CLT 6>");
+						text = text + "<CLT>";
+					}
+					else if(person.equalsIgnoreCase("Narrator")){
+						text = "<CLT 6>" + text;
+						text = text.replace("<bold>", "<CLT><CLT 6>").replace("</bold>", "<CLT><CLT 6>");
 						text = text + "<CLT>";
 					}
 					else

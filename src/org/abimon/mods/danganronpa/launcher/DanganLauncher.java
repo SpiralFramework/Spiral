@@ -397,6 +397,7 @@ public class DanganLauncher {
 							}
 						}
 						catch(Throwable th){
+							th.printStackTrace();
 						}
 					}
 				}.start();
@@ -511,15 +512,17 @@ public class DanganLauncher {
 			}
 		});
 
-		JButton btnNonstopDebates = new JButton("NONSTOP DEBATES");
+		JButton btnNonstopDebates = new JButton("DR2 THING");
 		panel.add(btnNonstopDebates, "2, 12, fill, default");
 		btnNonstopDebates.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				try{
-					File dat = new File("dr1_data Extract/Dr1/data/us/bin/nonstop_01_001.dat");
-					File txt = new File("dr1_data Extract/Dr1/data/us/bin/nonstop_01_001.dat.json");
-					DanganModding.extractNonstop(new Data(dat)).write(txt);
-					//DanganModding.packNonstop(new Data(txt)).write(dat);
+					DanganModding.isDR1 = false;
+					File dat = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin.txt");
+					File compiled = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin");
+					File out = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin.txt.txt");
+					DanganModding.compileLin(new Data(dat)).write(compiled);
+					DanganModding.linHandling(new Data(compiled), System.out).write(out);
 				}
 				catch(Throwable th){
 					th.printStackTrace();
@@ -531,7 +534,47 @@ public class DanganLauncher {
 		panel.add(btnOpenGame, "2, 13, fill, default");
 		btnOpenGame.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				SteamProtocol.openGame(SteamAppIDs.DANGANRONPA_TRIGGER_HAPPY_HAVOC);
+				try{
+					JsonObject json;
+					try{
+						Data jsonData = new Data(new File(".spiral_settings"));
+						JsonElement element = new JsonParser().parse(jsonData.getAsString());
+						if(element.isJsonObject())
+							json = element.getAsJsonObject();
+						else
+							json = new JsonObject();
+					}
+					catch(Throwable th){
+						json = new JsonObject();
+					}
+
+					if(json.has("game")){
+						String game = json.get("game").getAsString();
+
+						File wadFile = null;
+
+						if(game.equalsIgnoreCase("Danganronpa: Trigger Happy Havoc"))
+							wadFile = DanganLauncher.wadFileDR1;
+						if(game.equalsIgnoreCase("Danganronpa 2: Goodbye Despair"))
+							wadFile = DanganLauncher.wadFileDR2;
+						if(json.has("custom_games") && json.getAsJsonObject("custom_games").has(game))
+							wadFile = new File(json.getAsJsonObject("custom_games").get(game).getAsString());
+
+						if(wadFile != null && wadFile.exists()){
+							DDFile dd = new DDFile(wadFile);
+							
+							if(dd.isDR1)
+								SteamProtocol.openGame(SteamAppIDs.DANGANRONPA_TRIGGER_HAPPY_HAVOC);
+							else
+								SteamProtocol.openGame(SteamAppIDs.DANGANRONPA_2_GOODBYE_DESPAIR	);
+						}
+					}
+					else{
+						JOptionPane.showMessageDialog(null, "You haven't selected a game to install to yet!", "Error: No Game Found", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+				}
+				catch(Throwable th){}
 			}
 		});
 

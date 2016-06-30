@@ -23,7 +23,6 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.abimon.mods.danganronpa.launcher.windows.InstallFrame;
 import org.abimon.omnis.io.Data;
 import org.abimon.omnis.io.EmptyOutputStream;
 import org.abimon.omnis.io.MarkableFileInputStream;
@@ -52,6 +51,8 @@ public class DDFile {
 	MarkableFileInputStream in;
 
 	File wadFile;
+	
+	boolean isDR1 = true;
 
 	public DDFile(File wadFile) throws IOException{
 		long start = System.currentTimeMillis();
@@ -73,6 +74,9 @@ public class DDFile {
 			String name = readString(in, (int) nameLen);
 			long size = readLong(in);
 			long offset = readLong(in);
+			
+			if(name.contains("Dr2"))
+				this.isDR1 = false;
 
 			fileStructure.put(name, new DRFile(name, size, offset));
 		}
