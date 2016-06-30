@@ -1,6 +1,8 @@
 # Spiral
 Spiral is a Danganronpa Modding Framework written in Java
 
+The latest release can be found here: https://github.com/UnderMybrella/Spiral/releases/latest
+
 # Usage
 Double click the JAR file, and it brings up a launcher. Fancy, isn't it?
 
