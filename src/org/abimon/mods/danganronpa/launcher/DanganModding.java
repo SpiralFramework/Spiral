@@ -2393,8 +2393,10 @@ public class DanganModding {
 						longText += s + "\n";
 					continue;
 				}
-				if(s.equalsIgnoreCase("SPIRAL"))
+				if(s.equalsIgnoreCase("SPIRAL")){
+					newLin += "0x22{1, 0, 1}\n";
 					continue;
+				}
 				if(s.startsWith("0x"))
 					newLin += s;
 				else if(s.startsWith("[SetTrial]"))
@@ -2402,7 +2404,7 @@ public class DanganModding {
 				else if(s.equalsIgnoreCase("[Text:Start]"))
 					handlingLong = true;
 				else if(s.startsWith("[SetupTextUI]")){
-					newLin += "0x22{1, 0, 1}\n0x22{0, 1, 24}\nChangeUI{11, 1}\nChangeUI{0, 1}\nChangeUI{51, 1}\nChangeUI{1, 1}\nChangeUI{9, 1}";
+					newLin += "0x22{0, 1, 24}\nChangeUI{11, 1}\nChangeUI{0, 1}\nChangeUI{51, 1}\nChangeUI{1, 1}\nChangeUI{9, 1}";
 				}
 				else if(s.startsWith("[TrialCam:") || s.startsWith("[TrialCamera:")){
 					s = s.replace("[", "").replace("]", "");
