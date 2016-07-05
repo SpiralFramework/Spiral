@@ -71,8 +71,7 @@ public class DanganLauncher {
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Ludus.getData("debug_menu.ttf").getAsInputStream()));
 			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Ludus.getData("goodbyeDespair.ttf").getAsInputStream()));
 		}
-		catch(Throwable th){
-		}
+		catch(Throwable th){}
 
 		if(EnumOS.determineOS() == EnumOS.WINDOWS){
 			wadFileDR1 = new File("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Danganronpa Trigger Happy Havoc\\dr1_data.wad");

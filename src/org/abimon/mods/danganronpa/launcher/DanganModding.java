@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -22,6 +24,8 @@ import java.net.Socket;
 import java.net.URLEncoder;
 import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
@@ -35,6 +39,7 @@ import org.abimon.omnis.io.TGAWriter;
 import org.abimon.omnis.io.ZipData;
 import org.abimon.omnis.ludus.Ludus;
 import org.abimon.omnis.net.Website;
+import org.abimon.omnis.util.ExtraArrays;
 import org.abimon.omnis.util.General;
 
 import com.google.gson.Gson;
@@ -43,6 +48,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 public class DanganModding {
 
@@ -66,7 +72,6 @@ public class DanganModding {
 			}
 		}
 		catch(Throwable th){
-			th.printStackTrace();
 		}
 	}
 
@@ -196,7 +201,7 @@ public class DanganModding {
 
 					ImageIO.write(img, "PNG", file);
 				}
-				else if(drfile.name.endsWith(".dat") && drfile.name.contains("nonstop")){
+				else if(drfile.name.endsWith(".dat") && drfile.name.contains("nonstop") && isDR1){
 					Data nonstopData = DanganModding.extractNonstop(new Data(data));
 					nonstopData.write(new File(output.getAbsolutePath() + ".json"));
 				}
@@ -241,6 +246,9 @@ public class DanganModding {
 	public static HashMap<String, Integer> animations = new HashMap<String, Integer>();
 	public static HashMap<String, Integer> evidenceMap = new HashMap<String, Integer>();
 	public static HashMap<Integer, String> nonstopOpCodes = new HashMap<Integer, String>();
+
+	public static final int magicOne = 1399866996;
+	public static final int magicTwo = 4;
 
 	static
 	{
@@ -913,10 +921,23 @@ public class DanganModding {
 			DanganLauncher.progress.updateProgress(55, "Detecting files to write...");
 		DanganModding.sendNotification("Mod Installation", "Detecting files to write...");
 
+		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+
+		for(File f : iterate(new File(wadDir, "Font"), false))
+			if(f.getName().endsWith(".ttf")){
+				try{
+					ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new FileInputStream(f)));
+				}
+				catch(Throwable th){}
+			}
+
 		for(int i = 0; i < files.size(); i++){
 			File f = files.get(i);
 
 			pOut.println("Handling: " + f.getName());
+			if(DanganLauncher.progress != null)
+				DanganLauncher.progress.updateProgress(55, "Handling " + f.getName());
 
 			if(f.getName().endsWith(".lin.txt")){
 				File compiledFile = new File(f.getAbsolutePath().replace(".lin.txt", ".lin"));
@@ -931,7 +952,278 @@ public class DanganModding {
 				compiledLin.write(compiledFile);
 				files.set(i, compiledFile);
 			}
-			if(f.getName().endsWith(".pak.zip")){
+			if(f.getName().equalsIgnoreCase("font.pak.zip")){
+
+				LinkedList<Integer> dialogueCharacters = new LinkedList<Integer>();
+				LinkedList<Integer> nonstopCharacters = new LinkedList<Integer>();
+
+				if(Ludus.hasData("dialogue.dat")){
+					InputStream in = Ludus.getData("dialogue.dat").getAsInputStream();
+
+					read(in, 4);
+					read(in, 4);
+
+					read(in, 4);
+					read(in, 4);
+					long numChunks = read(in, 4);
+					read(in, 4);
+
+					read(in, 4);
+					read(in, 4);
+
+					for(int pos = 0; pos < numChunks; pos++){
+						long chunk = read(in, 2);
+						if(chunk != 65535)
+							dialogueCharacters.add(pos);
+					}
+				}
+
+				if(Ludus.hasData("nonstop.dat")){
+					InputStream in = Ludus.getData("nonstop.dat").getAsInputStream();
+
+					read(in, 4);
+					read(in, 4);
+
+					read(in, 4);
+					read(in, 4);
+					long numChunks = read(in, 4);
+					read(in, 4);
+
+					read(in, 4);
+					read(in, 4);
+
+					for(int pos = 0; pos < numChunks; pos++){
+						long chunk = read(in, 2);
+						if(chunk != 65535)
+							nonstopCharacters.add(pos);
+					}
+				}
+
+				ZipData zip = new ZipData(new Data(f));
+
+				String[] keys = zip.keySet().toArray(new String[0]);
+
+				for(String file : keys)
+					if(file.endsWith(".json")){
+						int index = Integer.parseInt(file.replaceAll("\\D", ""));
+						JsonObject json = zip.getAsJsonObject(file);
+
+						String fontName = json.get("font").getAsString();
+						int size = json.has("size") ? json.get("size").getAsInt() : 28;
+
+						int imageIndex = index % 2 == 0 ? index : index - 1;
+
+						LinkedList<Integer> encoding = new LinkedList<Integer>();
+
+						JsonArray characters = json.getAsJsonArray("characters");
+
+						for(JsonElement element : characters)
+							if(element.getAsJsonPrimitive().isString()){
+								JsonPrimitive prim = element.getAsJsonPrimitive();
+								String s = prim.getAsString();
+								if(s.equalsIgnoreCase("UPPERCASE"))
+									for(char c : "QWERTYUIOPASDFGHJKLZXCVBNM".toCharArray())
+										encoding.add((int) c);
+
+								else if(s.equalsIgnoreCase("lowercase"))
+									for(char c : "qwertyuiopasdfghjklzxcvbnm".toCharArray())
+										encoding.add((int) c);
+
+								else if(s.equalsIgnoreCase("ASCII"))
+									for(int c = 0; c < 94; c++)
+										encoding.add(c + 32);
+
+								else if(s.toLowerCase().startsWith("dialo"))
+									encoding.addAll(dialogueCharacters);
+
+								else if(s.toLowerCase().startsWith("nonstop") || s.toLowerCase().startsWith("debate"))
+									encoding.addAll(nonstopCharacters);
+
+								else
+									encoding.add((int) s.charAt(0));
+							}
+							else if(element.getAsJsonPrimitive().isNumber())
+								encoding.add(element.getAsNumber().intValue());
+
+						Collections.sort(encoding);
+
+						int chunks = 65536;
+						int startPos = 0x20;
+
+						BufferedImage img = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_ARGB);
+
+						for(int x = 0; x < img.getWidth(); x++)
+							for(int y = 0; y < img.getHeight(); y++)
+								img.setRGB(x, y, new Color(0, 0, 0, 0).getRGB());
+
+						Graphics g = img.getGraphics();
+						g.setColor(Color.white);
+
+						BufferedImage glyphImg = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_ARGB);
+						Graphics gi = glyphImg.getGraphics();
+						gi.setColor(Color.white);
+						gi.setFont(new Font(fontName, Font.PLAIN, size));
+						FontMetrics metrics = gi.getFontMetrics();
+
+						for(int x = 0; x < 1024; x++)
+							for(int y = 0; y < 1024; y++)
+								glyphImg.setRGB(x, y, new Color(0, 0, 0, 0).getRGB());
+
+						ByteArrayOutputStream chunkData = new ByteArrayOutputStream();
+
+						for(int gl = 0; gl < chunks; gl++){
+							if(encoding.contains(gl)){
+								write(chunkData, encoding.indexOf(gl), 2);
+							}
+							else
+								write(chunkData, 65535, 2);
+						}
+
+						ByteArrayOutputStream glyphTable = new ByteArrayOutputStream();
+
+						HashMap<Integer, Rectangle2D> boxes = new HashMap<Integer, Rectangle2D>();
+						HashMap<Integer, Point> positions = new HashMap<Integer, Point>();
+
+						for(int gl : encoding){
+							char c = (char) gl;
+
+							String s = c + "";
+							Rectangle2D bounds = metrics.getStringBounds(s, gi);
+
+							gi.drawString(s, 128, 128);
+							if(bounds.getWidth() <= 0)
+								continue;
+
+							BufferedImage glyph = glyphImg.getSubimage(127 + (int) bounds.getX(), 127 + (int) bounds.getY(), (int) bounds.getWidth() + 2, (int) bounds.getHeight() + 2);
+
+//							int highestPoint = 0;
+//							int lowestPoint = glyph.getHeight() - 1;
+//
+//							int leftmostPoint = 0;
+//							int rightmostPoint = glyph.getWidth() - 1;
+//
+//							boolean found = false;
+//
+//							for(int y = 0; y < glyph.getHeight() && !found; y++){
+//								for(int x = 0; x < glyph.getWidth(); x++){
+//									if(new Color(glyph.getRGB(x, y)).getRed() > 0){
+//										found = true;
+//										highestPoint = y;
+//									}
+//								}
+//							}
+//							
+//							found = false;
+//
+//							for(int y = glyph.getHeight() - 1; y >= 0 && !found; y--){
+//								for(int x = 0; x < glyph.getWidth(); x++){
+//									if(new Color(glyph.getRGB(x, y)).getRed() > 0){
+//										found = true;
+//										lowestPoint = y;
+//									}
+//								}
+//							}
+							
+							Rectangle2D realBounds = new Rectangle(0, 0, glyph.getWidth(), glyph.getHeight());
+							boxes.put(gl, realBounds);
+							
+							for(int xx = 0; xx < 1024; xx++)
+								for(int yy = 0; yy < 1024; yy++)
+									glyphImg.setRGB(xx, yy, new Color(0, 0, 0, 0).getRGB());
+
+							System.out.println("Boxed " + c);
+						}
+
+						LinkedList<Entry<Integer, Rectangle2D>> boxesUpdated = new LinkedList<>();
+						
+						boxesUpdated.addAll(boxes.entrySet());
+						
+						Collections.sort(boxesUpdated, new Comparator<Entry<Integer, Rectangle2D>>(){
+
+							@Override
+							public int compare(Entry<Integer, Rectangle2D> o1, Entry<Integer, Rectangle2D> o2) {
+								double h1 = o1.getValue().getHeight();
+								double h2 = o2.getValue().getHeight();
+								
+								return (h1 > h2 - 0.01 && h1 < h2 + 0.001) ? 0 : h1 < (h2 - 0.01) ? -1 : 1; 
+							}
+						});
+						
+						int x = 0;
+						int y = 0;
+						
+						for(Entry<Integer, Rectangle2D> entry : boxesUpdated){
+							Rectangle2D rect = entry.getValue();
+							if((x + rect.getWidth()) > img.getWidth()){
+								x = 0;
+								y += rect.getHeight();
+							}
+							
+							positions.put(entry.getKey(), new Point(x, y));
+							
+							char c = (char) entry.getKey().intValue();
+
+							String s = c + "";
+							Rectangle2D bounds = metrics.getStringBounds(s, gi);
+
+							gi.drawString(s, 128, 128);
+							if(bounds.getWidth() <= 0)
+								continue;
+
+							BufferedImage glyph = glyphImg.getSubimage(127 + (int) bounds.getX(), 127 + (int) bounds.getY(), (int) bounds.getWidth() + 2, (int) bounds.getHeight() + 2);
+
+							g.drawImage(glyph.getSubimage((int) rect.getX(), (int) rect.getY(), (int) rect.getWidth(), (int) Math.max(1, rect.getHeight())), x, y, null);
+							x += rect.getWidth();
+							
+							for(int xx = 0; xx < 1024; xx++)
+								for(int yy = 0; yy < 1024; yy++)
+									glyphImg.setRGB(xx, yy, new Color(0, 0, 0, 0).getRGB());
+						
+							System.out.println("Put " + c + " away");
+						}
+						
+						for(int gl : encoding){
+
+							write(glyphTable, gl, 2);
+
+							write(glyphTable, positions.get(gl).x, 2);
+							write(glyphTable, positions.get(gl).y, 2);
+							write(glyphTable, (int) boxes.get(gl).getWidth(), 2);
+							write(glyphTable, (int) boxes.get(gl).getHeight(), 2);
+							write(glyphTable, 0, 6);
+						}
+
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+						write(baos, magicOne, 4);
+						write(baos, magicTwo, 4);
+
+						write(baos, encoding.size(), 4);
+						write(baos, startPos + chunkData.size(), 4);
+						write(baos, chunks, 4);
+						write(baos, startPos, 4);
+
+						write(baos, 73, 4);
+						write(baos, 1, 4);
+
+						chunkData.writeTo(baos);
+						glyphTable.writeTo(baos);
+
+						baos.close();
+
+						zip.remove(file);
+						zip.put(imageIndex + ".png", new Data(img));
+						zip.put((imageIndex + 1) + "", new Data(baos.toByteArray()));
+					}
+
+				zip.write(new File(f.getAbsolutePath().replace(".zip", ".test.zip")));
+				pOut.println("Packing " + f.getName());
+				File compiledFile = new File(f.getAbsolutePath().replace(".pak.zip", ".pak"));
+				Data compiledPak = DanganModding.compilePak(zip);
+				compiledPak.write(compiledFile);
+				files.set(i, compiledFile);
+			}
+			else if(f.getName().endsWith(".pak.zip")){
 				File compiledFile = new File(f.getAbsolutePath().replace(".pak.zip", ".pak"));
 
 				if(compiledFile.exists() && compiledFile.lastModified() >= f.lastModified()){
@@ -2391,7 +2683,9 @@ public class DanganModding {
 
 		JsonObject json = nonstop.getAsJsonObject();
 
-		int perSeg = (json.has("DR2") ? json.get("DR2").getAsBoolean() : false) ? 0x44 : 0x3C;
+		int perSeg = !isDR1 ? 0x44 : 0x3C;
+		
+		System.out.println(perSeg);
 
 		int count = json.getAsJsonArray("text").size();
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
