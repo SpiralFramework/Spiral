@@ -517,11 +517,10 @@ public class DanganLauncher {
 			public void actionPerformed(ActionEvent e){
 				try{
 					DanganModding.isDR1 = false;
-					File dat = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin.txt");
-					File compiled = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin");
-					File out = new File("dr2_data Extract/Dr2/data/us/script/e00_000_000.lin.txt.txt");
-					DanganModding.compileLin(new Data(dat)).write(compiled);
-					DanganModding.linHandling(new Data(compiled), System.out).write(out);
+					File dat = new File("dr2_data Extract/Dr2/data/us/bin/hanron_04_001.dat");
+					File compiled = new File("dr2_data Extract/Dr2/data/us/bin/hanron_04_001.dat.json");
+					DanganModding.extractNonstop(new Data(dat)).write(compiled);
+					//DanganModding.packNonstop(new Data(compiled)).write(dat);
 				}
 				catch(Throwable th){
 					th.printStackTrace();
