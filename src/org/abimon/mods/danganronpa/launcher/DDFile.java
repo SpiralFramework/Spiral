@@ -23,20 +23,13 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.abimon.omnis.io.Data;
-import org.abimon.omnis.io.EmptyOutputStream;
-import org.abimon.omnis.io.MarkableFileInputStream;
-import org.abimon.omnis.io.TGAWriter;
-import org.abimon.omnis.io.VirtualDirectory;
-import org.abimon.omnis.io.VirtualFile;
-import org.abimon.omnis.io.ZipData;
-import org.abimon.omnis.ludus.Ludus;
-import org.abimon.omnis.util.General;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.abimon.omnis.io.*;
+import org.abimon.omnis.ludus.Ludus;
+import org.abimon.omnis.util.General;
 
 public class DDFile {
 
@@ -81,11 +74,7 @@ public class DDFile {
 			fileStructure.put(name, new DRFile(name, size, offset));
 		}
 
-		System.out.println("Now reading DIRs");
-
 		long numDirs = readInt(in);
-
-		System.out.println(numDirs + " directories");
 
 		long nameLen = readInt(in);
 		String name = readString(in, (int) nameLen);
@@ -120,14 +109,11 @@ public class DDFile {
 				vDir.getParent().addSubFile(vDir);
 			}
 			else{
-				System.out.println(vDir + " is missing a parent!");
 				this.directory.addSubFile(vDir);
 			}
 		}
 
 		in.mark(-1);
-
-		System.out.println("Mark: " + in.getMark());
 
 		long end = System.currentTimeMillis();
 
@@ -136,8 +122,6 @@ public class DDFile {
 		long minutes = time / 1000 / 60;
 		long seconds = time / 1000 % 60;
 		long millis = time % 1000;
-
-		System.out.println("Took " + minutes + " minutes, " + seconds + " seconds and " + millis + " milliseconds.");
 	}
 
 	public void changeFile(String name, String fullPath, long length){
@@ -212,8 +196,6 @@ public class DDFile {
 			File backupFile = new File("mods" + File.separator + "backup.drs");
 			ZipData zipData = new ZipData();
 
-			System.out.println(backupFile.exists() + ":" + fileStructure.containsKey("installed_mods.json"));
-
 			if(backupFile.exists()){
 				zipData = new ZipData(new Data(backupFile));
 
@@ -250,7 +232,6 @@ public class DDFile {
 												patching.put(trueName, new Data(new byte[0]));
 										}
 										if(name.equalsIgnoreCase("people.json")){
-											System.out.println("Attempting to retrieve tex from " + zipData.keySet());
 											String trueName = "Dr1/data/us/cg/tex_cmn_name.pak";
 											if(zipData.containsKey(trueName))
 												patches.put(trueName, new ZipFile(backupFile));

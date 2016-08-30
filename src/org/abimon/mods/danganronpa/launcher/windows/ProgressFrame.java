@@ -82,6 +82,17 @@ public class ProgressFrame extends JFrame {
 		this.lblSittingHere.setText(newOperation);
 		if(val == 100)
 			btnFinish.setVisible(true);
+		else
+			btnFinish.setVisible(false);
+	}
+	
+	public boolean isComplete(){
+		return btnFinish.isVisible();
+	}
+
+	public void pressFinish(){
+		if(isComplete())
+			btnFinish.getActionListeners()[0].actionPerformed(null);
 	}
 
 }

@@ -13,9 +13,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.abimon.mods.danganronpa.launcher.DanganLauncher;
-import org.abimon.omnis.io.Data;
-import org.abimon.omnis.io.filefilters.FileExtensionFilter;
-import org.abimon.omnis.util.EnumOS;
 
 import com.jgoodies.forms.layout.FormLayout;
 import com.google.gson.JsonElement;
@@ -25,6 +22,10 @@ import com.jgoodies.common.collect.LinkedListModel;
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.FormSpecs;
+import org.abimon.omnis.io.Data;
+import org.abimon.omnis.io.filefilters.FileExtensionFilter;
+import org.abimon.omnis.util.EnumOS;
+
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 

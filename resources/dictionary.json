@@ -10,5 +10,21 @@
 	"Dr1/data/us/flash/fla_718.pak":{
 		"name":"Kiyotaka Ishimaru's Introduction",
 		"desc":"Note: May not be Kiyotaka's Introduction"
+	},
+	"Dr2/data/us/flash/fla_410.pak":{
+		"name":"Monokuma Theatre",
+		"desc":"Monokuma Theatre animation"
+	},
+	"Dr2/data/us/flash/fla_411.pak":{
+		"name":"Monomi Transformation",
+		"desc":"You remember that animation at the start where Usami transformed into Monomi?"
+	},
+	"Dr2/data/us/flash/fla_500.pak":{
+		"name":"DR2 Logo",
+		"desc":"The opening animation for DR2"
+	},
+	"Dr2/data/us/flash/fla_501.pak":{
+		"name":"Chapter 1 Opening",
+		"desc":"Chapter 1 of DR2: Destination Despair"
 	}
 }

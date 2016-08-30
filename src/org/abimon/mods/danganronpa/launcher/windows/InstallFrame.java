@@ -16,8 +16,6 @@ import javax.swing.border.EmptyBorder;
 
 import org.abimon.mods.danganronpa.launcher.DDFile;
 import org.abimon.mods.danganronpa.launcher.DanganLauncher;
-import org.abimon.omnis.io.Data;
-import org.abimon.omnis.io.ZipData;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -28,6 +26,8 @@ import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpecs;
 import com.jgoodies.forms.layout.RowSpec;
+import org.abimon.omnis.io.Data;
+import org.abimon.omnis.io.ZipData;
 
 public class InstallFrame extends JFrame {
 
