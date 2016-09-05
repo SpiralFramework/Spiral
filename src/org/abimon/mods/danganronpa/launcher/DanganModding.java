@@ -517,7 +517,7 @@ public class DanganModding {
 		nonstopOpCodes.put(22, "Sprite");
 		nonstopOpCodes.put(25, "Voice");
 		nonstopOpCodes.put(27, "Chapter");
-	};
+	}
 
 	private static File workingDir = null;
 
@@ -2077,7 +2077,7 @@ public class DanganModding {
 				din.skip(textBlock + (textID + 2) * 4);
 				int nextTextPos = (int) readInt(din);
 				if(textID == textEntries - 1)
-					nextTextPos = (int) ((long) size - (long) textBlock);
+					nextTextPos = (int) (size - textBlock);
 
 				din.reset();
 				din.skip(textBlock + textPos);

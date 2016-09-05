@@ -98,6 +98,7 @@ public class SettingsFrame extends JFrame {
 
 		settingList.add("Name Font");
 		settingList.add("Game");
+		settingList.add("GitHub OAuth Token");
 
 		settingsPane = new JScrollPane();
 		panel.add(settingsPane, "1, 2, fill, fill");
@@ -149,6 +150,13 @@ public class SettingsFrame extends JFrame {
 								}
 								catch(Throwable th){}
 							}
+					}
+					else if(option.equalsIgnoreCase("GitHub OAuth Token")){
+						valueList.add(json.has("github") ? json.get("github").getAsString() : "None");
+						if(json.has("github"))
+							valueList.add("Remove");
+						else
+							valueList.add("New...");
 					}
 				}
 			}
@@ -239,17 +247,37 @@ public class SettingsFrame extends JFrame {
 							json.addProperty("game", game);
 						}
 					}
+					else if(option.equalsIgnoreCase("GitHub OAuth Token")){
+						if(valuesList.getSelectedValue() != null) {
+							if (valuesList.getSelectedValue().equalsIgnoreCase("Remove")) {
+								json.remove("github");
+								valueList.clear();
+								valueList.add("New...");
+							}
+							else if(valuesList.getSelectedValue().equalsIgnoreCase("New...")){
+								GitHubLogin login = new GitHubLogin();
+
+								while (login.isVisible()) {
+									try {
+										Thread.sleep(1000);
+									} catch (Throwable th) {}
+								}
+
+								if(!DanganLauncher.githubOauth.isEmpty()){
+									valueList.clear();
+									valueList.add(DanganLauncher.githubOauth);
+									valueList.add("Remove");
+								}
+							}
+						}
+					}
 				}
 			}
 
 		});
 
 		JButton btnClose = new JButton("Close");
-		btnClose.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				self.setVisible(false);
-			}
-		});
+		btnClose.addActionListener(e -> self.setVisible(false));
 
 		lblTest = new JLabel("");
 		lblTest.setFont(lblTest.getFont().deriveFont(Font.PLAIN, 28));

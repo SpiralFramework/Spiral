@@ -106,7 +106,7 @@ public class InstallFrame extends JFrame {
 					continue;
 
 				String name = f.getName().substring(0, f.getName().lastIndexOf('.'));
-				String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();;
+				String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();
 
 				System.out.println(f);
 				ZipData zData = new ZipData(f);
@@ -181,7 +181,7 @@ public class InstallFrame extends JFrame {
 								continue;
 
 							String name = f.getName().substring(0, f.getName().lastIndexOf('.'));
-							String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();;
+							String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();
 
 							ZipData zData = new ZipData(f);
 							for(String key : zData.keySet()){
@@ -235,7 +235,7 @@ public class InstallFrame extends JFrame {
 								continue;
 
 							String name = f.getName().substring(0, f.getName().lastIndexOf('.'));
-							String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();;
+							String version = f.length() < 1000 * 10 ? new Data(f).getAsMD5Hash() : new Data(f.getAbsolutePath()).getAsMD5Hash();
 
 							ZipData zData = new ZipData(f);
 							for(String key : zData.keySet())
