@@ -37,7 +37,6 @@ import java.net.Socket;
 import java.net.URI;
 import java.util.*;
 
-@SuppressWarnings("Convert2streamapi")
 public class DanganLauncher {
 
 	private JFrame frame;
@@ -265,6 +264,8 @@ public class DanganLauncher {
 				}
 			}
 		}
+
+		System.out.println(wadFileDR1 + ":" + wadFileDR1Lang);
 
 		EventQueue.invokeLater(() -> {
 			try {
@@ -641,9 +642,14 @@ public class DanganLauncher {
 												Data data = new Data(f);
 												progress.updateProgress(0, "Moving " + f.getName());
 												File newF = new File(f.getAbsolutePath().replace(dir.getAbsolutePath(), langDir.getAbsolutePath()));
-												System.out.println(newF);
+												//System.out.println(newF);
 												File dirs = new File(f.getAbsolutePath().replace(dir.getAbsolutePath(), langDir.getAbsolutePath()).substring(0, f.getAbsolutePath().replace(dir.getAbsolutePath(), langDir.getAbsolutePath()).lastIndexOf(File.separator)));
-												System.out.println(dirs + ":" + dirs.mkdirs());
+												//System.out.println(dirs + ":" + dirs.mkdirs());
+												while(!dirs.exists()){
+													Thread.sleep(10);
+													System.out.println(dirs + " doesn't exist...");
+													System.out.println(dirs.mkdirs());
+												}
 												data.write(newF);
 												newF.setLastModified(f.lastModified());
 												f.delete();
@@ -654,7 +660,7 @@ public class DanganLauncher {
 										progress.updateProgress(0.0f, "Beginning Compilation of " + langWad.getName());
 										DanganModding.makeWad(langWad, langDir, new PrintStream(new EmptyOutputStream()), false);
 										for(File f : General.iterate(langDir, false)){
-											System.out.println(f);
+											//System.out.println(f);
 											progress.updateProgress(99, "Moving " + f.getName());
 											Data data = new Data(f);
 											File newF = new File(f.getAbsolutePath().replace(langDir.getAbsolutePath(), dir.getAbsolutePath()));
@@ -690,6 +696,11 @@ public class DanganLauncher {
 			}
 		});
 		panel.add(btnCompile, "2, 7, fill, center");
+
+		JButton btnReload = new JButton("Reload Codes");
+		//btnCompile.setEnabled(false);
+		btnReload.addActionListener(e -> DanganModding.reload());
+		panel.add(btnReload, "2, 8, fill, center");
 
 		JButton btnPackMod = new JButton("Pack Mod");
 		panel.add(btnPackMod, "2, 9, fill, default");
@@ -793,6 +804,7 @@ public class DanganLauncher {
 								}
 
 								if(wadFile != null && wadFile.exists() && langWad != null && langWad.exists()){
+									System.out.println("Extracting LANGWAD");
 									DanganLauncher.progress.updateProgress(0.0f, "Beginning Extraction of " + langWad);
 									File dir = new File(wadFile.getName().replace(".wad", "") + " Extract");
 									File log = new File(System.currentTimeMillis() + ".txt");

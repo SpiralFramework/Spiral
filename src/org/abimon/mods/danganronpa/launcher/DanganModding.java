@@ -252,6 +252,14 @@ public class DanganModding {
 
 	static
 	{
+		reload();
+	}
+
+	public static void reload(){
+		Opcodes.clear();
+		characterIDs.clear();
+		nonstopOpCodes.clear();
+
 		HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>> dr1 = new HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>();
 		HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>> dr2 = new HashMap<Byte, AbstractMap.SimpleEntry<String, Integer>>();
 
@@ -501,22 +509,24 @@ public class DanganModding {
 		characterIDs.put("???", 30);
 		characterIDs.put("Narrator", 31);
 
-		nonstopOpCodes.put(0, "TextID");
-		nonstopOpCodes.put(1, "Type");
-		nonstopOpCodes.put(3, "ShootWithEvidence");
-		nonstopOpCodes.put(4, "ShootWithWeakPoint");
-		nonstopOpCodes.put(6, "HasWeakPoint");
-		nonstopOpCodes.put(7, "Advance");
-//		nonstopOpCodes.put(8, "XPos");
-//		nonstopOpCodes.put(9, "YPos");
-		nonstopOpCodes.put(10, "Zoom");
-		nonstopOpCodes.put(11, "Fadeout");
-		nonstopOpCodes.put(12, "Horizontal");
-		nonstopOpCodes.put(13, "Vertical");
-		nonstopOpCodes.put(21, "Character");
-		nonstopOpCodes.put(22, "Sprite");
-		nonstopOpCodes.put(25, "Voice");
-		nonstopOpCodes.put(27, "Chapter");
+		nonstopOpCodes.put(0x0, "TextID");
+		nonstopOpCodes.put(0x1, "Type");
+		nonstopOpCodes.put(0x3, "ShootWithEvidence");
+		nonstopOpCodes.put(0x4, "ShootWithWeakPoint");
+		nonstopOpCodes.put(0x6, "HasWeakPoint");
+		nonstopOpCodes.put(0x7, "Advance");
+		nonstopOpCodes.put(0xA, "Transition");
+		nonstopOpCodes.put(0xB, "Fadeout");
+		nonstopOpCodes.put(0xC, "Horizontal");
+		nonstopOpCodes.put(0xD, "Vertical");
+		nonstopOpCodes.put(0xE, "AngleAcceleration");
+		nonstopOpCodes.put(0xF, "Angle");
+		nonstopOpCodes.put(0x10, "Scale");
+		nonstopOpCodes.put(0x11, "FinalScale"); //Final Scale is a percentage of Scale, sorta. So if Scale is 50 and FinalScale is 100, it'll remain consistant. If Scale is 50 and FinalScale is 50, the final scale will be a quarter of normal
+		nonstopOpCodes.put(0x15, "Character");
+		nonstopOpCodes.put(0x16, "Sprite");
+		nonstopOpCodes.put(0x19, "Voice");
+		nonstopOpCodes.put(0x1B, "Chapter");
 	}
 
 	private static File workingDir = null;
@@ -2936,7 +2946,7 @@ public class DanganModding {
 				
 				for(int i = 0; i < perSeg; i++){
 					String key = nonstopOpCodes.containsKey(i) ? nonstopOpCodes.get(i) : "0x" + Integer.toHexString(i).toUpperCase();
-					if(s.equalsIgnoreCase(key)){
+					if(s.equalsIgnoreCase(key) || s.equalsIgnoreCase("0x" + Integer.toHexString(i).toUpperCase())){
 						tmpData[i] = code;
 						break;
 					}
