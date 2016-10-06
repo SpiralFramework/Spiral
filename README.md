@@ -3,6 +3,9 @@ Spiral is a Danganronpa Modding Framework written in Java
 
 The latest release can be found here: https://github.com/UnderMybrella/Spiral/releases/latest
 
+# Discord Server
+To discuss SPIRAL, for bugs, or anything like that, there's a Discord server here: https://discord.gg/BSdvdef
+
 # Usage
 Double click the JAR file, and it brings up a launcher. Fancy, isn't it?
 
@@ -48,3 +51,7 @@ I do this work entirely in my spare time, and it's not always easy. While I enjo
 As such, I've set up a Patreon page, if people want to support me, which can be found here: https://www.patreon.com/undermybrella
 
 Please note: The Patreon page is entirely optional, and I won't stop my projects if nobody donates. However, it would be nice, as projects like this really do suck up a lot of time.
+
+Patreon Supporters:
+
+xMusicaRequiem
