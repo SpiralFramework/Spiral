@@ -1,57 +1,21 @@
 # Spiral
-Spiral is a Danganronpa Modding Framework written in Java
+Spiral is a Danganronpa Modding Framework written in Kotlin, which is currently undergoing a major rewrite. Watch this space for any updates which may or may not happen, but stay tuned!
 
-The latest release can be found here: https://github.com/UnderMybrella/Spiral/releases/latest
+At the moment the only way you'll be able to use this is by actually coding an extension, so trust me; it's not usable.
+
+# Dependencies
+https://github.com/UnderMybrella/Visi
 
 # Discord Server
 To discuss SPIRAL, for bugs, or anything like that, there's a Discord server here: https://discord.gg/BSdvdef
 
-# Usage
-Double click the JAR file, and it brings up a launcher. Fancy, isn't it?
-
-You'll need to specify the game you're using first, through the "Settings" button.
-
-Also: USE THE BACKUP BUTTON! It backs up the wad file in under a minute, so do that before doing anything else. It saves you however long for redownloading.
-
-# Mods
-Mods are basically .zip files renamed to .drs, and are put in a 'mods' folder.
-
-Include a mod.info file with the format of:
-
-
-Mod Name
-
-Author Name
-
-Description
-
-
-Any files included in the .dr1 file will be included in the repacked .wad
-
-NOTE: Installing mods requres at least 3.5 GB of harddrive space reserved for the extraction, however this folder is deleted after use.
-
-Installing mods takes around 1 to 1 and a half minutes.
-
-# Roadmap
-Current Plan:
-
-* Syntax: [X] = Done, [I] = Implementing, [ ] = Not Done
-* [X] Get basic mod installation working
-* [X] Get unpacking and repacking of .pak files working
-* [X] Get decompiling and recompiling of .lin files working
-* [I] Implement custom Spiral scripting format
-* [ ] Mod deletion
-
 # Credit
 Primary credit goes to https://github.com/AdmiralCurtiss/HyoutaTools and https://github.com/TcT2k/HLMWadExplorer for providing the basis of this program.
 
-# Patreon
-I do this work entirely in my spare time, and it's not always easy. While I enjoy doing it, it does take up a bunch of time.
+# Patreon (Also known as yes you can stop reading)
+I do this work entirely in my spare time (Shocking, right). And considering the scope of this project and others, it'd be nice if you spare a dollar or two every month. Nothing big, really. On the offchance that you're interested, details can be found here: https://www.patreon.com/undermybrella
 
-As such, I've set up a Patreon page, if people want to support me, which can be found here: https://www.patreon.com/undermybrella
-
-Please note: The Patreon page is entirely optional, and I won't stop my projects if nobody donates. However, it would be nice, as projects like this really do suck up a lot of time.
+Note the usual of it's a side thing I won't stop if I don't receive money etc etc etc whatever. You probably know the drill from everywhere else by now.
 
 Patreon Supporters:
-
-xMusicaRequiem
+* Zale
