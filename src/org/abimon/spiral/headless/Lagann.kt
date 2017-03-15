@@ -2,6 +2,7 @@ package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
 import org.abimon.visi.io.FileDataSource
+import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.SteamProtocol
 import org.abimon.visi.lang.time
 import java.io.File
@@ -11,24 +12,15 @@ fun main(args: Array<String>) {
     println("Initialising SPIRAL Power...")
 
     //restore()
-    //compare()
+    patch()
+    compare()
 
-    val patchTime = time {
-        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
-        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
-        val wad = WAD(FileDataSource(backupWadFile))
-        //wad.extractToDirectory(File("functional"))
-        val customWad = customWad {
-            major(1)
-            minor(1)
+    //patch()
 
-            wad(wad)
-            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("Hajime.png"))))
-            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("HajimeAirGuitar.png"))))
-        }
-        customWad.compile(FileOutputStream(wadFile))
-    }
-    println("Patching took $patchTime ms")
+    val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+    val wad = WAD(FileDataSource(wadFile))
+    wad.files.filter { (name) -> name.endsWith("bustup_00_00.tga") }.first().getInputStream().use { inputStream -> inputStream.writeTo(FileOutputStream(File("Test.tga"))) }
+
 //    wad.files.filter { file -> file.name.endsWith("dr1_voice_hca_us.awb.06547.ogg") }.first().getInputStream().use { inputStream -> inputStream.writeTo(FileOutputStream(File("dr1_voice_hca_us.awb.06547.ogg"))) }
 //
 //    val wadIS = FileInputStream(wadFile);
@@ -109,13 +101,16 @@ fun compare() {
         println(wad.directories.count())
         println(backupWad.directories.count())
 
-        println(wad.directories.flatMap(WADFileDirectory::subFiles).count())
-        println(backupWad.directories.flatMap(WADFileDirectory::subFiles).count())
+        println(wad.directories.flatMap(WADFileDirectory::subfiles).count())
+        println(backupWad.directories.flatMap(WADFileDirectory::subfiles).count())
 
         println(wad.files.count())
         println(backupWad.files.count())
 
+        wad.spiralHeader.ifPresent { header -> println(String(header)) }
+
 //        wad.files
+//                .filter { (name) -> backupWad.files.any { (backupName) -> backupName == name } }
 //                .map { file -> Pair(file, backupWad.files.first { (name) -> name == file.name }) }
 //                .filter { (file, backup) -> file.offset != backup.offset }
 //                .forEach { (original, backup) ->
@@ -123,6 +118,7 @@ fun compare() {
 //                }
 //
 //        wad.files
+//                .filter { (name) -> backupWad.files.any { (backupName) -> backupName == name } }
 //                .map { file -> Pair(file, backupWad.files.first { (name) -> name == file.name }) }
 //                .filter { (file, backup) -> file.size != backup.size }
 //                .forEach { (original, backup) ->
@@ -130,6 +126,7 @@ fun compare() {
 //                }
 //
 //        wad.directories
+//                .filter { (name) -> backupWad.files.any { (backupName) -> backupName == name } }
 //                .map { dir -> Pair(dir, backupWad.directories.first{ (name) -> name == dir.name }) }
 //                .filter { (dir, backup) -> dir.subFiles.count() != backup.subFiles.count() }
 //                .forEach { (dir, backup) ->
@@ -142,4 +139,25 @@ fun compare() {
     println("Took $time ms")
 
     Thread.sleep(1000)
+}
+
+fun patch() {
+    val patchTime = time {
+        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
+        val wad = WAD(FileDataSource(backupWadFile))
+        //wad.extractToDirectory(File("functional"))
+        val customWad = customWad {
+            major(11037)
+            minor(1)
+
+            headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
+
+            wad(wad)
+            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("Hajime.png"))))
+            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("HajimeAirGuitar.png"))))
+        }
+        customWad.compile(FileOutputStream(wadFile))
+    }
+    println("Patching took $patchTime ms")
 }

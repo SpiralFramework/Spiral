@@ -5,16 +5,15 @@ import org.abimon.util.OffsetInputStream
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.remove
 import org.abimon.visi.lang.toArrayString
+import org.abimon.visi.security.sha512Hash
 import java.io.*
-import java.math.BigInteger
 import java.nio.charset.Charset
-import java.security.MessageDigest
 import java.util.*
-import java.util.function.Supplier
 import java.util.zip.ZipInputStream
 
 val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
 val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
+val spiralHeaderName = "Spiral-Header"
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding
@@ -31,6 +30,8 @@ class WAD(val dataSource: DataSource) {
     val directories = LinkedList<WADFileDirectory>()
 
     val dataOffset: Long
+
+    val spiralHeader: Optional<ByteArray>
 
     operator fun component1(): Int = major
     operator fun component2(): Int = minor
@@ -67,21 +68,26 @@ class WAD(val dataSource: DataSource) {
             for (i in 0 until numberOfDirectories) {
                 val len = wad.readNumber(4, true).toInt()
                 val name = wad.readString(len)
-                val subFiles = LinkedList<WADFileSubfile>()
+                val subfiles = LinkedList<WADFileSubfile>()
                 val numberOfSubFiles = wad.readNumber(4, true)
 
                 for (j in 0 until numberOfSubFiles) {
                     val subLen = wad.readNumber(4, true).toInt()
                     val subName = wad.readString(subLen)
                     val isFile = wad.read() == 0
-                    subFiles.add(WADFileSubfile(subName, isFile))
+                    subfiles.add(WADFileSubfile(subName, isFile))
                 }
 
-                directories.add(WADFileDirectory(name, subFiles))
+                directories.add(WADFileDirectory(name, subfiles))
             }
 
             dataOffset = wad.count
             wad.close()
+
+            if(files.any { (name) -> name == spiralHeaderName })
+                spiralHeader = files.first { (name) -> name == spiralHeaderName }.getData().asOptional()
+            else
+                spiralHeader = Optional.empty()
         }
         catch(illegal: IllegalArgumentException){
             wad.close()
@@ -101,7 +107,7 @@ data class WADFile(val name: String, val size: Long, val offset: Long, val wad: 
 
     override fun getDataSize(): Long = size
 }
-data class WADFileDirectory(val name: String, val subFiles: List<WADFileSubfile>)
+data class WADFileDirectory(val name: String, val subfiles: List<WADFileSubfile>)
 data class WADFileSubfile(val name: String, val isFile: Boolean)
 
 class CustomWAD {
@@ -119,6 +125,11 @@ class CustomWAD {
     }
     fun header(header: ByteArray) {
         this.header = header
+        errPrintln("Warning: Danganronpa does not presently support the header field of a WAD file! Proceed with ***extreme*** caution! (Maybe you're looking for headerFile() ?)")
+    }
+
+    fun headerFile(header: ByteArray) {
+        data(spiralHeaderName, FunctionDataSource { header })
     }
 
     fun data(name: String, dataSource: DataSource) {
@@ -128,7 +139,7 @@ class CustomWAD {
     }
 
     fun data(name: String, data: ByteArray) {
-        data(name, FunctionalDataSource(Supplier { data }))
+        data(name, FunctionDataSource { data })
     }
 
     fun file(file: File, name: String = file.name) {
@@ -243,7 +254,7 @@ fun customWad(init: CustomWAD.() -> Unit): CustomWAD {
  * Filenames are therefore generated as the index of the file, and a format may be guessed based on some information.
  * SPIRAL also has a method to get the name if it has been recorded previously
  *
- * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. Instead, they start at the end of the header
+ * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
 class Pak(val dataSource: DataSource) {
     val offsets: LongArray
@@ -355,7 +366,18 @@ fun customPak(init: CustomPak.() -> Unit): CustomPak {
     return pak
 }
 
-//Now we reach the Vita portions
+/**
+ * *Sigh*
+ * Here we are, the script files.
+ * Massive writeup for the lin format itself, check Formats.md
+ */
+class Lin(val dataSource: DataSource) {
+    init {
+        println("Why do you do this to me")
+    }
+}
+
+/** Vita */
 
 class CPK(val dataSource: DataSource) {
 
@@ -400,7 +422,6 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
         STORAGE_ZERO(0x10),
         STORAGE_CONSTANT(0x30),
         STORAGE_PERROW(0x50),
-
 
         TYPE_MASK(0x0f),
         TYPE_DATA(0x0b),
@@ -553,8 +574,8 @@ object SpiralNames {
 
     fun getPakName(pathName: String, data: ByteArray): Optional<String> {
         if(pakNames.containsKey(pathName)) {
-            val (md5, name) = pakNames[pathName]!!
-            if(md5 == getMD5(data))
+            val (sha512, name) = pakNames[pathName]!!
+            if(sha512 == data.sha512Hash())
                 return name.asOptional()
         }
 
@@ -563,8 +584,8 @@ object SpiralNames {
 
     fun getFormat(pathName: String, data: ByteArray): Optional<SpiralFormat> {
         if(formats.containsKey(pathName)) {
-            val (md5, format) = formats[pathName]!!
-            if(md5 == getMD5(data))
+            val (sha512, format) = formats[pathName]!!
+            if(sha512 == data.sha512Hash())
                 return format.asOptional()
         }
 
@@ -573,8 +594,8 @@ object SpiralNames {
 
     fun getFormat(pathName: String, data: DataSource): Optional<SpiralFormat> {
         if(formats.containsKey(pathName)) {
-            val (md5, format) = formats[pathName]!!
-            if(md5 == getMD5(data.getData()))
+            val (sha512, format) = formats[pathName]!!
+            if(sha512 == data.getData().sha512Hash())
                 return format.asOptional()
         }
 
@@ -582,14 +603,8 @@ object SpiralNames {
     }
 
     fun registerFormat(pathName: String, data: ByteArray, format: SpiralFormat) {
-        formats[pathName] = Pair(getMD5(data), format)
+        formats[pathName] = Pair(data.sha512Hash(), format)
         save()
-    }
-
-    private fun getMD5(data: ByteArray): String {
-        val md5 = MessageDigest.getInstance("MD5")
-        md5.update(data)
-        return BigInteger(1, md5.digest()).toString(16)
     }
 
     fun save() {
