@@ -19,3 +19,4 @@ Note the usual of it's a side thing I won't stop if I don't receive money etc et
 
 Patreon Supporters:
 * Zale
+* Akane

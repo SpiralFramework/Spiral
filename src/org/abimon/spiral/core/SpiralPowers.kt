@@ -1,14 +1,12 @@
 package org.abimon.spiral.core
 
 import org.abimon.external.TGAWriter
-import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.toBinaryString
 import org.abimon.visi.lang.toFloat
 import org.abimon.visi.lang.toLong
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
@@ -51,7 +49,7 @@ fun InputStream.readFloat(unsigned: Boolean = false): Float {
 }
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
-    var data: ByteArray = ByteArray(len.coerceAtLeast(0))
+    val data: ByteArray = ByteArray(len.coerceAtLeast(0))
     read(data)
     return String(data, Charset.forName(encoding))
 }
@@ -60,7 +58,7 @@ fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8"): S
     val max = maxLen.coerceAtMost(255)
     val baos = ByteArrayOutputStream()
 
-    for(i in 0 until maxLen) {
+    for(i in 0 until max) {
         val read = read()
         if(read <= 0)
             break
@@ -122,7 +120,7 @@ fun Short.write(unsigned: Boolean = false): ByteArray {
     return baos.toByteArray()
 }
 
-fun Byte.write(unsigned: Boolean = false): ByteArray = ByteArray(1, {this})
+fun Byte.write(): ByteArray = ByteArray(1, {this})
 
 fun ByteArray.write(outputStream: OutputStream) {
     outputStream.write(this)
@@ -132,6 +130,10 @@ fun OutputStream.writeString(str: String, encoding: String = "UTF-8") = write(st
 
 fun String.getParents(): String {
     return if(this.lastIndexOf('/') == -1) "" else this.substring(0, this.lastIndexOf('/'))
+}
+
+fun String.getChild(): String {
+    return if(this.lastIndexOf('/') == -1) this else this.substring(this.lastIndexOf('/') + 1, length)
 }
 
 fun <T> T.asOptional(): Optional<T> = Optional.of(this)

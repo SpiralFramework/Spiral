@@ -3,6 +3,7 @@ package org.abimon.spiral.core
 import org.abimon.external.TGAReader
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
@@ -18,8 +19,6 @@ interface SpiralFormat {
     fun canConvert(format: SpiralFormat): Boolean
     /**
      * Convert from this format to another
-     * @param transformer [Transformer#invoke][transformer] is called when writing **new data to the output**.
-     * Therefore, it is not called for things like [TGAFormat.convert], as no unexpected or new input is being provided
      */
     fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         if(!canConvert(format))
@@ -210,4 +209,9 @@ object SpiralFormats {
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): Optional<SpiralFormat> = selectiveFormats.findOrEmpty { it.isFormat(dataSource) }
     fun formatForName(name: String): Optional<SpiralFormat> = formats.findOrEmpty { it.getName().equals(name, true) }
 
+    fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource): ByteArray {
+        val baos = ByteArrayOutputStream()
+        from.convert(to, source, baos)
+        return baos.toByteArray()
+    }
 }

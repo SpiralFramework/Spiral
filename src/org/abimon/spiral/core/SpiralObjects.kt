@@ -3,6 +3,7 @@ package org.abimon.spiral.core
 import org.abimon.util.CountingInputStream
 import org.abimon.util.OffsetInputStream
 import org.abimon.visi.io.*
+import org.abimon.visi.lang.remove
 import org.abimon.visi.lang.toArrayString
 import java.io.*
 import java.math.BigInteger
@@ -11,6 +12,9 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.function.Supplier
 import java.util.zip.ZipInputStream
+
+val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
+val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding
@@ -66,8 +70,12 @@ class WAD(val dataSource: DataSource) {
                 val subFiles = LinkedList<WADFileSubfile>()
                 val numberOfSubFiles = wad.readNumber(4, true)
 
-                for (j in 0 until numberOfSubFiles)
-                    subFiles.add(WADFileSubfile(wad.readString(wad.readNumber(4, true).toInt()), wad.read() == 0))
+                for (j in 0 until numberOfSubFiles) {
+                    val subLen = wad.readNumber(4, true).toInt()
+                    val subName = wad.readString(subLen)
+                    val isFile = wad.read() == 0
+                    subFiles.add(WADFileSubfile(subName, isFile))
+                }
 
                 directories.add(WADFileDirectory(name, subFiles))
             }
@@ -101,7 +109,7 @@ class CustomWAD {
     var minor: Long = 0
     var header: ByteArray = ByteArray(0)
 
-    var files: LinkedList<CustomWADFile> = LinkedList()
+    private var files: LinkedList<CustomWADFile> = LinkedList()
 
     fun major(major: Number) {
         this.major = major.toLong()
@@ -114,7 +122,9 @@ class CustomWAD {
     }
 
     fun data(name: String, dataSource: DataSource) {
-        files.add(CustomWADFile(name.replace(File.separator, "/"), dataSource))
+        val newName = name.replace(File.separator, "/")
+        files.remove { (customFile) -> customFile == newName }
+        files.add(CustomWADFile(newName, dataSource))
     }
 
     fun data(name: String, data: ByteArray) {
@@ -179,21 +189,22 @@ class CustomWAD {
                 dirs[""] = HashSet()
             if (str.isNotBlank())
                 dirs[""]!!.add(str)
-        }
 
-        println("$dirs")
+            if (dirs.containsKey(it.name.getParents()))
+                dirs[it.name.getParents()]!!.add(it.name)
+        }
 
         val setDirs = getDirs(dirs, "")
         wad.writeNumber(setDirs.size.toLong(), 4, true)
 
-        setDirs.forEach {
+        setDirs.sortedWith(Comparator<String>(String::compareTo)).forEach {
             val name = it.toByteArray(Charset.forName("UTF-8"))
             wad.writeNumber(name.size.toLong(), 4, true)
             wad.write(name)
             wad.writeNumber(dirs[it]!!.size.toLong(), 4, true)
 
-            dirs[it]!!.forEach {
-                val fileName = it.toByteArray(Charset.forName("UTF-8"))
+            dirs[it]!!.sortedWith(Comparator<String>(String::compareTo)).forEach {
+                val fileName = it.getChild().toByteArray(Charset.forName("UTF-8"))
                 wad.writeNumber(fileName.size.toLong(), 4, true)
                 wad.write(fileName)
                 wad.write(if(dirs.containsKey(it)) 1 else 0)
@@ -215,7 +226,7 @@ class CustomWAD {
     }
 }
 
-class CustomWADFile(val name: String, val dataSource: DataSource)
+data class CustomWADFile(val name: String, val dataSource: DataSource)
 
 fun customWad(init: CustomWAD.() -> Unit): CustomWAD {
     val wad = CustomWAD()

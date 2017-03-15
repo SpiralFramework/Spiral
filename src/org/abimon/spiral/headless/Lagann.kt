@@ -1,35 +1,40 @@
 package org.abimon.spiral.headless
 
-import org.abimon.external.TGAReader
 import org.abimon.spiral.core.*
-import org.abimon.visi.io.*
-import org.abimon.visi.lang.toArrayString
-import java.io.*
-import java.nio.charset.Charset
-import java.util.*
-import java.util.zip.ZipInputStream
+import org.abimon.visi.io.FileDataSource
+import org.abimon.visi.lang.SteamProtocol
+import org.abimon.visi.lang.time
+import java.io.File
+import java.io.FileOutputStream
 
 fun main(args: Array<String>) {
     println("Initialising SPIRAL Power...")
 
-    val data = File("bustup_01_00.png")
-    val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
-    val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
-    val tmpWadFile = File(wadFile.absolutePath + ".tmp")
-    val wad = WAD(FileDataSource(backupWadFile))
-    //wad.extractToDirectory(File("functional"))
-    val customWad = customWad {
-        major(1)
-        minor(1)
+    //restore()
+    //compare()
 
-        //directory(File("functional"))
-        wad(wad)
+    val patchTime = time {
+        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
+        val wad = WAD(FileDataSource(backupWadFile))
+        //wad.extractToDirectory(File("functional"))
+        val customWad = customWad {
+            major(1)
+            minor(1)
+
+            wad(wad)
+            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("Hajime.png"))))
+            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("HajimeAirGuitar.png"))))
+        }
+        customWad.compile(FileOutputStream(wadFile))
     }
-    customWad.compile(FileOutputStream(wadFile))
-    wad.files.filter { file -> file.name.endsWith("dr1_voice_hca_us.awb.06547.ogg") }.first().getInputStream().use { inputStream -> inputStream.writeTo(FileOutputStream(File("dr1_voice_hca_us.awb.06547.ogg"))) }
+    println("Patching took $patchTime ms")
+//    wad.files.filter { file -> file.name.endsWith("dr1_voice_hca_us.awb.06547.ogg") }.first().getInputStream().use { inputStream -> inputStream.writeTo(FileOutputStream(File("dr1_voice_hca_us.awb.06547.ogg"))) }
+//
+//    val wadIS = FileInputStream(wadFile);
+//    val backupIS = FileInputStream(backupWadFile)
 
-    val wadIS = FileInputStream(wadFile);
-    val backupIS = FileInputStream(backupWadFile)
+    SteamProtocol.openGame(STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC)
 /**
     wadIS.use {
         backupIS.use {
@@ -71,4 +76,70 @@ fun main(args: Array<String>) {
     //customWad.compile(FileOutputStream(tmpWadFile))
     //wadFile.delete()
     //tmpWadFile.renameTo(wadFile)
+}
+
+fun restore() {
+    val time = time {
+        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
+
+        val backupWad = WAD(FileDataSource(backupWadFile))
+
+        val customWad = customWad {
+            major(1)
+            minor(1)
+
+            wad(backupWad)
+        }
+        customWad.compile(FileOutputStream(wadFile))
+    }
+    println("Took $time ms")
+
+    Thread.sleep(1000)
+}
+
+fun compare() {
+    val time = time {
+        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
+
+        val wad = WAD(FileDataSource(wadFile))
+        val backupWad = WAD(FileDataSource(backupWadFile))
+
+        println(wad.directories.count())
+        println(backupWad.directories.count())
+
+        println(wad.directories.flatMap(WADFileDirectory::subFiles).count())
+        println(backupWad.directories.flatMap(WADFileDirectory::subFiles).count())
+
+        println(wad.files.count())
+        println(backupWad.files.count())
+
+//        wad.files
+//                .map { file -> Pair(file, backupWad.files.first { (name) -> name == file.name }) }
+//                .filter { (file, backup) -> file.offset != backup.offset }
+//                .forEach { (original, backup) ->
+//                    println("${original.name}'s offset is not equal (${original.offset} ≠ ${backup.offset})")
+//                }
+//
+//        wad.files
+//                .map { file -> Pair(file, backupWad.files.first { (name) -> name == file.name }) }
+//                .filter { (file, backup) -> file.size != backup.size }
+//                .forEach { (original, backup) ->
+//                    println("${original.name}'s size is not equal (${original.size} ≠ ${backup.size})")
+//                }
+//
+//        wad.directories
+//                .map { dir -> Pair(dir, backupWad.directories.first{ (name) -> name == dir.name }) }
+//                .filter { (dir, backup) -> dir.subFiles.count() != backup.subFiles.count() }
+//                .forEach { (dir, backup) ->
+//                    println("${dir.name} has an inconsistent subfile count (${dir.subFiles.count()} ≠ ${backup.subFiles.count()}")
+//                }
+
+        if(wad.dataOffset != backupWad.dataOffset)
+            println("Data offsets are not equal (${wad.dataOffset} ≠ ${backupWad.dataOffset})")
+    }
+    println("Took $time ms")
+
+    Thread.sleep(1000)
 }
