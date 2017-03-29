@@ -1,10 +1,11 @@
 package org.abimon.spiral.core
 
 import org.abimon.visi.io.*
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.*
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
@@ -66,16 +67,16 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
             val format = possibleFormat.get()
             when(format) {
                 is TGAFormat -> {
-                    zipOut.putNextEntry(ZipEntry(it.name + if(SpiralFormats.PNG.getExtension().isPresent) ".${SpiralFormats.PNG.getExtension().get()}" else ""))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${SpiralFormats.PNG.getExtension()}"))
                     format.convert(SpiralFormats.PNG, it, zipOut)
                 }
                 is PAKFormat -> {
-                    zipOut.putNextEntry(ZipEntry(it.name + if(SpiralFormats.ZIP.getExtension().isPresent) ".${SpiralFormats.ZIP.getExtension().get()}" else ""))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${SpiralFormats.ZIP.getExtension()}"))
                     format.convert(SpiralFormats.ZIP, it, zipOut)
                 }
                 is WADFormat -> println("Oh no. $name#${it.name} is a WAD file. Panic. Now.")
                 else -> {
-                    zipOut.putNextEntry(ZipEntry(it.name + if(format.getExtension().isPresent) ".${format.getExtension().get()}" else ""))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${format.getExtension()}"))
                     it.getInputStream().writeTo(zipOut)
                 }
             }

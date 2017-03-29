@@ -136,6 +136,10 @@ fun String.getChild(): String {
     return if(this.lastIndexOf('/') == -1) this else this.substring(this.lastIndexOf('/') + 1, length)
 }
 
+fun String.getExtension(): String {
+    return if(this.lastIndexOf('.') == -1) this else this.substring(this.lastIndexOf('.') + 1, length)
+}
+
 fun <T> T.asOptional(): Optional<T> = Optional.of(this)
 
 inline fun <T> Array<out T>.findOrEmpty(predicate: (T) -> Boolean): Optional<T> {

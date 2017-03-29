@@ -270,8 +270,8 @@ class Pak(val dataSource: DataSource) {
 
             for (i in 0 until numFiles) {
                 offsets[i] = pak.readNumber(4, true)
-                if (offsets[i] <= 0)
-                    throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt (${offsets[i]} <= 0)")
+                if (offsets[i] < 0)
+                    throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt (${offsets[i]} < 0)")
                 else if (offsets[i] >= dataSource.getDataSize())
                     throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt (${offsets[i]} >= ${dataSource.getDataSize()})")
             }

@@ -14,7 +14,7 @@ import javax.imageio.ImageIO
 
 interface SpiralFormat {
     fun getName(): String
-    fun getExtension(): Optional<String> = getName().toLowerCase().asOptional()
+    fun getExtension(): String = getName().toLowerCase()
     fun isFormat(source: DataSource): Boolean
     fun canConvert(format: SpiralFormat): Boolean
     /**
@@ -160,7 +160,7 @@ class PNGFormat : SpiralFormat {
     }
 }
 class JPEGFormat : SpiralFormat {
-    override fun getName(): String = "JPEG"
+    override fun getName(): String = "JPG"
 
     override fun isFormat(source: DataSource): Boolean =
             source.getInputStream().use { ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
@@ -205,7 +205,7 @@ object SpiralFormats {
     val formats = arrayOf(WAD, PAK, TGA, ZIP, PNG, JPG)
     val drWadFormats = arrayOf(WAD, PAK, TGA)
 
-    fun formatForExtension(extension: String): Optional<SpiralFormat> = formats.findOrEmpty { (it.getExtension().isPresent) and (it.getExtension().get() == extension) }
+    fun formatForExtension(extension: String): Optional<SpiralFormat> = formats.findOrEmpty { (it.getExtension() == extension) }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): Optional<SpiralFormat> = selectiveFormats.findOrEmpty { it.isFormat(dataSource) }
     fun formatForName(name: String): Optional<SpiralFormat> = formats.findOrEmpty { it.getName().equals(name, true) }
 

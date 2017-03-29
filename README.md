@@ -1,7 +1,20 @@
 # Spiral
 Spiral is a Danganronpa Modding Framework written in Kotlin, which is currently undergoing a major rewrite. Watch this space for any updates which may or may not happen, but stay tuned!
 
-At the moment the only way you'll be able to use this is by actually coding an extension, so trust me; it's not usable.
+# Usage
+Right now, the SPIRAL indev release is a **command line only program**. That means, you need to open it using either Command Prompt, or Terminal, depending on your operating system.
+
+Open your Command Prompt or Terminal, and type in "java -jar ", and then drag in the JAR file downloaded from the Releases page. This will either start up SPIRAL or inform you that you need to install Java.
+
+Currently, the feature set of SPIRAL is fairly limited - supporting extraction and conversion only. A full list of commands is available in the program, however for convenience a simple list is provided here
+* help
+* find
+* registered
+* convert
+* operate
+* exit
+
+If you discover a bug, please report it!
 
 # Dependencies
 https://github.com/UnderMybrella/Visi
