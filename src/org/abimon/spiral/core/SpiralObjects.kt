@@ -1,5 +1,9 @@
 package org.abimon.spiral.core
 
+import org.abimon.spiral.core.lin.LinScript
+import org.abimon.spiral.core.lin.TextCountEntry
+import org.abimon.spiral.core.lin.TextEntry
+import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.util.CountingInputStream
 import org.abimon.util.OffsetInputStream
 import org.abimon.visi.io.*
@@ -10,6 +14,9 @@ import java.io.*
 import java.nio.charset.Charset
 import java.util.*
 import java.util.zip.ZipInputStream
+import kotlin.String
+import kotlin.collections.ArrayList
+import kotlin.collections.set
 
 val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
 val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
@@ -372,9 +379,177 @@ fun customPak(init: CustomPak.() -> Unit): CustomPak {
  * Massive writeup for the lin format itself, check Formats.md
  */
 class Lin(val dataSource: DataSource) {
+    val linType: Long
+    val headerSpace: Long
+    val size: Long
+    val textBlock: Long
+    val header: ByteArray
+    val entries: ArrayList<LinScript>
     init {
         println("Why do you do this to me")
+
+        val lin = CountingInputStream(DataInputStream(dataSource.getInputStream()))
+        try {
+            linType = lin.readNumber(4, true)
+            headerSpace = lin.readNumber(4, true)
+
+            if (linType == 1L) {
+                size = lin.readNumber(4, true)
+                textBlock = size
+            } else if (linType == 2L) {
+                textBlock = lin.readNumber(4, true)
+                size = lin.readNumber(4, true)
+            } else
+                throw IllegalArgumentException("Unknown LIN type $linType")
+
+            header = lin.readPartialBytes((headerSpace - (if(linType == 1L) 12 else 16)).toInt())
+            entries = ArrayList<LinScript>()
+            val data = lin.readPartialBytes((textBlock - headerSpace).toInt()).map { byte -> byte.toInt() }
+
+            val textStream = ByteArrayInputStream(lin.readPartialBytes((size - textBlock).toInt()))
+            val numTextEntries = textStream.readNumber(4, true)
+
+            var i = 0
+
+            for (index in 0 until data.size) {
+                if(i >= data.size)
+                    break
+
+                if (data[i] == 0x0) {
+                    println("$i is 0x0")
+                    i++
+                }
+
+                if (data[i] != 0x70) {
+                    while (i < data.size) {
+                        errPrintln("$i expected to be 0x70, was ${data[i]}")
+                        if (i == 0x00 || i == 0x70)
+                            break
+                        i++
+                    }
+                } else {
+                    val opCode = data[i++ + 1]
+                    val (argumentCount) = SpiralData.opCodes.getOrDefault(opCode, Pair(-1, opCode.toString(16)))
+                    val arguments: Array<Int>
+
+                    if (argumentCount == -1) {
+                        val args = ArrayList<Int>()
+                        while (i + 1 < data.size && data[i + 1] != 0x70) {
+                            args.add(data[i] and 0xFF)
+                            i++
+                        }
+                        arguments = args.toTypedArray()
+                    } else {
+                        arguments = Array(argumentCount, { 0 })
+
+                        for (argumentIndex in 0 until argumentCount) {
+                            arguments[argumentIndex] = data[i + 1] and 0xFF
+                            i++
+                        }
+                    }
+
+                    when(opCode) {
+                        0x00 -> entries.add(TextCountEntry((arguments[1] shl 8) or arguments[0]))
+                        0x02 -> {
+                            val textID = ((arguments[0] shl 8) or arguments[1])
+                            textStream.reset()
+                            textStream.skip((textID + 1) * 4L)
+                            val textPos = textStream.readNumber(4, true)
+
+                            val nextTextPos: Long
+                            if(textID.toLong() == (numTextEntries - 1))
+                                nextTextPos = size - textBlock
+                            else {
+                                textStream.reset()
+                                textStream.skip((textID + 2) * 4L)
+                                nextTextPos = textStream.readNumber(4, true)
+                            }
+
+                            textStream.reset()
+                            textStream.skip(textPos)
+                            entries.add(TextEntry(textStream.readString((nextTextPos - textPos).toInt(), "UTF-16"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
+                        }
+                        else -> entries.add(UnknownEntry(opCode, arguments.toIntArray()))
+                    }
+                }
+                i++
+            }
+        } catch(illegal: IllegalArgumentException) {
+            illegal.printStackTrace()
+            throw illegal
+        }
     }
+}
+
+class CustomLin {
+    var type = 2
+    var header: ByteArray = ByteArray(0)
+    val entries: ArrayList<LinScript> = ArrayList()
+
+    fun type(type: Int) {
+        this.type = type
+    }
+
+    fun entry(script: LinScript) {
+        if(entries.any { entry -> entry.getOpCode() == script.getOpCode() && entry.getRawArguments().contentEquals(script.getRawArguments()) })
+            entries.removeIf { entry -> entry.getOpCode() == script.getOpCode() && entry.getRawArguments().contentEquals(script.getRawArguments()) }
+        entries.add(script)
+    }
+
+    fun entry(text: String) {
+        entry(TextEntry(text, 0, 0, 0))
+    }
+
+    fun compile(lin: OutputStream) {
+        lin.writeNumber(type.toLong(), 4, true)
+        lin.writeNumber((header.size + (if(type == 1) 12 else 16)).toLong(), 4, true)
+
+        val entryData = ByteArrayOutputStream()
+        val textData = ByteArrayOutputStream()
+        val textText = ByteArrayOutputStream()
+
+        textData.writeNumber(entries.count { entry -> entry is TextEntry }.toLong(), 4, true)
+
+        var textID: Int = 0
+
+        entries.add(0, TextCountEntry(entries.count { entry -> entry is TextEntry }))
+
+        entries.forEach { entry ->
+            entryData.write(0x70)
+            entryData.write(entry.getOpCode())
+
+            if(entry is TextEntry) {
+                val strData = entry.text.toByteArray(Charsets.UTF_16)
+                textData.writeNumber(textText.size().toLong(), 4, true)
+                textText.write(strData)
+
+                entryData.write(textID / 256)
+                entryData.write(textID % 256)
+
+                textID++
+            }
+            else {
+                entry.getRawArguments().forEach { arg -> entryData.write(arg) }
+            }
+        }
+
+        if(type == 1)
+            lin.writeNumber((12 + entryData.size() + textData.size() + textText.size()).toLong(), 4, true)
+        else {
+            lin.writeNumber((16 + entryData.size()).toLong(), 4, true)
+            lin.writeNumber((16 + entryData.size() + textData.size() + textText.size()).toLong(), 4, true)
+        }
+
+        lin.write(entryData.toByteArray())
+        lin.write(textData.toByteArray())
+        lin.write(textText.toByteArray())
+    }
+}
+
+fun customLin(init: CustomLin.() -> Unit): CustomLin {
+    val lin = CustomLin()
+    lin.init()
+    return lin
 }
 
 /** Vita */
@@ -567,10 +742,15 @@ class CPKRow(var type: CPKType = CPKType.DATA, var data: ByteArray = ByteArray(0
 
 data class CPKFileEntry(var dirName: String = "", var fileName: String = "", var fileSize: Long = 0, var extractSize: Long = 0, var id: Long = 0, var userString: String = "", var localDir: String = "", var fileOffset: Long = 0, var fileType: String = "")
 
-object SpiralNames {
+object SpiralData {
     val pakNames = HashMap<String, Pair<String, String>>()
     val formats = HashMap<String, Pair<String, SpiralFormat>>()
     val config = File(".spiral_names")
+    val opCodes = tripleMapOf(
+            Triple(0x00, 2, "TextCount"),
+            Triple(0x01, 3, "0x03"),
+            Triple(0x02, 2, "Text")
+    )
 
     fun getPakName(pathName: String, data: ByteArray): Optional<String> {
         if(pakNames.containsKey(pathName)) {

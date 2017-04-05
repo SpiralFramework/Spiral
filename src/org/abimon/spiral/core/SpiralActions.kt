@@ -38,9 +38,9 @@ fun WAD.extractToDirectory(directory: File) {
 }
 
 fun Collection<File>.convertTgaToPng() {
-    filter { it.name.endsWith(".tga") && ((SpiralNames.getFormat(it.name, FileDataSource(it)).orElse(SpiralFormats.UNKNOWN) is TGAFormat) or SpiralFormats.TGA.isFormat(FileDataSource(it))) }.forEach {
+    filter { it.name.endsWith(".tga") && ((SpiralData.getFormat(it.name, FileDataSource(it)).orElse(SpiralFormats.UNKNOWN) is TGAFormat) or SpiralFormats.TGA.isFormat(FileDataSource(it))) }.forEach {
         val data = it.readBytes()
-        SpiralNames.registerFormat(it.name, data, SpiralFormats.TGA)
+        SpiralData.registerFormat(it.name, data, SpiralFormats.TGA)
         val out = FileOutputStream(File(it.absolutePath.replace(".tga", ".png")))
         SpiralFormats.TGA.convert(SpiralFormats.PNG, FunctionDataSource { data }, out)
         it.delete()
@@ -48,8 +48,8 @@ fun Collection<File>.convertTgaToPng() {
 }
 
 fun Collection<File>.convertPakToZip() {
-    filter {file -> file.name.endsWith(".pak") && ((SpiralNames.getFormat(file.name, FileDataSource(file)).orElse(SpiralFormats.UNKNOWN) is PAKFormat) or SpiralFormats.PAK.isFormat(FileDataSource(file))) }.forEach { file ->
-        SpiralNames.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
+    filter {file -> file.name.endsWith(".pak") && ((SpiralData.getFormat(file.name, FileDataSource(file)).orElse(SpiralFormats.UNKNOWN) is PAKFormat) or SpiralFormats.PAK.isFormat(FileDataSource(file))) }.forEach { file ->
+        SpiralData.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
 
         FileOutputStream(file.absolutePath.replace(".pak", ".zip")).use { Pak(FileDataSource(file)).convertToZip(file.name, it) }
     }
@@ -59,7 +59,7 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
     val zipOut = ZipOutputStream(outputStream)
 
     files.forEach {
-        var possibleFormat = SpiralNames.getFormat("$name#${it.name}", it)
+        var possibleFormat = SpiralData.getFormat("$name#${it.name}", it)
         if(!possibleFormat.isPresent)
             possibleFormat = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
 
@@ -80,7 +80,7 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
                     it.getInputStream().writeTo(zipOut)
                 }
             }
-            SpiralNames.registerFormat("$name#${it.name}", it.getData(), format)
+            SpiralData.registerFormat("$name#${it.name}", it.getData(), format)
         }
         else {
             zipOut.putNextEntry(ZipEntry(it.name))

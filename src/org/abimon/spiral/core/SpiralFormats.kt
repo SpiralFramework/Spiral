@@ -3,9 +3,7 @@ package org.abimon.spiral.core
 import org.abimon.external.TGAReader
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.OutputStream
+import java.io.*
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -116,6 +114,26 @@ class TGAFormat : SpiralFormat {
         }
     }
 }
+class LINFormat : SpiralFormat {
+    override fun getName(): String = "LIN"
+
+    override fun isFormat(source: DataSource): Boolean {
+        try {
+            Lin(source)
+            return true
+        }
+        catch(illegal: IllegalArgumentException){}
+        return false
+    }
+
+    override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat
+
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
+        super.convert(format, source, output)
+
+        Lin(source).entries.forEach { entry -> output.writeString("0x${entry.getOpCode().toString(16)}|${entry.getRawArguments().joinToString()}\n") }
+    }
+}
 
 class ZIPFormat : SpiralFormat {
     override fun getName(): String = "ZIP"
@@ -181,6 +199,45 @@ class JPEGFormat : SpiralFormat {
         }
     }
 }
+class TXTFormat : SpiralFormat {
+    override fun getName(): String = "TXT"
+
+    override fun isFormat(source: DataSource): Boolean = true
+
+    override fun canConvert(format: SpiralFormat): Boolean = format is LINFormat
+
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
+        super.convert(format, source, output)
+
+        when(format) {
+            is LINFormat -> {
+                val reader = BufferedReader(InputStreamReader(source.getInputStream()))
+                val lin = customLin {
+                    reader.forEachLine loop@{ line ->
+                        val parts = line.split("|", limit = 2)
+                        if(parts.size != 2)
+                            return@loop
+
+                        val opCode = parts[0]
+                        val args = parts[1].split(",")
+
+                        val op: Int
+                        if(opCode.startsWith("0x"))
+                            op = opCode.substring(2).toInt(16)
+                        else if(opCode.matches("\\d+".toRegex()))
+                            op = opCode.toInt()
+                        else if(SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
+                            op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.value.first
+                        else
+                            op = 0x00
+
+                        println(op)
+                    }
+                }
+            }
+        }
+    }
+}
 
 class UnknownFormat : SpiralFormat {
     override fun getName(): String = "UNKNOWN"
@@ -195,15 +252,17 @@ object SpiralFormats {
     val WAD = WADFormat()
     val PAK = PAKFormat()
     val TGA = TGAFormat()
+    val LIN = LINFormat()
 
     val ZIP = ZIPFormat()
     val PNG = PNGFormat()
     val JPG = JPEGFormat()
+    val TXT = TXTFormat()
 
     val  UNKNOWN = UnknownFormat()
 
-    val formats = arrayOf(WAD, PAK, TGA, ZIP, PNG, JPG)
-    val drWadFormats = arrayOf(WAD, PAK, TGA)
+    val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT)
+    val drWadFormats = arrayOf(WAD, PAK, TGA, LIN)
 
     fun formatForExtension(extension: String): Optional<SpiralFormat> = formats.findOrEmpty { (it.getExtension() == extension) }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): Optional<SpiralFormat> = selectiveFormats.findOrEmpty { it.isFormat(dataSource) }
