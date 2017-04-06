@@ -108,12 +108,12 @@ TGA files are a mess, which is why I was glad to not have to handle them myself.
 * `0x00` - Text Count, two arguments. The number of text lines in the file. Argument 1 is the remainder of the full number divided by 256, and the second is the full number divided by 256.
 * `0x01` - Unknown, 3 arguments.
 * `0x02` - Text. The basis of the game, really. Two arguments. The first is the starting offset (0-indexed) of the text to read, and the second argument is the ending offset.
-* `0x03` - Formatting. One argument. This is used for things like bolding, self talk, and so forth. `3` is **bold**, `4` is used for when the protag talks to themself, `17` is used for the Weak Points in class trials, and `69` is used when you `agree` with a statement.
+* `0x03` - Format. One argument. This is used for things like bolding, self talk, and so forth. `3` is **bold**, `4` is used for when the protag talks to themself, `17` is used for the Weak Points in class trials, and `69` is used when you `agree` with a statement.
 * `0x04` - Filter. Four arguments. The filter to apply to a scene. Details unknown, will investigate further.
 * `0x05` - Movie. Two arguments. Argument 1 is the full movie ID divided by 256, and the second is the remainder of that operation.
 * `0x06` - Animation. Eight arguments. Argument 1 is the animation ID divided by 256, the second is the remainder. The third to seventh arguments are unknown. The eighth argument is the frame to use, and 255 to hide it.
 * `0x07` - Unknown
-* `0x08` - Voice line, Five arguments. The first is the character ID (See below). The second is the chapter to pull from, set to `99` for no chapter. The third argument is the voice line number divided by 256, and the fourth is the remainder. The fifth argument is the volume *percentage* (At least, I assume so). Default to 100.
+* `0x08` - Voice, Five arguments. The first is the character ID (See below). The second is the chapter to pull from, set to `99` for no chapter. The third argument is the voice line number divided by 256, and the fourth is the remainder. The fifth argument is the volume *percentage* (At least, I assume so). Default to 100.
 * `0x09` - Music, three arguments. First is the music number, second is likely the volume. Third is unknown, `0` is a safe value.
 * `0x0A` - Sound, three arguments. Suspect it follows the same format as `0x09`, but for sound effects.
 * `0x0B` - SoundB, two arguments. Unknown.

@@ -7,6 +7,7 @@ import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.util.CountingInputStream
 import org.abimon.util.OffsetInputStream
 import org.abimon.visi.io.*
+import org.abimon.visi.lang.make
 import org.abimon.visi.lang.remove
 import org.abimon.visi.lang.toArrayString
 import org.abimon.visi.security.sha512Hash
@@ -246,12 +247,6 @@ class CustomWAD {
 
 data class CustomWADFile(val name: String, val dataSource: DataSource)
 
-fun customWad(init: CustomWAD.() -> Unit): CustomWAD {
-    val wad = CustomWAD()
-    wad.init()
-    return wad
-}
-
 /**
  * Very basic and boring, yet crucial archive format.
  * Very basic structure - an unsigned integer dictating how many files there are, followed by the offsets for each file, and then followed by the data, at the offset indicated.
@@ -365,12 +360,6 @@ fun customPak(dataSource: DataSource): CustomPak {
     }
     else
         throw IllegalArgumentException("${dataSource.getLocation()} is not a ZIP file/stream!")
-}
-
-fun customPak(init: CustomPak.() -> Unit): CustomPak {
-    val pak = CustomPak()
-    pak.init()
-    return pak
 }
 
 /**
@@ -544,12 +533,6 @@ class CustomLin {
         lin.write(textData.toByteArray())
         lin.write(textText.toByteArray())
     }
-}
-
-fun customLin(init: CustomLin.() -> Unit): CustomLin {
-    val lin = CustomLin()
-    lin.init()
-    return lin
 }
 
 /** Vita */
@@ -746,11 +729,24 @@ object SpiralData {
     val pakNames = HashMap<String, Pair<String, String>>()
     val formats = HashMap<String, Pair<String, SpiralFormat>>()
     val config = File(".spiral_names")
-    val opCodes = tripleMapOf(
-            Triple(0x00, 2, "TextCount"),
-            Triple(0x01, 3, "0x03"),
-            Triple(0x02, 2, "Text")
-    )
+    val opCodes = make<TripleHashMap<Int, Int, String>> {
+        put(0x00, 2, "Text Count")
+        put(0x01, 3, "0x03")
+        put(0x02, 2, "Text")
+        put(0x03, 1, "Format")
+        put(0x04, 4, "Filter")
+        put(0x05, 2, "Movie")
+        put(0x06, 8, "Animation")
+        put(0x07, -1, "0x07")
+        put(0x08, 5, "Voice Line")
+        put(0x09, 3, "Music")
+        put(0x0A, 3, "Sound")
+        put(0x0B, 2, "SoundB")
+        put(0x0C, 2, "Toggle Truth Bullet")
+        put(0x0D, 3, "0x0D")
+        put(0x0E, 2, "0x0E")
+        put(0x0F, 3, "Set Title")
+    }
 
     fun getPakName(pathName: String, data: ByteArray): Optional<String> {
         if(pakNames.containsKey(pathName)) {

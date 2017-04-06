@@ -14,13 +14,9 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
-public typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
+typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
-fun <T, U, V> tripleMapOf(vararg triples: Triple<T, U, V>): TripleHashMap<T, U, V> {
-    val map = TripleHashMap<T, U, V>()
-    triples.forEach { (first, second, third) -> map.put(first, Pair(second, third)) }
-    return map
-}
+fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
 
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false): Long {
     var s = "0"
