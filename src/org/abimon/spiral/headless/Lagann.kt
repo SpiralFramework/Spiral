@@ -1,9 +1,13 @@
 package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.lin.TextEntry
+import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
+import org.abimon.visi.collections.random
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
@@ -13,6 +17,43 @@ fun main(args: Array<String>) {
     setHeadless()
     println("Initialising SPIRAL Power...")
 
+    val processing = File("processing")
+    val linName = "e00_001_000.lin"
+    val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")
+    val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad copy")
+    val wad = WAD(FileDataSource(backupWadFile))
+    val linData = wad.files.first { (name) -> name.endsWith(linName) }
+    val lin = Lin(linData)
+    val originalLines = File("/Users/undermybrella/bees.txt").readLines().filter(String::isNotBlank)
+    val beeMovieScript = LinkedList(originalLines)
+    val customLin = make<CustomLin> {
+        lin.entries.forEach { entry ->
+            if(entry is TextEntry)
+                entry((0 until 2).joinToString("\n") { beeMovieScript.poll() ?: originalLines.random() })
+            else
+                entry(entry)
+        }
+    }
+    val data = ByteArrayOutputStream().apply { customLin.compile(this) }.toByteArray()
+    File(processing, "backup.lin.txt").writeText(String(SpiralFormats.convert(SpiralFormats.LIN, SpiralFormats.TXT, FunctionDataSource { data }), Charsets.UTF_8))
+    val customWad = make<CustomWAD> {
+        major(1)
+        minor(1)
+
+        wad(wad)
+        data(linData.name, data)
+    }
+
+//    println("Took ${time {
+//        customWad.compile(FileOutputStream(wadFile))
+//    }} ms")
+
+    wad.files.filter { (name) -> name.endsWith(".lin") }.map(::Lin).flatMap(Lin::entries).filter { entry -> entry.getOpCode() == 0x14 }.forEach { entry ->
+        println("Trial Cam Arg 2: ${entry.getRawArguments()[1]}")
+    }
+}
+
+fun menu() {
     val os = EnumOS.determineOS()
     val wads = HashSet<File>()
     headless@while(true) {
@@ -481,7 +522,7 @@ fun restore() {
 
         val backupWad = WAD(FileDataSource(backupWadFile))
 
-        val customWad = customWad {
+        val customWad = make<CustomWAD> {
             major(1)
             minor(1)
 
@@ -551,15 +592,15 @@ fun patch() {
         val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad copy")
         val wad = WAD(FileDataSource(backupWadFile))
         //wad.extractToDirectory(File("functional"))
-        val customWad = customWad {
+        val customWad = make<CustomWAD> {
             major(11037)
             minor(1)
 
             headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
 
             wad(wad)
-            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("Hajime.png"))))
-            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("HajimeAirGuitar.png"))))
+            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/Hajime.png"))))
+            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/HajimeAirGuitar.png"))))
         }
         customWad.compile(FileOutputStream(wadFile))
     }

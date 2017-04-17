@@ -1,8 +1,13 @@
 package org.abimon.spiral.core
 
 import org.abimon.external.TGAReader
+import org.abimon.spiral.core.lin.TextCountEntry
+import org.abimon.spiral.core.lin.TextEntry
+import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
+import org.abimon.visi.lang.make
+import org.abimon.visi.lang.times
 import java.io.*
 import java.util.*
 import java.util.zip.ZipEntry
@@ -131,7 +136,12 @@ class LINFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        Lin(source).entries.forEach { entry -> output.writeString("0x${entry.getOpCode().toString(16)}|${entry.getRawArguments().joinToString()}\n") }
+        Lin(source).entries.forEach { entry ->
+            if(entry is TextEntry)
+                output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}\n")
+            else
+                output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}\n")
+        }
     }
 }
 
@@ -209,17 +219,18 @@ class TXTFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
+        println("Begun Converting\n${"-" * 100}")
         when(format) {
             is LINFormat -> {
                 val reader = BufferedReader(InputStreamReader(source.getInputStream()))
-                val lin = customLin {
+                val lin = make<CustomLin> {
                     reader.forEachLine loop@{ line ->
                         val parts = line.split("|", limit = 2)
-                        if(parts.size != 2)
+                        if(parts.size != 2) {
                             return@loop
+                        }
 
                         val opCode = parts[0]
-                        val args = parts[1].split(",")
 
                         val op: Int
                         if(opCode.startsWith("0x"))
@@ -227,13 +238,22 @@ class TXTFormat : SpiralFormat {
                         else if(opCode.matches("\\d+".toRegex()))
                             op = opCode.toInt()
                         else if(SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
-                            op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.value.first
+                            op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
                         else
                             op = 0x00
 
-                        println(op)
+                        if(op == 2) { //Text
+                            entry(parts[1])
+                        } else {
+                            val args = if(parts[1].isBlank()) IntArray(0) else parts[1].split(",").map(String::trim).map(String::toInt).toIntArray()
+                            when(op) {
+                                0x00 -> entry(TextCountEntry((args[1] shl 8) or args[0]))
+                                else -> entry(UnknownEntry(op, args))
+                            }
+                        }
                     }
                 }
+                lin.compile(output)
             }
         }
     }

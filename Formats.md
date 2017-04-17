@@ -103,21 +103,70 @@ TGA files are a mess, which is why I was glad to not have to handle them myself.
 
 # OP Codes
 
+For simplicity, there are several points where IDs are handled as either `arg 1 + arg 2 * 256`, or the reverse (`arg 1 * 256 + arg 2`). 
+
+These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + arg 2 * 256`, and `{ID}` for `arg 1 * 256 + arg 2`)
+
 ## Danganronpa 1
 
 * `0x00` - Text Count, two arguments. The number of text lines in the file. Argument 1 is the remainder of the full number divided by 256, and the second is the full number divided by 256.
-* `0x01` - Unknown, 3 arguments.
+* `0x01` - Unknown, three arguments.
 * `0x02` - Text. The basis of the game, really. Two arguments. The first is the starting offset (0-indexed) of the text to read, and the second argument is the ending offset.
 * `0x03` - Format. One argument. This is used for things like bolding, self talk, and so forth. `3` is **bold**, `4` is used for when the protag talks to themself, `17` is used for the Weak Points in class trials, and `69` is used when you `agree` with a statement.
-* `0x04` - Filter. Four arguments. The filter to apply to a scene. Details unknown, will investigate further.
-* `0x05` - Movie. Two arguments. Argument 1 is the full movie ID divided by 256, and the second is the remainder of that operation.
+* `0x04` - Filter. Four arguments. The filter to apply to a scene. Argument 1 is always 1, Argument 2 is the filter used (0 is normal, 1 is flashback), and 3 & 4 is 0
+* `0x05` - Movie. Two arguments. Two arguments make up the movie `{ID}`
 * `0x06` - Animation. Eight arguments. Argument 1 is the animation ID divided by 256, the second is the remainder. The third to seventh arguments are unknown. The eighth argument is the frame to use, and 255 to hide it.
 * `0x07` - Unknown
-* `0x08` - Voice, Five arguments. The first is the character ID (See below). The second is the chapter to pull from, set to `99` for no chapter. The third argument is the voice line number divided by 256, and the fourth is the remainder. The fifth argument is the volume *percentage* (At least, I assume so). Default to 100.
-* `0x09` - Music, three arguments. First is the music number, second is likely the volume. Third is unknown, `0` is a safe value.
-* `0x0A` - Sound, three arguments. Suspect it follows the same format as `0x09`, but for sound effects.
-* `0x0B` - SoundB, two arguments. Unknown.
-* `0x0C` - ToggleTruthBullet, two arguments. The first argument is the ID of the truth bullet, or piece of evidence, to either enable or disable. The second argument is 0 to disable, and 1 to enable. Using `255, 0` as the arguments should clear the evidence list.
+* `0x08` - Voice Line, Five arguments. The first is the character ID (See below). The second is the chapter to pull from, set to `99` for no chapter. The third argument is the voice line `{ID}`. The fifth argument is the volume *percentage* (At least, I assume so). Default to 100.
+* `0x09` - Music, three arguments. First is the music number, second is the transition. Third is unknown, `0` is a safe value.
+* `0x0A` - SFX A, three arguments. Suspect it follows the same format as `0x09`, but for sound effects.
+* `0x0B` - SFX B, two arguments. Unknown.
+* `0x0C` - Toggle Truth Bullet, two arguments. The first argument is the ID of the truth bullet, or piece of evidence, to either enable or disable. The second argument is 0 to disable, and 1 to enable. Using `255, 0` as the arguments should clear the evidence list.
 * `0x0D` - Unknown, three arguments.
 * `0x0E` - Unknown, two arguments.
-* `0x0F` - SetTitle, three arguments. Argument 1 is character ID, argument 2 seems to always be `0`, and argument 3 is the state of the title? Purpose is unknown, further testing is required.
+* `0x0F` - Set Title, three arguments. Argument 1 is character ID, argument 2 seems to always be `0`, and argument 3 is the state of the title? Purpose is unknown, possibly used for report cards.
+* `0x10` - Set Report Info, three arguments. Argument 1 is character ID, argument 2 seems to always be `0`, and argument 3 is the state of the info. Seems to be used to update the info available in the report card.
+* `0x11` - Unknown, four arguments.
+* `0x12` - Unknown
+* `0x13` - Unknown
+* `0x14` - Trial Camera, three arguments. Argument 1 is the character to focus on, arguments 2 and 3 make up the Motion `{ID}`
+* `0x15` - Load Map, three arguments. Argument 1 is the room, argument 2 is the state, and argument 3 is padding.
+* `0x16` - Unknown
+* `0x17` - Unknown
+* `0x18` - Unknown
+* `0x19` - Script, three arguments. Argument 1 is the chapter, argument 2 is the scene, and argument 3 is the room. Essentially, runs the script `e[arg1]_[arg2]_[arg3]`
+* `0x1A` - Stop Script, no arguments.
+* `0x1B` - Run Script, three arguments. Same syntax as `0x19`. Seems to be used for quick return scripts.
+* `0x1C` - Unknown, no arguments.
+* `0x1D` - Unknown
+* `0x1E` - Sprite, five arguments. Argument 1 is the object ID to map to, argument 2 is the character ID to use for the sprite. Argument 3 is the sprite ID, and argument 4 is the sprite state. Argument 5 is the sprite type.
+* `0x1F` - Unknown, seven arguments.
+* `0x20` - Unknown, five arguments.
+* `0x21` - Speaker, one argument. Singular argument is the character ID.
+* `0x22` - Unknown, three arguments.
+* `0x23` - Unknown, five arguments.
+* `0x24` - Unknown.
+* `0x25` - Change UI, two arguments. Argument 1 is the element to change, argument 2 is the state to change it to.
+* `0x26` - Set Flag, three arguments. Argument 1 is the group, argument 2 is the ID, and argument 3 is the state.
+* `0x27` - Check Character, one argument. Argument 1 is the character ID. Used in move abouts and investigation to allow for interacting with a student. Think of it as a function header, or an `IF` check.
+* `0x28` - Unknown
+* `0x29` - Check Object, one argument. Argument 1 is the object ID. See `0x27`
+* `0x2A` - Set Label, two arguments. Arguments 1 and 2 make up the label `[ID]`
+* `0x2B` - Choice, one argument. Unknown
+* `0x2C` - Unknown, two arguments.
+* `0x2D` - Unknown
+* `0x2E` - Unknown, two arguments.
+* `0x2F` - Unknown, *ten* arguments.
+* `0x30` - Show Background, three arguments. Argument 1 and 2 make up the background `[ID]`, and argument 3 is the state.
+* `0x31` - Unknown
+* `0x32` - Unknown, one argument.
+* `0x33` - Unknown, four arguments.
+* `0x34` - Goto Label, two arguments. Argument 1 and 2 make up the label `[ID]`. See `0x2A`.
+* `0x35` - Check Flag A, dynamic number of arguments. Combined with `0x36`, almost certainly the most complicated OP code in the game. See below.
+* `0x36` - Check Flag B, dynamic number of arguments. Combined with `0x35`, almost certainly the most complicated OP code in the game. See below.
+* `0x37` - Unknown
+* `0x38` - Unknown
+* `0x39` - Unknown, five arguments.
+* `0x3A` - Wait For Input, no arguments. Waits for the user to press enter, or click next.
+* `0x3B` - Wait Frame, no arguments. Waits a frame
+* `0x3C` - End Flag Check, no arguments. Presumably used to signify an end to `0x35` and `0x36`.

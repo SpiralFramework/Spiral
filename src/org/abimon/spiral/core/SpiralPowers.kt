@@ -130,6 +130,17 @@ fun ByteArray.write(outputStream: OutputStream) {
     outputStream.write(this)
 }
 
+fun String.toDRBytes(): ByteArray {
+    val bytes = toByteArray(Charsets.UTF_16LE)
+    val drBytes = ByteArray(bytes.size + 4)
+    drBytes[0] = 0xFF.toByte()
+    drBytes[1] = 0xFE.toByte()
+    drBytes[bytes.size] = 0
+    drBytes[bytes.size + 1] = 0
+    System.arraycopy(bytes, 0, drBytes, 2, bytes.size)
+    return drBytes
+}
+
 fun OutputStream.writeString(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
 
 fun String.getParents(): String {
