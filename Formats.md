@@ -70,7 +70,7 @@ The use case for these tends to be when the engine knows what type of data it's 
 * List of file offsets - Many 4 byte integers, up to [Number of Files] (Total size is therefore [Number of Files] * 4)
 * File Data - Data is read from one file offset to another, meaning the first file is from the first offset to the second, the second file is the second offset to the third, and so on.
 
-##LIN
+## LIN
 
 Credit: [AdmiralCurtiss/HyoutaTools](https://github.com/AdmiralCurtiss/HyoutaTools)
 
@@ -113,6 +113,7 @@ These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + 
 * `0x01` - Unknown, three arguments.
 * `0x02` - Text. The basis of the game, really. Two arguments. The first is the starting offset (0-indexed) of the text to read, and the second argument is the ending offset.
 * `0x03` - Format. One argument. This is used for things like bolding, self talk, and so forth. `3` is **bold**, `4` is used for when the protag talks to themself, `17` is used for the Weak Points in class trials, and `69` is used when you `agree` with a statement.
+  * Note: Formatting may be used, and may occur, in text lines, as `<CLT>`. For instance, to bold a particular statement, you would have `This sentence has a <CLT 3>BOLD<CLT> word in it`
 * `0x04` - Filter. Four arguments. The filter to apply to a scene. Argument 1 is always 1, Argument 2 is the filter used (0 is normal, 1 is flashback), and 3 & 4 is 0
 * `0x05` - Movie. Two arguments. Two arguments make up the movie `{ID}`
 * `0x06` - Animation. Eight arguments. Argument 1 is the animation ID divided by 256, the second is the remainder. The third to seventh arguments are unknown. The eighth argument is the frame to use, and 255 to hide it.
