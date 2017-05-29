@@ -666,6 +666,10 @@ fun menu() {
 
                                     println("Compiled ${compiling.size} new files into $original, took $compileTime ms to compile and $movementTime ms to move")
                                 }
+                                "reload" -> {
+                                    wadFile = WAD(FileDataSource(original))
+                                    println("[$wad] Reloaded WAD file")
+                                }
                                 "exit" -> {
                                     println("[$wad] Returning to previous menu...")
                                     break@operate
