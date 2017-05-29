@@ -58,6 +58,12 @@ fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
     return String(data, Charset.forName(encoding))
 }
 
+fun InputStream.readDRString(len: Int, encoding: String = "UTF-8"): String {
+    val data: ByteArray = ByteArray(len.coerceAtLeast(0))
+    read(data)
+    return String(data.sliceArray(0 until data.size - 2), Charset.forName(encoding))
+}
+
 fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8"): String {
     val max = maxLen.coerceAtMost(255)
     val baos = ByteArrayOutputStream()
@@ -132,12 +138,10 @@ fun ByteArray.write(outputStream: OutputStream) {
 
 fun String.toDRBytes(): ByteArray {
     val bytes = toByteArray(Charsets.UTF_16LE)
-    val drBytes = ByteArray(bytes.size + 4)
-    drBytes[0] = 0xFF.toByte()
-    drBytes[1] = 0xFE.toByte()
+    val drBytes = ByteArray(bytes.size + 2)
     drBytes[bytes.size] = 0
     drBytes[bytes.size + 1] = 0
-    System.arraycopy(bytes, 0, drBytes, 2, bytes.size)
+    System.arraycopy(bytes, 0, drBytes, 0, bytes.size)
     return drBytes
 }
 

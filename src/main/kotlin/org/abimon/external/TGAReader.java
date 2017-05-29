@@ -1,23 +1,23 @@
-/**
- * TGAReader.java
- * 
- * Copyright (c) 2014 Kenji Sasaki
- * Released under the MIT license.
- * https://github.com/npedotnet/TGAReader/blob/master/LICENSE
- * 
- * English document
- * https://github.com/npedotnet/TGAReader/blob/master/README.md
- * 
- * Japanese document
- * http://3dtech.jp/wiki/index.php?TGAReader
- * 
- */
-
 package org.abimon.external;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+/**
+ * TGAReader.java
+ *
+ * Copyright (c) 2014 Kenji Sasaki
+ * Released under the MIT license.
+ * https://github.com/npedotnet/TGAReader/blob/master/LICENSE
+ *
+ * English document
+ * https://github.com/npedotnet/TGAReader/blob/master/README.md
+ *
+ * Japanese document
+ * http://3dtech.jp/wiki/index.php?TGAReader
+ *
+ */
+@SuppressWarnings("WeakerAccess")
 public final class TGAReader {
 	
 	public static final Order ARGB = new Order(16, 8, 0, 24);
@@ -559,5 +559,4 @@ public final class TGAReader {
 		public int blueShift;
 		public int alphaShift;
 	}
-	
 }

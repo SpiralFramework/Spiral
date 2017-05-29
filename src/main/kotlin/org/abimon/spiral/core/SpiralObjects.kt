@@ -405,9 +405,7 @@ class Lin(val dataSource: DataSource) {
                 if (data[i] == 0x0) {
                     println("$i is 0x0")
                     i++
-                }
-
-                if (data[i] != 0x70) {
+                } else if (data[i] != 0x70) {
                     while (i < data.size) {
                         errPrintln("$i expected to be 0x70, was ${data[i]}")
                         if (i == 0x00 || i == 0x70)
@@ -453,7 +451,7 @@ class Lin(val dataSource: DataSource) {
 
                             textStream.reset()
                             textStream.skip(textPos)
-                            entries.add(TextEntry(textStream.readString((nextTextPos - textPos).toInt(), "UTF-16LE"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
+                            entries.add(TextEntry(textStream.readDRString((nextTextPos - textPos).toInt(), "UTF-16LE"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
                         }
                         else -> entries.add(UnknownEntry(opCode, arguments.toIntArray()))
                     }
