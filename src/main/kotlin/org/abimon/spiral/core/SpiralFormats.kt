@@ -24,11 +24,12 @@ interface SpiralFormat {
      * Convert from this format to another
      */
     fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        if(!canConvert(format))
+        if (!canConvert(format))
             throw IllegalArgumentException("Cannot convert to $format")
-        if(!isFormat(source))
+        if (!isFormat(source))
             throw IllegalArgumentException("${source.getLocation()} does not conform to the ${getName()} format")
     }
+
     fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) = format.convert(this, source, output)
 }
 
@@ -39,8 +40,8 @@ class WADFormat : SpiralFormat {
         try {
             WAD(source)
             return true
+        } catch(illegal: IllegalArgumentException) {
         }
-        catch(illegal: IllegalArgumentException) {}
 
         return false
     }
@@ -63,6 +64,7 @@ class WADFormat : SpiralFormat {
         }
     }
 }
+
 class PAKFormat : SpiralFormat {
     override fun getName(): String = "PAK"
 
@@ -70,8 +72,8 @@ class PAKFormat : SpiralFormat {
         try {
             Pak(source)
             return true
+        } catch (e: IllegalArgumentException) {
         }
-        catch (e: IllegalArgumentException) { }
         return false
     }
 
@@ -81,7 +83,7 @@ class PAKFormat : SpiralFormat {
         super.convert(format, source, output)
 
         val pak = Pak(source)
-        when(format) {
+        when (format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
                 pak.files.forEach {
@@ -93,6 +95,7 @@ class PAKFormat : SpiralFormat {
         }
     }
 }
+
 class TGAFormat : SpiralFormat {
     override fun getName(): String = "TGA"
 
@@ -100,10 +103,10 @@ class TGAFormat : SpiralFormat {
         try {
             TGAReader.readImage(source.getData())
             return true
+        } catch(e: IOException) {
+        } catch(e: ArrayIndexOutOfBoundsException) {
+        } catch(e: IllegalArgumentException) {
         }
-        catch(e: IOException) { }
-        catch(e: ArrayIndexOutOfBoundsException) { }
-        catch(e: IllegalArgumentException) { }
         return false
     }
 
@@ -113,12 +116,13 @@ class TGAFormat : SpiralFormat {
         super.convert(format, source, output)
 
         val img = TGAReader.readImage(source.getData())
-        when(format) {
+        when (format) {
             is PNGFormat -> ImageIO.write(img, "PNG", output)
             is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
         }
     }
 }
+
 class LINFormat : SpiralFormat {
     override fun getName(): String = "LIN"
 
@@ -126,8 +130,8 @@ class LINFormat : SpiralFormat {
         try {
             Lin(source)
             return true
+        } catch(illegal: IllegalArgumentException) {
         }
-        catch(illegal: IllegalArgumentException){}
         return false
     }
 
@@ -137,7 +141,7 @@ class LINFormat : SpiralFormat {
         super.convert(format, source, output)
 
         Lin(source).entries.forEach { entry ->
-            if(entry is TextEntry)
+            if (entry is TextEntry)
                 output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}\n")
             else
                 output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}\n")
@@ -152,26 +156,38 @@ class ZIPFormat : SpiralFormat {
         try {
             val zip = ZipInputStream(source.getInputStream())
             var count = 0
-            while(zip.nextEntry != null)
+            while (zip.nextEntry != null)
                 count++
             zip.close()
             return count > 0
+        } catch (e: NullPointerException) {
+        } catch (e: IOException) {
         }
-        catch (e: NullPointerException) { }
-        catch (e: IOException) { }
 
         return false
     }
 
-    override fun canConvert(format: SpiralFormat): Boolean = false
+    override fun canConvert(format: SpiralFormat): Boolean = format is PAKFormat || format is WADFormat
+
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
+        super.convert(format, source, output)
+
+        when (format) {
+            is PAKFormat -> customPak(source).compile(output)
+            else -> TODO("NYI PAK -> ${format::class.simpleName}")
+        }
+    }
 }
+
 class PNGFormat : SpiralFormat {
     override fun getName(): String = "PNG"
 
     override fun isFormat(source: DataSource): Boolean =
-            source.getInputStream().use { ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
-                    .asSequence()
-                    .any { it.formatName.toLowerCase() == "png" } }
+            source.getInputStream().use {
+                ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
+                        .asSequence()
+                        .any { it.formatName.toLowerCase() == "png" }
+            }
 
     override fun canConvert(format: SpiralFormat): Boolean = (format is TGAFormat) or (format is JPEGFormat)
 
@@ -182,18 +198,22 @@ class PNGFormat : SpiralFormat {
             when (format) {
                 is TGAFormat -> output.write(ImageIO.read(it).toTGA())
                 is JPEGFormat -> ImageIO.write(ImageIO.read(it).toJPG(), "JPG", output)
-                else -> {}
+                else -> {
+                }
             }
         }
     }
 }
+
 class JPEGFormat : SpiralFormat {
     override fun getName(): String = "JPG"
 
     override fun isFormat(source: DataSource): Boolean =
-            source.getInputStream().use { ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
-                    .asSequence()
-                    .any { (it.formatName.toLowerCase() == "jpg") or (it.formatName.toLowerCase() == "jpeg") } }
+            source.getInputStream().use {
+                ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
+                        .asSequence()
+                        .any { (it.formatName.toLowerCase() == "jpg") or (it.formatName.toLowerCase() == "jpeg") }
+            }
 
     override fun canConvert(format: SpiralFormat): Boolean = (format is TGAFormat) or (format is PNGFormat)
 
@@ -204,11 +224,13 @@ class JPEGFormat : SpiralFormat {
             when (format) {
                 is TGAFormat -> output.write(ImageIO.read(it).toTGA())
                 is PNGFormat -> ImageIO.write(ImageIO.read(it), "PNG", output)
-                else -> {}
+                else -> {
+                }
             }
         }
     }
 }
+
 class TXTFormat : SpiralFormat {
     override fun getName(): String = "TXT"
 
@@ -219,34 +241,34 @@ class TXTFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        println("Begun Converting\n${"-" * 100}")
-        when(format) {
+        if (isDebug) println("Begun Converting\n${"-" * 100}")
+        when (format) {
             is LINFormat -> {
                 val reader = BufferedReader(InputStreamReader(source.getInputStream()))
                 val lin = make<CustomLin> {
-                    reader.forEachLine loop@{ line ->
+                    reader.forEachLine loop@ { line ->
                         val parts = line.split("|", limit = 2)
-                        if(parts.size != 2) {
+                        if (parts.size != 2) {
                             return@loop
                         }
 
                         val opCode = parts[0]
 
                         val op: Int
-                        if(opCode.startsWith("0x"))
+                        if (opCode.startsWith("0x"))
                             op = opCode.substring(2).toInt(16)
-                        else if(opCode.matches("\\d+".toRegex()))
+                        else if (opCode.matches("\\d+".toRegex()))
                             op = opCode.toInt()
-                        else if(SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
+                        else if (SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
                             op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
                         else
                             op = 0x00
 
-                        if(op == 2) { //Text
+                        if (op == 2) { //Text
                             entry(parts[1])
                         } else {
-                            val args = if(parts[1].isBlank()) IntArray(0) else parts[1].split(",").map(String::trim).map(String::toInt).toIntArray()
-                            when(op) {
+                            val args = if (parts[1].isBlank()) IntArray(0) else parts[1].split(",").map(String::trim).map(String::toInt).toIntArray()
+                            when (op) {
                                 0x00 -> entry(TextCountEntry((args[1] shl 8) or args[0]))
                                 else -> entry(UnknownEntry(op, args))
                             }
@@ -279,7 +301,7 @@ object SpiralFormats {
     val JPG = JPEGFormat()
     val TXT = TXTFormat()
 
-    val  UNKNOWN = UnknownFormat()
+    val UNKNOWN = UnknownFormat()
 
     val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT)
     val drWadFormats = arrayOf(WAD, PAK, TGA, LIN)

@@ -22,6 +22,7 @@ import kotlin.collections.set
 val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
 val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
 val spiralHeaderName = "Spiral-Header"
+var isDebug = false
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding
@@ -92,12 +93,11 @@ class WAD(val dataSource: DataSource) {
             dataOffset = wad.count
             wad.close()
 
-            if(files.any { (name) -> name == spiralHeaderName })
+            if (files.any { (name) -> name == spiralHeaderName })
                 spiralHeader = files.first { (name) -> name == spiralHeaderName }.getData().asOptional()
             else
                 spiralHeader = Optional.empty()
-        }
-        catch(illegal: IllegalArgumentException){
+        } catch(illegal: IllegalArgumentException) {
             wad.close()
             throw illegal
         }
@@ -106,7 +106,7 @@ class WAD(val dataSource: DataSource) {
     fun hasHeader(): Boolean = header.isNotEmpty()
 }
 
-data class WADFile(val name: String, val size: Long, val offset: Long, val wad: WAD): DataSource {
+data class WADFile(val name: String, val size: Long, val offset: Long, val wad: WAD) : DataSource {
     override fun getLocation(): String = "WAD File ${wad.dataSource.getLocation()}, offset ${wad.dataOffset + offset} bytes"
 
     override fun getData(): ByteArray = getInputStream().use { it.readPartialBytes(size.toInt()) }
@@ -115,6 +115,7 @@ data class WADFile(val name: String, val size: Long, val offset: Long, val wad: 
 
     override fun getDataSize(): Long = size
 }
+
 data class WADFileDirectory(val name: String, val subfiles: List<WADFileSubfile>)
 data class WADFileSubfile(val name: String, val isFile: Boolean)
 
@@ -128,9 +129,11 @@ class CustomWAD {
     fun major(major: Number) {
         this.major = major.toLong()
     }
+
     fun minor(minor: Number) {
         this.minor = minor.toLong()
     }
+
     fun header(header: ByteArray) {
         this.header = header
         errPrintln("Warning: Danganronpa does not presently support the header field of a WAD file! Proceed with ***extreme*** caution! (Maybe you're looking for headerFile() ?)")
@@ -155,7 +158,7 @@ class CustomWAD {
     }
 
     fun directory(file: File, names: Map<File, String> = HashMap()) {
-        if(!file.isDirectory)
+        if (!file.isDirectory)
             throw IllegalArgumentException("$file is not a directory")
         file.iterate(false).forEach { file(it, names.getOrElse(it, { it.absolutePath.replace("${file.absolutePath}${File.separator}", "") })) }
     }
@@ -226,7 +229,7 @@ class CustomWAD {
                 val fileName = it.getChild().toByteArray(Charset.forName("UTF-8"))
                 wad.writeNumber(fileName.size.toLong(), 4, true)
                 wad.write(fileName)
-                wad.write(if(dirs.containsKey(it)) 1 else 0)
+                wad.write(if (dirs.containsKey(it)) 1 else 0)
             }
         }
 
@@ -287,15 +290,15 @@ class Pak(val dataSource: DataSource) {
             for (i in 0 until numFiles)
                 files.add(PakFile("$i", offsets[i + 1] - offsets[i], offsets[i], this))
             pak.close()
-        }
-        catch(illegal: IllegalArgumentException) {
+        } catch(illegal: IllegalArgumentException) {
             pak.close()
+            if(isDebug) illegal.printStackTrace()
             throw illegal
         }
     }
 }
 
-data class PakFile(val name: String, val size: Long, val offset: Long, val pak: Pak): DataSource {
+data class PakFile(val name: String, val size: Long, val offset: Long, val pak: Pak) : DataSource {
     override fun getLocation(): String = "PAK File ${pak.dataSource.getLocation()}, offset $offset bytes"
 
     override fun getData(): ByteArray = getInputStream().use { it.readPartialBytes(size.toInt()) }
@@ -318,10 +321,10 @@ class CustomPak {
 
         data.forEach {
             val possibleFormat = SpiralFormats.formatForData(it)
-            if(possibleFormat.isPresent){
+            if (possibleFormat.isPresent) {
                 val format = possibleFormat.get()
 
-                when(format) {
+                when (format) {
                     is PNGFormat -> {
                         val baos = ByteArrayOutputStream()
                         format.convert(SpiralFormats.TGA, it, baos)
@@ -331,8 +334,7 @@ class CustomPak {
                     }
                     else -> modified.add(it)
                 }
-            }
-            else
+            } else
                 modified.add(it)
         }
         var headerSize = 4 + modified.size.times(4).toLong()
@@ -347,18 +349,20 @@ class CustomPak {
 }
 
 fun customPak(dataSource: DataSource): CustomPak {
-    if(SpiralFormats.ZIP.isFormat(dataSource)) {
+    if (SpiralFormats.ZIP.isFormat(dataSource)) {
         val pak = CustomPak()
         val zipIn = ZipInputStream(dataSource.getInputStream())
+        val entries = HashMap<String, DataSource>()
 
-        while(true) {
-            zipIn.nextEntry ?: break
-            val data = zipIn.readAllBytes()
-            pak.dataSource(FunctionDataSource { data })
+        while (true) {
+            entries[zipIn.nextEntry?.name?.substringBeforeLast('.') ?: break] = run {
+                val data = zipIn.readAllBytes()
+                return@run FunctionDataSource { data }
+            }
         }
+        entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> pak.dataSource(data) }
         return pak
-    }
-    else
+    } else
         throw IllegalArgumentException("${dataSource.getLocation()} is not a ZIP file/stream!")
 }
 
@@ -374,6 +378,7 @@ class Lin(val dataSource: DataSource) {
     val textBlock: Long
     val header: ByteArray
     val entries: ArrayList<LinScript>
+
     init {
         val lin = CountingInputStream(DataInputStream(dataSource.getInputStream()))
         try {
@@ -389,7 +394,7 @@ class Lin(val dataSource: DataSource) {
             } else
                 throw IllegalArgumentException("Unknown LIN type $linType")
 
-            header = lin.readPartialBytes((headerSpace - (if(linType == 1L) 12 else 16)).toInt())
+            header = lin.readPartialBytes((headerSpace - (if (linType == 1L) 12 else 16)).toInt())
             entries = ArrayList<LinScript>()
             val data = lin.readPartialBytes((textBlock - headerSpace).toInt()).map { byte -> byte.toInt() }
 
@@ -399,11 +404,11 @@ class Lin(val dataSource: DataSource) {
             var i = 0
 
             for (index in 0 until data.size) {
-                if(i >= data.size)
+                if (i >= data.size)
                     break
 
                 if (data[i] == 0x0) {
-                    println("$i is 0x0")
+                    if (isDebug) println("$i is 0x0")
                     i++
                 } else if (data[i] != 0x70) {
                     while (i < data.size) {
@@ -432,7 +437,7 @@ class Lin(val dataSource: DataSource) {
                         }
                     }
 
-                    when(opCode) {
+                    when (opCode) {
                         0x00 -> entries.add(TextCountEntry((arguments[1] shl 8) or arguments[0]))
                         0x02 -> {
                             val textID = ((arguments[0] shl 8) or arguments[1])
@@ -441,7 +446,7 @@ class Lin(val dataSource: DataSource) {
                             val textPos = textStream.readNumber(4, true)
 
                             val nextTextPos: Long
-                            if(textID.toLong() == (numTextEntries - 1))
+                            if (textID.toLong() == (numTextEntries - 1))
                                 nextTextPos = size - textBlock
                             else {
                                 textStream.reset()
@@ -458,7 +463,7 @@ class Lin(val dataSource: DataSource) {
                 }
             }
         } catch(illegal: IllegalArgumentException) {
-            illegal.printStackTrace()
+            if(isDebug) illegal.printStackTrace()
             throw illegal
         }
     }
@@ -478,12 +483,12 @@ class CustomLin {
     }
 
     fun entry(text: String) {
-        entry(TextEntry(text, 0, 0, 0))
+        entry(TextEntry(text.replace("\\n", "\n"), 0, 0, 0))
     }
 
     fun compile(lin: OutputStream) {
         lin.writeNumber(type.toLong(), 4, true)
-        lin.writeNumber((header.size + (if(type == 1) 12 else 16)).toLong(), 4, true)
+        lin.writeNumber((header.size + (if (type == 1) 12 else 16)).toLong(), 4, true)
 
         val entryData = ByteArrayOutputStream()
         val textData = ByteArrayOutputStream()
@@ -493,7 +498,7 @@ class CustomLin {
 
         var textID: Int = 0
 
-        if(entries[0] !is TextCountEntry)
+        if (entries[0] !is TextCountEntry)
             entries.add(0, TextCountEntry(entries.count { entry -> entry is TextEntry }))
         val numText = (entries.count { entry -> entry is TextEntry }).toLong()
 
@@ -501,7 +506,7 @@ class CustomLin {
             entryData.write(0x70)
             entryData.write(entry.getOpCode())
 
-            if(entry is TextEntry) {
+            if (entry is TextEntry) {
                 val strData = entry.text.toDRBytes()
                 textData.writeNumber((numText * 4L) + 4 + textText.size(), 4, true)
                 textText.write(strData)
@@ -510,13 +515,12 @@ class CustomLin {
                 entryData.write(textID % 256)
 
                 textID++
-            }
-            else {
+            } else {
                 entry.getRawArguments().forEach { arg -> entryData.write(arg) }
             }
         }
 
-        if(type == 1)
+        if (type == 1)
             lin.writeNumber((12 + entryData.size() + textData.size() + textText.size()).toLong(), 4, true)
         else {
             lin.writeNumber((16 + entryData.size()).toLong(), 4, true)
@@ -543,7 +547,7 @@ class CPK(val dataSource: DataSource) {
 
         val cpkMagic = cpk.readString(4)
 
-        if(cpkMagic != "CPK ")
+        if (cpkMagic != "CPK ")
             throw IllegalArgumentException("${dataSource.getLocation()} is either not a CPK file, or a corrupted/invalid one!")
 
         cpk.readNumber(4)
@@ -555,7 +559,7 @@ class CPK(val dataSource: DataSource) {
 
         utf = CPKUTF(cpk.readPartialBytes(utfSize.toInt()), this)
 
-        for(i in 0 until utf.columns.size) {
+        for (i in 0 until utf.columns.size) {
             cpkData[utf.columns[i].name] = utf.rows[0][i].data
             cpkType[utf.columns[i].name] = utf.rows[0][i].type
         }
@@ -606,7 +610,7 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
 
     init {
         val utf = packet.inputStream()
-        if(utf.readString(4) != "@UTF")
+        if (utf.readString(4) != "@UTF")
             throw IllegalArgumentException("${cpk.dataSource.getLocation()} is either not a CPK file, or a corrupted/invalid one!")
 
         println(packet.copyOfRange(0, 16).toArrayString())
@@ -621,10 +625,10 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
         rowLength = utf.readNumber(2).toInt()
         numRows = utf.readNumber(4).toInt()
 
-        for(i in 0 until numColumns) {
+        for (i in 0 until numColumns) {
             val column = CPKColumn()
             column.flags = utf.read()
-            if(column.flags == 0) {
+            if (column.flags == 0) {
                 utf.skip(3)
                 column.flags = utf.read()
             }
@@ -633,16 +637,16 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
             columns.add(column)
         }
 
-        for(x in 0 until numRows) {
+        for (x in 0 until numRows) {
             val currentEntry = LinkedList<CPKRow>()
             val pos = (rowsOffset + (x * rowLength)).toLong()
             val rowInputStream = packet.inputStream().skipBytes(pos)
 
-            loop@for(y in 0 until numColumns) {
+            loop@ for (y in 0 until numColumns) {
                 val currentRow = CPKRow()
                 val storageFlag = columns[y].flags and ColumnFlags.STORAGE_MASK.flag
 
-                when(storageFlag) {
+                when (storageFlag) {
                     ColumnFlags.STORAGE_NONE.flag -> {
                         currentEntry.add(currentRow)
                         continue@loop
@@ -662,7 +666,7 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
                 currentRow.type = CPKType.getValue(columns[y].flags and ColumnFlags.TYPE_MASK.flag)
                 currentRow.position = pos
 
-                when(currentRow.type) {
+                when (currentRow.type) {
                     CPKType.UINT8 -> currentRow.data = rowInputStream.read().toByte().write()
                     CPKType.UINT16 -> currentRow.data = rowInputStream.readNumber(2).write()
                     CPKType.UINT32 -> currentRow.data = rowInputStream.readNumber(4).write()
@@ -705,7 +709,7 @@ data class CPKColumn(var flags: Int = 0, var name: String = "")
 class CPKRow(var type: CPKType = CPKType.DATA, var data: ByteArray = ByteArray(0), var position: Long = 0) {
     operator fun component1(): CPKType = type
     operator fun component2(): Any {
-        when(type) {
+        when (type) {
             CPKType.UINT8 -> return data.inputStream().readNumber(1, true)
             CPKType.UINT16 -> return data.inputStream().readNumber(2, true)
             CPKType.UINT32 -> return data.inputStream().readNumber(4, true)
@@ -788,9 +792,9 @@ object SpiralData {
     }
 
     fun getPakName(pathName: String, data: ByteArray): Optional<String> {
-        if(pakNames.containsKey(pathName)) {
+        if (pakNames.containsKey(pathName)) {
             val (sha512, name) = pakNames[pathName]!!
-            if(sha512 == data.sha512Hash())
+            if (sha512 == data.sha512Hash())
                 return name.asOptional()
         }
 
@@ -798,9 +802,9 @@ object SpiralData {
     }
 
     fun getFormat(pathName: String, data: ByteArray): Optional<SpiralFormat> {
-        if(formats.containsKey(pathName)) {
+        if (formats.containsKey(pathName)) {
             val (sha512, format) = formats[pathName]!!
-            if(sha512 == data.sha512Hash())
+            if (sha512 == data.sha512Hash())
                 return format.asOptional()
         }
 
@@ -808,9 +812,9 @@ object SpiralData {
     }
 
     fun getFormat(pathName: String, data: DataSource): Optional<SpiralFormat> {
-        if(formats.containsKey(pathName)) {
+        if (formats.containsKey(pathName)) {
             val (sha512, format) = formats[pathName]!!
-            if(sha512 == data.getData().sha512Hash())
+            if (sha512 == data.getData().sha512Hash())
                 return format.asOptional()
         }
 
@@ -831,7 +835,7 @@ object SpiralData {
     }
 
     init {
-        if(!config.exists())
+        if (!config.exists())
             config.createNewFile()
 
         val reader = BufferedReader(FileReader(config))
@@ -842,7 +846,7 @@ object SpiralData {
                     "name" -> pakNames.put(components[1], Pair(components[2], components[3]))
                     "format" -> {
                         val format = SpiralFormats.formatForName(components[3])
-                        if(format.isPresent)
+                        if (format.isPresent)
                             formats.put(components[1], Pair(components[2], format.get()))
                     }
                 }

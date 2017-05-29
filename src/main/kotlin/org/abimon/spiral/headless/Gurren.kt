@@ -7,15 +7,16 @@ import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
 import org.parboiled.errors.ErrorUtils
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileFilter
-import java.io.FileOutputStream
+import java.io.*
 import java.util.*
 
 fun main(args: Array<String>) {
     setHeadless()
     println("Initialising SPIRAL Power...")
+    if (args.any { it == "-debug" }) {
+        isDebug = true
+        println("Debug mode engaged")
+    }
 
     menu()
 }
@@ -125,325 +126,367 @@ fun menu() {
     val os = EnumOS.determineOS()
     val wads = HashSet<File>()
     headless@ while (true) {
-        Thread.sleep(100)
-        println("What would you like to do?")
-        print("> ")
-        val operation = readLine()?.splitOutsideGroup("\\s+") ?: break
-        when (operation[0].toLowerCase()) {
-            "help" -> {
-                println("SPIRAL v0.1.0 - Headless")
-                println("Help")
-                println("\tCommands can be run just by entering the command, and parameters are supplied between speech marks")
-                println("\tFor instance: command \"Parameter 1\" \"Parameter 2\"")
-                println("Commands")
-                println("\thelp - Display this message")
-                println("\tfind - Tries to find the WAD files for DR1/2, if they're in their normal locations")
-                println("\tlocate [directory] - Searches a directory for all WAD files. Note: Will take a fair time, also will require confirmation for each")
-                println("\tregister [wad] - Register an individual WAD file.")
-                println("\tregistered - Displays the registered WAD files")
-                println("\toperate - Operate on a WAD file (Extract files, list, etc)")
-                println("\texit - Exits the program")
-            }
+        try {
+            Thread.sleep(100)
+            println("What would you like to do?")
+            print("> ")
+            val operation = readLine()?.splitOutsideGroup("\\s+") ?: break
+            when (operation[0].toLowerCase()) {
+                "help" -> {
+                    println("SPIRAL v0.1.0 - Headless")
+                    println("Help")
+                    println("\tCommands can be run just by entering the command, and parameters are supplied between speech marks")
+                    println("\tFor instance: command \"Parameter 1\" \"Parameter 2\"")
+                    println("Commands")
+                    println("\thelp - Display this message")
+                    println("\tfind - Tries to find the WAD files for DR1/2, if they're in their normal locations")
+                    println("\tlocate [directory] - Searches a directory for all WAD files. Note: Will take a fair time, also will require confirmation for each")
+                    println("\tregister [wad] - Register an individual WAD file.")
+                    println("\tregistered - Displays the registered WAD files")
+                    println("\toperate - Operate on a WAD file (Extract files, list, etc)")
+                    println("\tconvert [file] [convertFrom] [convertTo] - Converts a file from one format to another. If a directory is provided, this acts upon all files in the directory")
+                    println("\tidentify [file] - Attempt to identify the format of a file. If a directory is provided, this acts upon all files in the directory")
+                    println("\tidentify_and_convert [file] [convertTo] - Attempts to identify the format of a file, and convert to another format. If a directory is provided, this acts upon all files in the directory")
+                    println("\tformats - What formats are currently known")
+                    println("\texit - Exits the program")
+                }
 
-            "find" -> {
-                when (os) {
-                    EnumOS.WINDOWS -> {
-                        for (root in File.listRoots()) {
-                            for (programFolder in arrayOf(File(root, "Program Files (x86)"), File(root, "Program Files"))) {
-                                val steamFolder = File(programFolder, "Steam")
-                                if (steamFolder.exists()) {
-                                    val common = File(steamFolder, "steamapps${File.separator}common")
-                                    for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") })
-                                        wads.addAll(game.listFiles { file -> file.isFile && file.extension == "wad" && !file.name.contains(".backup") })
+                "find" -> {
+                    when (os) {
+                        EnumOS.WINDOWS -> {
+                            for (root in File.listRoots()) {
+                                for (programFolder in arrayOf(File(root, "Program Files (x86)"), File(root, "Program Files"))) {
+                                    val steamFolder = File(programFolder, "Steam")
+                                    if (steamFolder.exists()) {
+                                        val common = File(steamFolder, "steamapps${File.separator}common")
+                                        for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") })
+                                            wads.addAll(game.listFiles { file -> file.isFile && file.extension == "wad" && !file.name.contains(".backup") })
+                                    }
                                 }
                             }
                         }
-                    }
-                    EnumOS.MACOSX -> {
-                        val steamFolder = os.getStorageLocation("Steam")
-                        if (steamFolder.exists()) {
-                            val common = File(steamFolder, "steamapps${File.separator}common")
-                            for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") }) {
-                                val appDirs = game.listFiles { file -> file.isDirectory && file.extension == "app" }
-                                if (appDirs.isNotEmpty())
-                                    wads.addAll(
-                                            appDirs.flatMap<File, File> { app ->
-                                                File(app, "Contents${File.separator}Resources").listFiles { file ->
-                                                    file.isFile && file.extension == "wad" && !file.name.contains(".backup")
-                                                }.toList()
-                                            }
-                                    )
+                        EnumOS.MACOSX -> {
+                            val steamFolder = os.getStorageLocation("Steam")
+                            if (steamFolder.exists()) {
+                                val common = File(steamFolder, "steamapps${File.separator}common")
+                                for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") }) {
+                                    val appDirs = game.listFiles { file -> file.isDirectory && file.extension == "app" }
+                                    if (appDirs.isNotEmpty())
+                                        wads.addAll(
+                                                appDirs.flatMap<File, File> { app ->
+                                                    File(app, "Contents${File.separator}Resources").listFiles { file ->
+                                                        file.isFile && file.extension == "wad" && !file.name.contains(".backup")
+                                                    }.toList()
+                                                }
+                                        )
+                                }
                             }
                         }
+                        else -> println("No behaviour defined for $os!")
                     }
-                    else -> println("No behaviour defined for $os!")
-                }
 
-                if (wads.isEmpty())
-                    errPrintln("Error: No WAD files detected! You can manually add them via the register command, or by running the locate command!")
-                else
-                    println("WADs: ${wads.joinToPrefixedString("", "\n\t")}")
-            }
-            "locate" -> {
-                if (operation.size == 1) {
-                    errPrintln("Error: No directory provided!")
-                    continue@headless
-                }
-
-                val dir = File(operation.copyFrom(1).joinToString(" "))
-                if (!dir.exists()) {
-                    errPrintln("Error: $dir does not exist!")
-                    continue@headless
-                }
-
-                if (question("Warning: This operation will take quite some time. Do you wish to proceed to scan $dir (Y/N)? ", "Y")) {
-                    val time = time {
-                        dir.iterate(filters = arrayOf(
-                                FileFilter { file -> !file.name.startsWith(".") },
-                                FileFilter { file -> file.isDirectory || (file.isFile && file.extension == "wad" && !file.name.contains(".backup")) }
-                        )).forEach { wad ->
-                            if (question("WAD Found ($wad). Would you like to add this to the internal registry (Y/N)? ", "Y"))
-                                wads.add(wad)
-                        }
-                    }
-                    println("Took $time ms.")
                     if (wads.isEmpty())
                         errPrintln("Error: No WAD files detected! You can manually add them via the register command, or by running the locate command!")
                     else
-                        println(wads.joinToString("\n"))
+                        println("WADs: ${wads.joinToPrefixedString("", "\n\t")}")
                 }
-            }
+                "locate" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No directory provided!")
+                        continue@headless
+                    }
 
-            "register" -> {
-                if (operation.size == 1) {
-                    errPrintln("Error: No file provided!")
-                    continue@headless
+                    val dir = File(operation.copyFrom(1).joinToString(" "))
+                    if (!dir.exists()) {
+                        errPrintln("Error: $dir does not exist!")
+                        continue@headless
+                    }
+
+                    if (question("Warning: This operation will take quite some time. Do you wish to proceed to scan $dir (Y/N)? ", "Y")) {
+                        val time = time {
+                            dir.iterate(filters = arrayOf(
+                                    FileFilter { file -> !file.name.startsWith(".") },
+                                    FileFilter { file -> file.isDirectory || (file.isFile && file.extension == "wad" && !file.name.contains(".backup")) }
+                            )).forEach { wad ->
+                                if (question("WAD Found ($wad). Would you like to add this to the internal registry (Y/N)? ", "Y"))
+                                    wads.add(wad)
+                            }
+                        }
+                        println("Took $time ms.")
+                        if (wads.isEmpty())
+                            errPrintln("Error: No WAD files detected! You can manually add them via the register command, or by running the locate command!")
+                        else
+                            println(wads.joinToString("\n"))
+                    }
                 }
 
-                val wad = File(operation.copyFrom(1).joinToString(" "))
-                if (!wad.exists()) {
-                    errPrintln("Error: $wad does not exist!")
-                    continue@headless
+                "register" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    val wad = File(operation.copyFrom(1).joinToString(" "))
+                    if (!wad.exists()) {
+                        errPrintln("Error: $wad does not exist!")
+                        continue@headless
+                    }
+
+                    if (!wad.isFile) {
+                        errPrintln("Error: $wad is not a file!")
+                        continue@headless
+                    }
+
+                    if (wad.extension != "wad") {
+                        errPrintln("Error: $wad is not a .wad file!")
+                        continue@headless
+                    }
+
+                    wads.add(wad)
+                    println("Registered $wad!")
                 }
+                "registered" -> println("Registered WADs: ${wads.joinToPrefixedString("", "\n\t")}")
 
-                if (!wad.isFile) {
-                    errPrintln("Error: $wad is not a file!")
-                    continue@headless
-                }
-
-                if (wad.extension != "wad") {
-                    errPrintln("Error: $wad is not a .wad file!")
-                    continue@headless
-                }
-
-                wads.add(wad)
-                println("Registered $wad!")
-            }
-            "registered" -> println("Registered WADs: ${wads.joinToPrefixedString("", "\n\t")}")
-
-            "operate" -> {
-                println("Select a WAD file to operate on (or type exit to return to the previous menu)")
-                println(wads.joinToPrefixedString("\n", "\t") { "$nameWithoutExtension ($absolutePath)" })
-                print("> ")
-                var wad = readLine() ?: break@headless
-                if (wad == "exit")
-                    continue@headless
-                while (wads.none { file -> file.nameWithoutExtension == wad || file.name == wad || file.absolutePath.endsWith(wad) }) {
-                    println("$wad is an invalid WAD file")
-                    print("> ")
-                    wad = readLine() ?: break@headless
+                "operate" -> {
+                    println("Select a WAD file to operate on (or type exit to return to the previous menu)")
+                    println(wads.joinToPrefixedString("\n", "\t") { "$nameWithoutExtension ($absolutePath)" })
+                    print("[operate] > ")
+                    var wad = readLine() ?: break@headless
                     if (wad == "exit")
                         continue@headless
-                }
+                    while (wads.none { file -> file.nameWithoutExtension == wad || file.name == wad || file.absolutePath.endsWith(wad) }) {
+                        println("$wad is an invalid WAD file")
+                        print("[operate] > ")
+                        wad = readLine() ?: break@headless
+                        if (wad == "exit")
+                            continue@headless
+                    }
 
-                val wadFile = WAD(FileDataSource(wads.first { file -> file.nameWithoutExtension == wad || file.name == wad || file.absolutePath.endsWith(wad) }))
-                println("Now operating on $wad")
+                    val original = wads.first { file -> file.nameWithoutExtension == wad || file.name == wad || file.absolutePath.endsWith(wad) }
+                    var wadFile = WAD(FileDataSource(original))
+                    println("Now operating on $wad")
 
-                operate@ while (true) {
-                    try {
-                        Thread.sleep(100)
-                        println("[$wad] What would you like to do?")
-                        print("[$wad] > ")
-                        val wadOperation = readLine()?.splitOutsideGroup("\\s+") ?: break
+                    operate@ while (true) {
+                        try {
+                            Thread.sleep(100)
+                            println("[$wad] What would you like to do?")
+                            print("[$wad] > ")
+                            val wadOperation = readLine()?.splitOutsideGroup("\\s+") ?: break
 
-                        when (wadOperation[0].toLowerCase()) {
-                            "help" -> {
-                                println("[$wad] WAD Operations")
-                                println("[$wad] Help")
-                                println("[$wad] Help")
-                                println("[$wad]\tCommands can be run just by entering the command, and parameters are supplied between speech marks")
-                                println("[$wad]\tFor instance: command \"Parameter 1\" \"Parameter 2\"")
-                                println("[$wad] Commands")
-                                println("[$wad]\thelp - Display this message")
-                                println("[$wad]\tlist [regex] - List all files that match the provided regex")
-                                println("[$wad]\textract [dir] [regex] - Extract all files that match the provided regex to the provided directory")
-                                println("[$wad]\textrat_nicely [dir] [regex] - List all files that match the provided regex to the provided directory, and convert them to nicer formats")
-                                println("[$wad]\texit - Return to the previous menu")
-                            }
+                            when (wadOperation[0].toLowerCase()) {
+                                "help" -> {
+                                    println("[$wad] WAD Operations")
+                                    println("[$wad] Help")
+                                    println("[$wad]\tCommands can be run just by entering the command, and parameters are supplied between speech marks")
+                                    println("[$wad]\tParameters listed as [parameter] are mandatory, while ones listed as {parameter} are optional.")
+                                    println("[$wad]\tFor instance: command \"Parameter 1\" \"Parameter 2\"")
+                                    println("[$wad] Commands")
+                                    println("[$wad]\thelp - Display this message")
+                                    println("[$wad]\tlist {regex} - List all files that match the provided regex, or all files if no regex are provided")
+                                    println("[$wad]\textract [dir] {regex} - Extract all files that match the provided regex to the provided directory, or all files if no regex are provided")
+                                    println("[$wad]\textract_nicely [dir] {regex} - List all files that match the provided regex to the provided directory, or all files if no regex are provided. The files are converted to nicer formats where possible (TGA -> PNG)")
+                                    println("[$wad]\tbackup - Backs up the WAD file to $wad.wad.backup")
+                                    println("[$wad]\tcompile [dir] {regex} - Recompile this wad file using the files in the provided directory that match the provided regex, or all files if no regex are provided. The WAD file is then reloaded")
+                                    println("[$wad]\tcompile_nicely [dir] {regex} - Recompile this wad file using the files in the provided directory that match the provided regex, or all files if no regex are provided. The WAD file is then reloaded. The files are converted from nicer formats where possible (PNG -> TGA)")
+                                    println("[$wad]\treload - Reload the contents of this WAD file")
+                                    println("[$wad]\texit - Return to the previous menu")
+                                }
 
-                            "list" -> {
-                                val pattern = (if (wadOperation.size == 1) ".*" else wadOperation.copyFrom(1).joinToString(" "))
-                                if (pattern.isRegex()) {
-                                    val regex = pattern.toRegex()
-                                    println("[$wad] Files in $wad that match the regex $regex:")
-                                    wadFile.files.filter { (name) -> name.matches(regex) }.forEach { (name, size, offset) ->
-                                        println("[$wad] $name ($size bytes, $offset bytes from the start)")
-                                    }
-                                } else {
-                                    val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
-                                    if (semiRegex.isRegex()) {
-                                        val regex = semiRegex.toRegex()
+                                "list" -> {
+                                    val pattern = (if (wadOperation.size == 1) ".*" else wadOperation.copyFrom(1).joinToString(" "))
+                                    if (pattern.isRegex()) {
+                                        val regex = pattern.toRegex()
                                         println("[$wad] Files in $wad that match the regex $regex:")
-                                        wadFile.files.filter { (name) -> name.matches(regex) }.forEach { (name, size, offset) ->
+                                        wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) }.forEach { (name, size, offset) ->
                                             println("[$wad] $name ($size bytes, $offset bytes from the start)")
                                         }
                                     } else {
-                                        println("[$wad] Files in $wad that end with $pattern:")
-                                        wadFile.files.filter { (name) -> name.endsWith(pattern) }.forEach { (name, size, offset) ->
-                                            println("[$wad] $name ($size bytes, $offset bytes from the start)")
-                                        }
-                                    }
-                                }
-                            }
-                            "extract" -> {
-                                if (wadOperation.size == 1) {
-                                    errPrintln("[$wad] Error: No directory path provided!")
-                                    continue@operate
-                                }
-
-                                val dir = File(wadOperation[1])
-                                if (!dir.exists()) {
-                                    errPrintln("[$wad] $dir does not exist, creating...")
-                                    if (!dir.mkdirs()) {
-                                        println("[$wad] An error occurred while creating $dir")
-                                        continue@operate
-                                    }
-                                }
-                                if (!dir.isDirectory) {
-                                    errPrintln("[$wad] Error: $dir is not a directory!")
-                                    continue@operate
-                                }
-
-                                val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
-                                val extracting = ArrayList<WADFile>()
-                                if (pattern.isRegex()) {
-                                    val regex = pattern.toRegex()
-                                    println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
-                                    extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) })
-                                } else {
-                                    val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
-                                    if (semiRegex.isRegex()) {
-                                        val regex = semiRegex.toRegex()
-                                        println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
-                                        extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) })
-                                    } else {
-                                        println("[$wad] Extracting files in $wad to $dir that end in $pattern:")
-                                        extracting.addAll(wadFile.files.filter { (name) -> name.endsWith(pattern) })
-                                    }
-                                }
-
-                                val totalTime = time {
-                                    extracting.forEach files@ { file ->
-                                        val parentDirs = File(dir, file.name.getParents())
-                                        if (!parentDirs.exists()) {
-                                            if (!parentDirs.mkdirs()) {
-                                                errPrintln("[$wad] An error occurred while creating $parentDirs")
-                                                return@files
+                                        val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
+                                        if (semiRegex.isRegex()) {
+                                            val regex = semiRegex.toRegex()
+                                            println("[$wad] Files in $wad that match the regex $regex:")
+                                            wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) }.forEach { (name, size, offset) ->
+                                                println("[$wad] $name ($size bytes, $offset bytes from the start)")
+                                            }
+                                        } else {
+                                            println("[$wad] Files in $wad that end with $pattern:")
+                                            wadFile.files.filter { (name) -> name.endsWith(pattern) }.forEach { (name, size, offset) ->
+                                                println("[$wad] $name ($size bytes, $offset bytes from the start)")
                                             }
                                         }
-
-                                        val extractLocation = File(dir, file.name)
-                                        val time = time {
-                                            val fileOutput = FileOutputStream(extractLocation)
-                                            file.getInputStream().writeTo(fileOutput, closeAfter = true)
-                                            fileOutput.close()
-                                        }
-
-                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms")
                                     }
                                 }
-                                println("[$wad] Finished extracting ${extracting.count()} files to $dir, took $totalTime ms")
-                            }
-                            "extract_nicely" -> {
-                                if (wadOperation.size == 1) {
-                                    errPrintln("[$wad] Error: No directory path provided!")
-                                    continue@operate
-                                }
-
-                                val dir = File(wadOperation[1])
-                                if (!dir.exists()) {
-                                    errPrintln("[$wad] $dir does not exist, creating...")
-                                    if (!dir.mkdirs()) {
-                                        println("[$wad] An error occurred while creating $dir")
+                                "extract" -> {
+                                    if (wadOperation.size == 1) {
+                                        errPrintln("[$wad] Error: No directory path provided!")
                                         continue@operate
                                     }
-                                }
-                                if (!dir.isDirectory) {
-                                    errPrintln("[$wad] Error: $dir is not a directory!")
-                                    continue@operate
-                                }
 
-                                val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
-                                val extracting = ArrayList<WADFile>()
-                                if (pattern.isRegex()) {
-                                    val regex = pattern.toRegex()
-                                    println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
-                                    extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) })
-                                } else {
-                                    val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
-                                    if (semiRegex.isRegex()) {
-                                        val regex = semiRegex.toRegex()
-                                        println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
-                                        extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) })
-                                    } else {
-                                        println("[$wad] Extracting files in $wad to $dir that end in $pattern:")
-                                        extracting.addAll(wadFile.files.filter { (name) -> name.endsWith(pattern) })
-                                    }
-                                }
-
-                                val totalTime = time {
-                                    extracting.forEach files@ { file ->
-                                        val parentDirs = File(dir, file.name.getParents())
-                                        if (!parentDirs.exists()) {
-                                            if (!parentDirs.mkdirs()) {
-                                                errPrintln("[$wad] An error occurred while creating $parentDirs")
-                                                return@files
-                                            }
+                                    val dir = File(wadOperation[1])
+                                    if (!dir.exists()) {
+                                        errPrintln("[$wad] $dir does not exist, creating...")
+                                        if (!dir.mkdirs()) {
+                                            println("[$wad] An error occurred while creating $dir")
+                                            continue@operate
                                         }
+                                    }
+                                    if (!dir.isDirectory) {
+                                        errPrintln("[$wad] Error: $dir is not a directory!")
+                                        continue@operate
+                                    }
 
-                                        when (file.name.getExtension()) {
-                                            "tga" -> {
-                                                if (SpiralFormats.TGA.isFormat(file)) {
-                                                    val extractLocation = File(dir, file.name.replace(".tga", ".png"))
-                                                    val time = time {
-                                                        val fileOutput = FileOutputStream(extractLocation)
-                                                        SpiralFormats.TGA.convert(SpiralFormats.PNG, file, fileOutput)
-                                                        fileOutput.close()
-                                                    }
+                                    val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
+                                    val extracting = ArrayList<WADFile>()
+                                    if (pattern.isRegex()) {
+                                        val regex = pattern.toRegex()
+                                        println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
+                                        extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) })
+                                    } else {
+                                        val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
+                                        if (semiRegex.isRegex()) {
+                                            val regex = semiRegex.toRegex()
+                                            println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
+                                            extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) })
+                                        } else {
+                                            println("[$wad] Extracting files in $wad to $dir that end in $pattern:")
+                                            extracting.addAll(wadFile.files.filter { (name) -> name.endsWith(pattern) })
+                                        }
+                                    }
 
-                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from TGA to PNG)")
-                                                } else {
-                                                    val extractLocation = File(dir, file.name)
-                                                    val time = time {
-                                                        val fileOutput = FileOutputStream(extractLocation)
-                                                        file.getInputStream().writeTo(fileOutput, closeAfter = true)
-                                                        fileOutput.close()
-                                                    }
-
-                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from TGA due to a formatting error)")
+                                    val totalTime = time {
+                                        extracting.forEach files@ { file ->
+                                            val parentDirs = File(dir, file.name.getParents())
+                                            if (!parentDirs.exists()) {
+                                                if (!parentDirs.mkdirs()) {
+                                                    errPrintln("[$wad] An error occurred while creating $parentDirs")
+                                                    return@files
                                                 }
                                             }
-                                            "pak" -> {
-                                                if (SpiralFormats.PAK.isFormat(file)) {
-                                                    val extractLocation = File(dir, file.name.replace(".pak", ".zip"))
-                                                    val time = time {
-                                                        val fileOutput = FileOutputStream(extractLocation)
-                                                        SpiralFormats.PAK.convert(SpiralFormats.ZIP, file, fileOutput)
-                                                        fileOutput.close()
-                                                    }
 
-                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from PAK to ZIP)")
-                                                } else {
+                                            val extractLocation = File(dir, file.name)
+                                            val time = time {
+                                                val fileOutput = FileOutputStream(extractLocation)
+                                                file.getInputStream().writeTo(fileOutput, closeAfter = true)
+                                                fileOutput.close()
+                                            }
+
+                                            println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms")
+                                        }
+                                    }
+                                    println("[$wad] Finished extracting ${extracting.count()} files to $dir, took $totalTime ms")
+                                }
+                                "extract_nicely" -> {
+                                    if (wadOperation.size == 1) {
+                                        errPrintln("[$wad] Error: No directory path provided!")
+                                        continue@operate
+                                    }
+
+                                    val dir = File(wadOperation[1])
+                                    if (!dir.exists()) {
+                                        errPrintln("[$wad] $dir does not exist, creating...")
+                                        if (!dir.mkdirs()) {
+                                            println("[$wad] An error occurred while creating $dir")
+                                            continue@operate
+                                        }
+                                    }
+                                    if (!dir.isDirectory) {
+                                        errPrintln("[$wad] Error: $dir is not a directory!")
+                                        continue@operate
+                                    }
+
+                                    val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
+                                    val extracting = ArrayList<WADFile>()
+                                    if (pattern.isRegex()) {
+                                        val regex = pattern.toRegex()
+                                        println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
+                                        extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) })
+                                    } else {
+                                        val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
+                                        if (semiRegex.isRegex()) {
+                                            val regex = semiRegex.toRegex()
+                                            println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
+                                            extracting.addAll(wadFile.files.filter { (name) -> name.matches(regex) || name.getChild().matches(regex) })
+                                        } else {
+                                            println("[$wad] Extracting files in $wad to $dir that end in $pattern:")
+                                            extracting.addAll(wadFile.files.filter { (name) -> name.endsWith(pattern) })
+                                        }
+                                    }
+
+                                    val totalTime = time {
+                                        extracting.forEach files@ { file ->
+                                            val parentDirs = File(dir, file.name.getParents())
+                                            if (!parentDirs.exists()) {
+                                                if (!parentDirs.mkdirs()) {
+                                                    errPrintln("[$wad] An error occurred while creating $parentDirs")
+                                                    return@files
+                                                }
+                                            }
+
+                                            when (file.name.getExtension()) {
+                                                "tga" -> {
+                                                    if (SpiralFormats.TGA.isFormat(file)) {
+                                                        val extractLocation = File(dir, file.name.replace(".tga", ".png"))
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            SpiralFormats.TGA.convert(SpiralFormats.PNG, file, fileOutput)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from TGA to PNG)")
+                                                    } else {
+                                                        val extractLocation = File(dir, file.name)
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            file.getInputStream().writeTo(fileOutput, closeAfter = true)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from TGA due to a formatting error)")
+                                                    }
+                                                }
+                                                "pak" -> {
+                                                    if (SpiralFormats.PAK.isFormat(file)) {
+                                                        val extractLocation = File(dir, file.name.replace(".pak", ".zip"))
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            SpiralFormats.PAK.convert(SpiralFormats.ZIP, file, fileOutput)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from PAK to ZIP)")
+                                                    } else {
+                                                        val extractLocation = File(dir, file.name)
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            file.getInputStream().writeTo(fileOutput, closeAfter = true)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from PAK due to a formatting error)")
+                                                    }
+                                                }
+                                                "lin" -> {
+                                                    if (SpiralFormats.LIN.isFormat(file)) {
+                                                        val extractLocation = File(dir, file.name.replace(".lin", ".txt"))
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            SpiralFormats.LIN.convert(SpiralFormats.TXT, file, fileOutput)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from LIN to TXT)")
+                                                    } else {
+                                                        val extractLocation = File(dir, file.name)
+                                                        val time = time {
+                                                            val fileOutput = FileOutputStream(extractLocation)
+                                                            file.getInputStream().writeTo(fileOutput, closeAfter = true)
+                                                            fileOutput.close()
+                                                        }
+
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from LIN due to a formatting error)")
+                                                    }
+                                                }
+                                                else -> {
                                                     val extractLocation = File(dir, file.name)
                                                     val time = time {
                                                         val fileOutput = FileOutputStream(extractLocation)
@@ -451,125 +494,370 @@ fun menu() {
                                                         fileOutput.close()
                                                     }
 
-                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from PAK due to a formatting error)")
+                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms)")
+                                                }
+                                            }
+                                        }
+                                    }
+                                    println("[$wad] Finished extracting ${extracting.count()} files to $dir, took $totalTime ms")
+                                }
+                                "backup" -> {
+                                    println("Backing up now...")
+                                    val backup = File(original.absolutePath + ".backup")
+                                    val timeTaken = time { FileInputStream(original).use { inputStream -> inputStream.writeTo(FileOutputStream(backup), closeAfter = true) } }
+
+                                    println("And all backed up to ${backup.absolutePath}, took $timeTaken ms")
+                                }
+                                "compile" -> {
+                                    if (wadOperation.size == 1) {
+                                        errPrintln("[$wad] Error: No directory path provided!")
+                                        continue@operate
+                                    }
+
+                                    val dir = File(wadOperation[1])
+                                    if (!dir.exists()) {
+                                        errPrintln("[$wad] $dir does not exist!")
+                                        continue@operate
+                                    }
+
+                                    if (!dir.isDirectory) {
+                                        errPrintln("[$wad] Error: $dir is not a directory!")
+                                        continue@operate
+                                    }
+
+                                    val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
+                                    val extracting = ArrayList<File>()
+                                    if (pattern.isRegex()) {
+                                        val regex = pattern.toRegex()
+                                        println("[$wad] Compiling files in $wad to $dir that match the regex $regex:")
+                                        extracting.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").matches(regex) || file.name.matches(regex) })
+                                    } else {
+                                        val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
+                                        if (semiRegex.isRegex()) {
+                                            val regex = semiRegex.toRegex()
+                                            println("[$wad] Compiling files in $wad to $dir that match the regex $regex:")
+                                            extracting.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").matches(regex) || file.name.matches(regex) })
+                                        } else {
+                                            println("[$wad] Compiling files in $wad to $dir that end in $pattern:")
+                                            extracting.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").endsWith(pattern) })
+                                        }
+                                    }
+
+                                    extracting.forEach { println("[$wad] ${it.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original") }
+                                    println("Compiling...")
+
+                                    val customWADLocation = File(original.absolutePath + ".tmp")
+                                    val compileTime = time {
+                                        val customWAD = make<CustomWAD> {
+                                            major(1)
+                                            minor(1)
+
+                                            wad(wadFile)
+                                            extracting.forEach { file(it, it.absolutePath.replace(dir.absolutePath + File.separator, "")) }
+                                        }
+
+                                        FileOutputStream(customWADLocation).use { customWAD.compile(it) }
+                                    }
+                                    val movementTime = time { FileInputStream(customWADLocation).use { inputStream -> inputStream.writeTo(FileOutputStream(original), closeAfter = true) } }
+                                    customWADLocation.delete()
+
+                                    println("Compiled ${extracting.size} new files into $original, tool $compileTime ms to compile and $movementTime ms to move")
+                                }
+                                "compile_nicely" -> {
+                                    if (wadOperation.size == 1) {
+                                        errPrintln("[$wad] Error: No directory path provided!")
+                                        continue@operate
+                                    }
+
+                                    val dir = File(wadOperation[1])
+                                    if (!dir.exists()) {
+                                        errPrintln("[$wad] $dir does not exist!")
+                                        continue@operate
+                                    }
+
+                                    if (!dir.isDirectory) {
+                                        errPrintln("[$wad] Error: $dir is not a directory!")
+                                        continue@operate
+                                    }
+
+                                    val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
+                                    val compilingFiles = ArrayList<File>()
+                                    if (pattern.isRegex()) {
+                                        val regex = pattern.toRegex()
+                                        println("[$wad] Compiling files in $wad to $dir that match the regex $regex:")
+                                        compilingFiles.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").matches(regex) || file.name.matches(regex) })
+                                    } else {
+                                        val semiRegex = pattern.replace(".", "\\.").replace("*", ".*")
+                                        if (semiRegex.isRegex()) {
+                                            val regex = semiRegex.toRegex()
+                                            println("[$wad] Compiling files in $wad to $dir that match the regex $regex:")
+                                            compilingFiles.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").matches(regex) || file.name.matches(regex) })
+                                        } else {
+                                            println("[$wad] Compiling files in $wad to $dir that end in $pattern:")
+                                            compilingFiles.addAll(dir.iterate().filter { file -> file.absolutePath.replace(dir.absolutePath + File.separator, "").endsWith(pattern) })
+                                        }
+                                    }
+
+                                    //compilingFiles.forEach { println("[$wad] ${it.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original") }
+                                    val compiling = compilingFiles.map { file ->
+                                        when (file.name.getExtension()) {
+                                            "png" -> {
+                                                if (SpiralFormats.PNG.isFormat(FileDataSource(file))) {
+                                                    val name = file.absolutePath.replace(dir.absolutePath + File.separator, "").replace(".png", ".tga")
+                                                    println("[$wad] $name will be compiled into $original (Converting from PNG -> TGA)")
+                                                    return@map name to FunctionDataSource { SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(file)) }
+                                                } else {
+                                                    println("[$wad] ${file.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original (Can't convert from PNG -> TGA due to a formatting error)")
+                                                    return@map file.absolutePath.replace(dir.absolutePath + File.separator, "") to FileDataSource(file)
+                                                }
+                                            }
+                                            "jpg" -> {
+                                                if (SpiralFormats.JPG.isFormat(FileDataSource(file))) {
+                                                    val name = file.absolutePath.replace(dir.absolutePath + File.separator, "").replace(".jpg", ".tga")
+                                                    println("[$wad] $name will be compiled into $original (Converting from JPG -> TGA)")
+                                                    return@map name to FunctionDataSource { SpiralFormats.convert(SpiralFormats.JPG, SpiralFormats.TGA, FileDataSource(file)) }
+                                                } else {
+                                                    println("[$wad] ${file.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original (Can't convert from JPG -> TGA due to a formatting error)")
+                                                    return@map file.absolutePath.replace(dir.absolutePath + File.separator, "") to FileDataSource(file)
+                                                }
+                                            }
+                                            "zip" -> {
+                                                if (SpiralFormats.ZIP.isFormat(FileDataSource(file))) {
+                                                    val name = file.absolutePath.replace(dir.absolutePath + File.separator, "").replace(".zip", ".pak")
+                                                    println("[$wad] $name will be compiled into $original (Converting from ZIP -> PAK)")
+                                                    return@map name to FunctionDataSource { SpiralFormats.convert(SpiralFormats.ZIP, SpiralFormats.PAK, FileDataSource(file)) }
+                                                } else {
+                                                    println("[$wad] ${file.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original (Can't convert from ZIP -> PAK due to a formatting error)")
+                                                    return@map file.absolutePath.replace(dir.absolutePath + File.separator, "") to FileDataSource(file)
+                                                }
+                                            }
+                                            "txt" -> {
+                                                if (SpiralFormats.TXT.isFormat(FileDataSource(file))) {
+                                                    val name = file.absolutePath.replace(dir.absolutePath + File.separator, "").replace(".txt", ".lin")
+                                                    println("[$wad] $name will be compiled into $original (Converting from TXT -> LIN)")
+                                                    return@map name to FunctionDataSource { SpiralFormats.convert(SpiralFormats.TXT, SpiralFormats.LIN, FileDataSource(file)) }
+                                                } else {
+                                                    println("[$wad] ${file.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original (Can't convert from TXT -> LIN due to a formatting error)")
+                                                    return@map file.absolutePath.replace(dir.absolutePath + File.separator, "") to FileDataSource(file)
                                                 }
                                             }
                                             else -> {
-                                                val extractLocation = File(dir, file.name)
-                                                val time = time {
-                                                    val fileOutput = FileOutputStream(extractLocation)
-                                                    file.getInputStream().writeTo(fileOutput, closeAfter = true)
-                                                    fileOutput.close()
-                                                }
-
-                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms)")
+                                                println("[$wad] ${file.absolutePath.replace(dir.absolutePath + File.separator, "")} will be compiled into $original")
+                                                return@map file.absolutePath.replace(dir.absolutePath + File.separator, "") to FileDataSource(file)
                                             }
                                         }
-
-
                                     }
-                                }
-                                println("[$wad] Finished extracting ${extracting.count()} files to $dir, took $totalTime ms")
-                            }
+                                    println("Compiling...")
 
-                            "exit" -> {
-                                println("[$wad] Returning to previous menu...")
-                                break@operate
+                                    val customWADLocation = File(original.absolutePath + ".tmp")
+                                    val compileTime = time {
+                                        val customWAD = make<CustomWAD> {
+                                            major(1)
+                                            minor(1)
+
+                                            wad(wadFile)
+                                            compiling.forEach { (name, data) -> this.data(name, data) }
+                                        }
+
+                                        FileOutputStream(customWADLocation).use { customWAD.compile(it) }
+                                    }
+                                    val movementTime = time { FileInputStream(customWADLocation).use { inputStream -> inputStream.writeTo(FileOutputStream(original), closeAfter = true) } }
+                                    customWADLocation.delete()
+
+                                    println("Compiled ${compiling.size} new files into $original, took $compileTime ms to compile and $movementTime ms to move")
+                                }
+                                "exit" -> {
+                                    println("[$wad] Returning to previous menu...")
+                                    break@operate
+                                }
                             }
+                        } catch(th: Throwable) {
+                            errPrintln("An unexpected error occurred: \n${th.exportStackTrace()}")
                         }
-                    } catch(th: Throwable) {
-                        errPrintln("An unexpected error occurred: \n${th.exportStackTrace()}")
                     }
                 }
+
+                "convert" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    if (operation.size == 2) {
+                        errPrintln("Error: No format to convert from was provided!")
+                        continue@headless
+                    }
+
+                    if (operation.size == 3) {
+                        errPrintln("Error: No format to convert to was provided!")
+                        continue@headless
+                    }
+
+                    val file = File(operation[1])
+                    if (!file.exists()) {
+                        errPrintln("Error: $file does not exist!")
+                        continue@headless
+                    }
+
+                    val from = SpiralFormats.formatForName(operation[2])
+                    val to = SpiralFormats.formatForName(operation[3])
+
+                    if (from.isEmpty) {
+                        errPrintln("Error: No such format with the name ${operation[2]} could be found to convert from!")
+                        continue@headless
+                    }
+
+                    if (to.isEmpty) {
+                        errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
+                        continue@headless
+                    }
+
+                    if (!from().canConvert(to())) {
+                        errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                        continue@headless
+                    }
+
+                    if (file.isFile) {
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from().getExtension(), to().getExtension())) else File(operation[4])
+                        FileOutputStream(outputFile).use { from().convert(to(), FileDataSource(file), it) }
+                        println("Converted $file from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                    } else if (file.isDirectory) {
+                        file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.filter { (_, data) -> from().isFormat(data) }.forEach { (f, data) ->
+                            val outputFile = File(f.absolutePath.replaceLast(from().getExtension(), to().getExtension()))
+                            FileOutputStream(outputFile).use { from().convert(to(), data, it) }
+                            println("Converted $f from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                        }
+                    }
+                }
+                "identify" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    val file = File(operation[1])
+                    if (!file.exists()) {
+                        errPrintln("Error: $file does not exist!")
+                        continue@headless
+                    }
+
+                    if (file.isFile) {
+                        val format = SpiralFormats.formatForData(FileDataSource(file))
+                        if (format.isEmpty)
+                            println("No format recognised for $file")
+                        else
+                            println("Format for $file: ${format().getName()}")
+                    } else if (file.isDirectory) {
+                        file.iterate().filter { f -> f.isFile }.map { it to SpiralFormats.formatForData(FileDataSource(it)) }.forEach { (f, format) ->
+                            if (format.isEmpty)
+                                println("No format recognised for $f")
+                            else
+                                println("Format for $f: ${format().getName()}")
+                        }
+                    }
+                }
+                "convert_and_identify" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    if (operation.size == 2) {
+                        errPrintln("Error: No format to convert to was provided!")
+                        continue@headless
+                    }
+
+                    val file = File(operation[1])
+                    if (!file.exists()) {
+                        errPrintln("Error: $file does not exist!")
+                        continue@headless
+                    }
+
+                    val to = SpiralFormats.formatForName(operation[2])
+
+                    if (to.isEmpty) {
+                        errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
+                        continue@headless
+                    }
+
+                    if (file.isFile) {
+                        val data = FileDataSource(file)
+                        val from = SpiralFormats.formatForData(data)
+
+                        if (from.isEmpty) {
+                            errPrintln("Error: No format found for $file")
+                            continue@headless
+                        }
+
+                        if (!from().canConvert(to())) {
+                            errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                            continue@headless
+                        }
+
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from().getExtension(), to().getExtension())) else File(operation[4])
+                        FileOutputStream(outputFile).use { from().convert(to(), data, it) }
+                        println("Converted $file from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                    } else if (file.isDirectory) {
+                        file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.map { pair -> pair and SpiralFormats.formatForData(pair.second) }.forEach { (f, data, from) ->
+                            if (from.isEmpty) {
+                                errPrintln("Error: No format found for $f")
+                                return@forEach
+                            }
+
+                            if (!from().canConvert(to())) {
+                                errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                                return@forEach
+                            }
+
+                            val outputFile = File(f.absolutePath.replaceLast(".${from().getExtension()}", "") + ".${to().getExtension()}")
+                            FileOutputStream(outputFile).use { from().convert(to(), data, it) }
+                            println("Converted $f from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                        }
+                    }
+                }
+                "formats" -> {
+                    println("SPIRAL Formats and Conversion")
+                    println("--------------")
+                    println("WAD")
+                    println("|--> ZIP")
+                    println("PAK")
+                    println("|--> ZIP")
+                    println("TGA")
+                    println("|--> PNG")
+                    println("|--> JPG")
+                    println("PNG")
+                    println("|--> JPG")
+                    println("|--> TGA")
+                    println("JPG")
+                    println("|--> PNG")
+                    println("|--> TGA")
+                }
+
+                "os" -> println(os)
+                "roots" -> println(File.listRoots().joinToString())
+                "in" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No directory provided!")
+                        continue@headless
+                    }
+
+                    val dir = File(operation.copyFrom(1).joinToString(" "))
+                    if (!dir.exists()) {
+                        errPrintln("Error: $dir does not exist!")
+                        continue@headless
+                    }
+
+                    println(dir.listFiles().joinToString())
+                }
+                "exit" -> {
+                    println("Bye!")
+                    break@headless
+                }
+                else -> println("Command not found (${operation.joinToString(" ")})")
             }
 
-            "convert" -> {
-                if (operation.size == 1) {
-                    errPrintln("Error: No file provided!")
-                    continue@headless
-                }
-
-                if (operation.size == 2) {
-                    errPrintln("Error: No format to convert from was provided!")
-                    continue@headless
-                }
-
-                if (operation.size == 3) {
-                    errPrintln("Error: No format to convert to was provided!")
-                    continue@headless
-                }
-
-                val file = File(operation[1])
-                if (!file.exists()) {
-                    errPrintln("Error: $file does not exist!")
-                    continue@headless
-                }
-                if (!file.isFile) {
-                    errPrintln("Error: $file is not a file!")
-                    continue@headless
-                }
-
-                val from = SpiralFormats.formatForName(operation[2])
-                val to = SpiralFormats.formatForName(operation[3])
-
-                if (from.isEmpty) {
-                    errPrintln("Error: No such format with the name ${operation[2]} could be found to convert from!")
-                    continue@headless
-                }
-
-                if (to.isEmpty) {
-                    errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
-                    continue@headless
-                }
-
-                if (!from().canConvert(to())) {
-                    errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
-                    continue@headless
-                }
-
-                val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from().getExtension(), to().getExtension())) else File(operation[4])
-                FileOutputStream(outputFile).use { from().convert(to(), FileDataSource(file), it) }
-                println("Converted $file from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
-            }
-            "formats" -> {
-                println("SPIRAL Formats and Conversion")
-                println("--------------")
-                println("WAD")
-                println("|--> ZIP")
-                println("PAK")
-                println("|--> ZIP")
-                println("TGA")
-                println("|--> PNG")
-                println("|--> JPG")
-                println("PNG")
-                println("|--> JPG")
-                println("|--> TGA")
-                println("JPG")
-                println("|--> PNG")
-                println("|--> TGA")
-            }
-
-            "os" -> println(os)
-            "roots" -> println(File.listRoots().joinToString())
-            "in" -> {
-                if (operation.size == 1) {
-                    errPrintln("Error: No directory provided!")
-                    continue@headless
-                }
-
-                val dir = File(operation.copyFrom(1).joinToString(" "))
-                if (!dir.exists()) {
-                    errPrintln("Error: $dir does not exist!")
-                    continue@headless
-                }
-
-                println(dir.listFiles().joinToString())
-            }
-            "exit" -> {
-                println("Bye!")
-                break@headless
-            }
-            else -> println("Command not found (${operation.joinToString(" ")})")
+        } catch(th: Throwable) {
+            errPrintln("An unexpected error occurred: \n${th.exportStackTrace()}")
         }
     }
 }
@@ -697,7 +985,7 @@ fun patch() {
             type(lin.linType.toInt())
             lin.entries.forEach { script ->
                 if (script is TextEntry)
-                    entry(script.text.mapIndexed { index, char -> if(index % 2 == 0) ';' else char }.joinToString(""))
+                    entry(script.text.mapIndexed { index, char -> if (index % 2 == 0) ';' else char }.joinToString(""))
                 else
                     entry(script)
             }

@@ -2,9 +2,9 @@ package org.abimon.util
 
 import java.io.InputStream
 
-open class DelegatedInputStream(val delegatedInputStream: InputStream): InputStream() {
+open class DelegatedInputStream(val delegatedInputStream: InputStream) : InputStream() {
     override fun read(): Int = delegatedInputStream.read()
-    override fun read(b: ByteArray): Int  = delegatedInputStream.read(b)
+    override fun read(b: ByteArray): Int = delegatedInputStream.read(b)
     override fun read(b: ByteArray, off: Int, len: Int): Int = delegatedInputStream.read(b, off, len)
     override fun available(): Int = delegatedInputStream.available()
     override fun close() = delegatedInputStream.close()
@@ -17,7 +17,7 @@ open class DelegatedInputStream(val delegatedInputStream: InputStream): InputStr
 /**
  * Simple little wrapper that just does a count every time a byte is read
  */
-open class CountingInputStream(countedInputStream: InputStream): DelegatedInputStream(countedInputStream) {
+open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
     var count = 0L
 
     override fun read(): Int {
@@ -38,7 +38,7 @@ open class CountingInputStream(countedInputStream: InputStream): DelegatedInputS
     }
 }
 
-class OffsetInputStream(offsetInputStream: InputStream, offset: Long, val overriding: Long = offsetInputStream.available().toLong()): CountingInputStream(offsetInputStream) {
+class OffsetInputStream(offsetInputStream: InputStream, offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {
 
     override fun read(): Int = if (count < overriding) super.read() else -1
     override fun read(b: ByteArray): Int {
@@ -46,7 +46,7 @@ class OffsetInputStream(offsetInputStream: InputStream, offset: Long, val overri
     }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
-        if(count >= overriding)
+        if (count >= overriding)
             return -1
         return super.read(b, off, len.coerceAtMost((overriding - count).toInt()))
     }

@@ -22,12 +22,12 @@ fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false): Long {
     var s = "0"
 
     try {
-        val bin = Array(bytes, {""})
+        val bin = Array(bytes, { "" })
         for (i in 0 until bytes)
             bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
 
         val base = "00000000"
-        for (i in if(unsigned) (bytes - 1 downTo 0) else (0 until bytes))
+        for (i in if (unsigned) (bytes - 1 downTo 0) else (0 until bytes))
             s += base.substring(bin[i].length) + bin[i]
     } catch (th: Throwable) {
     }
@@ -39,12 +39,12 @@ fun InputStream.readFloat(unsigned: Boolean = false): Float {
     var s = "0"
 
     try {
-        val bin = Array(4, {""})
+        val bin = Array(4, { "" })
         for (i in 0 until 4)
             bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
 
         val base = "00000000"
-        for (i in if(unsigned) (4 - 1 downTo 0) else (0 until 4))
+        for (i in if (unsigned) (4 - 1 downTo 0) else (0 until 4))
             s += base.substring(bin[i].length) + bin[i]
     } catch (th: Throwable) {
     }
@@ -68,9 +68,9 @@ fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8"): S
     val max = maxLen.coerceAtMost(255)
     val baos = ByteArrayOutputStream()
 
-    for(i in 0 until max) {
+    for (i in 0 until max) {
         val read = read()
-        if(read <= 0)
+        if (read <= 0)
             break
 
         baos.write(read)
@@ -107,7 +107,7 @@ fun OutputStream.writeNumber(num: Long, bytes: Int = 4, unsigned: Boolean = fals
         base += "00000000"
     val nums = base.substring(ss.length) + ss
 
-    for (i in if(unsigned) (bytes - 1 downTo 0) else (0 until bytes)) {
+    for (i in if (unsigned) (bytes - 1 downTo 0) else (0 until bytes)) {
         write(Integer.parseInt(nums.substring(i * 8, (i + 1) * 8), 2))
     }
 }
@@ -130,7 +130,7 @@ fun Short.write(unsigned: Boolean = false): ByteArray {
     return baos.toByteArray()
 }
 
-fun Byte.write(): ByteArray = ByteArray(1, {this})
+fun Byte.write(): ByteArray = ByteArray(1, { this })
 
 fun ByteArray.write(outputStream: OutputStream) {
     outputStream.write(this)
@@ -148,15 +148,15 @@ fun String.toDRBytes(): ByteArray {
 fun OutputStream.writeString(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
 
 fun String.getParents(): String {
-    return if(this.lastIndexOf('/') == -1) "" else this.substring(0, this.lastIndexOf('/'))
+    return if (this.lastIndexOf('/') == -1) "" else this.substring(0, this.lastIndexOf('/'))
 }
 
 fun String.getChild(): String {
-    return if(this.lastIndexOf('/') == -1) this else this.substring(this.lastIndexOf('/') + 1, length)
+    return if (this.lastIndexOf('/') == -1) this else this.substring(this.lastIndexOf('/') + 1, length)
 }
 
 fun String.getExtension(): String {
-    return if(this.lastIndexOf('.') == -1) this else this.substring(this.lastIndexOf('.') + 1, length)
+    return if (this.lastIndexOf('.') == -1) this else this.substring(this.lastIndexOf('.') + 1, length)
 }
 
 fun <T> T.asOptional(): Optional<T> = Optional.of(this)
@@ -164,3 +164,5 @@ fun <T> T.asOptional(): Optional<T> = Optional.of(this)
 inline fun <T> Array<out T>.findOrEmpty(predicate: (T) -> Boolean): Optional<T> {
     return Optional.ofNullable(firstOrNull(predicate))
 }
+
+public infix fun <A, B, C> Pair<A, B>.and(that: C): Triple<A, B, C> = Triple(this.first, this.second, that)
