@@ -1,13 +1,11 @@
 package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
-import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
-import org.parboiled.errors.ErrorUtils
 import java.io.*
 import java.util.*
 

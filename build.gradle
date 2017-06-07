@@ -33,7 +33,7 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile "com.github.undermybrella:Visi:master-SNAPSHOT"
+    compile "com.github.undermybrella:Visi:84ef47a"
 
     compile "org.parboiled:parboiled-java:1.1.8"
 
