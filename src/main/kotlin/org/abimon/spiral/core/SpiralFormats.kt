@@ -1,6 +1,6 @@
 package org.abimon.spiral.core
 
-import org.abimon.external.TGAReader
+import net.npe.tga.TGAReader
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.lin.UnknownEntry

@@ -1,4 +1,4 @@
-package org.abimon.external;
+package net.npe.tga;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

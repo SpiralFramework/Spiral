@@ -1,6 +1,6 @@
 package org.abimon.spiral.core
 
-import org.abimon.external.TGAWriter
+import net.npe.tga.TGAWriter
 import org.abimon.visi.lang.toBinaryString
 import org.abimon.visi.lang.toFloat
 import org.abimon.visi.lang.toLong
