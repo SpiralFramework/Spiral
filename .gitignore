@@ -4,3 +4,4 @@ out/
 .idea/
 processing/
 build/
+/src/main/resources/META-INF/

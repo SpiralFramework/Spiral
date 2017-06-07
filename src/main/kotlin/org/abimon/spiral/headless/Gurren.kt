@@ -1,6 +1,7 @@
 package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
@@ -19,6 +20,8 @@ fun main(args: Array<String>) {
     }
 
     menu()
+
+    //customFormats()
 }
 
 fun extractText() {
@@ -112,13 +115,75 @@ fun extractText() {
 //    }
 }
 
-fun customFormats() {
-    val result = SpiralDrill.runner.run("1024 lines of TEXT\n0x3|1\n0x1|123,245, 182")
-    if (result.parseErrors.isNotEmpty())
-        println(ErrorUtils.printParseError(result.parseErrors[0]))
-    else {
-        val valueStack = result.valueStack.filter { it is Pair<*, *> }.map { it as Pair<*, *> }.toMap()
-        println("Values: ${(valueStack["lines"] as List<*>).joinToString("\n")}")
+//fun customFormats() {
+//    val result = SpiralDrill.runner.run("THIS SENTENCE IS FALSE\nTHIS SENTENCE IS FALSE")
+//    if (result.parseErrors.isNotEmpty())
+//        println(ErrorUtils.printParseError(result.parseErrors[0]))
+//    else {
+//        result.valueStack.reversed().forEach { value ->
+//            if (value is ArrayList<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).toTypedArray())
+//        }
+//    }
+//}
+
+fun process(name: String, data: DataSource, parent: File) {
+    SpiralFormats.formatForData(data, SpiralFormats.drWadFormats).ifPresent { format ->
+
+        when (format) {
+            is TGAFormat -> {
+                val extractLocation = File(parent, name.replace(".tga", "") + ".png")
+                val time = time {
+                    val fileOutput = FileOutputStream(extractLocation)
+                    SpiralFormats.TGA.convert(SpiralFormats.PNG, data, fileOutput)
+                    fileOutput.close()
+                }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
+
+                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".tga" else name)
+                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+            }
+            is LINFormat -> {
+                val extractLocation = File(parent, name.replace(".lin", "") + ".txt")
+                val time = time {
+                    val fileOutput = FileOutputStream(extractLocation)
+                    SpiralFormats.LIN.convert(SpiralFormats.TXT, data, fileOutput)
+                    fileOutput.close()
+                }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from LIN to TXT)")
+
+                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".lin" else name)
+                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+            }
+            is PAKFormat -> {
+                val pakDir = File(parent, name.replace(".pak", ""))
+                pakDir.mkdirs()
+
+                val extractLocation = File(parent, name.replace(".pak", "") + ".zip")
+                val time = time {
+                    val fileOutput = FileOutputStream(extractLocation)
+                    SpiralFormats.PAK.convert(SpiralFormats.ZIP, data, fileOutput)
+                    fileOutput.close()
+                }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
+
+                val pak = Pak(data)
+                pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir) }
+
+                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".pak" else name)
+                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+            }
+            else -> {
+                val extractLocation = File(parent, if(name.lastIndexOf('.') == -1)  name + ".unknown" else name)
+                val time = time { FileOutputStream(extractLocation).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms)")
+            }
+        }
     }
 }
 
@@ -500,6 +565,40 @@ fun menu() {
                                         }
                                     }
                                     println("[$wad] Finished extracting ${extracting.count()} files to $dir, took $totalTime ms")
+                                }
+                                "extract_all_nicely" -> {
+                                    if (wadOperation.size == 1) {
+                                        errPrintln("[$wad] Error: No directory path provided!")
+                                        continue@operate
+                                    }
+
+                                    val dir = File(wadOperation[1])
+                                    if (!dir.exists()) {
+                                        errPrintln("[$wad] $dir does not exist, creating...")
+                                        if (!dir.mkdirs()) {
+                                            println("[$wad] An error occurred while creating $dir")
+                                            continue@operate
+                                        }
+                                    }
+                                    if (!dir.isDirectory) {
+                                        errPrintln("[$wad] Error: $dir is not a directory!")
+                                        continue@operate
+                                    }
+
+                                    val totalTime = time {
+                                        wadFile.files.forEach { file ->
+                                            val parentDirs = File(dir, file.name.getParents())
+                                            if (!parentDirs.exists()) {
+                                                if (!parentDirs.mkdirs()) {
+                                                    errPrintln("[$wad] An error occurred while creating $parentDirs")
+                                                    return@forEach
+                                                }
+                                            }
+
+                                            process(file.name.getChild(), file, parentDirs)
+                                        }
+                                    }
+                                    println("[$wad] Finished extracting all files of a format to $dir, took $totalTime ms")
                                 }
                                 "backup" -> {
                                     println("Backing up now...")
