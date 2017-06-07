@@ -269,8 +269,8 @@ class Pak(val dataSource: DataSource) {
         val pak = CountingInputStream(dataSource.getInputStream())
         try {
             val numFiles = pak.readNumber(4, true).toInt().coerceAtMost(1024) //Fair sample size
-            if (numFiles <= 0)
-                throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt ($numFiles <= 0)")
+            if (numFiles <= 1)
+                throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt ($numFiles <= 1)")
             offsets = LongArray(numFiles + 1)
 
             for (i in 0 until numFiles) {
@@ -412,7 +412,7 @@ class Lin(val dataSource: DataSource) {
                     i++
                 } else if (data[i] != 0x70) {
                     while (i < data.size) {
-                        errPrintln("$i expected to be 0x70, was ${data[i]}")
+                        if(isDebug) errPrintln("$i expected to be 0x70, was ${data[i]}")
                         if (i == 0x00 || i == 0x70)
                             break
                         i++
