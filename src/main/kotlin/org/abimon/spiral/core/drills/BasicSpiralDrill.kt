@@ -112,7 +112,7 @@ object BasicSpiralDrill : DrillHead {
             0x20 -> { ensure(0x20, 5, params); return unknown(0x20, params.copyOf(5)) }
             0x21 -> { ensure(0x21, 1, params); return SpeakerEntry(params[0]) }
             0x22 -> { ensure(0x22, 3, params); return unknown(0x22, params.copyOf(3)) }
-            0x23 -> { ensure(0x23, 5, params); return unknown(0x20, params.copyOf(5)) }
+            0x23 -> { ensure(0x23, 5, params); return unknown(0x23, params.copyOf(5)) }
             0x25 -> { ensure(0x25, 2, params); return ChangeUIEntry(params[0], params[1]) }
             0x26 -> { ensure(0x26, 3, params); return SetFlagEntry(params[0], params[1], params[2]) }
             0x27 -> { ensure(0x27, 1, params); return CheckCharacterEntry(params[0]) }

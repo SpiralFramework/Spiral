@@ -23,8 +23,8 @@ fun main(args: Array<String>) {
 
     //menu()
 
-    //dumpScriptEntries()
-    customFormats()
+    dumpScriptEntries()
+    //customFormats()
     Thread.sleep(1000)
 }
 
@@ -125,10 +125,11 @@ fun dumpScriptEntries() {
     if(!parentDir.exists())
         parentDir.mkdirs()
 
-    wad.files.filter { (name) -> name.endsWith(".lin") }.flatMap { Lin(it).entries.map { script -> script to it } }.groupBy { (script) -> script.getOpCode() }.forEach { code, scripts ->
+    wad.files.filter { (name) -> name.endsWith(".lin") }.flatMap { Lin(it).entries.map { script -> script to it } }.groupBy { (script) -> script.getOpCode() }.toSortedMap(Comparator { o1, o2 -> o1.compareTo(o2) }).forEach { code, scripts ->
         val file = File(parentDir, "0x${code.toString(16)}.txt")
         val out = PrintStream(file)
 
+        println(scripts[0].first)
         val padLength = (scripts.filter { (entry) -> entry.getRawArguments().isNotEmpty() }.takeIf { it.isNotEmpty() }?.flatMap { (entry) -> entry.getRawArguments().map { "$it".length } }?.pass { a, b -> a.coerceAtLeast(b) } ?: 0) + 1
         scripts.forEach { (entry, location) -> out.println("${location.name.getChild()}|${entry.getRawArguments().joinToString { it.toPaddedString(padLength) } }") }
         out.close()

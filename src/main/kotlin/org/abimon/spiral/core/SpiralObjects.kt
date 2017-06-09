@@ -1,9 +1,6 @@
 package org.abimon.spiral.core
 
-import org.abimon.spiral.core.lin.LinScript
-import org.abimon.spiral.core.lin.TextCountEntry
-import org.abimon.spiral.core.lin.TextEntry
-import org.abimon.spiral.core.lin.UnknownEntry
+import org.abimon.spiral.core.lin.*
 import org.abimon.util.CountingInputStream
 import org.abimon.util.OffsetInputStream
 import org.abimon.visi.collections.remove
@@ -437,10 +434,14 @@ class Lin(val dataSource: DataSource) {
                         }
                     }
 
+                    val params = arguments.toIntArray()
+
                     when (opCode) {
-                        0x00 -> entries.add(TextCountEntry((arguments[1] shl 8) or arguments[0]))
+                        0x00 -> { ensure(0x00, 2, params); entries.add(TextCountEntry(params[0], params[1])) }
+                        0x01 -> { ensure(0x01, 3, params); entries.add(UnknownEntry(0x01, params)) }
                         0x02 -> {
-                            val textID = ((arguments[0] shl 8) or arguments[1])
+                            ensure(0x02, 2, params)
+                            val textID = ((params[0] shl 8) or params[1])
                             textStream.reset()
                             textStream.skip((textID + 1) * 4L)
                             val textPos = textStream.readNumber(4, true)
@@ -458,7 +459,53 @@ class Lin(val dataSource: DataSource) {
                             textStream.skip(textPos)
                             entries.add(TextEntry(textStream.readDRString((nextTextPos - textPos).toInt(), "UTF-16LE"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
                         }
-                        else -> entries.add(UnknownEntry(opCode, arguments.toIntArray()))
+                        0x03 -> { ensure(0x03, 1, params); entries.add(FormatEntry(params[0])) }
+                        0x04 -> { ensure(0x04, 4, params); entries.add(FilterEntry(params[0], params[1], params[2], params[3])) }
+                        0x05 -> { ensure(0x05, 2, params); entries.add(MovieEntry(params[0], params[1])) }
+                        0x06 -> { ensure(0x06, 8, params); entries.add(AnimationEntry(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7])) }
+                        0x08 -> { ensure(0x08, 5, params); entries.add(VoiceLineEntry(params[0], params[1], params[2], params[3], params[4])) }
+                        0x09 -> { ensure(0x09, 3, params); entries.add(MusicEntry(params[0], params[1], params[2])) }
+                        0x0A -> { ensure(0x0A, 3, params); entries.add(SoundEffectEntryA(params[0], params[1], params[2])) }
+                        0x0B -> { ensure(0x0B, 2, params); entries.add(SoundEffectEntryB(params[0], params[1])) }
+                        0x0C -> { ensure(0x0C, 2, params); entries.add(TruthBulletEntry(params[0], params[1])) }
+                        0x0D -> { ensure(0x0D, 3, params); entries.add(UnknownEntry(0x0D, params)) }
+                        0x0E -> { ensure(0x0E, 2, params); entries.add(UnknownEntry(0x0E, params)) }
+                        0x0F -> { ensure(0x0F, 3, params); entries.add(SetStudentTitleEntry(params[0], params[1], params[2])) }
+                        0x10 -> { ensure(0x10, 3, params); entries.add(SetStudentReportEntry(params[0], params[1], params[2])) }
+                        0x11 -> { ensure(0x11, 4, params); entries.add(UnknownEntry(0x11, params)) }
+                        0x14 -> { ensure(0x14, 3, params); entries.add(TrialCameraEntry(params[0], params[1], params[2])) }
+                        0x15 -> { ensure(0x15, 3, params); entries.add(LoadMapEntry(params[0], params[1], params[2])) }
+                        0x19 -> { ensure(0x19, 3, params); entries.add(LoadScriptEntry(params[0], params[1], params[2])) }
+                        0x1A -> { ensure(0x1A, 0, params); entries.add(StopScriptEntry()) }
+                        0x1B -> { ensure(0x1B, 3, params); entries.add(RunScriptEntry(params[0], params[1], params[2])) }
+                        0x1C -> { ensure(0x1C, 0, params); entries.add(UnknownEntry(0x1C, IntArray(0))) }
+                        0x1E -> { ensure(0x1E, 5, params); entries.add(SpriteEntry(params[0], params[1], params[2], params[3], params[4])) }
+                        0x1F -> { ensure(0x1F, 7, params); entries.add(UnknownEntry(0x1F, params)) }
+                        0x20 -> { ensure(0x20, 5, params); entries.add(UnknownEntry(0x20, params)) }
+                        0x21 -> { ensure(0x21, 1, params); entries.add(SpeakerEntry(params[0])) }
+                        0x22 -> { ensure(0x22, 3, params); entries.add(UnknownEntry(0x22, params)) }
+                        0x23 -> { ensure(0x23, 5, params); entries.add(UnknownEntry(0x23, params)) }
+                        0x25 -> { ensure(0x25, 2, params); entries.add(ChangeUIEntry(params[0], params[1])) }
+                        0x26 -> { ensure(0x26, 3, params); entries.add(SetFlagEntry(params[0], params[1], params[2])) }
+                        0x27 -> { ensure(0x27, 1, params); entries.add(CheckCharacterEntry(params[0])) }
+                        0x29 -> { ensure(0x29, 1, params); entries.add(CheckObjectEntry(params[0])) }
+                        0x2A -> { ensure(0x2A, 2, params); entries.add(SetLabelEntry(params[0], params[1])) }
+                        0x2B -> { ensure(0x2B, 1, params); entries.add(ChoiceEntry(params[0])) }
+                        0x2C -> { ensure(0x2C, 2, params); entries.add(UnknownEntry(0x2C, params)) }
+                        0x2E -> { ensure(0x2E, 2, params); entries.add(UnknownEntry(0x2E, params)) }
+                        0x2F -> { ensure(0x2F, 10, params); entries.add(UnknownEntry(0x2F, params)) }
+                        0x30 -> { ensure(0x30, 3, params); entries.add(ShowBackgroundEntry(params[0], params[1], params[2])) }
+                        0x32 -> { ensure(0x32, 1, params); entries.add(UnknownEntry(0x32, params)) }
+                        0x33 -> { ensure(0x33, 4, params); entries.add(UnknownEntry(0x33, params)) }
+                        0x34 -> { ensure(0x34, 2, params); entries.add(GoToLabelEntry(params[0], params[1])) }
+                        0x35 -> entries.add(CheckFlagEntryA(params))
+                        0x36 -> entries.add(CheckFlagEntryB(params))
+                        0x39 -> { ensure(0x39, 5, params); entries.add(UnknownEntry(0x39, params)) }
+                        0x3A -> { ensure(0x3A, 0, params); entries.add(WaitForInputEntry()) }
+                        0x3B -> { ensure(0x3B, 0, params); entries.add(WaitFrameEntry()) }
+                        0x3C -> { ensure(0x3C, 0, params); entries.add(EndFlagCheckEntry()) }
+
+                        else -> entries.add(UnknownEntry(opCode, params))
                     }
                 }
             }
@@ -467,6 +514,8 @@ class Lin(val dataSource: DataSource) {
             throw illegal
         }
     }
+
+    fun ensure(opCode: Int, required: Int, params: IntArray): Unit = if(params.size != required) throw IllegalArgumentException("Malformed LIN entry - 0x${opCode.toString(16)} (Expected $required, got ${params.size})") else Unit
 }
 
 class CustomLin {
