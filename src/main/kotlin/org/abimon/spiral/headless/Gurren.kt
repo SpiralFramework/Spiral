@@ -2,9 +2,11 @@ package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.drills.DrillHead
+import org.abimon.spiral.core.lin.SoundEffectEntryB
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
+import org.abimon.visi.collections.pass
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
 import org.parboiled.errors.ErrorUtils
@@ -21,6 +23,7 @@ fun main(args: Array<String>) {
 
     //menu()
 
+    //dumpScriptEntries()
     customFormats()
     Thread.sleep(1000)
 }
@@ -116,6 +119,22 @@ fun extractText() {
 //    }
 }
 
+fun dumpScriptEntries() {
+    val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
+    val parentDir = File("processing/lin dump")
+    if(!parentDir.exists())
+        parentDir.mkdirs()
+
+    wad.files.filter { (name) -> name.endsWith(".lin") }.flatMap { Lin(it).entries.map { script -> script to it } }.groupBy { (script) -> script.getOpCode() }.forEach { code, scripts ->
+        val file = File(parentDir, "0x${code.toString(16)}.txt")
+        val out = PrintStream(file)
+
+        val padLength = (scripts.filter { (entry) -> entry.getRawArguments().isNotEmpty() }.takeIf { it.isNotEmpty() }?.flatMap { (entry) -> entry.getRawArguments().map { "$it".length } }?.pass { a, b -> a.coerceAtLeast(b) } ?: 0) + 1
+        scripts.forEach { (entry, location) -> out.println("${location.name.getChild()}|${entry.getRawArguments().joinToString { it.toPaddedString(padLength) } }") }
+        out.close()
+    }
+}
+
 fun customFormats() {
     val result = SpiralDrill.runner.run(readLine()!!.replace("\\n", "\n"))
     if (result.parseErrors.isNotEmpty())
@@ -125,8 +144,25 @@ fun customFormats() {
             println(if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) else null)
         }
     }
+}
 
-    println("Done")
+fun sfxb() {
+    val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
+    val sfxB = ArrayList<SoundEffectEntryB>()
+
+    wad.files.filter { (name) -> name.endsWith(".lin") }.forEach {
+        val text = String(SpiralFormats.convert(SpiralFormats.LIN, SpiralFormats.TXT, it))
+        val result = SpiralDrill.runner.run(text)
+        if (result.parseErrors.isNotEmpty())
+            println(ErrorUtils.printParseError(result.parseErrors[0]))
+        else {
+            result.valueStack.forEach value@{ value -> sfxB.add((if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) as? SoundEffectEntryB else null) ?: return@value)}
+        }
+    }
+
+    println("\n" * 100)
+
+    println(sfxB.groupBy { (arg1) -> arg1 }.mapValues { (_, num) -> num.size }.toList().joinToString("\n") { (arg1, amount) -> "[$arg1] $amount entries"})
 }
 
 fun process(name: String, data: DataSource, parent: File) {

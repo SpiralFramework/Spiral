@@ -740,7 +740,7 @@ object SpiralData {
         put(0x09, 3, "Music")
         put(0x0A, 3, "SFX A")
         put(0x0B, 2, "SFX B")
-        put(0x0C, 2, "Toggle Truth Bullet")
+        put(0x0C, 2, "Truth Bullet")
         put(0x0D, 3, "0x0D")
         put(0x0E, 2, "0x0E")
         put(0x0F, 3, "Set Title")

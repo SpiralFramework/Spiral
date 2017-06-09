@@ -123,6 +123,7 @@ These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + 
 * `0x0A` - SFX A, three arguments. Suspect it follows the same format as `0x09`, but for sound effects.
 * `0x0B` - SFX B, two arguments. Unknown.
 * `0x0C` - Toggle Truth Bullet, two arguments. The first argument is the ID of the truth bullet, or piece of evidence, to either enable or disable. The second argument is 0 to disable, and 1 to enable. Using `255, 0` as the arguments should clear the evidence list.
+    * Update: I don't quite think this is right, but further testing is required.
 * `0x0D` - Unknown, three arguments.
 * `0x0E` - Unknown, two arguments.
 * `0x0F` - Set Title, three arguments. Argument 1 is character ID, argument 2 seems to always be `0`, and argument 3 is the state of the title? Purpose is unknown, possibly used for report cards.
