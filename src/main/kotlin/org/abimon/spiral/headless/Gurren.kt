@@ -1,11 +1,13 @@
 package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
+import org.parboiled.errors.ErrorUtils
 import java.io.*
 import java.util.*
 
@@ -17,9 +19,10 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
-    menu()
+    //menu()
 
-    //customFormats()
+    customFormats()
+    Thread.sleep(1000)
 }
 
 fun extractText() {
@@ -113,16 +116,18 @@ fun extractText() {
 //    }
 }
 
-//fun customFormats() {
-//    val result = SpiralDrill.runner.run("THIS SENTENCE IS FALSE\nTHIS SENTENCE IS FALSE")
-//    if (result.parseErrors.isNotEmpty())
-//        println(ErrorUtils.printParseError(result.parseErrors[0]))
-//    else {
-//        result.valueStack.reversed().forEach { value ->
-//            if (value is ArrayList<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).toTypedArray())
-//        }
-//    }
-//}
+fun customFormats() {
+    val result = SpiralDrill.runner.run(readLine()!!.replace("\\n", "\n"))
+    if (result.parseErrors.isNotEmpty())
+        println(ErrorUtils.printParseError(result.parseErrors[0]))
+    else {
+        result.valueStack.forEach { value ->
+            println(if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) else null)
+        }
+    }
+
+    println("Done")
+}
 
 fun process(name: String, data: DataSource, parent: File) {
     SpiralFormats.formatForData(data, SpiralFormats.drWadFormats).ifPresent { format ->

@@ -128,8 +128,7 @@ class LINFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            Lin(source)
-            return true
+            return Lin(source).entries.isNotEmpty()
         } catch(illegal: IllegalArgumentException) {
         }
         return false
@@ -141,10 +140,10 @@ class LINFormat : SpiralFormat {
         super.convert(format, source, output)
 
         Lin(source).entries.forEach { entry ->
-            if (entry is TextEntry)
-                output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}\n")
+            if (entry is TextEntry) //SpiralData.opCodes[entry.getOpCode()]?.second ?:
+                output.writeString("${"0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}\n")
             else
-                output.writeString("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}\n")
+                output.writeString("${"0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}\n")
         }
     }
 }
