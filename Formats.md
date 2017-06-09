@@ -119,7 +119,7 @@ These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + 
 * `0x06` - Animation. Eight arguments. Argument 1 is the animation ID divided by 256, the second is the remainder. The third to seventh arguments are unknown. The eighth argument is the frame to use, and 255 to hide it.
 * `0x07` - Unknown
 * `0x08` - Voice Line, Five arguments. The first is the character ID (See below). The second is the chapter to pull from, set to `99` for no chapter. The third argument is the voice line `{ID}`. The fifth argument is the volume *percentage* (At least, I assume so). Default to 100.
-* `0x09` - Music, three arguments. First is the music number, second is the transition. Third is unknown, `0` is a safe value.
+* `0x09` - Music, three arguments. First is the music number (or `255` to stop any music playing), second is the transition. Third is the volume percentage.
 * `0x0A` - SFX A, three arguments. Suspect it follows the same format as `0x09`, but for sound effects.
 * `0x0B` - SFX B, two arguments. Unknown.
 * `0x0C` - Toggle Truth Bullet, two arguments. The first argument is the ID of the truth bullet, or piece of evidence, to either enable or disable. The second argument is 0 to disable, and 1 to enable. Using `255, 0` as the arguments should clear the evidence list.
