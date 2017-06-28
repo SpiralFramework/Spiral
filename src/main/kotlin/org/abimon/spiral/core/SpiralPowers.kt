@@ -145,7 +145,8 @@ fun String.toDRBytes(): ByteArray {
     return drBytes
 }
 
-fun OutputStream.writeString(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
+fun OutputStream.print(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
+fun OutputStream.println(str: String, encoding: String = "UTF-8") = write("$str\n".toByteArray(Charset.forName(encoding)))
 
 fun String.getParents(): String {
     return if (this.lastIndexOf('/') == -1) "" else this.substring(0, this.lastIndexOf('/'))

@@ -1,6 +1,7 @@
 package org.abimon.spiral.core
 
 import net.npe.tga.TGAReader
+import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.lin.UnknownEntry
@@ -9,15 +10,14 @@ import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.make
 import org.abimon.visi.lang.times
 import java.io.*
-import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.imageio.ImageIO
 
 interface SpiralFormat {
-    fun getName(): String
-    fun getExtension(): String = getName().toLowerCase()
+    val name: String
+    val extension: String?
     fun isFormat(source: DataSource): Boolean
     fun canConvert(format: SpiralFormat): Boolean
     /**
@@ -27,14 +27,15 @@ interface SpiralFormat {
         if (!canConvert(format))
             throw IllegalArgumentException("Cannot convert to $format")
         if (!isFormat(source))
-            throw IllegalArgumentException("${source.getLocation()} does not conform to the ${getName()} format")
+            throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format")
     }
 
     fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) = format.convert(this, source, output)
 }
 
-class WADFormat : SpiralFormat {
-    override fun getName(): String = "WAD"
+object WADFormat : SpiralFormat {
+    override val name = "WAD"
+    override val extension = "wad"
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -65,8 +66,9 @@ class WADFormat : SpiralFormat {
     }
 }
 
-class PAKFormat : SpiralFormat {
-    override fun getName(): String = "PAK"
+object PAKFormat : SpiralFormat {
+    override val name = "PAK"
+    override val extension = "pak"
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -96,8 +98,9 @@ class PAKFormat : SpiralFormat {
     }
 }
 
-class TGAFormat : SpiralFormat {
-    override fun getName(): String = "TGA"
+object TGAFormat : SpiralFormat {
+    override val name = "TGA"
+    override val extension = "tga"
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -123,8 +126,9 @@ class TGAFormat : SpiralFormat {
     }
 }
 
-class LINFormat : SpiralFormat {
-    override fun getName(): String = "LIN"
+object LINFormat : SpiralFormat {
+    override val name = "LIN"
+    override val extension = "lin"
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -134,22 +138,48 @@ class LINFormat : SpiralFormat {
         return false
     }
 
-    override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat
+    override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat || format is SpiralTextFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
         Lin(source).entries.forEach { entry ->
-            if (entry is TextEntry) //SpiralData.opCodes[entry.getOpCode()]?.second ?:
-                output.writeString("${"0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}\n")
+            if (entry is TextEntry)
+                output.println("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
             else
-                output.writeString("${"0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}\n")
+                output.println("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}")
         }
     }
 }
 
-class ZIPFormat : SpiralFormat {
-    override fun getName(): String = "ZIP"
+object SpiralTextFormat : SpiralFormat {
+    override val name = "SPIRAL Text"
+    override val extension = ".sprl.txt"
+
+    override fun isFormat(source: DataSource): Boolean = !SpiralDrill.runner.run(String(source.getData(), Charsets.UTF_8)).hasErrors()
+
+    override fun canConvert(format: SpiralFormat): Boolean = format is LINFormat
+
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
+        super.convert(format, source, output)
+
+        when (format) {
+            is LINFormat -> {
+                val lin = make<CustomLin> {
+                    SpiralDrill.runner.run(String(source.getData(), Charsets.UTF_8)).valueStack.forEach { value ->
+                        if (value is List<*>) (value[0] as DrillHead).formScripts(value.subList(1, value.size).filterNotNull().toTypedArray()).forEach { scriptEntry -> entry(scriptEntry) }
+                    }
+                }
+
+                lin.compile(output)
+            }
+        }
+    }
+}
+
+object ZIPFormat : SpiralFormat {
+    override val name = "ZIP"
+    override val extension = "zip"
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -178,8 +208,9 @@ class ZIPFormat : SpiralFormat {
     }
 }
 
-class PNGFormat : SpiralFormat {
-    override fun getName(): String = "PNG"
+object PNGFormat : SpiralFormat {
+    override val name = "PNG"
+    override val extension = "png"
 
     override fun isFormat(source: DataSource): Boolean =
             source.getInputStream().use {
@@ -204,8 +235,9 @@ class PNGFormat : SpiralFormat {
     }
 }
 
-class JPEGFormat : SpiralFormat {
-    override fun getName(): String = "JPG"
+object JPEGFormat : SpiralFormat {
+    override val name = "JPEG"
+    override val extension = "jpg"
 
     override fun isFormat(source: DataSource): Boolean =
             source.getInputStream().use {
@@ -230,8 +262,9 @@ class JPEGFormat : SpiralFormat {
     }
 }
 
-class TXTFormat : SpiralFormat {
-    override fun getName(): String = "TXT"
+object TXTFormat : SpiralFormat {
+    override val name = "Text"
+    override val extension = "txt"
 
     override fun isFormat(source: DataSource): Boolean = true
 
@@ -280,8 +313,18 @@ class TXTFormat : SpiralFormat {
     }
 }
 
-class UnknownFormat : SpiralFormat {
-    override fun getName(): String = "UNKNOWN"
+object SHTXFSFormat : SpiralFormat {
+    override val name = "SHTXFS"
+    override val extension = null
+
+    override fun isFormat(source: DataSource): Boolean = source.getInputStream().readString(4) == "SHTX"
+
+    override fun canConvert(format: SpiralFormat): Boolean = format is TGAFormat || format is PNGFormat || format is JPEGFormat
+}
+
+object UnknownFormat : SpiralFormat {
+    override val name = "Unknown"
+    override val extension = null
 
     override fun isFormat(source: DataSource): Boolean = false
 
@@ -290,24 +333,28 @@ class UnknownFormat : SpiralFormat {
 }
 
 object SpiralFormats {
-    val WAD = WADFormat()
-    val PAK = PAKFormat()
-    val TGA = TGAFormat()
-    val LIN = LINFormat()
+    val WAD = WADFormat
+    val PAK = PAKFormat
+    val TGA = TGAFormat
+    val LIN = LINFormat
 
-    val ZIP = ZIPFormat()
-    val PNG = PNGFormat()
-    val JPG = JPEGFormat()
-    val TXT = TXTFormat()
+    val ZIP = ZIPFormat
+    val PNG = PNGFormat
+    val JPG = JPEGFormat
+    val TXT = TXTFormat
 
-    val UNKNOWN = UnknownFormat()
+    val SPRL_TXT = SpiralTextFormat
 
-    val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT)
+    val SHTXFS = SHTXFSFormat
+
+    val UNKNOWN = UnknownFormat
+
+    val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT, SPRL_TXT, SHTXFS)
     val drWadFormats = arrayOf(WAD, PAK, TGA, LIN)
 
-    fun formatForExtension(extension: String): Optional<SpiralFormat> = formats.findOrEmpty { (it.getExtension() == extension) }
-    fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): Optional<SpiralFormat> = selectiveFormats.findOrEmpty { it.isFormat(dataSource) }
-    fun formatForName(name: String): Optional<SpiralFormat> = formats.findOrEmpty { it.getName().equals(name, true) }
+    fun formatForExtension(extension: String): SpiralFormat? = formats.firstOrNull { it.extension == extension }
+    fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }
+    fun formatForName(name: String): SpiralFormat? = formats.firstOrNull { it.name.equals(name, true) }
 
     fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource): ByteArray {
         val baos = ByteArrayOutputStream()

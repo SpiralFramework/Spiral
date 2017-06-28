@@ -1,8 +1,8 @@
 package org.abimon.spiral.core
 
 import org.abimon.spiral.core.lin.*
-import org.abimon.util.CountingInputStream
-import org.abimon.util.OffsetInputStream
+import org.abimon.spiral.util.CountingInputStream
+import org.abimon.spiral.util.OffsetInputStream
 import org.abimon.visi.collections.remove
 import org.abimon.visi.collections.toArrayString
 import org.abimon.visi.io.*
@@ -165,7 +165,7 @@ class CustomWAD {
     }
 
     fun compile(wad: OutputStream) {
-        wad.writeString("AGAR")
+        wad.print("AGAR")
         wad.writeNumber(major, 4, true)
         wad.writeNumber(minor, 4, true)
         wad.writeNumber(header.size.toLong(), 4, true)
@@ -317,10 +317,8 @@ class CustomPak {
         val modified = LinkedList<DataSource>()
 
         data.forEach {
-            val possibleFormat = SpiralFormats.formatForData(it)
-            if (possibleFormat.isPresent) {
-                val format = possibleFormat.get()
-
+            val format = SpiralFormats.formatForData(it)
+            if (format != null) {
                 when (format) {
                     is PNGFormat -> {
                         val baos = ByteArrayOutputStream()
@@ -879,7 +877,7 @@ object SpiralData {
         val writer = PrintWriter(BufferedWriter(FileWriter(config)))
         writer.use {
             pakNames.forEach { path, pair -> it.println("name|$path|${pair.first}|${pair.second}") }
-            formats.forEach { path, pair -> it.println("format|$path|${pair.first}|${pair.second.getName()}") }
+            formats.forEach { path, pair -> it.println("format|$path|${pair.first}|${pair.second.name}") }
         }
     }
 
@@ -895,8 +893,8 @@ object SpiralData {
                     "name" -> pakNames.put(components[1], Pair(components[2], components[3]))
                     "format" -> {
                         val format = SpiralFormats.formatForName(components[3])
-                        if (format.isPresent)
-                            formats.put(components[1], Pair(components[2], format.get()))
+                        if (format != null)
+                            formats.put(components[1], Pair(components[2], format))
                     }
                 }
             }
