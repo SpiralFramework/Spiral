@@ -10,8 +10,11 @@ import org.abimon.visi.collections.pass
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
 import org.parboiled.errors.ErrorUtils
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.io.*
 import java.util.*
+import javax.imageio.ImageIO
 
 fun main(args: Array<String>) {
     setHeadless()
@@ -21,8 +24,8 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
-    menu()
-
+    udg()
+    //menu()
     //dumpScriptEntries()
     Thread.sleep(1000)
 }
@@ -132,6 +135,95 @@ fun dumpScriptEntries() {
         val padLength = (scripts.filter { (entry) -> entry.getRawArguments().isNotEmpty() }.takeIf { it.isNotEmpty() }?.flatMap { (entry) -> entry.getRawArguments().map { "$it".length } }?.pass { a, b -> a.coerceAtLeast(b) } ?: 0) + 1
         scripts.forEach { (entry, location) -> out.println("${location.name.getChild()}|${entry.getRawArguments().joinToString { it.toPaddedString(padLength) } }") }
         out.close()
+    }
+}
+
+fun currentYear() {
+    run findSize@{
+        val stream = FileInputStream(File("processing/genocider.btx"))
+        val shtx = stream.readString(4)
+        val version = stream.readPartialBytes(2, 2)
+
+        when (String(version)) {
+            "Fs" -> {
+                val width = stream.readNumber(2, unsigned = true).toInt()
+                val height = stream.readNumber(2, unsigned = true).toInt()
+                val unknown = stream.readNumber(2, unsigned = true)
+
+                val palette = ArrayList<Color>()
+
+                for (i in 0 until 256)
+                    palette.add(Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF))
+
+                if (palette.all { it.red == 0 && it.green == 0 && it.blue == 0 && it.alpha == 0 }) ;
+                else {
+                    val pixelList = ArrayList<Color>()
+                    var x = Int.MAX_VALUE
+                    var y = Int.MAX_VALUE
+
+                    stream.readChunked { pixels -> pixels.forEach { index -> pixelList.add(palette[index.toInt() and 0xFF]) } }
+
+                    pixelList.forEachIndexed { index, color ->
+                        if (color.red == 0 && color.green == 0 && color.blue == 1) {
+                            val thix = (index % width)
+                            val thiy = (index / width)
+
+                            if (thix == 0 && thiy < y)
+                                y = thiy
+                            if (thiy == 0 && thix < x)
+                                x = thix
+                        }
+                    }
+
+                    println("Images are ${x}x${y}")
+                }
+            }
+            else -> {
+            }
+        }
+    }
+
+    run Ff@{
+        val stream = FileInputStream(File("processing/special.btx"))
+        val shtx = stream.readString(4)
+        val version = stream.readPartialBytes(2, 2)
+
+        when(String(version)) {
+            "Ff" -> {
+                val width = stream.readNumber(2, unsigned = true).toInt()
+                val height = stream.readNumber(2, unsigned = true).toInt()
+                val unknown = stream.readNumber(2, unsigned = true)
+
+                val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                for(y in 0 until height)
+                    for(x in 0 until width)
+                        img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
+
+                ImageIO.write(img, "PNG", File("processing/special.png"))
+            }
+            else -> println("*Sigh*")
+        }
+    }
+}
+
+fun udg() {
+    //currentYear()
+
+    val btx = File("processing/udg busts btx")
+    val png = File("processing/udg busts png")
+
+    btx.iterate(filters = arrayOf(FileFilter { it.name.matches("bustup_\\d+_\\d+\\.btx".toRegex()) })).forEach { file ->
+        val data = FileDataSource(file)
+        if(SHTXFormat.isFormat(data)) {
+            val comps = file.name.split('_')
+            val outputDir = File(png, comps[1])
+            if(!outputDir.exists())
+                outputDir.mkdirs()
+            val output = File(outputDir, "${comps[2].split('.')[0]}.png")
+            val img = ImageIO.read(ByteArrayInputStream(SpiralFormats.convert(SHTXFormat, PNGFormat, data)))
+            ImageIO.write(img.getSubimage(0, 0, 1937, 1112), "PNG", output)
+            println("Converted $file")
+        }
     }
 }
 

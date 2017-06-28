@@ -38,7 +38,7 @@ fun WAD.extractToDirectory(directory: File) {
 }
 
 fun Collection<File>.convertTgaToPng() {
-    filter { it.name.endsWith(".tga") && ((SpiralData.getFormat(it.name, FileDataSource(it)).orElse(SpiralFormats.UNKNOWN) is TGAFormat) or SpiralFormats.TGA.isFormat(FileDataSource(it))) }.forEach {
+    filter { it.name.endsWith(".tga") && ((SpiralData.getFormat(it.name, FileDataSource(it)) ?: (SpiralFormats.UNKNOWN) is TGAFormat) or SpiralFormats.TGA.isFormat(FileDataSource(it))) }.forEach {
         val data = it.readBytes()
         SpiralData.registerFormat(it.name, data, SpiralFormats.TGA)
         val out = FileOutputStream(File(it.absolutePath.replace(".tga", ".png")))
@@ -48,7 +48,7 @@ fun Collection<File>.convertTgaToPng() {
 }
 
 fun Collection<File>.convertPakToZip() {
-    filter {file -> file.name.endsWith(".pak") && ((SpiralData.getFormat(file.name, FileDataSource(file)).orElse(SpiralFormats.UNKNOWN) is PAKFormat) or SpiralFormats.PAK.isFormat(FileDataSource(file))) }.forEach { file ->
+    filter {file -> file.name.endsWith(".pak") && ((SpiralData.getFormat(file.name, FileDataSource(file)) ?: (SpiralFormats.UNKNOWN) is PAKFormat) or SpiralFormats.PAK.isFormat(FileDataSource(file))) }.forEach { file ->
         SpiralData.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
 
         FileOutputStream(file.absolutePath.replace(".pak", ".zip")).use { Pak(FileDataSource(file)).convertToZip(file.name, it) }
@@ -59,24 +59,23 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
     val zipOut = ZipOutputStream(outputStream)
 
     files.forEach {
-        var possibleFormat = SpiralData.getFormat("$name#${it.name}", it)
-        if(!possibleFormat.isPresent)
-            possibleFormat = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
+        var format = SpiralData.getFormat("$name#${it.name}", it)
+        if(format != null)
+            format = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
 
-        if(possibleFormat.isPresent) {
-            val format = possibleFormat.get()
+        if(format != null) {
             when(format) {
                 is TGAFormat -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${SpiralFormats.PNG.getExtension()}"))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${PNGFormat.extension}"))
                     format.convert(SpiralFormats.PNG, it, zipOut)
                 }
                 is PAKFormat -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${SpiralFormats.ZIP.getExtension()}"))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${ZIPFormat.extension}"))
                     format.convert(SpiralFormats.ZIP, it, zipOut)
                 }
                 is WADFormat -> println("Oh no. $name#${it.name} is a WAD file. Panic. Now.")
                 else -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${format.getExtension()}"))
+                    zipOut.putNextEntry(ZipEntry("${it.name}.${format.extension}"))
                     it.getInputStream().writeTo(zipOut)
                 }
             }

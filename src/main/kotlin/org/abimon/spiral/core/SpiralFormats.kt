@@ -6,9 +6,13 @@ import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.visi.io.DataSource
+import org.abimon.visi.io.readChunked
+import org.abimon.visi.io.readPartialBytes
 import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.make
 import org.abimon.visi.lang.times
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.io.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -313,13 +317,83 @@ object TXTFormat : SpiralFormat {
     }
 }
 
-object SHTXFSFormat : SpiralFormat {
-    override val name = "SHTXFS"
+object SHTXFormat : SpiralFormat {
+    override val name = "SHTX"
     override val extension = null
 
     override fun isFormat(source: DataSource): Boolean = source.getInputStream().readString(4) == "SHTX"
-
     override fun canConvert(format: SpiralFormat): Boolean = format is TGAFormat || format is PNGFormat || format is JPEGFormat
+
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
+        super.convert(format, source, output)
+
+        val img = toBufferedImage(source)
+        when (format) {
+            is PNGFormat -> ImageIO.write(img, "PNG", output)
+            is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
+        }
+    }
+
+    /** This information is taken from BlackDragonHunt's Danganronpa-Tools */
+    fun toBufferedImage(source: DataSource): BufferedImage {
+        //    throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format")
+
+        val stream = source.getInputStream()
+        val shtx = stream.readString(4)
+
+        if(shtx != "SHTX")
+            throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format (First four bytes do not spell [SHTX], spell $shtx)")
+
+        val version = stream.readPartialBytes(2, 2)
+
+        when(String(version)) {
+            "Fs" -> {
+                val width = stream.readNumber(2, unsigned = true).toInt()
+                val height = stream.readNumber(2, unsigned = true).toInt()
+                val unknown = stream.readNumber(2, unsigned = true)
+
+                val palette = ArrayList<Color>()
+
+                for(i in 0 until 256)
+                    palette.add(Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF))
+
+                if(palette.all { it.red == 0 && it.green == 0 && it.blue == 0 && it.alpha == 0 }) {
+                    println("Blank palette in Fs")
+
+                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                    for(y in 0 until height)
+                        for(x in 0 until width)
+                            img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
+                    return img
+
+                }
+                else {
+                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                    val pixelList = ArrayList<Color>()
+
+                    stream.readChunked { pixels -> pixels.forEach { index -> pixelList.add(palette[index.toInt() and 0xFF]) } }
+
+                    pixelList.forEachIndexed { index, color -> img.setRGB((index % width), (index / width), color.rgb) }
+
+                    return img
+                }
+            }
+            "Ff" -> {
+                val width = stream.readNumber(2, unsigned = true).toInt()
+                val height = stream.readNumber(2, unsigned = true).toInt()
+                val unknown = stream.readNumber(2, unsigned = true)
+
+                val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                for (y in 0 until height)
+                    for (x in 0 until width)
+                        img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
+                return img
+            }
+            else -> {}
+        }
+
+        throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format (Reached end of function)")
+    }
 }
 
 object UnknownFormat : SpiralFormat {
@@ -345,11 +419,11 @@ object SpiralFormats {
 
     val SPRL_TXT = SpiralTextFormat
 
-    val SHTXFS = SHTXFSFormat
+    val SHTX = SHTXFormat
 
     val UNKNOWN = UnknownFormat
 
-    val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT, SPRL_TXT, SHTXFS)
+    val formats = arrayOf(WAD, PAK, TGA, LIN, ZIP, PNG, JPG, TXT, SPRL_TXT, SHTX)
     val drWadFormats = arrayOf(WAD, PAK, TGA, LIN)
 
     fun formatForExtension(extension: String): SpiralFormat? = formats.firstOrNull { it.extension == extension }

@@ -92,6 +92,38 @@ Ideally, you don't deal directly with LIN formats, and can use the custom SPIRAL
   * Text Position - 4 byte integer. The starting point of the text to read.
   * Next Text Position - 4 byte integer. The ending point of this line of text.
   * Text - [Next Text Position] - [Text Position] bytes. UTF-16 string. The actual text itself, assigned to the entry `i`, where `i` is the iteration count (0-indexed)
+  
+## 'SHTX'
+
+Credit: [BlackDragonHunt/Danganronpa-Tools](https://github.com/BlackDragonHunt/Danganronpa-Tools)
+
+It's `CURRENT_YEAR` why are we still using obscure image formats
+
+Regardless, the 'SHTX' format seems to be a format used for Danganronpa: Another Episode/Ultra Despair Girls. 
+
+Fairly simple, but still annoying, it consists of a series of "subformats" that are still being documented
+
+* `SHTX` - Magic Number, or `0x53 0x48 0x54 0x58`
+* Format - 2 characters. The formats are as follows
+    * `Fs` - The most common one, an 8 bit image defined with a palette
+        * Width - 2 byte integer, unsigned. 
+        * Height - 2 byte integer, unsigned.
+        * Unknown - 2 byte integer
+        * Palette Definitions - 256 of them, as follows
+            * Red Value - 1 byte
+            * Green Value - 1 byte
+            * Blue Value - 1 byte
+            * Alpha Value - 1 byte
+        * Pixels - Each byte corresponds to the palette entry as defined before. Indexed as rows (So 0,0 -> 16,0 and then 0,1 -> 16,1 and so on so forth)
+    * `Ff` - Less common, used for only a few images.
+        * Width - 2 byte integer, unsigned. 
+        * Height - 2 byte integer, unsigned.
+        * Unknown - 2 byte integer
+        * Pixels - `width` * `height` of them, as follows
+            * Red Value - 1 byte
+            * Green Value - 1 byte
+            * Blue Value - 1 byte
+            * Alpha Value - 1 byte
 
 # Misc Formats
 

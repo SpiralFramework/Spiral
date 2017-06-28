@@ -858,14 +858,14 @@ object SpiralData {
         return Optional.empty()
     }
 
-    fun getFormat(pathName: String, data: DataSource): Optional<SpiralFormat> {
+    fun getFormat(pathName: String, data: DataSource): SpiralFormat? {
         if (formats.containsKey(pathName)) {
             val (sha512, format) = formats[pathName]!!
             if (sha512 == data.getData().sha512Hash())
-                return format.asOptional()
+                return format
         }
 
-        return Optional.empty()
+        return null
     }
 
     fun registerFormat(pathName: String, data: ByteArray, format: SpiralFormat) {
