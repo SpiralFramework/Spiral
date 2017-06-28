@@ -1,4 +1,4 @@
-package org.abimon.util
+package org.abimon.spiral.util
 
 import org.parboiled.MatcherContext
 import org.parboiled.matchers.AnyMatcher

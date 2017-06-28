@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.lin.*
-import org.abimon.util.*
+import org.abimon.spiral.util.*
 import org.abimon.visi.io.errPrintln
 import org.parboiled.BaseParser
 import org.parboiled.Rule

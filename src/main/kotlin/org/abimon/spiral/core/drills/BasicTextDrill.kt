@@ -2,7 +2,7 @@ package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.core.lin.TextEntry
-import org.abimon.util.*
+import org.abimon.spiral.util.*
 import org.parboiled.BaseParser
 import org.parboiled.Rule
 

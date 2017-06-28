@@ -1,4 +1,4 @@
-package org.abimon.util
+package org.abimon.spiral.util
 
 import org.parboiled.Action
 import org.parboiled.BaseParser

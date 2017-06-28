@@ -4,10 +4,10 @@ import org.abimon.spiral.core.drills.BasicSpiralDrill
 import org.abimon.spiral.core.drills.BasicTextDrill
 import org.abimon.spiral.core.drills.DialogueDrill
 import org.abimon.spiral.core.drills.NamedSpiralDrill
-import org.abimon.util.LineMatcher
-import org.abimon.util.ParamList
-import org.abimon.util.clearState
-import org.abimon.util.operateOnTmpStack
+import org.abimon.spiral.util.LineMatcher
+import org.abimon.spiral.util.ParamList
+import org.abimon.spiral.util.clearState
+import org.abimon.spiral.util.operateOnTmpStack
 import org.parboiled.BaseParser
 import org.parboiled.Parboiled
 import org.parboiled.Rule
