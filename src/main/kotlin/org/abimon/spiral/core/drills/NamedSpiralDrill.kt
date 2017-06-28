@@ -18,7 +18,9 @@ object NamedSpiralDrill : DrillHead {
                 pushTmpAction(this, cmd, this@NamedSpiralDrill),
                 pushTmpAction(this, cmd),
                 Optional(
-                        '|',
+                        '|'
+                ),
+                Optional(
                         ParamList(
                                 cmd,
                                 Sequence(
@@ -35,8 +37,8 @@ object NamedSpiralDrill : DrillHead {
         )
     }
 
-    override fun formScript(rawParams: Array<Any>): LinScript {
+    override fun formScripts(rawParams: Array<Any>): Array<LinScript> {
         rawParams[0] = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals("${rawParams[0]}", true) }.key.toString(16)
-        return BasicSpiralDrill.formScript(rawParams)
+        return BasicSpiralDrill.formScripts(rawParams)
     }
 }

@@ -17,7 +17,9 @@ object BasicSpiralDrill : DrillHead {
                 pushTmpAction(this, cmd, this@BasicSpiralDrill),
                 pushTmpAction(this, cmd),
                 Optional(
-                        '|',
+                        '|'
+                ),
+                Optional(
                         ParamList(
                                 cmd,
                                 Sequence(
@@ -34,7 +36,9 @@ object BasicSpiralDrill : DrillHead {
         )
     }
 
-    override fun formScript(rawParams: Array<Any>): LinScript {
+    override fun formScripts(rawParams: Array<Any>): Array<LinScript> = arrayOf(formScript(rawParams))
+
+    fun formScript(rawParams: Array<Any>): LinScript {
         val opCode = "${rawParams[0]}".toInt(16)
         val params = rawParams.copyOfRange(1, rawParams.size).map { "$it".toIntOrNull() }.filterNotNull().toIntArray()
         when(opCode) {

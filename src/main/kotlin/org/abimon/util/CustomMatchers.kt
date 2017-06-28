@@ -21,3 +21,11 @@ object LineCodeMatcher: AnyMatcher() {
         }
     }
 }
+
+class AllButMatcher(val blacklist: CharArray): AnyMatcher() {
+    override fun match(context: MatcherContext<*>): Boolean {
+        if(blacklist.contains(context.currentChar))
+            return false
+        return super.match(context)
+    }
+}

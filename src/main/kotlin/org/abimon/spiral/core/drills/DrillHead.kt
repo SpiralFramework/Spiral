@@ -6,5 +6,5 @@ import org.parboiled.Rule
 
 interface DrillHead {
     fun Syntax(parser: BaseParser<Any>): Rule
-    fun formScript(rawParams: Array<Any>): LinScript
+    fun formScripts(rawParams: Array<Any>): Array<LinScript>
 }

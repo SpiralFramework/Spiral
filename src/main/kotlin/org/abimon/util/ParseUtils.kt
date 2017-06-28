@@ -10,9 +10,12 @@ fun pushAction(parser: BaseParser<Any>, value: Any? = null): Action<Any> = Actio
 val tmpStack = HashMap<String, LinkedList<Any>>()
 var tmp: Any? = null
 var param: Any? = null
+
+fun clearState(): Action<Any> = Action { tmpStack.clear(); tmp = null; param = null; return@Action true }
+
 fun clearTmpStack(cmd: String): Action<Any> = Action { tmpStack.remove(cmd); return@Action true }
 fun pushTmpAction(parser: BaseParser<Any>, cmd: String, value: Any? = null): Action<Any> = Action { if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(value ?: parser.match()); true }
-fun pushTmpFromStack(parser: BaseParser<Any>, cmd: String): Action<Any> = Action { if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(parser.pop()); true }
+fun pushTmpFromStack(parser: BaseParser<Any>, cmd: String): Action<Any> = Action { if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); if(!it.valueStack.isEmpty) tmpStack[cmd]!!.push(parser.pop()); true }
 fun pushTmpStack(parser: BaseParser<Any>, cmd: String): Action<Any> = Action { parser.push(tmpStack.remove(cmd)?.reversed() ?: LinkedList<Any>()) }
 fun operateOnTmpStack(parser: BaseParser<Any>, cmd: String, operate: (Any) -> Unit): Action<Any> = Action { if(tmpStack.containsKey(cmd)) tmpStack[cmd]!!.forEach(operate); true }
 fun pushStackToTmp(parser: BaseParser<Any>, cmd: String): Action<Any> = Action { pushTmpAction(parser, cmd, parser.pop() ?: return@Action true).run(it) }
@@ -24,7 +27,7 @@ fun copyTmp(from: String, to: String): Action<Any> = Action { if (!tmpStack.cont
 fun popTmpFromStack(parser: BaseParser<Any>): Action<Any> = Action { tmp = parser.pop(); return@Action true }
 fun pushTmpToStack(parser: BaseParser<Any>): Action<Any> = Action { parser.push(tmp ?: return@Action true) }
 
-fun popParamFromStack(parser: BaseParser<Any>): Action<Any> = Action { param = parser.pop(); return@Action true }
+fun popParamFromStack(parser: BaseParser<Any>): Action<Any> = Action { param = if(it.valueStack.isEmpty) null else parser.pop(); return@Action true }
 fun pushParamToStack(parser: BaseParser<Any>): Action<Any> = Action { parser.push(param ?: return@Action true) }
 fun pushParamToTmp(parser: BaseParser<Any>, cmd: String): Action<Any> = Action { pushTmpAction(parser, cmd, param ?: return@Action true).run(it) }
 

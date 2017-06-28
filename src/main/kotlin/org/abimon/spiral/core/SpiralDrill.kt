@@ -1,8 +1,12 @@
 package org.abimon.spiral.core
 
 import org.abimon.spiral.core.drills.BasicSpiralDrill
+import org.abimon.spiral.core.drills.BasicTextDrill
+import org.abimon.spiral.core.drills.DialogueDrill
 import org.abimon.spiral.core.drills.NamedSpiralDrill
+import org.abimon.util.LineMatcher
 import org.abimon.util.ParamList
+import org.abimon.util.clearState
 import org.abimon.util.operateOnTmpStack
 import org.parboiled.BaseParser
 import org.parboiled.Parboiled
@@ -14,10 +18,21 @@ import org.parboiled.parserunners.ReportingParseRunner
 open class SpiralDrill: BaseParser<Any>() {
     companion object {
         val parser: SpiralDrill = Parboiled.createParser(SpiralDrill::class.java)
-        val runner = ReportingParseRunner<Any>(parser.SpiralFile())
+        val runner: ReportingParseRunner<Any> = ReportingParseRunner(parser.SpiralFile())
     }
 
-    open fun SpiralFile(): Rule = Sequence(ParamList("DRILL", SpiralLine()), operateOnTmpStack(this, "DRILL") { push(it) })
+    open fun SpiralFile(): Rule = Sequence(
+            clearState(),
+            ParamList("DRILL", SpiralLine()),
+            operateOnTmpStack(this, "DRILL") { push(it) }
+    )
 
-    open fun SpiralLine(): Rule = FirstOf(BasicSpiralDrill.Syntax(this), NamedSpiralDrill.Syntax(this))
+    open fun SpiralLine(): Rule = FirstOf(
+            BasicTextDrill.Syntax(this),
+            DialogueDrill.Syntax(this),
+            BasicSpiralDrill.Syntax(this),
+            NamedSpiralDrill.Syntax(this),
+            Sequence("//", ZeroOrMore(LineMatcher)),
+            EOI
+    )
 }

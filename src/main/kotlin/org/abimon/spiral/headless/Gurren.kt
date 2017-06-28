@@ -2,7 +2,7 @@ package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.drills.DrillHead
-import org.abimon.spiral.core.lin.SoundEffectEntryB
+import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
@@ -21,10 +21,9 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
-    //menu()
+    menu()
 
-    dumpScriptEntries()
-    //customFormats()
+    //dumpScriptEntries()
     Thread.sleep(1000)
 }
 
@@ -136,93 +135,81 @@ fun dumpScriptEntries() {
     }
 }
 
-fun customFormats() {
-    val result = SpiralDrill.runner.run(readLine()!!.replace("\\n", "\n"))
-    if (result.parseErrors.isNotEmpty())
-        println(ErrorUtils.printParseError(result.parseErrors[0]))
-    else {
-        result.valueStack.forEach { value ->
-            println(if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) else null)
-        }
-    }
-}
-
-fun sfxb() {
-    val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
-    val sfxB = ArrayList<SoundEffectEntryB>()
-
-    wad.files.filter { (name) -> name.endsWith(".lin") }.forEach {
-        val text = String(SpiralFormats.convert(SpiralFormats.LIN, SpiralFormats.TXT, it))
-        val result = SpiralDrill.runner.run(text)
-        if (result.parseErrors.isNotEmpty())
-            println(ErrorUtils.printParseError(result.parseErrors[0]))
-        else {
-            result.valueStack.forEach value@{ value -> sfxB.add((if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) as? SoundEffectEntryB else null) ?: return@value)}
-        }
-    }
-
-    println("\n" * 100)
-
-    println(sfxB.groupBy { (arg1) -> arg1 }.mapValues { (_, num) -> num.size }.toList().joinToString("\n") { (arg1, amount) -> "[$arg1] $amount entries"})
-}
+//fun sfxb() {
+//    val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
+//    val sfxB = ArrayList<SoundEffectEntryB>()
+//
+//    wad.files.filter { (name) -> name.endsWith(".lin") }.forEach {
+//        val text = String(SpiralFormats.convert(SpiralFormats.LIN, SpiralFormats.TXT, it))
+//        val result = SpiralDrill.runner.run(text)
+//        if (result.parseErrors.isNotEmpty())
+//            println(ErrorUtils.printParseError(result.parseErrors[0]))
+//        else {
+//            result.valueStack.forEach value@{ value -> sfxB.addAll((if (value is List<*>) (value[0] as DrillHead).formScript(value.subList(1, value.size).filterNotNull().toTypedArray()) as? SoundEffectEntryB else null) ?: return@value)}
+//        }
+//    }
+//
+//    println("\n" * 100)
+//
+//    println(sfxB.groupBy { (arg1) -> arg1 }.mapValues { (_, num) -> num.size }.toList().joinToString("\n") { (arg1, amount) -> "[$arg1] $amount entries"})
+//}
 
 fun process(name: String, data: DataSource, parent: File) {
-    SpiralFormats.formatForData(data, SpiralFormats.drWadFormats).ifPresent { format ->
+    val format = SpiralFormats.formatForData(data, SpiralFormats.drWadFormats) ?: return
 
-        when (format) {
-            is TGAFormat -> {
-                val extractLocation = File(parent, name.replace(".tga", "") + ".png")
-                val time = time {
-                    val fileOutput = FileOutputStream(extractLocation)
-                    SpiralFormats.TGA.convert(SpiralFormats.PNG, data, fileOutput)
-                    fileOutput.close()
-                }
-
-                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
-
-                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".tga" else name)
-                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
-                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+    when (format) {
+        is TGAFormat -> {
+            val extractLocation = File(parent, name.replace(".tga", "") + ".png")
+            val time = time {
+                val fileOutput = FileOutputStream(extractLocation)
+                SpiralFormats.TGA.convert(SpiralFormats.PNG, data, fileOutput)
+                fileOutput.close()
             }
-            is LINFormat -> {
-                val extractLocation = File(parent, name.replace(".lin", "") + ".txt")
-                val time = time {
-                    val fileOutput = FileOutputStream(extractLocation)
-                    SpiralFormats.LIN.convert(SpiralFormats.TXT, data, fileOutput)
-                    fileOutput.close()
-                }
 
-                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from LIN to TXT)")
+            println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
 
-                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".lin" else name)
-                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
-                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+            val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".tga" else name)
+            val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+            println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+        }
+        is LINFormat -> {
+            val extractLocation = File(parent, name.replace(".lin", "") + ".txt")
+            val time = time {
+                val fileOutput = FileOutputStream(extractLocation)
+                SpiralFormats.LIN.convert(SpiralFormats.TXT, data, fileOutput)
+                fileOutput.close()
             }
-            is PAKFormat -> {
-                val pakDir = File(parent, name.replace(".pak", ""))
-                pakDir.mkdirs()
 
-                val extractLocation = File(parent, name.replace(".pak", "") + ".zip")
-                val time = time {
-                    val fileOutput = FileOutputStream(extractLocation)
-                    SpiralFormats.PAK.convert(SpiralFormats.ZIP, data, fileOutput)
-                    fileOutput.close()
-                }
+            println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from LIN to TXT)")
 
-                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
+            val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".lin" else name)
+            val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+            println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+        }
+        is PAKFormat -> {
+            val pakDir = File(parent, name.replace(".pak", ""))
+            pakDir.mkdirs()
 
-                val pak = Pak(data)
-                pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir) }
-
-                val extractLocationOrig = File(parent, if(name.lastIndexOf('.') == -1)  name + ".pak" else name)
-                val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
-                println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+            val extractLocation = File(parent, name.replace(".pak", "") + ".zip")
+            val time = time {
+                val fileOutput = FileOutputStream(extractLocation)
+                SpiralFormats.PAK.convert(SpiralFormats.ZIP, data, fileOutput)
+                fileOutput.close()
             }
-            else -> {
-                val extractLocation = File(parent, if(name.lastIndexOf('.') == -1)  name + ".unknown" else name)
-                val time = time { FileOutputStream(extractLocation).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
-                println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms)")
-            }
+
+            println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms, converted from TGA to PNG)")
+
+            val pak = Pak(data)
+            pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir) }
+
+            val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".pak" else name)
+            val timeOrig = time { FileOutputStream(extractLocationOrig).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+            println("[Unknown] Extracted $name to $extractLocationOrig (${data.getDataSize()} bytes), took $timeOrig ms)")
+        }
+        else -> {
+            val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".unknown" else name)
+            val time = time { FileOutputStream(extractLocation).use { data.getInputStream().use { inputStream -> inputStream.writeTo(it) } } }
+            println("[Unknown] Extracted $name to $extractLocation (${data.getDataSize()} bytes), took $time ms)")
         }
     }
 }
@@ -845,30 +832,30 @@ fun menu() {
                     val from = SpiralFormats.formatForName(operation[2])
                     val to = SpiralFormats.formatForName(operation[3])
 
-                    if (from.isEmpty) {
+                    if (from == null) {
                         errPrintln("Error: No such format with the name ${operation[2]} could be found to convert from!")
                         continue@headless
                     }
 
-                    if (to.isEmpty) {
+                    if (to == null) {
                         errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
                         continue@headless
                     }
 
-                    if (!from().canConvert(to())) {
-                        errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                    if (!from.canConvert(to)) {
+                        errPrintln("Error: You can't convert from ${from.name} to ${to.name}!")
                         continue@headless
                     }
 
                     if (file.isFile) {
-                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from().getExtension(), to().getExtension())) else File(operation[4])
-                        FileOutputStream(outputFile).use { from().convert(to(), FileDataSource(file), it) }
-                        println("Converted $file from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from.extension ?: "", to.extension ?: "")) else File(operation[4])
+                        FileOutputStream(outputFile).use { from.convert(to, FileDataSource(file), it) }
+                        println("Converted $file from ${from.name} to ${to.name}, new file is located at $outputFile")
                     } else if (file.isDirectory) {
-                        file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.filter { (_, data) -> from().isFormat(data) }.forEach { (f, data) ->
-                            val outputFile = File(f.absolutePath.replaceLast(from().getExtension(), to().getExtension()))
-                            FileOutputStream(outputFile).use { from().convert(to(), data, it) }
-                            println("Converted $f from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                        file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.filter { (_, data) -> from.isFormat(data) }.forEach { (f, data) ->
+                            val outputFile = File(f.absolutePath.replaceLast(from.extension ?: "", to.extension ?: ""))
+                            FileOutputStream(outputFile).use { from.convert(to, data, it) }
+                            println("Converted $f from ${from.name} to ${to.name}, new file is located at $outputFile")
                         }
                     }
                 }
@@ -886,16 +873,16 @@ fun menu() {
 
                     if (file.isFile) {
                         val format = SpiralFormats.formatForData(FileDataSource(file))
-                        if (format.isEmpty)
+                        if (format == null)
                             println("No format recognised for $file")
                         else
-                            println("Format for $file: ${format().getName()}")
+                            println("Format for $file: ${format.name}")
                     } else if (file.isDirectory) {
                         file.iterate().filter { f -> f.isFile }.map { it to SpiralFormats.formatForData(FileDataSource(it)) }.forEach { (f, format) ->
-                            if (format.isEmpty)
+                            if (format == null)
                                 println("No format recognised for $f")
                             else
-                                println("Format for $f: ${format().getName()}")
+                                println("Format for $f: ${format.name}")
                         }
                     }
                 }
@@ -918,7 +905,7 @@ fun menu() {
 
                     val to = SpiralFormats.formatForName(operation[2])
 
-                    if (to.isEmpty) {
+                    if (to == null) {
                         errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
                         continue@headless
                     }
@@ -927,34 +914,34 @@ fun menu() {
                         val data = FileDataSource(file)
                         val from = SpiralFormats.formatForData(data)
 
-                        if (from.isEmpty) {
+                        if (from == null) {
                             errPrintln("Error: No format found for $file")
                             continue@headless
                         }
 
-                        if (!from().canConvert(to())) {
-                            errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                        if (!from.canConvert(to)) {
+                            errPrintln("Error: You can't convert from ${from.name} to ${to.name}!")
                             continue@headless
                         }
 
-                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from().getExtension(), to().getExtension())) else File(operation[4])
-                        FileOutputStream(outputFile).use { from().convert(to(), data, it) }
-                        println("Converted $file from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from.extension ?: "", to.extension ?: "")) else File(operation[4])
+                        FileOutputStream(outputFile).use { from.convert(to, data, it) }
+                        println("Converted $file from ${from.name} to ${to.name}, new file is located at $outputFile")
                     } else if (file.isDirectory) {
                         file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.map { pair -> pair and SpiralFormats.formatForData(pair.second) }.forEach { (f, data, from) ->
-                            if (from.isEmpty) {
+                            if (from == null) {
                                 errPrintln("Error: No format found for $f")
                                 return@forEach
                             }
 
-                            if (!from().canConvert(to())) {
-                                errPrintln("Error: You can't convert from ${from().getName()} to ${to().getName()}!")
+                            if (!from.canConvert(to)) {
+                                errPrintln("Error: You can't convert from ${from.name} to ${to.name}!")
                                 return@forEach
                             }
 
-                            val outputFile = File(f.absolutePath.replaceLast(".${from().getExtension()}", "") + ".${to().getExtension()}")
-                            FileOutputStream(outputFile).use { from().convert(to(), data, it) }
-                            println("Converted $f from ${from().getName()} to ${to().getName()}, new file is located at $outputFile")
+                            val outputFile = File(f.absolutePath.replaceLast(".${from.extension}", "") + ".${to.extension}")
+                            FileOutputStream(outputFile).use { from.convert(to, data, it) }
+                            println("Converted $f from ${from.name} to ${to.name}, new file is located at $outputFile")
                         }
                     }
                 }
@@ -974,6 +961,34 @@ fun menu() {
                     println("JPG")
                     println("|--> PNG")
                     println("|--> TGA")
+                }
+
+                "custom" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    val file = File(operation[1])
+                    if (!file.exists()) {
+                        errPrintln("Error: $file does not exist!")
+                        continue@headless
+                    }
+
+                    if (file.isFile) {
+                        val result = SpiralDrill.runner.run(file.readText())
+                        if (result.parseErrors.isNotEmpty())
+                            println(ErrorUtils.printParseError(result.parseErrors[0]))
+                        else {
+                            val script = ArrayList<LinScript>()
+                            result.valueStack.forEach { value ->
+                                if (value is List<*>) script.addAll((value[0] as DrillHead).formScripts(value.subList(1, value.size).filterNotNull().toTypedArray()))
+                            }
+                            println(script.joinToString("\n"))
+                        }
+                    } else {
+                        println("$file is not a file!")
+                    }
                 }
 
                 "os" -> println(os)
