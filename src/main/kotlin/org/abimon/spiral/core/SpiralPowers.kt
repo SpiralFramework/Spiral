@@ -18,7 +18,7 @@ typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
 fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
 
-fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false): Long {
+fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
     var s = "0"
 
     try {
@@ -27,7 +27,7 @@ fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false): Long {
             bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
 
         val base = "00000000"
-        for (i in if (unsigned) (bytes - 1 downTo 0) else (0 until bytes))
+        for (i in if (little) (bytes - 1 downTo 0) else (0 until bytes))
             s += base.substring(bin[i].length) + bin[i]
     } catch (th: Throwable) {
     }
@@ -35,7 +35,7 @@ fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false): Long {
     return s.toLong(2)
 }
 
-fun InputStream.readFloat(unsigned: Boolean = false): Float {
+fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Float {
     var s = "0"
 
     try {
@@ -44,7 +44,7 @@ fun InputStream.readFloat(unsigned: Boolean = false): Float {
             bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
 
         val base = "00000000"
-        for (i in if (unsigned) (4 - 1 downTo 0) else (0 until 4))
+        for (i in if (little) (4 - 1 downTo 0) else (0 until 4))
             s += base.substring(bin[i].length) + bin[i]
     } catch (th: Throwable) {
     }
@@ -167,3 +167,24 @@ inline fun <T> Array<out T>.findOrEmpty(predicate: (T) -> Boolean): Optional<T> 
 }
 
 public infix fun <A, B, C> Pair<A, B>.and(that: C): Triple<A, B, C> = Triple(this.first, this.second, that)
+
+fun byteArrayOf(vararg bytes: Int): ByteArray = kotlin.byteArrayOf(*bytes.map { it.toByte() }.toByteArray())
+
+fun InputStream.read(count: Int): ByteArray {
+    val data = ByteArray(count)
+    val read = read(data)
+    return data.copyOfRange(0, read)
+}
+
+infix fun ByteArray.equals(other: ByteArray): Boolean = Arrays.equals(this, other)
+infix fun ByteArray.doesntEqual(other: ByteArray): Boolean = !(this equals other)
+
+infix fun ByteArray.asBase(base: Int): String = this.joinToString(" ") { byte ->
+    when(base) {
+        2 -> "0b${byte.toString(2)}"
+        16 -> "0x${byte.toString(16)}"
+        else -> byte.toString(base)
+    }
+}
+
+infix fun <T: Number> T.hasBitSet(bit: T): Boolean = (this.toLong() and bit.toLong()) == bit.toLong()
