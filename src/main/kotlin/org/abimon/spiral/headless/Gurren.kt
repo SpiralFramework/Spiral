@@ -13,6 +13,7 @@ import org.parboiled.errors.ErrorUtils
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.*
+import java.nio.LongBuffer
 import java.util.*
 import javax.imageio.ImageIO
 
@@ -124,7 +125,7 @@ fun extractText() {
 fun dumpScriptEntries() {
     val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
     val parentDir = File("processing/lin dump")
-    if(!parentDir.exists())
+    if (!parentDir.exists())
         parentDir.mkdirs()
 
     wad.files.filter { (name) -> name.endsWith(".lin") }.flatMap { Lin(it).entries.map { script -> script to it } }.groupBy { (script) -> script.getOpCode() }.toSortedMap(Comparator { o1, o2 -> o1.compareTo(o2) }).forEach { code, scripts ->
@@ -133,13 +134,13 @@ fun dumpScriptEntries() {
 
         println(scripts[0].first)
         val padLength = (scripts.filter { (entry) -> entry.getRawArguments().isNotEmpty() }.takeIf { it.isNotEmpty() }?.flatMap { (entry) -> entry.getRawArguments().map { "$it".length } }?.pass { a, b -> a.coerceAtLeast(b) } ?: 0) + 1
-        scripts.forEach { (entry, location) -> out.println("${location.name.getChild()}|${entry.getRawArguments().joinToString { it.toPaddedString(padLength) } }") }
+        scripts.forEach { (entry, location) -> out.println("${location.name.getChild()}|${entry.getRawArguments().joinToString { it.toPaddedString(padLength) }}") }
         out.close()
     }
 }
 
 fun currentYear() {
-    run findSize@{
+    run findSize@ {
         val stream = FileInputStream(File("processing/genocider.btx"))
         val shtx = stream.readString(4)
         val version = stream.readPartialBytes(2, 2)
@@ -183,20 +184,20 @@ fun currentYear() {
         }
     }
 
-    run Ff@{
+    run Ff@ {
         val stream = FileInputStream(File("processing/special.btx"))
         val shtx = stream.readString(4)
         val version = stream.readPartialBytes(2, 2)
 
-        when(String(version)) {
+        when (String(version)) {
             "Ff" -> {
                 val width = stream.readNumber(2, unsigned = true).toInt()
                 val height = stream.readNumber(2, unsigned = true).toInt()
                 val unknown = stream.readNumber(2, unsigned = true)
 
                 val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                for(y in 0 until height)
-                    for(x in 0 until width)
+                for (y in 0 until height)
+                    for (x in 0 until width)
                         img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
 
                 ImageIO.write(img, "PNG", File("processing/special.png"))
@@ -212,19 +213,46 @@ fun udg() {
     val btx = File("processing/udg busts btx")
     val png = File("processing/udg busts png")
 
-    btx.iterate(filters = arrayOf(FileFilter { it.name.matches("bustup_\\d+_\\d+\\.btx".toRegex()) })).forEach { file ->
-        val data = FileDataSource(file)
-        if(SHTXFormat.isFormat(data)) {
-            val comps = file.name.split('_')
-            val outputDir = File(png, comps[1])
-            if(!outputDir.exists())
-                outputDir.mkdirs()
-            val output = File(outputDir, "${comps[2].split('.')[0]}.png")
-            val img = ImageIO.read(ByteArrayInputStream(SpiralFormats.convert(SHTXFormat, PNGFormat, data)))
-            ImageIO.write(img.getSubimage(0, 0, 1937, 1112), "PNG", output)
-            println("Converted $file")
-        }
+//    btx.iterate(filters = arrayOf(FileFilter { it.name.matches("bustup_\\d+_\\d+\\.btx".toRegex()) })).forEach { file ->
+//        val data = FileDataSource(file)
+//        if(SHTXFormat.isFormat(data)) {
+//            val comps = file.name.split('_')
+//            val outputDir = File(png, comps[1])
+//            if(!outputDir.exists())
+//                outputDir.mkdirs()
+//            val output = File(outputDir, "${comps[2].split('.')[0]}.png")
+//            val img = ImageIO.read(ByteArrayInputStream(SpiralFormats.convert(SHTXFormat, PNGFormat, data)))
+//            ImageIO.write(img.getSubimage(0, 0, 1937, 1112), "PNG", output)
+//            println("Converted $file")
+//        }
+//    }
+
+    val dir = File("processing/a2.cpk_unpacked")
+//    dir.iterate(false).filter { it.extension == "btx" && SHTXFormat.isFormat(FileDataSource(it)) }.forEach { file ->
+//        val outputDir = File("processing/udg${file.absolutePath.replace(dir.absolutePath, "").substringBeforeLast('/')}")
+//        outputDir.mkdirs()
+//
+//        val output = File(outputDir, file.nameWithoutExtension + ".png")
+//        FileOutputStream(output).use { SHTXFormat.convert(PNGFormat, FileDataSource(file), it) }
+//    }
+
+//    dir.iterate(false).filter { it.extension == "btx" && DRVitaCompressionFormat.isFormat(FileDataSource(it)) }.forEach { file ->
+//        println("Decompressing $file")
+//
+//        val outputDir = File("processing/udg${file.absolutePath.replace(dir.absolutePath, "").substringBeforeLast('/')}")
+//        outputDir.mkdirs()
+//
+//        val output = File(outputDir, file.nameWithoutExtension + ".unk")
+//        FileOutputStream(output).use { DRVitaCompressionFormat.convert(BinaryFormat, FileDataSource(file), it) }
+//    }
+
+    File("processing/udg").iterate(false).filter { it.extension == "unk"  && DDS1DDSFormat.isFormat(FileDataSource(it)) }.forEach { file ->
+        println("DDoSing $file")
+
+        FileOutputStream(file.absolutePath.replaceLast(".unk", ".png")).use { DDS1DDSFormat.convert(PNGFormat, FileDataSource(file), it) }
     }
+
+    //FileOutputStream(File("processing/mono.png")).use { DDS1DDSFormat.convert(PNGFormat, FileDataSource(File("processing/mono.dds")), it) }
 }
 
 //fun sfxb() {

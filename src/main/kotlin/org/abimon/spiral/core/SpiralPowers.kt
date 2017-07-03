@@ -13,10 +13,16 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
+import kotlin.experimental.and
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
 fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
+
+fun Int.getBit(bit: Int): Byte = if((this and (1 shl bit)) == (1 shl bit)) 1 else 0
+
+
+fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
     var s = "0"
