@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage
 import java.io.*
 import java.nio.LongBuffer
 import java.util.*
+import java.util.concurrent.Executors
 import javax.imageio.ImageIO
 
 fun main(args: Array<String>) {
@@ -210,6 +211,8 @@ fun currentYear() {
 fun udg() {
     //currentYear()
 
+    println("PNG images take ${time {ImageIO.read(File("processing/mono.png")) } }")
+
     val btx = File("processing/udg busts btx")
     val png = File("processing/udg busts png")
 
@@ -246,6 +249,7 @@ fun udg() {
 //        FileOutputStream(output).use { DRVitaCompressionFormat.convert(BinaryFormat, FileDataSource(file), it) }
 //    }
 
+    val exec = Executors.newFixedThreadPool(8)
     File("processing/udg").iterate(false).filter { it.extension == "unk"  && DDS1DDSFormat.isFormat(FileDataSource(it)) }.forEach { file ->
         println("DDoSing $file")
 

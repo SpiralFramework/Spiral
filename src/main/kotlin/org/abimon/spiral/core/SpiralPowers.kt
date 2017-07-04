@@ -14,13 +14,32 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 import kotlin.experimental.and
+import kotlin.system.measureNanoTime
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
 fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
 
-fun Int.getBit(bit: Int): Byte = if((this and (1 shl bit)) == (1 shl bit)) 1 else 0
+//val bitsAndBobs: Map<Int, BooleanArray> = run {
+//    var value: Map<Int, BooleanArray>? = null
+//    val time = measureNanoTime {
+//        val bitRange = (0 until 8).map { 1 shl it }
+//        value = (0 until 256).map { byte -> byte to bitRange.map { bit -> byte and bit == bit }.toBooleanArray() }.toMap()
+//    }
+//
+//    println("Settings bits took $time")
+//    return@run value ?: HashMap()
+//}
+fun Int.getBit(bit: Int): Byte {
+    val shift = (1 shl bit)
+    if (this and shift == shift)
+        return 1
+    return 0
+}
 
+fun debug(any: Any?) {
+    if (isDebug) println(any)
+}
 
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 

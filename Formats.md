@@ -133,6 +133,13 @@ Credit: [npedotnet/TGAReader](https://github.com/npedotnet/TGAReader) (Redistrib
 
 TGA files are a mess, which is why I was glad to not have to handle them myself. If you're interested in the technical details of the format, you can check [here](https://en.wikipedia.org/wiki/Truevision_TGA#Technical_details).
 
+## DXT/DDS
+
+Credit: So many sites, and a pretty common format, but the final touches were obtained from [npedotnet/DDSReader](https://github.com/npedotnet/DDSReader)
+
+I'll fill this in later, I don't like them.
+
+
 # OP Codes
 
 For simplicity, there are several points where IDs are handled as either `arg 1 + arg 2 * 256`, or the reverse (`arg 1 * 256 + arg 2`). 
