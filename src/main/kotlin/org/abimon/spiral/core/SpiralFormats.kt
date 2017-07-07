@@ -437,9 +437,9 @@ object DRVitaCompressionFormat : SpiralFormat {
                 var b = stream.read()
                 i++
 
-                val bit1 = b hasBitSet 0b10000000
-                val bit2 = b hasBitSet 0b01000000
-                val bit3 = b hasBitSet 0b00100000
+                val bit1 = b hasBitSet 0b10000000 //128 / 2^7
+                val bit2 = b hasBitSet 0b01000000 //64 / 2^6
+                val bit3 = b hasBitSet 0b00100000 //32 / 2^5
 
                 if (bit1) {
                     val b2 = stream.read()
@@ -490,8 +490,37 @@ object DRVitaCompressionFormat : SpiralFormat {
     }
 
     override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convertFrom(format, source, output)
+        if(format.canConvert(this)) //Check if there's a built in way of doing it
+            format.convert(this, source, output)
+        else { //Otherwise we roll up our sleaves and get dirty
+            source.getInputStream().use { stream ->
+                val result = ByteArrayOutputStream()
 
+                val buffer = ByteArray(15)
+                var size = 0
+                while (true) {
+                    val read = stream.read(buffer)
+                    if (read <= 0)
+                        break
+                    size += read
+                    result.write(read)
+                    result.write(buffer, 0, read)
+
+                    if (read != 15)
+                        break
+                }
+
+                output.write(0xFC)
+                output.write(0xAA)
+                output.write(0x55)
+                output.write(0xA7)
+
+                output.writeNumber(size.toLong(), unsigned = true)
+                output.writeNumber(result.size() + 12L, unsigned = true)
+
+                result.writeTo(output)
+            }
+        }
     }
 }
 
@@ -628,7 +657,7 @@ object BinaryFormat : SpiralFormat {
     override val extension = null
 
     override fun isFormat(source: DataSource): Boolean = true
-    override fun canConvert(format: SpiralFormat): Boolean = true
+    override fun canConvert(format: SpiralFormat): Boolean = false //Can't inherently convert to other formats
 }
 
 object SpiralFormats {

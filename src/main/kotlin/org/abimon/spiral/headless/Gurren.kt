@@ -26,9 +26,20 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
-    udg()
+    //udg()
     //menu()
     //dumpScriptEntries()
+
+    val rng = Random()
+    val img = BufferedImage(4 + rng.nextInt(1024), 4 + rng.nextInt(1024), BufferedImage.TYPE_INT_ARGB)
+    (0 until img.width * img.height).forEach { img.setRGB(it % img.width, it / img.width, Color(rng.nextInt(256), rng.nextInt(256), rng.nextInt(256)).rgb) }
+    ImageIO.write(img, "PNG", File("processing/before.png"))
+
+    val baos = ByteArrayOutputStream()
+    DRVitaCompressionFormat.convertFrom(BinaryFormat, FunctionDataSource { img.toByteArray() }, baos)
+
+    FileOutputStream(File("processing/after.png")).use { DRVitaCompressionFormat.convert(BinaryFormat, FunctionDataSource { baos.toByteArray() }, it) }
+
     Thread.sleep(1000)
 }
 
