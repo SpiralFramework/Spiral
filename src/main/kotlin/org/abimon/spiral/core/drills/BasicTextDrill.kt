@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.drills
 
+import org.abimon.spiral.core.SpiralConfig
 import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.util.*
@@ -28,5 +29,5 @@ object BasicTextDrill : DrillHead {
         )
     }
 
-    override fun formScripts(rawParams: Array<Any>): Array<LinScript> = arrayOf(TextEntry("${rawParams[0]}"))
+    override fun formScripts(rawParams: Array<Any>, config: SpiralConfig): Array<LinScript> = arrayOf(TextEntry("${rawParams[0]}"))
 }

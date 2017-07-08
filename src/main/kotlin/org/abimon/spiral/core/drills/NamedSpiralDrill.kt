@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.drills
 
+import org.abimon.spiral.core.SpiralConfig
 import org.abimon.spiral.core.SpiralData
 import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.util.*
@@ -37,7 +38,7 @@ object NamedSpiralDrill : DrillHead {
         )
     }
 
-    override fun formScripts(rawParams: Array<Any>): Array<LinScript> {
+    override fun formScripts(rawParams: Array<Any>, config: SpiralConfig): Array<LinScript> {
         rawParams[0] = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals("${rawParams[0]}", true) }.key.toString(16)
         return BasicSpiralDrill.formScripts(rawParams)
     }

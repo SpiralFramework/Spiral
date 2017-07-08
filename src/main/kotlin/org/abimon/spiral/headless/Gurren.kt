@@ -13,7 +13,6 @@ import org.parboiled.errors.ErrorUtils
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.*
-import java.nio.LongBuffer
 import java.util.*
 import java.util.concurrent.Executors
 import javax.imageio.ImageIO
@@ -26,20 +25,10 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
+    //patch()
     //udg()
-    //menu()
+    menu()
     //dumpScriptEntries()
-
-    val rng = Random()
-    val img = BufferedImage(4 + rng.nextInt(1024), 4 + rng.nextInt(1024), BufferedImage.TYPE_INT_ARGB)
-    (0 until img.width * img.height).forEach { img.setRGB(it % img.width, it / img.width, Color(rng.nextInt(256), rng.nextInt(256), rng.nextInt(256)).rgb) }
-    ImageIO.write(img, "PNG", File("processing/before.png"))
-
-    val baos = ByteArrayOutputStream()
-    DRVitaCompressionFormat.convertFrom(BinaryFormat, FunctionDataSource { img.toByteArray() }, baos)
-
-    FileOutputStream(File("processing/after.png")).use { DRVitaCompressionFormat.convert(BinaryFormat, FunctionDataSource { baos.toByteArray() }, it) }
-
     Thread.sleep(1000)
 }
 
@@ -1241,35 +1230,45 @@ fun compare() {
 }
 
 fun patch() {
-    var patchTime = time {
-        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
-        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data copy.wad")
-        val wad = WAD(FileDataSource(backupWadFile))
-        //wad.extractToDirectory(File("functional"))
-        val customWad = make<CustomWAD> {
-            major(11037)
-            minor(1)
+//    var patchTime = time {
+//        val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad")
+//        val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data copy.wad")
+//        val wad = WAD(FileDataSource(backupWadFile))
+//        //wad.extractToDirectory(File("functional"))
+//        val customWad = make<CustomWAD> {
+//            major(11037)
+//            minor(1)
+//
+//            headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
+//
+//            wad(wad)
+//            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/bustup_barry.png"))))
+//            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/bustup_barry.png"))))
+//        }
+//        customWad.compile(FileOutputStream(wadFile))
+//    }
+//    println("Patching dr1_data took $patchTime ms")
 
-            headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
-
-            wad(wad)
-            data("Dr1/data/all/cg/bustup_00_00.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/bustup_barry.png"))))
-            data("Dr1/data/all/cg/bustup_00_01.tga", SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/bustup_barry.png"))))
-        }
-        customWad.compile(FileOutputStream(wadFile))
-    }
-    println("Patching dr1_data took $patchTime ms")
-
-    patchTime = time {
+    val patchTime = time {
         val wadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")
         val backupWadFile = File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us copy.wad")
         val wad = WAD(FileDataSource(backupWadFile))
         //wad.extractToDirectory(File("functional"))
 
-        val customPak = make<CustomPak> {
-            dataSource(FunctionDataSource { SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/Barry.png"))) })
-            Pak(wad.files.first { (name) -> name.endsWith("tex_cmn_name.pak") }).files.toTypedArray().copyFrom(1).forEach { dataSource(it) }
+        val pak = Pak(wad.files.first { (name) -> name.endsWith("bin_title_l.pak") })
+        val menu = make<CustomPak> {
+            dataSource(Pak(pak.files[0]).files[0])
+            dataSource(FunctionDataSource { SpiralFormats.convert(SpiralFormats.PNG, SpiralFormats.TGA, FileDataSource(File("processing/tilted.png"))) })
+            Pak(pak.files[0]).files.toTypedArray().copyFrom(2).forEach { dataSource(it) }
         }
+        val menuData = ByteArrayOutputStream()
+        menu.compile(menuData)
+
+        val customPak = make<CustomPak> {
+            dataSource(FunctionDataSource { menuData.toByteArray() })
+            pak.files.toTypedArray().copyFrom(1).forEach { dataSource(it) }
+        }
+
         val customPakData = ByteArrayOutputStream()
         customPak.compile(customPakData)
 
@@ -1293,7 +1292,7 @@ fun patch() {
             headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
 
             wad(wad)
-            data("Dr1/data/us/cg/tex_cmn_name.pak", FunctionDataSource(customPakData::toByteArray))
+            data("Dr1/data/us/bin/bin_title_l.pak", FunctionDataSource(customPakData::toByteArray))
             data("Dr1/data/us/script/e00_001_000.lin", FunctionDataSource(customLinData::toByteArray))
         }
         customWad.compile(FileOutputStream(wadFile))

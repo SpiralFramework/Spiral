@@ -13,8 +13,6 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
-import kotlin.experimental.and
-import kotlin.system.measureNanoTime
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
@@ -59,6 +57,9 @@ fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Bo
 
     return s.toLong(2)
 }
+
+operator fun <K, V> Map<K, V>.get(v: V): K? = getByValue(v)
+fun <K, V> Map<K, V>.getByValue(v: V): K? = entries.firstOrNull { (_, value) -> value == v }?.key
 
 fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Float {
     var s = "0"

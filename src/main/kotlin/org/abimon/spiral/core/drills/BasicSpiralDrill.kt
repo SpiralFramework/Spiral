@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.drills
 
+import org.abimon.spiral.core.SpiralConfig
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.util.*
 import org.abimon.visi.io.errPrintln
@@ -36,7 +37,7 @@ object BasicSpiralDrill : DrillHead {
         )
     }
 
-    override fun formScripts(rawParams: Array<Any>): Array<LinScript> = arrayOf(formScript(rawParams))
+    override fun formScripts(rawParams: Array<Any>, config: SpiralConfig): Array<LinScript> = arrayOf(formScript(rawParams))
 
     fun formScript(rawParams: Array<Any>): LinScript {
         val opCode = "${rawParams[0]}".toInt(16)

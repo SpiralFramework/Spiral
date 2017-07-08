@@ -1,5 +1,7 @@
 package org.abimon.spiral.core.drills
 
+import org.abimon.spiral.core.SpiralConfig
+import org.abimon.spiral.core.get
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.util.*
 import org.parboiled.BaseParser
@@ -21,9 +23,9 @@ object DialogueDrill: DrillHead {
         )
     }
 
-    override fun formScripts(rawParams: Array<Any>): Array<LinScript> {
+    override fun formScripts(rawParams: Array<Any>, config: SpiralConfig): Array<LinScript> {
         return arrayOf(
-                SpeakerEntry(0), //Replace with valid naming or numbers or whatever
+                SpeakerEntry(config.characters["${rawParams[0]}"] ?: config.characters["???"] ?: 0), //Replace with valid naming or numbers or whatever
                 TextEntry("${rawParams[1]}"),
                 WaitFrameEntry(),
                 WaitFrameEntry(),
