@@ -492,7 +492,7 @@ object DRVitaCompressionFormat : SpiralFormat {
     override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) {
         if(format.canConvert(this)) //Check if there's a built in way of doing it
             format.convert(this, source, output)
-        else { //Otherwise we roll up our sleaves and get dirty
+        else { //Otherwise we roll up our sleeves and get dirty
             source.getInputStream().use { stream ->
                 val result = ByteArrayOutputStream()
 
