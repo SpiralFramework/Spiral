@@ -1109,9 +1109,34 @@ fun menu() {
                                 if (value is List<*>) script.addAll((value[0] as DrillHead).formScripts(value.subList(1, value.size).filterNotNull().toTypedArray()))
                             }
                             println(script.joinToString("\n"))
+
+                            val customLin = make<CustomLin> {
+                                script.forEach { entry(it) }
+                            }
+
+                            FileOutputStream(File("custom.lin")).use { customLin.compile(it) }
                         }
                     } else {
                         println("$file is not a file!")
+                    }
+                }
+
+                "open" -> {
+                    if(operation.size == 1) {
+                        SteamProtocol.openGame(STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC)
+                        println("Opening Danganronpa: Trigger Happy Havoc")
+                    }
+                    else {
+                        when(operation[1].toLowerCase()) {
+                            "dr1" -> {
+                                SteamProtocol.openGame(STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC)
+                                println("Opening Danganronpa: Trigger Happy Havoc")
+                            }
+                            "dr2" -> {
+                                SteamProtocol.openGame(STEAM_DANGANRONPA_2_GOODBYE_DESPAIR)
+                                println("Opening Danganronpa 2: Goodbye Despair")
+                            }
+                        }
                     }
                 }
 

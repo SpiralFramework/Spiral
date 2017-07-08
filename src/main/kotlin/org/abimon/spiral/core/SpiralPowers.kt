@@ -164,10 +164,12 @@ fun ByteArray.write(outputStream: OutputStream) {
 
 fun String.toDRBytes(): ByteArray {
     val bytes = toByteArray(Charsets.UTF_16LE)
-    val drBytes = ByteArray(bytes.size + 2)
-    drBytes[bytes.size] = 0
-    drBytes[bytes.size + 1] = 0
-    System.arraycopy(bytes, 0, drBytes, 0, bytes.size)
+    val drBytes = ByteArray(bytes.size + 4)
+    drBytes[0] = 0xFF.toByte()
+    drBytes[1] = 0xFE.toByte()
+    drBytes[bytes.size + 2] = 0
+    drBytes[bytes.size + 3] = 0
+    System.arraycopy(bytes, 0, drBytes, 2, bytes.size)
     return drBytes
 }
 

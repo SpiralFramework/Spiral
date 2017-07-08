@@ -455,7 +455,7 @@ class Lin(val dataSource: DataSource) {
 
                             textStream.reset()
                             textStream.skip(textPos)
-                            entries.add(TextEntry(textStream.readDRString((nextTextPos - textPos).toInt(), "UTF-16LE"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
+                            entries.add(TextEntry(textStream.readDRString((nextTextPos - textPos).toInt(), "UTF-16"), textID, (textBlock + textPos).toInt(), (textBlock + nextTextPos).toInt()))
                         }
                         0x03 -> { ensure(0x03, 1, params); entries.add(FormatEntry(params[0])) }
                         0x04 -> { ensure(0x04, 4, params); entries.add(FilterEntry(params[0], params[1], params[2], params[3])) }

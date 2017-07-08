@@ -14,9 +14,9 @@ object DialogueDrill: DrillHead {
         Sequence(
                 clearTmpStack(cmd),
                 OneOrMore(AllButMatcher(charArrayOf(':', '\n'))),
-                ':',
                 pushTmpAction(this, cmd, this@DialogueDrill),
                 pushTmpAction(this, cmd),
+                ':',
                 OneOrMore(LineMatcher),
                 pushTmpAction(this, cmd),
                 pushTmpStack(this, cmd)
