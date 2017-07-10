@@ -5,9 +5,10 @@ import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.lin.UnknownEntry
+import org.abimon.visi.collections.asBase
+import org.abimon.visi.collections.byteArrayOf
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.make
-import org.abimon.visi.lang.time
 import org.abimon.visi.lang.times
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -17,6 +18,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.imageio.ImageIO
+import kotlin.system.measureNanoTime
 
 interface SpiralFormat {
     val name: String
@@ -30,7 +32,7 @@ interface SpiralFormat {
         if (!canConvert(format))
             throw IllegalArgumentException("Cannot convert to $format")
         if (!isFormat(source))
-            throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format")
+            throw IllegalArgumentException("${source.location} does not conform to the $name format")
     }
 
     fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) = format.convert(this, source, output)
@@ -67,7 +69,7 @@ object WADFormat : SpiralFormat {
                 val zip = ZipOutputStream(output)
                 wad.files.forEach {
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.getInputStream().writeTo(zip, closeAfter = true)
+                    it.inputStream.writeTo(zip, closeAfter = true)
                 }
                 zip.close()
             }
@@ -99,7 +101,7 @@ object PAKFormat : SpiralFormat {
                 val zip = ZipOutputStream(output)
                 pak.files.forEach {
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.getInputStream().writeTo(zip, closeAfter = true)
+                    it.inputStream.writeTo(zip, closeAfter = true)
                 }
                 zip.close()
             }
@@ -113,7 +115,7 @@ object TGAFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            TGAReader.readImage(source.getData())
+            TGAReader.readImage(source.data)
             return true
         } catch(e: IOException) {
         } catch(e: ArrayIndexOutOfBoundsException) {
@@ -127,7 +129,7 @@ object TGAFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        val img = TGAReader.readImage(source.getData())
+        val img = TGAReader.readImage(source.data)
         when (format) {
             is PNGFormat -> ImageIO.write(img, "PNG", output)
             is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
@@ -163,9 +165,9 @@ object LINFormat : SpiralFormat {
 
 object SpiralTextFormat : SpiralFormat {
     override val name = "SPIRAL Text"
-    override val extension = ".sprl.txt"
+    override val extension = ".stxt"
 
-    override fun isFormat(source: DataSource): Boolean = !SpiralDrill.runner.run(String(source.getData(), Charsets.UTF_8)).hasErrors()
+    override fun isFormat(source: DataSource): Boolean = !SpiralDrill.runner.run(String(source.data, Charsets.UTF_8)).hasErrors()
 
     override fun canConvert(format: SpiralFormat): Boolean = format is LINFormat
 
@@ -175,7 +177,7 @@ object SpiralTextFormat : SpiralFormat {
         when (format) {
             is LINFormat -> {
                 val lin = make<CustomLin> {
-                    SpiralDrill.runner.run(String(source.getData(), Charsets.UTF_8)).valueStack.forEach { value ->
+                    SpiralDrill.runner.run(String(source.data, Charsets.UTF_8)).valueStack.forEach { value ->
                         if (value is List<*>) (value[0] as DrillHead).formScripts(value.subList(1, value.size).filterNotNull().toTypedArray()).forEach { scriptEntry -> entry(scriptEntry) }
                     }
                 }
@@ -192,12 +194,14 @@ object ZIPFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            val zip = ZipInputStream(source.getInputStream())
-            var count = 0
-            while (zip.nextEntry != null)
-                count++
-            zip.close()
-            return count > 0
+            return source.use { stream ->
+                val zip = ZipInputStream(stream)
+                var count = 0
+                while (zip.nextEntry != null)
+                    count++
+                zip.close()
+                return@use count > 0
+            }
         } catch (e: NullPointerException) {
         } catch (e: IOException) {
         }
@@ -222,7 +226,7 @@ object PNGFormat : SpiralFormat {
     override val extension = "png"
 
     override fun isFormat(source: DataSource): Boolean =
-            source.getInputStream().use {
+            source.use {
                 ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
                         .asSequence()
                         .any { it.formatName.toLowerCase() == "png" }
@@ -233,7 +237,7 @@ object PNGFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        source.getInputStream().use {
+        source.use {
             when (format) {
                 is TGAFormat -> output.write(ImageIO.read(it).toTGA())
                 is JPEGFormat -> ImageIO.write(ImageIO.read(it).toJPG(), "JPG", output)
@@ -249,7 +253,7 @@ object JPEGFormat : SpiralFormat {
     override val extension = "jpg"
 
     override fun isFormat(source: DataSource): Boolean =
-            source.getInputStream().use {
+            source.use {
                 ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
                         .asSequence()
                         .any { (it.formatName.toLowerCase() == "jpg") or (it.formatName.toLowerCase() == "jpeg") }
@@ -260,7 +264,7 @@ object JPEGFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        source.getInputStream().use {
+        source.use {
             when (format) {
                 is TGAFormat -> output.write(ImageIO.read(it).toTGA())
                 is PNGFormat -> ImageIO.write(ImageIO.read(it), "PNG", output)
@@ -285,38 +289,40 @@ object TXTFormat : SpiralFormat {
         if (isDebug) println("Begun Converting\n${"-" * 100}")
         when (format) {
             is LINFormat -> {
-                val reader = BufferedReader(InputStreamReader(source.getInputStream()))
-                val lin = make<CustomLin> {
-                    reader.forEachLine loop@ { line ->
-                        val parts = line.split("|", limit = 2)
-                        if (parts.size != 2) {
-                            return@loop
-                        }
+                source.use { stream ->
+                    val reader = BufferedReader(InputStreamReader(stream))
+                    val lin = make<CustomLin> {
+                        reader.forEachLine loop@ { line ->
+                            val parts = line.split("|", limit = 2)
+                            if (parts.size != 2) {
+                                return@loop
+                            }
 
-                        val opCode = parts[0]
+                            val opCode = parts[0]
 
-                        val op: Int
-                        if (opCode.startsWith("0x"))
-                            op = opCode.substring(2).toInt(16)
-                        else if (opCode.matches("\\d+".toRegex()))
-                            op = opCode.toInt()
-                        else if (SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
-                            op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
-                        else
-                            op = 0x00
+                            val op: Int
+                            if (opCode.startsWith("0x"))
+                                op = opCode.substring(2).toInt(16)
+                            else if (opCode.matches("\\d+".toRegex()))
+                                op = opCode.toInt()
+                            else if (SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
+                                op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
+                            else
+                                op = 0x00
 
-                        if (op == 2) { //Text
-                            entry(parts[1])
-                        } else {
-                            val args = if (parts[1].isBlank()) IntArray(0) else parts[1].split(",").map(String::trim).map(String::toInt).toIntArray()
-                            when (op) {
-                                0x00 -> entry(TextCountEntry((args[1] shl 8) or args[0]))
-                                else -> entry(UnknownEntry(op, args))
+                            if (op == 2) { //Text
+                                entry(parts[1])
+                            } else {
+                                val args = if (parts[1].isBlank()) IntArray(0) else parts[1].split(",").map(String::trim).map(String::toInt).toIntArray()
+                                when (op) {
+                                    0x00 -> entry(TextCountEntry((args[1] shl 8) or args[0]))
+                                    else -> entry(UnknownEntry(op, args))
+                                }
                             }
                         }
                     }
+                    lin.compile(output)
                 }
-                lin.compile(output)
             }
         }
     }
@@ -326,7 +332,7 @@ object SHTXFormat : SpiralFormat {
     override val name = "SHTX"
     override val extension = null
 
-    override fun isFormat(source: DataSource): Boolean = source.getInputStream().readString(4) == "SHTX"
+    override fun isFormat(source: DataSource): Boolean = source.use { it.readString(4) == "SHTX" }
     override fun canConvert(format: SpiralFormat): Boolean = format is TGAFormat || format is PNGFormat || format is JPEGFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
@@ -343,61 +349,62 @@ object SHTXFormat : SpiralFormat {
     fun toBufferedImage(source: DataSource): BufferedImage {
         //    throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format")
 
-        val stream = source.getInputStream()
-        val shtx = stream.readString(4)
+        return source.use { stream ->
+            val shtx = stream.readString(4)
 
-        if (shtx != "SHTX")
-            throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format (First four bytes do not spell [SHTX], spell $shtx)")
+            if (shtx != "SHTX")
+                throw IllegalArgumentException("${source.location} does not conform to the $name format (First four bytes do not spell [SHTX], spell $shtx)")
 
-        val version = stream.readPartialBytes(2, 2)
+            val version = stream.readPartialBytes(2, 2)
 
-        when (String(version)) {
-            "Fs" -> {
-                val width = stream.readNumber(2, unsigned = true).toInt()
-                val height = stream.readNumber(2, unsigned = true).toInt()
-                val unknown = stream.readNumber(2, unsigned = true)
+            when (String(version)) {
+                "Fs" -> {
+                    val width = stream.readNumber(2, unsigned = true).toInt()
+                    val height = stream.readNumber(2, unsigned = true).toInt()
+                    val unknown = stream.readNumber(2, unsigned = true)
 
-                val palette = ArrayList<Color>()
+                    val palette = ArrayList<Color>()
 
-                for (i in 0 until 256)
-                    palette.add(Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF))
+                    for (i in 0 until 256)
+                        palette.add(Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF))
 
-                if (palette.all { it.red == 0 && it.green == 0 && it.blue == 0 && it.alpha == 0 }) {
-                    println("Blank palette in Fs")
+                    if (palette.all { it.red == 0 && it.green == 0 && it.blue == 0 && it.alpha == 0 }) {
+                        println("Blank palette in Fs")
+
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                        for (y in 0 until height)
+                            for (x in 0 until width)
+                                img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
+                        return@use img
+
+                    } else {
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                        val pixelList = ArrayList<Color>()
+
+                        stream.readChunked { pixels -> pixels.forEach { index -> pixelList.add(palette[index.toInt() and 0xFF]) } }
+
+                        pixelList.forEachIndexed { index, color -> img.setRGB((index % width), (index / width), color.rgb) }
+
+                        return@use img
+                    }
+                }
+                "Ff" -> {
+                    val width = stream.readNumber(2, unsigned = true).toInt()
+                    val height = stream.readNumber(2, unsigned = true).toInt()
+                    val unknown = stream.readNumber(2, unsigned = true)
 
                     val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
                     for (y in 0 until height)
                         for (x in 0 until width)
                             img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
-                    return img
-
-                } else {
-                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                    val pixelList = ArrayList<Color>()
-
-                    stream.readChunked { pixels -> pixels.forEach { index -> pixelList.add(palette[index.toInt() and 0xFF]) } }
-
-                    pixelList.forEachIndexed { index, color -> img.setRGB((index % width), (index / width), color.rgb) }
-
-                    return img
+                    return@use img
+                }
+                else -> {
                 }
             }
-            "Ff" -> {
-                val width = stream.readNumber(2, unsigned = true).toInt()
-                val height = stream.readNumber(2, unsigned = true).toInt()
-                val unknown = stream.readNumber(2, unsigned = true)
 
-                val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                for (y in 0 until height)
-                    for (x in 0 until width)
-                        img.setRGB(x, y, Color(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF).rgb)
-                return img
-            }
-            else -> {
-            }
+            throw IllegalArgumentException("${source.location} does not conform to the $name format (Reached end of function)")
         }
-
-        throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format (Reached end of function)")
     }
 }
 
@@ -408,21 +415,21 @@ object DRVitaCompressionFormat : SpiralFormat {
     val CMP_MAGIC = byteArrayOf(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = byteArrayOf(0x47, 0x58, 0x33, 0x00)
 
-    override fun isFormat(source: DataSource): Boolean = source.getInputStream().read(4) equals CMP_MAGIC
+    override fun isFormat(source: DataSource): Boolean = source.use { it.read(4) equals CMP_MAGIC }
 
     override fun canConvert(format: SpiralFormat): Boolean = true
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        source.getInputStream().use { stream ->
+        source.use { stream ->
             var magic = stream.read(4)
 
             if (magic equals GX3_MAGIC)
                 magic = stream.read(4)
 
             if (magic doesntEqual CMP_MAGIC)
-                throw IllegalArgumentException("${source.getLocation()} does not conform to the $name format (Magic Number ≠ ${CMP_MAGIC asBase 16}; is actually ${magic asBase 16})")
+                throw IllegalArgumentException("${source.location} does not conform to the $name format (Magic Number ≠ ${CMP_MAGIC asBase 16}; is actually ${magic asBase 16})")
 
             val rawSize = stream.readNumber(4, unsigned = true)
             val compressedSize = stream.readNumber(4, unsigned = true)
@@ -493,7 +500,7 @@ object DRVitaCompressionFormat : SpiralFormat {
         if(format.canConvert(this)) //Check if there's a built in way of doing it
             format.convert(this, source, output)
         else { //Otherwise we roll up our sleeves and get dirty
-            source.getInputStream().use { stream ->
+            source.use { stream ->
                 val result = ByteArrayOutputStream()
 
                 val buffer = ByteArray(15)
@@ -531,14 +538,14 @@ object DDS1DDSFormat : SpiralFormat {
     val BIT5 = intArrayOf(0, 8, 16, 25, 33, 41, 49, 58, 66, 74, 82, 90, 99, 107, 115, 123, 132, 140, 148, 156, 165, 173, 181, 189, 197, 206, 214, 222, 230, 239, 247, 255 )
     val BIT6 = intArrayOf(0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 117, 121, 125, 130, 134, 138, 142, 146, 150, 154, 158, 162, 166, 170, 174, 178, 182, 186, 190, 194, 198, 202, 206, 210, 215, 219, 223, 227, 231, 235, 239, 243, 247, 251, 255)
 
-    override fun isFormat(source: DataSource): Boolean = source.getInputStream().use { it.readString(8) == "DDS1DDS " }
+    override fun isFormat(source: DataSource): Boolean = source.use { it.readString(8) == "DDS1DDS " }
 
     override fun canConvert(format: SpiralFormat): Boolean = format is PNGFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
 
-        source.getInputStream().use { stream ->
+        source.use { stream ->
             val header = stream.read(132)
             val his = ByteArrayInputStream(header)
 
@@ -559,7 +566,7 @@ object DDS1DDSFormat : SpiralFormat {
 
             val texels = ArrayList<Array<Color>>()
 
-            val time = time {
+            val time = measureNanoTime {
                 var ms = System.nanoTime()
                 (0 until ((height * width) / 16)).forEach { supposedIndex ->
                     val now = System.nanoTime()
@@ -617,7 +624,7 @@ object DDS1DDSFormat : SpiralFormat {
                 }
             }
 
-            if(isDebug) println("Took $time ms to read")
+            if(isDebug) println("Took $time ns to read")
 
             val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
 
@@ -634,7 +641,7 @@ object DDS1DDSFormat : SpiralFormat {
 
             tmpRows.forEach { rows.add(it.toTypedArray()); it.clear() }
 
-            if(isDebug) println("Setting pixels through an iterator took ${time { rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } } } } ms")
+            if(isDebug) println("Setting pixels through an iterator took ${measureNanoTime { rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } } } } ns")
             else rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } }
 
             ImageIO.write(img, "PNG", output)

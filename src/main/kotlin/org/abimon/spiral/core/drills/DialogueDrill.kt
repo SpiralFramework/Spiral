@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.SpiralConfig
-import org.abimon.spiral.core.get
+import org.abimon.visi.collections.get
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.util.*
 import org.parboiled.BaseParser

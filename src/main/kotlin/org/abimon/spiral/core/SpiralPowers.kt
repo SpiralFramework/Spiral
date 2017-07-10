@@ -2,8 +2,6 @@ package org.abimon.spiral.core
 
 import net.npe.tga.TGAWriter
 import org.abimon.visi.lang.toBinaryString
-import org.abimon.visi.lang.toFloat
-import org.abimon.visi.lang.toLong
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
@@ -58,9 +56,6 @@ fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Bo
     return s.toLong(2)
 }
 
-operator fun <K, V> Map<K, V>.get(v: V): K? = getByValue(v)
-fun <K, V> Map<K, V>.getByValue(v: V): K? = entries.firstOrNull { (_, value) -> value == v }?.key
-
 fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Float {
     var s = "0"
 
@@ -75,7 +70,7 @@ fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Fl
     } catch (th: Throwable) {
     }
 
-    return s.toFloat(2)
+    return s.toLong(2).toFloat()
 }
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
@@ -176,43 +171,11 @@ fun String.toDRBytes(): ByteArray {
 fun OutputStream.print(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
 fun OutputStream.println(str: String, encoding: String = "UTF-8") = write("$str\n".toByteArray(Charset.forName(encoding)))
 
-fun String.getParents(): String {
-    return if (this.lastIndexOf('/') == -1) "" else this.substring(0, this.lastIndexOf('/'))
-}
-
-fun String.getChild(): String {
-    return if (this.lastIndexOf('/') == -1) this else this.substring(this.lastIndexOf('/') + 1, length)
-}
-
-fun String.getExtension(): String {
-    return if (this.lastIndexOf('.') == -1) this else this.substring(this.lastIndexOf('.') + 1, length)
-}
-
-fun <T> T.asOptional(): Optional<T> = Optional.of(this)
-
 inline fun <T> Array<out T>.findOrEmpty(predicate: (T) -> Boolean): Optional<T> {
     return Optional.ofNullable(firstOrNull(predicate))
 }
 
-public infix fun <A, B, C> Pair<A, B>.and(that: C): Triple<A, B, C> = Triple(this.first, this.second, that)
-
-fun byteArrayOf(vararg bytes: Int): ByteArray = kotlin.byteArrayOf(*bytes.map { it.toByte() }.toByteArray())
-
-fun InputStream.read(count: Int): ByteArray {
-    val data = ByteArray(count)
-    val read = read(data)
-    return data.copyOfRange(0, read)
-}
-
 infix fun ByteArray.equals(other: ByteArray): Boolean = Arrays.equals(this, other)
 infix fun ByteArray.doesntEqual(other: ByteArray): Boolean = !(this equals other)
-
-infix fun ByteArray.asBase(base: Int): String = this.joinToString(" ") { byte ->
-    when(base) {
-        2 -> "0b${byte.toString(2)}"
-        16 -> "0x${byte.toString(16)}"
-        else -> byte.toString(base)
-    }
-}
 
 infix fun <T: Number> T.hasBitSet(bit: T): Boolean = (this.toLong() and bit.toLong()) == bit.toLong()

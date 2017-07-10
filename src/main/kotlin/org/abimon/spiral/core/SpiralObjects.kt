@@ -6,7 +6,9 @@ import org.abimon.spiral.util.OffsetInputStream
 import org.abimon.visi.collections.remove
 import org.abimon.visi.collections.toArrayString
 import org.abimon.visi.io.*
+import org.abimon.visi.lang.child
 import org.abimon.visi.lang.make
+import org.abimon.visi.lang.parents
 import org.abimon.visi.security.sha512Hash
 import java.io.*
 import java.nio.charset.Charset
@@ -37,7 +39,7 @@ class WAD(val dataSource: DataSource) {
 
     val dataOffset: Long
 
-    val spiralHeader: Optional<ByteArray>
+    val spiralHeader: ByteArray?
 
     operator fun component1(): Int = major
     operator fun component2(): Int = minor
@@ -46,13 +48,13 @@ class WAD(val dataSource: DataSource) {
     operator fun component5(): Long = dataOffset
 
     init {
-        val wad = CountingInputStream(dataSource.getInputStream())
+        val wad = CountingInputStream(dataSource.inputStream)
 
         try {
             val agar = wad.readString(4)
 
             if (agar != "AGAR")
-                throw IllegalArgumentException("${dataSource.getLocation()} is either not a WAD file, or a corrupted/invalid one!")
+                throw IllegalArgumentException("${dataSource.location} is either not a WAD file, or a corrupted/invalid one!")
 
             major = wad.readNumber(4, true).toInt()
             minor = wad.readNumber(4, true).toInt()
@@ -91,9 +93,9 @@ class WAD(val dataSource: DataSource) {
             wad.close()
 
             if (files.any { (name) -> name == spiralHeaderName })
-                spiralHeader = files.first { (name) -> name == spiralHeaderName }.getData().asOptional()
+                spiralHeader = files.first { (name) -> name == spiralHeaderName }.data
             else
-                spiralHeader = Optional.empty()
+                spiralHeader = null
         } catch(illegal: IllegalArgumentException) {
             wad.close()
             throw illegal
@@ -103,14 +105,14 @@ class WAD(val dataSource: DataSource) {
     fun hasHeader(): Boolean = header.isNotEmpty()
 }
 
-data class WADFile(val name: String, val size: Long, val offset: Long, val wad: WAD) : DataSource {
-    override fun getLocation(): String = "WAD File ${wad.dataSource.getLocation()}, offset ${wad.dataOffset + offset} bytes"
+data class WADFile(val name: String, val fileSize: Long, val offset: Long, val wad: WAD) : DataSource {
+    override val location: String = "WAD File ${wad.dataSource.location}, offset ${wad.dataOffset + offset} bytes"
 
-    override fun getData(): ByteArray = getInputStream().use { it.readPartialBytes(size.toInt()) }
+    override val data: ByteArray = use { it.readPartialBytes(size.toInt()) }
 
-    override fun getInputStream(): InputStream = OffsetInputStream(wad.dataSource.getInputStream(), wad.dataOffset + offset, size)
+    override val inputStream: InputStream = OffsetInputStream(wad.dataSource.inputStream, wad.dataOffset + offset, fileSize)
 
-    override fun getDataSize(): Long = size
+    override val size: Long = fileSize
 }
 
 data class WADFileDirectory(val name: String, val subfiles: List<WADFileSubfile>)
@@ -178,16 +180,16 @@ class CustomWAD {
             val name = it.name.toByteArray(Charset.forName("UTF-8"))
             wad.writeNumber(name.size.toLong(), 4, true)
             wad.write(name)
-            wad.writeNumber(it.dataSource.getDataSize(), 8, true)
+            wad.writeNumber(it.dataSource.size, 8, true)
             wad.writeNumber(offset, 8, true)
 
-            offset += it.dataSource.getDataSize()
+            offset += it.dataSource.size
         }
 
         val dirs = HashMap<String, HashSet<String>>()
 
         files.forEach {
-            var str = it.name.getParents()
+            var str = it.name.parents
             var prev = ""
 
             while (str.lastIndexOf("/") > -1) {
@@ -196,7 +198,7 @@ class CustomWAD {
                 if (prev != it.name && prev.isNotBlank())
                     dirs[str]!!.add(prev)
                 prev = str
-                str = str.getParents()
+                str = str.parents
             }
 
             if (!dirs.containsKey(str))
@@ -209,8 +211,8 @@ class CustomWAD {
             if (str.isNotBlank())
                 dirs[""]!!.add(str)
 
-            if (dirs.containsKey(it.name.getParents()))
-                dirs[it.name.getParents()]!!.add(it.name)
+            if (dirs.containsKey(it.name.parents))
+                dirs[it.name.parents]!!.add(it.name)
         }
 
         val setDirs = getDirs(dirs, "")
@@ -223,14 +225,14 @@ class CustomWAD {
             wad.writeNumber(dirs[it]!!.size.toLong(), 4, true)
 
             dirs[it]!!.sortedWith(Comparator<String>(String::compareTo)).forEach {
-                val fileName = it.getChild().toByteArray(Charset.forName("UTF-8"))
+                val fileName = it.child.toByteArray(Charset.forName("UTF-8"))
                 wad.writeNumber(fileName.size.toLong(), 4, true)
                 wad.write(fileName)
                 wad.write(if (dirs.containsKey(it)) 1 else 0)
             }
         }
 
-        files.forEach { it.dataSource.getInputStream().use { it.writeTo(wad) } }
+        files.forEach { it.dataSource.use { it.writeTo(wad) } }
     }
 
     fun getDirs(dirs: HashMap<String, HashSet<String>>, dir: String = ""): HashSet<String> {
@@ -263,26 +265,26 @@ class Pak(val dataSource: DataSource) {
     val files: LinkedList<PakFile> = LinkedList()
 
     init {
-        val pak = CountingInputStream(dataSource.getInputStream())
+        val pak = CountingInputStream(dataSource.inputStream)
         try {
             val numFiles = pak.readNumber(4, true).toInt().coerceAtMost(1024) //Fair sample size
             if (numFiles <= 1)
-                throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt ($numFiles <= 1)")
+                throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($numFiles <= 1)")
             offsets = LongArray(numFiles + 1)
 
             for (i in 0 until numFiles) {
                 offsets[i] = pak.readNumber(4, true)
                 if (offsets[i] < 0)
-                    throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt (${offsets[i]} < 0)")
-                else if (offsets[i] >= dataSource.getDataSize())
-                    throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt (${offsets[i]} >= ${dataSource.getDataSize()})")
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${offsets[i]} < 0)")
+                else if (offsets[i] >= dataSource.size)
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${offsets[i]} >= ${dataSource.size})")
             }
 
-            offsets[numFiles] = dataSource.getDataSize()
+            offsets[numFiles] = dataSource.size
 
             for (i in 0 until numFiles)
                 if (offsets[i] >= offsets[i + 1])
-                    throw IllegalArgumentException("${dataSource.getLocation()} is either not a valid PAK file, or is corrupt ($i >= ${i + 1})")
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i >= ${i + 1})")
 
             for (i in 0 until numFiles)
                 files.add(PakFile("$i", offsets[i + 1] - offsets[i], offsets[i], this))
@@ -295,14 +297,14 @@ class Pak(val dataSource: DataSource) {
     }
 }
 
-data class PakFile(val name: String, val size: Long, val offset: Long, val pak: Pak) : DataSource {
-    override fun getLocation(): String = "PAK File ${pak.dataSource.getLocation()}, offset $offset bytes"
+data class PakFile(val name: String, val fileSize: Long, val offset: Long, val pak: Pak) : DataSource {
+    override val location: String = "PAK File ${pak.dataSource.location}, offset $offset bytes"
 
-    override fun getData(): ByteArray = getInputStream().use { it.readPartialBytes(size.toInt()) }
+    override val data: ByteArray = use { it.readPartialBytes(size.toInt()) }
 
-    override fun getInputStream(): InputStream = OffsetInputStream(pak.dataSource.getInputStream(), offset, size)
+    override val inputStream: InputStream = OffsetInputStream(pak.dataSource.inputStream, offset, fileSize)
 
-    override fun getDataSize(): Long = size
+    override val size: Long = fileSize
 }
 
 class CustomPak {
@@ -337,16 +339,16 @@ class CustomPak {
         pak.writeNumber(modified.size.toLong(), unsigned = true)
         modified.forEach {
             pak.writeNumber(headerSize, unsigned = true)
-            headerSize += it.getDataSize()
+            headerSize += it.size
         }
-        modified.forEach { it.getInputStream().writeTo(pak, closeAfter = true) }
+        modified.forEach { it.use { it.writeTo(pak, closeAfter = true) } }
     }
 }
 
 fun customPak(dataSource: DataSource): CustomPak {
     if (SpiralFormats.ZIP.isFormat(dataSource)) {
         val pak = CustomPak()
-        val zipIn = ZipInputStream(dataSource.getInputStream())
+        val zipIn = ZipInputStream(dataSource.inputStream)
         val entries = HashMap<String, DataSource>()
 
         while (true) {
@@ -358,7 +360,7 @@ fun customPak(dataSource: DataSource): CustomPak {
         entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> pak.dataSource(data) }
         return pak
     } else
-        throw IllegalArgumentException("${dataSource.getLocation()} is not a ZIP file/stream!")
+        throw IllegalArgumentException("${dataSource.location} is not a ZIP file/stream!")
 }
 
 /**
@@ -375,7 +377,7 @@ class Lin(val dataSource: DataSource) {
     val entries: ArrayList<LinScript>
 
     init {
-        val lin = CountingInputStream(DataInputStream(dataSource.getInputStream()))
+        val lin = CountingInputStream(DataInputStream(dataSource.inputStream))
         try {
             linType = lin.readNumber(4, true)
             headerSpace = lin.readNumber(4, true)
@@ -507,7 +509,9 @@ class Lin(val dataSource: DataSource) {
                     }
                 }
             }
+            lin.close()
         } catch(illegal: IllegalArgumentException) {
+            lin.close()
             if(isDebug) illegal.printStackTrace()
             throw illegal
         }
@@ -590,12 +594,12 @@ class CPK(val dataSource: DataSource) {
     val utf: CPKUTF
 
     init {
-        val cpk = CountingInputStream(dataSource.getInputStream())
+        val cpk = CountingInputStream(dataSource.inputStream)
 
         val cpkMagic = cpk.readString(4)
 
         if (cpkMagic != "CPK ")
-            throw IllegalArgumentException("${dataSource.getLocation()} is either not a CPK file, or a corrupted/invalid one!")
+            throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one!")
 
         cpk.readNumber(4)
 
@@ -658,7 +662,7 @@ class CPKUTF(val packet: ByteArray, val cpk: CPK) {
     init {
         val utf = packet.inputStream()
         if (utf.readString(4) != "@UTF")
-            throw IllegalArgumentException("${cpk.dataSource.getLocation()} is either not a CPK file, or a corrupted/invalid one!")
+            throw IllegalArgumentException("${cpk.dataSource.location} is either not a CPK file, or a corrupted/invalid one!")
 
         println(packet.copyOfRange(0, 16).toArrayString())
 
@@ -838,30 +842,30 @@ object SpiralData {
         put(0x3C, 0, "End Flag Check")
     }
 
-    fun getPakName(pathName: String, data: ByteArray): Optional<String> {
+    fun getPakName(pathName: String, data: ByteArray): String? {
         if (pakNames.containsKey(pathName)) {
             val (sha512, name) = pakNames[pathName]!!
             if (sha512 == data.sha512Hash())
-                return name.asOptional()
+                return name
         }
 
-        return Optional.empty()
+        return null
     }
 
-    fun getFormat(pathName: String, data: ByteArray): Optional<SpiralFormat> {
+    fun getFormat(pathName: String, data: ByteArray): SpiralFormat? {
         if (formats.containsKey(pathName)) {
             val (sha512, format) = formats[pathName]!!
             if (sha512 == data.sha512Hash())
-                return format.asOptional()
+                return format
         }
 
-        return Optional.empty()
+        return null
     }
 
     fun getFormat(pathName: String, data: DataSource): SpiralFormat? {
         if (formats.containsKey(pathName)) {
             val (sha512, format) = formats[pathName]!!
-            if (sha512 == data.getData().sha512Hash())
+            if (sha512 == data.data.sha512Hash())
                 return format
         }
 

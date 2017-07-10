@@ -24,11 +24,9 @@ fun WAD.extractToDirectory(directory: File) {
     files.forEach {
         try {
             val file = File(directory, it.name)
-            val out = FileOutputStream(file)
 
             val start = System.currentTimeMillis()
-            it.getInputStream().writeTo(out, closeAfter = true)
-            out.close()
+            FileOutputStream(file).use { fos -> it.use { stream -> stream.writeTo(fos, closeAfter = true) } }
             println("Finished $file, took ${System.currentTimeMillis() - start} ms")
         } catch(th: Throwable) {
             th.printStackTrace()
@@ -76,14 +74,14 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
                 is WADFormat -> println("Oh no. $name#${it.name} is a WAD file. Panic. Now.")
                 else -> {
                     zipOut.putNextEntry(ZipEntry("${it.name}.${format.extension}"))
-                    it.getInputStream().writeTo(zipOut)
+                    it.use { stream -> stream.writeTo(zipOut) }
                 }
             }
-            SpiralData.registerFormat("$name#${it.name}", it.getData(), format)
+            SpiralData.registerFormat("$name#${it.name}", it.data, format)
         }
         else {
             zipOut.putNextEntry(ZipEntry(it.name))
-            it.getInputStream().writeTo(zipOut, closeAfter = true)
+            it.use { stream -> stream.writeTo(zipOut, closeAfter = true) }
         }
     }
 
