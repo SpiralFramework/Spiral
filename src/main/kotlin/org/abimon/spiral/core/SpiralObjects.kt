@@ -108,9 +108,11 @@ class WAD(val dataSource: DataSource) {
 data class WADFile(val name: String, val fileSize: Long, val offset: Long, val wad: WAD) : DataSource {
     override val location: String = "WAD File ${wad.dataSource.location}, offset ${wad.dataOffset + offset} bytes"
 
-    override val data: ByteArray = use { it.readPartialBytes(size.toInt()) }
+    override val data: ByteArray
+        get() = use { it.readPartialBytes(size.toInt()) }
 
-    override val inputStream: InputStream = OffsetInputStream(wad.dataSource.inputStream, wad.dataOffset + offset, fileSize)
+    override val inputStream: InputStream
+        get() = OffsetInputStream(wad.dataSource.inputStream, wad.dataOffset + offset, fileSize)
 
     override val size: Long = fileSize
 }
@@ -300,9 +302,11 @@ class Pak(val dataSource: DataSource) {
 data class PakFile(val name: String, val fileSize: Long, val offset: Long, val pak: Pak) : DataSource {
     override val location: String = "PAK File ${pak.dataSource.location}, offset $offset bytes"
 
-    override val data: ByteArray = use { it.readPartialBytes(size.toInt()) }
+    override val data: ByteArray
+        get() = use { it.readPartialBytes(size.toInt()) }
 
-    override val inputStream: InputStream = OffsetInputStream(pak.dataSource.inputStream, offset, fileSize)
+    override val inputStream: InputStream
+        get() = OffsetInputStream(pak.dataSource.inputStream, offset, fileSize)
 
     override val size: Long = fileSize
 }
