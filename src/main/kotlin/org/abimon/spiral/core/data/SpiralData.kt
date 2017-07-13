@@ -1,8 +1,8 @@
 package org.abimon.spiral.core.data
 
-import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.TripleHashMap
+import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.put
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
@@ -77,6 +77,29 @@ object SpiralData {
         put(0x3B, 0, "Wait Frame")
         put(0x3C, 0, "End Flag Check")
     }
+
+    val nonstopOpCodes = hashMapOf(
+            0x00 to "TextID",
+            0x01 to "Type",
+            0x03 to "Shoot With Evidence",
+            0x06 to "Has Weak Point",
+            0x07 to "Advance",
+            0x0A to "Transition",
+            0x0B to "Fadeout",
+            0x0C to "Horizontal",
+            0x0D to "Vertical",
+            0x0E to "Angle Acceleration",
+            0x0F to "Angle",
+            0x10 to "Scale",
+            0x11 to "Final Scale",
+            0x13 to "Rotation",
+            0x14 to "Rotation Speed",
+            0x15 to "Character",
+            0x16 to "Sprite",
+            0x17 to "Background Animation",
+            0x19 to "Voice",
+            0x1B to "Chapter"
+    )
 
     fun getPakName(pathName: String, data: ByteArray): String? {
         if (pakNames.containsKey(pathName)) {

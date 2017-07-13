@@ -18,16 +18,17 @@ import org.parboiled.parserunners.ReportingParseRunner
 open class SpiralDrill: BaseParser<Any>() {
     companion object {
         val parser: SpiralDrill = Parboiled.createParser(SpiralDrill::class.java)
-        val runner: ReportingParseRunner<Any> = ReportingParseRunner(parser.SpiralFile())
+        val stxtRunner: ReportingParseRunner<Any> = ReportingParseRunner(parser.SpiralTextFile())
     }
 
-    open fun SpiralFile(): Rule = Sequence(
+    /** Spiral Text */
+    open fun SpiralTextFile(): Rule = Sequence(
             clearState(),
-            ParamList("DRILL", SpiralLine()),
+            ParamList("DRILL", SpiralTextLine()),
             operateOnTmpStack(this, "DRILL") { push(it) }
     )
 
-    open fun SpiralLine(): Rule = FirstOf(
+    open fun SpiralTextLine(): Rule = FirstOf(
             BasicTextDrill.Syntax(this),
             DialogueDrill.Syntax(this),
             BasicSpiralDrill.Syntax(this),
@@ -35,4 +36,6 @@ open class SpiralDrill: BaseParser<Any>() {
             Sequence("//", ZeroOrMore(LineMatcher)),
             EOI
     )
+
+    
 }

@@ -39,7 +39,7 @@ class WAD(val dataSource: DataSource) {
             val agar = wad.readString(4)
 
             if (agar != "AGAR")
-                throw IllegalArgumentException("${dataSource.location} is either not a WAD file, or a corrupted/invalid one!")
+                throw IllegalArgumentException("${dataSource.location} is either not a WAD file, or a corrupted/invalid one (Magic number ≠ 'AGAR'; is $agar)!")
 
             major = wad.readNumber(4, true).toInt()
             minor = wad.readNumber(4, true).toInt()

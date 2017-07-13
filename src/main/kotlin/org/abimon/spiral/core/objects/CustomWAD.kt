@@ -17,7 +17,7 @@ class CustomWAD {
     var minor: Long = 0
     var header: ByteArray = ByteArray(0)
 
-    private var files: LinkedList<CustomWADFile> = LinkedList()
+    private var files: MutableList<CustomWADFile> = LinkedList()
 
     fun major(major: Number) {
         this.major = major.toLong()
@@ -43,7 +43,7 @@ class CustomWAD {
     }
 
     fun data(name: String, data: ByteArray) {
-        data(name, FunctionDataSource { data })
+        data(name, ByteArrayDataSource(data))
     }
 
     fun file(file: File, name: String = file.name) {

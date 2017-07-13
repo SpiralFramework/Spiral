@@ -14,8 +14,7 @@ object PAKFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            Pak(source)
-            return true
+            return Pak(source).files.size > 1
         } catch (e: IllegalArgumentException) {
         }
         return false

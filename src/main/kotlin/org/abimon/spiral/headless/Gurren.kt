@@ -4,8 +4,8 @@ import org.abimon.spiral.core.*
 import org.abimon.spiral.core.drills.DrillHead
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.lin.LinScript
-import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.objects.*
+import org.abimon.visi.collections.asBase
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.collections.pass
@@ -28,13 +28,71 @@ fun main(args: Array<String>) {
         println("Debug mode engaged")
     }
 
-    //patch()
+    //holdIt()
+    //twoDimensionsSucks()
+    patch()
     //udg()
-    menu()
+    //menu()
     //dumpScriptEntries()
     Thread.sleep(1000)
 }
 
+fun holdIt() {
+    val nonstop = NonstopDebate(FileDataSource(File("processing/dr1_us_all_formats/Dr1/data/us/bin/nonstop_01_001.dat")))
+    val customNonstop = make<CustomNonstopDebate> {
+        this.secondsForDebate = nonstop.secondsForDebate
+        nonstop.sections.forEach { section(it) }
+    }
+
+    FileOutputStream(File("processing/dr1_us_all_formats/Dr1/data/us/bin/nonstop_01_001_1.dat")).use { customNonstop.compile(it) }
+}
+
+fun twoDimensionsSucks() {
+    FileInputStream(File("processing/2d.gmo")).use { stream ->
+        val magic = stream.read(16)
+        println(String(magic))
+
+        val fileID = stream.readNumber(2, unsigned = true)
+        val dataHeaderSize = stream.readNumber(2, unsigned = true)
+        val dataSize = stream.readUnsignedLittleInt()
+        val dataHeader = stream.read(dataHeaderSize.toInt() - 8)
+
+        println("File ID: $fileID")
+        println("Data Header Size: $dataHeaderSize")
+        println("Data Size: $dataSize")
+        println("Data Header: ${dataHeader asBase 16}")
+
+        var read = dataHeaderSize
+        while(read < dataSize) {
+            val chunkType = stream.readNumber(2, unsigned = true)
+            val chunkHeaderSize = stream.readNumber(2, unsigned = true)
+            val chunkSize = stream.readUnsignedLittleInt()
+
+            read += 8
+
+            println("Type: $chunkType")
+            println("Header Size: $chunkHeaderSize")
+            println("Size: $chunkSize")
+
+            when(chunkType) {
+                0x3L -> {
+                    val header = stream.read(chunkHeaderSize.toInt())
+                    println("Header: ${header asBase 16}")
+                    read += chunkHeaderSize
+                }
+                else -> {
+                    val header = stream.read(chunkHeaderSize.toInt())
+                    val chunk = stream.read(chunkSize.toInt())
+                    println("Header: ${header asBase 16}")
+                    println("Chunk: ${chunk asBase 16}")
+
+                    read += chunkHeaderSize
+                    read += chunkSize
+                }
+            }
+        }
+    }
+}
 fun extractText() {
     //    val dr1 = arrayOf("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data.wad", "/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")
 //    val dr2 = arrayOf("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa 2 Goodbye Despair/Danganronpa2.app/Contents/Resources/dr2_data.wad", "/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa 2 Goodbye Despair/Danganronpa2.app/Contents/Resources/dr2_data_us.wad")
@@ -1065,7 +1123,7 @@ fun menu() {
                     }
 
                     if (file.isFile) {
-                        val result = SpiralDrill.runner.run(file.readText())
+                        val result = SpiralDrill.stxtRunner.run(file.readText())
                         if (result.parseErrors.isNotEmpty())
                             println(ErrorUtils.printParseError(result.parseErrors[0]))
                         else {
@@ -1262,18 +1320,32 @@ fun patch() {
         val customPakData = ByteArrayOutputStream()
         customPak.compile(customPakData)
 
-        val lin = Lin(wad.files.first { (name) -> name.endsWith("e00_001_000.lin") })
-        val customLin = make<CustomLin> {
-            type(lin.linType.toInt())
-            lin.entries.forEach { script ->
-                if (script is TextEntry)
-                    entry(script.text.mapIndexed { index, char -> if (index % 2 == 0) ';' else char }.joinToString(""))
-                else
-                    entry(script)
+//        val lin = Lin(wad.files.first { (name) -> name.endsWith("e00_001_000.lin") })
+//        val customLin = make<CustomLin> {
+//            type(lin.linType.toInt())
+//            lin.entries.forEach { script ->
+//                if (script is TextEntry)
+//                    entry(script.text.mapIndexed { index, char -> if (index % 2 == 0) ';' else char }.joinToString(""))
+//                else
+//                    entry(script)
+//            }
+//        }
+//        val customLinData = ByteArrayOutputStream()
+//        customLin.compile(customLinData)
+
+        val nonstopNumber = "Dr1/data/us/bin/nonstop_01_001.dat"
+        val nonstop = NonstopDebate(wad.files.first { (name) -> name == nonstopNumber })
+        val customNonstop = make<CustomNonstopDebate> {
+            this.secondsForDebate = nonstop.secondsForDebate / 4
+            nonstop.sections.forEach { section ->
+                section.rotation = 90
+                section.rotationSpeed = 2
+                section.sprite++
+                this.section(section)
             }
         }
-        val customLinData = ByteArrayOutputStream()
-        customLin.compile(customLinData)
+
+        val customNonstopData = make<ByteArrayOutputStream> { customNonstop.compile(this) }
 
         val customWad = make<CustomWAD> {
             major(11037)
@@ -1282,8 +1354,9 @@ fun patch() {
             headerFile(File("/Users/undermybrella/Bee Movie Script.txt").readBytes())
 
             wad(wad)
-            data("Dr1/data/us/bin/bin_title_l.pak", FunctionDataSource(customPakData::toByteArray))
-            data("Dr1/data/us/script/e00_001_000.lin", FunctionDataSource(customLinData::toByteArray))
+            data("Dr1/data/us/bin/bin_title_l.pak", ByteArrayDataSource(customPakData.toByteArray()))
+            data(nonstopNumber, ByteArrayDataSource(customNonstopData.toByteArray()))
+            //data("Dr1/data/us/script/e00_001_000.lin", FunctionDataSource(customLinData::toByteArray))
         }
         customWad.compile(FileOutputStream(wadFile))
     }
