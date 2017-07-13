@@ -2,8 +2,10 @@ package org.abimon.spiral.headless
 
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.drills.DrillHead
+import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.core.lin.TextEntry
+import org.abimon.spiral.core.objects.*
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.collections.pass
@@ -123,7 +125,6 @@ fun extractText() {
 //        }
 //    }
 }
-
 fun dumpScriptEntries() {
     val wad = WAD(FileDataSource(File("/Users/undermybrella/Library/Application Support/Steam/steamapps/common/Danganronpa Trigger Happy Havoc/Danganronpa.app/Contents/Resources/dr1_data_us.wad")))
     val parentDir = File("processing/lin dump")
@@ -140,7 +141,6 @@ fun dumpScriptEntries() {
         out.close()
     }
 }
-
 fun currentYear() {
     run findSize@ {
         val stream = FileInputStream(File("processing/genocider.btx"))
@@ -280,37 +280,15 @@ fun udg() {
 //}
 
 fun process(name: String, data: DataSource, parent: File) {
-    val format = SpiralFormats.formatForData(data, SpiralFormats.drWadFormats) ?: return
+    val format = SpiralFormats.formatForData(data, SpiralFormats.drWadFormats) ?: run {
+        val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".unk" else name)
+        val time = measureTimeMillis { FileOutputStream(extractLocation).use { data.use { inputStream -> inputStream.writeTo(it) } } }
+
+        println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms")
+        return@process
+    }
 
     when (format) {
-        is TGAFormat -> {
-            val extractLocation = File(parent, name.replace(".tga", "") + ".png")
-            val time = measureTimeMillis {
-                val fileOutput = FileOutputStream(extractLocation)
-                SpiralFormats.TGA.convert(SpiralFormats.PNG, data, fileOutput)
-                fileOutput.close()
-            }
-
-            println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from TGA to PNG)")
-
-            val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".tga" else name)
-            val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
-            println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms)")
-        }
-        is LINFormat -> {
-            val extractLocation = File(parent, name.replace(".lin", "") + ".txt")
-            val time = measureTimeMillis {
-                val fileOutput = FileOutputStream(extractLocation)
-                SpiralFormats.LIN.convert(SpiralFormats.TXT, data, fileOutput)
-                fileOutput.close()
-            }
-
-            println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from LIN to TXT)")
-
-            val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".lin" else name)
-            val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
-            println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms)")
-        }
         is PAKFormat -> {
             val pakDir = File(parent, name.replace(".pak", ""))
             pakDir.mkdirs()
@@ -322,19 +300,36 @@ fun process(name: String, data: DataSource, parent: File) {
                 fileOutput.close()
             }
 
-            println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from TGA to PNG)")
+            println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from PAK to ZIP")
 
             val pak = Pak(data)
             pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir) }
 
             val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".pak" else name)
             val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
-            println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms)")
+            println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms")
         }
         else -> {
-            val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".unknown" else name)
-            val time = measureTimeMillis { FileOutputStream(extractLocation).use { data.use { inputStream -> inputStream.writeTo(it) } } }
-            println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms)")
+            val convertingTo = format.preferredConversions.firstOrNull()
+            if (convertingTo != null) {
+                val extractLocation = File(parent, name.replace(".${format.extension ?: "unk"}", "") + ".${convertingTo.extension ?: "unk"}")
+                val time = measureTimeMillis {
+                    val fileOutput = FileOutputStream(extractLocation)
+                    format.convert(convertingTo, data, fileOutput)
+                    fileOutput.close()
+                }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from ${format.name} to ${convertingTo.name})")
+
+                val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".${format.extension ?: "unk"}" else name)
+                val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms)")
+            } else {
+                val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".${format.extension ?: "unk"}" else name)
+                val time = measureTimeMillis { FileOutputStream(extractLocation).use { data.use { inputStream -> inputStream.writeTo(it) } } }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, was not converted from ${format.name} due to no preferable conversions being available")
+            }
         }
     }
 }
@@ -553,7 +548,7 @@ fun menu() {
                                     }
 
                                     val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
-                                    val extracting = ArrayList<WADFile>()
+                                    val extracting = ArrayList<WADFileEntry>()
                                     if (pattern.isRegex()) {
                                         val regex = pattern.toRegex()
                                         println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
@@ -612,7 +607,7 @@ fun menu() {
                                     }
 
                                     val pattern = (if (wadOperation.size == 2) ".*" else wadOperation.copyFrom(2).joinToString(" "))
-                                    val extracting = ArrayList<WADFile>()
+                                    val extracting = ArrayList<WADFileEntry>()
                                     if (pattern.isRegex()) {
                                         val regex = pattern.toRegex()
                                         println("[$wad] Extracting files in $wad to $dir that match the regex $regex:")
@@ -639,64 +634,38 @@ fun menu() {
                                                 }
                                             }
 
-                                            when (file.name.extension) {
-                                                "tga" -> {
-                                                    if (SpiralFormats.TGA.isFormat(file)) {
-                                                        val extractLocation = File(dir, file.name.replace(".tga", ".png"))
+                                            val sourceFormat = SpiralFormats.formatForExtension(file.name.extension)
+                                            if(sourceFormat != null) {
+                                                if (sourceFormat.isFormat(file)) {
+                                                    val convertingTo = sourceFormat.preferredConversions.firstOrNull()
+                                                    if(convertingTo != null) {
+                                                        val extractLocation = File(dir, file.name.replace(".${sourceFormat.extension ?: "unk"}", ".${convertingTo.extension ?: "unk"}"))
                                                         val time = measureTimeMillis {
                                                             val fileOutput = FileOutputStream(extractLocation)
-                                                            SpiralFormats.TGA.convert(SpiralFormats.PNG, file, fileOutput)
+                                                            sourceFormat.convert(convertingTo, file, fileOutput)
                                                             fileOutput.close()
                                                         }
 
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from TGA to PNG)")
-                                                    } else {
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from ${sourceFormat.name} to ${convertingTo.name}")
+                                                    }
+                                                    else {
                                                         val extractLocation = File(dir, file.name)
                                                         val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
 
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from TGA due to a formatting error)")
+                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from ${sourceFormat.name} due to no preferable conversions being available")
                                                     }
-                                                }
-                                                "pak" -> {
-                                                    if (SpiralFormats.PAK.isFormat(file)) {
-                                                        val extractLocation = File(dir, file.name.replace(".pak", ".zip"))
-                                                        val time = measureTimeMillis {
-                                                            val fileOutput = FileOutputStream(extractLocation)
-                                                            SpiralFormats.PAK.convert(SpiralFormats.ZIP, file, fileOutput)
-                                                            fileOutput.close()
-                                                        }
-
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from PAK to ZIP)")
-                                                    } else {
-                                                        val extractLocation = File(dir, file.name)
-                                                        val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
-
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from PAK due to a formatting error)")
-                                                    }
-                                                }
-                                                "lin" -> {
-                                                    if (SpiralFormats.LIN.isFormat(file)) {
-                                                        val extractLocation = File(dir, file.name.replace(".lin", ".txt"))
-                                                        val time = measureTimeMillis {
-                                                            val fileOutput = FileOutputStream(extractLocation)
-                                                            SpiralFormats.LIN.convert(SpiralFormats.TXT, file, fileOutput)
-                                                            fileOutput.close()
-                                                        }
-
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from LIN to TXT)")
-                                                    } else {
-                                                        val extractLocation = File(dir, file.name)
-                                                        val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
-
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from LIN due to a formatting error)")
-                                                    }
-                                                }
-                                                else -> {
+                                                } else {
                                                     val extractLocation = File(dir, file.name)
                                                     val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
 
-                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms)")
+                                                    println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from ${sourceFormat.name} due to a formatting error")
                                                 }
+                                            }
+                                            else {
+                                                val extractLocation = File(dir, file.name)
+                                                val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
+
+                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms)")
                                             }
                                         }
                                     }
@@ -1210,8 +1179,8 @@ fun compare() {
         println(wad.directories.count())
         println(backupWad.directories.count())
 
-        println(wad.directories.flatMap(WADFileDirectory::subfiles).count())
-        println(backupWad.directories.flatMap(WADFileDirectory::subfiles).count())
+        println(wad.directories.flatMap(WADSubdirectoryEntry::subfiles).count())
+        println(backupWad.directories.flatMap(WADSubdirectoryEntry::subfiles).count())
 
         println(wad.files.count())
         println(backupWad.files.count())

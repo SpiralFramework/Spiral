@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.SpiralConfig
-import org.abimon.spiral.core.SpiralData
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.util.*
 import org.parboiled.Action

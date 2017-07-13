@@ -1,5 +1,9 @@
 package org.abimon.spiral.core
 
+import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.formats.*
+import org.abimon.spiral.core.objects.Pak
+import org.abimon.spiral.core.objects.WAD
 import org.abimon.visi.io.*
 import java.io.File
 import java.io.FileOutputStream
