@@ -30,9 +30,9 @@ fun main(args: Array<String>) {
 
     //holdIt()
     //twoDimensionsSucks()
-    patch()
+    //patch()
     //udg()
-    //menu()
+    menu()
     //dumpScriptEntries()
     Thread.sleep(1000)
 }
@@ -824,6 +824,7 @@ fun menu() {
                                     customWADLocation.delete()
 
                                     println("Compiled ${extracting.size} new files into $original, tool $compileTime ms to compile and $movementTime ms to move")
+                                    wadFile = WAD(FileDataSource(original))
                                 }
                                 "compile_nicely" -> {
                                     if (wadOperation.size == 1) {
@@ -938,6 +939,7 @@ fun menu() {
                                     customWADLocation.delete()
 
                                     println("Compiled ${compiling.size} new files into $original, took $compileTime ms to compile and $movementTime ms to move")
+                                    wadFile = WAD(FileDataSource(original))
                                 }
                                 "reload" -> {
                                     wadFile = WAD(FileDataSource(original))
@@ -995,12 +997,12 @@ fun menu() {
                     }
 
                     if (file.isFile) {
-                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from.extension ?: "", to.extension ?: "")) else File(operation[4])
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast("." + (from.extension ?: "unk"), "") + "." + (to.extension ?: "unk")) else File(operation[4])
                         FileOutputStream(outputFile).use { from.convert(to, FileDataSource(file), it) }
                         println("Converted $file from ${from.name} to ${to.name}, new file is located at $outputFile")
                     } else if (file.isDirectory) {
                         file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.filter { (_, data) -> from.isFormat(data) }.forEach { (f, data) ->
-                            val outputFile = File(f.absolutePath.replaceLast(from.extension ?: "", to.extension ?: ""))
+                            val outputFile = File(f.absolutePath.replaceLast("." + (from.extension ?: "unk"), "") + "." + (to.extension ?: "unk"))
                             FileOutputStream(outputFile).use { from.convert(to, data, it) }
                             println("Converted $f from ${from.name} to ${to.name}, new file is located at $outputFile")
                         }
@@ -1071,7 +1073,7 @@ fun menu() {
                             continue@headless
                         }
 
-                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(from.extension ?: "", to.extension ?: "")) else File(operation[4])
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast("." + (from.extension ?: "unk"), "") + "." + (to.extension ?: "unk")) else File(operation[4])
                         FileOutputStream(outputFile).use { from.convert(to, data, it) }
                         println("Converted $file from ${from.name} to ${to.name}, new file is located at $outputFile")
                     } else if (file.isDirectory) {
