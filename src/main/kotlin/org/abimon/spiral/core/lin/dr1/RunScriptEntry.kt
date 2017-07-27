@@ -1,4 +1,6 @@
-package org.abimon.spiral.core.lin
+package org.abimon.spiral.core.lin.dr1
+
+import org.abimon.spiral.core.lin.LinScript
 
 data class RunScriptEntry(val chapter: Int, val scene: Int, val room: Int): LinScript {
     

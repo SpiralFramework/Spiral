@@ -22,8 +22,8 @@ object SpiralFormats {
     val UNKNOWN = SpiralFormat.UnknownFormat
     val BINARY = SpiralFormat.BinaryFormat
 
-    val formats = arrayOf(WADFormat, PAKFormat, TGAFormat, LINFormat, ZIPFormat, PNGFormat, JPEGFormat, TXTFormat, SpiralTextFormat, SHTXFormat, DRVitaCompressionFormat, DDS1DDSFormat, LLFSFormat, GMOModelFormat)
-    val drWadFormats = arrayOf(WADFormat, PAKFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat)
+    val formats = arrayOf(WADFormat, TGAFormat, LINFormat, ZIPFormat, PNGFormat, JPEGFormat, TXTFormat, SpiralTextFormat, SHTXFormat, DRVitaCompressionFormat, DDS1DDSFormat, LLFSFormat, GMOModelFormat, PAKFormat)
+    val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, PAKFormat)
 
     fun formatForExtension(extension: String): SpiralFormat? = formats.firstOrNull { it.extension == extension }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }

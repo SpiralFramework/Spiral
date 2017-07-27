@@ -20,7 +20,7 @@ class CustomPak() {
 
             while (true) {
                 entries[zipIn.nextEntry?.name?.substringBeforeLast('.') ?: break] = run {
-                    val data = zipIn.readAllBytes()
+                    val data = zipIn.readBytes()
                     return@run FunctionDataSource { data }
                 }
             }

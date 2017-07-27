@@ -337,7 +337,7 @@ fun udg() {
 //    println(sfxB.groupBy { (arg1) -> arg1 }.mapValues { (_, num) -> num.size }.toList().joinToString("\n") { (arg1, amount) -> "[$arg1] $amount entries"})
 //}
 
-fun process(name: String, data: DataSource, parent: File) {
+fun process(name: String, data: DataSource, parent: File, dr1: Boolean = true) {
     val format = SpiralFormats.formatForData(data, SpiralFormats.drWadFormats) ?: run {
         val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".unk" else name)
         val time = measureTimeMillis { FileOutputStream(extractLocation).use { data.use { inputStream -> inputStream.writeTo(it) } } }
@@ -361,11 +361,33 @@ fun process(name: String, data: DataSource, parent: File) {
             println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from PAK to ZIP")
 
             val pak = Pak(data)
-            pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir) }
+            pak.files.forEach { pakFile -> process(pakFile.name, pakFile, pakDir, dr1) }
 
             val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".pak" else name)
             val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
             println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms")
+        }
+        is LINFormat -> {
+            val convertingTo = format.preferredConversions.firstOrNull()
+            if (convertingTo != null) {
+                val extractLocation = File(parent, name.replace(".lin", "") + ".${convertingTo.extension ?: "unk"}")
+                val time = measureTimeMillis {
+                    val fileOutput = FileOutputStream(extractLocation)
+                    LINFormat.convert(convertingTo, data, fileOutput, dr1)
+                    fileOutput.close()
+                }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, converted from LIN to ${convertingTo.name})")
+
+                val extractLocationOrig = File(parent, if (name.lastIndexOf('.') == -1) name + ".lin" else name)
+                val timeOrig = measureTimeMillis { FileOutputStream(extractLocationOrig).use { data.use { inputStream -> inputStream.writeTo(it) } } }
+                println("[Unknown] Extracted $name to $extractLocationOrig (${data.size} bytes), took $timeOrig ms)")
+            } else {
+                val extractLocation = File(parent, if (name.lastIndexOf('.') == -1) name + ".lin" else name)
+                val time = measureTimeMillis { FileOutputStream(extractLocation).use { data.use { inputStream -> inputStream.writeTo(it) } } }
+
+                println("[Unknown] Extracted $name to $extractLocation (${data.size} bytes), took $time ms, was not converted from LIN due to no preferable conversions being available")
+            }
         }
         else -> {
             val convertingTo = format.preferredConversions.firstOrNull()
@@ -695,22 +717,43 @@ fun menu() {
                                             val sourceFormat = SpiralFormats.formatForExtension(file.name.extension)
                                             if(sourceFormat != null) {
                                                 if (sourceFormat.isFormat(file)) {
-                                                    val convertingTo = sourceFormat.preferredConversions.firstOrNull()
-                                                    if(convertingTo != null) {
-                                                        val extractLocation = File(dir, file.name.replace(".${sourceFormat.extension ?: "unk"}", ".${convertingTo.extension ?: "unk"}"))
-                                                        val time = measureTimeMillis {
-                                                            val fileOutput = FileOutputStream(extractLocation)
-                                                            sourceFormat.convert(convertingTo, file, fileOutput)
-                                                            fileOutput.close()
+                                                    when(sourceFormat) {
+                                                        LINFormat -> {
+                                                            val convertingTo = LINFormat.preferredConversions.firstOrNull()
+                                                            if (convertingTo != null) {
+                                                                val extractLocation = File(dir, file.name.replace(".lin", ".${convertingTo.extension ?: "unk"}"))
+                                                                val time = measureTimeMillis {
+                                                                    val fileOutput = FileOutputStream(extractLocation)
+                                                                    LINFormat.convert(convertingTo, file, fileOutput, wad.contains("dr1_data"))
+                                                                    fileOutput.close()
+                                                                }
+
+                                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from LIN to ${convertingTo.name}")
+                                                            } else {
+                                                                val extractLocation = File(dir, file.name)
+                                                                val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
+
+                                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from LIN due to no preferable conversions being available")
+                                                            }
                                                         }
+                                                        else -> {
+                                                            val convertingTo = sourceFormat.preferredConversions.firstOrNull()
+                                                            if (convertingTo != null) {
+                                                                val extractLocation = File(dir, file.name.replace(".${sourceFormat.extension ?: "unk"}", ".${convertingTo.extension ?: "unk"}"))
+                                                                val time = measureTimeMillis {
+                                                                    val fileOutput = FileOutputStream(extractLocation)
+                                                                    sourceFormat.convert(convertingTo, file, fileOutput)
+                                                                    fileOutput.close()
+                                                                }
 
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from ${sourceFormat.name} to ${convertingTo.name}")
-                                                    }
-                                                    else {
-                                                        val extractLocation = File(dir, file.name)
-                                                        val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
+                                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, converted from ${sourceFormat.name} to ${convertingTo.name}")
+                                                            } else {
+                                                                val extractLocation = File(dir, file.name)
+                                                                val time = measureTimeMillis { FileOutputStream(extractLocation).use { fos -> file.use { stream -> stream.writeTo(fos, closeAfter = true) } } }
 
-                                                        println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from ${sourceFormat.name} due to no preferable conversions being available")
+                                                                println("[$wad] Extracted ${file.name} to $extractLocation (${file.size} bytes), took $time ms, was not converted from ${sourceFormat.name} due to no preferable conversions being available")
+                                                            }
+                                                        }
                                                     }
                                                 } else {
                                                     val extractLocation = File(dir, file.name)
@@ -758,7 +801,7 @@ fun menu() {
                                                 }
                                             }
 
-                                            process(file.name.child, file, parentDirs)
+                                            process(file.name.child, file, parentDirs, wad.contains("dr1_data"))
                                         }
                                     }
                                     println("[$wad] Finished extracting all files of a format to $dir, took $totalTime ms")
@@ -1035,7 +1078,7 @@ fun menu() {
                         }
                     }
                 }
-                "convert_and_identify" -> {
+                "identify_and_convert" -> {
                     if (operation.size == 1) {
                         errPrintln("Error: No file provided!")
                         continue@headless
@@ -1091,6 +1134,56 @@ fun menu() {
                             val outputFile = File(f.absolutePath.replaceLast(".${from.extension}", "") + ".${to.extension}")
                             FileOutputStream(outputFile).use { from.convert(to, data, it) }
                             println("Converted $f from ${from.name} to ${to.name}, new file is located at $outputFile")
+                        }
+                    }
+                }
+                "convert_lin" -> {
+                    if (operation.size == 1) {
+                        errPrintln("Error: No file provided!")
+                        continue@headless
+                    }
+
+                    if (operation.size == 2) {
+                        errPrintln("Error: No format to convert to was provided!")
+                        continue@headless
+                    }
+
+                    val file = File(operation[1])
+                    if (!file.exists()) {
+                        errPrintln("Error: $file does not exist!")
+                        continue@headless
+                    }
+
+                    val to = SpiralFormats.formatForName(operation[2])
+
+                    if (to == null) {
+                        errPrintln("Error: No such format with the name ${operation[3]} could be found to convert to!")
+                        continue@headless
+                    }
+
+                    val dr1 = if(operation.size == 3) true else operation[3].toBoolean()
+
+                    if (file.isFile) {
+                        val data = FileDataSource(file)
+
+                        if (!LINFormat.canConvert(to)) {
+                            errPrintln("Error: You can't convert a LIN file to ${to.name}!")
+                            continue@headless
+                        }
+
+                        val outputFile = if (operation.size == 4) File(file.absolutePath.replaceLast(".lin", "") + "." + (to.extension ?: "unk")) else File(operation[4])
+                        FileOutputStream(outputFile).use { LINFormat.convert(to, data, it, dr1) }
+                        println("Converted $file from LIN to ${to.name}, new file is located at $outputFile")
+                    } else if (file.isDirectory) {
+                        file.iterate().filter { f -> f.isFile }.map { it to FileDataSource(it) }.filter { (f, data) -> LINFormat.isFormat(data) }.forEach { (f, data) ->
+                            if (!LINFormat.canConvert(to)) {
+                                errPrintln("Error: You can't convert a LIN file to ${to.name}!")
+                                return@forEach
+                            }
+
+                            val outputFile = File(f.absolutePath.replaceLast(".lin", "") + ".${to.extension}")
+                            FileOutputStream(outputFile).use { LINFormat.convert(to, data, it, dr1) }
+                            println("Converted $f from LIN to ${to.name}, new file is located at $outputFile")
                         }
                     }
                 }

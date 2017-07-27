@@ -93,6 +93,12 @@ Ideally, you don't deal directly with LIN formats, and can use the custom SPIRAL
   * Next Text Position - 4 byte integer. The ending point of this line of text.
   * Text - [Next Text Position] - [Text Position] bytes. UTF-16 string. The actual text itself, assigned to the entry `i`, where `i` is the iteration count (0-indexed)
   
+## Nonstop Debates (DAT files)
+
+Credit: [AdmiralCurtiss/HyoutaTools](https://github.com/AdmiralCurtiss/HyoutaTools)
+
+Nonstop debates have a number of files associated with them, but this is focusing on just the `.dat` files you see 
+  
 ## 'SHTX'
 
 Credit: [BlackDragonHunt/Danganronpa-Tools](https://github.com/BlackDragonHunt/Danganronpa-Tools)

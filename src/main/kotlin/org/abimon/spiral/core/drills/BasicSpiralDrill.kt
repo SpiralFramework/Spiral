@@ -2,11 +2,17 @@ package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.SpiralConfig
 import org.abimon.spiral.core.lin.*
+import org.abimon.spiral.core.lin.dr1.LoadMapEntry
+import org.abimon.spiral.core.lin.dr1.LoadScriptEntry
+import org.abimon.spiral.core.lin.dr1.RunScriptEntry
+import org.abimon.spiral.core.lin.dr1.TrialCameraEntry
+import org.abimon.spiral.core.lin.WaitForInputEntry
 import org.abimon.spiral.util.*
 import org.abimon.visi.io.errPrintln
 import org.parboiled.BaseParser
 import org.parboiled.Rule
 
+//TODO: Support DR2 op codes too
 object BasicSpiralDrill : DrillHead {
     val cmd = "BASIC"
 
@@ -108,9 +114,11 @@ object BasicSpiralDrill : DrillHead {
                 else if(params.size >= 3) return LoadMapEntry(params[0], params[1], params[2])
                 else throw notEnoughParams(opCode, intArrayOf(2, 3), params.size)
             }
-            0x19 -> { ensure(0x19, 3, params); return LoadScriptEntry(params[0], params[1], params[2]) }
+            0x19 -> { ensure(0x19, 3, params); return LoadScriptEntry(params[0], params[1], params[2])
+            }
             0x1A -> return StopScriptEntry()
-            0x1B -> { ensure(0x1B, 3, params); return RunScriptEntry(params[0], params[1], params[2]) }
+            0x1B -> { ensure(0x1B, 3, params); return RunScriptEntry(params[0], params[1], params[2])
+            }
             0x1C -> return unknown(0x1C, IntArray(0))
             0x1E -> { ensure(0x1E, 5, params); return SpriteEntry(params[0], params[1], params[2], params[3], params[4]) }
             0x1F -> { ensure(0x1F, 7, params); return unknown(0x1F, params.copyOf(7)) }

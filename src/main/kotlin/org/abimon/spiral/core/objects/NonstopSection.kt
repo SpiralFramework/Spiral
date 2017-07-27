@@ -71,11 +71,11 @@ class NonstopSection(entries: Int) {
         set(value)  { data[0x14] = value }
 
     var character: Int
-        get()       = data[0x15]
+        get()       = data[0x15] //21 / 42
         set(value)  { data[0x15] = value }
 
     var sprite: Int
-        get()       = data[0x16]
+        get()       = data[0x16] //22 / 44
         set(value)  { data[0x16] = value }
 
     var backgroundAnimation: Int
@@ -83,7 +83,7 @@ class NonstopSection(entries: Int) {
         set(value)  { data[0x17] = value }
 
     var voice: Int
-        get()       = data[0x19]
+        get()       = data[0x19] //25 / 50
         set(value)  { data[0x19] = value }
 
     var chapter: Int

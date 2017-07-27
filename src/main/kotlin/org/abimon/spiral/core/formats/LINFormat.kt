@@ -24,12 +24,15 @@ object LINFormat : SpiralFormat {
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
         super.convert(format, source, output)
+        convert(format, source, output, true)
+    }
 
-        Lin(source).entries.forEach { entry ->
+    fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, dr1: Boolean) {
+        Lin(source, dr1).entries.forEach { entry ->
             if (entry is TextEntry)
-                output.println("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
+                output.println("${(if (dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes)[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
             else
-                output.println("${SpiralData.opCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}")
+                output.println("${(if (dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes)[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}")
         }
     }
 }

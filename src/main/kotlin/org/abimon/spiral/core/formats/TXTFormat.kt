@@ -12,6 +12,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
 
+//TODO: Support DR2 op codes too
 object TXTFormat : SpiralFormat {
     override val name = "Text"
     override val extension = "txt"
@@ -42,8 +43,8 @@ object TXTFormat : SpiralFormat {
                                 op = opCode.substring(2).toInt(16)
                             else if (opCode.matches("\\d+".toRegex()))
                                 op = opCode.toInt()
-                            else if (SpiralData.opCodes.values.any { (_, name) -> name.equals(opCode, true) })
-                                op = SpiralData.opCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
+                            else if (SpiralData.dr1OpCodes.values.any { (_, name) -> name.equals(opCode, true) })
+                                op = SpiralData.dr1OpCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
                             else
                                 op = 0x00
 

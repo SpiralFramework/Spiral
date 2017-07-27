@@ -1,4 +1,6 @@
-package org.abimon.spiral.core.lin
+package org.abimon.spiral.core.lin.dr1
+
+import org.abimon.spiral.core.lin.LinScript
 
 data class TrialCameraEntry(val charID: Int, val motionID: Int): LinScript {
     constructor(charID: Int, major: Int, rem: Int): this(charID, major * 256 + rem)
