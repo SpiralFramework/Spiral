@@ -10,13 +10,12 @@ import java.io.OutputStream
 object SpiralTextFormat : SpiralFormat {
     override val name = "SPIRAL Text"
     override val extension = ".stxt"
+    override val conversions: Array<SpiralFormat> = arrayOf(LINFormat)
 
     override fun isFormat(source: DataSource): Boolean = !SpiralDrill.stxtRunner.run(String(source.data, Charsets.UTF_8)).hasErrors()
 
-    override fun canConvert(format: SpiralFormat): Boolean = format is LINFormat
-
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         when (format) {
             is LINFormat -> {

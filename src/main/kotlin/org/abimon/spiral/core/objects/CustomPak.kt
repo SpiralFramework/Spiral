@@ -5,7 +5,6 @@ import org.abimon.spiral.core.formats.PNGFormat
 import org.abimon.spiral.core.writeNumber
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FunctionDataSource
-import org.abimon.visi.io.readAllBytes
 import org.abimon.visi.io.writeTo
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -45,7 +44,7 @@ class CustomPak() {
                 when (format) {
                     is PNGFormat -> {
                         val baos = ByteArrayOutputStream()
-                        format.convert(SpiralFormats.TGA, it, baos)
+                        format.convert(SpiralFormats.TGA, it, baos, emptyMap())
                         val data = baos.toByteArray()
                         modified.add(FunctionDataSource { data })
                         baos.close()

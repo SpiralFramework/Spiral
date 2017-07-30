@@ -10,7 +10,7 @@ import java.io.OutputStream
 object LINFormat : SpiralFormat {
     override val name = "LIN"
     override val extension = "lin"
-    override val preferredConversions: Array<SpiralFormat> = arrayOf(TXTFormat, SpiralTextFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(TXTFormat, SpiralTextFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -22,12 +22,8 @@ object LINFormat : SpiralFormat {
 
     override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat || format is SpiralTextFormat
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
-        convert(format, source, output, true)
-    }
-
-    fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, dr1: Boolean) {
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        val dr1 = "${params["dr1"] ?: "true"}".toBoolean()
         Lin(source, dr1).entries.forEach { entry ->
             if (entry is TextEntry)
                 output.println("${(if (dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes)[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")

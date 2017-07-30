@@ -3,6 +3,7 @@ package org.abimon.spiral.core.formats
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.core.toJPG
+import org.abimon.spiral.core.toTGA
 import org.abimon.visi.collections.coerceAtMost
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readChunked
@@ -16,17 +17,18 @@ import javax.imageio.ImageIO
 object SHTXFormat : SpiralFormat {
     override val name = "SHTX"
     override val extension = null
+    override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, TGAFormat)
 
     override fun isFormat(source: DataSource): Boolean = source.use { it.readString(4) == "SHTX" }
-    override fun canConvert(format: SpiralFormat): Boolean = format is TGAFormat || format is PNGFormat || format is JPEGFormat
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         val img = toBufferedImage(source)
         when (format) {
             is PNGFormat -> ImageIO.write(img, "PNG", output)
             is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
+            is TGAFormat -> output.write(img.toTGA())
         }
     }
 

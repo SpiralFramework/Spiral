@@ -44,7 +44,7 @@ fun Collection<File>.convertTgaToPng() {
         val data = it.readBytes()
         SpiralData.registerFormat(it.name, data, SpiralFormats.TGA)
         val out = FileOutputStream(File(it.absolutePath.replace(".tga", ".png")))
-        SpiralFormats.TGA.convert(SpiralFormats.PNG, FunctionDataSource { data }, out)
+        SpiralFormats.TGA.convert(SpiralFormats.PNG, FunctionDataSource { data }, out, emptyMap())
         it.delete()
     }
 }
@@ -69,11 +69,11 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
             when(format) {
                 is TGAFormat -> {
                     zipOut.putNextEntry(ZipEntry("${it.name}.${PNGFormat.extension}"))
-                    format.convert(SpiralFormats.PNG, it, zipOut)
+                    format.convert(SpiralFormats.PNG, it, zipOut, emptyMap())
                 }
                 is PAKFormat -> {
                     zipOut.putNextEntry(ZipEntry("${it.name}.${ZIPFormat.extension}"))
-                    format.convert(SpiralFormats.ZIP, it, zipOut)
+                    format.convert(SpiralFormats.ZIP, it, zipOut, emptyMap())
                 }
                 is WADFormat -> println("Oh no. $name#${it.name} is a WAD file. Panic. Now.")
                 else -> {

@@ -10,6 +10,7 @@ import java.util.zip.ZipOutputStream
 object WADFormat : SpiralFormat {
     override val name = "WAD"
     override val extension = "wad"
+    override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -21,10 +22,8 @@ object WADFormat : SpiralFormat {
         return false
     }
 
-    override fun canConvert(format: SpiralFormat): Boolean = format is ZIPFormat
-
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         val wad = WAD(source)
         when (format) {

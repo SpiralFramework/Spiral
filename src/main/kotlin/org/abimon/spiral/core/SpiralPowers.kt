@@ -14,6 +14,8 @@ import javax.imageio.ImageIO
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
+fun byteArrayOfInts(vararg ints: Int): ByteArray = ints.map { it.toByte() }.toByteArray()
+
 fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
 
 //val bitsAndBobs: Map<Int, BooleanArray> = run {

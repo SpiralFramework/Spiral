@@ -16,13 +16,12 @@ import java.io.OutputStream
 object TXTFormat : SpiralFormat {
     override val name = "Text"
     override val extension = "txt"
+    override val conversions: Array<SpiralFormat> = arrayOf(LINFormat)
 
     override fun isFormat(source: DataSource): Boolean = true
 
-    override fun canConvert(format: SpiralFormat): Boolean = format is LINFormat
-
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         if (isDebug) println("Begun Converting\n${"-" * 100}")
         when (format) {

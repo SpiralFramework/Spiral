@@ -10,7 +10,7 @@ import java.util.zip.ZipOutputStream
 object PAKFormat : SpiralFormat {
     override val name = "PAK"
     override val extension = "pak"
-    override val preferredConversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -20,10 +20,8 @@ object PAKFormat : SpiralFormat {
         return false
     }
 
-    override fun canConvert(format: SpiralFormat): Boolean = format is ZIPFormat
-
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         val pak = Pak(source)
         when (format) {

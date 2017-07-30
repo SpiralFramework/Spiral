@@ -22,16 +22,28 @@ object SpiralFormats {
     val UNKNOWN = SpiralFormat.UnknownFormat
     val BINARY = SpiralFormat.BinaryFormat
 
-    val formats = arrayOf(WADFormat, TGAFormat, LINFormat, ZIPFormat, PNGFormat, JPEGFormat, TXTFormat, SpiralTextFormat, SHTXFormat, DRVitaCompressionFormat, DDS1DDSFormat, LLFSFormat, GMOModelFormat, PAKFormat)
+    val formats = arrayOf(
+            WADFormat, ZIPFormat,
+            TGAFormat, SHTXFormat, DDS1DDSFormat, PNGFormat, JPEGFormat,
+            OggFormat,
+            IVFFormat,
+            LINFormat, SpiralTextFormat,
+            DRVitaCompressionFormat,
+            LLFSFormat,
+            GMOModelFormat,
+            PAKFormat,
+            TXTFormat
+    )
+
     val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, PAKFormat)
 
     fun formatForExtension(extension: String): SpiralFormat? = formats.firstOrNull { it.extension == extension }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }
     fun formatForName(name: String): SpiralFormat? = formats.firstOrNull { it.name.equals(name, true) }
 
-    fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource): ByteArray {
+    fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
         val baos = ByteArrayOutputStream()
-        from.convert(to, source, baos)
+        from.convert(to, source, baos, params)
         return baos.toByteArray()
     }
 }

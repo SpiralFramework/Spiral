@@ -6,11 +6,12 @@ import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
-import java.util.ArrayList
+import java.util.*
 
 object DRVitaCompressionFormat : SpiralFormat {
     override val name: String = "Danganronpa Vita Compression"
     override val extension: String? = null
+    override val conversions: Array<SpiralFormat> = emptyArray()
 
     val CMP_MAGIC = org.abimon.visi.collections.byteArrayOf(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = org.abimon.visi.collections.byteArrayOf(0x47, 0x58, 0x33, 0x00)
@@ -19,8 +20,8 @@ object DRVitaCompressionFormat : SpiralFormat {
 
     override fun canConvert(format: SpiralFormat): Boolean = true
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream) {
-        super.convert(format, source, output)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+        super.convert(format, source, output, params)
 
         source.use { stream ->
             var magic = stream.read(4)
@@ -96,9 +97,9 @@ object DRVitaCompressionFormat : SpiralFormat {
         }
     }
 
-    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream) {
+    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
         if(format.canConvert(this)) //Check if there's a built in way of doing it
-            format.convert(this, source, output)
+            format.convert(this, source, output, params)
         else { //Otherwise we roll up our sleeves and get dirty
             source.use { stream ->
                 val result = ByteArrayOutputStream()
