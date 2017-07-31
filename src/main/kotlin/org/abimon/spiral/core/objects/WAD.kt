@@ -19,8 +19,8 @@ class WAD(val dataSource: DataSource) {
     val minor: Int
     val header: ByteArray
 
-    val files = LinkedList<WADFileEntry>()
-    val directories = LinkedList<WADSubdirectoryEntry>()
+    val files: MutableList<WADFileEntry> = ArrayList<WADFileEntry>()
+    val directories: MutableList<WADSubdirectoryEntry> = ArrayList<WADSubdirectoryEntry>()
 
     val dataOffset: Long
 

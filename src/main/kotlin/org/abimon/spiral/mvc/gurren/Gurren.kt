@@ -1,13 +1,13 @@
-package org.abimon.spiral.mvc
+package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
-import org.abimon.imperator.impl.InstanceSoldier
-import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.mvc.SpiralModel
+import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
@@ -15,7 +15,6 @@ import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.EnumOS
 import org.abimon.visi.lang.replaceLast
-import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
@@ -65,7 +64,7 @@ object Gurren {
             )
     )
 
-    val help = Command("help") { println(helpTable) }
+    val help = Command("help", "default") { println(helpTable) }
     val find = Command("find") {
         when (os) {
             EnumOS.WINDOWS -> {
@@ -98,7 +97,7 @@ object Gurren {
                     }
                 }
             }
-            else -> println("No behaviour defined for $os!")
+            else -> println("No behaviour defined for ${os}!")
         }
 
         if (SpiralModel.wads.isEmpty())
@@ -164,19 +163,19 @@ object Gurren {
     val formats = Command("formats") { println(formatTable) }
 
     val identify = Command("identify") { (params) ->
-        if(params.size == 1)
+        if (params.size == 1)
             errPrintln("Error: No file or directory provided")
 
         val files = params.map { File(it) }
 
         files.forEach { file ->
-            if(file.isFile) {
+            if (file.isFile) {
 
-            } else if(file.isDirectory) {
+            } else if (file.isDirectory) {
                 val rows = ArrayList<Array<String>>()
-                file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
+                file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
                     val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile), identifyFormats)
-                    if(format == null)
+                    if (format == null)
                         rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "No Identifiable Format"))
                     else
                         rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), format.name))
@@ -199,8 +198,8 @@ object Gurren {
             if (format == null)
                 rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
             else {
-                if(convertTo == null) {
-                    if(format.conversions.isEmpty())
+                if (convertTo == null) {
+                    if (format.conversions.isEmpty())
                         rows.add(arrayOf(file.path, "N/a", format.name, "No Convertable Formats"))
                     else {
                         val tmpConvertTo = format.conversions.first()
@@ -217,7 +216,7 @@ object Gurren {
                         }
                     }
                 } else {
-                    if(format.canConvert(convertTo)) {
+                    if (format.canConvert(convertTo)) {
                         val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
@@ -226,7 +225,7 @@ object Gurren {
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
                         } finally {
-                            if(output.length() == 0L)
+                            if (output.length() == 0L)
                                 output.delete()
                         }
                     } else
@@ -239,8 +238,8 @@ object Gurren {
                 if (format == null)
                     rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "No Identifiable Format", "N/a"))
                 else {
-                    if(convertTo == null) {
-                        if(format.conversions.isEmpty())
+                    if (convertTo == null) {
+                        if (format.conversions.isEmpty())
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "No Convertable Formats"))
                         else {
                             val tmpConvertTo = format.conversions.first()
@@ -260,7 +259,7 @@ object Gurren {
                             }
                         }
                     } else {
-                        if(format.canConvert(convertTo)) {
+                        if (format.canConvert(convertTo)) {
                             val output = File(subfile.absolutePath.replace(".${format.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").run {
                                 if (exists())
                                     return@run File(this.absolutePath.replaceLast(".${convertTo.extension ?: "unk"}", "-${UUID.randomUUID()}.${convertTo.extension ?: "unk"}"))
@@ -273,7 +272,7 @@ object Gurren {
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
                             } finally {
-                                if(output.length() == 0L)
+                                if (output.length() == 0L)
                                     output.delete()
                             }
                         } else
@@ -288,7 +287,7 @@ object Gurren {
         if (params.size == 1)
             return@Command errPrintln("Error: No file or directory provided")
 
-        if(params.size == 3)
+        if (params.size == 3)
             return@Command identifyAndConvert.command(InstanceOrder("Redirected", null, str))
 
         val file = File(params[1])
@@ -343,7 +342,7 @@ object Gurren {
     }
 
     val join = Command("join") { (params) ->
-        if(!MediaWrapper.ffmpeg.isInstalled)
+        if (!MediaWrapper.ffmpeg.isInstalled)
             return@Command errPrintln("Error: ffmpeg is not installed")
 
         if (params.size == 1)
@@ -352,16 +351,16 @@ object Gurren {
         if (params.size == 2) {
             val directory = File(params[1])
 
-            if(!directory.exists())
+            if (!directory.exists())
                 return@Command errPrintln("Error: Directory does not exist")
-            else if(!directory.isDirectory)
+            else if (!directory.isDirectory)
                 return@Command errPrintln("Error: Provided directory was not, in fact, a directory")
 
             val entries = ArrayList<Array<String>>()
 
             val files = directory.listFiles().filter { file -> ignoreFilters.all { filter -> filter.accept(file) } }
             files.map { it.nameWithoutExtension }.group().values.sortedBy { it.firstOrNull() ?: "" }.forEach { names ->
-                if(names.size < 2) {
+                if (names.size < 2) {
                     entries.add(arrayOf(names.firstOrNull() ?: "None", "", "", "", " < 2 files for provided name"))
                     return@forEach
                 }
@@ -387,9 +386,9 @@ object Gurren {
                 try {
                     MediaWrapper.ffmpeg.join(audio, video, output)
                 } finally {
-                    if(output.exists()) {
-                        if(output.length() > 16) {
-                            if(MP4Format.isFormat(FileDataSource(output)))
+                    if (output.exists()) {
+                        if (output.length() > 16) {
+                            if (MP4Format.isFormat(FileDataSource(output)))
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, ""))
                             else
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, "Output is not an MP4 file"))
@@ -407,11 +406,5 @@ object Gurren {
     }
 
     val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
-    val exit = Command("exit") { println("Bye!"); keepLooping = false }
-
-    fun Command(commandName: String, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
-        return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
-            return@InstanceWatchtower it is InstanceOrder<*> && it.data is String && ((it.data as String).splitOutsideGroup().firstOrNull() ?: "") == commandName
-        })) { command((it.data as String).splitOutsideGroup() to it.data as String) }
-    }
+    val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
 }
