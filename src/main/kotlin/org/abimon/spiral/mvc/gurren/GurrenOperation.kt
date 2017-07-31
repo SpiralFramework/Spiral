@@ -71,7 +71,6 @@ object GurrenOperation {
             }
         }
     }
-
     val extractNicely = Command("extract_nicely") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
@@ -104,7 +103,7 @@ object GurrenOperation {
                 val parents = File(directory, entry.name.parents)
                 if(!parents.exists() && !parents.mkdirs())
                     return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping ${entry.name}")
-                val format = SpiralFormats.formatForExtension(entry.name.extension, SpiralFormats.drWadFormats) ?: SpiralFormats.formatForData(entry)
+                val format = SpiralFormats.formatForExtension(entry.name.extension, SpiralFormats.drWadFormats) ?: SpiralFormats.formatForData(entry, SpiralFormats.drWadFormats)
 
                 val convertingTo = format?.conversions?.firstOrNull()
 

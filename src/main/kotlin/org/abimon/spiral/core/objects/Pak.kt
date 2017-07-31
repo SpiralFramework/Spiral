@@ -39,9 +39,12 @@ class Pak(val dataSource: DataSource) {
 
             offsets[numFiles] = dataSource.size
 
-            for (i in 0 until numFiles)
+            for (i in 0 until numFiles) {
                 if (offsets[i] >= offsets[i + 1])
-                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i >= ${i + 1})")
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i >= ${i + 1}; ${offsets[i]} >= ${offsets[i + 1]})")
+                else if(offsets[i] < pak.count)
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i < header; ${offsets[i]} < ${pak.count})")
+            }
 
             for (i in 0 until numFiles)
                 files.add(PakFileEntry("$i", offsets[i + 1] - offsets[i], offsets[i], this))
