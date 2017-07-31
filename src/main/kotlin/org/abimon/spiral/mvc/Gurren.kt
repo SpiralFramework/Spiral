@@ -5,18 +5,22 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
+import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.util.MediaWrapper
 import org.abimon.visi.collections.copyFrom
+import org.abimon.visi.collections.group
 import org.abimon.visi.collections.joinToPrefixedString
-import org.abimon.visi.io.FileDataSource
-import org.abimon.visi.io.errPrintln
-import org.abimon.visi.io.iterate
-import org.abimon.visi.io.question
+import org.abimon.visi.io.*
 import org.abimon.visi.lang.EnumOS
+import org.abimon.visi.lang.replaceLast
 import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.io.FileFilter
+import java.io.FileOutputStream
 import java.nio.file.Files
+import java.util.*
 import kotlin.system.measureTimeMillis
 
 @Suppress("unused")
@@ -158,6 +162,7 @@ object Gurren {
     }
     val registered = Command("registered") { println("Registered WADs: ${SpiralModel.wads.joinToPrefixedString("", "\n\t")}") }
     val formats = Command("formats") { println(formatTable) }
+
     val identify = Command("identify") { (params) ->
         if(params.size == 1)
             errPrintln("Error: No file or directory provided")
@@ -181,6 +186,227 @@ object Gurren {
             }
         }
     }
+    val identifyAndConvert = Command("identify_and_convert") { (params) ->
+        if (params.size == 1)
+            return@Command errPrintln("Error: No file or directory provided")
+
+        val file = File(params[1])
+        val convertTo: SpiralFormat? = if (params.size == 2) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
+
+        val rows = ArrayList<Array<String>>()
+        if (file.isFile) {
+            val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file), identifyFormats)
+            if (format == null)
+                rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
+            else {
+                if(convertTo == null) {
+                    if(format.conversions.isEmpty())
+                        rows.add(arrayOf(file.path, "N/a", format.name, "No Convertable Formats"))
+                    else {
+                        val tmpConvertTo = format.conversions.first()
+                        val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
+
+                        try {
+                            FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(file), out, emptyMap()) }
+                            rows.add(arrayOf(file.path, output.path, format.name, tmpConvertTo.name))
+                        } catch (iea: IllegalArgumentException) {
+                            rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
+                        } finally {
+                            if (output.length() == 0L)
+                                output.delete()
+                        }
+                    }
+                } else {
+                    if(format.canConvert(convertTo)) {
+                        val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+
+                        try {
+                            FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(file), out, emptyMap()) }
+                            rows.add(arrayOf(file.path, output.path, format.name, convertTo.name))
+                        } catch (iea: IllegalArgumentException) {
+                            rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
+                        } finally {
+                            if(output.length() == 0L)
+                                output.delete()
+                        }
+                    } else
+                        rows.add(arrayOf(file.path, "N/a", "${format.name} cannot be converted to ${convertTo.name}", "N/a"))
+                }
+            }
+        } else if (file.isDirectory) {
+            file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
+                val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile), identifyFormats)
+                if (format == null)
+                    rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "No Identifiable Format", "N/a"))
+                else {
+                    if(convertTo == null) {
+                        if(format.conversions.isEmpty())
+                            rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "No Convertable Formats"))
+                        else {
+                            val tmpConvertTo = format.conversions.first()
+                            val output = File(subfile.absolutePath.replace(".${format.extension ?: subfile.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").run {
+                                if (exists())
+                                    return@run File(this.absolutePath.replaceLast(".${tmpConvertTo.extension ?: "unk"}", "-${UUID.randomUUID()}.${tmpConvertTo.extension ?: "unk"}"))
+                                return@run this
+                            }
+                            try {
+                                FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(subfile), out, emptyMap()) }
+                                rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, tmpConvertTo.name))
+                            } catch (iea: IllegalArgumentException) {
+                                rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
+                            } finally {
+                                if (output.length() == 0L)
+                                    output.delete()
+                            }
+                        }
+                    } else {
+                        if(format.canConvert(convertTo)) {
+                            val output = File(subfile.absolutePath.replace(".${format.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").run {
+                                if (exists())
+                                    return@run File(this.absolutePath.replaceLast(".${convertTo.extension ?: "unk"}", "-${UUID.randomUUID()}.${convertTo.extension ?: "unk"}"))
+                                return@run this
+                            }
+
+                            try {
+                                FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(subfile), out, emptyMap()) }
+                                rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, convertTo.name))
+                            } catch (iea: IllegalArgumentException) {
+                                rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
+                            } finally {
+                                if(output.length() == 0L)
+                                    output.delete()
+                            }
+                        } else
+                            rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "${format.name} cannot be converted to ${convertTo.name}", "N/a"))
+                    }
+                }
+            }
+        }
+        println(FlipTable.of(arrayOf("File", "Output File", "Old Format", "New Format"), rows.toTypedArray()))
+    }
+    val convert = Command("convert") { (params, str) ->
+        if (params.size == 1)
+            return@Command errPrintln("Error: No file or directory provided")
+
+        if(params.size == 3)
+            return@Command identifyAndConvert.command(InstanceOrder("Redirected", null, str))
+
+        val file = File(params[1])
+        val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
+        val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
+
+        val rows = ArrayList<Array<String>>()
+        if (file.isFile) {
+            val data = FileDataSource(file)
+            if (convertFrom.isFormat(data))
+                rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
+            else {
+                if (convertFrom.canConvert(convertTo)) {
+                    val output = File(file.absolutePath.replace(".${convertFrom.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+
+                    try {
+                        FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, emptyMap()) }
+                        rows.add(arrayOf(file.path, output.path, convertFrom.name, convertTo.name))
+                    } catch (iea: IllegalArgumentException) {
+                        rows.add(arrayOf(file.path, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
+                    } finally {
+                        if (output.length() == 0L)
+                            output.delete()
+                    }
+                } else
+                    rows.add(arrayOf(file.path, "N/a", "${convertFrom.name} cannot be converted to ${convertTo.name}", "N/a"))
+            }
+        } else if (file.isDirectory) {
+            file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
+                val data = FileDataSource(subfile)
+                if (convertFrom.isFormat(data))
+                    rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
+                else {
+                    if (convertFrom.canConvert(convertTo)) {
+                        val output = File(subfile.absolutePath.replace(".${convertFrom.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+
+                        try {
+                            FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, emptyMap()) }
+                            rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), convertFrom.name, convertTo.name))
+                        } catch (iea: IllegalArgumentException) {
+                            rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
+                        } finally {
+                            if (output.length() == 0L)
+                                output.delete()
+                        }
+                    } else
+                        rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "${convertFrom.name} cannot be converted to ${convertTo.name}", "N/a"))
+                }
+            }
+        }
+        println(FlipTable.of(arrayOf("File", "Output File", "Old Format", "New Format"), rows.toTypedArray()))
+    }
+
+    val join = Command("join") { (params) ->
+        if(!MediaWrapper.ffmpeg.isInstalled)
+            return@Command errPrintln("Error: ffmpeg is not installed")
+
+        if (params.size == 1)
+            return@Command errPrintln("Error: No file or directory provided")
+
+        if (params.size == 2) {
+            val directory = File(params[1])
+
+            if(!directory.exists())
+                return@Command errPrintln("Error: Directory does not exist")
+            else if(!directory.isDirectory)
+                return@Command errPrintln("Error: Provided directory was not, in fact, a directory")
+
+            val entries = ArrayList<Array<String>>()
+
+            val files = directory.listFiles().filter { file -> ignoreFilters.all { filter -> filter.accept(file) } }
+            files.map { it.nameWithoutExtension }.group().values.sortedBy { it.firstOrNull() ?: "" }.forEach { names ->
+                if(names.size < 2) {
+                    entries.add(arrayOf(names.firstOrNull() ?: "None", "", "", "", " < 2 files for provided name"))
+                    return@forEach
+                }
+                val name = names.first()
+                val audio = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
+                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.audioFormats) ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.audioFormats)) != null
+                } ?: run {
+                    entries.add(arrayOf(name, "", "", "", "No audio file for provided name"))
+                    return@forEach
+                }
+
+                val video = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
+                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.videoFormats) ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.videoFormats)) != null
+                } ?: run {
+                    entries.add(arrayOf(name, audio.name, "", "", "No video file for provided name"))
+                    return@forEach
+                }
+
+                debug("Joining ${audio.name} and ${video.name}")
+
+                val output = File(directory, "$name.mp4")
+
+                try {
+                    MediaWrapper.ffmpeg.join(audio, video, output)
+                } finally {
+                    if(output.exists()) {
+                        if(output.length() > 16) {
+                            if(MP4Format.isFormat(FileDataSource(output)))
+                                entries.add(arrayOf(name, audio.name, video.name, output.name, ""))
+                            else
+                                entries.add(arrayOf(name, audio.name, video.name, output.name, "Output is not an MP4 file"))
+                        } else {
+                            output.delete()
+                            entries.add(arrayOf(name, audio.name, video.name, "", "Output was empty"))
+                        }
+                    } else
+                        entries.add(arrayOf(name, audio.name, video.name, "", "Output does not exist!"))
+                }
+            }
+
+            println(FlipTable.of(arrayOf("Name", "Audio File", "Video File", "Output File", "Error"), entries.toTypedArray()))
+        }
+    }
+
+    val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
     val exit = Command("exit") { println("Bye!"); keepLooping = false }
 
     fun Command(commandName: String, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
