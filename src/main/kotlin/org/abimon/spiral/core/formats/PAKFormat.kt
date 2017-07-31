@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.core.objects.Pak
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
@@ -16,8 +17,9 @@ object PAKFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            return Pak(source).files.size > 1
+            return Pak(source).files.size >= 1
         } catch (e: IllegalArgumentException) {
+            if(isDebug) e.printStackTrace()
         }
         return false
     }
@@ -45,7 +47,7 @@ object PAKFormat : SpiralFormat {
                     zip.putNextEntry(ZipEntry(it.name))
                     it.use { stream -> stream.writeTo(zip) }
                 }
-                zip.close()
+                zip.finish()
             }
         }
     }
