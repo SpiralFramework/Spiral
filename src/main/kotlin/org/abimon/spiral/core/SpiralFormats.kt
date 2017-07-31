@@ -38,7 +38,7 @@ object SpiralFormats {
     val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat)
     val videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
 
-    val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, PAKFormat)
+    val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, IVFFormat, OggFormat, NonstopFormat, PAKFormat)
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.extension == extension }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }

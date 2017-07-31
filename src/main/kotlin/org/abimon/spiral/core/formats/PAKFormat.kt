@@ -1,8 +1,10 @@
 package org.abimon.spiral.core.formats
 
+import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.objects.Pak
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
+import org.abimon.visi.lang.replaceLast
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -24,12 +26,24 @@ object PAKFormat : SpiralFormat {
         super.convert(format, source, output, params)
 
         val pak = Pak(source)
+        val convert = "${params["pak:convert"] ?: false}".toBoolean()
         when (format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
                 pak.files.forEach {
+                    if (convert) {
+                        val innerFormat = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
+                        val convertTo = innerFormat?.conversions?.firstOrNull()
+
+                        if (innerFormat != null && convertTo != null) {
+                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
+                            innerFormat.convert(convertTo, it, zip, params)
+                            return@forEach
+                        }
+                    }
+
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.inputStream.writeTo(zip, closeAfter = true)
+                    it.use { stream -> stream.writeTo(zip) }
                 }
                 zip.close()
             }

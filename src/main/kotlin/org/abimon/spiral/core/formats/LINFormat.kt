@@ -23,7 +23,7 @@ object LINFormat : SpiralFormat {
     override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat || format is SpiralTextFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        val dr1 = "${params["dr1"] ?: "true"}".toBoolean()
+        val dr1 = "${params["lin:dr1"] ?: true}".toBoolean()
         Lin(source, dr1).entries.forEach { entry ->
             if (entry is TextEntry)
                 output.println("${(if (dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes)[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
