@@ -27,26 +27,28 @@ class Pak(val dataSource: DataSource) {
             val numFiles = pak.readNumber(4, true).toInt().coerceAtMost(1024) //Fair sample size
             if (numFiles < 1)
                 throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($numFiles < 1)")
-            offsets = LongArray(numFiles + 1)
+            val tmpOffsets = LongArray(numFiles + 1)
 
             for (i in 0 until numFiles) {
-                offsets[i] = pak.readNumber(4, true)
-                if (offsets[i] < 0)
-                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${offsets[i]} < 0)")
-                else if (offsets[i] >= dataSource.size)
-                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${offsets[i]} >= ${dataSource.size})")
+                tmpOffsets[i] = pak.readNumber(4, true)
+                if (tmpOffsets[i] < 0)
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${tmpOffsets[i]} < 0)")
+                else if (tmpOffsets[i] >= dataSource.size)
+                    throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt (${tmpOffsets[i]} >= ${dataSource.size})")
             }
 
-            offsets[numFiles] = dataSource.size
+            tmpOffsets[numFiles] = dataSource.size
 
-            for (i in 0 until numFiles) {
+            offsets = tmpOffsets.filter { it != 0L }.toLongArray()
+
+            for (i in 0 until offsets.size - 1) {
                 if (offsets[i] >= offsets[i + 1])
                     throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i >= ${i + 1}; ${offsets[i]} >= ${offsets[i + 1]})")
                 else if(offsets[i] < pak.count)
                     throw IllegalArgumentException("${dataSource.location} is either not a valid PAK file, or is corrupt ($i < header; ${offsets[i]} < ${pak.count})")
             }
 
-            for (i in 0 until numFiles)
+            for (i in 0 until offsets.size - 1)
                 files.add(PakFileEntry("$i", offsets[i + 1] - offsets[i], offsets[i], this))
             pak.close()
         } catch(illegal: IllegalArgumentException) {

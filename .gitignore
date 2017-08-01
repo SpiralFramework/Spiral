@@ -1,7 +1,8 @@
 .spiral_names
-KSPIRAL.iml
 out/
 .idea/
 processing/
 build/
 /src/main/resources/META-INF/
+/experimenting/
+/shinkiro/

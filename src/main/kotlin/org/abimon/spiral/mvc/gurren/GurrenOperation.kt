@@ -34,7 +34,7 @@ object GurrenOperation {
 
     val help = Command("help", "operate") { println(helpTable) }
 
-    val extract = Command("extract") { (params) ->
+    val extract = Command("extract", "operate") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
 
@@ -71,7 +71,7 @@ object GurrenOperation {
             }
         }
     }
-    val extractNicely = Command("extract_nicely") { (params) ->
+    val extractNicely = Command("extract_nicely", "operate") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
 
@@ -99,6 +99,7 @@ object GurrenOperation {
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
             val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
+            val rows = ArrayList<Array<String>>()
             matching.forEach { entry ->
                 val parents = File(directory, entry.name.parents)
                 if(!parents.exists() && !parents.mkdirs())
@@ -107,17 +108,29 @@ object GurrenOperation {
 
                 val convertingTo = format?.conversions?.firstOrNull()
 
-                if(format == null || convertingTo == null) {
+                if(format == null) {
                     val output = File(directory, entry.name)
                     FileOutputStream(output).use { outputStream -> entry.use { inputStream -> inputStream.writeTo(outputStream) } }
-                    println("[$operatingName] Couldn't identify a format for ${entry.name}; wrote directly to $output")
+                    rows.add(arrayOf(entry.name, "Unknown", "None", directory.name + output.absolutePath.replace(directory.absolutePath, "")))
+                } else if(convertingTo == null) {
+                    val output = File(directory, entry.name)
+                    FileOutputStream(output).use { outputStream -> entry.use { inputStream -> inputStream.writeTo(outputStream) } }
+                    rows.add(arrayOf(entry.name, format.name, "None", directory.name + output.absolutePath.replace(directory.absolutePath, "")))
                 } else {
                     val output = File(directory, entry.name.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
                     FileOutputStream(output).use { outputStream -> format.convert(convertingTo, entry, outputStream, formatParams) }
-                    println("[$operatingName] Converted ${entry.name} from ${format.name} to ${convertingTo.name}; write to $output")
+                    rows.add(arrayOf(entry.name, format.name, convertingTo.name, directory.name + output.absolutePath.replace(directory.absolutePath, "")))
                 }
             }
+            println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
         }
+    }
+    val info = Command("info", "operate") { (params) ->
+        val regex = (if(params.size > 1) params[1] else ".*").toRegex()
+        val wad = operatingWad
+
+        val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { (name, fileSize, offset) -> arrayOf(name, "$fileSize B", "$offset B from the beginning") }.toTypedArray()
+        println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset"), matching))
     }
 
     val exit = Command("exit", "operate") { SpiralModel.scope = "> " to "default" }
