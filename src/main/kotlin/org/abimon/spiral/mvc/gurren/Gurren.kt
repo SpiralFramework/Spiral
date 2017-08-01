@@ -297,7 +297,7 @@ object Gurren {
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
             val data = FileDataSource(file)
-            if (convertFrom.isFormat(data))
+            if (!convertFrom.isFormat(data))
                 rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
             else {
                 if (convertFrom.canConvert(convertTo)) {
@@ -318,7 +318,7 @@ object Gurren {
         } else if (file.isDirectory) {
             file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
                 val data = FileDataSource(subfile)
-                if (convertFrom.isFormat(data))
+                if (!convertFrom.isFormat(data))
                     rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
                 else {
                     if (convertFrom.canConvert(convertTo)) {
