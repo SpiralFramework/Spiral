@@ -30,14 +30,14 @@ repositories {
     mavenCentral()
     jcenter()
     maven { url 'https://jitpack.io' }
-    maven { url 'http://localhost:8181/maven' }
+    maven { url 'https://maven.abimon.org' }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile('org.abimon:Imperator:24')
-    compile('org.abimon:Visi:12')
+    compile('org.abimon:Imperator:3')
+    compile('org.abimon:Visi:7')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
