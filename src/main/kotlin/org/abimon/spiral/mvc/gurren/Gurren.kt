@@ -46,6 +46,8 @@ object Gurren {
                     arrayOf("registered", "", "Display the registered WAD files", ""),
                     arrayOf("formats", "", "Display the formats table", ""),
                     arrayOf("identify", "[file|directory]", "Identify the format of either the provided [file], or the files in the provided [directory]", "identify \"images\""),
+                    arrayOf("identify_and_convert", "[file|directory] [format] {params}", "Identify the format of either the provided [file], or the files in the provided [directory], and try to convert them to [format] with the provided {params} (or no params if not provided)", "identify_and_convert \"images\" \"png\""),
+                    arrayOf("convert", "[file|directory] [from] [to] {params}", "Convert the provided [file], or the files in the provided [directory], from [from] to [to] with the provided {params} (or no params if not provided)", "convert \"scripts\" \"lin\" \"txt\" \"lin:dr1=true\""),
                     arrayOf("exit", "", "Exits the program", "")
             )
     )
@@ -191,6 +193,8 @@ object Gurren {
 
         val file = File(params[1])
         val convertTo: SpiralFormat? = if (params.size == 2) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
+        val formatParams: Map<String, String> = if(params.size == 3) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
+
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
@@ -206,7 +210,7 @@ object Gurren {
                         val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(file), out, emptyMap()) }
+                            FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(file), out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, tmpConvertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -220,7 +224,7 @@ object Gurren {
                         val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(file), out, emptyMap()) }
+                            FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(file), out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -249,7 +253,7 @@ object Gurren {
                                 return@run this
                             }
                             try {
-                                FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(subfile), out, emptyMap()) }
+                                FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(subfile), out, formatParams) }
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, tmpConvertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -267,7 +271,7 @@ object Gurren {
                             }
 
                             try {
-                                FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(subfile), out, emptyMap()) }
+                                FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(subfile), out, formatParams) }
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, convertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -293,6 +297,7 @@ object Gurren {
         val file = File(params[1])
         val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
         val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
+        val formatParams: Map<String, String> = if(params.size == 4) emptyMap() else params.copyFrom(4).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
@@ -304,7 +309,7 @@ object Gurren {
                     val output = File(file.absolutePath.replace(".${convertFrom.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                     try {
-                        FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, emptyMap()) }
+                        FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, formatParams) }
                         rows.add(arrayOf(file.path, output.path, convertFrom.name, convertTo.name))
                     } catch (iea: IllegalArgumentException) {
                         rows.add(arrayOf(file.path, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -325,7 +330,7 @@ object Gurren {
                         val output = File(subfile.absolutePath.replace(".${convertFrom.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, emptyMap()) }
+                            FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, formatParams) }
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), convertFrom.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
