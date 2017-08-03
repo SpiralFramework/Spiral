@@ -1,6 +1,8 @@
 package org.abimon.spiral.util
 
+import org.abimon.spiral.core.isDebug
 import java.io.File
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -12,6 +14,12 @@ object MediaWrapper {
             if(to.exists())
                 to.delete()
             execute(listOf("ffmpeg", "-i", from.absolutePath, to.absolutePath)).waitFor(waitFor, units)
+        }
+
+        fun extractAudio(from: File, to: File, waitFor: Long = 5, units: TimeUnit = TimeUnit.MINUTES) {
+            if(to.exists())
+                to.delete()
+            execute(listOf("ffmpeg", "-i", from.absolutePath, "-map", "0:a:0", to.absolutePath)).waitFor(waitFor, units)
         }
 
         fun join(audio: File, video: File, output: File, waitFor: Long = 5, units: TimeUnit = TimeUnit.MINUTES) {
@@ -32,7 +40,18 @@ object MediaWrapper {
             }
     }
 
-    fun execute(command: List<String>): Process = ProcessBuilder().command(command).apply {}.start()
+    fun execute(command: List<String>): Process = ProcessBuilder().command(command).apply {
+        if(isDebug) {
+            val logs = File("logs")
+            if(!logs.exists())
+                logs.mkdir()
+
+            val log = File(logs, "${UUID.randomUUID()}.log")
+            log.writeText("Command: ${command.joinToString(" ")}")
+            redirectOutput(log)
+            redirectError(log)
+        }
+    }.start()
 
     fun executeSilent(command: List<String>): Process = ProcessBuilder().command(command).start()
 }

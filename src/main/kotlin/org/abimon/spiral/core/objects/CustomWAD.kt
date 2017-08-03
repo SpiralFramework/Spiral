@@ -57,6 +57,9 @@ class CustomWAD {
     }
 
     fun wad(wad: WAD) {
+        major(wad.major)
+        minor(wad.minor)
+
         wad.files.forEach { file -> data(file.name, file) }
     }
 

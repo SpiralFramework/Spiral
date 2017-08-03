@@ -2,16 +2,18 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.debug
+import org.abimon.spiral.core.objects.CustomWAD
 import org.abimon.spiral.core.objects.WAD
+import org.abimon.spiral.core.relativePathFrom
+import org.abimon.spiral.core.relativePathTo
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.joinToPrefixedString
-import org.abimon.visi.io.FileDataSource
-import org.abimon.visi.io.errPrintln
-import org.abimon.visi.io.question
-import org.abimon.visi.io.writeTo
+import org.abimon.visi.io.*
 import org.abimon.visi.lang.child
 import org.abimon.visi.lang.extension
+import org.abimon.visi.lang.make
 import org.abimon.visi.lang.parents
 import java.io.File
 import java.io.FileOutputStream
@@ -56,10 +58,11 @@ object GurrenOperation {
         val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
         println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println()
+        println("")
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { name })
-        println()
+        println("")
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
+            val rows = ArrayList<Array<String>>()
             matching.forEach { entry ->
                 val parents = File(directory, entry.name.parents)
                 if(!parents.exists() && !parents.mkdirs())
@@ -67,8 +70,10 @@ object GurrenOperation {
 
                 val output = File(directory, entry.name)
                 FileOutputStream(output).use { outputStream -> entry.use { inputStream -> inputStream.writeTo(outputStream) } }
-                println("[$operatingName] Wrote ${entry.name} to $output")
+                debug("[$operatingName] Wrote ${entry.name} to $output")
+                rows.add(arrayOf(entry.name, output relativePathTo directory))
             }
+            println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
         }
     }
     val extractNicely = Command("extract_nicely", "operate") { (params) ->
@@ -93,9 +98,9 @@ object GurrenOperation {
         val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
         println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println()
+        println("")
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { name })
-        println()
+        println("")
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
             val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
@@ -111,20 +116,66 @@ object GurrenOperation {
                 if(format == null) {
                     val output = File(directory, entry.name)
                     FileOutputStream(output).use { outputStream -> entry.use { inputStream -> inputStream.writeTo(outputStream) } }
-                    rows.add(arrayOf(entry.name, "Unknown", "None", directory.name + output.absolutePath.replace(directory.absolutePath, "")))
+                    rows.add(arrayOf(entry.name, "Unknown", "None", output relativePathTo directory))
                 } else if(convertingTo == null) {
                     val output = File(directory, entry.name)
                     FileOutputStream(output).use { outputStream -> entry.use { inputStream -> inputStream.writeTo(outputStream) } }
-                    rows.add(arrayOf(entry.name, format.name, "None", directory.name + output.absolutePath.replace(directory.absolutePath, "")))
+                    rows.add(arrayOf(entry.name, format.name, "None", output relativePathTo directory))
                 } else {
                     val output = File(directory, entry.name.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
                     FileOutputStream(output).use { outputStream -> format.convert(convertingTo, entry, outputStream, formatParams) }
-                    rows.add(arrayOf(entry.name, format.name, convertingTo.name, directory.name + output.absolutePath.replace(directory.absolutePath, "")))
+                    rows.add(arrayOf(entry.name, format.name, convertingTo.name, output relativePathTo directory))
                 }
             }
             println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
         }
     }
+
+    val compile = Command("compile", "operate") { (params) ->
+        if(params.size == 1)
+            return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
+
+        val directory = File(params[1])
+        if(directory.exists()) {
+            if (directory.isFile)
+                return@Command errPrintln("[$operatingName] Error: $directory is a file")
+            else if (!directory.isDirectory)
+                return@Command errPrintln("[$operatingName] Error: $directory is not a directory")
+        } else
+            return@Command errPrintln("[$operatingName] Error: $directory does not exist")
+
+        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val wad = operatingWad
+
+        val matching = directory.iterate(filters = Gurren.ignoreFilters).filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
+
+        println("[$operatingName] Attempting to compile files matching the regex ${regex.pattern}, which is the following list of files: ")
+        println("")
+        println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { this relativePathFrom directory })
+        println("")
+        if(question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")) {
+            val customWad = make<CustomWAD> {
+                wad(wad)
+
+                matching.forEach { entry -> file(entry, entry relativePathFrom directory) }
+            }
+
+            val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
+            val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
+            try {
+                FileOutputStream(tmpFile).use(customWad::compile)
+
+                if(backupFile.exists()) backupFile.delete()
+                SpiralModel.operating!!.renameTo(backupFile)
+                tmpFile.renameTo(SpiralModel.operating!!)
+
+                println("[$operatingName] Successfully compiled ${matching.size} files into $operatingName.wad")
+            } finally {
+                tmpFile.delete()
+            }
+        }
+    }
+
     val info = Command("info", "operate") { (params) ->
         val regex = (if(params.size > 1) params[1] else ".*").toRegex()
         val wad = operatingWad

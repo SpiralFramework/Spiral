@@ -35,7 +35,7 @@ object SpiralFormats {
             TXTFormat
     )
 
-    val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat)
+    val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
     val videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
 
     val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, IVFFormat, OggFormat, NonstopFormat, PAKFormat)
