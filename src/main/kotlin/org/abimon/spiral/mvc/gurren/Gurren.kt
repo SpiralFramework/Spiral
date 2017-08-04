@@ -172,7 +172,14 @@ object Gurren {
 
         files.forEach { file ->
             if (file.isFile) {
+                val rows = ArrayList<Array<String>>()
+                    val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file), identifyFormats)
+                    if (format == null)
+                        rows.add(arrayOf(file.name, "No Identifiable Format"))
+                    else
+                        rows.add(arrayOf(file.name, format.name))
 
+                println(FlipTable.of(arrayOf("File", "Format"), rows.toTypedArray()))
             } else if (file.isDirectory) {
                 val rows = ArrayList<Array<String>>()
                 file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->

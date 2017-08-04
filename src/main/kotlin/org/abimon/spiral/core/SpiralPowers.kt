@@ -4,11 +4,12 @@ import net.npe.tga.TGAWriter
 import org.abimon.visi.lang.toBinaryString
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
 import javax.imageio.ImageIO
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
@@ -37,12 +38,6 @@ fun Int.getBit(bit: Int): Byte {
 fun debug(any: Any?) {
     if (isDebug) println(any)
 }
-
-infix fun File.relativePathTo(to: File): String = to.name + absolutePath.replace(to.absolutePath, "")
-infix fun File.relativePathFrom(to: File): String = absolutePath.replace(to.absolutePath + File.separator, "")
-
-fun <T : Closeable?> T.use(consumer: Consumer<T>): Unit = use { consumer.accept(it) }
-fun <T : Closeable?, R> T.use(function: java.util.function.Function<T, R>): R? = use { function.apply(it) }
 
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 
@@ -177,10 +172,6 @@ fun String.toDRBytes(): ByteArray {
 
 fun OutputStream.print(str: String, encoding: String = "UTF-8") = write(str.toByteArray(Charset.forName(encoding)))
 fun OutputStream.println(str: String, encoding: String = "UTF-8") = write("$str\n".toByteArray(Charset.forName(encoding)))
-
-inline fun <T> Array<out T>.findOrEmpty(predicate: (T) -> Boolean): Optional<T> {
-    return Optional.ofNullable(firstOrNull(predicate))
-}
 
 infix fun ByteArray.equals(other: ByteArray): Boolean = Arrays.equals(this, other)
 infix fun ByteArray.doesntEqual(other: ByteArray): Boolean = !(this equals other)

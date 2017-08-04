@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.formats
 
+import org.abimon.spiral.core.TripleHashMap
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.core.lin.TextCountEntry
@@ -12,7 +13,6 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
 
-//TODO: Support DR2 op codes too
 object TXTFormat : SpiralFormat {
     override val name = "Text"
     override val extension = "txt"
@@ -26,6 +26,9 @@ object TXTFormat : SpiralFormat {
         if (isDebug) println("Begun Converting\n${"-" * 100}")
         when (format) {
             is LINFormat -> {
+                val dr1 = "${params["lin:dr1"] ?: true}".toBoolean()
+                val ops: TripleHashMap<Int, Int, String> = if(dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes
+
                 source.use { stream ->
                     val reader = BufferedReader(InputStreamReader(stream))
                     val lin = make<CustomLin> {
@@ -42,8 +45,8 @@ object TXTFormat : SpiralFormat {
                                 op = opCode.substring(2).toInt(16)
                             else if (opCode.matches("\\d+".toRegex()))
                                 op = opCode.toInt()
-                            else if (SpiralData.dr1OpCodes.values.any { (_, name) -> name.equals(opCode, true) })
-                                op = SpiralData.dr1OpCodes.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
+                            else if (ops.values.any { (_, name) -> name.equals(opCode, true) })
+                                op = ops.entries.first { (_, pair) -> pair.second.equals(opCode, true) }.key
                             else
                                 op = 0x00
 

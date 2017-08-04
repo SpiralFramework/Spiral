@@ -5,16 +5,11 @@ import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.objects.CustomWAD
 import org.abimon.spiral.core.objects.WAD
-import org.abimon.spiral.core.relativePathFrom
-import org.abimon.spiral.core.relativePathTo
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
-import org.abimon.visi.lang.child
-import org.abimon.visi.lang.extension
-import org.abimon.visi.lang.make
-import org.abimon.visi.lang.parents
+import org.abimon.visi.lang.*
 import java.io.File
 import java.io.FileOutputStream
 
@@ -158,6 +153,67 @@ object GurrenOperation {
                 wad(wad)
 
                 matching.forEach { entry -> file(entry, entry relativePathFrom directory) }
+            }
+
+            val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
+            val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
+            try {
+                FileOutputStream(tmpFile).use(customWad::compile)
+
+                if(backupFile.exists()) backupFile.delete()
+                SpiralModel.operating!!.renameTo(backupFile)
+                tmpFile.renameTo(SpiralModel.operating!!)
+
+                println("[$operatingName] Successfully compiled ${matching.size} files into $operatingName.wad")
+            } finally {
+                tmpFile.delete()
+            }
+        }
+    }
+
+    val compileNicely = Command("compile_nicely", "operate") { (params) ->
+        if(params.size == 1)
+            return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
+
+        val directory = File(params[1])
+        if(directory.exists()) {
+            if (directory.isFile)
+                return@Command errPrintln("[$operatingName] Error: $directory is a file")
+            else if (!directory.isDirectory)
+                return@Command errPrintln("[$operatingName] Error: $directory is not a directory")
+        } else
+            return@Command errPrintln("[$operatingName] Error: $directory does not exist")
+
+        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val wad = operatingWad
+
+        val matching = directory.iterate(filters = Gurren.ignoreFilters)
+                .filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
+                .map { file -> file to (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))) }
+                .map { (file, format) -> if(format in SpiralFormats.drWadFormats) file to null else file to format }
+                .toMap()
+
+        println("[$operatingName] Attempting to convert and compile files matching the regex ${regex.pattern}, which is the following list of files: ")
+        println("")
+        println(matching.entries.joinToPrefixedString("\n", "[$operatingName]\t") {
+            if(this.value == null)
+                "${this.key relativePathFrom directory} (No known format)"
+            else if(this.value!!.conversions.isEmpty())
+                "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
+            else
+                "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
+        })
+        println("")
+        if(question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")) {
+            val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
+            val customWad = make<CustomWAD> {
+                wad(wad)
+
+                matching.filter { (_, format) -> format == null }.forEach { (entry) -> file(entry, entry relativePathFrom directory) }
+                matching.filter { (_, format) -> format != null }.forEach { (entry, from) ->
+                    val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
+                    data(name, ByteArrayDataSource(from.convertToBytes(from.conversions.first(), FileDataSource(entry), formatParams)))
+                }
             }
 
             val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
