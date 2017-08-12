@@ -1,11 +1,13 @@
 package org.abimon.spiral.mvc.gurren
 
+import com.github.kittinunf.fuel.Fuel
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
@@ -422,6 +424,14 @@ object Gurren {
 
     val versionCommand = Command("version") { println("SPIRAL version $version") }
     val whereAmI = Command("whereami") { println("You are here: ${Gurren::class.java.protectionDomain.codeSource.location}\nAnd you are: ${Gurren::class.java.protectionDomain.codeSource.location.openStream().use { it.toString() } }")}
+    val jenkinsBuild = Command("build") {
+        val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
+
+        if(response.httpStatusCode != 200)
+            println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
+        else
+            println("SPIRAL version $version; Jenkins build ${(SpiralModel.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
+    }
 
     val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }

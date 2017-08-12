@@ -1,5 +1,6 @@
 package org.abimon.spiral.core
 
+import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
 import org.abimon.visi.lang.toBinaryString
 import java.awt.image.BufferedImage
@@ -177,3 +178,5 @@ infix fun ByteArray.equals(other: ByteArray): Boolean = Arrays.equals(this, othe
 infix fun ByteArray.doesntEqual(other: ByteArray): Boolean = !(this equals other)
 
 infix fun <T: Number> T.hasBitSet(bit: T): Boolean = (this.toLong() and bit.toLong()) == bit.toLong()
+
+fun Request.userAgent(agent: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:54.0) Gecko/20100101 Firefox/54.0"): Request = this.header("User-Agent" to agent)
