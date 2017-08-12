@@ -15,6 +15,7 @@ import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.EnumOS
 import org.abimon.visi.lang.replaceLast
+import org.abimon.visi.security.md5Hash
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
@@ -35,6 +36,8 @@ object Gurren {
     val identifyFormats: Array<SpiralFormat> = SpiralFormats.formats.filter { it !is TXTFormat }.toTypedArray()
     val separator: String = File.separator
     var keepLooping: Boolean = true
+    val version: String
+        get() = Gurren::class.java.protectionDomain.codeSource.location.openStream().md5Hash()
 
     val helpTable: String = FlipTable.of(
             arrayOf("Command", "Arguments", "Description", "Example Command"),
@@ -99,7 +102,7 @@ object Gurren {
                     }
                 }
             }
-            else -> println("No behaviour defined for ${os}!")
+            else -> println("No behaviour defined for $os!")
         }
 
         if (SpiralModel.wads.isEmpty())
@@ -416,6 +419,9 @@ object Gurren {
             println(FlipTable.of(arrayOf("Name", "Audio File", "Video File", "Output File", "Error"), entries.toTypedArray()))
         }
     }
+
+    val versionCommand = Command("version") { println("SPIRAL version $version") }
+    val whereAmI = Command("whereami") { println("You are here: ${Gurren::class.java.protectionDomain.codeSource.location}\nAnd you are: ${Gurren::class.java.protectionDomain.codeSource.location.openStream().use { it.toString() } }")}
 
     val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }

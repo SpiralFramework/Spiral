@@ -14,6 +14,7 @@ fun main(args: Array<String>) {
     Gurren.registerSoldiers()
     GurrenOperation.registerSoldiers()
 
+    println("Initialising SPIRAL")
     while(Gurren.keepLooping) {
         print(SpiralModel.scope.first)
         imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break))

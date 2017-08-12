@@ -12,6 +12,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object MP4Format: SpiralFormat {
     override val name: String = "MP4"
@@ -48,7 +49,7 @@ object MP4Format: SpiralFormat {
             if(format in SpiralFormats.audioFormats && format !in SpiralFormats.videoFormats)
                 MediaWrapper.ffmpeg.extractAudio(tmpIn, tmpOut)
             else
-                MediaWrapper.ffmpeg.convert(tmpIn, tmpOut)
+                MediaWrapper.ffmpeg.convert(tmpIn, tmpOut, 10, TimeUnit.MINUTES)
 
             FileInputStream(tmpOut).use { inputStream -> inputStream.writeTo(output) }
         } finally {
