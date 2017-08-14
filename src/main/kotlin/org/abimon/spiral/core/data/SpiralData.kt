@@ -1,19 +1,17 @@
 package org.abimon.spiral.core.data
 
-import org.abimon.spiral.core.SpiralFormats
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import org.abimon.spiral.core.TripleHashMap
-import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.put
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
-import org.abimon.visi.security.sha512Hash
-import java.io.*
-import java.util.*
 
 object SpiralData {
-    val pakNames = HashMap<String, Pair<String, String>>()
-    val formats = HashMap<String, Pair<String, SpiralFormat>>()
-    val config = File(".spiral_names")
     val dr1OpCodes = make<TripleHashMap<Int, Int, String>> {
         put(0x00, 2, "Text Count")
         put(0x01, 3, "0x01")
@@ -77,7 +75,6 @@ object SpiralData {
         put(0x3B, 0, "Wait Frame")
         put(0x3C, 0, "End Flag Check")
     }
-    
     val dr2OpCodes = make<TripleHashMap<Int, Int, String>> {
         put(0x00, 2, "Text Count")
         put(0x01, 4, "0x01")
@@ -167,66 +164,10 @@ object SpiralData {
             0x1B to "Chapter"
     )
 
-    fun getPakName(pathName: String, data: ByteArray): String? {
-        if (pakNames.containsKey(pathName)) {
-            val (sha512, name) = pakNames[pathName]!!
-            if (sha512 == data.sha512Hash())
-                return name
-        }
-
-        return null
-    }
-
-    fun getFormat(pathName: String, data: ByteArray): SpiralFormat? {
-        if (formats.containsKey(pathName)) {
-            val (sha512, format) = formats[pathName]!!
-            if (sha512 == data.sha512Hash())
-                return format
-        }
-
-        return null
-    }
-
-    fun getFormat(pathName: String, data: DataSource): SpiralFormat? {
-        if (formats.containsKey(pathName)) {
-            val (sha512, format) = formats[pathName]!!
-            if (sha512 == data.data.sha512Hash())
-                return format
-        }
-
-        return null
-    }
-
-    fun registerFormat(pathName: String, data: ByteArray, format: SpiralFormat) {
-        formats[pathName] = Pair(data.sha512Hash(), format)
-        save()
-    }
-
-    fun save() {
-        val writer = PrintWriter(BufferedWriter(FileWriter(config)))
-        writer.use {
-            pakNames.forEach { path, pair -> it.println("name|$path|${pair.first}|${pair.second}") }
-            formats.forEach { path, pair -> it.println("format|$path|${pair.first}|${pair.second.name}") }
-        }
-    }
-
-    init {
-        if (!config.exists())
-            config.createNewFile()
-
-        val reader = BufferedReader(FileReader(config))
-        reader.use {
-            it.forEachLine {
-                val components = it.split("|")
-                when (components[0]) {
-                    "name" -> pakNames.put(components[1], Pair(components[2], components[3]))
-                    "format" -> {
-                        val format = SpiralFormats.formatForName(components[3])
-                        if (format != null)
-                            formats.put(components[1], Pair(components[2], format))
-                    }
-                }
-            }
-        }
-    }
+    val MAPPER: ObjectMapper = ObjectMapper()
+            .registerKotlinModule()
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
 }

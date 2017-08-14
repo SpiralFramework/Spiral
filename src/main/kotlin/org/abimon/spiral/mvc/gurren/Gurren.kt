@@ -4,6 +4,7 @@ import com.github.kittinunf.fuel.Fuel
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.isDebug
@@ -430,7 +431,7 @@ object Gurren {
         if(response.httpStatusCode != 200)
             println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
         else
-            println("SPIRAL version $version; Jenkins build ${(SpiralModel.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
+            println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
     }
 
     val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }

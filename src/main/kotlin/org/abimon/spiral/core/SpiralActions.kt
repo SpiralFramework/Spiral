@@ -1,6 +1,5 @@
 package org.abimon.spiral.core
 
-import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.objects.Pak
 import org.abimon.spiral.core.objects.WAD
@@ -40,9 +39,8 @@ fun WAD.extractToDirectory(directory: File) {
 }
 
 fun Collection<File>.convertTgaToPng() {
-    filter { it.name.endsWith(".tga") && ((SpiralData.getFormat(it.name, FileDataSource(it)) ?: (SpiralFormats.UNKNOWN) is TGAFormat) or SpiralFormats.TGA.isFormat(FileDataSource(it))) }.forEach {
+    filter { it.name.endsWith(".tga") && SpiralFormats.TGA.isFormat(FileDataSource(it)) }.forEach {
         val data = it.readBytes()
-        SpiralData.registerFormat(it.name, data, SpiralFormats.TGA)
         val out = FileOutputStream(File(it.absolutePath.replace(".tga", ".png")))
         SpiralFormats.TGA.convert(SpiralFormats.PNG, FunctionDataSource { data }, out, emptyMap())
         it.delete()
@@ -50,8 +48,8 @@ fun Collection<File>.convertTgaToPng() {
 }
 
 fun Collection<File>.convertPakToZip() {
-    filter {file -> file.name.endsWith(".pak") && ((SpiralData.getFormat(file.name, FileDataSource(file)) ?: (SpiralFormats.UNKNOWN) is PAKFormat) or SpiralFormats.PAK.isFormat(FileDataSource(file))) }.forEach { file ->
-        SpiralData.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
+    filter {file -> file.name.endsWith(".pak") && SpiralFormats.PAK.isFormat(FileDataSource(file)) }.forEach { file ->
+        //SpiralData.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
 
         FileOutputStream(file.absolutePath.replace(".pak", ".zip")).use { Pak(FileDataSource(file)).convertToZip(file.name, it) }
     }
@@ -61,9 +59,7 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
     val zipOut = ZipOutputStream(outputStream)
 
     files.forEach {
-        var format = SpiralData.getFormat("$name#${it.name}", it)
-        if(format != null)
-            format = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
+        val format = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
 
         if(format != null) {
             when(format) {
@@ -81,7 +77,6 @@ fun Pak.convertToZip(name: String, outputStream: OutputStream) {
                     it.use { stream -> stream.writeTo(zipOut) }
                 }
             }
-            SpiralData.registerFormat("$name#${it.name}", it.data, format)
         }
         else {
             zipOut.putNextEntry(ZipEntry(it.name))

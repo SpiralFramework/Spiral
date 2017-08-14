@@ -2,6 +2,9 @@ package org.abimon.spiral.util
 
 import org.abimon.spiral.core.isDebug
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.PrintStream
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -30,12 +33,21 @@ object MediaWrapper {
 
         val isInstalled: Boolean
             get() {
-                val process = executeSilent(listOf("ffmpeg", "-version"))
-                process.waitFor(60, TimeUnit.SECONDS)
-                val version = String(process.inputStream.readBytes())
-                if(version.startsWith("ffmpeg version"))
-                    return true
-                println(version)
+                try {
+                    val process = executeSilent(listOf("ffmpeg", "-version"))
+                    process.waitFor(60, TimeUnit.SECONDS)
+                    val version = String(process.inputStream.readBytes())
+                    if (version.startsWith("ffmpeg version"))
+                        return true
+                } catch(io: IOException) { //Should catch any Windows errors
+                    if(isDebug) {
+                        val logs = File("logs")
+                        if(!logs.exists())
+                            logs.mkdir()
+
+                        PrintStream(FileOutputStream(File(logs, "ffmpeg-process-errors.log"), true)).use { io.printStackTrace(it) }
+                    }
+                }
                 return false
             }
     }

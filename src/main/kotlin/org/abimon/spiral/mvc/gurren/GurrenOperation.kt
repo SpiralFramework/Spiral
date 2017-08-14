@@ -2,14 +2,17 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.objects.CustomWAD
 import org.abimon.spiral.core.objects.WAD
+import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
+import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileOutputStream
 
@@ -232,12 +235,22 @@ object GurrenOperation {
         }
     }
 
+    val fingerprintWad = Command("fingerprint_wad", "operate") {
+        val fileMap: MutableMap<String, Map<String, String>> = HashMap()
+        val fingerprints: MutableMap<String, String> = HashMap()
+        fileMap["1312478"] = fingerprints
+
+        operatingWad.files.forEach { file -> fingerprints[file.name] = file.use { it.sha512Hash() } }
+
+        SpiralData.MAPPER.writeValue(File("fingerprints.json"), fileMap)
+    }
+
     val info = Command("info", "operate") { (params) ->
         val regex = (if(params.size > 1) params[1] else ".*").toRegex()
         val wad = operatingWad
 
-        val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { (name, fileSize, offset) -> arrayOf(name, "$fileSize B", "$offset B from the beginning") }.toTypedArray()
-        println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset"), matching))
+        val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.run { "${first.name} v$second" } ?: "Unknown") }.toTypedArray()
+        println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
     }
 
     val exit = Command("exit", "operate") { SpiralModel.scope = "> " to "default" }
