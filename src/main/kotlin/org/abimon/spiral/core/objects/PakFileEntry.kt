@@ -13,6 +13,8 @@ data class PakFileEntry(val name: String, val fileSize: Long, val offset: Long, 
 
     override val inputStream: InputStream
         get() = OffsetInputStream(pak.dataSource.inputStream, offset, fileSize)
+    override val seekableInputStream: InputStream
+        get() = OffsetInputStream(pak.dataSource.seekableInputStream, offset, fileSize)
 
     override val size: Long = fileSize
 }

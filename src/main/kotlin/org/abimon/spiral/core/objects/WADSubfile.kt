@@ -15,6 +15,8 @@ data class WADFileEntry(val name: String, val fileSize: Long, val offset: Long, 
 
     override val inputStream: InputStream
         get() = OffsetInputStream(wad.dataSource.inputStream, wad.dataOffset + offset, fileSize)
+    override val seekableInputStream: InputStream
+        get() = OffsetInputStream(wad.dataSource.seekableInputStream, wad.dataOffset + offset, fileSize)
 
     override val size: Long = fileSize
 }

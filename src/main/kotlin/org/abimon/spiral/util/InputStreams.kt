@@ -1,5 +1,6 @@
 package org.abimon.spiral.util
 
+import org.abimon.visi.io.skipBytes
 import java.io.InputStream
 
 open class DelegatedInputStream(val delegatedInputStream: InputStream) : InputStream() {
@@ -38,7 +39,7 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
     }
 }
 
-class OffsetInputStream(offsetInputStream: InputStream, offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {
+class OffsetInputStream(offsetInputStream: InputStream, private val offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {
 
     override fun read(): Int = if (count < overriding) super.read() else -1
     override fun read(b: ByteArray): Int {
@@ -51,10 +52,22 @@ class OffsetInputStream(offsetInputStream: InputStream, offset: Long, val overri
         return super.read(b, off, len.coerceAtMost((overriding - count).toInt()))
     }
 
+    override fun reset() {
+        super.reset()
+        skip(offset)
+    }
+
     override fun available(): Int = (overriding - count).toInt()
 
     init {
         skip(offset)
         count = count.minus(offset).coerceAtLeast(0)
+    }
+}
+
+class SeekableInputStream(seekable: InputStream): CountingInputStream(seekable) {
+    fun seek(offset: Long) {
+        reset()
+        skipBytes(offset)
     }
 }

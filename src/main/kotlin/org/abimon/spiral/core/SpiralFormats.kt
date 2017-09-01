@@ -23,7 +23,7 @@ object SpiralFormats {
     val BINARY = SpiralFormat.BinaryFormat
 
     val formats: Array<SpiralFormat> = arrayOf(
-            WADFormat, ZIPFormat,
+            WADFormat, CPKFormat, ZIPFormat,
             TGAFormat, SHTXFormat, DDS1DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
             IVFFormat, MP4Format,

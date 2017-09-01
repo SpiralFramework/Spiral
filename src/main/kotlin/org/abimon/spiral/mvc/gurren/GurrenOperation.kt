@@ -238,11 +238,12 @@ object GurrenOperation {
     val fingerprintWad = Command("fingerprint_wad", "operate") {
         val fileMap: MutableMap<String, Map<String, String>> = HashMap()
         val fingerprints: MutableMap<String, String> = HashMap()
-        fileMap["1312478"] = fingerprints
+        print("Version: ")
+        fileMap[readLine() ?: "unknown"] = fingerprints
 
         operatingWad.files.forEach { file -> fingerprints[file.name] = file.use { it.sha512Hash() } }
 
-        SpiralData.MAPPER.writeValue(File("fingerprints.json"), fileMap)
+        SpiralData.MAPPER.writeValue(File("fingerprints_${SpiralModel.operating?.nameWithoutExtension}.json"), fileMap)
     }
 
     val info = Command("info", "operate") { (params) ->

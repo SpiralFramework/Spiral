@@ -1,37 +1,34 @@
 package org.abimon.spiral.core.formats
 
-import org.abimon.spiral.core.objects.WAD
+import org.abimon.spiral.core.objects.CPK
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.writeTo
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-object WADFormat : SpiralFormat {
-    override val name = "WAD"
-    override val extension = "wad"
+object CPKFormat: SpiralFormat {
+    override val name: String = "CPK"
+    override val extension: String = "cpk"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
-            WAD(source)
-            return true
-        } catch(illegal: IllegalArgumentException) {
+            return CPK(source).fileTable.isNotEmpty()
+        } catch(iea: IllegalArgumentException) {
+            return false
         }
-
-        return false
     }
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
         super.convert(format, source, output, params)
+        val cpk = CPK(source)
 
-        val wad = WAD(source)
-        when (format) {
+        when(format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
-                wad.files.forEach {
+                cpk.fileTable.forEach {
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.inputStream.writeTo(zip, closeAfter = true)
+                    it.pipe(zip)
                 }
                 zip.closeEntry()
             }

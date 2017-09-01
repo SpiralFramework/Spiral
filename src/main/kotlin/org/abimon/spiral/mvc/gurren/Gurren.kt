@@ -19,6 +19,7 @@ import org.abimon.visi.io.*
 import org.abimon.visi.lang.EnumOS
 import org.abimon.visi.lang.replaceLast
 import org.abimon.visi.security.md5Hash
+import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
@@ -432,6 +433,26 @@ object Gurren {
             println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
         else
             println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
+    }
+
+    val fingerprintFolder = Command("fingerprint_folder", "default") { (params) ->
+        if(params.size == 1)
+            return@Command errPrintln("Error: No folder provided!")
+
+        val folder = File(params[1])
+        if(!folder.exists())
+            return@Command errPrintln("Error: $folder does not exist!")
+        if(!folder.isDirectory)
+            return@Command errPrintln("Error: $folder is not a directory!")
+
+        val fileMap: MutableMap<String, Map<String, String>> = HashMap()
+        val fingerprints: MutableMap<String, String> = HashMap()
+        print("Version: ")
+        fileMap[readLine() ?: "unknown"] = fingerprints
+
+        folder.iterate(false, filters = ignoreFilters).forEach { file -> fingerprints[file relativePathFrom folder] = file.inputStream().use { it.sha512Hash() } }
+
+        SpiralData.MAPPER.writeValue(File(folder, "fingerprints.json"), fileMap)
     }
 
     val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
