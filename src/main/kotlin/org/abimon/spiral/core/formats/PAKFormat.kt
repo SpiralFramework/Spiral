@@ -40,7 +40,7 @@ object PAKFormat : SpiralFormat {
 
                         if (innerFormat != null && convertTo != null) {
                             zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(convertTo, it, zip, params)
+                            innerFormat.convert(convertTo, data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
                             zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
