@@ -55,6 +55,7 @@ class OffsetInputStream(offsetInputStream: InputStream, private val offset: Long
     override fun reset() {
         super.reset()
         skip(offset)
+        count = count.minus(offset).coerceAtLeast(0)
     }
 
     override fun available(): Int = (overriding - count).toInt()

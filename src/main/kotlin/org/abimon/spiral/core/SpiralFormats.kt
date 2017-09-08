@@ -2,6 +2,7 @@ package org.abimon.spiral.core
 
 import org.abimon.spiral.core.formats.*
 import org.abimon.visi.io.DataSource
+import org.abimon.visi.io.FunctionDataSource
 import java.io.ByteArrayOutputStream
 
 object SpiralFormats {
@@ -28,7 +29,7 @@ object SpiralFormats {
             OggFormat,
             IVFFormat, MP4Format,
             LINFormat, SpiralTextFormat,
-            DRVitaCompressionFormat,
+            DRVitaCompressionFormat, CRILAYLAFormat,
             LLFSFormat,
             GMOModelFormat,
             PAKFormat,
@@ -38,11 +39,37 @@ object SpiralFormats {
     val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
     val videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
 
-    val drWadFormats = arrayOf(WADFormat, TGAFormat, LINFormat, LLFSFormat, GMOModelFormat, IVFFormat, OggFormat, NonstopFormat, PAKFormat)
+    val compressionFormats = arrayOf(DRVitaCompressionFormat, CRILAYLAFormat)
+
+    val drArchiveFormats = arrayOf(
+            WADFormat, CPKFormat,
+            TGAFormat, SHTXFormat, DDS1DDSFormat,
+            LINFormat,
+            LLFSFormat,
+            GMOModelFormat,
+            IVFFormat,
+            OggFormat,
+            NonstopFormat,
+            PAKFormat,
+            DRVitaCompressionFormat, CRILAYLAFormat
+    )
+
+    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(dataSource) }
+    fun decompress(dataSource: DataSource): DataSource {
+        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(dataSource) } ?: return dataSource
+        return FunctionDataSource { compressionFormat.convertToBytes(SpiralFormat.BinaryFormat, dataSource, emptyMap()) }
+    }
+    fun decompressFully(dataSource: DataSource): DataSource {
+        var data: DataSource = dataSource
+        while(true) {
+            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(data) } ?: return data
+            data = FunctionDataSource { compressionFormat.convertToBytes(SpiralFormat.BinaryFormat, dataSource, emptyMap()) }
+        }
+    }
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.extension == extension }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }
-    fun formatForName(name: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.name.equals(name, true) }
+    fun formatForName(name: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.name.equals(name, true) } ?: if(name.equals("BINARY", true)) SpiralFormat.BinaryFormat else null
 
     fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
         val baos = ByteArrayOutputStream()

@@ -9,7 +9,7 @@ import java.util.zip.ZipOutputStream
 object CPKFormat: SpiralFormat {
     override val name: String = "CPK"
     override val extension: String = "cpk"
-    override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat, WADFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -28,9 +28,12 @@ object CPKFormat: SpiralFormat {
                 val zip = ZipOutputStream(output)
                 cpk.fileTable.forEach {
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.pipe(zip)
+                    if(it.isCompressed)
+                        CRILAYLAFormat.convert(SpiralFormat.BinaryFormat, it, zip, params)
+                    else
+                        it.pipe(zip)
                 }
-                zip.closeEntry()
+                zip.finish()
             }
         }
     }

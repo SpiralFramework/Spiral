@@ -11,7 +11,7 @@ import java.util.*
 object DRVitaCompressionFormat : SpiralFormat {
     override val name: String = "Danganronpa Vita Compression"
     override val extension: String? = null
-    override val conversions: Array<SpiralFormat> = emptyArray()
+    override val conversions: Array<SpiralFormat> = arrayOf(SpiralFormat.BinaryFormat)
 
     val CMP_MAGIC = org.abimon.visi.collections.byteArrayOf(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = org.abimon.visi.collections.byteArrayOf(0x47, 0x58, 0x33, 0x00)
@@ -34,8 +34,6 @@ object DRVitaCompressionFormat : SpiralFormat {
 
             val rawSize = stream.readNumber(4, unsigned = true)
             val compressedSize = stream.readNumber(4, unsigned = true)
-
-            println("$rawSize -> $compressedSize")
 
             var i = 12
             var previousOffset = 1
@@ -84,7 +82,9 @@ object DRVitaCompressionFormat : SpiralFormat {
                         count = (count shl 8) + b
                     }
 
-                    result.addAll(stream.read(count).toList())
+                    if(count > 0)
+                        result.addAll(stream.read(count).toList())
+
                     i += count
                 } else
                     println("???")

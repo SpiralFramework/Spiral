@@ -1,6 +1,7 @@
 package org.abimon.spiral.core
 
-import org.abimon.spiral.core.formats.*
+import org.abimon.spiral.core.formats.PAKFormat
+import org.abimon.spiral.core.formats.ZIPFormat
 import org.abimon.spiral.core.objects.Pak
 import org.abimon.spiral.core.objects.WAD
 import org.abimon.visi.io.*
@@ -8,9 +9,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.*
-import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
 
 object SpiralActions {
 
@@ -55,37 +54,7 @@ fun Collection<File>.convertPakToZip() {
     }
 }
 
-fun Pak.convertToZip(name: String, outputStream: OutputStream) {
-    val zipOut = ZipOutputStream(outputStream)
-
-    files.forEach {
-        val format = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
-
-        if(format != null) {
-            when(format) {
-                is TGAFormat -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${PNGFormat.extension}"))
-                    format.convert(SpiralFormats.PNG, it, zipOut, emptyMap())
-                }
-                is PAKFormat -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${ZIPFormat.extension}"))
-                    format.convert(SpiralFormats.ZIP, it, zipOut, emptyMap())
-                }
-                is WADFormat -> println("Oh no. $name#${it.name} is a WAD file. Panic. Now.")
-                else -> {
-                    zipOut.putNextEntry(ZipEntry("${it.name}.${format.extension}"))
-                    it.use { stream -> stream.writeTo(zipOut) }
-                }
-            }
-        }
-        else {
-            zipOut.putNextEntry(ZipEntry(it.name))
-            it.use { stream -> stream.writeTo(zipOut, closeAfter = true) }
-        }
-    }
-
-    zipOut.closeEntry()
-}
+fun Pak.convertToZip(name: String, outputStream: OutputStream) = PAKFormat.convert(ZIPFormat, this.dataSource, outputStream, mapOf("pak:convert" to true))
 
 fun ZipInputStream.convertToMap(): HashMap<String, DataSource> {
     val map = HashMap<String, DataSource>()

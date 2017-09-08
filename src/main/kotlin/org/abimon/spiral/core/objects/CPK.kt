@@ -136,9 +136,11 @@ class CPK(val dataSource: DataSource) {
                 val filesize = fileSizes[i]
                 val extractSize = extractSizes[i]
 
+                val isCompressed = extractSize > filesize
+
                 val offset = fileOffsets[i] + Math.min(contentOffset.toLong(), tocOffset)
 
-                fileTable.add(CPKFileEntry(filename, dirname, filesize, extractSize, offset, this))
+                fileTable.add(CPKFileEntry(filename, dirname, filesize, extractSize, offset, isCompressed, this))
             }
         } catch (th: Throwable) {
             cpk.close()

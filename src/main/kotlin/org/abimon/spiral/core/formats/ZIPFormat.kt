@@ -51,7 +51,7 @@ object ZIPFormat : SpiralFormat {
                                     val innerFormat = SpiralFormats.formatForData(data)
                                     val convertTo = innerFormat?.conversions?.firstOrNull()
 
-                                    if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drWadFormats) {
+                                    if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                         put(entry.name.substringBeforeLast('.'), FunctionDataSource { innerFormat.convertToBytes(convertTo, data, params) })
                                         return@forEach
                                     }

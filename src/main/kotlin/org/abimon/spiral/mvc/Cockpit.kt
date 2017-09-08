@@ -16,8 +16,12 @@ fun main(args: Array<String>) {
 
     println("Initialising SPIRAL")
     while(Gurren.keepLooping) {
-        print(SpiralModel.scope.first)
-        imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break))
-        Thread.sleep(250)
+        try {
+            print(SpiralModel.scope.first)
+            imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break))
+            Thread.sleep(250)
+        } catch (th: Throwable) {
+            th.printStackTrace()
+        }
     }
 }

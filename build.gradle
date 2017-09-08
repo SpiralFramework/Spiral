@@ -37,7 +37,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile('org.abimon:Imperator:3')
-    compile('org.abimon:Visi:15')
+    compile('org.abimon:Visi:19')
     compile('org.abimon:ModBrowser:2')
 
     compile "org.parboiled:parboiled-java:1.1.8"

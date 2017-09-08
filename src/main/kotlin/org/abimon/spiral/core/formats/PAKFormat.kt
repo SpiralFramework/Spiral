@@ -33,19 +33,24 @@ object PAKFormat : SpiralFormat {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
                 pak.files.forEach {
+                    val data = SpiralFormats.decompressFully(it)
                     if (convert) {
-                        val innerFormat = SpiralFormats.formatForData(it, SpiralFormats.drWadFormats)
+                        val innerFormat = SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
                             zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
                             innerFormat.convert(convertTo, it, zip, params)
                             return@forEach
+                        } else if (innerFormat != null) {
+                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
+                            data.use { stream -> stream.writeTo(zip) }
+                            return@forEach
                         }
                     }
 
                     zip.putNextEntry(ZipEntry(it.name))
-                    it.use { stream -> stream.writeTo(zip) }
+                    data.use { stream -> stream.writeTo(zip) }
                 }
                 zip.finish()
             }

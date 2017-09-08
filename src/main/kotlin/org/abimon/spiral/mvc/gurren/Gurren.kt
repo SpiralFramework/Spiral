@@ -4,6 +4,7 @@ import com.github.kittinunf.fuel.Fuel
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
@@ -47,10 +48,10 @@ object Gurren {
             arrayOf("Command", "Arguments", "Description", "Example Command"),
             arrayOf(
                     arrayOf("help", "", "Display this message", ""),
-                    arrayOf("find", "", "Try to find the WAD files for DR1/2, if they're in their normal locations", ""),
-                    arrayOf("locate", "[directory]", "Search [directory] for all WAD files. Note: Will take a fair amount of time, and requires confirmation for each WAD file.", "find \"Steam${separator}steamapps${separator}common${separator}Danganronpa: Trigger Happy Havoc\""),
-                    arrayOf("register", "[wad]", "Register an individual WAD file", "register \"dr1_data_us.wad\""),
-                    arrayOf("registered", "", "Display the registered WAD files", ""),
+                    arrayOf("find", "", "Try to find the archive files for DR, if they're in their normal locations", ""),
+                    arrayOf("locate", "[directory]", "Search [directory] for all archive. Note: Will take a fair amount of time, and requires confirmation for each archive.", "find \"Steam${separator}steamapps${separator}common${separator}Danganronpa: Trigger Happy Havoc\""),
+                    arrayOf("register", "[archive]", "Register an individual archive", "register \"dr1_data_us.wad\""),
+                    arrayOf("registered", "", "Display the registered archives", ""),
                     arrayOf("formats", "", "Display the formats table", ""),
                     arrayOf("identify", "[file|directory]", "Identify the format of either the provided [file], or the files in the provided [directory]", "identify \"images\""),
                     arrayOf("identify_and_convert", "[file|directory] [format] {params}", "Identify the format of either the provided [file], or the files in the provided [directory], and try to convert them to [format] with the provided {params} (or no params if not provided)", "identify_and_convert \"images\" \"png\""),
@@ -63,6 +64,7 @@ object Gurren {
             arrayOf("Format", "Can Convert To"),
             arrayOf(
                     arrayOf("WAD", WADFormat.conversions.joinToString { it.name }),
+                    arrayOf("CPK", CPKFormat.conversions.joinToString { it.name }),
                     arrayOf("PAK", PAKFormat.conversions.joinToString { it.name }),
                     arrayOf("TGA", TGAFormat.conversions.joinToString { it.name }),
                     arrayOf("SHTX", SHTXFormat.conversions.joinToString { it.name }),
@@ -83,7 +85,7 @@ object Gurren {
                         if (steamFolder.exists()) {
                             val common = File(steamFolder, "steamapps${File.separator}common")
                             for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") })
-                                SpiralModel.wads.addAll(game.listFiles { file -> file.isFile && file.extension == "wad" && !file.name.contains(".backup") })
+                                SpiralModel.archives.addAll(game.listFiles { file -> file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup") })
                         }
                     }
                 }
@@ -95,10 +97,10 @@ object Gurren {
                     for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") }) {
                         val appDirs = game.listFiles { file -> file.isDirectory && file.extension == "app" }
                         if (appDirs.isNotEmpty()) {
-                            SpiralModel.wads.addAll(
+                            SpiralModel.archives.addAll(
                                     appDirs.flatMap<File, File> { app ->
                                         File(app, "Contents${File.separator}Resources").listFiles { file ->
-                                            file.isFile && file.extension == "wad" && !file.name.contains(".backup")
+                                            file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup")
                                         }.toList()
                                     }
                             )
@@ -109,10 +111,10 @@ object Gurren {
             else -> println("No behaviour defined for $os!")
         }
 
-        if (SpiralModel.wads.isEmpty())
-            errPrintln("Error: No WAD files detected! You can manually add them via the register command, or by running the locate command!")
+        if (SpiralModel.archives.isEmpty())
+            errPrintln("Error: No archive files detected! You can manually add them via the register command, or by running the locate command!")
         else
-            println("WADs: ${SpiralModel.wads.joinToPrefixedString("", "\n\t")}")
+            println("Archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}")
     }
     val locate = Command("locate") { (operation) ->
         if (operation.size == 1) {
@@ -130,17 +132,17 @@ object Gurren {
             val time = measureTimeMillis {
                 dir.iterate(filters = arrayOf(
                         FileFilter { file -> !file.name.startsWith(".") },
-                        FileFilter { file -> file.isDirectory || (file.isFile && file.extension == "wad" && !file.name.contains(".backup")) }
-                )).forEach { wad ->
-                    if (question("WAD Found ($wad). Would you like to add this to the internal registry (Y/N)? ", "Y"))
-                        SpiralModel.wads.add(wad)
+                        FileFilter { file -> file.isDirectory || (file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup")) }
+                )).forEach { archive ->
+                    if (question("Archive Found ($archive). Would you like to add this to the internal registry (Y/N)? ", "Y"))
+                        SpiralModel.archives.add(archive)
                 }
             }
             println("Took $time ms.")
-            if (SpiralModel.wads.isEmpty())
-                errPrintln("Error: No WAD files detected! You can manually add them via the register command, or by running the locate command!")
+            if (SpiralModel.archives.isEmpty())
+                errPrintln("Error: No archive files detected! You can manually add them via the register command, or by running the locate command!")
             else
-                println("WADs: ${SpiralModel.wads.joinToPrefixedString("", "\n\t")}")
+                println("archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}")
         }
     }
     val register = Command("register") { (operation) ->
@@ -149,26 +151,26 @@ object Gurren {
             return@Command
         }
 
-        val wad = File(operation.copyFrom(1).joinToString(" "))
-        if (!wad.exists()) {
-            errPrintln("Error: $wad does not exist!")
+        val archive = File(operation.copyFrom(1).joinToString(" "))
+        if (!archive.exists()) {
+            errPrintln("Error: $archive does not exist!")
             return@Command
         }
 
-        if (!wad.isFile) {
-            errPrintln("Error: $wad is not a file!")
+        if (!archive.isFile) {
+            errPrintln("Error: $archive is not a file!")
             return@Command
         }
 
-        if (wad.extension != "wad") {
-            errPrintln("Error: $wad is not a .wad file!")
+        if (archive.extension !in IArchive.EXTENSIONS) {
+            errPrintln("Error: $archive is not an archive file!")
             return@Command
         }
 
-        SpiralModel.wads.add(wad)
-        println("Registered $wad!")
+        SpiralModel.archives.add(archive)
+        println("Registered $archive!")
     }
-    val registered = Command("registered") { println("Registered WADs: ${SpiralModel.wads.joinToPrefixedString("", "\n\t")}") }
+    val registered = Command("registered") { println("Registered archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}") }
     val formats = Command("formats") { println(formatTable) }
 
     val identify = Command("identify") { (params) ->
@@ -206,9 +208,8 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
-        val convertTo: SpiralFormat? = if (params.size == 2) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
-        val formatParams: Map<String, String> = if(params.size == 3) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
-
+        val convertTo: SpiralFormat? = if (params.size < 3) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
+        val formatParams: Map<String, String> = if(params.size < 4) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
@@ -310,7 +311,7 @@ object Gurren {
 
         val file = File(params[1])
         val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
-        val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
+        val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[3]}")
         val formatParams: Map<String, String> = if(params.size == 4) emptyMap() else params.copyFrom(4).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
