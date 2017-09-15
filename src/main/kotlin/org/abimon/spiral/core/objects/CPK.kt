@@ -16,6 +16,8 @@ class CPK(val dataSource: DataSource) {
     val fileTable: MutableList<CPKFileEntry> = ArrayList()
     val headerInfo: UTFTableInfo
     val tocHeader: UTFTableInfo
+    val etocHeader: UTFTableInfo
+    val gtocHeader: UTFTableInfo
 
     companion object {
         val COLUMN_STORAGE_MASK = 0xF0
@@ -36,6 +38,15 @@ class CPK(val dataSource: DataSource) {
         val COLUMN_TYPE_1BYTE = 0x00
 
         val NULL_TERMINATOR = 0x00.toChar()
+
+        fun sanitiseStringTable(table: String, index: Int): String {
+            if(index in (0 until table.length))
+                return table.substring(index).substringBefore(NULL_TERMINATOR)
+            else {
+                //println("$index vs ${table.length}")
+                return table.substringBefore(NULL_TERMINATOR)
+            }
+        }
 
         fun readTable(dataSource: DataSource, offset: Long): UTFTableInfo {
             return CountingInputStream(dataSource.inputStream).use { cpk ->
@@ -109,6 +120,8 @@ class CPK(val dataSource: DataSource) {
                 throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (Number of header rows '${headerInfo.rows}' ≠ 1)!")
 
             val tocOffset = (headerInfo.getRows(dataSource, "TocOffset")[0].third as? Number)?.toLong() ?: throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (No column or no value for 'TocOffset')!")
+            val etocOffset = (headerInfo.getRows(dataSource, "EtocOffset")[0].third as? Number)?.toLong() ?: throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (No column or no value for 'EtocOffset')!")
+            val gtocOffset = (headerInfo.getRows(dataSource, "GtocOffset")[0].third as? Number)?.toLong() ?: throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (No column or no value for 'GtocOffset')!")
             val contentOffset = (headerInfo.getRows(dataSource, "ContentOffset")[0].third as? Number)?.toInt() ?: throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (No column or no value for 'ContentOffset')!")
             val fileCount = (headerInfo.getRows(dataSource, "Files")[0].third as? Number)?.toInt() ?: throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (No column or no value for 'Files')!")
 
@@ -123,8 +136,25 @@ class CPK(val dataSource: DataSource) {
             if (tocHeader.rows != fileCount.toLong())
                 throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (TocHeader#rows '${tocHeader.rows}' ≠ CpkHeader#Files '$fileCount')!")
 
-            val filenames = tocHeader.getRows(dataSource, "FileName").map { (_, _, index) -> tocHeader.stringTable.substring((index as? Number ?: 0).toInt()).substringBefore(NULL_TERMINATOR) }
-            val dirnames = tocHeader.getRows(dataSource, "DirName").map { (_, _, index) -> tocHeader.stringTable.substring((index as? Number ?: 0).toInt()).substringBefore(NULL_TERMINATOR) }
+            cpk.seek(etocOffset)
+
+            val etocSignature = cpk.readString(4)
+            if (etocSignature != "ETOC")
+                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (ETOC Signature at $etocOffset '$etocSignature' ≠ 'ETOC')!")
+
+            etocHeader = readTable(dataSource, etocOffset + 0x10)
+
+            cpk.seek(gtocOffset)
+
+            val gtocSignature = cpk.readString(4)
+            if (gtocSignature != "GTOC")
+                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (GTOC Signature at $gtocOffset '$gtocSignature' ≠ 'GTOC')!")
+
+            gtocHeader = readTable(dataSource, gtocOffset + 0x10)
+
+
+            val filenames = tocHeader.getRows(dataSource, "FileName").map { (_, _, name) -> name as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR) }
+            val dirnames = tocHeader.getRows(dataSource, "DirName").map { (_, _, name) -> name as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR) }
             val fileSizes = tocHeader.getRows(dataSource, "FileSize").map { (_, _, size) -> (size as? Number ?: -1).toLong() }
             val extractSizes = tocHeader.getRows(dataSource, "ExtractSize").map { (_, _, size) -> (size as? Number ?: -1).toLong() }
             val fileOffsets = tocHeader.getRows(dataSource, "FileOffset").map { (_, _, size) -> (size as? Number ?: -1).toLong() }

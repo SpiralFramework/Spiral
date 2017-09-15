@@ -52,8 +52,6 @@ data class UTFTableInfo(
                     when (dataPair.second) {
                         CPKColumnType.TYPE_STRING -> {
                             val num = stream.readNumber(4, unsigned = true, little = false)
-                            //println("$num | ${num.toInt()}")
-                            //dataObj = stringTable.substring(num.toInt()).substringBefore(CPK.NULL_TERMINATOR)
                             dataObj = num
                             bytesRead = 4
                         }
@@ -104,11 +102,13 @@ data class UTFTableInfo(
                         rowOffset += bytesRead
 
                     if (schema[j].columnName == column)
-                        data.add(dataPair and dataObj)
+                        data.add(dataPair and (if (dataPair.second == CPKColumnType.TYPE_STRING) CPK.sanitiseStringTable(stringTable, (dataObj as Number).toInt()) else dataObj))
                 }
             }
         }
 
         return data
     }
+
+    fun dump(data: DataSource): Map<String, List<Triple<Int, CPKColumnType, Any>>> = schema.map { it.columnName to getRows(data, it.columnName) }.toMap()
 }

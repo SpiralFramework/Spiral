@@ -67,8 +67,8 @@ class WAD(val dataSource: DataSource) {
                 for (j in 0 until numberOfSubFiles) {
                     val subLen = wad.readNumber(4, true).toInt()
                     val subName = wad.readString(subLen)
-                    val isFile = wad.read() == 0
-                    subfiles.add(WADSubfileEntry(subName, isFile))
+                    val isDirectory = wad.read() == 1
+                    subfiles.add(WADSubfileEntry(subName, isDirectory))
                 }
 
                 directories.add(WADSubdirectoryEntry(name, subfiles))

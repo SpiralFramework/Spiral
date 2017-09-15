@@ -1,11 +1,15 @@
 package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
+import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -18,6 +22,8 @@ import org.abimon.visi.lang.replaceLast
 import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.system.measureTimeMillis
 
 @Suppress("unused")
 object GurrenOperation {
@@ -62,18 +68,22 @@ object GurrenOperation {
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
         println("")
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
-            val rows = ArrayList<Array<String>>()
-            matching.forEach { (entryName, entry) ->
-                val parents = File(directory, entryName.parents)
-                if(!parents.exists() && !parents.mkdirs())
-                    return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
+            val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
+            val duration = measureTimeMillis {
+                matching.forEach { (entryName, entry) ->
+                    val parents = File(directory, entryName.parents)
+                    if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
+                        return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
-                val output = File(directory, entryName)
-                FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.writeTo(outputStream) } }
-                debug("[$operatingName] Wrote $entryName to $output")
-                rows.add(arrayOf(entryName, output relativePathTo directory))
+                    val output = File(directory, entryName)
+                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.writeTo(outputStream) } }
+                    debug("[$operatingName] Wrote $entryName to $output")
+                    rows.add(arrayOf(entryName, output relativePathTo directory))
+                }
             }
+
             println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
+            if(isDebug) println("Took $duration ms")
         }
     }
     val extractNicely = Command("extract_nicely", "operate") { (params) ->
@@ -103,37 +113,51 @@ object GurrenOperation {
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
             val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
-            val rows = ArrayList<Array<String>>()
-            matching.forEach { (entryName, entry) ->
-                val parents = File(directory, entryName.parents)
-                if(!parents.exists() && !parents.mkdirs())
-                    return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
-                val data = SpiralFormats.decompressFully(entry)
-                val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
-
-                val convertingTo = format?.conversions?.firstOrNull()
-
-                if(format == null) {
-                    val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                    rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
-                } else if(convertingTo == null) {
-                    val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                    rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
-                } else {
-                    try {
-                        val output = File(directory, entryName.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
-                        FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
-                        rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
-                    } catch(iea: IllegalArgumentException) {
-                        val output = File(directory, entryName)
-                        FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                        rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
+            val rows: MutableCollection<Array<String>> = ConcurrentLinkedQueue()
+            val duration = measureTimeMillis {
+                runBlocking {
+                    matching.forEach { (entryName) ->
+                        val parents = File(directory, entryName.parents)
+                        if (!parents.exists())
+                            parents.mkdirs()
                     }
+
+                    matching.map { (entryName, entry) ->
+                        launch(CommonPool) {
+                            val parents = File(directory, entryName.parents)
+                            if (!parents.exists() && !parents.mkdirs() && !parents.exists())
+                                return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
+                            val data = SpiralFormats.decompressFully(entry)
+                            val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+
+                            val convertingTo = format?.conversions?.firstOrNull()
+
+                            if (format == null) {
+                                val output = File(directory, entryName)
+                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                                rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
+                            } else if (convertingTo == null) {
+                                val output = File(directory, entryName)
+                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                                rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
+                            } else {
+                                try {
+                                    val output = File(directory, entryName.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
+                                    FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
+                                    rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
+                                } catch (iea: IllegalArgumentException) {
+                                    val output = File(directory, entryName)
+                                    FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                                    rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
+                                }
+                            }
+                        }
+                    }.forEach { it.join() }
                 }
             }
+
             println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
+            if(isDebug) println("Took $duration ms")
         }
     }
 
