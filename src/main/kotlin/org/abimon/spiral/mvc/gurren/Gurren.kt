@@ -115,6 +115,8 @@ object Gurren {
             errPrintln("Error: No archive files detected! You can manually add them via the register command, or by running the locate command!")
         else
             println("Archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}")
+
+        SpiralModel.save()
     }
     val locate = Command("locate") { (operation) ->
         if (operation.size == 1) {
@@ -143,6 +145,8 @@ object Gurren {
                 errPrintln("Error: No archive files detected! You can manually add them via the register command, or by running the locate command!")
             else
                 println("archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}")
+
+            SpiralModel.save()
         }
     }
     val register = Command("register") { (operation) ->
@@ -169,6 +173,7 @@ object Gurren {
 
         SpiralModel.archives.add(archive)
         println("Registered $archive!")
+        SpiralModel.save()
     }
     val registered = Command("registered") { println("Registered archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}") }
     val formats = Command("formats") { println(formatTable) }
