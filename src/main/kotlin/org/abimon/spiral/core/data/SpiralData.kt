@@ -178,4 +178,8 @@ object SpiralData {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+
+    val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
+    val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
+    val SPIRAL_HEADER_NAME = "Spiral-Header"
 }

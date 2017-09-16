@@ -9,7 +9,6 @@ import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
-import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -83,7 +82,7 @@ object GurrenOperation {
             }
 
             println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
-            if(isDebug) println("Took $duration ms")
+            debug("Took $duration ms")
         }
     }
     val extractNicely = Command("extract_nicely", "operate") { (params) ->
@@ -157,7 +156,7 @@ object GurrenOperation {
             }
 
             println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
-            if(isDebug) println("Took $duration ms")
+            debug("Took $duration ms")
         }
     }
 

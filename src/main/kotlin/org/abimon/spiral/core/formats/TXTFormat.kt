@@ -2,7 +2,7 @@ package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.TripleHashMap
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.spiral.core.objects.CustomLin
@@ -23,7 +23,7 @@ object TXTFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
         super.convert(format, source, output, params)
 
-        if (isDebug) println("Begun Converting\n${"-" * 100}")
+        debug("Begun Converting\n${"-" * 100}")
         when (format) {
             is LINFormat -> {
                 val dr1 = "${params["lin:dr1"] ?: true}".toBoolean()

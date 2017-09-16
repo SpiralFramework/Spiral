@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.*
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import org.abimon.visi.io.skipBytes
@@ -36,21 +37,21 @@ object DDS1DDSFormat : SpiralFormat {
             if (magic != "DDS1DDS ")
                 throw IllegalArgumentException("\"$magic\" ≠ DDS1DDS ")
 
-            val size = his.readUnsignedLittleInt()
-            val flags = his.readUnsignedLittleInt()
+            his.readUnsignedLittleInt() //Size
+            his.readUnsignedLittleInt() //Flags
             val height = his.readUnsignedLittleInt().toInt()
             val width = his.readUnsignedLittleInt().toInt()
 
             //Check the type here or something
 
             his.skipBytes(104)
-            val caps2 = his.readUnsignedLittleInt()
+            his.readUnsignedLittleInt() //caps2
 
             val texels = ArrayList<Array<Color>>()
 
             val time = measureNanoTime {
                 var ms = System.nanoTime()
-                (0 until ((height * width) / 16)).forEach { supposedIndex ->
+                for (supposedIndex in 0 until ((height * width) / 16)) {
                     val now = System.nanoTime()
                     debug("Last loop (It is now $supposedIndex) took ${now - ms} nanoseconds")
                     ms = now
@@ -106,7 +107,7 @@ object DDS1DDSFormat : SpiralFormat {
                 }
             }
 
-            if(isDebug) println("Took $time ns to read")
+            debug("Took $time ns to read")
 
             val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
 
@@ -123,7 +124,7 @@ object DDS1DDSFormat : SpiralFormat {
 
             tmpRows.forEach { rows.add(it.toTypedArray()); it.clear() }
 
-            if(isDebug) println("Setting pixels through an iterator took ${measureNanoTime { rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } } }} ns")
+            if(SpiralModel.isDebug) println("Setting pixels through an iterator took ${measureNanoTime { rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } } }} ns")
             else rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } }
 
             return@use img

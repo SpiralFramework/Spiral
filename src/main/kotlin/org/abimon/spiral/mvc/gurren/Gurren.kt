@@ -8,7 +8,6 @@ import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
-import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -461,6 +460,6 @@ object Gurren {
         SpiralData.MAPPER.writeValue(File(folder, "fingerprints.json"), fileMap)
     }
 
-    val toggleDebug = Command("toggle_debug") { isDebug = !isDebug; println("Debug status is now $isDebug") }
+    val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
 }

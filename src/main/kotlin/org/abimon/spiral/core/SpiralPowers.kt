@@ -2,6 +2,7 @@ package org.abimon.spiral.core
 
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.lang.toBinaryString
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
@@ -37,7 +38,7 @@ fun Int.getBit(bit: Int): Byte {
 }
 
 fun debug(any: Any?) {
-    if (isDebug) println(any)
+    if (SpiralModel.isDebug) println(any)
 }
 
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)

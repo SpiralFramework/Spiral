@@ -1,6 +1,6 @@
 package org.abimon.spiral.util
 
-import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.mvc.SpiralModel
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -40,7 +40,7 @@ object MediaWrapper {
                     if (version.startsWith("ffmpeg version"))
                         return true
                 } catch(io: IOException) { //Should catch any Windows errors
-                    if(isDebug) {
+                    if(SpiralModel.isDebug) {
                         val logs = File("logs")
                         if(!logs.exists())
                             logs.mkdir()
@@ -53,7 +53,7 @@ object MediaWrapper {
     }
 
     fun execute(command: List<String>): Process = ProcessBuilder().command(command).apply {
-        if(isDebug) {
+        if(SpiralModel.isDebug) {
             val logs = File("logs")
             if(!logs.exists())
                 logs.mkdir()

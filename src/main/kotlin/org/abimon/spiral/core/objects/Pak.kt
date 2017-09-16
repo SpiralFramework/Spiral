@@ -1,6 +1,5 @@
 package org.abimon.spiral.core.objects
 
-import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
@@ -53,7 +52,6 @@ class Pak(val dataSource: DataSource) {
             pak.close()
         } catch(illegal: IllegalArgumentException) {
             pak.close()
-            if(isDebug) illegal.printStackTrace()
             throw illegal
         }
     }

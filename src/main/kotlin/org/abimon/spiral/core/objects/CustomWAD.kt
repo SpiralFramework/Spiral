@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.objects
 
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.print
-import org.abimon.spiral.core.spiralHeaderName
 import org.abimon.spiral.core.writeNumber
 import org.abimon.visi.collections.remove
 import org.abimon.visi.io.*
@@ -33,7 +33,7 @@ class CustomWAD {
     }
 
     fun headerFile(header: ByteArray) {
-        data(spiralHeaderName, FunctionDataSource { header })
+        data(SpiralData.SPIRAL_HEADER_NAME, FunctionDataSource { header })
     }
 
     fun data(name: String, dataSource: DataSource) {

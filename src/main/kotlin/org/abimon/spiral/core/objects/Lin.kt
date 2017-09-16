@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.isDebug
+import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.core.lin.dr1.LoadMapEntry
 import org.abimon.spiral.core.lin.dr1.LoadScriptEntry
@@ -10,9 +10,9 @@ import org.abimon.spiral.core.lin.dr1.TrialCameraEntry
 import org.abimon.spiral.core.lin.dr2.*
 import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.errPrintln
 import org.abimon.visi.io.readPartialBytes
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -59,11 +59,11 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                     break
 
                 if (data[i] == 0x0) {
-                    if (isDebug) println("$i is 0x0")
+                    debug("$i is 0x0")
                     i++
                 } else if (data[i] != 0x70) {
                     while (i < data.size) {
-                        if(isDebug) errPrintln("$i expected to be 0x70, was ${data[i]}")
+                        debug("$i expected to be 0x70, was ${data[i]}")
                         if (i == 0x00 || i == 0x70)
                             break
                         i++
@@ -242,7 +242,6 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
             lin.close()
         } catch(illegal: IllegalArgumentException) {
             lin.close()
-            if(isDebug) illegal.printStackTrace()
             throw illegal
         }
     }

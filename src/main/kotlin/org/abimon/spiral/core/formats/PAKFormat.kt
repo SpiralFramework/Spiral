@@ -1,7 +1,6 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.SpiralFormats
-import org.abimon.spiral.core.isDebug
 import org.abimon.spiral.core.objects.Pak
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
@@ -19,7 +18,6 @@ object PAKFormat : SpiralFormat {
         try {
             return Pak(source).files.size >= 1
         } catch (e: IllegalArgumentException) {
-            if(isDebug) e.printStackTrace()
         }
         return false
     }

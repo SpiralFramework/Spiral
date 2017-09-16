@@ -1,8 +1,8 @@
 package org.abimon.spiral.core.objects
 
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
-import org.abimon.spiral.core.spiralHeaderName
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readPartialBytes
@@ -77,8 +77,8 @@ class WAD(val dataSource: DataSource) {
             dataOffset = wad.count
             wad.close()
 
-            if (files.any { (name) -> name == spiralHeaderName })
-                spiralHeader = files.first { (name) -> name == spiralHeaderName }.data
+            if (files.any { (name) -> name == SpiralData.SPIRAL_HEADER_NAME })
+                spiralHeader = files.first { (name) -> name == SpiralData.SPIRAL_HEADER_NAME }.data
             else
                 spiralHeader = null
         } catch(illegal: IllegalArgumentException) {
