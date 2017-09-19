@@ -3,10 +3,10 @@ package org.abimon.spiral.core.data
 import org.abimon.visi.io.DataSource
 import java.util.*
 
-class BitPool(data: ByteArray) {
-    constructor(data: DataSource) : this(data.data)
+class BitPool(data: ByteArray, val reversed: Boolean = true) {
+    constructor(data: DataSource, reversed: Boolean = true) : this(data.data, reversed)
 
-    val bytes: Queue<Int> = data.reversed().map { it.toInt() and 0xFF }.toCollection(LinkedList())
+    val bytes: Queue<Int> = data.apply { if(reversed) reverse() }.map { it.toInt() and 0xFF }.toCollection(LinkedList())
     var bitpool = 0
     var bitsLeft = 0
 

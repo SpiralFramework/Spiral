@@ -93,18 +93,8 @@ object Gurren {
                 val steamFolder = os.getStorageLocation("Steam")
                 if (steamFolder.exists()) {
                     val common = File(steamFolder, "steamapps${File.separator}common")
-                    for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") }) {
-                        val appDirs = game.listFiles { file -> file.isDirectory && file.extension == "app" }
-                        if (appDirs.isNotEmpty()) {
-                            SpiralModel.archives.addAll(
-                                    appDirs.flatMap<File, File> { app ->
-                                        File(app, "Contents${File.separator}Resources").listFiles { file ->
-                                            file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup")
-                                        }.toList()
-                                    }
-                            )
-                        }
-                    }
+                    for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") })
+                        SpiralModel.archives.addAll(game.iterate().filter { file -> file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup") })
                 }
             }
             else -> println("No behaviour defined for $os!")
