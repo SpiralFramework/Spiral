@@ -84,7 +84,7 @@ object Gurren {
                         if (steamFolder.exists()) {
                             val common = File(steamFolder, "steamapps${File.separator}common")
                             for (game in common.listFiles { file -> file.isDirectory && file.name.contains("Danganronpa") })
-                                SpiralModel.archives.addAll(game.listFiles { file -> file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup") })
+                                SpiralModel.archives.addAll(game.iterate().filter { file -> file.isFile && file.extension in IArchive.EXTENSIONS && !file.name.contains(".backup") })
                         }
                     }
                 }
