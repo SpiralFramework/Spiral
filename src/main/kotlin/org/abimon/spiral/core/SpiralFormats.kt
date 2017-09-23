@@ -32,7 +32,7 @@ object SpiralFormats {
             DRVitaCompressionFormat, CRILAYLAFormat,
             LLFSFormat,
             GMOModelFormat,
-            PAKFormat,
+            PAKFormat, SPCFormat,
             TXTFormat
     )
 
@@ -50,7 +50,7 @@ object SpiralFormats {
             IVFFormat,
             OggFormat,
             NonstopFormat,
-            PAKFormat,
+            PAKFormat, SPCFormat,
             DRVitaCompressionFormat, CRILAYLAFormat
     )
 

@@ -1,11 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.1.4-3'
+    ext.kotlin_version = '1.2-M2'
     ext.jackson_version = '2.9.0'
 
     repositories {
         mavenCentral()
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.2' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -31,6 +32,7 @@ repositories {
     jcenter()
     maven { url 'https://jitpack.io' }
     maven { url 'https://maven.abimon.org' }
+    maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.2' }
 }
 
 dependencies {
@@ -38,8 +40,8 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
-    compile('org.abimon:Imperator:3')
-    compile('org.abimon:Visi:19')
+    compile('org.abimon:Imperator:4')
+    compile('org.abimon:Visi:23')
     compile('org.abimon:ModBrowser:2')
 
     compile "org.parboiled:parboiled-java:1.1.8"

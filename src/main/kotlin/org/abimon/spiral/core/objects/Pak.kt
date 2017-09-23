@@ -18,7 +18,7 @@ import java.util.*
  */
 class Pak(val dataSource: DataSource) {
     val offsets: LongArray
-    val files: LinkedList<PakFileEntry> = LinkedList()
+    val files: MutableList<PakFileEntry> = LinkedList()
 
     init {
         val pak = CountingInputStream(dataSource.inputStream)

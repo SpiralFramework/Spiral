@@ -37,6 +37,12 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
         count += read.coerceAtLeast(0)
         return read
     }
+
+    override fun skip(n: Long): Long {
+        val amount = super.skip(n)
+        count += amount
+        return amount
+    }
 }
 
 class OffsetInputStream(offsetInputStream: InputStream, private val offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {

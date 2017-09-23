@@ -18,8 +18,10 @@ fun main(args: Array<String>) {
     while(Gurren.keepLooping) {
         try {
             print(SpiralModel.scope.first)
-            imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break))
+            val unknown = imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break)).isEmpty()
             Thread.sleep(250)
+            if(unknown)
+                println("Unknown command")
         } catch (th: Throwable) {
             th.printStackTrace()
         }
