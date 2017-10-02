@@ -121,8 +121,8 @@ object GurrenOperation {
                             parents.mkdirs()
                     }
 
-                    matching.chunked(16).forEach { sublist ->
-                        debug("Next 16: ${sublist.joinToString { (entryName) -> entryName }}")
+                    matching.chunked(SpiralModel.concurrentOperations.coerceAtLeast(1)).forEach { sublist ->
+                        debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
                         sublist.map { (entryName, entry) ->
                             launch(CommonPool) {
                                 val parents = File(directory, entryName.parents)

@@ -1,7 +1,6 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.*
-import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import org.abimon.visi.io.skipBytes
@@ -47,85 +46,57 @@ object DDS1DDSFormat : SpiralFormat {
             his.skipBytes(104)
             his.readUnsignedLittleInt() //caps2
 
-            val texels = ArrayList<Array<Color>>()
-
+            val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
             val time = measureNanoTime {
-                var ms = System.nanoTime()
                 for (supposedIndex in 0 until ((height * width) / 16)) {
-                    val now = System.nanoTime()
-                    debug("Last loop (It is now $supposedIndex) took ${now - ms} nanoseconds")
-                    ms = now
-
-                    val palette = arrayOf(Color.RED, Color.GREEN, Color.BLUE, Color.BLACK)
-                    val colourBytes = arrayOf(stream.readNumber(2, unsigned = true, little = true), stream.readNumber(2, unsigned = true, little = true)).map { it.toInt() }
+                    val texel_palette = arrayOf(Color.RED, Color.GREEN, Color.BLUE, Color.BLACK)
+                    val colourBytes = arrayOf(stream.readNumber(2, unsigned = true, little = false), stream.readNumber(2, unsigned = true, little = false)).map { it.toInt() }
 
                     (0 until 2).forEach {
                         val rgb565 = colourBytes[it]
-//                    val r = ((rgb565 and 0xFC00) shr 11) shl 3
-//                    val g = ((rgb565 and 0x07E0) shr 5) shl 2
-//                    val b = (rgb565 and 0x001F) shl 3
-//
-                        val r = BIT5[((rgb565 and 0xFC00) shr 11)]
-                        val g = BIT6[((rgb565 and 0x07E0) shr 5)]
-                        val b = BIT5[(rgb565 and 0x001F)]
 
-                        palette[it] = Color(r, g, b)
+                        val r = DDS1DDSFormat.BIT5[((rgb565 and 0xFC00) shr 11)]
+                        val g = DDS1DDSFormat.BIT6[((rgb565 and 0x07E0) shr 5)]
+                        val b = DDS1DDSFormat.BIT5[(rgb565 and 0x001F)]
+
+                        texel_palette[it] = Color(r, g, b)
                     }
 
                     if (colourBytes[0] > colourBytes[1]) {
-                        palette[2] = Color(
-                                (2 * BIT5[colourBytes[0] and 0xFC00 shr 11] + BIT5[colourBytes[1] and 0xFC00 shr 11]) / 3,
-                                (2 * BIT6[colourBytes[0] and 0x07E0 shr 5] + BIT6[colourBytes[1] and 0x07E0 shr 5]) / 3,
-                                (2 * BIT5[colourBytes[0] and 0x001F] + BIT5[colourBytes[1] and 0x001F]) / 3
+                        texel_palette[2] = Color(
+                                (2 * DDS1DDSFormat.BIT5[colourBytes[0] and 0xFC00 shr 11] + DDS1DDSFormat.BIT5[colourBytes[1] and 0xFC00 shr 11]) / 3,
+                                (2 * DDS1DDSFormat.BIT6[colourBytes[0] and 0x07E0 shr 5] + DDS1DDSFormat.BIT6[colourBytes[1] and 0x07E0 shr 5]) / 3,
+                                (2 * DDS1DDSFormat.BIT5[colourBytes[0] and 0x001F] + DDS1DDSFormat.BIT5[colourBytes[1] and 0x001F]) / 3
                         )
 
-                        palette[3] = Color(
-                                (2 * BIT5[colourBytes[1] and 0xFC00 shr 11] + BIT5[colourBytes[0] and 0xFC00 shr 11]) / 3,
-                                (2 * BIT6[colourBytes[1] and 0x07E0 shr 5] + BIT6[colourBytes[0] and 0x07E0 shr 5]) / 3,
-                                (2 * BIT5[colourBytes[1] and 0x001F] + BIT5[colourBytes[0] and 0x001F]) / 3
+                        texel_palette[3] = Color(
+                                (2 * DDS1DDSFormat.BIT5[colourBytes[1] and 0xFC00 shr 11] + DDS1DDSFormat.BIT5[colourBytes[0] and 0xFC00 shr 11]) / 3,
+                                (2 * DDS1DDSFormat.BIT6[colourBytes[1] and 0x07E0 shr 5] + DDS1DDSFormat.BIT6[colourBytes[0] and 0x07E0 shr 5]) / 3,
+                                (2 * DDS1DDSFormat.BIT5[colourBytes[1] and 0x001F] + DDS1DDSFormat.BIT5[colourBytes[0] and 0x001F]) / 3
                         )
                     } else {
-                        palette[2] = Color((palette[0].red + palette[1].red) / 2, (palette[0].green + palette[1].green) / 2, (palette[0].blue + palette[1].blue) / 2)
-                        palette[3] = Color(0, 0, 0, 0)
+                        texel_palette[2] = Color((texel_palette[0].red + texel_palette[1].red) / 2, (texel_palette[0].green + texel_palette[1].green) / 2, (texel_palette[0].blue + texel_palette[1].blue) / 2)
+                        texel_palette[3] = Color(0, 0, 0, 0)
                     }
 
-                    val texel = ArrayList<Color>()
-
-                    (0 until 4).forEach {
+                    (0 until 4).forEach { i ->
                         val byte = stream.read()
                         //OH LET'S BREAK IT ***DOWN***
 
-                        val bitsOne = "${byte.getBit(7)}${byte.getBit(6)}".toInt(2)
-                        val bitsTwo = "${byte.getBit(5)}${byte.getBit(4)}".toInt(2)
-                        val bitsThree = "${byte.getBit(3)}${byte.getBit(2)}".toInt(2)
-                        val bitsFour = "${byte.getBit(1)}${byte.getBit(0)}".toInt(2)
+                        val bitsOne = byte shr 6 and 0b11   //"${byte.getBit(7)}${byte.getBit(6)}".toInt(2)
+                        val bitsTwo = byte shr 4 and 0b11   //"${byte.getBit(5)}${byte.getBit(4)}".toInt(2)
+                        val bitsThree = byte shr 2 and 0b11 //"${byte.getBit(3)}${byte.getBit(2)}".toInt(2)
+                        val bitsFour = byte shr 0 and 0b11  //"${byte.getBit(1)}${byte.getBit(0)}".toInt(2)
 
-                        texel.addAll(arrayOf(palette[bitsFour], palette[bitsThree], palette[bitsTwo], palette[bitsOne]))
+                        img.setRGB((supposedIndex % (width / 4)) * 4, (supposedIndex / (width / 4)) * 4 + i, texel_palette[bitsFour].rgb)
+                        img.setRGB((supposedIndex % (width / 4)) * 4 + 1, (supposedIndex / (width / 4)) * 4 + i, texel_palette[bitsThree].rgb)
+                        img.setRGB((supposedIndex % (width / 4)) * 4 + 2, (supposedIndex / (width / 4)) * 4 + i, texel_palette[bitsTwo].rgb)
+                        img.setRGB((supposedIndex % (width / 4)) * 4 + 3, (supposedIndex / (width / 4)) * 4 + i, texel_palette[bitsOne].rgb)
                     }
-
-                    texels.add(texel.toTypedArray())
                 }
             }
 
             debug("Took $time ns to read")
-
-            val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-
-            val rows = ArrayList<Array<Color>>()
-            val tmpRows = arrayOf(ArrayList<Color>(), ArrayList<Color>(), ArrayList<Color>(), ArrayList<Color>())
-
-            texels.forEachIndexed { index, texel ->
-                if (index % (width / 4) == 0 && tmpRows.any { it.isNotEmpty() }) {
-                    tmpRows.forEach { rows.add(it.toTypedArray()); it.clear() }
-                }
-
-                texel.forEachIndexed { i, color -> tmpRows[i / 4].add(color) }
-            }
-
-            tmpRows.forEach { rows.add(it.toTypedArray()); it.clear() }
-
-            if(SpiralModel.isDebug) println("Setting pixels through an iterator took ${measureNanoTime { rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } } }} ns")
-            else rows.forEachIndexed { y, row -> row.forEachIndexed { x, color -> img.setRGB(x, y, color.rgb) } }
 
             return@use img
         }

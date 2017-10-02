@@ -42,6 +42,7 @@ fun debug(any: Any?) {
 }
 
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
+fun InputStream.readUnsignedBigInt(): Long = readNumber(4, true, false)
 
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
     var s = "0"

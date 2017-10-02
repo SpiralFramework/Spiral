@@ -14,6 +14,8 @@ object SpiralModel {
     var operating: File? = null
     var scope: Pair<String, String> = "> " to "default"
     var isDebug: Boolean = false
+    var cacheEnabled: Boolean = true
+    var concurrentOperations: Int = 16
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -46,10 +48,11 @@ object SpiralModel {
         archives.clear()
         archives.addAll(config.archives.map { File(it) })
         isDebug = config.debug
+        concurrentOperations = config.concurrentOperations
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), isDebug)
+        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), isDebug, concurrentOperations)
 
     init { load() }
 }
