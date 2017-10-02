@@ -43,7 +43,7 @@ dependencies {
     compile('org.abimon:Imperator:4')
     compile('org.abimon:Visi:23')
     compile('org.abimon:ModBrowser:2')
-    compile('org.abimon:Karnage:2')
+    compile('org.abimon:Karnage:3')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"

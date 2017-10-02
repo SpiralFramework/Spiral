@@ -11,6 +11,7 @@ interface SpiralFormat {
 
     fun isFormat(source: DataSource): Boolean
     fun canConvert(format: SpiralFormat): Boolean = format in conversions
+    fun canConvertViaOverride(format: SpiralFormat): Boolean = OVERRIDING_CONVERSIONS.containsKey(this to format)
     /**
      * Convert from this format to another
      */
@@ -19,6 +20,11 @@ interface SpiralFormat {
             throw IllegalArgumentException("Cannot convert to $format")
         if (!isFormat(source))
             throw IllegalArgumentException("${source.location} does not conform to the $name format")
+
+        if (canConvertViaOverride(format)) {
+            if (OVERRIDING_CONVERSIONS[this to format]?.invoke(format, source, output, params) != null)
+                return
+        }
     }
 
     fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) = format.convert(this, source, output, params)
@@ -44,5 +50,9 @@ interface SpiralFormat {
         override val conversions: Array<SpiralFormat> = emptyArray()
 
         override fun isFormat(source: DataSource): Boolean = true
+    }
+
+    companion object {
+        val OVERRIDING_CONVERSIONS: MutableMap<Pair<SpiralFormat, SpiralFormat>, (SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Unit> = HashMap()
     }
 }
