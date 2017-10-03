@@ -64,4 +64,8 @@ object CacheHandler {
             cacheDir.listFiles().forEach { it.delete() }
         })
     }
+
+    fun purge() {
+        cacheDir.listFiles().forEach { it.delete() }
+    }
 }

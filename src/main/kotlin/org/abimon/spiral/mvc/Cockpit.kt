@@ -3,11 +3,15 @@ package org.abimon.spiral.mvc
 import org.abimon.imperator.impl.BasicImperator
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.mvc.gurren.Gurren
 import org.abimon.spiral.mvc.gurren.GurrenOperation
 import kotlin.reflect.full.memberProperties
 
 fun main(args: Array<String>) {
+    CacheHandler.purge()
+    //SRDFormat.hook()
+
     val imperator = BasicImperator()
     val registerSoldiers: Any.() -> Unit = { this.javaClass.kotlin.memberProperties.filter { it.returnType.classifier == InstanceSoldier::class }.forEach { imperator.hireSoldier(it.get(this) as? InstanceSoldier<*> ?: return@forEach) } }
 
@@ -26,4 +30,6 @@ fun main(args: Array<String>) {
             th.printStackTrace()
         }
     }
+
+    CacheHandler.purge() //Just in case shutdown hook doesn't go off
 }

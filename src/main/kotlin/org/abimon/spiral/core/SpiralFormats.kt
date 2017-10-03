@@ -1,8 +1,8 @@
 package org.abimon.spiral.core
 
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.*
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FunctionDataSource
 import java.io.ByteArrayOutputStream
 
 object SpiralFormats {
@@ -57,13 +57,17 @@ object SpiralFormats {
     fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(dataSource) }
     fun decompress(dataSource: DataSource): DataSource {
         val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(dataSource) } ?: return dataSource
-        return FunctionDataSource { compressionFormat.convertToBytes(SpiralFormat.BinaryFormat, dataSource, emptyMap()) }
+        val (output, source) = CacheHandler.cacheStream()
+        compressionFormat.convert(SpiralFormat.BinaryFormat, dataSource, output, emptyMap())
+        return source
     }
     fun decompressFully(dataSource: DataSource): DataSource {
         var data: DataSource = dataSource
         while(true) {
             val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(data) } ?: return data
-            data = FunctionDataSource { compressionFormat.convertToBytes(SpiralFormat.BinaryFormat, dataSource, emptyMap()) }
+            val (output, source) = CacheHandler.cacheStream()
+            compressionFormat.convert(SpiralFormat.BinaryFormat, data, output, emptyMap())
+            data = source
         }
     }
 

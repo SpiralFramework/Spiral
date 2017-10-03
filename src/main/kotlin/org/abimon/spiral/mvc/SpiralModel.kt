@@ -15,7 +15,7 @@ object SpiralModel {
     var scope: Pair<String, String> = "> " to "default"
     var isDebug: Boolean = false
     var cacheEnabled: Boolean = true
-    var concurrentOperations: Int = 16
+    var concurrentOperations: Int = 4
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {

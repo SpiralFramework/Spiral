@@ -11,6 +11,8 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import javax.imageio.ImageIO
 import kotlin.math.ceil
 import kotlin.math.log
@@ -19,11 +21,13 @@ import kotlin.math.min
 object SRDFormat {
     fun hook() {
         SpiralFormat.OVERRIDING_CONVERSIONS[SPCFormat to PNGFormat] = this::convertFromArchive
+        SpiralFormat.OVERRIDING_CONVERSIONS[SPCFormat to ZIPFormat] = this::convertFromArchive
     }
 
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         val srd: DataSource
         val imgDataSource: DataSource
+        val otherEntries: MutableMap<String, DataSource> = HashMap()
 
         when (from) {
             is SPCFormat -> {
@@ -31,6 +35,8 @@ object SRDFormat {
 
                 srd = spc.files.first { entry -> entry.name.endsWith("srd") }
                 imgDataSource = spc.files.firstOrNull { entry -> entry.name.endsWith("srdv") } ?: spc.files.first { entry -> entry.name.endsWith("srdi") }
+
+                spc.files.filter { entry -> !entry.name.endsWith("srd") && !entry.name.endsWith("srdv") }.forEach { entry -> otherEntries[entry.name] = entry }
             }
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
@@ -177,7 +183,30 @@ object SRDFormat {
 
         images.forEach { (name, img) -> ImageIO.write(img, "PNG", File("v3/$name.png")) }
 
-        return false
+        if(images.isEmpty())
+            return false
+
+        when(to) {
+            is PNGFormat -> ImageIO.write(images.entries.first().value, "PNG", output)
+            is ZIPFormat -> {
+                val zos = ZipOutputStream(output)
+
+                otherEntries.forEach { name, data ->
+                    zos.putNextEntry(ZipEntry(name))
+                    data.pipe(zos)
+                }
+
+                images.forEach { name, image ->
+                    zos.putNextEntry(ZipEntry(name))
+                    ImageIO.write(image, params["srd:format"]?.toString() ?: "PNG", zos)
+                }
+
+                zos.finish()
+            }
+            else -> return false
+        }
+
+        return true
     }
 
     fun readSRDItem(stream: InputStream): Triple<String, ByteArrayInputStream, ByteArrayInputStream>? {
