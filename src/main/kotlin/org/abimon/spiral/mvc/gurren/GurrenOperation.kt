@@ -1,8 +1,6 @@
 package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
@@ -121,39 +119,36 @@ object GurrenOperation {
                             parents.mkdirs()
                     }
 
-                    matching.chunked(SpiralModel.concurrentOperations.coerceAtLeast(1)).forEach { sublist ->
-                        debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
-                        sublist.map { (entryName, entry) ->
-                            launch(CommonPool) {
-                                val parents = File(directory, entryName.parents)
-                                if (!parents.exists() && !parents.mkdirs() && !parents.exists())
-                                    return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
-                                val data = SpiralFormats.decompressFully(entry)
-                                val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+                    //debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
+                    SpiralModel.distribute(matching) launch@{ (entryName, entry) ->
+                        debug("Starting $entryName")
+                        val parents = File(directory, entryName.parents)
+                        if (!parents.exists() && !parents.mkdirs() && !parents.exists())
+                            return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
+                        val data = SpiralFormats.decompressFully(entry)
+                        val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
 
-                                val convertingTo = format?.conversions?.firstOrNull()
+                        val convertingTo = format?.conversions?.firstOrNull()
 
-                                if (format == null) {
-                                    val output = File(directory, entryName)
-                                    FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                                    rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
-                                } else if (convertingTo == null) {
-                                    val output = File(directory, entryName)
-                                    FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                                    rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
-                                } else {
-                                    try {
-                                        val output = File(directory, entryName.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
-                                        FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
-                                        rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
-                                    } catch (iea: IllegalArgumentException) {
-                                        val output = File(directory, entryName)
-                                        FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
-                                        rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
-                                    }
-                                }
+                        if (format == null) {
+                            val output = File(directory, entryName)
+                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                            rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
+                        } else if (convertingTo == null) {
+                            val output = File(directory, entryName)
+                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                            rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
+                        } else {
+                            try {
+                                val output = File(directory, entryName.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
+                                FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
+                                rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
+                            } catch (iea: IllegalArgumentException) {
+                                val output = File(directory, entryName)
+                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                                rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
                             }
-                        }.forEach { it.join() }
+                        }
                     }
                 }
             }

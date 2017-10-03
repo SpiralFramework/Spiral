@@ -41,10 +41,10 @@ object SRDFormat {
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
 
-        debug("$from -> $to")
-        debug("SRD: ${srd.location}")
-        debug("Image Data Source: ${imgDataSource.location}")
-        debug("Other Entries: $otherEntries")
+        //debug("$from -> $to")
+        //debug("SRD: ${srd.location}")
+        //debug("Image Data Source: ${imgDataSource.location}")
+        //debug("Other Entries: $otherEntries")
 
         val images: MutableMap<String, BufferedImage> = HashMap()
 
@@ -206,7 +206,7 @@ object SRDFormat {
             }
         }
 
-        debug("Images: $images")
+        //debug("Images: $images")
 
         if(images.isEmpty())
             return false

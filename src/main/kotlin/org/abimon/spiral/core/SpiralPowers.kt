@@ -30,6 +30,7 @@ fun <T, U, V> TripleHashMap<T, U, V>.put(t: T, u: U, v: V) = put(t, Pair(u, v))
 //    println("Settings bits took $time")
 //    return@run value ?: HashMap()
 //}
+
 fun Int.getBit(bit: Int): Byte {
     val shift = (1 shl bit)
     if (this and shift == shift)

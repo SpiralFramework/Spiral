@@ -1,5 +1,9 @@
 package org.abimon.spiral.mvc
 
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineStart
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.launch
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.imperator.impl.InstanceWatchtower
@@ -49,6 +53,18 @@ object SpiralModel {
         archives.addAll(config.archives.map { File(it) })
         isDebug = config.debug
         concurrentOperations = config.concurrentOperations
+    }
+
+    suspend fun <T> distribute(list: List<T>, operation: (T) -> Unit) {
+        val coroutines: MutableList<Job> = ArrayList()
+        coroutines.addAll(list.map { t ->
+            val job = launch(CommonPool, CoroutineStart.LAZY) { operation(t) }
+            job.invokeOnCompletion comp@ { coroutines.forEach { if (it.start()) return@comp } }
+
+            return@map job
+        })
+
+        coroutines.chunked(SpiralModel.concurrentOperations).forEach { sublist -> sublist.forEach { it.join() } }
     }
 
     val config: ModelConfig
