@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2-M2'
+    ext.kotlin_version = '1.2.0-beta-31'
     ext.jackson_version = '2.9.0'
 
     repositories {
@@ -43,7 +43,7 @@ dependencies {
     compile('org.abimon:Imperator:4')
     compile('org.abimon:Visi:23')
     compile('org.abimon:ModBrowser:2')
-    compile('org.abimon:Karnage:3')
+    compile('org.abimon:Karnage:5')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
