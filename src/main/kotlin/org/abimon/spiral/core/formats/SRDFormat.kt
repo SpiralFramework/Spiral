@@ -8,7 +8,6 @@ import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -180,8 +179,6 @@ object SRDFormat {
                 }
             }
         }
-
-        images.forEach { (name, img) -> ImageIO.write(img, "PNG", File("v3/$name.png")) }
 
         if(images.isEmpty())
             return false
