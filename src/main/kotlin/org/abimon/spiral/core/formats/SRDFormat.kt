@@ -4,6 +4,7 @@ import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.objects.SPC
+import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 import java.awt.image.BufferedImage
@@ -132,8 +133,26 @@ object SRDFormat {
                                 debug("Raw $fmt")
                                 val decoder = "raw"
 
-                                val height = ceil(disp_height / 8.0) * 8.0
-                                val width = ceil(disp_width / 8.0) * 8.0
+                                val bytespp: Int
+
+                                when (fmt) {
+                                    0x01 -> bytespp = 4
+                                    0x02 -> bytespp = 2
+                                    0x05 -> bytespp = 2
+                                    0x1A -> bytespp = 4
+                                    else -> bytespp = 2
+                                }
+
+                                val height = (ceil(disp_height / 8.0) * 8.0).toInt()
+                                val width = (ceil(disp_width / 8.0) * 8.0).toInt()
+
+                                val processingData: ByteArray = new_img_data
+
+                                if (swizzled)
+                                    processingData.deswizzle(width / 4, height / 4, bytespp)
+
+                                otherEntries["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingData)
+
                             } else if (fmt in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
                                 val bytespp: Int
 
@@ -168,10 +187,12 @@ object SRDFormat {
                                 when (fmt) {
                                     0x0F -> images["$mip-$name"] = DXT1PixelData.read(width, height, ByteArrayInputStream(processingData))
                                     0x1C -> images["$mip-$name"] = BC7PixelData.read(width, height, ByteArrayInputStream(processingData))
-                                    else -> debug("Block Compression $fmt")
+                                    else -> { debug("Block Compression $fmt"); otherEntries["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingData) }
                                 }
                             } else {
                                 debug("Unknown format $fmt")
+
+                                otherEntries["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_data)
                             }
                         }
                     }
