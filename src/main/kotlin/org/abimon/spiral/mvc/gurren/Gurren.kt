@@ -450,6 +450,42 @@ object Gurren {
         SpiralData.MAPPER.writeValue(File(folder, "fingerprints.json"), fileMap)
     }
 
+    val checkForUpdates = Command("check_for_update") {
+        val currentBuild = run {
+            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
+
+            if(response.httpStatusCode != 200)
+                return@run -1
+            else
+                return@run (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+        }
+
+        if(currentBuild == -1) {
+            println("Error retrieving current build")
+            return@Command
+        }
+
+        val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
+
+        if(response.httpStatusCode != 200)
+            println("Error retrieving the latest jenkins build; status code ${response.httpStatusCode}")
+        else {
+            val latestBuild = (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+
+            if(latestBuild == -1)
+                println("Error retrieving latest build")
+            else {
+                if(currentBuild == latestBuild)
+                    println("SPIRAL version $version; build $currentBuild - You are on the latest build")
+                else if(currentBuild < latestBuild)
+                    println("SPIRAL version $version; build $currentBuild - Latest build is $latestBuild\nIf you would like to update, run \"download_latest\"")
+                else
+                    println("SPIRAL version $version; build $currentBuild - Apparent latest build is $latestBuild, however that build precedes this one.")
+            }
+        }
+
+    }
+
     val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
 }

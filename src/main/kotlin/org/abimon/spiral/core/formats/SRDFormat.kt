@@ -47,7 +47,7 @@ object SRDFormat {
             loop@ while (true) {
                 val (data_type, data, subdata) = readSRDItem(stream) ?: break
 
-//                println(data_type)
+                debug(data_type)
 
                 when (data_type) {
                     "\$CFH" -> continue@loop
