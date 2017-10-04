@@ -6,10 +6,10 @@ import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
+import org.abimon.spiral.util.debug
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.child

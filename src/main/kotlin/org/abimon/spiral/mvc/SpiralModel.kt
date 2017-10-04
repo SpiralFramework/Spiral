@@ -9,6 +9,7 @@ import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.data.ModelConfig
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
@@ -17,7 +18,7 @@ object SpiralModel {
     val archives: MutableSet<File> = ConcurrentSkipListSet()
     var operating: File? = null
     var scope: Pair<String, String> = "> " to "default"
-    var isDebug: Boolean = false
+    var loggerLevel: LoggerLevel = LoggerLevel.NONE
     var cacheEnabled: Boolean = true
     var concurrentOperations: Int = 4
 
@@ -51,8 +52,11 @@ object SpiralModel {
 
         archives.clear()
         archives.addAll(config.archives.map { File(it) })
-        isDebug = config.debug
+        loggerLevel = config.loggerLevel
         concurrentOperations = config.concurrentOperations
+
+        if(config.debug != null)
+            loggerLevel = LoggerLevel.DEBUG
     }
 
     suspend fun <T> distribute(list: List<T>, operation: (T) -> Unit) {
@@ -64,11 +68,14 @@ object SpiralModel {
             return@map job
         })
 
+        for(i in 0 until minOf(SpiralModel.concurrentOperations, coroutines.size))
+            coroutines[i].start()
+
         coroutines.chunked(SpiralModel.concurrentOperations).forEach { sublist -> sublist.forEach { it.join() } }
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), isDebug, concurrentOperations)
+        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations)
 
     init { load() }
 }

@@ -6,12 +6,12 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.formats.*
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
+import org.abimon.spiral.util.debug
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
 import org.abimon.visi.collections.joinToPrefixedString
@@ -486,6 +486,6 @@ object Gurren {
 
     }
 
-    val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
+    //val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
 }

@@ -2,11 +2,11 @@ package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.data.UTFColumnInfo
 import org.abimon.spiral.core.data.UTFTableInfo
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.spiral.util.SeekableInputStream
+import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.skipBytes
 

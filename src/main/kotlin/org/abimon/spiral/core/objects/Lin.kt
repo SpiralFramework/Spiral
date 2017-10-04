@@ -1,7 +1,6 @@
 package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.core.lin.dr1.LoadMapEntry
 import org.abimon.spiral.core.lin.dr1.LoadScriptEntry
@@ -10,8 +9,8 @@ import org.abimon.spiral.core.lin.dr1.TrialCameraEntry
 import org.abimon.spiral.core.lin.dr2.*
 import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
-import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.CountingInputStream
+import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readPartialBytes
 import java.io.ByteArrayInputStream

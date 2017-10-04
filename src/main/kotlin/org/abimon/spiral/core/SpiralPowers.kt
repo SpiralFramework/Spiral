@@ -38,10 +38,6 @@ fun Int.getBit(bit: Int): Byte {
     return 0
 }
 
-fun debug(any: Any?) {
-    if (SpiralModel.isDebug) println(any)
-}
-
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 fun InputStream.readUnsignedBigInt(): Long = readNumber(4, true, false)
 

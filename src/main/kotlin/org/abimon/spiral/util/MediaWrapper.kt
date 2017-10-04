@@ -40,7 +40,7 @@ object MediaWrapper {
                     if (version.startsWith("ffmpeg version"))
                         return true
                 } catch(io: IOException) { //Should catch any Windows errors
-                    if(SpiralModel.isDebug) {
+                    if(SpiralModel.loggerLevel >= LoggerLevel.DEBUG) {
                         val logs = File("logs")
                         if(!logs.exists())
                             logs.mkdir()
@@ -53,7 +53,7 @@ object MediaWrapper {
     }
 
     fun execute(command: List<String>): Process = ProcessBuilder().command(command).apply {
-        if(SpiralModel.isDebug) {
+        if(SpiralModel.loggerLevel >= LoggerLevel.DEBUG) {
             val logs = File("logs")
             if(!logs.exists())
                 logs.mkdir()

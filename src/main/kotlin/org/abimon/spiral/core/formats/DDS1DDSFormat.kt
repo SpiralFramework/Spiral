@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.*
+import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import org.abimon.visi.io.skipBytes

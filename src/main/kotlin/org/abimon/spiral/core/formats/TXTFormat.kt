@@ -2,10 +2,10 @@ package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.TripleHashMap
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.UnknownEntry
 import org.abimon.spiral.core.objects.CustomLin
+import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
 import org.abimon.visi.lang.times

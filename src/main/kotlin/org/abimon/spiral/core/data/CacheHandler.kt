@@ -8,6 +8,7 @@ import org.abimon.visi.io.FileDataSource
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
+import java.io.RandomAccessFile
 import java.nio.file.Files
 import java.nio.file.attribute.DosFileAttributeView
 import java.util.*
@@ -23,9 +24,9 @@ object CacheHandler {
         listFiles().forEach { it.delete() }
     }
 
-    fun cacheStream(): Pair<OutputStream, DataSource> {
+    fun cacheStream(name: String? = null): Pair<OutputStream, DataSource> {
         if(SpiralModel.cacheEnabled) {
-            val cacheFile = newCacheFile()
+            val cacheFile = if(name == null) newCacheFile() else File(cacheDir, name)
             cacheFiles.add(cacheFile)
 
             return FileOutputStream(cacheFile) to FileDataSource(cacheFile)
@@ -34,6 +35,13 @@ object CacheHandler {
 
             return bios.outputStream to bios.dataSource
         }
+    }
+
+    fun cacheRandomAccessStream(name: String? = null): Pair<DataSource, RandomAccessFile> {
+        val cacheFile = if(name == null) newCacheFile() else File(cacheDir, name)
+        cacheFiles.add(cacheFile)
+
+        return FileDataSource(cacheFile) to RandomAccessFile(cacheFile, "rw")
     }
 
     fun cache(data: ByteArray): DataSource {

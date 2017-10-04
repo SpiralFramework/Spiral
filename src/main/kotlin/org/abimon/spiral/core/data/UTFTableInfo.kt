@@ -1,9 +1,9 @@
 package org.abimon.spiral.core.data
 
-import org.abimon.spiral.core.debug
 import org.abimon.spiral.core.objects.CPK
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.util.SeekableInputStream
+import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 
