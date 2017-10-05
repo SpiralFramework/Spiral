@@ -5,6 +5,7 @@ import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.ByteArrayIOStream
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
+import org.abimon.visi.lang.and
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -37,11 +38,21 @@ object CacheHandler {
         }
     }
 
-    fun cacheRandomAccessStream(name: String? = null): Pair<DataSource, RandomAccessFile> {
-        val cacheFile = if(name == null) newCacheFile() else File(cacheDir, name)
+    fun cacheRandomAccessStream(name: String? = null): Triple<DataSource, RandomAccessFile, Boolean> {
+        val initialised: Boolean
+        val cacheFile: File
+
+        if (name == null) {
+            initialised = false
+            cacheFile = newCacheFile()
+        } else {
+            initialised = true
+            cacheFile = File(cacheDir, name)
+        }
+
         cacheFiles.add(cacheFile)
 
-        return FileDataSource(cacheFile) to RandomAccessFile(cacheFile, "rw")
+        return FileDataSource(cacheFile) to RandomAccessFile(cacheFile, "rw") and initialised
     }
 
     fun cache(data: ByteArray): DataSource {

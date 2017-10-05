@@ -11,7 +11,6 @@ import org.abimon.spiral.util.trace
 import org.abimon.visi.collections.remove
 import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.InputStreamDataSource
 import org.abimon.visi.lang.and
 import java.awt.image.BufferedImage
 import java.io.InputStream
@@ -153,7 +152,7 @@ object SRDFormat {
 
                                 for (mip in mipmaps.indices) {
                                     val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
-                                    var new_img_stream: InputStream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
+                                    val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
 //                                    var pal_data: ByteArray? = null
 //
 //                                    img.seekableInputStream.use { img_stream ->
@@ -234,13 +233,13 @@ object SRDFormat {
                                             0x0F -> images["$mip-$name"] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }
                                             0x1C -> images["$mip-$name"] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }
                                             else -> {
-                                                debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = InputStreamDataSource(processingStream)
+                                                debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                             }
                                         }
                                     } else {
                                         debug("Unknown format $fmt")
 
-                                        otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = InputStreamDataSource(new_img_stream)
+                                        otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
                                     }
                                 }
                             }
