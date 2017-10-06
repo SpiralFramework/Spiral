@@ -8,5 +8,6 @@ data class ModelConfig(
     val debug: Boolean? = null,
     val concurrentOperations: Int = 16,
     val scope: Pair<String, String> = "> " to "default",
-    val operating: String? = null
+    val operating: String? = null,
+    val autoConfirm: Boolean = false
 )

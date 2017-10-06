@@ -102,11 +102,15 @@ object GurrenOperation {
 
         val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
-        println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println("")
-        println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
-        println("")
-        if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
+        val proceed = SpiralModel.confirm {
+            println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
+            println("")
+            println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
+            println("")
+
+            return@confirm question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")
+        }
+        if(proceed) {
             val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
             params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }

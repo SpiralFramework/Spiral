@@ -49,7 +49,7 @@ object SRDFormat {
                     if (others.any { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" })
                         img = others.remove { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" } ?: return@forEach
                     else
-                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } ?: run { debug("No such element for ${srdEntry.name.split('.')[0]}"); return@forEach }
+                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } ?: run { debug("No such element for ${srdEntry.name.split('.')[0]}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
 
                     val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 

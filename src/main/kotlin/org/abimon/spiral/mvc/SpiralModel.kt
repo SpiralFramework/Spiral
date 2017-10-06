@@ -23,6 +23,7 @@ object SpiralModel {
     var loggerLevel: LoggerLevel by saveDelegate(LoggerLevel.NONE)
     var cacheEnabled: Boolean by saveDelegate(true)
     var concurrentOperations: Int by saveDelegate(4)
+    var autoConfirm: Boolean by saveDelegate(false)
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -58,6 +59,7 @@ object SpiralModel {
         concurrentOperations = config.concurrentOperations
         scope = config.scope
         operating = if(config.operating == null) null else File(config.operating)
+        autoConfirm = config.autoConfirm
 
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
@@ -79,9 +81,11 @@ object SpiralModel {
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath)
+        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm)
 
     init { load() }
 
     fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> save() }
+
+    fun confirm(question: () -> Boolean): Boolean = true || question()
 }
