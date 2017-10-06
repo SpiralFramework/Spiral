@@ -9,14 +9,12 @@ import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
+import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
-import org.abimon.visi.lang.child
-import org.abimon.visi.lang.extension
-import org.abimon.visi.lang.parents
-import org.abimon.visi.lang.replaceLast
+import org.abimon.visi.lang.*
 import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileOutputStream
@@ -150,6 +148,9 @@ object GurrenOperation {
                                 val output = File(directory, entryName)
                                 FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
                                 rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
+
+                                if(LoggerLevel.ERROR.enabled)
+                                    LoggerLevel.ERROR(iea.exportStackTrace())
                             }
                         }
                     }

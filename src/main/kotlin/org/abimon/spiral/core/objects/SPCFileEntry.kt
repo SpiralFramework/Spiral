@@ -1,9 +1,7 @@
 package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.util.OffsetInputStream
-import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readChunked
@@ -31,7 +29,6 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
         val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${location.md5Hash()}.dat")
 
         if(!initialised) {
-            var loops = 0
             val nano = measureNanoTime {
                 raf.use { access ->
                     when (cmp_flag) {
@@ -49,7 +46,7 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
                                             if (stream.available() == 0)
                                                 return@time
 
-                                            if (flag hasBitSet 1)
+                                            if (flag and 1 == 1)
                                                 access.write(stream.read())
                                             else {
 //                            val count = bitpool[6]
@@ -64,31 +61,22 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
 
                                                 try {
                                                     val r = offset - 1024
-                                                    if (r > 0) {
-                                                        debug(":thonk:")
-                                                        access.seek(r.toLong())
-                                                        val byte = access.read()
-                                                        access.seek(access.length())
-                                                        for (j in 0 until count)
-                                                            access.write(byte)
-                                                    } else {
-                                                        val buffer = ByteArray(count)
-                                                        access.seek(access.length() + r)
-                                                        access.read(buffer)
-                                                        val remaining = (access.length() - (access.length() + r)).toInt()
-                                                        if (remaining < count) {
-                                                            for (j in remaining until count)
-                                                                buffer[j] = buffer[j % remaining]
-                                                        }
-                                                        access.seek(access.length())
-                                                        access.write(buffer)
+                                                    val buffer = ByteArray(count)
+                                                    access.seek(access.length() + r)
+                                                    access.read(buffer)
+                                                    val remaining = (access.length() - (access.length() + r)).toInt()
+                                                    if (remaining < count) {
+                                                        for (j in remaining until count)
+                                                            buffer[j] = buffer[j % remaining]
+                                                    }
+                                                    access.seek(access.length())
+                                                    access.write(buffer)
 //                                                    for(j in 0 until count) {
 //                                                        access.seek(access.length() + r)
 //                                                        val byte = access.read()
 //                                                        access.seek(access.length())
 //                                                        access.write(byte)
 //                                                    }
-                                                    }
                                                 } catch (oom: OutOfMemoryError) {
                                                     println("OOM Error: ${oom.exportStackTrace()}")
                                                     println("Adding: $count")
@@ -98,7 +86,6 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
                                             }
 
                                             flag = flag shr 1
-                                            loops++
                                         }
 
                                         trace("[SPCFileEntry -> dataSource] $name loop time: $time ns")
@@ -117,7 +104,7 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
                 }
             }
 
-            trace("[SPCFileEntry -> dataSource] $name DS time: $nano ns; Loops: $loops")
+            trace("[SPCFileEntry -> dataSource] $name DS time: $nano ns")
         }
 
         return@lazy data

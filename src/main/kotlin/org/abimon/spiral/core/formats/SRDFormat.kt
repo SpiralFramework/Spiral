@@ -11,10 +11,7 @@ import org.abimon.visi.collections.remove
 import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
-import java.awt.AlphaComposite
-import java.awt.Color
-import java.awt.Polygon
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.geom.Area
 import java.awt.image.BufferedImage
 import java.io.InputStream
@@ -364,6 +361,7 @@ object SRDFormat {
         val allBut = Area(Rectangle(0, 0, img.width, img.height))
         allBut.subtract(area)
 
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
         g.clip = allBut
         g.color = Color.BLACK
         g.composite = AlphaComposite.Clear

@@ -13,14 +13,16 @@ import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
+import kotlin.properties.Delegates
+import kotlin.properties.ReadWriteProperty
 
 object SpiralModel {
     val archives: MutableSet<File> = ConcurrentSkipListSet()
-    var operating: File? = null
-    var scope: Pair<String, String> = "> " to "default"
-    var loggerLevel: LoggerLevel = LoggerLevel.NONE
-    var cacheEnabled: Boolean = true
-    var concurrentOperations: Int = 4
+    var operating: File? by saveDelegate(null)
+    var scope: Pair<String, String> by saveDelegate("> " to "default")
+    var loggerLevel: LoggerLevel by saveDelegate(LoggerLevel.NONE)
+    var cacheEnabled: Boolean by saveDelegate(true)
+    var concurrentOperations: Int by saveDelegate(4)
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -54,6 +56,8 @@ object SpiralModel {
         archives.addAll(config.archives.map { File(it) })
         loggerLevel = config.loggerLevel
         concurrentOperations = config.concurrentOperations
+        scope = config.scope
+        operating = if(config.operating == null) null else File(config.operating)
 
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
@@ -75,7 +79,9 @@ object SpiralModel {
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations)
+        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath)
 
     init { load() }
+
+    fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> save() }
 }

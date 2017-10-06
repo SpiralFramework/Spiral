@@ -6,5 +6,7 @@ data class ModelConfig(
     val archives: Set<String> = emptySet(),
     val loggerLevel: LoggerLevel = LoggerLevel.NONE,
     val debug: Boolean? = null,
-    val concurrentOperations: Int = 16
+    val concurrentOperations: Int = 16,
+    val scope: Pair<String, String> = "> " to "default",
+    val operating: String? = null
 )
