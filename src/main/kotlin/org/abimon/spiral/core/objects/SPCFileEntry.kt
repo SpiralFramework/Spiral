@@ -30,7 +30,8 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
     val dataSource: DataSource by lazy {
         val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${location.md5Hash()}.dat")
 
-        if(initialised) {
+        if(!initialised) {
+            var loops = 0
             val nano = measureNanoTime {
                 raf.use { access ->
                     when (cmp_flag) {
@@ -40,56 +41,67 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
 
                             rawInputStream.use { stream ->
                                 try {
-                                    while (stream.available() > 0) {
-                                        if (flag == 1)
-                                            flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
+                                    loop@while (stream.available() > 0) {
+                                        val time = measureNanoTime time@{
+                                            if (flag == 1)
+                                                flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
 
-                                        if (stream.available() == 0)
-                                            break
+                                            if (stream.available() == 0)
+                                                return@time
 
-                                        if (flag hasBitSet 1)
-                                            access.write(stream.read())
-                                        else {
+                                            if (flag hasBitSet 1)
+                                                access.write(stream.read())
+                                            else {
 //                            val count = bitpool[6]
 //                            val offset = bitpool[10]
 
-                                            val x = stream.read()
-                                            val y = stream.read()
+                                                val x = stream.read()
+                                                val y = stream.read()
 
-                                            val b = (y shl 8) or x
-                                            val count = (b shr 10) + 2
-                                            val offset = b and 0b1111111111
+                                                val b = (y shl 8) or x
+                                                val count = (b shr 10) + 2
+                                                val offset = b and 0b1111111111
 
-                                            try {
-                                                val r = offset - 1024
-                                                if (r > 0) {
-                                                    debug(":thonk:")
-                                                    access.seek(r.toLong())
-                                                    val byte = access.read()
-                                                    access.seek(access.length())
-                                                    for (j in 0 until count)
-                                                        access.write(byte)
-                                                } else {
-                                                    val buffer = ByteArray(count)
-                                                    access.seek(access.length() + r)
-                                                    access.read(buffer)
-                                                    val remaining = (access.length() - (access.length() + r)).toInt()
-                                                    if (remaining < count) {
-                                                        for (j in remaining until count)
-                                                            buffer[j] = buffer[j % remaining]
+                                                try {
+                                                    val r = offset - 1024
+                                                    if (r > 0) {
+                                                        debug(":thonk:")
+                                                        access.seek(r.toLong())
+                                                        val byte = access.read()
+                                                        access.seek(access.length())
+                                                        for (j in 0 until count)
+                                                            access.write(byte)
+                                                    } else {
+                                                        val buffer = ByteArray(count)
+                                                        access.seek(access.length() + r)
+                                                        access.read(buffer)
+                                                        val remaining = (access.length() - (access.length() + r)).toInt()
+                                                        if (remaining < count) {
+                                                            for (j in remaining until count)
+                                                                buffer[j] = buffer[j % remaining]
+                                                        }
+                                                        access.seek(access.length())
+                                                        access.write(buffer)
+//                                                    for(j in 0 until count) {
+//                                                        access.seek(access.length() + r)
+//                                                        val byte = access.read()
+//                                                        access.seek(access.length())
+//                                                        access.write(byte)
+//                                                    }
                                                     }
-                                                    access.seek(access.length())
-                                                    access.write(buffer)
-                                                }
-                                            } catch (oom: OutOfMemoryError) {
-                                                println("OOM Error: ${oom.exportStackTrace()}")
-                                                println("Adding: $count")
-                                                println("Offset: $offset")
+                                                } catch (oom: OutOfMemoryError) {
+                                                    println("OOM Error: ${oom.exportStackTrace()}")
+                                                    println("Adding: $count")
+                                                    println("Offset: $offset")
 
+                                                }
                                             }
+
+                                            flag = flag shr 1
+                                            loops++
                                         }
 
-                                        flag = flag shr 1
+                                        trace("[SPCFileEntry -> dataSource] $name loop time: $time ns")
                                     }
                                 } catch (oom: OutOfMemoryError) {
                                     println("OOM Error: ${oom.exportStackTrace()}")
@@ -105,7 +117,7 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
                 }
             }
 
-            trace("[SPCFileEntry -> dataSource] $name DS time: $nano")
+            trace("[SPCFileEntry -> dataSource] $name DS time: $nano ns; Loops: $loops")
         }
 
         return@lazy data

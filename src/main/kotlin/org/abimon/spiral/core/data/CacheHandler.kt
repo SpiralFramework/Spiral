@@ -46,8 +46,8 @@ object CacheHandler {
             initialised = false
             cacheFile = newCacheFile()
         } else {
-            initialised = true
             cacheFile = File(cacheDir, name)
+            initialised = cacheFile.exists()
         }
 
         cacheFiles.add(cacheFile)

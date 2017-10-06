@@ -2,7 +2,6 @@ package org.abimon.spiral.core
 
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
-import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.lang.toBinaryString
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
@@ -41,48 +40,32 @@ fun Int.getBit(bit: Int): Byte {
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 fun InputStream.readUnsignedBigInt(): Long = readNumber(4, true, false)
 
+val BITS_LOOKUP_TABLE: IntArray by lazy { (0 until 256).map { it * 8 }.toIntArray() }
+
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
-    var s = "0"
+    var r = 0L
+    val nums = ByteArray(bytes.coerceAtMost(BITS_LOOKUP_TABLE.size))
+    read(nums)
 
-    try {
-        val bin = Array(bytes, { "" })
-        for (i in 0 until bytes)
-            bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
+    if (little)
+        nums.reverse()
 
-        val base = "00000000"
-        for (i in if (little) (bytes - 1 downTo 0) else (0 until bytes))
-            s += base.substring(bin[i].length) + bin[i]
-    } catch (th: Throwable) {
-    }
+    for (i in 0 until bytes)
+        r = r or ((if(unsigned) nums[i].toInt() and 0xFF else nums[i].toInt()).toLong() shl BITS_LOOKUP_TABLE[bytes - 1 - i])
 
-    return s.toLong(2)
+    return r
 }
 
-fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Float {
-    var s = "0"
-
-    try {
-        val bin = Array(4, { "" })
-        for (i in 0 until 4)
-            bin[i] = (if (unsigned) read().toLong() and 0xffffffffL else read().toLong()).toBinaryString()
-
-        val base = "00000000"
-        for (i in if (little) (4 - 1 downTo 0) else (0 until 4))
-            s += base.substring(bin[i].length) + bin[i]
-    } catch (th: Throwable) {
-    }
-
-    return s.toLong(2).toFloat()
-}
+fun InputStream.readFloat(unsigned: Boolean = false, little: Boolean = true): Float = java.lang.Float.intBitsToFloat(this.readNumber(4, unsigned, little).toInt())
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
-    val data: ByteArray = ByteArray(len.coerceAtLeast(0))
+    val data = ByteArray(len.coerceAtLeast(0))
     read(data)
     return String(data, Charset.forName(encoding))
 }
 
 fun InputStream.readDRString(len: Int, encoding: String = "UTF-8"): String {
-    val data: ByteArray = ByteArray(len.coerceAtLeast(0))
+    val data = ByteArray(len.coerceAtLeast(0))
     read(data)
     return String(data.sliceArray(0 until data.size - 2), Charset.forName(encoding))
 }
