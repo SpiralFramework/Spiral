@@ -10,6 +10,7 @@ import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.debug
+import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.child
@@ -108,7 +109,9 @@ object GurrenOperation {
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
         println("")
         if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
-            val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
+            val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
+
+            params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
 
             val rows: MutableCollection<Array<String>> = ConcurrentLinkedQueue()
             val duration = measureTimeMillis {

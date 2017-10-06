@@ -39,6 +39,7 @@ fun Int.getBit(bit: Int): Byte {
 
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 fun InputStream.readUnsignedBigInt(): Long = readNumber(4, true, false)
+fun InputStream.readUnsignedLittleFloat(): Float = readFloat(true, true)
 
 val BITS_LOOKUP_TABLE: IntArray by lazy { (0 until 256).map { it * 8 }.toIntArray() }
 

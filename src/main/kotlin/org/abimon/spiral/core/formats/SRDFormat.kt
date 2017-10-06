@@ -3,15 +3,19 @@ package org.abimon.spiral.core.formats
 import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.objects.SPC
-import org.abimon.spiral.util.CountingInputStream
-import org.abimon.spiral.util.OffsetInputStream
-import org.abimon.spiral.util.debug
-import org.abimon.spiral.util.trace
+import org.abimon.spiral.core.objects.SRDIModel
+import org.abimon.spiral.util.*
 import org.abimon.visi.collections.remove
 import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Polygon
+import java.awt.Rectangle
+import java.awt.geom.Area
 import java.awt.image.BufferedImage
 import java.io.InputStream
 import java.io.OutputStream
@@ -31,6 +35,7 @@ object SRDFormat {
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         val otherEntries: MutableMap<String, DataSource> = HashMap()
         val images: MutableMap<String, BufferedImage> = HashMap()
+        val mapToModels: Boolean = "${params["srd:mapToModels"] ?: true}".toBoolean()
 
         when (from) {
             is SPCFormat -> {
@@ -43,12 +48,15 @@ object SRDFormat {
                 srds.forEach { srdEntry ->
                     val img: DataSource
 
+
                     if (others.any { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" })
                         img = others.remove { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" } ?: return@forEach
                     else
                         img = others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } ?: run { debug("No such element for ${srdEntry.name.split('.')[0]}"); return@forEach }
 
-                    readSRD(srdEntry, img, otherEntries, images)
+                    val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
+
+                    readSRD(srdEntry, img, if(model != null) SRDIModel(model) else null, otherEntries, images)
                 }
 
                 others.forEach { entry -> otherEntries[entry.name] = entry }
@@ -59,6 +67,7 @@ object SRDFormat {
         if (images.isEmpty())
             return false
 
+        val format = params["srd:format"]?.toString() ?: "PNG"
         when (to) {
             is PNGFormat -> ImageIO.write(images.entries.first().value, "PNG", output)
             is ZIPFormat -> {
@@ -70,8 +79,8 @@ object SRDFormat {
                 }
 
                 images.forEach { name, image ->
-                    zos.putNextEntry(ZipEntry(name))
-                    ImageIO.write(image, params["srd:format"]?.toString() ?: "PNG", zos)
+                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format)))
+                    ImageIO.write(image, format, zos)
                 }
 
                 zos.finish()
@@ -82,7 +91,7 @@ object SRDFormat {
         return true
     }
 
-    fun readSRD(srd: DataSource, img: DataSource, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>) {
+    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>) {
         srd.seekableUse { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
@@ -165,6 +174,7 @@ object SRDFormat {
 //                                    }
 
                                     val swizzled = !(swiz hasBitSet 1)
+                                    val imageInfo: MutableMap<String, Any> = hashMapOf("format" to fmt, "disp_width" to disp_width, "disp_height" to disp_height, "name" to name, "mipmap" to mip)
 
                                     val mode = "RGBA"
                                     if (fmt in arrayOf(0x01, 0x02, 0x05, 0x1A)) {
@@ -190,6 +200,8 @@ object SRDFormat {
                                             processingData.deswizzle(width / 4, height / 4, bytespp)
 
                                         otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingData)
+                                        imageInfo["swizzled"] = swizzled
+                                        imageInfo["bytes_per_pixel"] = bytespp
 
                                     } else if (fmt in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
                                         val bytespp: Int
@@ -230,21 +242,29 @@ object SRDFormat {
                                             processingStream = new_img_stream
 
                                         when (fmt) {
-                                            0x0F -> images["$mip-$name"] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }
-                                            0x1C -> images["$mip-$name"] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }
+                                            0x0F -> images["$mip-$name"] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
+                                            0x1C -> images["$mip-$name"] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
                                             else -> {
                                                 debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                             }
                                         }
+
+                                        imageInfo["swizzled"] = swizzled && width >= 4 && height >= 4
+                                        imageInfo["bytes_per_pixel"] = bytespp
+                                        imageInfo["width"] = width
+                                        imageInfo["height"] = height
                                     } else {
                                         debug("Unknown format $fmt")
 
                                         otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
                                     }
+
+                                    if(LoggerLevel.TRACE.enabled)
+                                        otherData["info-$name.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
                                 }
                             }
                         }
-                    //else -> println(data_type)
+                        else -> debug("Unknown data type: $data_type")
                     }
                 }
             }
@@ -322,5 +342,33 @@ object SRDFormat {
                     this[(p + l)] = copy[(i * bytespp + l)]
             }
         }
+    }
+
+    fun BufferedImage.mapToModel(model: SRDIModel?): BufferedImage {
+        if(model != null)
+            return mapImageToModel(this, model)
+        return this
+    }
+
+    fun mapImageToModel(img: BufferedImage, model: SRDIModel): BufferedImage {
+        val area = Area()
+        model.faces.forEach { (one, two, three) ->
+            val u1 = model.uvs[one]
+            val u2 = model.uvs[two]
+            val u3 = model.uvs[three]
+
+            area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
+        }
+
+        val g = img.createGraphics()
+        val allBut = Area(Rectangle(0, 0, img.width, img.height))
+        allBut.subtract(area)
+
+        g.clip = allBut
+        g.color = Color.BLACK
+        g.composite = AlphaComposite.Clear
+        g.fillRect(0, 0, img.width, img.height)
+
+        return img
     }
 }

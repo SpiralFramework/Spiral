@@ -13,6 +13,9 @@ enum class LoggerLevel(val logFunc: (Any?) -> Unit) {
     DEBUG(::println),
     TRACE(::println);
 
+    val enabled: Boolean
+        get() = SpiralModel.loggerLevel >= this
+
     operator fun invoke(msg: Any?) = logFunc(msg)
 }
 
