@@ -3,7 +3,6 @@ package org.abimon.spiral.util
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.collections.copyFrom
 import java.io.File
-import java.time.Instant
 
 enum class LoggerLevel(val logFunc: (Any?) -> Unit) {
     NONE(::println),
@@ -19,7 +18,7 @@ enum class LoggerLevel(val logFunc: (Any?) -> Unit) {
     operator fun invoke(msg: Any?) = logFunc(msg)
 }
 
-val currentLogFile = File("${Instant.now()}.log")
+val currentLogFile = File("spiral.log")
 val currentLog = currentLogFile.printWriter()
 
 fun log(msg: Any?, level: LoggerLevel) {
