@@ -25,11 +25,13 @@ object IVFFormat : SpiralFormat {
         return@use Arrays.equals(stream.readPartialBytes(4), secondHeader)
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
-        if (!MediaWrapper.ffmpeg.isInstalled)
-            return errPrintln("ffmpeg is not installed, and thus we cannot convert from an IVF file to a ${format.name} file")
+        if (!MediaWrapper.ffmpeg.isInstalled) {
+            errPrintln("ffmpeg is not installed, and thus we cannot convert from an IVF file to a ${format.name} file")
+            return false
+        }
 
         val tmpIn = File("${UUID.randomUUID()}.$extension")
         val tmpOut = File("${UUID.randomUUID()}.${format.extension ?: "mp4"}") //unk won't be a valid conversion, so if all else fails let's be useful
@@ -44,5 +46,7 @@ object IVFFormat : SpiralFormat {
             tmpIn.delete()
             tmpOut.delete()
         }
+
+        return true
     }
 }

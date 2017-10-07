@@ -20,8 +20,8 @@ object TXTFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean = true
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         debug("Begun Converting\n${"-" * 100}")
         when (format) {
@@ -65,5 +65,7 @@ object TXTFormat : SpiralFormat {
                 }
             }
         }
+
+        return true
     }
 }

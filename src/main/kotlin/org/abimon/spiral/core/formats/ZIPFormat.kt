@@ -35,8 +35,8 @@ object ZIPFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         when (format) {
             is PAKFormat -> {
@@ -68,5 +68,7 @@ object ZIPFormat : SpiralFormat {
             }
             else -> TODO("NYI PAK -> ${format::class.simpleName}")
         }
+
+        return true
     }
 }

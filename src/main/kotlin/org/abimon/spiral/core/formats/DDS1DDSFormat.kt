@@ -25,8 +25,8 @@ object DDS1DDSFormat : SpiralFormat {
 
     override fun canConvert(format: SpiralFormat): Boolean = format is PNGFormat
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         val img = source.use { stream ->
             val header = stream.read(132)
@@ -144,5 +144,7 @@ object DDS1DDSFormat : SpiralFormat {
                 }
             }
         }
+
+        return true
     }
 }

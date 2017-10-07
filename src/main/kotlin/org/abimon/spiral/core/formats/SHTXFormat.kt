@@ -21,8 +21,8 @@ object SHTXFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean = source.use { it.readString(4) == "SHTX" }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         val img = toBufferedImage(source)
         when (format) {
@@ -30,6 +30,8 @@ object SHTXFormat : SpiralFormat {
             is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
             is TGAFormat -> output.write(img.toTGA())
         }
+
+        return true
     }
 
     /** This information is taken from BlackDragonHunt's Danganronpa-Tools */

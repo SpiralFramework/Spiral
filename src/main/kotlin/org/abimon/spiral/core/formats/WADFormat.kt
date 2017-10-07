@@ -22,8 +22,8 @@ object WADFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         val wad = WAD(source)
         when (format) {
@@ -36,5 +36,7 @@ object WADFormat : SpiralFormat {
                 zip.closeEntry()
             }
         }
+
+        return true
     }
 }

@@ -11,6 +11,7 @@ import org.abimon.visi.collections.remove
 import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
+import org.abimon.visi.lang.exportStackTrace
 import java.awt.*
 import java.awt.geom.Area
 import java.awt.image.BufferedImage
@@ -61,7 +62,7 @@ object SRDFormat {
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
 
-        if (images.isEmpty())
+        if (images.isEmpty() && !LoggerLevel.TRACE.enabled)
             return false
 
         val format = params["srd:format"]?.toString() ?: "PNG"
@@ -191,12 +192,33 @@ object SRDFormat {
                                         val height = (ceil(disp_height / 8.0) * 8.0).toInt()
                                         val width = (ceil(disp_width / 8.0) * 8.0).toInt()
 
-                                        val processingData: ByteArray = new_img_stream.use { it.readBytes() }
+                                        val processing: InputStream
 
-                                        if (swizzled)
+                                        if (swizzled) {
+                                            val processingData = new_img_stream.use { it.readBytes() }
                                             processingData.deswizzle(width / 4, height / 4, bytespp)
+                                            processing = processingData.inputStream()
+                                        } else
+                                            processing = new_img_stream
 
-                                        otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingData)
+                                        when (fmt) {
+                                            0x01 -> {
+                                                val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                                                for(y in 0 until height) {
+                                                    for(x in 0 until width) {
+                                                        val b = processing.read()
+                                                        val g = processing.read()
+                                                        val r = processing.read()
+                                                        val a = processing.read()
+
+                                                        resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
+                                                    }
+                                                }
+                                                images[name] = resultingImage.mapToModel(model)
+                                            }
+                                            else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
+                                        }
+
                                         imageInfo["swizzled"] = swizzled
                                         imageInfo["bytes_per_pixel"] = bytespp
 
@@ -239,8 +261,8 @@ object SRDFormat {
                                             processingStream = new_img_stream
 
                                         when (fmt) {
-                                            0x0F -> images["$mip-$name"] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
-                                            0x1C -> images["$mip-$name"] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
+                                            0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
+                                            0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
                                             else -> {
                                                 debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                             }
@@ -350,11 +372,16 @@ object SRDFormat {
     fun mapImageToModel(img: BufferedImage, model: SRDIModel): BufferedImage {
         val area = Area()
         model.faces.forEach { (one, two, three) ->
-            val u1 = model.uvs[one]
-            val u2 = model.uvs[two]
-            val u3 = model.uvs[three]
+            try {
+                val u1 = model.uvs[one]
+                val u2 = model.uvs[two]
+                val u3 = model.uvs[three]
 
-            area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
+                area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
+            } catch(ioob: IndexOutOfBoundsException) {
+                debug(ioob.exportStackTrace())
+                return@forEach
+            }
         }
 
         val g = img.createGraphics()

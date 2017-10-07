@@ -22,8 +22,8 @@ object PAKFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         val pak = Pak(source)
         val convert = "${params["pak:convert"] ?: false}".toBoolean()
@@ -53,5 +53,7 @@ object PAKFormat : SpiralFormat {
                 zip.finish()
             }
         }
+
+        return true
     }
 }

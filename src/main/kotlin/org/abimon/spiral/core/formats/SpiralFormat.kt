@@ -15,20 +15,22 @@ interface SpiralFormat {
     /**
      * Convert from this format to another
      */
-    fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+    fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (!isFormat(source))
             throw IllegalArgumentException("${source.location} does not conform to the $name format")
 
         if (canConvertViaOverride(format)) {
             if (OVERRIDING_CONVERSIONS[this to format]?.invoke(this, format, source, output, params) == true)
-                return
+                return true
         }
 
         if (!canConvert(format))
             throw IllegalArgumentException("Cannot convert to $format")
+
+        return false
     }
 
-    fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) = format.convert(this, source, output, params)
+    fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean = format.convert(this, source, output, params)
 
     fun convertToBytes(format: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
         val baos = ByteArrayOutputStream()

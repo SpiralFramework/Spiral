@@ -25,8 +25,8 @@ object TGAFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         val img = TGAReader.readImage(source.data)
         when (format) {
@@ -38,14 +38,14 @@ object TGAFormat : SpiralFormat {
                 var palette: List<Color> = img.run {
                     val pixels = ArrayList<Color>()
 
-                    for(y in 0 until height)
-                        for(x in 0 until width)
+                    for (y in 0 until height)
+                        for (x in 0 until width)
                             pixels.add(Color(getRGB(x, y), true))
 
                     return@run pixels
                 }
 
-                if(palette.distinctBy { it.rgb }.size > 256) {
+                if (palette.distinctBy { it.rgb }.size > 256) {
                     output.write("Ff".toByteArray())
                     output.writeNumber(img.width.toLong(), 2, true)
                     output.writeNumber(img.height.toLong(), 2, true)
@@ -63,12 +63,14 @@ object TGAFormat : SpiralFormat {
                     palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
 
                     img.run {
-                        for(y in 0 until height)
-                            for(x in 0 until width)
+                        for (y in 0 until height)
+                            for (x in 0 until width)
                                 output.write(palette.indexOf(Color(getRGB(x, y), true)))
                     }
                 }
             }
         }
+
+        return true
     }
 }

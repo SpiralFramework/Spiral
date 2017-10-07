@@ -19,8 +19,8 @@ object CPKFormat: SpiralFormat {
         }
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
         val cpk = CPK(source)
 
         when(format) {
@@ -36,5 +36,7 @@ object CPKFormat: SpiralFormat {
                 zip.finish()
             }
         }
+
+        return true
     }
 }

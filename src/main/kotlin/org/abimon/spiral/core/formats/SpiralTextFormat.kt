@@ -14,8 +14,8 @@ object SpiralTextFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean = !SpiralDrill.stxtRunner.run(String(source.data, Charsets.UTF_8)).hasErrors()
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         when (format) {
             is LINFormat -> {
@@ -28,5 +28,7 @@ object SpiralTextFormat : SpiralFormat {
                 lin.compile(output)
             }
         }
+
+        return true
     }
 }

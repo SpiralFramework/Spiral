@@ -34,11 +34,15 @@ object MP4Format: SpiralFormat {
         return@use subtype in subtypes
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    //override fun canConvert(format: SpiralFormat): Boolean = super.canConvert(format) && MediaWrapper.ffmpeg.isInstalled
 
-        if (!MediaWrapper.ffmpeg.isInstalled)
-            return errPrintln("ffmpeg is not installed, and thus we cannot convert from an MP4 file to a ${format.name} file")
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
+
+        if (!MediaWrapper.ffmpeg.isInstalled) {
+            errPrintln("ffmpeg is not installed, and thus we cannot convert from an MP4 file to a ${format.name} file")
+            return false
+        }
 
         val tmpIn = File("${UUID.randomUUID()}.$extension")
         val tmpOut = File("${UUID.randomUUID()}.${format.extension ?: "mp4"}") //unk won't be a valid conversion, so if all else fails let's be useful
@@ -56,5 +60,7 @@ object MP4Format: SpiralFormat {
             tmpIn.delete()
             tmpOut.delete()
         }
+
+        return true
     }
 }

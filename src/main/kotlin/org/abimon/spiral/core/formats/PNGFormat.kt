@@ -21,8 +21,8 @@ object PNGFormat : SpiralFormat {
                         .any { it.formatName.toLowerCase() == "png" }
             }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         source.use {
             when (format) {
@@ -70,5 +70,7 @@ object PNGFormat : SpiralFormat {
                 }
             }
         }
+
+        return true
     }
 }

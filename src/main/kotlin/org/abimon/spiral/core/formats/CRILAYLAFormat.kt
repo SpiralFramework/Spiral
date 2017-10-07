@@ -29,8 +29,8 @@ object CRILAYLAFormat : SpiralFormat {
 
     override fun isFormat(source: DataSource): Boolean = source.use { it.readString(8) == MAGIC }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         source.use { stream ->
             val magic = stream.readString(8)
@@ -95,16 +95,18 @@ object CRILAYLAFormat : SpiralFormat {
                 output.write(buffer)
             }
         }
+
+        return true
     }
 
-    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(format.canConvert(this)) //Check if there's a build in way
-            format.convert(this, source, output, params)
+            return format.convert(this, source, output, params)
         else { //Let's get our hands dirty
             val sourceData = source.data
             if(sourceData.size < 0x100) {
                 output.write(sourceData)
-                return
+                return false
             }
             val data: Queue<Boolean> = sourceData.copyOfRange(0x100, sourceData.size).reversed().flatMap { arrayListOf(false).apply { LOOKUP_TABLE[it.toInt() and 0xFF]!!.toCollection(this) } }.toCollection(LinkedList())
             output.write(MAGIC_BYTES)
@@ -121,6 +123,8 @@ object CRILAYLAFormat : SpiralFormat {
             output.writeNumber(baos.size().toLong(), 4, true)
             output.write(baos.toByteArray().reversedArray())
             output.write(sourceData.copyOfRange(0, 0x100))
+
+            return true
         }
     }
 //    fun something() {

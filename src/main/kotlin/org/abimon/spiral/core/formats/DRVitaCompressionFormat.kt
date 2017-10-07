@@ -20,8 +20,8 @@ object DRVitaCompressionFormat : SpiralFormat {
 
     override fun canConvert(format: SpiralFormat): Boolean = true
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
-        super.convert(format, source, output, params)
+    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(format, source, output, params)) return true
 
         source.use { stream ->
             var magic = stream.read(4)
@@ -95,11 +95,13 @@ object DRVitaCompressionFormat : SpiralFormat {
 
             output.write(result.toByteArray())
         }
+
+        return true
     }
 
-    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>) {
+    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(format.canConvert(this)) //Check if there's a built in way of doing it
-            format.convert(this, source, output, params)
+            return format.convert(this, source, output, params)
         else { //Otherwise we roll up our sleeves and get dirty
             source.use { stream ->
                 val result = ByteArrayOutputStream()
@@ -128,6 +130,8 @@ object DRVitaCompressionFormat : SpiralFormat {
 
                 result.writeTo(output)
             }
+
+            return true
         }
     }
 }
