@@ -9,5 +9,6 @@ data class ModelConfig(
     val concurrentOperations: Int = 16,
     val scope: Pair<String, String> = "> " to "default",
     val operating: String? = null,
-    val autoConfirm: Boolean = false
+    val autoConfirm: Boolean = false,
+    val purgeCache: Boolean = true
 )

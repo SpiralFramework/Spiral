@@ -10,7 +10,8 @@ import org.abimon.spiral.mvc.gurren.GurrenOperation
 import kotlin.reflect.full.memberProperties
 
 fun main(args: Array<String>) {
-    CacheHandler.purge()
+    if(SpiralModel.purgeCache)
+        CacheHandler.purge()
     SRDFormat.hook()
 
     val imperator = BasicImperator()
@@ -32,5 +33,6 @@ fun main(args: Array<String>) {
         }
     }
 
-    CacheHandler.purge() //Just in case shutdown hook doesn't go off
+    if(SpiralModel.purgeCache)
+        CacheHandler.purge() //Just in case shutdown hook doesn't go off
 }

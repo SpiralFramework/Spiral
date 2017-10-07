@@ -24,6 +24,7 @@ object SpiralModel {
     var cacheEnabled: Boolean by saveDelegate(true)
     var concurrentOperations: Int by saveDelegate(4)
     var autoConfirm: Boolean by saveDelegate(false)
+    var purgeCache: Boolean by saveDelegate(true)
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -60,6 +61,7 @@ object SpiralModel {
         scope = config.scope
         operating = if(config.operating == null) null else File(config.operating)
         autoConfirm = config.autoConfirm
+        purgeCache = config.purgeCache
 
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
@@ -81,7 +83,7 @@ object SpiralModel {
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm)
+        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache)
 
     init { load() }
 

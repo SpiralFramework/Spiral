@@ -80,7 +80,8 @@ object CacheHandler {
 
     init {
         Runtime.getRuntime().addShutdownHook(Thread {
-            cacheDir.listFiles().forEach { it.delete() }
+            if(SpiralModel.purgeCache)
+                cacheDir.listFiles().forEach { it.delete() }
         })
     }
 

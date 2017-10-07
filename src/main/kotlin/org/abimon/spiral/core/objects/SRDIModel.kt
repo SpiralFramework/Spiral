@@ -45,6 +45,8 @@ class SRDIModel(data: DataSource) {
                         faces.add(toShort(buffer, true, true, i * 6 + 0) to toShort(buffer, true, true, i * 6 + 2) and toShort(buffer, true, true, i * 6 + 4))
                 }
             }
+
+            println("Something")
         }
     }
 }

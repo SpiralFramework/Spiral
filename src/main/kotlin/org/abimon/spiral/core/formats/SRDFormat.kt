@@ -40,7 +40,7 @@ object SRDFormat {
                 val spc = SPC(dataSource)
 
                 val files = spc.files.groupBy { entry -> entry.name.endsWith("srd") }
-                val srds = files[true]!!
+                val srds = files[true] ?: emptyList()
                 val others = files[false]!!.toMutableList()
 
                 srds.forEach { srdEntry ->
@@ -77,7 +77,7 @@ object SRDFormat {
                 }
 
                 images.forEach { name, image ->
-                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format)))
+                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.toLowerCase())))
                     ImageIO.write(image, format, zos)
                 }
 
@@ -93,73 +93,75 @@ object SRDFormat {
         srd.seekableUse { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
-                val (data_type, data_S, subdata) = readSRDItem(stream, srd) ?: break
+                val (data_type, data_S, subdata_S) = readSRDItem(stream, srd) ?: break
 
-                data_S.use { data ->
+                subdata_S.use big@{ subdata ->
+                    data_S.use { data ->
 
-                    //debug(data_type)
+                        //debug(data_type)
 
-                    when (data_type) {
-                        "\$CFH" -> return@use
-                        "\$CT0" -> return@use
-                        "\$RSF" -> {
-                            data.skip(16)
-                            val name = data.readZeroString()
-                            //println(name)
-                        }
-                        "\$TXR" -> {
-                            val unk1 = data.readUnsignedLittleInt()
-                            val swiz = data.readNumber(2, unsigned = true, little = true)
-                            val disp_width = data.readNumber(2, unsigned = true, little = true)
-                            val disp_height = data.readNumber(2, unsigned = true, little = true)
-                            val scanline = data.readNumber(2, unsigned = true, little = true)
-                            val fmt = data.read() and 0xFF
-                            val unk2 = data.read() and 0xFF
-                            val palette = data.read() and 0xFF
-                            val palette_id = data.read() and 0xFF
+                        when (data_type) {
+                            "\$CFH" -> return@big
+                            "\$CT0" -> return@big
+                            "\$RSF" -> {
+                                data.skip(16)
+                                val name = data.readZeroString()
+                                //println(name)
+                            }
+                            "\$TXR" -> {
+                                val unk1 = data.readUnsignedLittleInt()
+                                val swiz = data.readNumber(2, unsigned = true, little = true)
+                                val disp_width = data.readNumber(2, unsigned = true, little = true)
+                                val disp_height = data.readNumber(2, unsigned = true, little = true)
+                                val scanline = data.readNumber(2, unsigned = true, little = true)
+                                val fmt = data.read() and 0xFF
+                                val unk2 = data.read() and 0xFF
+                                val palette = data.read() and 0xFF
+                                val palette_id = data.read() and 0xFF
 
-                            val (img_data_type, img_data_S, img_subdata) = readSRDItem(subdata, srd)!!
-                            img_data_S.use { img_data ->
-                                img_data.skip(2)
-                                val unk5 = img_data.read() and 0xFF
-                                val mipmap_count = img_data.read() and 0xFF
-                                img_data.skip(8)
-                                val name_offset = img_data.readUnsignedLittleInt()
+                                val (img_data_type, img_data_S, img_subdata_S) = readSRDItem(subdata, srd)!!
+                                img_subdata_S.close()
+                                img_data_S.use { img_data ->
+                                    img_data.skip(2)
+                                    val unk5 = img_data.read() and 0xFF
+                                    val mipmap_count = img_data.read() and 0xFF
+                                    img_data.skip(8)
+                                    val name_offset = img_data.readUnsignedLittleInt()
 
-                                val mipmaps: MutableList<IntArray> = ArrayList()
+                                    val mipmaps: MutableList<IntArray> = ArrayList()
 
-                                for (i in 0 until mipmap_count) {
-                                    val mipmap_start = img_data.readUnsignedLittleInt() and 0x00FFFFFF
-                                    val mipmap_len = img_data.readUnsignedLittleInt()
-                                    val mipmap_unk1 = img_data.readUnsignedLittleInt()
-                                    val mipmap_unk2 = img_data.readUnsignedLittleInt()
+                                    for (i in 0 until mipmap_count) {
+                                        val mipmap_start = img_data.readUnsignedLittleInt() and 0x00FFFFFF
+                                        val mipmap_len = img_data.readUnsignedLittleInt()
+                                        val mipmap_unk1 = img_data.readUnsignedLittleInt()
+                                        val mipmap_unk2 = img_data.readUnsignedLittleInt()
 
-                                    mipmaps.add(intArrayOf(mipmap_start.toInt(), mipmap_len.toInt(), mipmap_unk1.toInt(), mipmap_unk2.toInt()))
-                                }
+                                        mipmaps.add(intArrayOf(mipmap_start.toInt(), mipmap_len.toInt(), mipmap_unk1.toInt(), mipmap_unk2.toInt()))
+                                    }
 
-                                val pal_start: Int?
-                                val pal_len: Int?
+                                    val pal_start: Int?
+                                    val pal_len: Int?
 
-                                if (palette == 0x01) {
-                                    pal_start = mipmaps[palette_id][0]
-                                    pal_len = mipmaps[palette_id][1]
+                                    if (palette == 0x01) {
+                                        pal_start = mipmaps[palette_id][0]
+                                        pal_len = mipmaps[palette_id][1]
 
-                                    mipmaps.removeAt(palette_id)
-                                } else {
-                                    pal_start = null
-                                    pal_len = null
-                                }
+                                        mipmaps.removeAt(palette_id)
+                                    } else {
+                                        pal_start = null
+                                        pal_len = null
+                                    }
 
-                                img_data.reset()
-                                img_data.skip(name_offset)
+                                    img_data.reset()
+                                    img_data.skip(name_offset)
 
-                                val name = img_data.readZeroString()
+                                    val name = img_data.readZeroString()
 
-                                (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
+                                    (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
 
-                                for (mip in mipmaps.indices) {
-                                    val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
-                                    val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
+                                    for (mip in mipmaps.indices) {
+                                        val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
+                                        val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
 //                                    var pal_data: ByteArray? = null
 //
 //                                    img.seekableInputStream.use { img_stream ->
@@ -171,119 +173,119 @@ object SRDFormat {
 //                                        }
 //                                    }
 
-                                    val swizzled = !(swiz hasBitSet 1)
-                                    val imageInfo: MutableMap<String, Any> = hashMapOf("format" to fmt, "disp_width" to disp_width, "disp_height" to disp_height, "name" to name, "mipmap" to mip)
+                                        val swizzled = !(swiz hasBitSet 1)
+                                        val imageInfo: MutableMap<String, Any> = hashMapOf("format" to fmt, "disp_width" to disp_width, "disp_height" to disp_height, "name" to name, "mipmap" to mip)
 
-                                    val mode = "RGBA"
-                                    if (fmt in arrayOf(0x01, 0x02, 0x05, 0x1A)) {
-                                        debug("Raw $fmt")
-                                        val decoder = "raw"
+                                        val mode = "RGBA"
+                                        if (fmt in arrayOf(0x01, 0x02, 0x05, 0x1A)) {
+                                            debug("Raw $fmt")
+                                            val decoder = "raw"
 
-                                        val bytespp: Int
+                                            val bytespp: Int
 
-                                        when (fmt) {
-                                            0x01 -> bytespp = 4
-                                            0x02 -> bytespp = 2
-                                            0x05 -> bytespp = 2
-                                            0x1A -> bytespp = 4
-                                            else -> bytespp = 2
-                                        }
+                                            when (fmt) {
+                                                0x01 -> bytespp = 4
+                                                0x02 -> bytespp = 2
+                                                0x05 -> bytespp = 2
+                                                0x1A -> bytespp = 4
+                                                else -> bytespp = 2
+                                            }
 
-                                        val height = (ceil(disp_height / 8.0) * 8.0).toInt()
-                                        val width = (ceil(disp_width / 8.0) * 8.0).toInt()
+                                            val height = (ceil(disp_height / 8.0) * 8.0).toInt()
+                                            val width = (ceil(disp_width / 8.0) * 8.0).toInt()
 
-                                        val processing: InputStream
+                                            val processing: InputStream
 
-                                        if (swizzled) {
-                                            val processingData = new_img_stream.use { it.readBytes() }
-                                            processingData.deswizzle(width / 4, height / 4, bytespp)
-                                            processing = processingData.inputStream()
-                                        } else
-                                            processing = new_img_stream
+                                            if (swizzled) {
+                                                val processingData = new_img_stream.use { it.readBytes() }
+                                                processingData.deswizzle(width / 4, height / 4, bytespp)
+                                                processing = processingData.inputStream()
+                                            } else
+                                                processing = new_img_stream
 
-                                        when (fmt) {
-                                            0x01 -> {
-                                                val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                                                for(y in 0 until height) {
-                                                    for(x in 0 until width) {
-                                                        val b = processing.read()
-                                                        val g = processing.read()
-                                                        val r = processing.read()
-                                                        val a = processing.read()
+                                            when (fmt) {
+                                                0x01 -> {
+                                                    val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                                                    for (y in 0 until height) {
+                                                        for (x in 0 until width) {
+                                                            val b = processing.read()
+                                                            val g = processing.read()
+                                                            val r = processing.read()
+                                                            val a = processing.read()
 
-                                                        resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
+                                                            resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
+                                                        }
                                                     }
+                                                    images[name] = resultingImage.mapToModel(model)
                                                 }
-                                                images[name] = resultingImage.mapToModel(model)
+                                                else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
                                             }
-                                            else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
-                                        }
 
-                                        imageInfo["swizzled"] = swizzled
-                                        imageInfo["bytes_per_pixel"] = bytespp
+                                            imageInfo["swizzled"] = swizzled
+                                            imageInfo["bytes_per_pixel"] = bytespp
 
-                                    } else if (fmt in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
-                                        val bytespp: Int
+                                        } else if (fmt in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
+                                            val bytespp: Int
 
-                                        when (fmt) {
-                                            0x0F -> bytespp = 8
-                                            0x1C -> bytespp = 16
-                                            else -> bytespp = 8
-                                        }
+                                            when (fmt) {
+                                                0x0F -> bytespp = 8
+                                                0x1C -> bytespp = 16
+                                                else -> bytespp = 8
+                                            }
 
-                                        var width: Int
-                                        var height: Int
+                                            var width: Int
+                                            var height: Int
 
-                                        if (unk5 == 0x08) {
-                                            width = lowestPowerOfTwo(disp_width.toInt())
-                                            height = lowestPowerOfTwo(disp_height.toInt())
+                                            if (unk5 == 0x08) {
+                                                width = lowestPowerOfTwo(disp_width.toInt())
+                                                height = lowestPowerOfTwo(disp_height.toInt())
+                                            } else {
+                                                width = disp_width.toInt()
+                                                height = disp_height.toInt()
+                                            }
+
+                                            if (width % 4 != 0)
+                                                width += 4 - (width % 4)
+
+                                            if (height % 4 != 0)
+                                                height += 4 - (height % 4)
+
+                                            val processingStream: InputStream
+
+                                            trace("Does $name need deswizzling? ${swizzled && width >= 4 && height >= 4}")
+
+                                            if (swizzled && width >= 4 && height >= 4) {
+                                                val processingData = new_img_stream.use { it.readBytes() }
+                                                processingData.deswizzle(width / 4, height / 4, bytespp)
+                                                processingStream = processingData.inputStream()
+                                            } else
+                                                processingStream = new_img_stream
+
+                                            when (fmt) {
+                                                0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
+                                                0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
+                                                else -> {
+                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
+                                                }
+                                            }
+
+                                            imageInfo["swizzled"] = swizzled && width >= 4 && height >= 4
+                                            imageInfo["bytes_per_pixel"] = bytespp
+                                            imageInfo["width"] = width
+                                            imageInfo["height"] = height
                                         } else {
-                                            width = disp_width.toInt()
-                                            height = disp_height.toInt()
+                                            debug("Unknown format $fmt")
+
+                                            otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
                                         }
 
-                                        if (width % 4 != 0)
-                                            width += 4 - (width % 4)
-
-                                        if (height % 4 != 0)
-                                            height += 4 - (height % 4)
-
-                                        val processingStream: InputStream
-
-                                        trace("Does $name need deswizzling? ${swizzled && width >= 4 && height >= 4}")
-
-                                        if (swizzled && width >= 4 && height >= 4) {
-                                            val processingData = new_img_stream.use { it.readBytes() }
-                                            processingData.deswizzle(width / 4, height / 4, bytespp)
-                                            processingStream = processingData.inputStream()
-                                        }
-                                        else
-                                            processingStream = new_img_stream
-
-                                        when (fmt) {
-                                            0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
-                                            0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
-                                            else -> {
-                                                debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
-                                            }
-                                        }
-
-                                        imageInfo["swizzled"] = swizzled && width >= 4 && height >= 4
-                                        imageInfo["bytes_per_pixel"] = bytespp
-                                        imageInfo["width"] = width
-                                        imageInfo["height"] = height
-                                    } else {
-                                        debug("Unknown format $fmt")
-
-                                        otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
+                                        if (LoggerLevel.TRACE.enabled)
+                                            otherData["info-$name.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
                                     }
-
-                                    if(LoggerLevel.TRACE.enabled)
-                                        otherData["info-$name.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
                                 }
                             }
+                            else -> debug("Unknown data type: $data_type")
                         }
-                        else -> debug("Unknown data type: $data_type")
                     }
                 }
             }
