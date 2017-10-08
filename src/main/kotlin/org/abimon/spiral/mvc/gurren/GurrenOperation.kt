@@ -113,7 +113,7 @@ object GurrenOperation {
         if(proceed) {
             val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
-            params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
+           if(params.size > 3) params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
 
             val rows: MutableCollection<Array<String>> = ConcurrentLinkedQueue()
             val duration = measureTimeMillis {

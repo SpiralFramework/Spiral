@@ -4,7 +4,7 @@ import org.abimon.spiral.core.data.BitPool
 import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.core.readUnsignedLittleInt
-import org.abimon.spiral.core.writeNumber
+import org.abimon.spiral.core.writeInt
 import org.abimon.visi.io.DataSource
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -110,7 +110,7 @@ object CRILAYLAFormat : SpiralFormat {
             }
             val data: Queue<Boolean> = sourceData.copyOfRange(0x100, sourceData.size).reversed().flatMap { arrayListOf(false).apply { LOOKUP_TABLE[it.toInt() and 0xFF]!!.toCollection(this) } }.toCollection(LinkedList())
             output.write(MAGIC_BYTES)
-            output.writeNumber(sourceData.size - 0x100L, 4, true)
+            output.writeInt(sourceData.size - 0x100L, true, true)
             val baos = ByteArrayOutputStream()
 
             while(data.isNotEmpty()) {
@@ -120,7 +120,7 @@ object CRILAYLAFormat : SpiralFormat {
 
                 baos.write(LOOKUP_TABLE.entries.first { (_, bits) -> bits contentEquals seven }.key)
             }
-            output.writeNumber(baos.size().toLong(), 4, true)
+            output.writeInt(baos.size().toLong(), true, true)
             output.write(baos.toByteArray().reversedArray())
             output.write(sourceData.copyOfRange(0, 0x100))
 

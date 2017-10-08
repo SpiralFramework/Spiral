@@ -7,13 +7,18 @@ import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
 
 class SPC(val dataSource: DataSource) {
+    companion object {
+        val SPC_MAGIC = "CPS."
+        val SPC_TABLE_MAGIC = "Root"
+    }
+
     val files: MutableList<SPCFileEntry> = ArrayList()
 
     init {
         dataSource.seekableUse {
             val stream = CountingInputStream(it)
             val magic = stream.readString(4)
-            if(magic != "CPS.")
+            if(magic != SPC_MAGIC)
                 throw IllegalArgumentException("${dataSource.location} is an invalid/corrupt SPC file! (Magic $magic ≠ 'CPS.')")
 
             stream.skip(0x24)
@@ -23,7 +28,7 @@ class SPC(val dataSource: DataSource) {
             stream.skip(0x10)
 
             val tableMagic = stream.readString(4)
-            if(tableMagic != "Root")
+            if(tableMagic != SPC_TABLE_MAGIC)
                 throw IllegalArgumentException("${dataSource.location} is an invalid/corrupt SPC file! (Table Magic $tableMagic ≠ 'Root')")
 
             stream.skip(0x0C)

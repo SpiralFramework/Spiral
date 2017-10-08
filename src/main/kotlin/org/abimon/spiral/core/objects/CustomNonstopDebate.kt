@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects
 
-import org.abimon.spiral.core.writeNumber
+import org.abimon.spiral.core.writeShort
 import java.io.OutputStream
 
 class CustomNonstopDebate {
@@ -11,9 +11,9 @@ class CustomNonstopDebate {
     fun section(section: NonstopSection) = sections.add(section)
 
     fun compile(output: OutputStream) {
-        output.writeNumber(secondsForDebate / 2L, 2, unsigned = true)
-        output.writeNumber(sections.size.toLong(), 2, unsigned = true)
+        output.writeShort(secondsForDebate / 2L)
+        output.writeShort(sections.size.toLong())
 
-        sections.forEach { it.data.forEachIndexed { index, num -> if(index * 2 <= bytesPerSection) output.writeNumber(num.toLong(), 2, unsigned = true) } }
+        sections.forEach { it.data.forEachIndexed { index, num -> if(index * 2 <= bytesPerSection) output.writeShort(num.toLong()) } }
     }
 }

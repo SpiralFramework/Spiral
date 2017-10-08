@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects
 
-import org.abimon.spiral.core.writeNumber
+import org.abimon.spiral.core.writeInt
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.writeTo
 import java.io.OutputStream
@@ -15,13 +15,14 @@ class CustomPak {
     }
 
     fun compile(pak: OutputStream) {
-        var headerSize = 4 + data.size.times(4).toLong()
+        var headerSize: Long = (4 + data.size * 4).toLong()
 
-        pak.writeNumber(data.size.toLong(), unsigned = true)
+        pak.writeInt(data.size)
         data.forEach {
-            pak.writeNumber(headerSize, unsigned = true)
+            pak.writeInt(headerSize)
             headerSize += it.size
         }
+
         data.forEach { it.use { it.writeTo(pak, closeAfter = true) } }
     }
 }

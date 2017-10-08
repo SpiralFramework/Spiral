@@ -121,18 +121,18 @@ object DDS1DDSFormat : SpiralFormat {
 
                 if(palette.distinctBy { it.rgb }.size > 256) {
                     output.write("Ff".toByteArray())
-                    output.writeNumber(img.width.toLong(), 2, true)
-                    output.writeNumber(img.height.toLong(), 2, true)
-                    output.writeNumber(0, 2, true)
+                    output.writeShort(img.width)
+                    output.writeShort(img.height)
+                    output.writeShort(0)
 
-                    palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
                 } else {
                     palette = palette.distinctBy { it.rgb }
 
                     output.write("Fs".toByteArray())
-                    output.writeNumber(img.width.toLong(), 2, true)
-                    output.writeNumber(img.height.toLong(), 2, true)
-                    output.writeNumber(0, 2, true)
+                    output.writeShort(img.width)
+                    output.writeShort(img.height)
+                    output.writeShort(0)
 
                     palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
 

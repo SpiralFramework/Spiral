@@ -2,7 +2,8 @@ package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.print
-import org.abimon.spiral.core.writeNumber
+import org.abimon.spiral.core.writeInt
+import org.abimon.spiral.core.writeLong
 import org.abimon.visi.collections.remove
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.child
@@ -65,20 +66,20 @@ class CustomWAD {
 
     fun compile(wad: OutputStream) {
         wad.print("AGAR")
-        wad.writeNumber(major, 4, true)
-        wad.writeNumber(minor, 4, true)
-        wad.writeNumber(header.size.toLong(), 4, true)
+        wad.writeInt(major)
+        wad.writeInt(minor)
+        wad.writeInt(header.size)
         wad.write(header)
 
-        wad.writeNumber(files.size.toLong(), 4, true)
+        wad.writeInt(files.size)
 
         var offset = 0L
         files.forEach {
             val name = it.name.toByteArray(Charset.forName("UTF-8"))
-            wad.writeNumber(name.size.toLong(), 4, true)
+            wad.writeInt(name.size)
             wad.write(name)
-            wad.writeNumber(it.dataSource.size, 8, true)
-            wad.writeNumber(offset, 8, true)
+            wad.writeLong(it.dataSource.size)
+            wad.writeLong(offset)
 
             offset += it.dataSource.size
         }
@@ -113,17 +114,17 @@ class CustomWAD {
         }
 
         val setDirs = getDirs(dirs, "")
-        wad.writeNumber(setDirs.size.toLong(), 4, true)
+        wad.writeInt(setDirs.size)
 
         setDirs.sortedWith(Comparator<String>(String::compareTo)).forEach {
             val name = it.toByteArray(Charset.forName("UTF-8"))
-            wad.writeNumber(name.size.toLong(), 4, true)
+            wad.writeInt(name.size)
             wad.write(name)
-            wad.writeNumber(dirs[it]!!.size.toLong(), 4, true)
+            wad.writeInt(dirs[it]!!.size)
 
             dirs[it]!!.sortedWith(Comparator<String>(String::compareTo)).forEach {
                 val fileName = it.child.toByteArray(Charset.forName("UTF-8"))
-                wad.writeNumber(fileName.size.toLong(), 4, true)
+                wad.writeInt(fileName.size)
                 wad.write(fileName)
                 wad.write(if (dirs.containsKey(it)) 1 else 0)
             }

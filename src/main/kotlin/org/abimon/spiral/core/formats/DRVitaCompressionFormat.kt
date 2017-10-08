@@ -32,8 +32,8 @@ object DRVitaCompressionFormat : SpiralFormat {
             if (magic doesntEqual CMP_MAGIC)
                 throw IllegalArgumentException("${source.location} does not conform to the $name format (Magic Number ≠ ${CMP_MAGIC asBase 16}; is actually ${magic asBase 16})")
 
-            val rawSize = stream.readNumber(4, unsigned = true)
-            val compressedSize = stream.readNumber(4, unsigned = true)
+            val rawSize = stream.readUnsignedLittleInt()
+            val compressedSize = stream.readUnsignedLittleInt()
 
             var i = 12
             var previousOffset = 1
@@ -125,8 +125,8 @@ object DRVitaCompressionFormat : SpiralFormat {
                 output.write(0x55)
                 output.write(0xA7)
 
-                output.writeNumber(size.toLong(), unsigned = true)
-                output.writeNumber(result.size() + 12L, unsigned = true)
+                output.writeInt(size.toLong(), true, true)
+                output.writeInt(result.size() + 12L, true, true)
 
                 result.writeTo(output)
             }

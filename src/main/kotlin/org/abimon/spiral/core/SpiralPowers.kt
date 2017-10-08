@@ -2,7 +2,6 @@ package org.abimon.spiral.core
 
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
-import org.abimon.visi.lang.toBinaryString
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
@@ -107,37 +106,61 @@ operator fun AtomicInteger.inc(): AtomicInteger {
     return this
 }
 
-fun OutputStream.writeNumber(num: Long, bytes: Int = 4, unsigned: Boolean = false) {
-    val ss = num.toBinaryString()
-    var base = ""
-    for (i in 0 until bytes)
-        base += "00000000"
-    val nums = base.substring(ss.length) + ss
-
-    for (i in if (unsigned) (bytes - 1 downTo 0) else (0 until bytes)) {
-        write(Integer.parseInt(nums.substring(i * 8, (i + 1) * 8), 2))
-    }
+fun OutputStream.writeLong(num: Number, unsigned: Boolean = false, little: Boolean = true) {
+    val long = num.toLong()
+    if(unsigned && little)
+        write(byteArrayOf(long.toByte(), (long ushr 8).toByte(), (long ushr 16).toByte(), (long ushr 24).toByte(), (long ushr 32).toByte(), (long ushr 40).toByte(), (long ushr 48).toByte(), (long ushr 56).toByte()))
+    else if(!unsigned && little)
+        write(byteArrayOf(long.toByte(), (long ushr 8).toByte(), (long ushr 16).toByte(), (long ushr 24).toByte(), (long ushr 32).toByte(), (long ushr 40).toByte(), (long ushr 48).toByte(), (long ushr 56).toByte()))
+    else if(unsigned && !little)
+        write(byteArrayOf((long ushr 56).toByte(), (long ushr 48).toByte(), (long ushr 40).toByte(), (long ushr 32).toByte(), (long ushr 24).toByte(), (long ushr 16).toByte(),(long ushr 8).toByte(), long.toByte()))
+    else
+        write(byteArrayOf((long ushr 24).toByte(), (long ushr 16).toByte(),(long ushr 8).toByte(), long.toByte()))
 }
 
-fun Long.write(unsigned: Boolean = false): ByteArray {
-    val baos = ByteArrayOutputStream()
-    baos.writeNumber(this, 8, unsigned)
-    return baos.toByteArray()
+fun OutputStream.writeInt(num: Number, unsigned: Boolean = false, little: Boolean = true) {
+    val int = num.toInt()
+    if(unsigned && little)
+        write(byteArrayOfInts(int, int ushr 8, int ushr 16, int ushr 24))
+    else if(!unsigned && little)
+        write(byteArrayOfInts(int, int shr 8, int shr 16, int shr 24))
+    else if(unsigned && !little)
+        write(byteArrayOfInts(int ushr 24, int ushr 16, int ushr 8, int))
+    else
+        write(byteArrayOfInts(int shr 24, int shr 16, int shr 8, int))
 }
 
-fun Int.write(unsigned: Boolean = false): ByteArray {
-    val baos = ByteArrayOutputStream()
-    baos.writeNumber(this.toLong(), 4, unsigned)
-    return baos.toByteArray()
+fun OutputStream.writeShort(num: Number, unsigned: Boolean = false, little: Boolean = true) {
+    val int = num.toShort().toInt()
+    if(unsigned && little)
+        write(byteArrayOfInts(int, int ushr 8))
+    else if(!unsigned && little)
+        write(byteArrayOfInts(int, int shr 8))
+    else if(unsigned && !little)
+        write(byteArrayOfInts(int ushr 8, int))
+    else
+        write(byteArrayOfInts(int shr 8, int))
 }
 
-fun Short.write(unsigned: Boolean = false): ByteArray {
-    val baos = ByteArrayOutputStream()
-    baos.writeNumber(this.toLong(), 2, unsigned)
-    return baos.toByteArray()
-}
-
-fun Byte.write(): ByteArray = ByteArray(1, { this })
+//fun Long.write(unsigned: Boolean = false): ByteArray {
+//    val baos = ByteArrayOutputStream()
+//    baos.writeNumber(this, 8, unsigned)
+//    return baos.toByteArray()
+//}
+//
+//fun Int.write(unsigned: Boolean = false): ByteArray {
+//    val baos = ByteArrayOutputStream()
+//    baos.writeNumber(this.toLong(), 4, unsigned)
+//    return baos.toByteArray()
+//}
+//
+//fun Short.write(unsigned: Boolean = false): ByteArray {
+//    val baos = ByteArrayOutputStream()
+//    baos.writeNumber(this.toLong(), 2, unsigned)
+//    return baos.toByteArray()
+//}
+//
+//fun Byte.write(): ByteArray = ByteArray(1, { this })
 
 fun ByteArray.write(outputStream: OutputStream) {
     outputStream.write(this)

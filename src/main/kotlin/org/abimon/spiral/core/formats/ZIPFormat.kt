@@ -1,10 +1,11 @@
 package org.abimon.spiral.core.formats
 
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.objects.CustomPak
-import org.abimon.visi.io.ByteArrayDataSource
+import org.abimon.spiral.core.objects.CustomSPC
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FunctionDataSource
+import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.io.IOException
@@ -45,25 +46,63 @@ object ZIPFormat : SpiralFormat {
                     val customPak = make<CustomPak> {
                         val zipIn = ZipInputStream(stream)
                         val entries = make<HashMap<String, DataSource>> {
-                            zipIn.forEach { entry ->
-                                val data = ByteArrayDataSource(zipIn.readBytes())
-                                if (convert) {
-                                    val innerFormat = SpiralFormats.formatForData(data)
-                                    val convertTo = innerFormat?.conversions?.firstOrNull()
+                            zipIn.use { zip ->
+                                zip.forEach { entry ->
+                                    val (out, data) = CacheHandler.cacheStream()
+                                    zip.writeTo(out)
 
-                                    if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
-                                        put(entry.name.substringBeforeLast('.'), FunctionDataSource { innerFormat.convertToBytes(convertTo, data, params) })
-                                        return@forEach
+                                    if (convert) {
+                                        val innerFormat = SpiralFormats.formatForData(data)
+                                        val convertTo = innerFormat?.conversions?.firstOrNull()
+
+                                        if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
+                                            val (convOut, convData) = CacheHandler.cacheStream()
+                                            innerFormat.convert(convertTo, data, convOut, params)
+
+                                            put(entry.name.substringBeforeLast('.'), convData)
+                                            return@forEach
+                                        }
                                     }
-                                }
 
-                                put(entry.name.substringBeforeLast('.'), data) }
+                                    put(entry.name.substringBeforeLast('.'), data)
+                                }
+                            }
                         }
 
                         entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> dataSource(data) }
                     }
 
                     customPak.compile(output)
+                }
+            }
+            is SPCFormat -> {
+                val convert = "${params["spc:convert"] ?: false}".toBoolean()
+                source.use { stream ->
+                    val customSpc = make<CustomSPC> {
+                        val zipIn = ZipInputStream(stream)
+                        zipIn.use { zip ->
+                            zip.forEach { entry ->
+                                val (out, data) = CacheHandler.cacheStream()
+                                zip.writeTo(out)
+
+                                if (convert) {
+                                    val innerFormat = SpiralFormats.formatForData(data)
+                                    val convertTo = innerFormat?.conversions?.firstOrNull()
+
+                                    if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
+                                        val (convOut, convData) = CacheHandler.cacheStream()
+                                        innerFormat.convert(convertTo, data, convOut, params)
+                                        file(entry.name.replace(innerFormat.extension ?: "unk", convertTo.extension ?: "unk"), convData)
+                                        return@forEach
+                                    }
+                                }
+
+                                file(entry.name, data)
+                            }
+                        }
+                    }
+
+                    customSpc.compile(output)
                 }
             }
             else -> TODO("NYI PAK -> ${format::class.simpleName}")

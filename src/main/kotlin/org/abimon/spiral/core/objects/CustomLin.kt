@@ -4,7 +4,7 @@ import org.abimon.spiral.core.lin.LinScript
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.toDRBytes
-import org.abimon.spiral.core.writeNumber
+import org.abimon.spiral.core.writeInt
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
@@ -26,16 +26,16 @@ class CustomLin {
     }
 
     fun compile(lin: OutputStream) {
-        lin.writeNumber(type.toLong(), 4, true)
-        lin.writeNumber((header.size + (if (type == 1) 12 else 16)).toLong(), 4, true)
+        lin.writeInt(type.toLong())
+        lin.writeInt((header.size + (if (type == 1) 12 else 16)).toLong())
 
         val entryData = ByteArrayOutputStream()
         val textData = ByteArrayOutputStream()
         val textText = ByteArrayOutputStream()
 
-        textData.writeNumber(entries.count { entry -> entry is TextEntry }.toLong(), 4, true)
+        textData.writeInt(entries.count { entry -> entry is TextEntry }.toLong())
 
-        var textID: Int = 0
+        var textID = 0
 
         if (entries[0] !is TextCountEntry)
             entries.add(0, TextCountEntry(entries.count { entry -> entry is TextEntry }))
@@ -47,7 +47,7 @@ class CustomLin {
 
             if (entry is TextEntry) {
                 val strData = entry.text.toDRBytes()
-                textData.writeNumber((numText * 4L) + 4 + textText.size(), 4, true)
+                textData.writeInt((numText * 4L) + 4 + textText.size())
                 textText.write(strData)
 
                 entryData.write(textID / 256)
@@ -60,10 +60,10 @@ class CustomLin {
         }
 
         if (type == 1)
-            lin.writeNumber((12 + entryData.size() + textData.size() + textText.size()).toLong(), 4, true)
+            lin.writeInt((12 + entryData.size() + textData.size() + textText.size()).toLong())
         else {
-            lin.writeNumber((16 + entryData.size()).toLong(), 4, true)
-            lin.writeNumber((16 + entryData.size() + textData.size() + textText.size()).toLong(), 4, true)
+            lin.writeInt((16 + entryData.size()).toLong())
+            lin.writeInt((16 + entryData.size() + textData.size() + textText.size()).toLong())
         }
 
         lin.write(entryData.toByteArray())
