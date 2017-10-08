@@ -327,10 +327,10 @@ object GurrenOperation {
                 val archiveName = params[i]
                 val archive = SpiralModel.archives.firstOrNull { file -> file.nameWithoutExtension == archiveName || file.absolutePath == archiveName }
                 if (archive == null)
-                    println("Invalid archive $archive")
+                    println("Invalid archive $archiveName")
                 else {
                     SpiralModel.operating = archive
-                    SpiralModel.scope = "[${archive.nameWithoutExtension}]|> " to "operate"
+                    SpiralModel.scope = "[Operation ${archive.nameWithoutExtension}]|> " to "operate"
                     println("Now operating on ${archive.nameWithoutExtension}")
 
                     return@Command
@@ -343,18 +343,19 @@ object GurrenOperation {
         while (true) {
             print("[operate] > ")
             val archiveName = readLine() ?: break
+            if(archiveName == "exit")
+                break
+
             val archive = SpiralModel.archives.firstOrNull { file -> file.nameWithoutExtension == archiveName || file.absolutePath == archiveName }
             if (archive == null)
-                println("Invalid archive $archive")
+                println("Invalid archive $archiveName")
             else {
                 SpiralModel.operating = archive
-                SpiralModel.scope = "[${archive.nameWithoutExtension}]|> " to "operate"
+                SpiralModel.scope = "[Operation ${archive.nameWithoutExtension}]|> " to "operate"
                 println("Now operating on ${archive.nameWithoutExtension}")
 
                 break
             }
         }
     }
-
-    fun process() {}
 }

@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.data
 
 import org.abimon.spiral.util.LoggerLevel
+import java.io.File
 
 data class ModelConfig(
     val archives: Set<String> = emptySet(),
@@ -10,5 +11,7 @@ data class ModelConfig(
     val scope: Pair<String, String> = "> " to "default",
     val operating: String? = null,
     val autoConfirm: Boolean = false,
-    val purgeCache: Boolean = true
+    val purgeCache: Boolean = true,
+    val patchOperation: PatchOperation? = null,
+    val patchFile: File? = null
 )

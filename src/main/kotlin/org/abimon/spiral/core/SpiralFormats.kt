@@ -25,7 +25,7 @@ object SpiralFormats {
 
     val formats: Array<SpiralFormat> = arrayOf(
             WADFormat, CPKFormat, ZIPFormat,
-            TGAFormat, SHTXFormat, DDS1DDSFormat, PNGFormat, JPEGFormat,
+            TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
             IVFFormat, MP4Format,
             LINFormat, SpiralTextFormat,
@@ -33,17 +33,20 @@ object SpiralFormats {
             LLFSFormat,
             GMOModelFormat,
             PAKFormat, SPCFormat,
+
             TXTFormat
     )
 
     val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
     val videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
 
+    val imageFormats: Array<SpiralFormat> = arrayOf(TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat)
+
     val compressionFormats = arrayOf(DRVitaCompressionFormat, CRILAYLAFormat)
 
     val drArchiveFormats = arrayOf(
             WADFormat, CPKFormat,
-            TGAFormat, SHTXFormat, DDS1DDSFormat,
+            TGAFormat, SHTXFormat, DDSFormat,
             LINFormat,
             LLFSFormat,
             GMOModelFormat,

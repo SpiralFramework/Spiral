@@ -20,7 +20,6 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.imageio.ImageIO
-import kotlin.math.ceil
 import kotlin.math.log
 import kotlin.math.min
 
@@ -115,9 +114,9 @@ object SRDFormat {
                             "\$TXR" -> {
                                 val unk1 = data.readUnsignedLittleInt()
                                 val swiz = data.readNumber(2, unsigned = true, little = true)
-                                val disp_width = data.readNumber(2, unsigned = true, little = true)
-                                val disp_height = data.readNumber(2, unsigned = true, little = true)
-                                val scanline = data.readNumber(2, unsigned = true, little = true)
+                                var disp_width = data.readNumber(2, unsigned = true, little = true)
+                                var disp_height = data.readNumber(2, unsigned = true, little = true)
+                                var scanline = data.readNumber(2, unsigned = true, little = true)
                                 val fmt = data.read() and 0xFF
                                 val unk2 = data.read() and 0xFF
                                 val palette = data.read() and 0xFF
@@ -160,10 +159,12 @@ object SRDFormat {
                                     img_data.skip(name_offset)
 
                                     val name = img_data.readZeroString()
-
-                                    (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
+                                    val doMips = "${params["srd:extractMipmaps"] ?: false}".toBoolean()
+                                    if(!doMips)
+                                        (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
 
                                     for (mip in mipmaps.indices) {
+                                        val mipName = if(doMips) "$mip-$name" else name
                                         val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
                                         val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
 //                                    var pal_data: ByteArray? = null
@@ -195,8 +196,8 @@ object SRDFormat {
                                                 else -> bytespp = 2
                                             }
 
-                                            val height = (ceil(disp_height / 8.0) * 8.0).toInt()
-                                            val width = (ceil(disp_width / 8.0) * 8.0).toInt()
+                                            val width: Int = disp_width.toInt() //(scanline / bytespp).toInt()
+                                            val height: Int = disp_height.toInt()
 
                                             val processing: InputStream
 
@@ -206,8 +207,6 @@ object SRDFormat {
                                                 processing = processingData.inputStream()
                                             } else
                                                 processing = new_img_stream
-
-                                            val test = arrayOf(1, 2, 3, 4)
 
                                             when (fmt) {
                                                 0x01 -> {
@@ -222,7 +221,7 @@ object SRDFormat {
                                                             resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
                                                         }
                                                     }
-                                                    images[name] = resultingImage.mapToModel(model, params)
+                                                    images[mipName] = resultingImage.mapToModel(model, params)
                                                 }
                                                 else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
                                             }
@@ -258,7 +257,7 @@ object SRDFormat {
 
                                             val processingStream: InputStream
 
-                                            trace("Does $name need deswizzling? ${swizzled && width >= 4 && height >= 4}")
+                                            trace("Does $mipName need deswizzling? ${swizzled && width >= 4 && height >= 4}")
 
                                             if (swizzled && width >= 4 && height >= 4) {
                                                 val processingData = new_img_stream.use { it.readBytes() }
@@ -268,8 +267,8 @@ object SRDFormat {
                                                 processingStream = new_img_stream
 
                                             when (fmt) {
-                                                0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
-                                                0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
+                                                0x0F -> images[mipName] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
+                                                0x1C -> images[mipName] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 else -> {
                                                     debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                                 }
@@ -286,7 +285,11 @@ object SRDFormat {
                                         }
 
                                         if (LoggerLevel.TRACE.enabled)
-                                            otherData["info-$name.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
+                                            otherData["info-$mipName.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
+
+                                        disp_width = maxOf(1, disp_width / 2)
+                                        disp_height = maxOf(1, disp_height / 2)
+                                        scanline = maxOf(1, scanline / 2)
                                     }
                                 }
                             }

@@ -8,6 +8,7 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.data.ModelConfig
+import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
@@ -25,6 +26,9 @@ object SpiralModel {
     var concurrentOperations: Int by saveDelegate(4)
     var autoConfirm: Boolean by saveDelegate(false)
     var purgeCache: Boolean by saveDelegate(true)
+
+    var patchOperation: PatchOperation? by saveDelegate(null)
+    var patchFile: File? by saveDelegate(null)
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -62,6 +66,8 @@ object SpiralModel {
         operating = if(config.operating == null) null else File(config.operating)
         autoConfirm = config.autoConfirm
         purgeCache = config.purgeCache
+        patchOperation = config.patchOperation
+        patchFile = config.patchFile
 
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
@@ -83,7 +89,10 @@ object SpiralModel {
     }
 
     val config: ModelConfig
-        get() = ModelConfig(archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache)
+        get() = ModelConfig(
+                archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
+                patchOperation, patchFile
+        )
 
     init { load() }
 

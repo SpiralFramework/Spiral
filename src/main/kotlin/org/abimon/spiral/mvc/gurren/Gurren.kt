@@ -355,6 +355,10 @@ object Gurren {
         println(FlipTable.of(arrayOf("File", "Output File", "Old Format", "New Format"), rows.toTypedArray()))
     }
 
+    val patch = Command("patch") { (params) ->
+
+    }
+
     val join = Command("join") { (params) ->
         if (!MediaWrapper.ffmpeg.isInstalled)
             return@Command errPrintln("Error: ffmpeg is not installed")

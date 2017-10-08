@@ -18,7 +18,7 @@ class WADArchive(override val archiveFile: File): IArchive {
             PNGFormat to TGAFormat,
             JPEGFormat to TGAFormat,
             SHTXFormat to TGAFormat,
-            DDS1DDSFormat to TGAFormat
+            DDSFormat to TGAFormat
     )
 
     override fun compile(newEntries: List<Pair<String, DataSource>>, outputStream: OutputStream) {

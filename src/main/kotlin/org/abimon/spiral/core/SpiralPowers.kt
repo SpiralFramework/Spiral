@@ -106,16 +106,42 @@ operator fun AtomicInteger.inc(): AtomicInteger {
     return this
 }
 
+fun OutputStream.writeNumber(num: Number, bytesNum: Int, unsigned: Boolean = false, little: Boolean = true) {
+    when(bytesNum) {
+        8 -> writeLong(num, unsigned, little)
+        4 -> writeInt(num, unsigned, little)
+        2 -> writeShort(num, unsigned, little)
+        1 -> write(num.toByte().toInt())
+        else -> {
+            val long = num.toLong()
+            val bytes = bytesNum.coerceAtMost(BITS_LOOKUP_TABLE.size)
+            if(unsigned && little) {
+                for(i in 0 until bytes)
+                    write((long ushr BITS_LOOKUP_TABLE[i]).toByte().toInt())
+            } else if(!unsigned && little) {
+                for (i in 0 until bytes)
+                    write((long shr BITS_LOOKUP_TABLE[i]).toByte().toInt())
+            } else if(unsigned && !little) {
+                for(i in (0 until bytes).reversed())
+                    write((long ushr BITS_LOOKUP_TABLE[i]).toByte().toInt())
+            } else {
+                for(i in (0 until bytes).reversed())
+                    write((long shr BITS_LOOKUP_TABLE[i]).toByte().toInt())
+            }
+        }
+    }
+}
+
 fun OutputStream.writeLong(num: Number, unsigned: Boolean = false, little: Boolean = true) {
     val long = num.toLong()
     if(unsigned && little)
         write(byteArrayOf(long.toByte(), (long ushr 8).toByte(), (long ushr 16).toByte(), (long ushr 24).toByte(), (long ushr 32).toByte(), (long ushr 40).toByte(), (long ushr 48).toByte(), (long ushr 56).toByte()))
     else if(!unsigned && little)
-        write(byteArrayOf(long.toByte(), (long ushr 8).toByte(), (long ushr 16).toByte(), (long ushr 24).toByte(), (long ushr 32).toByte(), (long ushr 40).toByte(), (long ushr 48).toByte(), (long ushr 56).toByte()))
+        write(byteArrayOf(long.toByte(), (long shr 8).toByte(), (long shr 16).toByte(), (long shr 24).toByte(), (long shr 32).toByte(), (long shr 40).toByte(), (long shr 48).toByte(), (long shr 56).toByte()))
     else if(unsigned && !little)
         write(byteArrayOf((long ushr 56).toByte(), (long ushr 48).toByte(), (long ushr 40).toByte(), (long ushr 32).toByte(), (long ushr 24).toByte(), (long ushr 16).toByte(),(long ushr 8).toByte(), long.toByte()))
     else
-        write(byteArrayOf((long ushr 24).toByte(), (long ushr 16).toByte(),(long ushr 8).toByte(), long.toByte()))
+        write(byteArrayOf((long shr 56).toByte(), (long shr 48).toByte(), (long shr 40).toByte(), (long shr 32).toByte(), (long shr 24).toByte(), (long shr 16).toByte(),(long shr 8).toByte(), long.toByte()))
 }
 
 fun OutputStream.writeInt(num: Number, unsigned: Boolean = false, little: Boolean = true) {

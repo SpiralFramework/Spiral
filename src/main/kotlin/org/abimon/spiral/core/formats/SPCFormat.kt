@@ -18,7 +18,6 @@ object SPCFormat : SpiralFormat {
         try {
             return SPC(source).files.size >= 1
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
         }
         return false
     }
