@@ -65,7 +65,8 @@ object SRDFormat {
         if (images.isEmpty() && !LoggerLevel.TRACE.enabled)
             return false
 
-        val format = params["srd:format"]?.toString() ?: "PNG"
+        /** Gotta get some form of easy conversion from PNG to this working, might make use of builtins? But that's a lot of writing to and from streams.... */
+        val format = "PNG" //params["srd:format"]?.toString() ?: "PNG"
         when (to) {
             is PNGFormat -> ImageIO.write(images.entries.first().value, "PNG", output)
             is ZIPFormat -> {
