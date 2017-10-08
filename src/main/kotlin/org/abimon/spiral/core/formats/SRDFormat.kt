@@ -54,7 +54,7 @@ object SRDFormat {
 
                     val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
-                    readSRD(srdEntry, img, if(model != null) SRDIModel(model) else null, otherEntries, images)
+                    readSRD(srdEntry, img, if(model != null) SRDIModel(model) else null, otherEntries, images, params)
                 }
 
                 others.forEach { entry -> otherEntries[entry.name] = entry }
@@ -90,7 +90,7 @@ object SRDFormat {
         return true
     }
 
-    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>) {
+    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
         srd.seekableUse { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
@@ -204,6 +204,8 @@ object SRDFormat {
                                             } else
                                                 processing = new_img_stream
 
+                                            val test = arrayOf(1, 2, 3, 4)
+
                                             when (fmt) {
                                                 0x01 -> {
                                                     val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
@@ -217,7 +219,7 @@ object SRDFormat {
                                                             resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
                                                         }
                                                     }
-                                                    images[name] = resultingImage.mapToModel(model)
+                                                    images[name] = resultingImage.mapToModel(model, params)
                                                 }
                                                 else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
                                             }
@@ -263,8 +265,8 @@ object SRDFormat {
                                                 processingStream = new_img_stream
 
                                             when (fmt) {
-                                                0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model)
-                                                0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model)
+                                                0x0F -> images[name] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
+                                                0x1C -> images[name] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 else -> {
                                                     debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                                 }
@@ -366,13 +368,14 @@ object SRDFormat {
         }
     }
 
-    fun BufferedImage.mapToModel(model: SRDIModel?): BufferedImage {
+    fun BufferedImage.mapToModel(model: SRDIModel?, params: Map<String, Any?>): BufferedImage {
         if(model != null)
-            return mapImageToModel(this, model)
+            return mapImageToModel(this, model, params)
         return this
     }
 
-    fun mapImageToModel(img: BufferedImage, model: SRDIModel): BufferedImage {
+    fun mapImageToModel(img: BufferedImage, model: SRDIModel, params: Map<String, Any?>): BufferedImage {
+        val antialias = "${params["srd:antialiasing"] ?: true}".toBoolean()
         val area = Area()
         model.faces.forEach { (one, two, three) ->
             try {
@@ -387,16 +390,34 @@ object SRDFormat {
             }
         }
 
-        val g = img.createGraphics()
-        val allBut = Area(Rectangle(0, 0, img.width, img.height))
-        allBut.subtract(area)
+        if(antialias) {
+            val newImg = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB)
+            val g = newImg.createGraphics()
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-        g.clip = allBut
-        g.color = Color.BLACK
-        g.composite = AlphaComposite.Clear
-        g.fillRect(0, 0, img.width, img.height)
+            g.composite = AlphaComposite.Src
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+            g.color = Color.WHITE
+            g.fill(area)
 
-        return img
+            g.composite = AlphaComposite.SrcIn
+            g.drawImage(img, 0, 0, null)
+
+            g.dispose()
+
+            return newImg
+        } else {
+            val g = img.createGraphics()
+            val allBut = Area(Rectangle(0, 0, img.width, img.height))
+            allBut.subtract(area)
+
+            g.clip = allBut
+            g.color = Color.BLACK
+            g.composite = AlphaComposite.Clear
+            g.fillRect(0, 0, img.width, img.height)
+
+            g.dispose()
+
+            return img
+        }
     }
 }
