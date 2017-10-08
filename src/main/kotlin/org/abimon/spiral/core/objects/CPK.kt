@@ -16,10 +16,14 @@ class CPK(val dataSource: DataSource) {
     val fileTable: MutableList<CPKFileEntry> = ArrayList()
     val headerInfo: UTFTableInfo
     val tocHeader: UTFTableInfo
-//    val etocHeader: UTFTableInfo
-//    val gtocHeader: UTFTableInfo
+    val etocHeader: UTFTableInfo?
+    val gtocHeader: UTFTableInfo?
 
     companion object {
+        val CPK_MAGIC = "CPK "
+
+
+
         val COLUMN_STORAGE_MASK = 0xF0
         val COLUMN_STORAGE_PERROW = 0x50
         val COLUMN_STORAGE_CONSTANT = 0x30
@@ -112,8 +116,8 @@ class CPK(val dataSource: DataSource) {
         try {
             val cpkMagic = cpk.readString(4)
 
-            if (cpkMagic != "CPK ")
-                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (Magic '$cpkMagic' ≠ 'CPK ')!")
+            if (cpkMagic != CPK_MAGIC)
+                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (Magic '$cpkMagic' ≠ '$CPK_MAGIC')!")
 
             headerInfo = readTable(dataSource, 0x10)
             if (headerInfo.rows != 1L)
@@ -136,22 +140,28 @@ class CPK(val dataSource: DataSource) {
             if (tocHeader.rows != fileCount.toLong())
                 throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (TocHeader#rows '${tocHeader.rows}' ≠ CpkHeader#Files '$fileCount')!")
 
-//            cpk.seek(etocOffset)
+//            if(etocOffset > 0) {
+//                cpk.seek(etocOffset)
 //
-//            val etocSignature = cpk.readString(4)
-//            if (etocSignature != "ETOC")
-//                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (ETOC Signature at $etocOffset '$etocSignature' ≠ 'ETOC')!")
+//                val etocSignature = cpk.readString(4)
+//                if (etocSignature != "ETOC")
+//                    throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (ETOC Signature at $etocOffset '$etocSignature' ≠ 'ETOC')!")
 //
-//            etocHeader = readTable(dataSource, etocOffset + 0x10)
+//                etocHeader = readTable(dataSource, etocOffset + 0x10)
+//            } else
+                etocHeader = null
+
+//            if(gtocOffset > 0) {
+//                cpk.seek(gtocOffset)
 //
-//            cpk.seek(gtocOffset)
+//                val gtocSignature = cpk.readString(4)
+//                if (gtocSignature != "GTOC")
+//                    throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (GTOC Signature at $gtocOffset '$gtocSignature' ≠ 'GTOC')!")
 //
-//            val gtocSignature = cpk.readString(4)
-//            if (gtocSignature != "GTOC")
-//                throw IllegalArgumentException("${dataSource.location} is either not a CPK file, or a corrupted/invalid one (GTOC Signature at $gtocOffset '$gtocSignature' ≠ 'GTOC')!")
-//
-//            gtocHeader = readTable(dataSource, gtocOffset + 0x10)
-//
+//                gtocHeader = readTable(dataSource, gtocOffset + 0x10)
+//            } else
+                gtocHeader = null
+
             val filenames = tocHeader.getRows(dataSource, "FileName").map { (_, _, name) -> name as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR) }
             val dirnames = tocHeader.getRows(dataSource, "DirName").map { (_, _, name) -> name as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR) }
             val fileSizes = tocHeader.getRows(dataSource, "FileSize").map { (_, _, size) -> (size as? Number ?: -1).toLong() }

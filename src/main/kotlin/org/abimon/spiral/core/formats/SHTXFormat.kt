@@ -7,7 +7,6 @@ import org.abimon.spiral.core.toTGA
 import org.abimon.visi.collections.coerceAtMost
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readChunked
-import org.abimon.visi.io.readPartialBytes
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.OutputStream
@@ -44,9 +43,9 @@ object SHTXFormat : SpiralFormat {
             if (shtx != "SHTX")
                 throw IllegalArgumentException("${source.location} does not conform to the $name format (First four bytes do not spell [SHTX], spell $shtx)")
 
-            val version = stream.readPartialBytes(2, 2)
+            val version = stream.readString(2)
 
-            when (String(version)) {
+            when (version) {
                 "Fs" -> {
                     val width = stream.readNumber(2, unsigned = true).toInt()
                     val height = stream.readNumber(2, unsigned = true).toInt()

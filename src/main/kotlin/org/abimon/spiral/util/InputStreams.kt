@@ -43,6 +43,11 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
         count += amount
         return amount
     }
+
+    override fun reset() {
+        super.reset()
+        count = 0L
+    }
 }
 
 class OffsetInputStream(offsetInputStream: InputStream, val offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {

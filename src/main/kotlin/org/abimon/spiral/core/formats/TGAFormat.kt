@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.formats
 
 import net.npe.tga.TGAReader
+import org.abimon.spiral.core.byteArrayOfInts
 import org.abimon.spiral.core.toJPG
 import org.abimon.spiral.core.writeShort
 import org.abimon.visi.io.DataSource
@@ -51,7 +52,7 @@ object TGAFormat : SpiralFormat {
                     output.writeShort(img.height)
                     output.writeShort(0)
 
-                    palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
                 } else {
                     palette = palette.distinctBy { it.rgb }
 
@@ -60,7 +61,7 @@ object TGAFormat : SpiralFormat {
                     output.writeShort(img.height)
                     output.writeShort(0)
 
-                    palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
 
                     img.run {
                         for (y in 0 until height)

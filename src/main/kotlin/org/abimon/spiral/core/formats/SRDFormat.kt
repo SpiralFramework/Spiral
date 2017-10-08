@@ -31,6 +31,9 @@ object SRDFormat {
     }
 
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(!"${params["srd:convert"] ?: true}".toBoolean())
+            return false
+
         val otherEntries: MutableMap<String, DataSource> = HashMap()
         val images: MutableMap<String, BufferedImage> = HashMap()
         val mapToModels: Boolean = "${params["srd:mapToModels"] ?: true}".toBoolean()

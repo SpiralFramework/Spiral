@@ -3,6 +3,7 @@ package org.abimon.spiral.mvc.gurren
 import com.jakewharton.fliptables.FlipTable
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.SpiralData
@@ -292,6 +293,26 @@ object GurrenOperation {
 
                 val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.run { "${first.name} v$second" } ?: "Unknown") }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
+            }
+            is CPKArchive -> {
+                val cpk = (operatingArchive as CPKArchive).cpk
+
+                val matching = cpk.fileTable.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.run { "${first.name} v$second" } ?: "Unknown") }.toTypedArray()
+                println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
+            }
+        }
+    }
+
+    val test = Command("test", "operate") {
+        when(operatingArchive) {
+            is CPKArchive -> {
+                val cpk = (operatingArchive as CPKArchive).cpk
+                if(cpk.etocHeader == null)
+                    return@Command
+
+                File("Etoc-V3.txt").printWriter().use { writer ->
+                    cpk.etocHeader.dump(cpk.dataSource).forEach { columnName, (row, columnType, data) -> writer.println("$columnName[$row]: $columnType / $data") }
+                }
             }
         }
     }

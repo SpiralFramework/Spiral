@@ -13,8 +13,8 @@ object DRVitaCompressionFormat : SpiralFormat {
     override val extension: String? = null
     override val conversions: Array<SpiralFormat> = arrayOf(SpiralFormat.BinaryFormat)
 
-    val CMP_MAGIC = org.abimon.visi.collections.byteArrayOf(0xFC, 0xAA, 0x55, 0xA7)
-    val GX3_MAGIC = org.abimon.visi.collections.byteArrayOf(0x47, 0x58, 0x33, 0x00)
+    val CMP_MAGIC = byteArrayOfInts(0xFC, 0xAA, 0x55, 0xA7)
+    val GX3_MAGIC = byteArrayOfInts(0x47, 0x58, 0x33, 0x00)
 
     override fun isFormat(source: DataSource): Boolean = source.use { it.read(4) equals CMP_MAGIC }
 

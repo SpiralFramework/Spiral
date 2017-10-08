@@ -1,6 +1,5 @@
 package org.abimon.spiral.core.formats
 
-import org.abimon.visi.collections.byteArrayOf
 import org.abimon.visi.io.DataSource
 
 object OggFormat: SpiralFormat {

@@ -134,7 +134,7 @@ object DDS1DDSFormat : SpiralFormat {
                     output.writeShort(img.height)
                     output.writeShort(0)
 
-                    palette.forEach { colour -> output.write(org.abimon.visi.collections.byteArrayOf(colour.red, colour.green, colour.blue, colour.alpha)) }
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
 
                     img.run {
                         for(y in 0 until height)

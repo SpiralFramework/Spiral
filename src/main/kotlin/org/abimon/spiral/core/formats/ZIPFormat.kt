@@ -17,7 +17,7 @@ import kotlin.Comparator
 object ZIPFormat : SpiralFormat {
     override val name = "ZIP"
     override val extension = "zip"
-    override val conversions: Array<SpiralFormat> = arrayOf(PAKFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(PAKFormat, SPCFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -49,7 +49,7 @@ object ZIPFormat : SpiralFormat {
                             zipIn.use { zip ->
                                 zip.forEach { entry ->
                                     val (out, data) = CacheHandler.cacheStream()
-                                    zip.writeTo(out)
+                                    zip.writeTo(out, closeAfter = false)
 
                                     if (convert) {
                                         val innerFormat = SpiralFormats.formatForData(data)
@@ -82,8 +82,11 @@ object ZIPFormat : SpiralFormat {
                         val zipIn = ZipInputStream(stream)
                         zipIn.use { zip ->
                             zip.forEach { entry ->
+                                if(entry.name.startsWith(".") || entry.name.startsWith("__"))
+                                    return@forEach
+
                                 val (out, data) = CacheHandler.cacheStream()
-                                zip.writeTo(out)
+                                zip.writeTo(out, closeAfter = false)
 
                                 if (convert) {
                                     val innerFormat = SpiralFormats.formatForData(data)
