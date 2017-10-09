@@ -4,6 +4,7 @@ import com.jakewharton.fliptables.FlipTable
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.CPKArchive
+import org.abimon.spiral.core.archives.FlatFileArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.SpiralData
@@ -189,18 +190,23 @@ object GurrenOperation {
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { this relativePathFrom directory })
         println("")
         if(question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")) {
-            val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
-            val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
-            try {
-                FileOutputStream(tmpFile).use { operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) }, it) }
+            if(operatingArchive is FlatFileArchive) {
+                (operatingArchive as FlatFileArchive).compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) })
+                println("[$operatingName] Successfully compiled ${matching.size} files into ${SpiralModel.operating!!}")
+            } else {
+                val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
+                val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
+                try {
+                    FileOutputStream(tmpFile).use { operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) }, it) }
 
-                if(backupFile.exists()) backupFile.delete()
-                SpiralModel.operating!!.renameTo(backupFile)
-                tmpFile.renameTo(SpiralModel.operating!!)
+                    if (backupFile.exists()) backupFile.delete()
+                    SpiralModel.operating!!.renameTo(backupFile)
+                    tmpFile.renameTo(SpiralModel.operating!!)
 
-                println("[$operatingName] Successfully compiled ${matching.size} files into $operatingName.wad")
-            } finally {
-                tmpFile.delete()
+                    println("[$operatingName] Successfully compiled ${matching.size} files into ${SpiralModel.operating!!}")
+                } finally {
+                    tmpFile.delete()
+                }
             }
         }
     }

@@ -6,7 +6,9 @@ import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.formats.PNGFormat
 import org.abimon.spiral.core.formats.SPCFormat
 import org.abimon.spiral.core.formats.ZIPFormat
+import org.abimon.spiral.core.objects.CustomSPC
 import org.abimon.spiral.core.objects.CustomSRD
+import org.abimon.spiral.core.objects.SPC
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.joinToPrefixedString
@@ -15,6 +17,7 @@ import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.child
+import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.awt.image.BufferedImage
 import java.io.File
@@ -143,6 +146,64 @@ object GurrenPatching {
                     srdv = srdvIn
                     srdvName = srdvFiles.first().name
                 }
+            } else if(SPCFormat.isFormat(patchingData)) {
+                val spc = SPC(patchingData)
+
+                val srdFiles = spc.files.filter { entry -> entry.name.endsWith(".srd") }
+                val srdvFiles = spc.files.filter { entry -> entry.name.endsWith(".srdv") }
+
+                if (srdFiles.isEmpty())
+                    return@Command errPrintln("[$patchingName] $patchFile does not contain any SRD files")
+
+                if (srdvFiles.isEmpty())
+                    return@Command errPrintln("[$patchingName] $patchFile does not contain any SRDV files")
+
+                if (srdFiles.size > 1) {
+                    println("[$patchingName] $patchFile contains multiple SRD files. Please select one from the following list: ")
+
+                    println(srdFiles.joinToPrefixedString("\n", "\t[$patchingName] ") { name })
+
+                    while (true) {
+                        print("[$patchingName]|[Choose SRD]|> ")
+                        srdName = readLine() ?: break
+                        if (srdName == "exit")
+                            return@Command
+
+                        val srdEntry = srdFiles.firstOrNull { entry -> entry.name == srdName }
+                        if (srdEntry == null)
+                            println("Invalid srd file $srdName")
+                        else {
+                            srd = srdEntry
+                            break
+                        }
+                    }
+                } else {
+                    srd = srdFiles.first()
+                    srdName = srdFiles.first().name
+                }
+                if (srdvFiles.size > 1) {
+                    println("[$patchingName] $patchFile contains multiple SRDV files. Please select one from the following list: ")
+
+                    println(srdvFiles.joinToPrefixedString("\n", "\t[$patchingName] ") { name })
+
+                    while (true) {
+                        print("[$patchingName]|[Choose SRDV]|> ")
+                        srdvName = readLine() ?: break
+                        if (srdvName == "exit")
+                            return@Command
+
+                        val srdvEntry = srdvFiles.firstOrNull { entry -> entry.name == srdvName }
+                        if (srdvEntry == null)
+                            println("Invalid srdv file $srdvName")
+                        else {
+                            srdv = srdvEntry
+                            break
+                        }
+                    }
+                } else {
+                    srdv = srdvFiles.first()
+                    srdvName = srdvFiles.first().name
+                }
             } else
                 throw IllegalStateException("$patchFile is not of a compatible format to be performing these operations")
 
@@ -173,8 +234,22 @@ object GurrenPatching {
 
                     patchFile.outputStream().use(cacheIn::pipe)
                 }
-            }
+            } else if(SPCFormat.isFormat(patchingData)) {
+                val (cacheOut, cacheIn) = CacheHandler.cacheStream()
+                val spc = SPC(patchingData)
 
+                val customSPC = make<CustomSPC> {
+                    spc.files.forEach { entry ->
+                        when {
+                            entry.name == srdName -> file(entry.name, srdIn)
+                            entry.name == srdvName -> file(entry.name, srdvIn)
+                            else -> file(entry.name, entry)
+                        }
+                    }
+                }
+                cacheOut.use(customSPC::compile) //Cache it temporarily
+                patchFile.outputStream().use(cacheIn::pipe)
+            }
         } else
             errPrintln("[$patchingName] Error: $file does not exist")
     }

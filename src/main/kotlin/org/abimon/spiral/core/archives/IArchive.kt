@@ -21,6 +21,6 @@ interface IArchive {
         )
         val EXTENSIONS: Set<String> = archiveExtensions.keys
 
-        operator fun invoke(file: File): IArchive? = archiveExtensions[file.extension.toLowerCase()]?.invoke(file)
+        operator fun invoke(file: File): IArchive? = if(file.isDirectory) FlatFileArchive(file) else archiveExtensions[file.extension.toLowerCase()]?.invoke(file)
     }
 }

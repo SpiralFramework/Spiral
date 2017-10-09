@@ -150,12 +150,7 @@ object Gurren {
             return@Command
         }
 
-        if (!archive.isFile) {
-            errPrintln("Error: $archive is not a file!")
-            return@Command
-        }
-
-        if (archive.extension !in IArchive.EXTENSIONS) {
+        if (archive.extension !in IArchive.EXTENSIONS && !archive.isDirectory) {
             errPrintln("Error: $archive is not an archive file!")
             return@Command
         }

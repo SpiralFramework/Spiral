@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import kotlin.system.measureNanoTime
 
-class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val dec_size: Int, val name: String, val offset: Long, val parent: SPC): DataSource {
+data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long, val dec_size: Long, val name: String, val offset: Long, val parent: SPC): DataSource {
     override val data: ByteArray
         get() = dataSource.use { it.readBytes() }
     override val inputStream: InputStream
@@ -21,20 +21,20 @@ class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Int, val 
     override val seekableInputStream: InputStream
         get() = dataSource.seekableInputStream
     override val size: Long
-        get() = dec_size.toLong()
+        get() = dec_size
 
     val rawInputStream: InputStream
-        get() = OffsetInputStream(parent.dataSource.inputStream, offset, cmp_size.toLong())
+        get() = OffsetInputStream(parent.dataSource.inputStream, offset, cmp_size)
 
     val dataSource: DataSource by lazy {
-        val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${location.md5Hash()}.dat")
+        val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${"$location-$cmp_size".md5Hash()}.dat")
 
         if(!initialised) {
             val nano = measureNanoTime {
                 raf.use { raw ->
                     raw.channel.use { access ->
                         when (cmp_flag) {
-                            0x01 -> rawInputStream.use { it.readChunked { chunk -> access.write(ByteBuffer.wrap(chunk)) } }
+                            0x01 -> rawInputStream.use { it.readChunked { chunk -> raw.write(chunk) } }
                             0x02 -> {
                                 var flag = 1
 

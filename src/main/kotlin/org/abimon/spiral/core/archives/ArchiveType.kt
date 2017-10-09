@@ -4,5 +4,6 @@ enum class ArchiveType {
     WAD,
     CPK,
     ZIP,
+    FLAT_FILE,
     UNKNOWN
 }

@@ -51,7 +51,7 @@ class SPC(val dataSource: DataSource) {
                 val name = stream.readString(name_len.toInt() - 1)
                 stream.skip(name_padding + 1)
 
-                files.add(SPCFileEntry(cmp_flag.toInt(), unk_flag.toInt(), cmp_size.toInt(), dec_size.toInt(), name, stream.count, this))
+                files.add(SPCFileEntry(cmp_flag.toInt(), unk_flag.toInt(), cmp_size, dec_size, name, stream.count, this))
                 stream.skip(cmp_size + data_padding)
             }
         }
