@@ -41,7 +41,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
     compile('org.abimon:Imperator:4')
-    compile('org.abimon:Visi:25')
+    compile('org.abimon:Visi:26')
     compile('org.abimon:ModBrowser:2')
     compile('org.abimon:Karnage:5')
 
