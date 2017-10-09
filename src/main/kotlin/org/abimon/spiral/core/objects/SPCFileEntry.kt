@@ -37,10 +37,12 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
                             0x01 -> rawInputStream.use { it.readChunked { chunk -> raw.write(chunk) } }
                             0x02 -> {
                                 var flag = 1
+                                //val buffer = ByteArrayOutputStream()
 
                                 rawInputStream.use { stream ->
                                     try {
-                                        val buffer = ByteBuffer.allocateDirect(8192)
+                                        val buffer = ByteBuffer.allocateDirect(4096)
+                                        val tmp = ByteBuffer.allocateDirect(4096)
                                         loop@ while (stream.available() > 0) {
                                             if (flag == 1)
                                                 flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
@@ -49,7 +51,7 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
                                                 break@loop
 
                                             if (flag and 1 == 1) {
-                                                raw.write(stream.read())
+                                                buffer.put(stream.read().toByte())
                                             } else {
                                                 val x = stream.read()
                                                 val y = stream.read()
@@ -58,21 +60,38 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
                                                 val count = (b shr 10) + 2
                                                 val offset = b and 0b1111111111
 
-                                                val r = access.size() + (offset - 1024)
-                                                buffer.limit(count)
-                                                val read = access.read(buffer, r)
-                                                if (read < count) {
-                                                    for (j in read until count)
-                                                        buffer.put(buffer[j % read])
+                                                val r = buffer.position() + (offset - 1024)
+                                                val overflow = count - buffer.position()
+                                                if(overflow < 0) {
+                                                    for (j in 0 until count)
+                                                        buffer.put(buffer[r + j])
+                                                } else {
+                                                    for (j in 0 until count) {
+                                                        buffer.put(buffer[r + (j % overflow)])
+                                                    }
                                                 }
+                                            }
 
+                                            if(buffer.position() >= 2048) {
+                                                val oldLimit = buffer.position()
                                                 buffer.flip()
+                                                buffer.limit(1024)
                                                 access.write(buffer)
+
+                                                buffer.limit(oldLimit)
+                                                tmp.put(buffer)
                                                 buffer.clear()
+                                                tmp.flip()
+                                                buffer.put(tmp)
+                                                tmp.clear()
                                             }
 
                                             flag = flag shr 1
                                         }
+
+
+                                        buffer.flip()
+                                        access.write(buffer)
                                     } catch (oom: OutOfMemoryError) {
                                         println("OOM Error: ${oom.exportStackTrace()}")
                                     }
