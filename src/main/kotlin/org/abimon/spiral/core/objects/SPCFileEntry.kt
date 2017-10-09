@@ -62,7 +62,7 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
 
                                                 val r = buffer.position() + (offset - 1024)
                                                 val overflow = count - buffer.position()
-                                                if(overflow < 0) {
+                                                if(overflow <= 0) {
                                                     for (j in 0 until count)
                                                         buffer.put(buffer[r + j])
                                                 } else {
