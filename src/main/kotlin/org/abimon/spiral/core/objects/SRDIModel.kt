@@ -18,7 +18,7 @@ class SRDIModel(data: DataSource) {
         data.use { stream ->
             var doingFaces = false
             
-            stream@while(stream.available() > 48) {
+            stream@while(stream.available() >= 48) {
                 val buffer = ByteArray(48).apply { stream.read(this) }
 
                 if(!doingFaces && buffer.copyOfRange(0, 6) contentEquals sequence)
