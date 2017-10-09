@@ -383,11 +383,11 @@ object SRDFormat {
     fun mapImageToModel(img: BufferedImage, model: SRDIModel, params: Map<String, Any?>): BufferedImage {
         val antialias = "${params["srd:antialiasing"] ?: true}".toBoolean()
         val area = Area()
-        model.faces.forEach { (one, two, three) ->
+        model.meshes[0].faces.forEach { (one, two, three) ->
             try {
-                val u1 = model.uvs[one]
-                val u2 = model.uvs[two]
-                val u3 = model.uvs[three]
+                val u1 = model.meshes[0].uvs[one]
+                val u2 = model.meshes[0].uvs[two]
+                val u3 = model.meshes[0].uvs[three]
 
                 area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
             } catch(ioob: IndexOutOfBoundsException) {
