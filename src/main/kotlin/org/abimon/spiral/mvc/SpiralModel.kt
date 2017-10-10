@@ -4,6 +4,8 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
+import org.abimon.imperator.handle.Imperator
+import org.abimon.imperator.impl.BasicImperator
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.imperator.impl.InstanceWatchtower
@@ -18,6 +20,8 @@ import kotlin.properties.Delegates
 import kotlin.properties.ReadWriteProperty
 
 object SpiralModel {
+    val imperator: Imperator = BasicImperator()
+
     val archives: MutableSet<File> = ConcurrentSkipListSet()
     var operating: File? by saveDelegate(null)
     var scope: Pair<String, String> by saveDelegate("> " to "default")

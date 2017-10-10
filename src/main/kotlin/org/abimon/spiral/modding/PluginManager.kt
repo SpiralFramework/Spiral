@@ -2,6 +2,7 @@ package org.abimon.spiral.modding
 
 import com.fasterxml.jackson.core.JsonParseException
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.lang.and
 import java.io.File
 import java.io.IOException
@@ -11,7 +12,11 @@ import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
 object PluginManager {
-    val PLUGIN_FOLDER = File("plugins")
+    val PLUGIN_FOLDER = File("plugins").apply {
+        if(!exists())
+            mkdir()
+    }
+
     val pluginsInFolder: MutableMap<String, Triple<File, PluginConfig, Boolean>> = HashMap() //File to PluginConfig to Signed
 
     val loadedPlugins: MutableMap<String, Triple<File, PluginConfig, IPlugin>> = HashMap()
@@ -34,7 +39,7 @@ object PluginManager {
 
                 val yamlEntry = zip.getEntry("plugin.yaml") ?: return null
 
-                return SpiralData.MAPPER.readValue(zip.getInputStream(yamlEntry), PluginConfig::class.java)
+                return SpiralData.YAML_MAPPER.readValue(zip.getInputStream(yamlEntry), PluginConfig::class.java)
             }
         } catch (io: IOException) {
             return null
@@ -46,8 +51,13 @@ object PluginManager {
     fun isSigned(uid: String, file: File): Boolean = true //Tmp hack
 
     fun loadPlugin(uid: String): Boolean {
-        if(pluginsInFolder.containsKey(uid))
-            return loadClasses(pluginsInFolder[uid]!!.first)
+        if(pluginsInFolder.containsKey(uid)) {
+            if(!loadClasses(pluginsInFolder[uid]!!.first))
+                return false
+            (loadedPlugins[uid] ?: return false).third.enable(SpiralModel.imperator)
+
+            return true
+        }
 
         return false
     }
