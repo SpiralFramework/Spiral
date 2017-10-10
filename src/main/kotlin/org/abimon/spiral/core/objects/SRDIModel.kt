@@ -60,6 +60,9 @@ class SRDIModel(data: DataSource) {
                         val b = toShort(buffer, true, true, i * 6 + 2)
                         val c = toShort(buffer, true, true, i * 6 + 4)
 
+                        if(a !in uvs.indices || b !in uvs.indices || c !in uvs.indices)
+                            break@stream
+
                         faces.add(a to b and c)
                     }
                 }
