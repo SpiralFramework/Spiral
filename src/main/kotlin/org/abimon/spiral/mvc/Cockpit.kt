@@ -5,6 +5,7 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.SRDFormat
+import org.abimon.spiral.modding.PluginManager
 import org.abimon.spiral.mvc.gurren.Gurren
 import org.abimon.spiral.mvc.gurren.GurrenOperation
 import org.abimon.spiral.mvc.gurren.GurrenPatching
@@ -13,6 +14,7 @@ import kotlin.reflect.full.memberProperties
 fun main(args: Array<String>) {
     if(SpiralModel.purgeCache)
         CacheHandler.purge()
+    PluginManager.scanForPlugins()
     SRDFormat.hook()
 
     val imperator = BasicImperator()
