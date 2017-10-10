@@ -8,7 +8,9 @@ import org.abimon.visi.io.errPrintln
 @Suppress("unused")
 object GurrenPlugins {
     val scannedPlugins = Command("scanned_plugins", "default") {
-        println(PluginManager.pluginsInFolder)
+        println("Loaded Plugins: ${PluginManager.pluginsInFolder.values.joinToString { (_, config, signed) ->
+            "\n\t* ${config.name} v${config.version} ${if(signed) "[SIGNED]" else "[UNSIGNED]"}"
+        } }")
     }
 
     val rescanPlugins = Command("rescan_plugins", "default") {
