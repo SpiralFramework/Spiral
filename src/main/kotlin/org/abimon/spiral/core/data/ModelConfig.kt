@@ -13,5 +13,7 @@ data class ModelConfig(
     val autoConfirm: Boolean = false,
     val purgeCache: Boolean = true,
     val patchOperation: PatchOperation? = null,
-    val patchFile: File? = null
+    val patchFile: File? = null,
+
+    val pluginData: Map<String, Any?> = emptyMap()
 )

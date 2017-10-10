@@ -34,6 +34,8 @@ object SpiralModel {
     var patchOperation: PatchOperation? by saveDelegate(null)
     var patchFile: File? by saveDelegate(null)
 
+    val pluginData: MutableMap<String, Any?> = HashMap()
+
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
             return@InstanceWatchtower (scope == null || SpiralModel.scope.second == scope) &&
@@ -73,6 +75,9 @@ object SpiralModel {
         patchOperation = config.patchOperation
         patchFile = config.patchFile
 
+        pluginData.clear()
+        pluginData.putAll(config.pluginData)
+
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
     }
@@ -95,7 +100,8 @@ object SpiralModel {
     val config: ModelConfig
         get() = ModelConfig(
                 archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
-                patchOperation, patchFile
+                patchOperation, patchFile,
+                pluginData
         )
 
     init { load() }
