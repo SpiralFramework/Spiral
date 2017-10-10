@@ -7,17 +7,17 @@ import org.abimon.visi.io.errPrintln
 
 @Suppress("unused")
 object GurrenPlugins {
-    val scannedPlugins = Command("scanned_plugins", "default") {
+    val scannedPlugins = Command("scanned_plugins") {
         println("Loaded Plugins: ${PluginManager.pluginsInFolder.values.joinToString { (_, config, signed) ->
             "\n\t* ${config.name} v${config.version} ${if(signed) "[SIGNED]" else "[UNSIGNED]"}"
         } }")
     }
 
-    val rescanPlugins = Command("rescan_plugins", "default") {
+    val rescanPlugins = Command("rescan_plugins") {
         PluginManager.scanForPlugins()
     }
 
-    val enablePlugin = Command("enable_plugin", "default") { (params) ->
+    val enablePlugin = Command("enable_plugin") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("Error: No plugin to enable")
 
@@ -32,7 +32,7 @@ object GurrenPlugins {
             return@Command errPrintln("Error: No plugin with UID $uid")
     }
 
-    val disablePlugin = Command("disable_plugin", "default") { (params) ->
+    val disablePlugin = Command("disable_plugin") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("Error: No plugin to disable")
 
