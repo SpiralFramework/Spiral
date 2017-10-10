@@ -2,6 +2,7 @@ package org.abimon.spiral.core
 
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
+import org.abimon.visi.io.readPartialBytes
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
@@ -70,13 +71,13 @@ fun InputStream.readDRString(len: Int, encoding: String = "UTF-8"): String {
     return String(data.sliceArray(0 until data.size - 2), Charset.forName(encoding))
 }
 
-fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8"): String {
+fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8", bytesPerCharacter: Int = 1): String {
     val max = maxLen.coerceAtMost(255)
     val baos = ByteArrayOutputStream()
 
     for (i in 0 until max) {
-        val read = read()
-        if (read <= 0)
+        val read = readPartialBytes(bytesPerCharacter)
+        if (read.all { it.toInt() == 0 })
             break
 
         baos.write(read)
