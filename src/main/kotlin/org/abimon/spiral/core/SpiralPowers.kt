@@ -37,11 +37,17 @@ fun Int.getBit(bit: Int): Byte {
     return 0
 }
 
+fun ByteArray.toIntArray(): IntArray = map { it.toInt() and 0xFF }.toIntArray()
+
 fun InputStream.readUnsignedLittleInt(): Long = readNumber(4, true, true)
 fun InputStream.readUnsignedBigInt(): Long = readNumber(4, true, false)
 fun InputStream.readUnsignedLittleFloat(): Float = readFloat(true, true)
 
 val BITS_LOOKUP_TABLE: IntArray by lazy { (0 until 256).map { it * 8 }.toIntArray() }
+
+fun InputStream.readLong(unsigned: Boolean = false, little: Boolean = true): Long = readNumber(8, unsigned, little)
+fun InputStream.readInt(unsigned: Boolean = false, little: Boolean = true): Long = readNumber(4, unsigned, little)
+fun InputStream.readShort(unsigned: Boolean = false, little: Boolean = true): Int = readNumber(2, unsigned, little).toInt()
 
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
     var r = 0L
@@ -169,23 +175,41 @@ fun OutputStream.writeShort(num: Number, unsigned: Boolean = false, little: Bool
         write(byteArrayOfInts(int shr 8, int))
 }
 
-//fun Long.write(unsigned: Boolean = false): ByteArray {
-//    val baos = ByteArrayOutputStream()
-//    baos.writeNumber(this, 8, unsigned)
-//    return baos.toByteArray()
-//}
-//
-//fun Int.write(unsigned: Boolean = false): ByteArray {
-//    val baos = ByteArrayOutputStream()
-//    baos.writeNumber(this.toLong(), 4, unsigned)
-//    return baos.toByteArray()
-//}
-//
-//fun Short.write(unsigned: Boolean = false): ByteArray {
-//    val baos = ByteArrayOutputStream()
-//    baos.writeNumber(this.toLong(), 2, unsigned)
-//    return baos.toByteArray()
-//}
+fun Long.write(unsigned: Boolean = false, little: Boolean = true): ByteArray {
+    val long = this
+    if(unsigned && little)
+        return byteArrayOf(long.toByte(), (long ushr 8).toByte(), (long ushr 16).toByte(), (long ushr 24).toByte(), (long ushr 32).toByte(), (long ushr 40).toByte(), (long ushr 48).toByte(), (long ushr 56).toByte())
+    else if(!unsigned && little)
+        return byteArrayOf(long.toByte(), (long shr 8).toByte(), (long shr 16).toByte(), (long shr 24).toByte(), (long shr 32).toByte(), (long shr 40).toByte(), (long shr 48).toByte(), (long shr 56).toByte())
+    else if(unsigned && !little)
+        return byteArrayOf((long ushr 56).toByte(), (long ushr 48).toByte(), (long ushr 40).toByte(), (long ushr 32).toByte(), (long ushr 24).toByte(), (long ushr 16).toByte(),(long ushr 8).toByte(), long.toByte())
+    else
+        return byteArrayOf((long shr 56).toByte(), (long shr 48).toByte(), (long shr 40).toByte(), (long shr 32).toByte(), (long shr 24).toByte(), (long shr 16).toByte(),(long shr 8).toByte(), long.toByte())
+}
+
+fun Int.write(unsigned: Boolean = false, little: Boolean = true): ByteArray {
+    val int = this
+    if(unsigned && little)
+        return byteArrayOfInts(int, int ushr 8, int ushr 16, int ushr 24)
+    else if(!unsigned && little)
+        return byteArrayOfInts(int, int shr 8, int shr 16, int shr 24)
+    else if(unsigned && !little)
+        return byteArrayOfInts(int ushr 24, int ushr 16, int ushr 8, int)
+    else
+        return byteArrayOfInts(int shr 24, int shr 16, int shr 8, int)
+}
+
+fun Short.write(unsigned: Boolean = false, little: Boolean = true): ByteArray {
+    val int = this.toInt()
+    if (unsigned && little)
+        return byteArrayOfInts(int, int ushr 8)
+    else if (!unsigned && little)
+        return byteArrayOfInts(int, int shr 8)
+    else if (unsigned && !little)
+        return byteArrayOfInts(int ushr 8, int)
+    else
+        return byteArrayOfInts(int shr 8, int)
+}
 //
 //fun Byte.write(): ByteArray = ByteArray(1, { this })
 

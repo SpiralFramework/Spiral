@@ -142,6 +142,13 @@ object SpiralData {
         put(0x4C, 0, "Wait Frame")
     }
 
+    val drv3OpCodes = make<TripleHashMap<Int, Int, String>> {
+        put(0x1D, 2, "Speaker")
+        put(0x46, 2, "Text")
+        put(0x53, 2, "Speaker")
+        put(0x58, 2, "Text")
+    }
+
     val nonstopOpCodes = hashMapOf(
             0x00 to "TextID",
             0x01 to "Type",

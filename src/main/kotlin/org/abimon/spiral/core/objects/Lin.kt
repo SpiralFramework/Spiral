@@ -9,6 +9,7 @@ import org.abimon.spiral.core.lin.dr1.TrialCameraEntry
 import org.abimon.spiral.core.lin.dr2.*
 import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
+import org.abimon.spiral.core.toIntArray
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
@@ -47,7 +48,7 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
 
             header = lin.readPartialBytes((headerSpace - (if (linType == 1L) 12 else 16)).toInt())
             entries = ArrayList<LinScript>()
-            val data = lin.readPartialBytes((textBlock - headerSpace).toInt()).map { byte -> byte.toInt() }
+            val data = lin.readPartialBytes((textBlock - headerSpace).toInt()).toIntArray()
 
             val textStream = ByteArrayInputStream(lin.readPartialBytes((size - textBlock).toInt()))
             val numTextEntries = textStream.readNumber(4, true)
@@ -72,23 +73,21 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                     i++
                     val opCode = data[i++]
                     val (argumentCount) = (if(dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes).getOrDefault(opCode, Pair(-1, opCode.toString(16)))
-                    val arguments: Array<Int>
+                    val params: IntArray
 
                     if (argumentCount == -1) {
                         val args = ArrayList<Int>()
                         while (i < data.size && data[i] != 0x70) {
-                            args.add(data[i++] and 0xFF)
+                            args.add(data[i++])
                         }
-                        arguments = args.toTypedArray()
+                        params = args.toIntArray()
                     } else {
-                        arguments = Array(argumentCount, { 0 })
+                        params = IntArray(argumentCount)
 
                         for (argumentIndex in 0 until argumentCount) {
-                            arguments[argumentIndex] = data[i++] and 0xFF
+                            params[argumentIndex] = data[i++]
                         }
                     }
-
-                    val params = arguments.toIntArray()
 
                     if(dr1) {
                         when (opCode) {
