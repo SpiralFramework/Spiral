@@ -34,7 +34,7 @@ object SpiralModel {
     var patchOperation: PatchOperation? by saveDelegate(null)
     var patchFile: File? by saveDelegate(null)
 
-    val pluginData: MutableMap<String, Any?> = HashMap()
+    private val pluginData: MutableMap<String, Any?> = HashMap()
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -109,4 +109,10 @@ object SpiralModel {
     fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> save() }
 
     fun confirm(question: () -> Boolean): Boolean = autoConfirm || question()
+
+    fun getPluginData(uid: String): Any? = pluginData[uid]
+    fun putPluginData(uid: String, data: Any?) {
+        pluginData[uid] = data
+        save()
+    }
 }
