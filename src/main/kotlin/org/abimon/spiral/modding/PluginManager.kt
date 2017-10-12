@@ -18,7 +18,6 @@ object PluginManager {
     }
 
     val pluginsInFolder: MutableMap<String, Triple<File, PluginConfig, Boolean>> = HashMap() //File to PluginConfig to Signed
-
     val loadedPlugins: MutableMap<String, Triple<File, PluginConfig, IPlugin>> = HashMap()
 
     fun scanForPlugins() {

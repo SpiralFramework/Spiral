@@ -80,6 +80,8 @@ object SpiralModel {
 
         if(config.debug != null)
             loggerLevel = LoggerLevel.DEBUG
+
+        save()
     }
 
     suspend fun <T> distribute(list: List<T>, operation: (T) -> Unit) {

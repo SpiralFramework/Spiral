@@ -11,7 +11,9 @@ import org.abimon.spiral.mvc.gurren.GurrenPatching
 import org.abimon.spiral.mvc.gurren.GurrenPlugins
 import kotlin.reflect.full.memberProperties
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = startupSpiral(args)
+
+fun startupSpiral(args: Array<String>) {
     if(SpiralModel.purgeCache)
         CacheHandler.purge()
     PluginManager.scanForPlugins()
