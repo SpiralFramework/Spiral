@@ -15,7 +15,7 @@ class FlatFileArchive(val dir: File): IArchive {
     override val archiveType: ArchiveType = ArchiveType.FLAT_FILE
     override val archiveFile: File = dir
     override val fileEntries: List<Pair<String, DataSource>>
-        get() = dir.iterate().map { file -> (file relativePathFrom dir) to FileDataSource(file) }
+        get() = dir.iterate().map { file -> (file relativePathFrom dir).replace(File.pathSeparator, "/") to FileDataSource(file) }
 
     override val niceCompileFormats: Map<SpiralFormat, SpiralFormat> = mapOf(
             ZIPFormat to SPCFormat //That's... that's it. "Nice" compiling won't really work with V3 for now
