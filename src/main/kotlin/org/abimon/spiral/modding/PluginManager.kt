@@ -1,23 +1,29 @@
 package org.abimon.spiral.modding
 
 import com.fasterxml.jackson.core.JsonParseException
+import com.github.kittinunf.fuel.Fuel
+import org.abimon.spiral.core.data.EnumSignedStatus
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.lang.and
+import org.abimon.visi.security.RSAPublicKey
+import org.abimon.visi.security.verify
 import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.net.URLClassLoader
+import java.security.PublicKey
 import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
 object PluginManager {
+    val BASE_URL = "https://dr.abimon.org/spiral/modRepository"
     val PLUGIN_FOLDER = File("plugins").apply {
         if(!exists())
             mkdir()
     }
 
-    val pluginsInFolder: MutableMap<String, Triple<File, PluginConfig, Boolean>> = HashMap() //File to PluginConfig to Signed
+    val pluginsInFolder: MutableMap<String, Triple<File, PluginConfig, EnumSignedStatus>> = HashMap() //File to PluginConfig to Signed
     val loadedPlugins: MutableMap<String, Triple<File, PluginConfig, IPlugin>> = HashMap()
 
     fun scanForPlugins() {
@@ -25,7 +31,7 @@ object PluginManager {
         PLUGIN_FOLDER.listFiles { file -> file.extension == "jar" }.forEach { potentialPlugin ->
             val metadata = getMetadataForFile(potentialPlugin) ?: return@forEach
 
-            pluginsInFolder[metadata.uid] = (potentialPlugin to metadata and isSigned(metadata.uid, potentialPlugin))
+            pluginsInFolder[metadata.uid] = (potentialPlugin to metadata and isSigned(metadata.uid, metadata.version, potentialPlugin))
         }
     }
 
@@ -47,7 +53,19 @@ object PluginManager {
         }
     }
 
-    fun isSigned(uid: String, file: File): Boolean = true //Tmp hack
+    fun isSigned(uid: String, version: String, file: File): EnumSignedStatus {
+        val (_, response, _) = Fuel.get("$BASE_URL/$uid/$version/signature.dat").response()
+
+        if(response.httpStatusCode != 200)
+            return EnumSignedStatus.UNSIGNED
+
+        val valid = file.inputStream().use { stream -> stream.verify(response.data, publicKey ?: return EnumSignedStatus.NO_PUBLIC_KEY) }
+
+        if(valid)
+            return EnumSignedStatus.SIGNED
+
+        return EnumSignedStatus.INVALID_SIGNATURE
+    }
 
     fun loadPlugin(uid: String): Boolean {
         if(pluginsInFolder.containsKey(uid)) {
@@ -86,5 +104,25 @@ object PluginManager {
         } catch(io: IOException) {
             return false
         }
+    }
+
+    val publicKey: PublicKey?
+        get() {
+            val (_, response, _) = Fuel.get("$BASE_URL/public.key").response()
+
+            if(response.httpStatusCode != 200)
+                return null
+
+            return RSAPublicKey(String(response.data))
+        }
+
+    fun semanticVersionToInts(version: String): Triple<Int, Int, Int> {
+        val components = version.split('.', limit = 3)
+
+        val major = components[0].toIntOrNull() ?: 0
+        val minor = if(components.size > 1) components[1].toIntOrNull() ?: 0 else 0
+        val patch = if(components.size > 2) components[2].toIntOrNull() ?: 0 else 0
+
+        return major to minor and patch
     }
 }
