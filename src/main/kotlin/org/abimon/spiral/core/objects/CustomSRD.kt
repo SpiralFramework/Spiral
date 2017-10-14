@@ -9,6 +9,7 @@ import org.abimon.visi.io.readPartialBytes
 import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.and
 import java.awt.Color
+import java.awt.geom.Dimension2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -20,9 +21,15 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
     }
 
     val images: MutableMap<String, BufferedImage> = HashMap()
+    val customMipmaps: MutableMap<String, Triple<Int, Dimension2D, Array<DataSource>>> = HashMap()
 
     fun image(name: String, img: BufferedImage): CustomSRD {
         images[name] = img
+        return this
+    }
+
+    fun mipmap(name: String, format: Int, dimensions: Dimension2D, images: Array<DataSource>): CustomSRD {
+        customMipmaps[name] = format to dimensions and images
         return this
     }
 
@@ -166,6 +173,108 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
 
                                             //Format must **always** be 1, so I don't have to do fancy encoding
                                             srdOut.write(0x01)
+
+                                            //Then write unk2
+                                            srdOut.write(unk2)
+
+                                            //And no palettes
+                                            srdOut.write(0)
+                                            srdOut.write(0)
+
+                                            //And padding
+                                            for (i in 0 until (0x10 - dataLen % 0x10) % 0x10)
+                                                srdOut.write(0)
+
+                                            //Before we write the subdata, we write the header for said subdata
+                                            srdOut.write(STATIC_RSI)
+                                            srdOut.writeInt(newSubdata.size() - 16 - namePadding, true, false)
+                                            srdOut.writeInt(0, true, false)
+                                            srdOut.writeInt(0, true, false)
+
+                                            //Then, we write the prepared subdata and pad
+                                            newSubdata.writeTo(srdOut)
+
+                                            for (i in 0 until (0x10 - newSubdata.size() % 0x10) % 0x10)
+                                                srdOut.write(0)
+                                        } else if(customMipmaps.containsKey(name)) {
+                                            val (mipmapFormat, dimensions, newMipmaps) = customMipmaps[name]!!
+                                            val nameBytes = name.toByteArray()
+
+                                            data.reset()
+                                            val dataLen = data.available()
+
+                                            //First, we construct the subdata so we can write.
+
+                                            val newSubdata = ByteArrayOutputStream()
+
+                                            //Write the initial number
+                                            newSubdata.writeShort(initial)
+
+                                            //Unk5
+                                            newSubdata.write(unk5)
+
+                                            //Only one mipmap - the main data
+                                            newSubdata.write(newMipmaps.size)
+
+                                            //Write the thing before "name offset"
+                                            newSubdata.writeLong(later, false, true)
+
+                                            //Name offset is relatively static - 16 bytes from the start, plus (mipmap_count * 16)
+                                            newSubdata.writeInt(16 + (mipmap_count * 16))
+
+                                            //Mipmap values are also fairly static, and we need a number of them.
+                                            for (i in 0 until newMipmaps.size) {
+                                                val mip = newMipmaps[i]
+                                                val size = mip.size
+                                                //Image Offset - Write only the first three bytes. For whatever reason, the fourth byte is also 0x40
+                                                newSubdata.writeNumber(imgOffset, 3)
+                                                newSubdata.write(0x40)
+
+                                                //Image Len - width * height * 4
+                                                newSubdata.writeInt(size)
+
+                                                //Two unknown numbers, always the same though
+                                                newSubdata.writeInt(128)
+                                                newSubdata.writeInt(0)
+
+                                                //Then write the image to the srdv stream
+                                                mip.pipe(srdvOut)
+
+                                                imgOffset += size
+                                            }
+
+                                            //Finally, we write the name
+                                            newSubdata.write(nameBytes)
+
+                                            //Now we need to write a zero to the end, so we write a single byte and add that to the size
+                                            newSubdata.write(0)
+
+                                            val namePadding = (0x10 - (nameBytes.size + 1) % 0x10) % 0x10
+                                            for (i in 0 until namePadding)
+                                                newSubdata.write(0)
+
+                                            //And last of all, we need to write the ending section and pad it. Fortunately, that's static
+                                            newSubdata.write(STATIC_SRD_END)
+
+                                            //Third, write the header info to the main output stream
+                                            srdOut.write(data_type.toByteArray())
+                                            srdOut.writeInt(dataLen, true, false)
+                                            srdOut.writeInt(newSubdata.size() + 0x10, true, false)
+                                            srdOut.writeInt(0, true, false)
+
+                                            //First, write unk1
+                                            srdOut.writeInt(unk1)
+                                            //Then swiz
+                                            srdOut.writeShort(swiz)
+                                            //Then the width + height of the overriding image
+                                            srdOut.writeShort(dimensions.width)
+                                            srdOut.writeShort(dimensions.height)
+
+                                            //Scanline
+                                            srdOut.writeShort(scanline)
+
+                                            //Format must **always** be 1, so I don't have to do fancy encoding
+                                            srdOut.write(mipmapFormat)
 
                                             //Then write unk2
                                             srdOut.write(unk2)
