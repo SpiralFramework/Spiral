@@ -1,4 +1,4 @@
-package org.abimon.spiral.modding
+package org.abimon.spiral.modding.data
 
 data class PluginConfig(
         val name: String,

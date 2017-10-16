@@ -7,6 +7,7 @@ import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.FlatFileArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
@@ -261,7 +262,9 @@ object GurrenOperation {
 
             newEntries.addAll(matching.filter { (_, format) -> format != null }.map { (entry, from) ->
                 val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
-                return@map name to FunctionDataSource { from.convertToBytes(from.conversions.first(), FileDataSource(entry), formatParams) }
+                val (formatOut, formatIn) = CacheHandler.cacheStream()
+                from.convert(operatingArchive.niceCompileFormats[from] ?: from.conversions.first(), FileDataSource(entry), formatOut, formatParams)
+                return@map name to formatIn
             })
 
             val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
