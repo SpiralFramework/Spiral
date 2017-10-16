@@ -2,7 +2,6 @@ package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.writeInt
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.writeTo
 import java.io.OutputStream
 import java.util.*
 
@@ -23,6 +22,6 @@ class CustomPak {
             headerSize += it.size
         }
 
-        data.forEach { it.use { it.writeTo(pak, closeAfter = true) } }
+        data.forEach { entry -> entry.use { stream -> stream.copyTo(pak) } }
     }
 }

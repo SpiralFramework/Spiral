@@ -28,7 +28,7 @@ object SpiralFormats {
             TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
             IVFFormat, MP4Format,
-            LINFormat, SpiralTextFormat,
+            LINFormat, SpiralTextFormat, WRDFormat,
             DRVitaCompressionFormat, CRILAYLAFormat,
             LLFSFormat,
             GMOModelFormat,
