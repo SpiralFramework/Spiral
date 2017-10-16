@@ -1,6 +1,7 @@
 package org.abimon.spiral.util
 
 import org.abimon.spiral.core.byteArrayOfInts
+import org.abimon.spiral.core.toIntArray
 
 fun toFloat(bytes: ByteArray, little: Boolean = true, offset: Int = 0): Float {
     if(bytes.size < 4)
@@ -85,38 +86,8 @@ fun shortToByteArray(num: Number, unsigned: Boolean = false, little: Boolean = t
         return byteArrayOfInts(int shr 8, int)
 }
 
-fun longToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray {
-    val long = num.toLong()
-    if(unsigned && little)
-        return intArrayOf(long.toInt(), (long ushr 8).toInt(), (long ushr 16).toInt(), (long ushr 24).toInt(), (long ushr 32).toInt(), (long ushr 40).toInt(), (long ushr 48).toInt(), (long ushr 56).toInt())
-    else if(!unsigned && little)
-        return intArrayOf(long.toInt(), (long shr 8).toInt(), (long shr 16).toInt(), (long shr 24).toInt(), (long shr 32).toInt(), (long shr 40).toInt(), (long shr 48).toInt(), (long shr 56).toInt())
-    else if(unsigned && !little)
-        return intArrayOf((long ushr 56).toInt(), (long ushr 48).toInt(), (long ushr 40).toInt(), (long ushr 32).toInt(), (long ushr 24).toInt(), (long ushr 16).toInt(),(long ushr 8).toInt(), long.toInt())
-    else
-        return intArrayOf((long shr 56).toInt(), (long shr 48).toInt(), (long shr 40).toInt(), (long shr 32).toInt(), (long shr 24).toInt(), (long shr 16).toInt(),(long shr 8).toInt(), long.toInt())
-}
+fun longToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray = longToByteArray(num, unsigned, little).toIntArray()
 
-fun intToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray {
-    val int = num.toInt()
-    if(unsigned && little)
-        return intArrayOf(int, int ushr 8, int ushr 16, int ushr 24)
-    else if(!unsigned && little)
-        return intArrayOf(int, int shr 8, int shr 16, int shr 24)
-    else if(unsigned && !little)
-        return intArrayOf(int ushr 24, int ushr 16, int ushr 8, int)
-    else
-        return intArrayOf(int shr 24, int shr 16, int shr 8, int)
-}
+fun intToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray = intToByteArray(num, unsigned, little).toIntArray()
 
-fun shortToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray {
-    val int = num.toShort().toInt()
-    if (unsigned && little)
-        return intArrayOf(int, int ushr 8)
-    else if (!unsigned && little)
-        return intArrayOf(int, int shr 8)
-    else if (unsigned && !little)
-        return intArrayOf(int ushr 8, int)
-    else
-        return intArrayOf(int shr 8, int)
-}
+fun shortToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray = shortToByteArray(num, unsigned, little).toIntArray()

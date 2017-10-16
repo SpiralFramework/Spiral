@@ -143,6 +143,7 @@ object SpiralData {
     }
 
     val drv3OpCodes = make<TripleHashMap<Int, Int, String>> {
+        put(0x10, 4, "Script")
         put(0x1D, 2, "Speaker")
         put(0x46, 2, "Text")
         put(0x53, 2, "Speaker")

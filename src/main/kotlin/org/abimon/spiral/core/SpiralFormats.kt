@@ -34,7 +34,7 @@ object SpiralFormats {
             GMOModelFormat,
             PAKFormat, SPCFormat,
 
-            TXTFormat
+            STXTFormat, TXTFormat
     )
 
     val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)

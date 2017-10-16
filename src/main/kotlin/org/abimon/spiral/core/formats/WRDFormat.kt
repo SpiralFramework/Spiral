@@ -24,12 +24,18 @@ object WRDFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true
 
-        WRD(source).entries.forEach { entry ->
+        val wrd = WRD(source)
+
+        wrd.entries.forEach { entry ->
 //            if (entry is TextEntry)
 //                output.println("${SpiralData.drv3OpCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
 //            else
             output.println("${SpiralData.drv3OpCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.getRawArguments().joinToString()}")
         }
+
+        output.println("\nCommands: ")
+
+        wrd.cmds.forEach { cmdType, cmdList -> output.println("\t$cmdType: ${cmdList.joinToString("\n") { "\t$it" } }") }
 
         return true
     }
