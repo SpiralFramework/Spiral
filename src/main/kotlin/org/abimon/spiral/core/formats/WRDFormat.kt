@@ -35,7 +35,7 @@ object WRDFormat : SpiralFormat {
 
         output.println("\nCommands: ")
 
-        wrd.cmds.forEach { cmdType, cmdList -> output.println("\t$cmdType: ${cmdList.joinToString("\n") { "\t$it" } }") }
+        wrd.cmds.forEach { cmdType, cmdList -> output.println("\t$cmdType: ${cmdList.mapIndexed { index, s -> "this[$index]: $s" }.joinToString("\n") { "\t$it" } }") }
 
         return true
     }
