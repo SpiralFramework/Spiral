@@ -4,6 +4,7 @@ import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.objects.WRD
 import org.abimon.spiral.core.println
 import org.abimon.spiral.core.wrd.LabelEntry
+import org.abimon.spiral.core.wrd.TextEntry
 import org.abimon.visi.io.DataSource
 import java.io.OutputStream
 
@@ -43,6 +44,7 @@ object WRDFormat : SpiralFormat {
 //                    //output.println("$op|${entry.rawArguments.joinToString()}")
 //                    output.println("$op|${args.joinToString()}")
 //                }
+                is TextEntry -> output.println("$op|${entry.id}")
                 else -> {
                     try {
                         output.println("$op|${entry.cmdArguments.joinToString { wrd.cmds[1][it] }}")

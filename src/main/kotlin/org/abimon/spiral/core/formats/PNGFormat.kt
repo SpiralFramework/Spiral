@@ -6,6 +6,7 @@ import org.abimon.spiral.core.toTGA
 import org.abimon.spiral.core.writeShort
 import org.abimon.visi.io.DataSource
 import java.awt.Color
+import java.awt.image.BufferedImage
 import java.io.OutputStream
 import javax.imageio.ImageIO
 
@@ -24,53 +25,52 @@ object PNGFormat : SpiralFormat {
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true
 
-        source.use {
-            when (format) {
-                is TGAFormat -> output.write(ImageIO.read(it).toTGA())
-                is JPEGFormat -> ImageIO.write(ImageIO.read(it).toJPG(), "JPG", output)
-                is SHTXFormat -> {
-                    output.write("SHTX".toByteArray())
+        source.use { convert(format, ImageIO.read(it), output) }
 
-                    val img = ImageIO.read(it)
-                    var palette: List<Color> = img.run {
-                        val pixels = ArrayList<Color>()
+        return true
+    }
 
+    fun convert(to: SpiralFormat, img: BufferedImage, output: OutputStream) {
+        when (to) {
+            is TGAFormat -> output.write(img.toTGA())
+            is JPEGFormat -> ImageIO.write(img.toJPG(), "JPG", output)
+            is SHTXFormat -> {
+                output.write("SHTX".toByteArray())
+
+                var palette: List<Color> = img.run {
+                    val pixels = ArrayList<Color>()
+
+                    for(y in 0 until height)
+                        for(x in 0 until width)
+                            pixels.add(Color(getRGB(x, y), true))
+
+                    return@run pixels
+                }
+
+                if(palette.distinctBy { it.rgb }.size > 256) {
+                    output.write("Ff".toByteArray())
+                    output.writeShort(img.width)
+                    output.writeShort(img.height)
+                    output.writeShort(0)
+
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
+                } else {
+                    palette = palette.distinctBy { it.rgb }
+
+                    output.write("Fs".toByteArray())
+                    output.writeShort(img.width)
+                    output.writeShort(img.height)
+                    output.writeShort(0)
+
+                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
+
+                    img.run {
                         for(y in 0 until height)
                             for(x in 0 until width)
-                                pixels.add(Color(getRGB(x, y), true))
-
-                        return@run pixels
+                                output.write(palette.indexOf(Color(getRGB(x, y), true)))
                     }
-
-                    if(palette.distinctBy { it.rgb }.size > 256) {
-                        output.write("Ff".toByteArray())
-                        output.writeShort(img.width)
-                        output.writeShort(img.height)
-                        output.writeShort(0)
-
-                        palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
-                    } else {
-                        palette = palette.distinctBy { it.rgb }
-
-                        output.write("Fs".toByteArray())
-                        output.writeShort(img.width)
-                        output.writeShort(img.height)
-                        output.writeShort(0)
-
-                        palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
-
-                        img.run {
-                            for(y in 0 until height)
-                                for(x in 0 until width)
-                                    output.write(palette.indexOf(Color(getRGB(x, y), true)))
-                        }
-                    }
-                }
-                else -> {
                 }
             }
         }
-
-        return true
     }
 }

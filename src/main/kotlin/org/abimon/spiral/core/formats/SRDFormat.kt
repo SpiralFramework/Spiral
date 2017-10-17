@@ -67,8 +67,7 @@ object SRDFormat {
         if (images.isEmpty() && !LoggerLevel.TRACE.enabled)
             return false
 
-        /** Gotta get some form of easy conversion from PNG to this working, might make use of builtins? But that's a lot of writing to and from streams.... */
-        val format = "PNG" //params["srd:format"]?.toString() ?: "PNG"
+        val format = SpiralFormats.formatForName(params["srd:format"]?.toString() ?: "PNG", SpiralFormats.imageFormats) ?: PNGFormat
         when (to) {
             is PNGFormat -> ImageIO.write(images.entries.first().value, "PNG", output)
             is ZIPFormat -> {
@@ -80,8 +79,8 @@ object SRDFormat {
                 }
 
                 images.forEach { name, image ->
-                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.toLowerCase())))
-                    ImageIO.write(image, format, zos)
+                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.extension!!)))
+                    PNGFormat.convert(format, image, zos)
                 }
 
                 zos.finish()
