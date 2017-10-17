@@ -5,10 +5,7 @@ import org.abimon.spiral.core.readShort
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.core.readUnsignedLittleInt
 import org.abimon.spiral.core.toIntArray
-import org.abimon.spiral.core.wrd.SpeakerEntry
-import org.abimon.spiral.core.wrd.TextEntry
-import org.abimon.spiral.core.wrd.UnknownEntry
-import org.abimon.spiral.core.wrd.WRDScript
+import org.abimon.spiral.core.wrd.*
 import org.abimon.spiral.util.SeekableInputStream
 import org.abimon.spiral.util.toShort
 import org.abimon.spiral.util.trace
@@ -35,6 +32,9 @@ class WRD(val dataSource: DataSource) {
             val cmd1Offset = stream.readUnsignedLittleInt()
             val cmd2Offset = stream.readUnsignedLittleInt()
             val stringOffset = stream.readUnsignedLittleInt()
+
+            if(unkOffset > stream.available() || cmd1Offset > stream.available() || cmd2Offset > stream.available() || cmd3Offset > stream.available())
+                throw IllegalArgumentException()
 
             val code = stream.readPartialBytes((unkOffset - 0x20).toInt()).toIntArray()
 
@@ -115,10 +115,11 @@ class WRD(val dataSource: DataSource) {
                     }
 
                     when(opCode) {
-                        0x1D -> { ensure(0x1D, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, false))) }
-                        0x46 -> { ensure(0x46, 2, params); wrdEntries.add(TextEntry(toShort(params, true, false))) }
-                        0x53 -> { ensure(0x53, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, false))) }
-                        0x58 -> { ensure(0x58, 2, params); wrdEntries.add(TextEntry(toShort(params, true, false))) }
+                        0x19 -> { ensure(0x19, 4, params); wrdEntries.add(VoiceLineEntry(toShort(params, false, true), toShort(params, false, true, 2))) }
+                        0x1D -> { ensure(0x1D, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, true))) }
+                        0x46 -> { ensure(0x46, 2, params); wrdEntries.add(TextEntry(toShort(params, true, true))) }
+                        0x53 -> { ensure(0x53, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, true))) }
+                        0x58 -> { ensure(0x58, 2, params); wrdEntries.add(TextEntry(toShort(params, true, true))) }
                         else -> wrdEntries.add(UnknownEntry(opCode, params))
                     }
                 }

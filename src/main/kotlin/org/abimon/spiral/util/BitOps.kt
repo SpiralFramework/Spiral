@@ -91,3 +91,15 @@ fun longToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = tru
 fun intToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray = intToByteArray(num, unsigned, little).toIntArray()
 
 fun shortToIntArray(num: Number, unsigned: Boolean = false, little: Boolean = true): IntArray = shortToByteArray(num, unsigned, little).toIntArray()
+
+fun shortToIntPair(num: Number, unsigned: Boolean = false, little: Boolean = true): Pair<Int, Int> {
+    val int = num.toShort().toInt()
+    if (unsigned && little)
+        return int.toUnsignedByte() to (int ushr 8).toUnsignedByte()
+    else if (!unsigned && little)
+        return int.toUnsignedByte() to (int shr 8).toUnsignedByte()
+    else if (unsigned && !little)
+        return (int ushr 8).toUnsignedByte() to int.toUnsignedByte()
+    else
+        return (int shr 8).toUnsignedByte() to int.toUnsignedByte()
+}
