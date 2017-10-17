@@ -148,6 +148,7 @@ object SpiralData {
         put(0x14, 2, "Label")
         put(0x17, 8, "Animation")
         put(0x19, 4, "Voice")
+        put(0x1A, 6, "Music") //Track, Play, Fade
         put(0x1D, 2, "Speaker")
         put(0x46, 2, "Text")
         put(0x47, 0, "Wait For Input")
