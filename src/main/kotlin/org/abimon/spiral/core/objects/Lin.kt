@@ -65,7 +65,7 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                 } else if (data[i] != 0x70) {
                     while (i < data.size) {
                         trace("$i expected to be 0x70, was ${data[i]}")
-                        if (i == 0x00 || i == 0x70)
+                        if (data[i] == 0x00 || data[i] == 0x70)
                             break
                         i++
                     }

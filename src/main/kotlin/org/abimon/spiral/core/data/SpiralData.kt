@@ -144,7 +144,7 @@ object SpiralData {
 
     val drv3OpCodes = make<TripleHashMap<Int, Int, String>> {
         put(0x00, 4, "Set Flag") //Value, Flag
-        put(0x01, 6, "0x01")
+        put(0x01, -1, "0x01")
         put(0x02, 6, "Check Flag")
         put(0x03, 6, "0x03")
         put(0x04, 2, "0x04")

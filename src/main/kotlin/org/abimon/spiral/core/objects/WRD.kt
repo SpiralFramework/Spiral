@@ -9,13 +9,14 @@ import org.abimon.spiral.core.wrd.*
 import org.abimon.spiral.util.SeekableInputStream
 import org.abimon.spiral.util.toShort
 import org.abimon.spiral.util.trace
+import org.abimon.visi.collections.LateArray
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readPartialBytes
 
 class WRD(val dataSource: DataSource) {
     val entries: Array<WRDScript>
     val strings: Array<String>
-    val cmds: Map<Int, Array<String>>
+    val cmds: LateArray<Array<String>>
 
     init {
         val stream = SeekableInputStream(dataSource.seekableInputStream)
@@ -33,18 +34,21 @@ class WRD(val dataSource: DataSource) {
             val cmd2Offset = stream.readUnsignedLittleInt()
             val stringOffset = stream.readUnsignedLittleInt()
 
-            if(unkOffset > stream.available() || cmd1Offset > stream.available() || cmd2Offset > stream.available() || cmd3Offset > stream.available())
+            val validRange = 0 until stream.available()
+
+            if(unkOffset !in validRange || cmd1Offset !in validRange || cmd2Offset !in validRange || cmd3Offset !in validRange)
                 throw IllegalArgumentException()
 
             val code = stream.readPartialBytes((unkOffset - 0x20).toInt()).toIntArray()
 
             val cmdInfo = arrayOf(
                     (cmd1Count to cmd1Offset),
-                    (cmd2Count to cmd2Offset),
-                    (cmd3Count to cmd3Offset)
+                    (cmd2Count to cmd2Offset)
+                    //(cmd3Count to cmd3Offset)
+            //cmd3 is being weird
             )
 
-            val commands: MutableMap<Int, Array<String>> = HashMap()
+            cmds = LateArray(cmdInfo.size)
 
             for (cmdNum in cmdInfo.indices) {
                 val (count, offset) = cmdInfo[cmdNum]
@@ -59,7 +63,7 @@ class WRD(val dataSource: DataSource) {
                     commandList.add(cmd)
                 }
 
-                commands[cmdNum] = commandList.toTypedArray()
+                cmds[cmdNum] = commandList.toTypedArray()
             }
 
             stream.seek(stringOffset)
@@ -89,8 +93,8 @@ class WRD(val dataSource: DataSource) {
                     i++
                 } else if (code[i] != 0x70) {
                     while (i < code.size) {
-                        trace("$i expected to be 0x70, was ${code[i]}")
-                        if (i == 0x00 || i == 0x70)
+                        trace("$i expected to be 0x70, was 0x${code[i].toString(16)}")
+                        if (code[i] == 0x70)
                             break
                         i++
                     }
@@ -115,18 +119,20 @@ class WRD(val dataSource: DataSource) {
                     }
 
                     when(opCode) {
+                        0x00 -> { ensure(0x00, 4, params); wrdEntries.add(SetFlagEntry(toShort(params, false, true), toShort(params, false, true, 2))) }
+                        0x10 -> { ensure(0x10, 4, params); wrdEntries.add(ScriptEntry(toShort(params, false, true), toShort(params, false, true, 2))) }
+                        0x14 -> { ensure(0x14, 2, params); wrdEntries.add(LabelEntry(toShort(params, false, true))) }
                         0x19 -> { ensure(0x19, 4, params); wrdEntries.add(VoiceLineEntry(toShort(params, false, true), toShort(params, false, true, 2))) }
-                        0x1D -> { ensure(0x1D, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, true))) }
-                        0x46 -> { ensure(0x46, 2, params); wrdEntries.add(TextEntry(toShort(params, true, true))) }
-                        0x53 -> { ensure(0x53, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, true, true))) }
-                        0x58 -> { ensure(0x58, 2, params); wrdEntries.add(TextEntry(toShort(params, true, true))) }
+                        0x1D -> { ensure(0x1D, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, false, true))) }
+                        0x46 -> { ensure(0x46, 2, params); wrdEntries.add(TextEntry(toShort(params, false, true))) }
+                        0x53 -> { ensure(0x53, 2, params); wrdEntries.add(SpeakerEntry(toShort(params, false, true))) }
+                        0x58 -> { ensure(0x58, 2, params); wrdEntries.add(TextEntry(toShort(params, false, true))) }
                         else -> wrdEntries.add(UnknownEntry(opCode, params))
                     }
                 }
             }
 
             entries = wrdEntries.toTypedArray()
-            cmds = commands
         } finally {
             stream.close()
         }
