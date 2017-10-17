@@ -13,6 +13,9 @@ object WRDFormat : SpiralFormat {
     override val extension = "wrd"
     override val conversions: Array<SpiralFormat> = arrayOf(TXTFormat, SpiralTextFormat)
 
+    val COMMAND_OP_CODE = 0x2B1D
+    val COMMAND_OP_CODE_HEX = COMMAND_OP_CODE.toString(16)
+
     override fun isFormat(source: DataSource): Boolean {
         try {
             return WRD(source).entries.isNotEmpty()
@@ -29,21 +32,9 @@ object WRDFormat : SpiralFormat {
         val wrd = WRD(source)
 
         wrd.entries.forEach { entry ->
-//            if (entry is TextEntry)
-//                output.println("${SpiralData.drv3OpCodes[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
-//            else
             val op = SpiralData.drv3OpCodes[entry.opCode]?.second ?: "0x${entry.opCode.toString(16)}"
             when(entry) {
                 is LabelEntry -> output.println("$op|${wrd.cmds[0][entry.labelID]}")
-//                is SetFlagEntry -> output.println("$op|${wrd.cmds[1][entry.valueID]}, ${wrd.cmds[1][entry.flagID]}")
-//                is ScriptEntry -> output.println("$op|${wrd.cmds[1][entry.scriptID]}, ${wrd.cmds[1][entry.labelID]}")
-//                is SpeakerEntry -> output.println("$op|${wrd.cmds[1][entry.charID]}")
-//                is VoiceLineEntry -> output.println("$op|${wrd.cmds[1][entry.voiceLine]}, ${wrd.cmds[1][entry.volumeControl]}")
-//                else -> {
-//                    val args = (0 until entry.rawArguments.size / 2).map { i -> wrd.cmds[1][entry.rawArguments[i * 2] or (entry.rawArguments[i * 2 + 1] shl 0)] }
-//                    //output.println("$op|${entry.rawArguments.joinToString()}")
-//                    output.println("$op|${args.joinToString()}")
-//                }
                 is TextEntry -> output.println("$op|${entry.id}")
                 else -> {
                     try {
@@ -55,9 +46,9 @@ object WRDFormat : SpiralFormat {
             }
         }
 
-        output.println("\nCommands: ")
+        output.println("")
 
-        wrd.cmds.forEachIndexed { cmdType, cmdList -> output.println("\t$cmdType: ${cmdList.mapIndexed { index, s -> "this[$index]: $s" }.joinToString("\n") { "\t$it" } }") }
+        wrd.cmds.forEachIndexed { cmdType, cmdList -> cmdList.forEachIndexed { index, s -> output.println("0x$COMMAND_OP_CODE_HEX|$cmdType, $index, $s") } }
 
         return true
     }
