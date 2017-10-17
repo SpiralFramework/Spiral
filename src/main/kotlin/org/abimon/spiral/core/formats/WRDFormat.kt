@@ -16,6 +16,9 @@ object WRDFormat : SpiralFormat {
     val COMMAND_OP_CODE = 0x2B1D
     val COMMAND_OP_CODE_HEX = COMMAND_OP_CODE.toString(16)
 
+    val STRING_OP_CODE = 0x2B1E
+    val STRING_OP_CODE_HEX = STRING_OP_CODE.toString(16)
+
     override fun isFormat(source: DataSource): Boolean {
         try {
             return WRD(source).entries.isNotEmpty()
@@ -40,7 +43,7 @@ object WRDFormat : SpiralFormat {
                     try {
                         output.println("$op|${entry.cmdArguments.joinToString { wrd.cmds[1][it] }}")
                     } catch(aioob: ArrayIndexOutOfBoundsException) {
-                        output.println("$op|${entry.rawArguments.joinToString()}")
+                        output.println("$op|${entry.rawArguments.joinToString { "raw:$it" }}")
                     }
                 }
             }
@@ -49,6 +52,7 @@ object WRDFormat : SpiralFormat {
         output.println("")
 
         wrd.cmds.forEachIndexed { cmdType, cmdList -> cmdList.forEachIndexed { index, s -> output.println("0x$COMMAND_OP_CODE_HEX|$cmdType, $index, $s") } }
+        wrd.strings.forEach { str -> output.println("0x$STRING_OP_CODE_HEX|$str") }
 
         return true
     }

@@ -43,8 +43,8 @@ class WRD(val dataSource: DataSource) {
 
             val cmdInfo = arrayOf(
                     (cmd1Count to cmd1Offset),
-                    (cmd2Count to cmd2Offset)
-                    //(cmd3Count to cmd3Offset)
+                    (cmd2Count to cmd2Offset),
+                    (cmd3Count to cmd3Offset)
             //cmd3 is being weird
             )
 
@@ -73,7 +73,7 @@ class WRD(val dataSource: DataSource) {
                 var stringLen = stream.read()
 
                 if(stringLen >= 0x80)
-                    stringLen += (stream.read() - 1) * 0x80
+                    stringLen += (stream.read() - 1) shl 8
 
                 val string = stream.readString(stringLen, "UTF-16LE")
                 stream.readShort()
