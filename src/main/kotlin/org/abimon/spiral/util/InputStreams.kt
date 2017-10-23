@@ -20,6 +20,8 @@ open class DelegatedInputStream(val delegatedInputStream: InputStream) : InputSt
  */
 open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
     var count = 0L
+    open val streamOffset: Long
+        get() = count
 
     override fun read(): Int {
         count++
@@ -51,6 +53,8 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
 }
 
 class OffsetInputStream(offsetInputStream: InputStream, val offset: Long, val overriding: Long = offsetInputStream.available().toLong()) : CountingInputStream(offsetInputStream) {
+    override val streamOffset: Long
+        get() = offset + count
 
     override fun read(): Int = if (count < overriding) super.read() else -1
     override fun read(b: ByteArray): Int {

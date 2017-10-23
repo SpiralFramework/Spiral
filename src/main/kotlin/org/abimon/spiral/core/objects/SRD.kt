@@ -1,19 +1,8 @@
 package org.abimon.spiral.core.objects
 
-import org.abimon.karnage.raw.BC7PixelData
-import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.*
-import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.formats.SRDFormat
-import org.abimon.spiral.core.formats.SRDFormat.deswizzle
-import org.abimon.spiral.core.formats.SRDFormat.mapToModel
-import org.abimon.spiral.util.*
-import org.abimon.visi.io.ByteArrayDataSource
+import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.lang.and
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.io.InputStream
 
 class SRD(val srd: DataSource) {
     companion object {
@@ -30,9 +19,9 @@ class SRD(val srd: DataSource) {
             val dataPadding = (0x10 - dataLen % 0x10) % 0x10
             val subdataPadding = (0x10 - subdataLen % 0x10) % 0x10
 
-            val dataOffset = if(stream is OffsetInputStream) stream.offset + stream.count else stream.count
+            val dataOffset = stream.streamOffset //if(stream is OffsetInputStream) stream.offset + stream.count else stream.count
             stream.skip(dataPadding + dataLen)
-            val subdataOffset = if(stream is OffsetInputStream) stream.offset + stream.count else stream.count
+            val subdataOffset = stream.streamOffset //if(stream is OffsetInputStream) stream.offset + stream.count else stream.count
             stream.skip(subdataPadding + subdataLen)
 
             return SRDItem(dataType, dataOffset, dataLen, subdataOffset, subdataLen, source)

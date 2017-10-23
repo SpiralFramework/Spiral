@@ -52,7 +52,28 @@ fun InputStream.readShort(unsigned: Boolean = false, little: Boolean = true): In
 fun InputStream.readNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long {
     var r = 0L
     val nums = ByteArray(bytes.coerceAtMost(BITS_LOOKUP_TABLE.size))
-    read(nums)
+    val numRead = read(nums)
+
+    if (little)
+        nums.reverse()
+
+    for (i in 0 until bytes)
+        r = r or ((if(unsigned) nums[i].toInt() and 0xFF else nums[i].toInt()).toLong() shl BITS_LOOKUP_TABLE[bytes - 1 - i])
+
+    return r
+}
+
+fun InputStream.readUnsureLong(unsigned: Boolean = false, little: Boolean = true): Long? = readUnsureNumber(8, unsigned, little)
+fun InputStream.readUnsureInt(unsigned: Boolean = false, little: Boolean = true): Long? = readUnsureNumber(4, unsigned, little)
+fun InputStream.readUnsureShort(unsigned: Boolean = false, little: Boolean = true): Int? = readUnsureNumber(2, unsigned, little)?.toInt()
+
+fun InputStream.readUnsureNumber(bytes: Int = 4, unsigned: Boolean = false, little: Boolean = true): Long? {
+    var r = 0L
+    val nums = ByteArray(bytes.coerceAtMost(BITS_LOOKUP_TABLE.size))
+    val numRead = read(nums)
+
+    if(numRead == -1)
+        return null
 
     if (little)
         nums.reverse()

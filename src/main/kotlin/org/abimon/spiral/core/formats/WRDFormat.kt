@@ -23,6 +23,7 @@ object WRDFormat : SpiralFormat {
         try {
             return WRD(source).entries.isNotEmpty()
         } catch(illegal: IllegalArgumentException) {
+        } catch(negative: NegativeArraySizeException) {
         }
         return false
     }
