@@ -78,6 +78,11 @@ class GMOModel(val dataSource: DataSource) {
                     }
                     0x08 -> list.add(GMOMaterialChunk(chunkID, headerSize, dataSize, header, substream.readChunks(dataSource, chunk)))
 
+                    0x0A -> {
+                        val padding = substream.readPartialBytes(8)
+                        val name = substream.readZeroString()
+                    }
+
                     0x8066 -> {
                         val arIndex = substream.readShort(true, true)
                         val unk = substream.readShort(true, true)

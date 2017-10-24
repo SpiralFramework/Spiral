@@ -16,6 +16,7 @@ object LINFormat : SpiralFormat {
         try {
             return Lin(source).entries.isNotEmpty()
         } catch(illegal: IllegalArgumentException) {
+        } catch(negative: NegativeArraySizeException) {
         }
         return false
     }
