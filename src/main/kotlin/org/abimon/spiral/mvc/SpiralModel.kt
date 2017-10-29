@@ -16,6 +16,7 @@ import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.properties.Delegates
 import kotlin.properties.ReadWriteProperty
 
@@ -33,6 +34,8 @@ object SpiralModel {
 
     var patchOperation: PatchOperation? by saveDelegate(null)
     var patchFile: File? by saveDelegate(null)
+
+    val defaultParams: MutableMap<String, Any?> = HashMap()
 
     private val pluginData: MutableMap<String, Any?> = HashMap()
 
@@ -55,33 +58,36 @@ object SpiralModel {
     }
 
     fun load() {
-        val config: ModelConfig
+        unsafeChange {
+            val config: ModelConfig
 
-        if(JSON_CONFIG.exists())
-            config = SpiralData.MAPPER.readValue(JSON_CONFIG, ModelConfig::class.java)
-        else if(YAML_CONFIG.exists())
-            config = SpiralData.YAML_MAPPER.readValue(YAML_CONFIG, ModelConfig::class.java)
-        else
-            return
+            if (JSON_CONFIG.exists())
+                config = SpiralData.MAPPER.readValue(JSON_CONFIG, ModelConfig::class.java)
+            else if (YAML_CONFIG.exists())
+                config = SpiralData.YAML_MAPPER.readValue(YAML_CONFIG, ModelConfig::class.java)
+            else
+                return@unsafeChange
 
-        archives.clear()
-        archives.addAll(config.archives.map { File(it) })
-        loggerLevel = config.loggerLevel
-        concurrentOperations = config.concurrentOperations
-        scope = config.scope
-        operating = if(config.operating == null) null else File(config.operating)
-        autoConfirm = config.autoConfirm
-        purgeCache = config.purgeCache
-        patchOperation = config.patchOperation
-        patchFile = config.patchFile
+            archives.clear()
+            archives.addAll(config.archives.map { File(it) })
+            loggerLevel = config.loggerLevel
+            concurrentOperations = config.concurrentOperations
+            scope = config.scope
+            operating = if (config.operating == null) null else File(config.operating)
+            autoConfirm = config.autoConfirm
+            purgeCache = config.purgeCache
+            patchOperation = config.patchOperation
+            patchFile = config.patchFile
 
-        pluginData.clear()
-        pluginData.putAll(config.pluginData)
+            defaultParams.clear()
+            defaultParams.putAll(config.defaultParams)
 
-        if(config.debug != null)
-            loggerLevel = LoggerLevel.DEBUG
+            pluginData.clear()
+            pluginData.putAll(config.pluginData)
 
-        save()
+            if (config.debug != null)
+                loggerLevel = LoggerLevel.DEBUG
+        }
     }
 
     suspend fun <T> distribute(list: List<T>, operation: (T) -> Unit) {
@@ -103,14 +109,25 @@ object SpiralModel {
         get() = ModelConfig(
                 archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
                 patchOperation, patchFile,
-                pluginData
+                defaultParams, pluginData
         )
 
     init { load() }
 
-    fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> save() }
+    private val unsafe: AtomicBoolean = AtomicBoolean(false)
+
+    fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(unsafe.get()) save() }
 
     fun confirm(question: () -> Boolean): Boolean = autoConfirm || question()
+
+    fun unsafeChange(op: () -> Unit) {
+        try {
+            unsafe.set(true)
+            op()
+        } finally {
+            unsafe.set(false)
+        }
+    }
 
     fun getPluginData(uid: String): Any? = pluginData[uid]
     fun putPluginData(uid: String, data: Any?) {

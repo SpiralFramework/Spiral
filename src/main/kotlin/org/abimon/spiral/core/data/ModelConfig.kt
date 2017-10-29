@@ -15,5 +15,6 @@ data class ModelConfig(
     val patchOperation: PatchOperation? = null,
     val patchFile: File? = null,
 
+    val defaultParams: Map<String, Any?> = emptyMap(),
     val pluginData: Map<String, Any?> = emptyMap()
 )

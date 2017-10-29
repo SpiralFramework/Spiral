@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.data
 
-import org.abimon.spiral.core.objects.CPK
+import org.abimon.spiral.core.objects.archives.CPK
 
 enum class CPKColumnType(val mask: Int) {
     TYPE_DATA(0x0B),

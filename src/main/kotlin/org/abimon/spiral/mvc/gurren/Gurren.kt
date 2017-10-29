@@ -6,7 +6,18 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.formats.*
+import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.formats.archives.CPKFormat
+import org.abimon.spiral.core.formats.archives.PAKFormat
+import org.abimon.spiral.core.formats.archives.WADFormat
+import org.abimon.spiral.core.formats.images.JPEGFormat
+import org.abimon.spiral.core.formats.images.PNGFormat
+import org.abimon.spiral.core.formats.images.SHTXFormat
+import org.abimon.spiral.core.formats.images.TGAFormat
+import org.abimon.spiral.core.formats.scripting.LINFormat
+import org.abimon.spiral.core.formats.scripting.NonstopFormat
+import org.abimon.spiral.core.formats.text.TXTFormat
+import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -350,10 +361,6 @@ object Gurren {
         println(FlipTable.of(arrayOf("File", "Output File", "Old Format", "New Format"), rows.toTypedArray()))
     }
 
-    val patch = Command("patch") { (params) ->
-
-    }
-
     val join = Command("join") { (params) ->
         if (!MediaWrapper.ffmpeg.isInstalled)
             return@Command errPrintln("Error: ffmpeg is not installed")
@@ -416,6 +423,11 @@ object Gurren {
 
             println(FlipTable.of(arrayOf("Name", "Audio File", "Video File", "Output File", "Error"), entries.toTypedArray()))
         }
+    }
+
+    val reloadConfig = Command("reload_config") {
+        SpiralModel.load()
+        println("Reloaded config.")
     }
 
     val versionCommand = Command("version") { println("SPIRAL version $version") }

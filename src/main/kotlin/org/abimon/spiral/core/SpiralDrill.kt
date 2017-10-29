@@ -36,6 +36,4 @@ open class SpiralDrill: BaseParser<Any>() {
             Sequence("//", ZeroOrMore(LineMatcher)),
             EOI
     )
-
-    
 }

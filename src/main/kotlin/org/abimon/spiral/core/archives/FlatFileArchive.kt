@@ -1,8 +1,8 @@
 package org.abimon.spiral.core.archives
 
-import org.abimon.spiral.core.formats.SPCFormat
+import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.ZIPFormat
+import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.iterate

@@ -1,8 +1,9 @@
 package org.abimon.spiral.core.archives
 
 import org.abimon.spiral.core.formats.*
-import org.abimon.spiral.core.objects.CustomWAD
-import org.abimon.spiral.core.objects.WAD
+import org.abimon.spiral.core.formats.images.*
+import org.abimon.spiral.core.objects.archives.CustomWAD
+import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.lang.make

@@ -1,9 +1,9 @@
 package org.abimon.spiral.core
 
-import org.abimon.spiral.core.formats.PAKFormat
-import org.abimon.spiral.core.formats.ZIPFormat
-import org.abimon.spiral.core.objects.Pak
-import org.abimon.spiral.core.objects.WAD
+import org.abimon.spiral.core.formats.archives.PAKFormat
+import org.abimon.spiral.core.formats.archives.ZIPFormat
+import org.abimon.spiral.core.objects.archives.Pak
+import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.visi.io.*
 import java.io.File
 import java.io.FileOutputStream

@@ -1,7 +1,8 @@
 package org.abimon.spiral.core.archives
 
 import org.abimon.spiral.core.formats.*
-import org.abimon.spiral.core.objects.CPK
+import org.abimon.spiral.core.formats.images.*
+import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import java.io.File
