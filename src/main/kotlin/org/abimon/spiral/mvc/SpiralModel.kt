@@ -35,6 +35,8 @@ object SpiralModel {
     var patchOperation: PatchOperation? by saveDelegate(null)
     var patchFile: File? by saveDelegate(null)
 
+    var attemptFingerprinting: Boolean by saveDelegate(true)
+
     val defaultParams: MutableMap<String, Any?> = HashMap()
 
     private val pluginData: MutableMap<String, Any?> = HashMap()
@@ -80,6 +82,8 @@ object SpiralModel {
             patchOperation = config.patchOperation
             patchFile = config.patchFile
 
+            attemptFingerprinting = config.attemptFingerprinting
+
             defaultParams.clear()
             defaultParams.putAll(config.defaultParams)
 
@@ -110,7 +114,7 @@ object SpiralModel {
         get() = ModelConfig(
                 archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
                 patchOperation, patchFile,
-                defaultParams, pluginData
+                attemptFingerprinting, defaultParams, pluginData
         )
 
     init { load() }

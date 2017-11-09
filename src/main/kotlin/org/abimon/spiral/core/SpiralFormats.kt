@@ -1,7 +1,7 @@
 package org.abimon.spiral.core
 
 import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.core.formats.*
+import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.*
 import org.abimon.spiral.core.formats.audio.OggFormat
 import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
@@ -94,6 +94,14 @@ object SpiralFormats {
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.extension?.equals(extension, true) ?: false }
     fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }
     fun formatForName(name: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.name.equals(name, true) } ?: if(name.equals("BINARY", true)) SpiralFormat.BinaryFormat else null
+
+    fun formatForFile(filename: String, dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? {
+        return null
+    }
+
+    fun formatForFingerprint(fingerprint: String): SpiralFormat? {
+        return null
+    }
 
     fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
         val baos = ByteArrayOutputStream()
