@@ -8,7 +8,6 @@ import org.abimon.spiral.core.archives.FlatFileArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.LoggerLevel
@@ -17,7 +16,6 @@ import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
-import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -210,7 +208,6 @@ object GurrenOperation {
             }
         }
     }
-
     val compileNicely = Command("compile_nicely", "operate") { (params) ->
         if(params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
@@ -280,17 +277,6 @@ object GurrenOperation {
                 tmpFile.delete()
             }
         }
-    }
-
-    val fingerprintWad = Command("fingerprint_wad", "operate") {
-        val fileMap: MutableMap<String, Map<String, String>> = HashMap()
-        val fingerprints: MutableMap<String, String> = HashMap()
-        print("Version: ")
-        fileMap[readLine() ?: "unknown"] = fingerprints
-
-        operatingArchive.fileEntries.forEach { (name, data) -> fingerprints[name] = data.use { it.sha512Hash() } }
-
-        SpiralData.MAPPER.writeValue(File("fingerprints_${SpiralModel.operating?.nameWithoutExtension}.json"), fileMap)
     }
 
     val info = Command("info", "operate") { (params) ->

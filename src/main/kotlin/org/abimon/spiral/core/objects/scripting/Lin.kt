@@ -11,7 +11,6 @@ import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.toIntArray
 import org.abimon.spiral.util.CountingInputStream
-import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readPartialBytes
@@ -60,7 +59,7 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                     break
 
                 if (data[i] == 0x0) {
-                    debug("$i is 0x0")
+                    trace("$i is 0x0")
                     i++
                 } else if (data[i] != 0x70) {
                     while (i < data.size) {

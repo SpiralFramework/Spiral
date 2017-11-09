@@ -38,6 +38,7 @@ object SpiralModel {
     val defaultParams: MutableMap<String, Any?> = HashMap()
 
     private val pluginData: MutableMap<String, Any?> = HashMap()
+    private val unsafe: AtomicBoolean = AtomicBoolean(false)
 
     fun Command(commandName: String, scope: String? = null, command: (Pair<Array<String>, String>) -> Unit): InstanceSoldier<InstanceOrder<*>> {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
@@ -113,8 +114,6 @@ object SpiralModel {
         )
 
     init { load() }
-
-    private val unsafe: AtomicBoolean = AtomicBoolean(false)
 
     fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(unsafe.get()) save() }
 
