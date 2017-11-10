@@ -6,9 +6,11 @@ import org.abimon.spiral.core.objects.archives.CustomWAD
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
+import org.abimon.visi.io.readChunked
 import org.abimon.visi.lang.make
 import java.io.File
 import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.util.*
 
 class WADArchive(override val archiveFile: File): IArchive {
@@ -25,21 +27,32 @@ class WADArchive(override val archiveFile: File): IArchive {
     override val supportsCompilation: Boolean = true
 
     override fun compile(newEntries: List<Pair<String, DataSource>>) {
-        //check if can patch
-        val customWad = make<CustomWAD> {
-            wad(wad)
-            newEntries.forEach { (name, data) -> this.data(name, data) }
-        }
+        //Check if can patch
+        if(newEntries.all { (name, data) -> wad.files.any { entry -> entry.name == name && entry.fileSize == data.size } }) {
+            val wadFile = RandomAccessFile(archiveFile, "rw")
+            newEntries.forEach { (name, data) ->
+                val wadEntry = wad.files.first { entry -> entry.name == name && entry.fileSize == data.size }
+                wadFile.seek(wadEntry.offset)
+                data.use { stream -> stream.readChunked { chunk -> wadFile.write(chunk) } }
+            }
 
-        val tmp = File.createTempFile(UUID.randomUUID().toString(), ".wad")
-        tmp.deleteOnExit()
+            println("Patched!")
+        } else {
+            val customWad = make<CustomWAD> {
+                wad(wad)
+                newEntries.forEach { (name, data) -> this.data(name, data) }
+            }
 
-        try {
-            FileOutputStream(tmp).use(customWad::compile)
-            archiveFile.delete()
-            tmp.renameTo(archiveFile)
-        } finally {
-            tmp.delete()
+            val tmp = File.createTempFile(UUID.randomUUID().toString(), ".wad")
+            tmp.deleteOnExit()
+
+            try {
+                FileOutputStream(tmp).use(customWad::compile)
+                archiveFile.delete()
+                tmp.renameTo(archiveFile)
+            } finally {
+                tmp.delete()
+            }
         }
     }
 }
