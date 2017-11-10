@@ -4,12 +4,13 @@ import com.jakewharton.fliptables.FlipTable
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.CPKArchive
-import org.abimon.spiral.core.archives.FlatFileArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
+import org.abimon.spiral.mvc.SpiralModel.operating
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
 import org.abimon.visi.collections.copyFrom
@@ -40,22 +41,22 @@ object GurrenOperation {
     val help = Command("help", "operate") { println(helpTable) }
 
     val extract = Command("extract", "operate") { (params) ->
-        if(params.size == 1)
+        if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
 
         val directory = File(params[1])
-        if(directory.exists()) {
+        if (directory.exists()) {
             if (directory.isFile)
                 return@Command errPrintln("[$operatingName] Error: $directory is a file")
             else if (!directory.isDirectory)
                 return@Command errPrintln("[$operatingName] Error: $directory is not a directory")
         } else {
             errPrintln("[$operatingName] Warn: $directory does not exist, creating...")
-            if(!directory.mkdirs())
+            if (!directory.mkdirs())
                 return@Command errPrintln("[$operatingName] Error: $directory could not be created, returning...")
         }
 
-        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
         val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
@@ -63,7 +64,7 @@ object GurrenOperation {
         println("")
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
         println("")
-        if(question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
+        if (question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
                 matching.forEach { (entryName, entry) ->
@@ -83,22 +84,22 @@ object GurrenOperation {
         }
     }
     val extractNicely = Command("extract_nicely", "operate") { (params) ->
-        if(params.size == 1)
+        if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
 
         val directory = File(params[1])
-        if(directory.exists()) {
+        if (directory.exists()) {
             if (directory.isFile)
                 return@Command errPrintln("[$operatingName] Error: $directory is a file")
             else if (!directory.isDirectory)
                 return@Command errPrintln("[$operatingName] Error: $directory is not a directory")
         } else {
             errPrintln("[$operatingName] Warn: $directory does not exist, creating...")
-            if(!directory.mkdirs())
+            if (!directory.mkdirs())
                 return@Command errPrintln("[$operatingName] Error: $directory could not be created, returning...")
         }
 
-        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
         val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
@@ -110,10 +111,10 @@ object GurrenOperation {
 
             return@confirm question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")
         }
-        if(proceed) {
+        if (proceed) {
             val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
-           if(params.size > 3) params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
+            if (params.size > 3) params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
 
             val rows: MutableCollection<Array<String>> = ConcurrentLinkedQueue()
             val duration = measureTimeMillis {
@@ -125,7 +126,7 @@ object GurrenOperation {
                     }
 
                     //debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
-                    SpiralModel.distribute(matching) launch@{ (entryName, entry) ->
+                    SpiralModel.distribute(matching) launch@ { (entryName, entry) ->
                         debug("Starting $entryName")
                         val parents = File(directory, entryName.parents)
                         if (!parents.exists() && !parents.mkdirs() && !parents.exists())
@@ -153,7 +154,7 @@ object GurrenOperation {
                                 FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
                                 rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
 
-                                if(LoggerLevel.ERROR.enabled)
+                                if (LoggerLevel.ERROR.enabled)
                                     LoggerLevel.ERROR(iea.exportStackTrace())
                             }
                         }
@@ -167,11 +168,11 @@ object GurrenOperation {
     }
 
     val compile = Command("compile", "operate") { (params) ->
-        if(params.size == 1)
+        if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
 
         val directory = File(params[1])
-        if(directory.exists()) {
+        if (directory.exists()) {
             if (directory.isFile)
                 return@Command errPrintln("[$operatingName] Error: $directory is a file")
             else if (!directory.isDirectory)
@@ -179,7 +180,7 @@ object GurrenOperation {
         } else
             return@Command errPrintln("[$operatingName] Error: $directory does not exist")
 
-        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
         val matching = directory.iterate(filters = Gurren.ignoreFilters).filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
 
@@ -187,33 +188,18 @@ object GurrenOperation {
         println("")
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { this relativePathFrom directory })
         println("")
-        if(question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")) {
-            if(operatingArchive is FlatFileArchive) {
-                (operatingArchive as FlatFileArchive).compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) })
-                println("[$operatingName] Successfully compiled ${matching.size} files into ${SpiralModel.operating!!}")
-            } else {
-                val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
-                val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
-                try {
-                    FileOutputStream(tmpFile).use { operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) }, it) }
-
-                    if (backupFile.exists()) backupFile.delete()
-                    SpiralModel.operating!!.renameTo(backupFile)
-                    tmpFile.renameTo(SpiralModel.operating!!)
-
-                    println("[$operatingName] Successfully compiled ${matching.size} files into ${SpiralModel.operating!!}")
-                } finally {
-                    tmpFile.delete()
-                }
-            }
+        if (question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")) {
+            operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) })
+            println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
         }
     }
+
     val compileNicely = Command("compile_nicely", "operate") { (params) ->
-        if(params.size == 1)
+        if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
 
         val directory = File(params[1])
-        if(directory.exists()) {
+        if (directory.exists()) {
             if (directory.isFile)
                 return@Command errPrintln("[$operatingName] Error: $directory is a file")
             else if (!directory.isDirectory)
@@ -221,26 +207,26 @@ object GurrenOperation {
         } else
             return@Command errPrintln("[$operatingName] Error: $directory does not exist")
 
-        val regex = (if(params.size > 2) params[2] else ".*").toRegex()
+        val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
         val matching = directory.iterate(filters = Gurren.ignoreFilters)
                 .filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
                 .map { file -> file to (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))) }
-                .map { (file, format) -> if(format in SpiralFormats.drArchiveFormats) file to null else file to format }
+                .map { (file, format) -> if (format in SpiralFormats.drArchiveFormats) file to null else file to format }
                 .toMap()
 
         println("[$operatingName] Attempting to convert and compile files matching the regex ${regex.pattern}, which is the following list of files: ")
         println("")
         println(matching.entries.joinToPrefixedString("\n", "[$operatingName]\t") {
-            if(this.value == null)
+            if (this.value == null)
                 "${this.key relativePathFrom directory} (No known format)"
-            else if(this.value!!.conversions.isEmpty())
+            else if (this.value!!.conversions.isEmpty())
                 "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
             else
                 "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
         })
         println("")
-        if(question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")) {
+        if (question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")) {
             val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 //            val customWad = make<CustomWAD> {
 //                wad(wad)
@@ -263,45 +249,34 @@ object GurrenOperation {
                 return@map name to formatIn
             })
 
-            val tmpFile = File(SpiralModel.operating!!.absolutePath + ".tmp")
-            val backupFile = File(SpiralModel.operating!!.absolutePath + ".backup")
-            try {
-                FileOutputStream(tmpFile).use { operatingArchive.compile(newEntries, it) }
-
-                if(backupFile.exists()) backupFile.delete()
-                SpiralModel.operating!!.renameTo(backupFile)
-                tmpFile.renameTo(SpiralModel.operating!!)
-
-                println("[$operatingName] Successfully compiled ${matching.size} files into $operatingName.wad")
-            } finally {
-                tmpFile.delete()
-            }
+            operatingArchive.compile(newEntries)
+            println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
         }
     }
 
     val info = Command("info", "operate") { (params) ->
-        val regex = (if(params.size > 1) params[1] else ".*").toRegex()
-        when(operatingArchive) {
+        val regex = (if (params.size > 1) params[1] else ".*").toRegex()
+        when (operatingArchive) {
             is WADArchive -> {
                 val wad = (operatingArchive as WADArchive).wad
 
-                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", "Unknown") }.toTypedArray()
+                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
             }
             is CPKArchive -> {
                 val cpk = (operatingArchive as CPKArchive).cpk
 
-                val matching = cpk.fileTable.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", "Unknown") }.toTypedArray()
+                val matching = cpk.fileTable.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
             }
         }
     }
 
     val test = Command("test", "operate") {
-        when(operatingArchive) {
+        when (operatingArchive) {
             is CPKArchive -> {
                 val cpk = (operatingArchive as CPKArchive).cpk
-                if(cpk.etocHeader == null)
+                if (cpk.etocHeader == null)
                     return@Command
 
                 File("Etoc-V3.txt").printWriter().use { writer ->
@@ -317,7 +292,7 @@ object GurrenOperation {
         if (SpiralModel.archives.isEmpty())
             return@Command errPrintln("Error: No archives registered")
         if (params.size > 1) {
-            for(i in 1 until params.size) {
+            for (i in 1 until params.size) {
                 val archiveName = params[i]
                 val archive = SpiralModel.archives.firstOrNull { file -> file.nameWithoutExtension == archiveName || file.absolutePath == archiveName }
                 if (archive == null)
@@ -337,7 +312,7 @@ object GurrenOperation {
         while (true) {
             print("[operate] > ")
             val archiveName = readLine() ?: break
-            if(archiveName == "exit")
+            if (archiveName == "exit")
                 break
 
             val archive = SpiralModel.archives.firstOrNull { file -> file.nameWithoutExtension == archiveName || file.absolutePath == archiveName }

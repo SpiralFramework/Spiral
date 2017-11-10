@@ -49,6 +49,9 @@ object ZIPFormat : SpiralFormat {
                         val entries = make<HashMap<String, DataSource>> {
                             zipIn.use { zip ->
                                 zip.forEach { entry ->
+                                    if(entry.name.startsWith('.') || entry.name.startsWith("__"))
+                                        return@forEach
+
                                     val (out, data) = CacheHandler.cacheStream()
                                     zip.writeTo(out, closeAfter = false)
 

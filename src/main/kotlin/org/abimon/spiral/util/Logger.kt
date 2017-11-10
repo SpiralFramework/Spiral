@@ -28,9 +28,9 @@ fun log(msg: Any?, level: LoggerLevel) {
     }
 }
 
-fun logWithCaller(msg: Any?, level: LoggerLevel) {
+fun logWithCaller(msg: Any?, level: LoggerLevel, stepsDown: Int) {
     if(SpiralModel.loggerLevel >= level) {
-        val there = Thread.currentThread().stackTrace.copyFrom(1).firstOrNull { it.className != "org.abimon.spiral.util.LoggerKt" && !it.className.contains('$') } ?: run {
+        val there = Thread.currentThread().stackTrace.copyFrom(1 + stepsDown).firstOrNull { it.className != "org.abimon.spiral.util.LoggerKt" && !it.className.contains('$') } ?: run {
             level("[Unknown] $msg")
             currentLog.println("[Unknown] $msg")
 
@@ -54,5 +54,5 @@ fun debug(msg: Any?) = log(msg, LoggerLevel.DEBUG)
 
 fun trace(msg: Any?) = log(msg, LoggerLevel.TRACE)
 
-fun debugWithCaller(msg: Any?) = logWithCaller(msg, LoggerLevel.DEBUG)
-fun traceWithCaller(msg: Any?) = logWithCaller(msg, LoggerLevel.TRACE)
+fun debugWithCaller(msg: Any?, stepsDown: Int = 0) = logWithCaller(msg, LoggerLevel.DEBUG, stepsDown)
+fun traceWithCaller(msg: Any?, stepsDown: Int = 0) = logWithCaller(msg, LoggerLevel.TRACE, stepsDown)

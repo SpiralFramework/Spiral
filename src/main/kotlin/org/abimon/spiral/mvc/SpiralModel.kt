@@ -119,7 +119,7 @@ object SpiralModel {
 
     init { load() }
 
-    fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(unsafe.get()) save() }
+    fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(!unsafe.get()) save() }
 
     fun confirm(question: () -> Boolean): Boolean = autoConfirm || question()
 

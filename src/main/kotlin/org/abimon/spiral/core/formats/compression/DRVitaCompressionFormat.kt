@@ -17,7 +17,7 @@ object DRVitaCompressionFormat : SpiralFormat {
     val CMP_MAGIC = byteArrayOfInts(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = byteArrayOfInts(0x47, 0x58, 0x33, 0x00)
 
-    override fun isFormat(source: DataSource): Boolean = source.use { it.read(4) equals CMP_MAGIC }
+    override fun isFormat(source: DataSource): Boolean = tryUnsafe { source.use { it.read(4) equals CMP_MAGIC } }
 
     override fun canConvert(format: SpiralFormat): Boolean = true
 
