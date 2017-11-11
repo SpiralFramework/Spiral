@@ -41,7 +41,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
     compile('org.abimon:Imperator:4')
-    compile('org.abimon:Visi:30')
+    compile('org.abimon:Visi:31')
     compile('org.abimon:Karnage:9')
 
     compile "org.parboiled:parboiled-java:1.1.8"

@@ -146,7 +146,7 @@ object GurrenOperation {
                             rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
                         } else {
                             try {
-                                val output = File(directory, entryName.replace(".${format.extension}", "") + ".${convertingTo.extension ?: "unk"}")
+                                val output = File(directory, entryName.replace(".${format.extension ?: "unk"}", "", true) + ".${convertingTo.extension ?: "unk"}")
                                 FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
                                 rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
                             } catch (iea: IllegalArgumentException) {
