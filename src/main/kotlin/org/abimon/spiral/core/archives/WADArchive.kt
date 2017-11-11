@@ -4,6 +4,7 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.objects.archives.CustomWAD
 import org.abimon.spiral.core.objects.archives.WAD
+import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.readChunked
@@ -32,11 +33,12 @@ class WADArchive(override val archiveFile: File): IArchive {
             val wadFile = RandomAccessFile(archiveFile, "rw")
             newEntries.forEach { (name, data) ->
                 val wadEntry = wad.files.first { entry -> entry.name == name && entry.fileSize == data.size }
-                wadFile.seek(wadEntry.offset)
-                data.use { stream -> stream.readChunked { chunk -> wadFile.write(chunk) } }
+                wadFile.seek(wadEntry.wad.dataOffset + wadEntry.offset)
+                data.use { stream -> stream.readChunked(processChunk = wadFile::write) }
             }
 
-            println("Patched!")
+            wadFile.close()
+            trace("Patched!")
         } else {
             val customWad = make<CustomWAD> {
                 wad(wad)
