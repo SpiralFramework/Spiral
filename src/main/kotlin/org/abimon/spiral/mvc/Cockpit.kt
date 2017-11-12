@@ -1,15 +1,10 @@
 package org.abimon.spiral.mvc
 
 import org.abimon.imperator.impl.InstanceOrder
-import org.abimon.imperator.impl.InstanceSoldier
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.images.SRDFormat
 import org.abimon.spiral.modding.PluginManager
-import org.abimon.spiral.mvc.gurren.Gurren
-import org.abimon.spiral.mvc.gurren.GurrenOperation
-import org.abimon.spiral.mvc.gurren.GurrenPatching
-import org.abimon.spiral.mvc.gurren.GurrenPlugins
-import kotlin.reflect.full.memberProperties
+import org.abimon.spiral.mvc.gurren.*
 
 fun main(args: Array<String>) = startupSpiral(args)
 
@@ -19,12 +14,11 @@ fun startupSpiral(args: Array<String>) {
     PluginManager.scanForPlugins()
     SRDFormat.hook()
 
-    val registerSoldiers: Any.() -> Unit = { this.javaClass.kotlin.memberProperties.filter { it.returnType.classifier == InstanceSoldier::class }.forEach { SpiralModel.imperator.hireSoldier(it.get(this) as? InstanceSoldier<*> ?: return@forEach) } }
-
-    Gurren.registerSoldiers()
-    GurrenOperation.registerSoldiers()
-    GurrenPatching.registerSoldiers()
-    GurrenPlugins.registerSoldiers()
+    SpiralModel.imperator.hireSoldiers(Gurren)
+    SpiralModel.imperator.hireSoldiers(GurrenOperation)
+    SpiralModel.imperator.hireSoldiers(GurrenPatching)
+    SpiralModel.imperator.hireSoldiers(GurrenPlugins)
+    SpiralModel.imperator.hireSoldiers(GurrenModding)
 
     println("Initialising SPIRAL")
 

@@ -40,7 +40,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
-    compile('org.abimon:Imperator:4')
+    compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:31')
     compile('org.abimon:Karnage:9')
 
