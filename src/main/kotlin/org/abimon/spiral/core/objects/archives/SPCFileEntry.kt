@@ -12,7 +12,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import kotlin.system.measureNanoTime
 
-data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long, val dec_size: Long, val name: String, val offset: Long, val parent: SPC): DataSource {
+data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long, val dec_size: Long, val name: String, val offset: Long, val parent: SPC) : DataSource {
     override val data: ByteArray
         get() = dataSource.use { it.readBytes() }
     override val inputStream: InputStream
@@ -30,7 +30,7 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
     val dataSource: DataSource by lazy {
         val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${"$location-$cmp_size".md5Hash()}.dat")
 
-        if(!initialised) {
+        if (!initialised) {
             val nano = measureNanoTime {
                 raf.use { raw ->
                     raw.channel.use { access ->
@@ -38,113 +38,61 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
                             0x01 -> rawInputStream.use { it.readChunked { chunk -> raw.write(chunk) } }
                             0x02 -> {
                                 var flag = 1
-
-//                                if(dec_size > 8 * 1024 * 1024) { //Less than 8 MB
-//                                    val buffer: MutableList<Int> = LinkedList()
-//                                    rawInputStream.use { stream ->
-//                                        try {
-//                                            loop@ while (stream.available() > 0) {
-//                                                if (flag == 1)
-//                                                    flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
-//
-//                                                if (stream.available() == 0)
-//                                                    break@loop
-//
-//                                                if (flag and 1 == 1) {
-//                                                    buffer.add(stream.read())
-//                                                } else {
-//                                                    val x = stream.read()
-//                                                    val y = stream.read()
-//
-//                                                    val b = (y shl 8) or x
-//                                                    val count = (b shr 10) + 2
-//                                                    val offset = b and 0b1111111111
-//
-//                                                    val r = buffer.size + (offset - 1024)
-//                                                    val overflow = count - buffer.size
-//                                                    if(overflow <= 0) {
-//                                                        for (j in 0 until count)
-//                                                            buffer.add(buffer[r + j])
-//                                                    } else {
-//                                                        for (j in 0 until count) {
-//                                                            buffer.add(buffer[r + (j % overflow)])
-//                                                        }
-//                                                    }
-//                                                }
-//
-//                                                flag = flag shr 1
-//                                            }
-//
-//                                            raw.write(buffer.map { it.toByte() }.toByteArray())
-//                                        } catch (oom: OutOfMemoryError) {
-//                                            println("OOM Error: ${oom.exportStackTrace()}")
-//                                        }
-//                                    }
-//                                }
-
                                 rawInputStream.use { stream ->
-                                        try {
-                                            val buffer = ByteBuffer.allocate(4096)
-                                            val tmp = ByteBuffer.allocate(4096)
-                                            loop@ while (stream.available() > 0) {
-                                                if (flag == 1)
-                                                    flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
+                                    try {
+                                        val buffer = ByteBuffer.allocate(4096)
+                                        val tmp = ByteBuffer.allocate(4096)
+                                        loop@ while (stream.available() > 0) {
+                                            if (flag == 1)
+                                                flag = 0x100 or ((stream.read() * 0x0202020202 and 0x010884422010) % 1023).toInt()
 
-                                                if (stream.available() == 0)
-                                                    break@loop
+                                            if (stream.available() == 0)
+                                                break@loop
 
-                                                if (flag and 1 == 1) {
-                                                    var count = 0
-                                                    while(flag and 1 == 1 && flag != 1) {
-                                                        flag = flag shr 1
-                                                        count++
-                                                    }
-
-                                                    buffer.put(stream.readPartialBytes(count))
-                                                } else {
-                                                    val x = stream.read()
-                                                    val y = stream.read()
-
-                                                    val b = (y shl 8) or x
-                                                    val count = (b shr 10) + 2
-                                                    val offset = b and 0b1111111111
-
-                                                    val r = buffer.position() + (offset - 1024)
-                                                    val overflow = count - buffer.position()
-                                                    if(overflow <= 0) {
-                                                        for (j in 0 until count)
-                                                            buffer.put(buffer[r + j])
-                                                    } else {
-                                                        for (j in 0 until count) {
-                                                            buffer.put(buffer[r + (j % overflow)])
-                                                        }
-                                                    }
-
+                                            if (flag and 1 == 1) {
+                                                var count = 0
+                                                while (flag and 1 == 1 && flag != 1) {
                                                     flag = flag shr 1
+                                                    count++
                                                 }
 
-                                                if(buffer.position() >= 2048) {
-                                                    val oldLimit = buffer.position()
-                                                    buffer.flip()
-                                                    buffer.limit(1024)
-                                                    access.write(buffer)
+                                                buffer.put(stream.readPartialBytes(count))
+                                            } else {
+                                                val x = stream.read()
+                                                val y = stream.read()
 
-                                                    buffer.limit(oldLimit)
-                                                    tmp.put(buffer)
-                                                    buffer.clear()
-                                                    tmp.flip()
-                                                    buffer.put(tmp)
-                                                    tmp.clear()
-                                                }
+                                                val b = (y shl 8) or x
+                                                val count = (b shr 10) + 2
+                                                val offset = buffer.position() + ((b and 0b1111111111) - 1024)
+
+                                                for (i in 0 until count)
+                                                    buffer.put(buffer[i + offset])
+
+                                                flag = flag shr 1
                                             }
 
+                                            if (buffer.position() >= 2048) {
+                                                val oldLimit = buffer.position()
+                                                buffer.flip()
+                                                buffer.limit(1024)
+                                                access.write(buffer)
 
-                                            buffer.flip()
-                                            access.write(buffer)
-                                        } catch (oom: OutOfMemoryError) {
-                                            println("OOM Error: ${oom.exportStackTrace()}")
+                                                buffer.limit(oldLimit)
+                                                tmp.put(buffer)
+                                                buffer.clear()
+                                                tmp.flip()
+                                                buffer.put(tmp)
+                                                tmp.clear()
+                                            }
                                         }
+
+
+                                        buffer.flip()
+                                        access.write(buffer)
+                                    } catch (oom: OutOfMemoryError) {
+                                        println("OOM Error: ${oom.exportStackTrace()}")
                                     }
+                                }
                             }
                             0x03 -> {
                                 println("Ext. File")
