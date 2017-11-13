@@ -42,7 +42,7 @@ object SpiralFormats {
 
     val formats: Array<SpiralFormat> = arrayOf(
             WADFormat, CPKFormat, ZIPFormat,
-            TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
+            GXTFormat, TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
             IVFFormat, MP4Format,
             LINFormat, SpiralTextFormat, WRDFormat,

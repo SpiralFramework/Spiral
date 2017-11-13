@@ -86,7 +86,7 @@ object SRDFormat {
                     if(format is PNGFormat)
                         ImageIO.write(image, "PNG", zos)
                     else
-                        PNGFormat.convert(format, image, zos)
+                        PNGFormat.convert(format, image, zos, emptyMap())
                 }
 
                 zos.finish()
