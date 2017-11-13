@@ -17,8 +17,10 @@ object GXTFormat: SpiralImageFormat {
     override val extension: String? = "gxt"
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, TGAFormat, SHTXFormat, DDSFormat)
     val HEADER = byteArrayOf(0x47, 0x58, 0x54, 0x00)
+    val VERSION = byteArrayOf(0x03, 0x00, 0x00, 0x10)
 
-    val LINEAR_TEXTURE = 0x60
+    val PALETTE_BGRA = byteArrayOf(0x00, 0x10, 0x00, 0x95.toByte())
+    val LINEAR_TEXTURE = byteArrayOf(0x00, 0x00, 0x00, 0x60)
 
     override fun isFormat(source: DataSource): Boolean = source.use { stream -> stream.read(4) contentEquals HEADER }
 
