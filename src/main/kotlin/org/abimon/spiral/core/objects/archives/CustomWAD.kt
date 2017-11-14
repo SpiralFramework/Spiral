@@ -21,7 +21,6 @@ import java.io.File
 import java.io.OutputStream
 import java.io.RandomAccessFile
 import java.nio.channels.Channels
-import java.nio.charset.Charset
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -103,7 +102,7 @@ class CustomWAD {
 
         var offset = 0L
         files.forEach { (filename, raf) ->
-            val name = filename.toByteArray(Charset.forName("UTF-8"))
+            val name = filename.toByteArray(Charsets.UTF_8)
             wad.writeInt(name.size)
             wad.write(name)
             wad.writeLong(raf.length())
@@ -145,13 +144,13 @@ class CustomWAD {
         wad.writeInt(setDirs.size)
 
         setDirs.sortedWith(Comparator<String>(String::compareTo)).forEach {
-            val name = it.toByteArray(Charset.forName("UTF-8"))
+            val name = it.toByteArray(Charsets.UTF_8)
             wad.writeInt(name.size)
             wad.write(name)
             wad.writeInt(dirs[it]!!.size)
 
             dirs[it]!!.sortedWith(Comparator<String>(String::compareTo)).forEach {
-                val fileName = it.child.toByteArray(Charset.forName("UTF-8"))
+                val fileName = it.child.toByteArray(Charsets.UTF_8)
                 wad.writeInt(fileName.size)
                 wad.write(fileName)
                 wad.write(if (dirs.containsKey(it)) 1 else 0)
