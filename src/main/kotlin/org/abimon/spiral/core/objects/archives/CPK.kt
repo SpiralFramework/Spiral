@@ -22,8 +22,6 @@ class CPK(val dataSource: DataSource) {
     companion object {
         val CPK_MAGIC = "CPK "
 
-
-
         val COLUMN_STORAGE_MASK = 0xF0
         val COLUMN_STORAGE_PERROW = 0x50
         val COLUMN_STORAGE_CONSTANT = 0x30

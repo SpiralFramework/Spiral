@@ -55,6 +55,23 @@ object CacheHandler {
         return FileDataSource(cacheFile) to RandomAccessFile(cacheFile, "rw") and initialised
     }
 
+    fun cacheRandomAccessOutput(name: String? = null): Triple<OutputStream, RandomAccessFile, Boolean> {
+        val initialised: Boolean
+        val cacheFile: File
+
+        if (name == null) {
+            initialised = false
+            cacheFile = newCacheFile()
+        } else {
+            cacheFile = File(cacheDir, name)
+            initialised = cacheFile.exists()
+        }
+
+        cacheFiles.add(cacheFile)
+
+        return FileOutputStream(cacheFile) to RandomAccessFile(cacheFile, "rw") and initialised
+    }
+
     fun cache(data: ByteArray): DataSource {
         if(SpiralModel.cacheEnabled) {
             val cacheFile = newCacheFile()
