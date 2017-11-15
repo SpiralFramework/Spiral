@@ -2,6 +2,7 @@ package org.abimon.spiral.mvc
 
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.formats.fonts.V3SPCFont
 import org.abimon.spiral.core.formats.images.SRDFormat
 import org.abimon.spiral.modding.PluginManager
 import org.abimon.spiral.mvc.gurren.*
@@ -13,6 +14,7 @@ fun startupSpiral(args: Array<String>) {
         CacheHandler.purge()
     PluginManager.scanForPlugins()
     SRDFormat.hook()
+    V3SPCFont.hook()
 
     SpiralModel.imperator.hireSoldiers(Gurren)
     SpiralModel.imperator.hireSoldiers(GurrenOperation)
@@ -30,8 +32,6 @@ fun startupSpiral(args: Array<String>) {
                 println("Unknown command")
         }
     }
-
-    //blaze()
 
     while(Gurren.keepLooping) {
         try {

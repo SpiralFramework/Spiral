@@ -81,7 +81,7 @@ class SRD(val srd: DataSource) {
                                             unk1, swiz, disp_width, disp_height,
                                             scanline, fmt, unk2, palette,
                                             palette_id, unk5, mipmaps.toTypedArray(),
-                                            name, item
+                                            name, item, imgItem
                                     ))
                                 }
                             }
