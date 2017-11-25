@@ -1,5 +1,6 @@
 package org.abimon.spiral.core
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
 import org.abimon.spiral.core.objects.images.GXTByteColourOrder
@@ -17,6 +18,9 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
+import kotlin.collections.HashMap
+import kotlin.reflect.KClass
+import kotlin.reflect.full.cast
 
 typealias TripleHashMap<T, U, V> = HashMap<T, Pair<U, V>>
 
@@ -297,3 +301,8 @@ fun IntArray.swizzle(colourOrder: GXTByteColourOrder): Int {
 }
 
 fun toRGBA(r: Int, g: Int, b: Int, a: Int): Int = Color(r, g, b, a).rgb//(a and 0xFF) shl 24 or (r and 0xFF shl 16) or (g and 0xFF shl 8) or (b and 0xFF shl 0)
+
+fun <A: Any, B: Any> ObjectMapper.readMapValue(src: ByteArray, key: KClass<A>, value: KClass<B>): Map<A, B> = readMapValueTo(src, HashMap<A, B>(), key, value)
+fun <T: MutableMap<A, B>, A: Any, B: Any> ObjectMapper.readMapValueTo(src: ByteArray, dest: T, key: KClass<A>, value: KClass<B>): T {
+    return readValue(src, Map::class.java).filter { (a, b) -> key.isInstance(a) && value.isInstance(b) }.map { (a, b) -> key.cast(a) to value.cast(b) }.toMap(dest)
+}

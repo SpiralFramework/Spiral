@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.0-rc-39'
+    ext.kotlin_version = '1.2.0-rc-84'
     ext.jackson_version = '2.9.0'
 
     repositories {
@@ -87,5 +87,11 @@ artifacts {
 kotlin {
     experimental {
         coroutines "enable"
+    }
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }

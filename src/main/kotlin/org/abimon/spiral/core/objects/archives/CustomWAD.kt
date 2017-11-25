@@ -10,17 +10,11 @@ import org.abimon.spiral.core.print
 import org.abimon.spiral.core.writeInt
 import org.abimon.spiral.core.writeLong
 import org.abimon.spiral.util.trace
-import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FunctionDataSource
-import org.abimon.visi.io.errPrintln
-import org.abimon.visi.io.iterate
+import org.abimon.visi.io.*
 import org.abimon.visi.lang.child
 import org.abimon.visi.lang.parents
-import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.OutputStream
-import java.io.RandomAccessFile
-import java.nio.channels.Channels
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -29,7 +23,8 @@ class CustomWAD {
     var minor: Long = 0
     var header: ByteArray = ByteArray(0)
 
-    private val files: MutableMap<String, RandomAccessFile> = HashMap()
+    private val files: MutableMap<String, DataSource> = HashMap()
+    private val filePriorities: MutableMap<String, Int> = HashMap()
     private val dataCoroutines: MutableList<Job> = ArrayList()
 
     fun major(major: Number) {
@@ -49,42 +44,46 @@ class CustomWAD {
         data(SpiralData.SPIRAL_HEADER_NAME, FunctionDataSource { header })
     }
 
-    fun data(name: String, dataSource: DataSource, calcHash: Boolean = false) {
+    fun data(name: String, dataSource: DataSource, prioritise: Boolean = false) {
         val newName = name.replace(File.separator, "/")
-        if (calcHash) {
-            val (out, raf, initialised) = CacheHandler.cacheRandomAccessOutput(dataSource.use { it.sha512Hash() })
-            if(!initialised) launchCoroutine { dataSource.pipe(out) }
-            files[newName] = raf
-        } else {
-            val (out, raf) = CacheHandler.cacheRandomAccessOutput()
-            launchCoroutine { dataSource.pipe(out) }
-            files[newName] = raf
-        }
+        val (out, source) = CacheHandler.cacheStream()
+        launchCoroutine { dataSource.pipe(out) }
+        files[newName] = source
+
+        if (prioritise)
+            filePriorities[name] = (filePriorities[name] ?: 0) + 1
     }
 
-    fun data(name: String, data: ByteArray) {
+    fun data(name: String, data: ByteArray, prioritise: Boolean = false) {
         val newName = name.replace(File.separator, "/")
-        val (out, raf) = CacheHandler.cacheRandomAccessOutput()
+        val (out, source) = CacheHandler.cacheStream()
         launchCoroutine { out.use { stream -> stream.write(data) } }
-        files[newName] = raf
+        files[newName] = source
+
+        if (prioritise)
+            filePriorities[name] = (filePriorities[name] ?: 0) + 1
     }
 
-    fun file(file: File, name: String = file.name) {
+    fun file(file: File, name: String = file.name, prioritise: Boolean = false) {
         val newName = name.replace(File.separator, "/")
-        files[newName] = RandomAccessFile(file, "r")
+        files[newName] = FileDataSource(file)
+
+        if (prioritise)
+            filePriorities[name] = (filePriorities[name] ?: 0) + 1
     }
 
-    fun directory(file: File, names: Map<File, String> = HashMap()) {
+    fun directory(file: File, names: Map<File, String> = HashMap(), prioritise: Boolean = false) {
         if (!file.isDirectory)
             throw IllegalArgumentException("$file is not a directory")
-        file.iterate(false).forEach { file(it, names.getOrElse(it, { it.absolutePath.replace("${file.absolutePath}${File.separator}", "") })) }
+        file.iterate(false).forEach { file(it, names.getOrElse(it, { it.absolutePath.replace("${file.absolutePath}${File.separator}", "", prioritise) })) }
     }
 
     fun wad(wad: WAD) {
         major(wad.major)
         minor(wad.minor)
 
-        wad.files.forEach { file -> data(file.name, file, true) }
+        wad.files.forEach { file -> files[file.name.replace(File.separator, "/")] = file }
+        filePriorities.putAll(wad.spiralPriorityList)
     }
 
     fun compile(wad: OutputStream) {
@@ -94,6 +93,9 @@ class CustomWAD {
         wad.writeInt(header.size)
         wad.write(header)
 
+        filePriorities[SpiralData.SPIRAL_PRIORITY_LIST] = 0
+        files[SpiralData.SPIRAL_PRIORITY_LIST] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(filePriorities))
+
         wad.writeInt(files.size)
 
         trace("Waiting on coroutines")
@@ -101,19 +103,21 @@ class CustomWAD {
         trace("Finished waiting")
 
         var offset = 0L
-        files.forEach { (filename, raf) ->
+        val sortedFiles = files.entries.sortedWith(Comparator { (first), (second) -> (filePriorities[first] ?: 0).compareTo((filePriorities[second] ?: 0)) })
+
+        sortedFiles.forEach { (filename, raf) ->
             val name = filename.toByteArray(Charsets.UTF_8)
             wad.writeInt(name.size)
             wad.write(name)
-            wad.writeLong(raf.length())
+            wad.writeLong(raf.size)
             wad.writeLong(offset)
 
-            offset += raf.length()
+            offset += raf.size
         }
 
         val dirs = HashMap<String, HashSet<String>>()
 
-        files.forEach { (filename) ->
+        sortedFiles.forEach { (filename) ->
             var str = filename.parents
             var prev = ""
 
@@ -157,8 +161,7 @@ class CustomWAD {
             }
         }
 
-        val wadChannel = Channels.newChannel(wad)
-        files.forEach { (_, raf) -> raf.channel.transferTo(0, raf.length(), wadChannel) }
+        sortedFiles.forEach { (_, source) -> source.pipe(wad) }
     }
 
     fun getDirs(dirs: HashMap<String, HashSet<String>>, dir: String = ""): HashSet<String> {

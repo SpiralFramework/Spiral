@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.archives
 
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.readMapValue
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.util.CountingInputStream
@@ -25,6 +26,7 @@ class WAD(val dataSource: DataSource) {
     val dataOffset: Long
 
     val spiralHeader: ByteArray?
+    val spiralPriorityList: Map<String, Int>
 
     operator fun component1(): Int = major
     operator fun component2(): Int = minor
@@ -81,6 +83,12 @@ class WAD(val dataSource: DataSource) {
                 spiralHeader = files.first { (name) -> name == SpiralData.SPIRAL_HEADER_NAME }.data
             else
                 spiralHeader = null
+
+            if (files.any { (name) -> name == SpiralData.SPIRAL_PRIORITY_LIST })
+                spiralPriorityList = SpiralData.MAPPER.readMapValue(files.first { (name) -> name == SpiralData.SPIRAL_PRIORITY_LIST }.data, String::class, Int::class)
+            else
+                spiralPriorityList = emptyMap()
+
         } catch(illegal: IllegalArgumentException) {
             wad.close()
             throw illegal

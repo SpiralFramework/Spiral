@@ -2,6 +2,7 @@ package org.abimon.spiral.core.archives
 
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.images.*
+import org.abimon.spiral.core.objects.archives.CustomPatchableWAD
 import org.abimon.spiral.core.objects.archives.CustomWAD
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.spiral.util.trace
@@ -14,7 +15,7 @@ import java.io.FileOutputStream
 import java.io.RandomAccessFile
 import java.util.*
 
-class WADArchive(override val archiveFile: File): IArchive {
+class WADArchive(override val archiveFile: File) : IArchive {
     val wad: WAD = WAD(FileDataSource(archiveFile))
 
     override val archiveType: ArchiveType = ArchiveType.WAD
@@ -29,7 +30,7 @@ class WADArchive(override val archiveFile: File): IArchive {
 
     override fun compile(newEntries: List<Pair<String, DataSource>>) {
         //Check if can patch
-        if(newEntries.all { (name, data) -> wad.files.any { entry -> entry.name == name && entry.fileSize == data.size } }) {
+        if (newEntries.all { (name, data) -> wad.files.any { entry -> entry.name == name && entry.fileSize == data.size } }) {
             val wadFile = RandomAccessFile(archiveFile, "rw")
             newEntries.forEach { (name, data) ->
                 val wadEntry = wad.files.first { entry -> entry.name == name && entry.fileSize == data.size }
@@ -40,20 +41,51 @@ class WADArchive(override val archiveFile: File): IArchive {
             wadFile.close()
             trace("Patched!")
         } else {
-            val customWad = make<CustomWAD> {
-                wad(wad)
-                newEntries.forEach { (name, data) -> this.data(name, data) }
+            var compiled = false
+
+            run reorganise@{
+                if (wad.files.map { (name) -> name }.containsAll(newEntries.map { (name) -> name })) { //Ensure there's no new files
+                    //If there's no new files, we can reorganise the WAD file based on priority.
+                    //We won't do most of it here, but we do do priority checks here
+
+                    val priorities = wad.spiralPriorityList
+
+                    val highestPriority = priorities.map { (_, priority) -> priority }.max() ?: 0
+                    val lowestPriority = newEntries.map { (name) -> priorities[name] ?: 0 }.min() ?: 0
+
+                    if (lowestPriority == 0 && highestPriority == 0) //All the files are here, but this is a fresh recompile.
+                        return@reorganise
+                    else if (lowestPriority > (highestPriority / 2)) { //Within "acceptable bounds"
+//                    val customWad = make<Custom> {
+//                        wad(wad)
+//                        newEntries.forEach { (name, data) -> this.data(name, data, prioritise = true) }
+//                    }
+
+                        val customWad = make<CustomPatchableWAD>(archiveFile) { newEntries.forEach { (name, data) -> this.data(name, data) } }
+                        customWad.patch()
+
+                        compiled = true
+                    } else
+                        return@reorganise
+                }
             }
 
-            val tmp = File.createTempFile(UUID.randomUUID().toString(), ".wad")
-            tmp.deleteOnExit()
+            if (!compiled) {
+                val customWad = make<CustomWAD> {
+                    wad(wad)
+                    newEntries.forEach { (name, data) -> this.data(name, data, prioritise = true) }
+                }
 
-            try {
-                FileOutputStream(tmp).use(customWad::compile)
-                archiveFile.delete()
-                tmp.renameTo(archiveFile)
-            } finally {
-                tmp.delete()
+                val tmp = File.createTempFile(UUID.randomUUID().toString(), ".wad")
+                tmp.deleteOnExit()
+
+                try {
+                    FileOutputStream(tmp).use(customWad::compile)
+                    archiveFile.delete()
+                    tmp.renameTo(archiveFile)
+                } finally {
+                    tmp.delete()
+                }
             }
         }
     }
