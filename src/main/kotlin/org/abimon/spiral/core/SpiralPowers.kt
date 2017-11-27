@@ -306,3 +306,8 @@ fun <A: Any, B: Any> ObjectMapper.readMapValue(src: ByteArray, key: KClass<A>, v
 fun <T: MutableMap<A, B>, A: Any, B: Any> ObjectMapper.readMapValueTo(src: ByteArray, dest: T, key: KClass<A>, value: KClass<B>): T {
     return readValue(src, Map::class.java).filter { (a, b) -> key.isInstance(a) && value.isInstance(b) }.map { (a, b) -> key.cast(a) to value.cast(b) }.toMap(dest)
 }
+
+fun <A: Any, B: Any> ObjectMapper.readMapValue(src: InputStream, key: KClass<A>, value: KClass<B>): Map<A, B> = readMapValueTo(src, HashMap<A, B>(), key, value)
+fun <T: MutableMap<A, B>, A: Any, B: Any> ObjectMapper.readMapValueTo(src: InputStream, dest: T, key: KClass<A>, value: KClass<B>): T {
+    return readValue(src, Map::class.java).filter { (a, b) -> key.isInstance(a) && value.isInstance(b) }.map { (a, b) -> key.cast(a) to value.cast(b) }.toMap(dest)
+}

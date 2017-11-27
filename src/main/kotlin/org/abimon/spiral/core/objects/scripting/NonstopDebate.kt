@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.scripting
 
 import org.abimon.spiral.core.readNumber
+import org.abimon.spiral.core.readShort
 import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 
@@ -16,7 +17,7 @@ class NonstopDebate(val dataSource: DataSource, sectionSize: Int? = null) {
         val stream = dataSource.inputStream
 
         try {
-            secondsForDebate = stream.readNumber(2, unsigned = true).toInt() * 2
+            secondsForDebate = stream.readShort(unsigned = true) * 2
 
             val numberOfSections = stream.readNumber(2, unsigned = true)
             bytesPerSection = sectionSize ?: (dataSource.size / numberOfSections).toInt()
