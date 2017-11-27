@@ -18,12 +18,41 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
 
-object TXTFormat : SpiralFormat {
-    override val name = "Text"
-    override val extension = "txt"
+object ScriptTextFormat : SpiralFormat {
+    override val name = "Scripting"
+    override val extension = "osl" //OP Scripting Language
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat, WRDFormat)
 
-    override fun isFormat(source: DataSource): Boolean = true
+    override fun isFormat(source: DataSource): Boolean {
+        return source.use { stream ->
+            val reader = BufferedReader(InputStreamReader(stream))
+
+            val opNames: List<String> = ArrayList<String>().apply {
+                addAll(SpiralData.dr1OpCodes.values.map { (_, name) -> name.toLowerCase() })
+                addAll(SpiralData.dr2OpCodes.values.map { (_, name) -> name.toLowerCase() })
+                addAll(SpiralData.drv3OpCodes.values.map { (_, name) -> name.toLowerCase() })
+            }
+
+            var foundOps = false
+            reader.forEachLine { line ->
+                if(foundOps)
+                    return@forEachLine
+
+                val parts = line.split("|", limit = 2)
+
+                val opCode = parts[0].toLowerCase()
+
+                if (opCode.startsWith("0x"))
+                    foundOps = true
+                else if (opCode.matches("\\d+".toRegex()))
+                    foundOps = true
+                else if (opCode in opNames)
+                    foundOps = true
+            }
+
+            return@use foundOps
+        }
+    }
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true

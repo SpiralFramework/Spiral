@@ -9,7 +9,7 @@ import java.io.OutputStream
 object STXTFormat : SpiralFormat {
     override val name = "STXT"
     override val extension = "stx"
-    override val conversions: Array<SpiralFormat> = arrayOf(TXTFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(TextFormat)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
@@ -18,8 +18,6 @@ object STXTFormat : SpiralFormat {
         }
         return false
     }
-
-    override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true

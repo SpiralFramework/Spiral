@@ -24,6 +24,13 @@ class CustomPatchableWAD(val wadFile: File) {
 
     fun data(name: String, dataSource: DataSource, prioritise: Boolean = false) {
         val newName = name.replace(File.separator, "/")
+
+        if(wad.files.any { entry -> entry.name == newName }) {
+            val wadFile = wad.files.first { entry -> entry.name == newName }
+            if(wadFile.data contentEquals dataSource.data)
+                return
+        }
+
         val (out, source) = CacheHandler.cacheStream()
         launchCoroutine { dataSource.pipe(out) }
         files[newName] = source
@@ -31,6 +38,13 @@ class CustomPatchableWAD(val wadFile: File) {
 
     fun data(name: String, data: ByteArray) {
         val newName = name.replace(File.separator, "/")
+
+        if(wad.files.any { entry -> entry.name == newName }) {
+            val wadFile = wad.files.first { entry -> entry.name == newName }
+            if(wadFile.data contentEquals data)
+                return
+        }
+
         val (out, source) = CacheHandler.cacheStream()
         launchCoroutine { out.use { stream -> stream.write(data) } }
         files[newName] = source

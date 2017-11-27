@@ -2,6 +2,8 @@ package org.abimon.spiral.core
 
 import org.abimon.spiral.core.formats.archives.PAKFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
+import org.abimon.spiral.core.formats.images.PNGFormat
+import org.abimon.spiral.core.formats.images.TGAFormat
 import org.abimon.spiral.core.objects.archives.Pak
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.visi.io.*
@@ -38,18 +40,15 @@ fun WAD.extractToDirectory(directory: File) {
 }
 
 fun Collection<File>.convertTgaToPng() {
-    filter { it.name.endsWith(".tga") && SpiralFormats.TGA.isFormat(FileDataSource(it)) }.forEach {
-        val data = it.readBytes()
-        val out = FileOutputStream(File(it.absolutePath.replace(".tga", ".png")))
-        SpiralFormats.TGA.convert(SpiralFormats.PNG, FunctionDataSource { data }, out, emptyMap())
-        it.delete()
+    filter { it.name.endsWith(".tga") && TGAFormat.isFormat(FileDataSource(it)) }.forEach { file ->
+        val out = FileOutputStream(File(file.absolutePath.replace(".tga", ".png")))
+        TGAFormat.convert(PNGFormat, FileDataSource(file), out, emptyMap())
+        file.delete()
     }
 }
 
 fun Collection<File>.convertPakToZip() {
-    filter {file -> file.name.endsWith(".pak") && SpiralFormats.PAK.isFormat(FileDataSource(file)) }.forEach { file ->
-        //SpiralData.registerFormat(file.name, file.readBytes(), SpiralFormats.PAK)
-
+    filter {file -> file.name.endsWith(".pak") && PAKFormat.isFormat(FileDataSource(file)) }.forEach { file ->
         FileOutputStream(file.absolutePath.replace(".pak", ".zip")).use { Pak(FileDataSource(file)).convertToZip(file.name, it) }
     }
 }

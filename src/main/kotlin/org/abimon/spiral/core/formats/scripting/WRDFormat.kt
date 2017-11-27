@@ -2,8 +2,8 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.formats.text.ScriptTextFormat
 import org.abimon.spiral.core.formats.text.SpiralTextFormat
-import org.abimon.spiral.core.formats.text.TXTFormat
 import org.abimon.spiral.core.objects.scripting.WRD
 import org.abimon.spiral.core.println
 import org.abimon.spiral.core.wrd.LabelEntry
@@ -14,7 +14,7 @@ import java.io.OutputStream
 object WRDFormat : SpiralFormat {
     override val name = "WRD"
     override val extension = "wrd"
-    override val conversions: Array<SpiralFormat> = arrayOf(TXTFormat, SpiralTextFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat)
 
     val COMMAND_OP_CODE = 0x2B1D
     val COMMAND_OP_CODE_HEX = COMMAND_OP_CODE.toString(16)
@@ -30,8 +30,6 @@ object WRDFormat : SpiralFormat {
         }
         return false
     }
-
-    override fun canConvert(format: SpiralFormat): Boolean = format is TXTFormat || format is SpiralTextFormat
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true

@@ -11,7 +11,7 @@ import java.io.OutputStream
 
 object SpiralTextFormat : SpiralFormat {
     override val name = "SPIRAL Text"
-    override val extension = ".stxt"
+    override val extension = "stxt"
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat)
 
     override fun isFormat(source: DataSource): Boolean = !SpiralDrill.stxtRunner.run(String(source.data, Charsets.UTF_8)).hasErrors()

@@ -16,7 +16,6 @@ import org.abimon.spiral.core.formats.images.SHTXFormat
 import org.abimon.spiral.core.formats.images.TGAFormat
 import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.NonstopFormat
-import org.abimon.spiral.core.formats.text.TXTFormat
 import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
@@ -47,7 +46,7 @@ object Gurren {
             FileFilter { file -> !Files.isSymbolicLink(file.toPath()) },
             FileFilter { file -> Files.isReadable(file.toPath()) }
     )
-    val identifyFormats: Array<SpiralFormat> = SpiralFormats.formats.filter { it !is TXTFormat }.toTypedArray()
+    
     val separator: String = File.separator
     var keepLooping: Boolean = true
     val version: String
@@ -184,7 +183,7 @@ object Gurren {
         files.forEach { file ->
             if (file.isFile) {
                 val rows = ArrayList<Array<String>>()
-                    val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file), identifyFormats)
+                    val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
                     if (format == null)
                         rows.add(arrayOf(file.name, "No Identifiable Format"))
                     else
@@ -194,7 +193,7 @@ object Gurren {
             } else if (file.isDirectory) {
                 val rows = ArrayList<Array<String>>()
                 file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
-                    val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile), identifyFormats)
+                    val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile))
                     if (format == null)
                         rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "No Identifiable Format"))
                     else
@@ -215,7 +214,7 @@ object Gurren {
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
-            val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file), identifyFormats)
+            val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
             if (format == null)
                 rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
             else {
@@ -255,7 +254,7 @@ object Gurren {
             }
         } else if (file.isDirectory) {
             file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
-                val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile), identifyFormats)
+                val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile))
                 if (format == null)
                     rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "No Identifiable Format", "N/a"))
                 else {

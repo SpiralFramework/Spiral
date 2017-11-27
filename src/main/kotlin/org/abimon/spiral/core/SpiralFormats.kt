@@ -14,31 +14,13 @@ import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.NonstopFormat
 import org.abimon.spiral.core.formats.scripting.SFLFormat
 import org.abimon.spiral.core.formats.scripting.WRDFormat
-import org.abimon.spiral.core.formats.text.STXTFormat
-import org.abimon.spiral.core.formats.text.SpiralTextFormat
-import org.abimon.spiral.core.formats.text.TXTFormat
+import org.abimon.spiral.core.formats.text.*
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.visi.io.DataSource
 import java.io.ByteArrayOutputStream
 
 object SpiralFormats {
-    val WAD = WADFormat
-    val PAK = PAKFormat
-    val TGA = TGAFormat
-    val LIN = LINFormat
-
-    val ZIP = ZIPFormat
-    val PNG = PNGFormat
-    val JPG = JPEGFormat
-    val TXT = TXTFormat
-
-    val SPRL_TXT = SpiralTextFormat
-
-    val SHTX = SHTXFormat
-
-    val UNKNOWN = SpiralFormat.UnknownFormat
-    val BINARY = SpiralFormat.BinaryFormat
 
     val formats: Array<SpiralFormat> = arrayOf(
             WADFormat, CPKFormat, ZIPFormat,
@@ -51,7 +33,12 @@ object SpiralFormats {
             GMOModelFormat, OBJModelFormat, SRDIModelFormat,
             PAKFormat, SPCFormat,
 
-            STXTFormat, TXTFormat
+            JSONFormat, YAMLFormat,
+
+            STXTFormat, ScriptTextFormat,
+            NonstopFormat,
+
+            TextFormat
     )
 
     val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
