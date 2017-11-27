@@ -73,4 +73,20 @@ abstract class JacksonFormat: SpiralFormat {
 
         return false
     }
+
+    object YAML: JacksonFormat() {
+        override val name: String = "YAML"
+        override val extension: String = "yaml"
+
+        override val MAPPER: ObjectMapper
+            get() = SpiralData.YAML_MAPPER
+    }
+
+    object JSON: JacksonFormat() {
+        override val name: String = "JSON"
+        override val extension: String = "json"
+
+        override val MAPPER: ObjectMapper
+            get() = SpiralData.MAPPER
+    }
 }

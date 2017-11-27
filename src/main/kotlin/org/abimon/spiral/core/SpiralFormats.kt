@@ -33,7 +33,7 @@ object SpiralFormats {
             GMOModelFormat, OBJModelFormat, SRDIModelFormat,
             PAKFormat, SPCFormat,
 
-            JSONFormat, YAMLFormat,
+            JacksonFormat.YAML, JacksonFormat.JSON,
 
             STXTFormat, ScriptTextFormat,
             NonstopFormat,

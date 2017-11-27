@@ -2,9 +2,7 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.text.JSONFormat
 import org.abimon.spiral.core.formats.text.JacksonFormat
-import org.abimon.spiral.core.formats.text.YAMLFormat
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.visi.io.DataSource
 import java.io.OutputStream
@@ -12,7 +10,7 @@ import java.io.OutputStream
 object NonstopFormat: SpiralFormat {
     override val name: String = "Nonstop Debate"
     override val extension: String = "dat"
-    override val conversions: Array<SpiralFormat> = arrayOf(YAMLFormat, JSONFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(JacksonFormat.YAML, JacksonFormat.JSON)
 
     override fun isFormat(source: DataSource): Boolean {
         try {
