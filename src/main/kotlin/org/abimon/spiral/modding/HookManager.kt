@@ -117,8 +117,9 @@ object HookManager {
 
     var prevExtractJob: Job? = null
     fun extractingFile(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>, extracting: Pair<String, DataSource>): Unit {
+        val prev: Job? = prevExtractJob
         prevExtractJob = launch(CommonPool) {
-            prevExtractJob?.join()
+            prev?.join()
 
             DURING_EXTRACT
                     .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
