@@ -20,8 +20,10 @@ interface SpiralFormat {
             throw IllegalArgumentException("${source.location} does not conform to the $name format")
 
         if (canConvertViaOverride(format)) {
-            if (OVERRIDING_CONVERSIONS[this to format]?.invoke(this, format, source, output, params) == true)
-                return true
+            for(conversion in SpiralFormat[this to format]) {
+                if (conversion.invoke(this, format, source, output, params))
+                    return true
+            }
         }
 
         if (!canConvert(format))
@@ -56,6 +58,14 @@ interface SpiralFormat {
     }
 
     companion object {
-        val OVERRIDING_CONVERSIONS: MutableMap<Pair<SpiralFormat, SpiralFormat>, (SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean> = HashMap()
+        val OVERRIDING_CONVERSIONS: MutableMap<Pair<SpiralFormat, SpiralFormat>, MutableList<(SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean>> = HashMap()
+
+        operator fun get(pair: Pair<SpiralFormat, SpiralFormat>): List<(SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean> = OVERRIDING_CONVERSIONS[pair] ?: emptyList()
+        operator fun set(pair: Pair<SpiralFormat, SpiralFormat>, func: (SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean) {
+            if(!OVERRIDING_CONVERSIONS.containsKey(pair))
+                OVERRIDING_CONVERSIONS[pair] = ArrayList()
+
+            OVERRIDING_CONVERSIONS[pair]!!.add(func)
+        }
     }
 }

@@ -14,7 +14,7 @@ import javax.imageio.ImageIO
 
 object V3SPCFont {
     fun hook() {
-        SpiralFormat.OVERRIDING_CONVERSIONS[SPCFormat to ZIPFormat] = this::convertFromArchive
+        SpiralFormat[SPCFormat to ZIPFormat] = this::convertFromArchive
     }
 
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {

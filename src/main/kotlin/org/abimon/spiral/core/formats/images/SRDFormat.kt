@@ -28,8 +28,8 @@ import kotlin.math.min
 
 object SRDFormat {
     fun hook() {
-        SpiralFormat.OVERRIDING_CONVERSIONS[SPCFormat to PNGFormat] = this::convertFromArchive
-        SpiralFormat.OVERRIDING_CONVERSIONS[SPCFormat to ZIPFormat] = this::convertFromArchive
+        SpiralFormat[SPCFormat to PNGFormat] = this::convertFromArchive
+        SpiralFormat[SPCFormat to ZIPFormat] = this::convertFromArchive
     }
 
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
@@ -51,11 +51,10 @@ object SRDFormat {
                 srds.forEach { srdEntry ->
                     val img: DataSource
 
-
-                    if (others.any { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" })
-                        img = others.remove { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdv" } ?: return@forEach
+                    if (others.any { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") })
+                        img = others.remove { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") } ?: return@forEach
                     else
-                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } ?: run { debug("No such element for ${srdEntry.name.split('.')[0]}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
+                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
 
                     val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
