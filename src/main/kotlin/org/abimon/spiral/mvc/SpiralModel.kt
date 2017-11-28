@@ -12,20 +12,23 @@ import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.data.ModelConfig
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.properties.Delegates
+import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 object SpiralModel {
     val imperator: Imperator = BasicImperator()
 
     val archives: MutableSet<File> = ConcurrentSkipListSet()
     var operating: File? by saveDelegate(null)
-    var scope: Pair<String, String> by saveDelegate("> " to "default")
+    var scope: Pair<String, String> by hookable("> " to "default", HookManager::beforeScopeChange, HookManager::afterScopeChange)
     var loggerLevel: LoggerLevel by saveDelegate(LoggerLevel.NONE)
     var cacheEnabled: Boolean by saveDelegate(true)
     var concurrentOperations: Int by saveDelegate(4)
@@ -120,6 +123,16 @@ object SpiralModel {
     init { load() }
 
     fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(!unsafe.get()) save() }
+    fun <T> hookable(initialValue: T, beforeChange: (T, T) -> Boolean, afterChange: (T, T) -> Unit):
+            ReadWriteProperty<Any?, T> = object : ObservableProperty<T>(initialValue) {
+        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T): Boolean = beforeChange(oldValue, newValue)
+        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) {
+            afterChange(oldValue, newValue)
+
+            if(!SpiralModel.unsafe.get())
+                SpiralModel.save()
+        }
+    }
 
     fun confirm(question: () -> Boolean): Boolean = autoConfirm || question()
 
