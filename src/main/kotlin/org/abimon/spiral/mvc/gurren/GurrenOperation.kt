@@ -7,6 +7,7 @@ import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -286,7 +287,7 @@ object GurrenOperation {
         }
     }
 
-    val exit = Command("exit", "operate") { SpiralModel.scope = "> " to "default" }
+    val exit = Command("exit", "operate") { HookManager.changeScope("> " to "default") }
 
     val operateOn = Command("operate", "default") { (params) ->
         if (SpiralModel.archives.isEmpty())
@@ -299,7 +300,7 @@ object GurrenOperation {
                     println("Invalid archive $archiveName")
                 else {
                     SpiralModel.operating = archive
-                    SpiralModel.scope = "[Operation ${archive.nameWithoutExtension}]|> " to "operate"
+                    HookManager.changeScope("[Operation ${archive.nameWithoutExtension}]|> " to "operate")
                     println("Now operating on ${archive.nameWithoutExtension}")
 
                     return@Command
@@ -320,7 +321,7 @@ object GurrenOperation {
                 println("Invalid archive $archiveName")
             else {
                 SpiralModel.operating = archive
-                SpiralModel.scope = "[Operation ${archive.nameWithoutExtension}]|> " to "operate"
+                HookManager.changeScope("[Operation ${archive.nameWithoutExtension}]|> " to "operate")
                 println("Now operating on ${archive.nameWithoutExtension}")
 
                 break
