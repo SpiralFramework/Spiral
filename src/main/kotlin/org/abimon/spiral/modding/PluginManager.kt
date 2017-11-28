@@ -99,9 +99,8 @@ object PluginManager {
                     if (entry.isDirectory || !entry.name.endsWith(".class"))
                         return@forEach
                     // -6 because of .class
-                    var className = entry.name.substring(0, entry.name.length - 6)
-                    className = className.replace('/', '.')
-                    val clazz = classLoader.loadClass(className)
+                    val className = entry.name.substring(0, entry.name.length - 6).replace('/', '.')
+                    val clazz = loadClass(classLoader, className)
 
                     if(clazz.interfaces.contains(IPlugin::class.java))
                         loadedPlugins[metadata.uid] = (file to metadata and clazz.newInstance() as IPlugin)
@@ -112,6 +111,17 @@ object PluginManager {
         } catch(io: IOException) {
             return false
         }
+    }
+
+    private fun loadClass(classLoader: ClassLoader, name: String): Class<*> {
+        try {
+            return Class.forName(name)
+        } catch (link: LinkageError) {
+        } catch (inInitializer: ExceptionInInitializerError) {
+        } catch (notFound: ClassNotFoundException) {
+        }
+
+        return classLoader.loadClass(name)
     }
 
     fun scanForUpdates() {

@@ -27,18 +27,18 @@ object SpiralModel {
     val imperator: Imperator = BasicImperator()
 
     val archives: MutableSet<File> = ConcurrentSkipListSet()
-    var operating: File? by saveDelegate(null)
+    var operating: File? by hookable(null, HookManager::beforeOperatingChange, HookManager::afterOperatingChange)
     var scope: Pair<String, String> by hookable("> " to "default", HookManager::beforeScopeChange, HookManager::afterScopeChange)
-    var loggerLevel: LoggerLevel by saveDelegate(LoggerLevel.NONE)
-    var cacheEnabled: Boolean by saveDelegate(true)
-    var concurrentOperations: Int by saveDelegate(4)
-    var autoConfirm: Boolean by saveDelegate(false)
-    var purgeCache: Boolean by saveDelegate(true)
+    var loggerLevel: LoggerLevel by hookable(LoggerLevel.NONE, HookManager::beforeLoggerLevelChange, HookManager::afterLoggerLevelChange)
+    var cacheEnabled: Boolean by hookable(true, HookManager::beforeCacheEnabledChange, HookManager::afterCacheEnabledChange)
+    var concurrentOperations: Int by hookable(4, HookManager::beforeConcurrentOperationsChange, HookManager::afterConcurrentOperationsChange)
+    var autoConfirm: Boolean by hookable(false, HookManager::beforeAutoConfirmChange, HookManager::afterAutoConfirmChange)
+    var purgeCache: Boolean by hookable(true, HookManager::beforePurgeCacheChange, HookManager::afterPurgeCacheChange)
 
-    var patchOperation: PatchOperation? by saveDelegate(null)
-    var patchFile: File? by saveDelegate(null)
+    var patchOperation: PatchOperation? by hookable(null, HookManager::beforePatchOperationChange, HookManager::afterPatchOperationChange)
+    var patchFile: File? by hookable(null, HookManager::beforePatchFileChange, HookManager::afterPatchFileChange)
 
-    var attemptFingerprinting: Boolean by saveDelegate(true)
+    var attemptFingerprinting: Boolean by hookable(true, HookManager::beforeAttemptFingerprintChange, HookManager::afterAttemptFingerprintChange)
 
     val defaultParams: MutableMap<String, Any?> = HashMap()
 
