@@ -7,6 +7,7 @@ import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -60,11 +61,16 @@ object GurrenOperation {
 
         val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
+        if(!HookManager.shouldExtract(operatingArchive, directory, matching))
+            return@Command errPrintln("[$operatingName] Extraction cancelled by plugin")
+
         println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
         println("")
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
         println("")
         if (question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
+            HookManager.extracting(operatingArchive, directory, matching)
+
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
                 matching.forEach { (entryName, entry) ->
@@ -79,6 +85,7 @@ object GurrenOperation {
                 }
             }
 
+            HookManager.finishedExtraction(operatingArchive, directory, matching)
             println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
             debug("Took $duration ms")
         }

@@ -1,7 +1,9 @@
 package org.abimon.spiral.modding
 
+import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.util.LoggerLevel
+import org.abimon.visi.io.DataSource
 import java.io.File
 
 object HookManager {
@@ -34,6 +36,10 @@ object HookManager {
 
     val BEFORE_ATTEMPT_FINGERPRINT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
     val ON_ATTEMPT_FINGERPRINT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
+
+    val BEFORE_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Boolean) -> Boolean>> = ArrayList()
+    val ON_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
+    val AFTER_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
 
     fun beforeOperatingChange(old: File?, new: File?): Boolean =
             beforeChange(old, new, BEFORE_OPERATING_CHANGE)
@@ -94,6 +100,21 @@ object HookManager {
 
     fun afterAttemptFingerprintChange(old: Boolean, new: Boolean): Unit
             = afterChange(old, new, ON_ATTEMPT_FINGERPRINT_CHANGE)
+
+    fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Boolean
+        = BEFORE_EXTRACT
+            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .fold(true) { state, (_, hook) -> hook(archive, folder, files, state) }
+
+    fun extracting(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Unit
+            = ON_EXTRACT
+            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .forEach { (_, hook) -> hook(archive, folder, files) }
+
+    fun finishedExtraction(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Unit
+            = AFTER_EXTRACT
+            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .forEach { (_, hook) -> hook(archive, folder, files) }
 
     fun <T : Any?> beforeChange(old: T, new: T, beforeChanges: List<Pair<IPlugin, (T, T, Boolean) -> Boolean>>): Boolean
             = beforeChanges
