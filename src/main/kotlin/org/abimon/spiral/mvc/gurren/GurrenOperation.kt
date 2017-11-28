@@ -74,6 +74,8 @@ object GurrenOperation {
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
                 matching.forEach { (entryName, entry) ->
+                    HookManager.extractingFile(operatingArchive, directory, matching, entryName to entry)
+
                     val parents = File(directory, entryName.parents)
                     if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")

@@ -1,5 +1,8 @@
 package org.abimon.spiral.modding
 
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.launch
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.util.LoggerLevel
@@ -39,6 +42,7 @@ object HookManager {
 
     val BEFORE_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Boolean) -> Boolean>> = ArrayList()
     val ON_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
+    val DURING_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Pair<String, DataSource>) -> Unit>> = ArrayList()
     val AFTER_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
 
     fun beforeOperatingChange(old: File?, new: File?): Boolean =
@@ -102,7 +106,7 @@ object HookManager {
             = afterChange(old, new, ON_ATTEMPT_FINGERPRINT_CHANGE)
 
     fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Boolean
-        = BEFORE_EXTRACT
+            = BEFORE_EXTRACT
             .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .fold(true) { state, (_, hook) -> hook(archive, folder, files, state) }
 
@@ -110,6 +114,17 @@ object HookManager {
             = ON_EXTRACT
             .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(archive, folder, files) }
+
+    var prevExtractJob: Job? = null
+    fun extractingFile(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>, extracting: Pair<String, DataSource>): Unit {
+        prevExtractJob = launch(CommonPool) {
+            prevExtractJob?.join()
+
+            DURING_EXTRACT
+                    .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+                    .forEach { (_, hook) -> hook(archive, folder, files, extracting) }
+        }
+    }
 
     fun finishedExtraction(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Unit
             = AFTER_EXTRACT
