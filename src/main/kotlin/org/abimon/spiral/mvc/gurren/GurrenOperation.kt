@@ -1,6 +1,8 @@
 package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.CPKArchive
@@ -74,7 +76,7 @@ object GurrenOperation {
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
                 matching.forEach { (entryName, entry) ->
-                    HookManager.extractingFile(operatingArchive, directory, matching, entryName to entry)
+                    launch(CommonPool) { HookManager.extractingFile(operatingArchive, directory, matching, entryName to entry) }
 
                     val parents = File(directory, entryName.parents)
                     if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
