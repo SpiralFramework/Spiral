@@ -387,7 +387,7 @@ object Gurren {
 
         //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
         val output = File(file.absolutePath.substringBeforeLast('.') + "-squished.${file.extension}")
-        FileOutputStream(output).use { stream -> format.convert(PNGFormat, squishied, stream, emptyMap()) }
+        FileOutputStream(output).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
 
         println("Squished $file into $output")
     }
