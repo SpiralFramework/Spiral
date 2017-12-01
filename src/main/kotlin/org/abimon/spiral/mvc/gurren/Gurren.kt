@@ -10,10 +10,7 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.CPKFormat
 import org.abimon.spiral.core.formats.archives.PAKFormat
 import org.abimon.spiral.core.formats.archives.WADFormat
-import org.abimon.spiral.core.formats.images.JPEGFormat
-import org.abimon.spiral.core.formats.images.PNGFormat
-import org.abimon.spiral.core.formats.images.SHTXFormat
-import org.abimon.spiral.core.formats.images.TGAFormat
+import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.NonstopFormat
 import org.abimon.spiral.core.formats.video.MP4Format
@@ -29,6 +26,8 @@ import org.abimon.visi.io.*
 import org.abimon.visi.lang.EnumOS
 import org.abimon.visi.lang.replaceLast
 import org.abimon.visi.security.md5Hash
+import java.awt.geom.AffineTransform
+import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
@@ -46,7 +45,7 @@ object Gurren {
             FileFilter { file -> !Files.isSymbolicLink(file.toPath()) },
             FileFilter { file -> Files.isReadable(file.toPath()) }
     )
-    
+
     val separator: String = File.separator
     var keepLooping: Boolean = true
     val version: String
@@ -183,11 +182,11 @@ object Gurren {
         files.forEach { file ->
             if (file.isFile) {
                 val rows = ArrayList<Array<String>>()
-                    val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
-                    if (format == null)
-                        rows.add(arrayOf(file.name, "No Identifiable Format"))
-                    else
-                        rows.add(arrayOf(file.name, format.name))
+                val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
+                if (format == null)
+                    rows.add(arrayOf(file.name, "No Identifiable Format"))
+                else
+                    rows.add(arrayOf(file.name, format.name))
 
                 println(FlipTable.of(arrayOf("File", "Format"), rows.toTypedArray()))
             } else if (file.isDirectory) {
@@ -210,7 +209,7 @@ object Gurren {
 
         val file = File(params[1])
         val convertTo: SpiralFormat? = if (params.size < 3) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
-        val formatParams: Map<String, String> = if(params.size < 4) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
+        val formatParams: Map<String, String> = if (params.size < 4) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
@@ -313,7 +312,7 @@ object Gurren {
         val file = File(params[1])
         val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
         val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[3]}")
-        val formatParams: Map<String, String> = if(params.size == 4) emptyMap() else params.copyFrom(4).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
+        val formatParams: Map<String, String> = if (params.size == 4) emptyMap() else params.copyFrom(4).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
@@ -360,6 +359,37 @@ object Gurren {
             }
         }
         println(FlipTable.of(arrayOf("File", "Output File", "Old Format", "New Format"), rows.toTypedArray()))
+    }
+
+    val squish = Command("squish") { (params) ->
+        if (params.size == 1)
+            return@Command errPrintln("Error: No file or directory provided")
+
+        val file = File(params[1])
+        val ds = FileDataSource(file)
+        val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
+                as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
+
+        val full = format.toBufferedImage(ds)
+
+        val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
+        val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
+        val squish = BufferedImage(full.width, half.height / 2, BufferedImage.TYPE_INT_ARGB)
+        var g = squish.createGraphics()
+        g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
+        g.dispose()
+
+        val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+        g = squishied.createGraphics()
+        g.drawImage(topHalf, 0, 0, null)
+        g.drawImage(squish, 0, topHalf.height, null)
+        g.dispose()
+
+        //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
+        val output = File(file.absolutePath.substringBeforeLast('.') + "-squished.${file.extension}")
+        FileOutputStream(output).use { stream -> format.convert(PNGFormat, squishied, stream, emptyMap()) }
+
+        println("Squished $file into $output")
     }
 
     val join = Command("join") { (params) ->
@@ -432,11 +462,11 @@ object Gurren {
     }
 
     val versionCommand = Command("version") { println("SPIRAL version $version") }
-    val whereAmI = Command("whereami") { println("You are here: ${Gurren::class.java.protectionDomain.codeSource.location}\nAnd you are: ${Gurren::class.java.protectionDomain.codeSource.location.openStream().use { it.toString() } }")}
+    val whereAmI = Command("whereami") { println("You are here: ${Gurren::class.java.protectionDomain.codeSource.location}\nAnd you are: ${Gurren::class.java.protectionDomain.codeSource.location.openStream().use { it.toString() }}") }
     val jenkinsBuild = Command("build") {
         val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
 
-        if(response.httpStatusCode != 200)
+        if (response.httpStatusCode != 200)
             println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
         else
             println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
@@ -446,30 +476,30 @@ object Gurren {
         val currentBuild = run {
             val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
 
-            if(response.httpStatusCode != 200)
+            if (response.httpStatusCode != 200)
                 return@run -1
             else
                 return@run (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
         }
 
-        if(currentBuild == -1) {
+        if (currentBuild == -1) {
             println("Error retrieving current build")
             return@Command
         }
 
         val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
 
-        if(response.httpStatusCode != 200)
+        if (response.httpStatusCode != 200)
             println("Error retrieving the latest jenkins build; status code ${response.httpStatusCode}")
         else {
             val latestBuild = (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
 
-            if(latestBuild == -1)
+            if (latestBuild == -1)
                 println("Error retrieving latest build")
             else {
-                if(currentBuild == latestBuild)
+                if (currentBuild == latestBuild)
                     println("SPIRAL version $version; build $currentBuild - You are on the latest build")
-                else if(currentBuild < latestBuild)
+                else if (currentBuild < latestBuild)
                     println("SPIRAL version $version; build $currentBuild - Latest build is $latestBuild\nIf you would like to update, run \"download_latest\"")
                 else
                     println("SPIRAL version $version; build $currentBuild - Apparent latest build is $latestBuild, however that build precedes this one.")
