@@ -1,8 +1,6 @@
 package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.CPKArchive
@@ -47,6 +45,8 @@ object GurrenOperation {
         if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to extract to provided")
 
+        val opArchive = operatingArchive
+
         val directory = File(params[1])
         if (directory.exists()) {
             if (directory.isFile)
@@ -61,9 +61,9 @@ object GurrenOperation {
 
         val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
-        val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
+        val matching = opArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
-        if(!HookManager.shouldExtract(operatingArchive, directory, matching))
+        if(!HookManager.shouldExtract(opArchive, directory, matching))
             return@Command errPrintln("[$operatingName] Extraction cancelled by plugin")
 
         println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
@@ -71,12 +71,12 @@ object GurrenOperation {
         println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
         println("")
         if (question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
-            HookManager.extracting(operatingArchive, directory, matching)
+            HookManager.extracting(opArchive, directory, matching)
 
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
                 matching.forEach { (entryName, entry) ->
-                    launch(CommonPool) { HookManager.extractingFile(operatingArchive, directory, matching, entryName to entry) }
+                    HookManager.extractingFile(opArchive, directory, matching, entryName to entry)
 
                     val parents = File(directory, entryName.parents)
                     if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
@@ -89,7 +89,7 @@ object GurrenOperation {
                 }
             }
 
-            HookManager.finishedExtraction(operatingArchive, directory, matching)
+            HookManager.finishedExtraction(opArchive, directory, matching)
             println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
             debug("Took $duration ms")
         }
