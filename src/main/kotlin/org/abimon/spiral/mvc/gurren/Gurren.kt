@@ -33,6 +33,7 @@ import java.io.FileFilter
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.system.measureTimeMillis
 
 @Suppress("unused")
@@ -167,9 +168,7 @@ object Gurren {
         println("Registered $archive!")
         SpiralModel.save()
     }
-    val deregister = Command("deregister") { (params) ->
-
-    }
+    val deregister = Command("deregister") {}
     val registered = Command("registered") { println("Registered archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}") }
     val formats = Command("formats") { println(formatTable) }
 
@@ -366,30 +365,66 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
-        val ds = FileDataSource(file)
-        val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
-                as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
+        if(file.isFile) {
+            val ds = FileDataSource(file)
+            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
+                    as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
 
-        val full = format.toBufferedImage(ds)
+            val full = format.toBufferedImage(ds)
 
-        val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
-        val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
-        val squish = BufferedImage(full.width, half.height / 2, BufferedImage.TYPE_INT_ARGB)
-        var g = squish.createGraphics()
-        g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
-        g.dispose()
+            val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
+            val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
+            val squish = BufferedImage(full.width, half.height / 2, BufferedImage.TYPE_INT_ARGB)
+            var g = squish.createGraphics()
+            g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
+            g.dispose()
 
-        val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
-        g = squishied.createGraphics()
-        g.drawImage(topHalf, 0, 0, null)
-        g.drawImage(squish, 0, topHalf.height, null)
-        g.dispose()
+            val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+            g = squishied.createGraphics()
+            g.drawImage(topHalf, 0, 0, null)
+            g.drawImage(squish, 0, topHalf.height, null)
+            g.dispose()
 
-        //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
-        val output = File(file.absolutePath.substringBeforeLast('.') + "-squished.${file.extension}")
-        FileOutputStream(output).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
+            //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
+            val output = File(file.absolutePath.substringBeforeLast('.') + "-squished.${file.extension}")
+            FileOutputStream(output).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
 
-        println("Squished $file into $output")
+            println("Squished $file into $output")
+        } else if(file.isDirectory) {
+            val rows: MutableList<Array<String>> = ArrayList()
+
+            file.iterate().filter { it.isFile }.forEach { subfile ->
+                val ds = FileDataSource(subfile)
+                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
+                        as? SpiralImageFormat ?: run {
+                    rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
+                    return@forEach
+                }
+
+                val full = format.toBufferedImage(ds)
+
+                val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
+                val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
+                val squish = BufferedImage(full.width, half.height / 2, BufferedImage.TYPE_INT_ARGB)
+                var g = squish.createGraphics()
+                g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
+                g.dispose()
+
+                val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+                g = squishied.createGraphics()
+                g.drawImage(topHalf, 0, 0, null)
+                g.drawImage(squish, 0, topHalf.height, null)
+                g.dispose()
+
+                //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
+                val output = File(subfile.absolutePath.substringBeforeLast('.') + "-squished.${subfile.extension}")
+                FileOutputStream(output).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
+
+                rows.add(arrayOf(subfile relativePathFrom file, output relativePathFrom file))
+            }
+
+            println(FlipTable.of(arrayOf("Original", "Squished"), rows.toTypedArray()))
+        }
     }
 
     val join = Command("join") { (params) ->
