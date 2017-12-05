@@ -11,7 +11,7 @@ import org.abimon.spiral.util.toShort
 import org.abimon.spiral.util.trace
 import org.abimon.visi.collections.LateArray
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.readPartialBytes
+import org.abimon.visi.io.read
 
 class WRD(val dataSource: DataSource) {
     val entries: Array<WRDScript>
@@ -39,7 +39,7 @@ class WRD(val dataSource: DataSource) {
             if(unkOffset !in validRange || cmd1Offset !in validRange || cmd2Offset !in validRange || cmd3Offset !in validRange)
                 throw IllegalArgumentException()
 
-            val code = stream.readPartialBytes((unkOffset - 0x20).toInt()).toIntArray()
+            val code = stream.read((unkOffset - 0x20).toInt()).toIntArray()
 
             val cmdInfo = arrayOf(
                     (cmd1Count to cmd1Offset),

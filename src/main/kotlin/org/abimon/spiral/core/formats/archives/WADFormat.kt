@@ -3,7 +3,6 @@ package org.abimon.spiral.core.formats.archives
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.writeTo
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -30,9 +29,9 @@ object WADFormat : SpiralFormat {
         when (format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
-                wad.files.forEach {
-                    zip.putNextEntry(ZipEntry(it.name))
-                    it.inputStream.writeTo(zip, closeAfter = true)
+                wad.files.forEach { wadEntry ->
+                    zip.putNextEntry(ZipEntry(wadEntry.name))
+                    wadEntry.pipe(zip)
                 }
                 zip.closeEntry()
             }

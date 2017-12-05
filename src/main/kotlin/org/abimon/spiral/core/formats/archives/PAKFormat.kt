@@ -4,7 +4,6 @@ import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.Pak
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.replaceLast
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -43,13 +42,13 @@ object PAKFormat : SpiralFormat {
                             return@forEach
                         } else if (innerFormat != null) {
                             zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
-                            data.use { stream -> stream.writeTo(zip) }
+                            data.use { stream -> stream.copyTo(zip) }
                             return@forEach
                         }
                     }
 
                     zip.putNextEntry(ZipEntry(it.name))
-                    data.use { stream -> stream.writeTo(zip) }
+                    data.use { stream -> stream.copyTo(zip) }
                 }
                 zip.finish()
             }

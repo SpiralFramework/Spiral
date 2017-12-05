@@ -83,7 +83,7 @@ object GurrenOperation {
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
                     val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.writeTo(outputStream) } }
+                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.copyTo(outputStream) } }
                     debug("[$operatingName] Wrote $entryName to $output")
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
@@ -149,11 +149,11 @@ object GurrenOperation {
 
                         if (format == null) {
                             val output = File(directory, entryName)
-                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
                             rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
                         } else if (convertingTo == null) {
                             val output = File(directory, entryName)
-                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
                             rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
                         } else {
                             try {
@@ -162,7 +162,7 @@ object GurrenOperation {
                                 rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
                             } catch (iea: IllegalArgumentException) {
                                 val output = File(directory, entryName)
-                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.writeTo(outputStream) } }
+                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
                                 rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
 
                                 if (LoggerLevel.ERROR.enabled)

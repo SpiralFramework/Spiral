@@ -3,19 +3,18 @@ package org.abimon.spiral.mvc.gurren
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.PatchOperation
-import org.abimon.spiral.core.formats.images.PNGFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
+import org.abimon.spiral.core.formats.images.PNGFormat
 import org.abimon.spiral.core.objects.archives.CustomSPC
-import org.abimon.spiral.core.objects.images.CustomSRD
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.images.CustomSRD
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.errPrintln
-import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.child
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
@@ -99,7 +98,7 @@ object GurrenPatching {
                         else {
                             val (srdOut, srdIn) = CacheHandler.cacheStream()
 
-                            zip.getInputStream(srdEntry).use { stream -> srdOut.use { out -> stream.writeTo(out) } }
+                            zip.getInputStream(srdEntry).use { stream -> srdOut.use { out -> stream.copyTo(out) } }
 
                             srd = srdIn
 
@@ -109,7 +108,7 @@ object GurrenPatching {
                 } else {
                     val (srdOut, srdIn) = CacheHandler.cacheStream()
 
-                    zip.getInputStream(srdFiles.first()).use { stream -> srdOut.use { out -> stream.writeTo(out) } }
+                    zip.getInputStream(srdFiles.first()).use { stream -> srdOut.use { out -> stream.copyTo(out) } }
 
                     srd = srdIn
                     srdName = srdFiles.first().name
@@ -131,7 +130,7 @@ object GurrenPatching {
                         else {
                             val (srdvOut, srdvIn) = CacheHandler.cacheStream()
 
-                            zip.getInputStream(srdvEntry).use { stream -> srdvOut.use { out -> stream.writeTo(out) } }
+                            zip.getInputStream(srdvEntry).use { stream -> srdvOut.use { out -> stream.copyTo(out) } }
 
                             srdv = srdvIn
 
@@ -141,7 +140,7 @@ object GurrenPatching {
                 } else {
                     val (srdvOut, srdvIn) = CacheHandler.cacheStream()
 
-                    zip.getInputStream(srdvFiles.first()).use { stream -> srdvOut.use { out -> stream.writeTo(out) } }
+                    zip.getInputStream(srdvFiles.first()).use { stream -> srdvOut.use { out -> stream.copyTo(out) } }
 
                     srdv = srdvIn
                     srdvName = srdvFiles.first().name
@@ -226,7 +225,7 @@ object GurrenPatching {
                                 when {
                                     entry.name == srdName -> srdIn.pipe(zipOut)
                                     entry.name == srdvName -> srdvIn.pipe(zipOut)
-                                    else -> zipIn.writeTo(zipOut, closeAfter = false)
+                                    else -> zipIn.copyTo(zipOut)
                                 }
                             }
                         }

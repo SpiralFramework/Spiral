@@ -1,8 +1,8 @@
 package org.abimon.spiral.core.formats.video
 
 import org.abimon.spiral.core.SpiralFormats
-import org.abimon.spiral.core.formats.audio.OggFormat
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.formats.audio.OggFormat
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.visi.io.DataSource
@@ -46,7 +46,7 @@ object MP4Format: SpiralFormat {
             return false
         }
 
-        val tmpIn = File("${UUID.randomUUID()}.${extension}")
+        val tmpIn = File("${UUID.randomUUID()}.$extension")
         val tmpOut = File("${UUID.randomUUID()}.${format.extension ?: "mp4"}") //unk won't be a valid conversion, so if all else fails let's be useful
 
         try {

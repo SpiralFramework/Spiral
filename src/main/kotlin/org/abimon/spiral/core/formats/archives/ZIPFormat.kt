@@ -6,7 +6,6 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.CustomPak
 import org.abimon.spiral.core.objects.archives.CustomSPC
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.writeTo
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.io.IOException
@@ -53,7 +52,7 @@ object ZIPFormat : SpiralFormat {
                                         return@forEach
 
                                     val (out, data) = CacheHandler.cacheStream()
-                                    zip.writeTo(out, closeAfter = false)
+                                    out.use { stream -> zip.copyTo(stream) }
 
                                     if (convert) {
                                         val innerFormat = SpiralFormats.formatForData(data)
@@ -90,7 +89,7 @@ object ZIPFormat : SpiralFormat {
                                     return@forEach
 
                                 val (out, data) = CacheHandler.cacheStream()
-                                zip.writeTo(out, closeAfter = false)
+                                out.use { stream -> zip.copyTo(stream) }
 
                                 if (convert) {
                                     val innerFormat = SpiralFormats.formatForData(data)

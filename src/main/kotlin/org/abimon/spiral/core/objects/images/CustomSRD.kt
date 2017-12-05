@@ -5,8 +5,7 @@ import org.abimon.spiral.core.formats.images.SRDFormat
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.spiral.util.OffsetInputStream
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.readPartialBytes
-import org.abimon.visi.io.writeTo
+import org.abimon.visi.io.read
 import org.abimon.visi.lang.and
 import java.awt.Color
 import java.awt.geom.Dimension2D
@@ -337,7 +336,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
 
                                                 srdvStream.reset()
                                                 srdvStream.skip(mipmaps[i][0].toLong())
-                                                val imgData = srdvStream.readPartialBytes(mipmaps[i][1])
+                                                val imgData = srdvStream.read(mipmaps[i][1])
 
                                                 srdvOut.write(imgData)
 
@@ -411,11 +410,11 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                     srdOut.writeInt(subdataLen, true, false)
                                     srdOut.writeInt(0, true, false)
 
-                                    data.writeTo(srdOut)
+                                    data.copyTo(srdOut)
                                     for (i in 0 until (0x10 - dataLen % 0x10) % 0x10)
                                         srdOut.write(0)
 
-                                    subdata.writeTo(srdOut)
+                                    subdata.copyTo(srdOut)
                                     for (i in 0 until (0x10 - subdataLen % 0x10) % 0x10)
                                         srdOut.write(0)
                                 }

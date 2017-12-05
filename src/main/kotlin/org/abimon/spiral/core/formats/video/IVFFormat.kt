@@ -3,7 +3,10 @@ package org.abimon.spiral.core.formats.video
 import org.abimon.spiral.core.byteArrayOfInts
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.util.MediaWrapper
-import org.abimon.visi.io.*
+import org.abimon.visi.io.DataSource
+import org.abimon.visi.io.errPrintln
+import org.abimon.visi.io.read
+import org.abimon.visi.io.skipBytes
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -19,11 +22,11 @@ object IVFFormat : SpiralFormat {
     val secondHeader = byteArrayOfInts(0x56, 0x50, 0x38, 0x30)
 
     override fun isFormat(source: DataSource): Boolean = source.use { stream ->
-        if (!Arrays.equals(stream.readPartialBytes(4), initialHeader))
+        if (!Arrays.equals(stream.read(4), initialHeader))
             return@use false
         stream.skipBytes(4)
 
-        return@use Arrays.equals(stream.readPartialBytes(4), secondHeader)
+        return@use Arrays.equals(stream.read(4), secondHeader)
     }
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
@@ -38,11 +41,11 @@ object IVFFormat : SpiralFormat {
         val tmpOut = File("${UUID.randomUUID()}.${format.extension ?: "mp4"}") //unk won't be a valid conversion, so if all else fails let's be useful
 
         try {
-            FileOutputStream(tmpIn).use { outputStream -> source.use { inputStream -> inputStream.writeTo(outputStream) } }
+            FileOutputStream(tmpIn).use { outputStream -> source.use { inputStream -> inputStream.copyTo(outputStream) } }
 
             MediaWrapper.ffmpeg.convert(tmpIn, tmpOut)
 
-            FileInputStream(tmpOut).use { inputStream -> inputStream.writeTo(output) }
+            FileInputStream(tmpOut).use { inputStream -> inputStream.copyTo(output) }
         } finally {
             tmpIn.delete()
             tmpOut.delete()

@@ -5,7 +5,7 @@ import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
 import org.abimon.spiral.core.objects.images.GXTByteColourOrder
 import org.abimon.spiral.util.traceWithCaller
-import org.abimon.visi.io.readPartialBytes
+import org.abimon.visi.io.read
 import org.abimon.visi.lang.exportStackTrace
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -112,7 +112,7 @@ fun InputStream.readZeroString(maxLen: Int = 255, encoding: String = "UTF-8", by
     val baos = ByteArrayOutputStream()
 
     for (i in 0 until max) {
-        val read = readPartialBytes(bytesPerCharacter)
+        val read = read(bytesPerCharacter)
         if (read.all { it.toInt() == 0 })
             break
 

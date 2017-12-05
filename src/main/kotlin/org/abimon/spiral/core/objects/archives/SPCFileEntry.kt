@@ -4,8 +4,8 @@ import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.util.OffsetInputStream
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
+import org.abimon.visi.io.read
 import org.abimon.visi.io.readChunked
-import org.abimon.visi.io.readPartialBytes
 import org.abimon.visi.lang.exportStackTrace
 import org.abimon.visi.security.md5Hash
 import java.io.InputStream
@@ -56,7 +56,7 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
                                                     count++
                                                 }
 
-                                                buffer.put(stream.readPartialBytes(count))
+                                                buffer.put(stream.read(count))
                                             } else {
                                                 val x = stream.read()
                                                 val y = stream.read()

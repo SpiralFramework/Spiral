@@ -3,7 +3,7 @@ package org.abimon.spiral.core.objects.models
 import org.abimon.spiral.core.*
 import org.abimon.spiral.util.*
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.readPartialBytes
+import org.abimon.visi.io.read
 import org.abimon.visi.lang.and
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
@@ -31,7 +31,7 @@ class GMOModel(val dataSource: DataSource) {
                 val chunkID = this.readUnsureShort(true, true) ?: break
                 val headerSize = this.readUnsureShort(true, true) ?: break
                 val dataSize = this.readUnsureInt(true, true) ?: break
-                val header = if (headerSize <= 0) IntArray(0) else this.readPartialBytes(headerSize - 8).toIntArray()
+                val header = if (headerSize <= 0) IntArray(0) else this.read(headerSize - 8).toIntArray()
                 val chunk = GMOModelChunk(chunkID, headerSize, dataSize, header)
                 val substream = OffsetInputStream(dataSource.seekableInputStream, streamOffset, dataSize - headerSize.coerceAtLeast(8))
 
@@ -79,7 +79,7 @@ class GMOModel(val dataSource: DataSource) {
                     0x08 -> list.add(GMOMaterialChunk(chunkID, headerSize, dataSize, header, substream.readChunks(dataSource, chunk)))
 
                     0x0A -> {
-                        val padding = substream.readPartialBytes(8)
+                        val padding = substream.read(8)
                         val name = substream.readZeroString()
                     }
 

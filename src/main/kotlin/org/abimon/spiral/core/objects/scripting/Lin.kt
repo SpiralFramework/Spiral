@@ -13,7 +13,7 @@ import org.abimon.spiral.core.toIntArray
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.readPartialBytes
+import org.abimon.visi.io.read
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
@@ -45,11 +45,11 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
             } else
                 throw IllegalArgumentException("Unknown LIN type $linType")
 
-            header = lin.readPartialBytes((headerSpace - (if (linType == 1L) 12 else 16)).toInt())
+            header = lin.read((headerSpace - (if (linType == 1L) 12 else 16)).toInt())
             entries = ArrayList<LinScript>()
-            val data = lin.readPartialBytes((textBlock - headerSpace).toInt()).toIntArray()
+            val data = lin.read((textBlock - headerSpace).toInt()).toIntArray()
 
-            val textStream = ByteArrayInputStream(lin.readPartialBytes((size - textBlock).toInt()))
+            val textStream = ByteArrayInputStream(lin.read((size - textBlock).toInt()))
             val numTextEntries = textStream.readNumber(4, true)
 
             var i = 0

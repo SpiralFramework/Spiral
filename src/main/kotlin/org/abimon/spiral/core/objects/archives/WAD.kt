@@ -6,7 +6,7 @@ import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.util.CountingInputStream
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.readPartialBytes
+import org.abimon.visi.io.read
 import java.util.*
 
 /**
@@ -45,7 +45,7 @@ class WAD(val dataSource: DataSource) {
 
             major = wad.readNumber(4, true).toInt()
             minor = wad.readNumber(4, true).toInt()
-            header = wad.readPartialBytes(wad.readNumber(4, true).toInt())
+            header = wad.read(wad.readNumber(4, true).toInt())
 
             val numberOfFiles = wad.readNumber(4, true)
 
