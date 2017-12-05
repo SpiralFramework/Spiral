@@ -647,7 +647,7 @@ object Gurren {
     }
 
     val downloadLatest = Command("download_latest") {
-        val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").response()
+        val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().response()
 
         if(headResponse.httpStatusCode != 200)
             return@Command errPrintln("Error retrieving latest update: ${headResponse.httpStatusCode}")
@@ -660,7 +660,7 @@ object Gurren {
         if (question("Do you wish to continue downloading this plugin (Y/n)? ", "Y")) {
             val destination = File("SPIRAL-$latestBuild.jar")
 
-            val (_, response, _) = Fuel.download("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").progress { readBytes, totalBytes ->
+            val (_, response, _) = Fuel.download("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().progress { readBytes, totalBytes ->
                 println("Downloaded ${GurrenPlugins.TWO_DECIMAL_PLACES.format(readBytes * 100.0 / totalBytes.toDouble())}%")
             }.destination { response, url -> destination }.responseStream()
 
