@@ -56,8 +56,8 @@ object SpiralFormats {
             GMOModelFormat,
             IVFFormat,
             OggFormat,
-            NonstopFormat,
             PAKFormat, SPCFormat,
+            NonstopFormat,
             DRVitaCompressionFormat, CRILAYLAFormat
     )
 
