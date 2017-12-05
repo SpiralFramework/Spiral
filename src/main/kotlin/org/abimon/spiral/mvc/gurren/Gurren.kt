@@ -366,6 +366,8 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
+        val croppedCanvas = if (params.size < 4) true else params[3].toBoolean()
+
         if (file.isFile) {
             val ds = FileDataSource(file)
             val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
@@ -380,11 +382,21 @@ object Gurren {
             g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
             g.dispose()
 
-            val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
-            g = squishied.createGraphics()
-            g.drawImage(topHalf, 0, 0, null)
-            g.drawImage(squish, 0, topHalf.height, null)
-            g.dispose()
+            val squishied: BufferedImage
+
+            if(croppedCanvas) {
+                squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+                g = squishied.createGraphics()
+                g.drawImage(topHalf, 0, 0, null)
+                g.drawImage(squish, 0, topHalf.height, null)
+                g.dispose()
+            } else {
+                squishied = BufferedImage(full.width, full.height, BufferedImage.TYPE_INT_ARGB)
+                g = squishied.createGraphics()
+                g.drawImage(topHalf, 0, squish.height, null)
+                g.drawImage(squish, 0, squish.height + topHalf.height, null)
+                g.dispose()
+            }
 
             //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
             val output = File(file.absolutePath.substringBeforeLast('.') + "-squished.${file.extension}")
@@ -411,11 +423,23 @@ object Gurren {
                 g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
                 g.dispose()
 
-                val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
-                g = squishied.createGraphics()
-                g.drawImage(topHalf, 0, 0, null)
-                g.drawImage(squish, 0, topHalf.height, null)
-                g.dispose()
+
+
+                val squishied: BufferedImage
+
+                if(croppedCanvas) {
+                    squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+                    g = squishied.createGraphics()
+                    g.drawImage(topHalf, 0, 0, null)
+                    g.drawImage(squish, 0, topHalf.height, null)
+                    g.dispose()
+                } else {
+                    squishied = BufferedImage(full.width, full.height, BufferedImage.TYPE_INT_ARGB)
+                    g = squishied.createGraphics()
+                    g.drawImage(topHalf, 0, squish.height, null)
+                    g.drawImage(squish, 0, squish.height + topHalf.height, null)
+                    g.dispose()
+                }
 
                 //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
                 val output = File(subfile.absolutePath.substringBeforeLast('.') + "-squished.${subfile.extension}")
@@ -433,6 +457,8 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
+        val croppedCanvas = if (params.size < 4) true else params[3].toBoolean()
+
         if (file.isFile) {
             val ds = FileDataSource(file)
             val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
@@ -447,11 +473,21 @@ object Gurren {
             g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
             g.dispose()
 
-            val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
-            g = squishied.createGraphics()
-            g.drawImage(topHalf, 0, 0, null)
-            g.drawImage(squish, 0, topHalf.height, null)
-            g.dispose()
+            val squishied: BufferedImage
+
+            if(croppedCanvas) {
+                squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+                g = squishied.createGraphics()
+                g.drawImage(topHalf, 0, 0, null)
+                g.drawImage(squish, 0, topHalf.height, null)
+                g.dispose()
+            } else {
+                squishied = BufferedImage(full.width, full.height, BufferedImage.TYPE_INT_ARGB)
+                g = squishied.createGraphics()
+                g.drawImage(topHalf, 0, squish.height, null)
+                g.drawImage(squish, 0, squish.height + topHalf.height, null)
+                g.dispose()
+            }
 
             //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
             FileOutputStream(file).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
@@ -477,11 +513,21 @@ object Gurren {
                 g.drawImage(half, AffineTransform.getScaleInstance(1.0, 0.5), null)
                 g.dispose()
 
-                val squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
-                g = squishied.createGraphics()
-                g.drawImage(topHalf, 0, 0, null)
-                g.drawImage(squish, 0, topHalf.height, null)
-                g.dispose()
+                val squishied: BufferedImage
+
+                if(croppedCanvas) {
+                    squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
+                    g = squishied.createGraphics()
+                    g.drawImage(topHalf, 0, 0, null)
+                    g.drawImage(squish, 0, topHalf.height, null)
+                    g.dispose()
+                } else {
+                    squishied = BufferedImage(full.width, full.height, BufferedImage.TYPE_INT_ARGB)
+                    g = squishied.createGraphics()
+                    g.drawImage(topHalf, 0, squish.height, null)
+                    g.drawImage(squish, 0, squish.height + topHalf.height, null)
+                    g.dispose()
+                }
 
                 //ImageIO.write(squishied, "PNG", File("$name-squish.png"))
                 FileOutputStream(subfile).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
