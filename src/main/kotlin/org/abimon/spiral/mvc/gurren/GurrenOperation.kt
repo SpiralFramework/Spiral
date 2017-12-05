@@ -21,6 +21,7 @@ import org.abimon.visi.lang.*
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.zip.ZipFile
 import kotlin.system.measureTimeMillis
 
 @Suppress("unused")
@@ -229,12 +230,11 @@ object GurrenOperation {
         println("[$operatingName] Attempting to convert and compile files matching the regex ${regex.pattern}, which is the following list of files: ")
         println("")
         println(matching.entries.joinToPrefixedString("\n", "[$operatingName]\t") {
-            if (this.value == null)
-                "${this.key relativePathFrom directory} (No known format)"
-            else if (this.value!!.conversions.isEmpty())
-                "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
-            else
-                "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
+            when {
+                this.value == null -> "${this.key relativePathFrom directory} (No known format)"
+                this.value!!.conversions.isEmpty() -> "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
+                else -> "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
+            }
         })
         println("")
         if (question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")) {
@@ -262,6 +262,38 @@ object GurrenOperation {
 
             operatingArchive.compile(newEntries)
             println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
+        }
+    }
+
+    val restore = Command("restore", "operate") { (params) ->
+        val backupFile = File((SpiralModel.operating ?: return@Command errPrintln("Error: SpiralModel#operating is null, this is a bug!")).absolutePath.replaceAfterLast('.', "zip"))
+        val backupZip = ZipFile(backupFile)
+        val regex = (if (params.size < 2) ".*" else params[1]).toRegex()
+
+        val archive = GurrenModding.operatingArchive
+        val archiveFiles = archive.fileEntries.map { (name) -> name }
+        val archiveBackupFiles = backupZip.entries().toList().filter { zipEntry -> zipEntry.name in archiveFiles && zipEntry.name.matches(regex) }
+        val proceed = SpiralModel.confirm {
+            println("[$operatingName] Attempting to restore files matching the regex ${regex.pattern}, which is the following list of files: ")
+            println("")
+            println(archiveBackupFiles.joinToPrefixedString("\n", "[$operatingName]\t") { name })
+            println("")
+
+            return@confirm question("[${GurrenModding.operatingName}] Proceed with restoration (Y/n)? ", "Y")
+        }
+
+        if(proceed) {
+            val backupEntries = archiveBackupFiles.map { zipEntry ->
+                val (out, ds) = CacheHandler.cacheStream()
+
+                backupZip.getInputStream(zipEntry).use { stream -> out.use { outStream -> stream.copyTo(outStream) } }
+
+                return@map zipEntry.name to ds
+            }
+
+            archive.compile(backupEntries)
+
+            println("Restored ${backupEntries.size} from backup")
         }
     }
 

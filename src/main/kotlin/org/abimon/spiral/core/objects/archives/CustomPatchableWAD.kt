@@ -13,7 +13,6 @@ import org.abimon.visi.io.readChunked
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.ArrayList
-import java.util.HashSet
 import kotlin.collections.HashMap
 
 class CustomPatchableWAD(val wadFile: File) {
@@ -22,7 +21,7 @@ class CustomPatchableWAD(val wadFile: File) {
     private val files: MutableMap<String, DataSource> = HashMap()
     private val dataCoroutines: MutableList<Job> = ArrayList()
 
-    fun data(name: String, dataSource: DataSource, prioritise: Boolean = false) {
+    fun data(name: String, dataSource: DataSource) {
         val newName = name.replace(File.separator, "/")
 
         if(wad.files.any { entry -> entry.name == newName }) {
@@ -100,93 +99,6 @@ class CustomPatchableWAD(val wadFile: File) {
                     offset += 4 + tmpEntry.name.toByteArray(Charsets.UTF_8).size + 16
             }
         }
-    }
-
-//    fun compile(wad: OutputStream) {
-//        wad.print("AGAR")
-//        wad.writeInt(major)
-//        wad.writeInt(minor)
-//        wad.writeInt(header.size)
-//        wad.write(header)
-//
-//        wad.writeInt(files.size)
-//
-//        trace("Waiting on coroutines")
-//        runBlocking { dataCoroutines.forEach { it.join() } }
-//        trace("Finished waiting")
-//
-//        var offset = 0L
-//        val sortedFiles = files.entries.sortedWith(Comparator { (first), (second) -> (filePriorities[first] ?: 0).compareTo((filePriorities[second] ?: 0)) })
-//
-//        sortedFiles.forEach { (filename, raf) ->
-//            val name = filename.toByteArray(Charsets.UTF_8)
-//            wad.writeInt(name.size)
-//            wad.write(name)
-//            wad.writeLong(raf.length())
-//            wad.writeLong(offset)
-//
-//            offset += raf.length()
-//        }
-//
-//        val dirs = HashMap<String, HashSet<String>>()
-//
-//        sortedFiles.forEach { (filename) ->
-//            var str = filename.parents
-//            var prev = ""
-//
-//            while (str.lastIndexOf("/") > -1) {
-//                if (!dirs.containsKey(str))
-//                    dirs[str] = HashSet()
-//                if (prev != filename && prev.isNotBlank())
-//                    dirs[str]!!.add(prev)
-//                prev = str
-//                str = str.parents
-//            }
-//
-//            if (!dirs.containsKey(str))
-//                dirs[str] = HashSet()
-//            if (prev != filename && prev.isNotBlank())
-//                dirs[str]!!.add(prev)
-//
-//            if (!dirs.containsKey(""))
-//                dirs[""] = HashSet()
-//            if (str.isNotBlank())
-//                dirs[""]!!.add(str)
-//
-//            if (dirs.containsKey(filename.parents))
-//                dirs[filename.parents]!!.add(filename)
-//        }
-//
-//        val setDirs = getDirs(dirs, "")
-//        wad.writeInt(setDirs.size)
-//
-//        setDirs.sortedWith(Comparator<String>(String::compareTo)).forEach {
-//            val name = it.toByteArray(Charsets.UTF_8)
-//            wad.writeInt(name.size)
-//            wad.write(name)
-//            wad.writeInt(dirs[it]!!.size)
-//
-//            dirs[it]!!.sortedWith(Comparator<String>(String::compareTo)).forEach {
-//                val fileName = it.child.toByteArray(Charsets.UTF_8)
-//                wad.writeInt(fileName.size)
-//                wad.write(fileName)
-//                wad.write(if (dirs.containsKey(it)) 1 else 0)
-//            }
-//        }
-//
-//        val wadChannel = Channels.newChannel(wad)
-//        sortedFiles.forEach { (_, raf) -> raf.channel.transferTo(0, raf.length(), wadChannel) }
-//    }
-
-    fun getDirs(dirs: HashMap<String, HashSet<String>>, dir: String = ""): HashSet<String> {
-        val set = HashSet<String>()
-        set.add(dir)
-
-        dirs[dir]!!
-                .filter { dirs.containsKey(it) }
-                .forEach { set.addAll(getDirs(dirs, it)) }
-
-        return set
     }
 
     fun launchCoroutine(op: () -> Unit) {

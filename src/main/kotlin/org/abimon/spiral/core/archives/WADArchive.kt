@@ -5,6 +5,7 @@ import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.objects.archives.CustomPatchableWAD
 import org.abimon.spiral.core.objects.archives.CustomWAD
 import org.abimon.spiral.core.objects.archives.WAD
+import org.abimon.spiral.modding.BackupManager
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
@@ -29,6 +30,8 @@ class WADArchive(override val archiveFile: File) : IArchive {
     override val supportsCompilation: Boolean = true
 
     override fun compile(newEntries: List<Pair<String, DataSource>>) {
+        BackupManager.backupOverridingEntries(this, newEntries)
+
         //Check if can patch
         if (newEntries.all { (name, data) -> wad.files.any { entry -> entry.name == name && entry.fileSize == data.size } }) {
             val wadFile = RandomAccessFile(archiveFile, "rw")

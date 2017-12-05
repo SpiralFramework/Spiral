@@ -414,6 +414,9 @@ object Gurren {
                     return@forEach
                 }
 
+                if(!format.isFormat(ds))
+                    return@forEach
+
                 val full = format.toBufferedImage(ds)
 
                 val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
@@ -503,6 +506,9 @@ object Gurren {
                     rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
                     return@forEach
                 }
+
+                if(!format.isFormat(ds))
+                    return@forEach
 
                 val full = format.toBufferedImage(ds)
 
