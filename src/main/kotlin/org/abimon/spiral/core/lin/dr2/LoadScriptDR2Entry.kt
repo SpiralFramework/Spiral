@@ -6,5 +6,5 @@ data class LoadScriptDR2Entry(val chapter: Int, val scene: Int, val room: Int): 
     constructor(chapter: Int, scene: Int, sceneRem: Int, room: Int, roomRem: Int): this(chapter, scene * 256 + sceneRem, room * 256 + roomRem)
 
     override fun getOpCode(): Int = 0x19
-    override fun getRawArguments(): IntArray = intArrayOf(chapter, scene / 256, scene % 256, room / 256, room % 256, room)
+    override fun getRawArguments(): IntArray = intArrayOf(chapter, scene / 256, scene % 256, room / 256, room % 256)
 }

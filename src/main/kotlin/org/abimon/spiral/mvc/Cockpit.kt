@@ -22,6 +22,8 @@ fun startupSpiral(args: Array<String>) {
     SpiralModel.imperator.hireSoldiers(GurrenPlugins)
     SpiralModel.imperator.hireSoldiers(GurrenModding)
 
+    Gurren.checkForUpdates.turn(InstanceOrder("CHECK-FOR-UPDATE", scout = null, data = "check_for_update"))
+
     println("Initialising SPIRAL")
 
     args.forEach { param ->

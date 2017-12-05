@@ -19,6 +19,7 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.debug
+import org.abimon.spiral.util.responseStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
 import org.abimon.visi.collections.joinToPrefixedString
@@ -365,7 +366,7 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
-        if(file.isFile) {
+        if (file.isFile) {
             val ds = FileDataSource(file)
             val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
                     as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
@@ -390,7 +391,7 @@ object Gurren {
             FileOutputStream(output).use { stream -> PNGFormat.convert(format, squishied, stream, emptyMap()) }
 
             println("Squished $file into $output")
-        } else if(file.isDirectory) {
+        } else if (file.isDirectory) {
             val rows: MutableList<Array<String>> = ArrayList()
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
@@ -508,41 +509,71 @@ object Gurren {
     }
 
     val checkForUpdates = Command("check_for_update") {
-        val currentBuild = run {
-            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
-
-            if (response.httpStatusCode != 200)
-                return@run -1
-            else
-                return@run (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
-        }
+        val currentBuild = this.currentBuild
 
         if (currentBuild == -1) {
             println("Error retrieving current build")
             return@Command
         }
 
-        val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
+        val latestBuild = this.latestBuild
 
-        if (response.httpStatusCode != 200)
-            println("Error retrieving the latest jenkins build; status code ${response.httpStatusCode}")
+        if (latestBuild == -1)
+            println("Error retrieving latest build")
         else {
-            val latestBuild = (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
-
-            if (latestBuild == -1)
-                println("Error retrieving latest build")
-            else {
-                if (currentBuild == latestBuild)
-                    println("SPIRAL version $version; build $currentBuild - You are on the latest build")
-                else if (currentBuild < latestBuild)
-                    println("SPIRAL version $version; build $currentBuild - Latest build is $latestBuild\nIf you would like to update, run \"download_latest\"")
-                else
-                    println("SPIRAL version $version; build $currentBuild - Apparent latest build is $latestBuild, however that build precedes this one.")
+            when {
+                currentBuild == latestBuild -> println("SPIRAL version $version; build $currentBuild - You are on the latest build")
+                currentBuild < latestBuild -> println("SPIRAL version $version; build $currentBuild - Latest build is $latestBuild\nIf you would like to update, run \"download_latest\"")
+                else -> println("SPIRAL version $version; build $currentBuild - Apparent latest build is $latestBuild, however that build precedes this one.")
             }
         }
+    }
 
+    val downloadLatest = Command("download_latest") {
+        val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").response()
+
+        if(headResponse.httpStatusCode != 200)
+            return@Command errPrintln("Error retrieving latest update: ${headResponse.httpStatusCode}")
+
+        val latestBuild = this.latestBuild
+
+        println("SPIRAL build $currentBuild -> build $latestBuild")
+        println("Update Size: ${headResponse.httpContentLength} B / ${GurrenPlugins.TWO_DECIMAL_PLACES.format(headResponse.httpContentLength / 1000.0 / 1000.0)} MB")
+
+        if (question("Do you wish to continue downloading this plugin (Y/n)? ", "Y")) {
+            val destination = File("SPIRAL-$latestBuild.jar")
+
+            val (_, response, _) = Fuel.download("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").progress { readBytes, totalBytes ->
+                println("Downloaded ${GurrenPlugins.TWO_DECIMAL_PLACES.format(readBytes * 100.0 / totalBytes.toDouble())}%")
+            }.destination { response, url -> destination }.responseStream()
+
+            if(response.httpStatusCode == 200)
+                println("Successfully downloaded update to $destination")
+            else
+                errPrintln("Error: Was unable to download SPIRAL build $latestBuild")
+        }
     }
 
     //val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
+
+    val currentBuild: Int
+        get() {
+            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
+
+            if (response.httpStatusCode != 200)
+                return -1
+            else
+                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+        }
+
+    val latestBuild: Int
+        get() {
+            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
+
+            if (response.httpStatusCode != 200)
+                return -1
+            else
+                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+        }
 }
