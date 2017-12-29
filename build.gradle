@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.0'
+    ext.kotlin_version = '1.2.10'
     ext.jackson_version = '2.9.0'
 
     repositories {
@@ -39,12 +39,12 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
     compile('org.abimon:Imperator:7')
-    compile('org.abimon:Visi:33')
+    compile('org.abimon:Visi:34')
     compile('org.abimon:Karnage:11')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
-    compile "com.github.kittinunf.fuel:fuel:1.8.0"
+    compile "com.github.kittinunf.fuel:fuel:1.11.0"
 
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
