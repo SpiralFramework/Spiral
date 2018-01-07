@@ -39,6 +39,7 @@ object SRDFormat {
         val otherEntries: MutableMap<String, DataSource> = HashMap()
         val images: MutableMap<String, BufferedImage> = HashMap()
         val mapToModels: Boolean = "${params["srd:mapToModels"] ?: true}".toBoolean()
+        var imageOverride: Boolean = false
 
         when (from) {
             is SPCFormat -> {
@@ -58,7 +59,10 @@ object SRDFormat {
 
                     val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
+                    val before = otherEntries.size
                     readSRD(srdEntry, img, if (model != null) SRDIModel(model) else null, otherEntries, images, params)
+                    if(otherEntries.size != before)
+                        imageOverride = true
                 }
 
                 others.forEach { entry -> otherEntries[entry.name] = entry }
@@ -66,7 +70,7 @@ object SRDFormat {
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
 
-        if (images.isEmpty() && !LoggerLevel.TRACE.enabled)
+        if (!imageOverride && images.isEmpty() && !LoggerLevel.TRACE.enabled)
             return false
 
         val format = SpiralFormats.formatForName(params["srd:format"]?.toString() ?: "PNG", SpiralFormats.imageFormats) ?: PNGFormat
@@ -227,7 +231,7 @@ object SRDFormat {
                                                     }
                                                     images[mipName] = resultingImage.mapToModel(model, params)
                                                 }
-                                                else -> otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
+                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
                                             }
 
                                             imageInfo["swizzled"] = swizzled
@@ -274,7 +278,7 @@ object SRDFormat {
                                                 0x0F -> images[mipName] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 0x1C -> images[mipName] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 else -> {
-                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt|$width|$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
+                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
                                                 }
                                             }
 
@@ -285,7 +289,7 @@ object SRDFormat {
                                         } else {
                                             debug("Unknown format $fmt")
 
-                                            otherData["$mip-$name ($fmt|$disp_width|$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
+                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
                                         }
 
                                         if (LoggerLevel.TRACE.enabled)

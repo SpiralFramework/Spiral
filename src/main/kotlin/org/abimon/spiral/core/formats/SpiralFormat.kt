@@ -10,7 +10,7 @@ interface SpiralFormat {
     val conversions: Array<SpiralFormat>
 
     fun isFormat(source: DataSource): Boolean
-    fun canConvert(format: SpiralFormat): Boolean = format in conversions
+    fun canConvert(format: SpiralFormat): Boolean = format in conversions || canConvertViaOverride(format)
     fun canConvertViaOverride(format: SpiralFormat): Boolean = OVERRIDING_CONVERSIONS.containsKey(this to format)
     /**
      * Convert from this format to another
