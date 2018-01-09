@@ -9,11 +9,15 @@ import org.abimon.spiral.core.formats.scripting.NonstopFormat
 import org.abimon.spiral.core.readMapValue
 import org.abimon.spiral.core.writeShort
 import org.abimon.visi.io.DataSource
+import org.yaml.snakeyaml.error.YAMLException
 import java.io.OutputStream
+import kotlin.reflect.KClass
 
 abstract class JacksonFormat: SpiralFormat {
     override val conversions: Array<SpiralFormat> = emptyArray() //We should not be doing any automated conversions
     val manualConversions: Array<SpiralFormat> = arrayOf(NonstopFormat) //But we should allow manual conversions
+
+    open val OTHER_EXCEPTION_TYPES: Array<KClass<out Throwable>> = emptyArray()
 
     override fun canConvert(format: SpiralFormat): Boolean = format in manualConversions
     abstract val MAPPER: ObjectMapper
@@ -24,6 +28,9 @@ abstract class JacksonFormat: SpiralFormat {
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
+        } catch (th: Throwable) {
+            if(OTHER_EXCEPTION_TYPES.none { klass -> klass.isInstance(th) })
+                throw th
         }
 
         try {
@@ -31,6 +38,9 @@ abstract class JacksonFormat: SpiralFormat {
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
+        } catch (th: Throwable) {
+            if(OTHER_EXCEPTION_TYPES.none { klass -> klass.isInstance(th) })
+                throw th
         }
 
         return false
@@ -80,6 +90,8 @@ abstract class JacksonFormat: SpiralFormat {
 
         override val MAPPER: ObjectMapper
             get() = SpiralData.YAML_MAPPER
+
+        override val OTHER_EXCEPTION_TYPES: Array<KClass<out Throwable>> = arrayOf(YAMLException::class)
     }
 
     object JSON: JacksonFormat() {
