@@ -13,10 +13,10 @@ object NonstopFormat: SpiralFormat {
     override val conversions: Array<SpiralFormat> = arrayOf(JacksonFormat.YAML, JacksonFormat.JSON)
 
     override fun isFormat(source: DataSource): Boolean {
-        try {
-            return NonstopDebate(source).sections.isNotEmpty()
-        } catch (iea: IllegalArgumentException) {
-        }
+//        try {
+//            return NonstopDebate(source).sections.isNotEmpty()
+//        } catch (iea: IllegalArgumentException) {
+//        }
 
         return false
     }
