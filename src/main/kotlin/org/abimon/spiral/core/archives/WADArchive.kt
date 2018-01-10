@@ -1,11 +1,14 @@
 package org.abimon.spiral.core.archives
 
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.objects.archives.CustomPatchableWAD
 import org.abimon.spiral.core.objects.archives.CustomWAD
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.spiral.modding.BackupManager
+import org.abimon.spiral.modding.data.ModList
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
@@ -27,6 +30,11 @@ class WADArchive(override val archiveFile: File) : IArchive {
             SHTXFormat to TGAFormat,
             DDSFormat to TGAFormat
     )
+    override val installedMods: ModList = run {
+        val entry = wad.files.firstOrNull { entry -> entry.name == SpiralData.SPIRAL_MOD_LIST } ?: return@run ModList()
+
+        return@run SpiralData.MAPPER.readValue(entry.inputStream, ModList::class.java)
+    }
     override val supportsCompilation: Boolean = true
 
     override fun compile(newEntries: List<Pair<String, DataSource>>) {
@@ -35,7 +43,12 @@ class WADArchive(override val archiveFile: File) : IArchive {
         //Check if can patch
         if (newEntries.all { (name, data) -> wad.files.any { entry -> entry.name == name && entry.fileSize == data.size } }) {
             val wadFile = RandomAccessFile(archiveFile, "rw")
-            newEntries.forEach { (name, data) ->
+            val per = 100.0 / newEntries.size
+
+            newEntries.forEachIndexed { index, (name, data) ->
+                if(SpiralModel.printCompilationPercentage)
+                    println("Compilation Percentage: ${per * index}%")
+
                 val wadEntry = wad.files.first { entry -> entry.name == name && entry.fileSize == data.size }
                 wadFile.seek(wadEntry.wad.dataOffset + wadEntry.offset)
                 data.use { stream -> stream.readChunked(processChunk = wadFile::write) }

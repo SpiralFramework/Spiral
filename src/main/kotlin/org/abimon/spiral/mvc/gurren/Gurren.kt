@@ -19,7 +19,7 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.debug
-import org.abimon.spiral.util.responseStream
+import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
 import org.abimon.visi.collections.joinToPrefixedString

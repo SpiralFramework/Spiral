@@ -9,6 +9,7 @@ import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.print
 import org.abimon.spiral.core.writeInt
 import org.abimon.spiral.core.writeLong
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.child
@@ -161,7 +162,13 @@ class CustomWAD {
             }
         }
 
-        sortedFiles.forEach { (_, source) -> source.pipe(wad) }
+        val per = 100.0 / sortedFiles.size
+        sortedFiles.forEachIndexed { index, (_, source) ->
+            if(SpiralModel.printCompilationPercentage)
+                println("Compilation Percentage: ${per * index}%")
+
+            source.pipe(wad)
+        }
     }
 
     fun getDirs(dirs: HashMap<String, HashSet<String>>, dir: String = ""): HashSet<String> {

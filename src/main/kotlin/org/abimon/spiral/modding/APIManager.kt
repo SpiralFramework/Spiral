@@ -3,9 +3,10 @@ package org.abimon.spiral.modding
 import com.github.kittinunf.fuel.Fuel
 import org.abimon.spiral.core.data.EnumSignedStatus
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.modding.data.SpiralModData
 import org.abimon.spiral.util.SemanticVersion
-import org.abimon.spiral.util.responseStream
+import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.lang.and
 import org.abimon.visi.security.verify
 import java.io.File
@@ -26,19 +27,19 @@ abstract class APIManager {
         return major to minor and patch
     }
 
-    fun apiSearch(query: String): Array<SpiralModData> {
-        val (_, response, r) = Fuel.get("$API_BASE_URL/search", listOf("q" to query)).responseStream()
+    open fun apiSearch(query: String): Array<SpiralModData> {
+        val (_, response, r) = Fuel.get("$API_BASE_URL/search", listOf("q" to query)).userAgent().responseStream()
 
-        if(response.httpStatusCode == 200)
+        if(response.statusCode == 200)
             return SpiralData.MAPPER.readValue(r.component1() ?: return emptyArray(), Array<SpiralModData>::class.java)
 
         return emptyArray()
     }
 
-    fun isSigned(uid: String, version: String, file: File): EnumSignedStatus {
+    open fun isSigned(uid: String, version: String, file: File): EnumSignedStatus {
         val (_, response, _) = Fuel.get("$API_BASE_URL/mods/$uid/$version/signature").response()
 
-        if(response.httpStatusCode != 200)
+        if(response.statusCode != 200)
             return EnumSignedStatus.UNSIGNED
 
         val valid = file.inputStream().use { stream -> stream.verify(response.data, PluginManager.publicKey ?: return EnumSignedStatus.NO_PUBLIC_KEY) }

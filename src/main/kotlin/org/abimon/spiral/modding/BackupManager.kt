@@ -9,6 +9,7 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import kotlin.collections.ArrayList
 
 object BackupManager {
     fun backupOverridingEntries(archive: IArchive, newEntries: List<Pair<String, DataSource>>) {
@@ -25,12 +26,14 @@ object BackupManager {
         //Next, we need to backup the files themselves.
         val backupFile = File(archive.archiveFile.absolutePath.replaceAfterLast('.', "zip"))
         val tmp = File.createTempFile("backup-${UUID.randomUUID()}", ".zip")
+        val alreadyAdded: MutableList<String> = ArrayList()
         FileOutputStream(tmp).use { fos ->
             val zipOut = ZipOutputStream(fos)
 
             if(backupFile.exists()) {
                 val zipBackup = ZipFile(backupFile)
                 for (entry in zipBackup.entries()) {
+                    alreadyAdded.add(entry.name)
                     zipOut.putNextEntry(entry)
                     zipBackup.getInputStream(entry).use { stream -> stream.copyTo(zipOut) }
                 }
@@ -41,7 +44,11 @@ object BackupManager {
                     return@forEach
 
                 val (_, fileData) = (archive.fileEntries.firstOrNull { (fileName) -> fileName == name } ?: return@forEach)
+                if(name in alreadyAdded)
+                    return@forEach
+
                 zipOut.putNextEntry(ZipEntry(name))
+                alreadyAdded.add(name)
                 fileData.pipe(zipOut)
             }
 

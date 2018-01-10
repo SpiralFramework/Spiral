@@ -4,6 +4,7 @@ import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.fonts.V3SPCFont
 import org.abimon.spiral.core.formats.images.SRDFormat
+import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.modding.PluginManager
 import org.abimon.spiral.mvc.gurren.*
 
@@ -12,7 +13,10 @@ fun main(args: Array<String>) = startupSpiral(args)
 fun startupSpiral(args: Array<String>) {
     if(SpiralModel.purgeCache)
         CacheHandler.purge()
+
+    ModManager.scanForMods()
     PluginManager.scanForPlugins()
+
     SRDFormat.hook()
     V3SPCFont.hook()
 

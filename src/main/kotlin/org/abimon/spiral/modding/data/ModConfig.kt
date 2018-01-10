@@ -8,6 +8,6 @@ data class ModConfig(
         val semantic_version: String = version,
         val uid: String,
         val description: String?,
-        val applicable_titles: Array<EnumDRGame> = emptyArray(),
-        val filterByTitle: Map<EnumDRGame, Array<String>> = emptyMap()
+        val applicable_titles: List<EnumDRGame> = emptyList(),
+        val filterByTitle: Map<EnumDRGame, List<String>> = emptyMap()
 )

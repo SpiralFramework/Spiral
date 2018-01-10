@@ -2,6 +2,7 @@ package org.abimon.spiral.util
 
 import org.abimon.visi.io.skipBytes
 import java.io.InputStream
+import java.io.OutputStream
 
 open class DelegatedInputStream(val delegatedInputStream: InputStream) : InputStream() {
     override fun read(): Int = delegatedInputStream.read()
@@ -86,4 +87,17 @@ class SeekableInputStream(seekable: InputStream): CountingInputStream(seekable) 
         reset()
         skipBytes(offset)
     }
+}
+
+fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: ((Long) -> Unit)?): Long {
+    var bytesCopied = 0L
+    val buffer = ByteArray(bufferSize)
+    var bytes = read(buffer)
+    while (bytes >= 0) {
+        out.write(buffer, 0, bytes)
+        bytesCopied += bytes
+        progress?.invoke(bytesCopied)
+        bytes = read(buffer)
+    }
+    return bytesCopied
 }

@@ -5,12 +5,16 @@ import com.github.kittinunf.fuel.Fuel
 import org.abimon.spiral.core.data.EnumSignedStatus
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.modding.data.PluginConfig
+import org.abimon.spiral.modding.data.SpiralModData
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.compareTo
-import org.abimon.spiral.util.responseStream
+import org.abimon.spiral.util.copyWithProgress
+import org.abimon.spiral.util.rocketFuel.largeResponse
+import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.lang.and
 import org.abimon.visi.security.RSAPublicKey
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
 import java.net.URLClassLoader
@@ -18,9 +22,9 @@ import java.security.PublicKey
 import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
-object PluginManager: APIManager() {
+object PluginManager : APIManager() {
     val PLUGIN_FOLDER = File("plugins").apply {
-        if(!exists())
+        if (!exists())
             mkdir()
     }
 
@@ -56,8 +60,8 @@ object PluginManager: APIManager() {
     }
 
     fun loadPlugin(uid: String): Boolean {
-        if(pluginsInFolder.containsKey(uid)) {
-            if(!loadClasses(pluginsInFolder[uid]!!.first))
+        if (pluginsInFolder.containsKey(uid)) {
+            if (!loadClasses(pluginsInFolder[uid]!!.first))
                 return false
             (loadedPlugins[uid] ?: return false).third.enable(SpiralModel.imperator)
 
@@ -82,13 +86,13 @@ object PluginManager: APIManager() {
                     val className = entry.name.substring(0, entry.name.length - 6).replace('/', '.')
                     val clazz = loadClass(classLoader, className)
 
-                    if(clazz.interfaces.contains(IPlugin::class.java))
+                    if (clazz.interfaces.contains(IPlugin::class.java))
                         loadedPlugins[metadata.uid] = (file to metadata and clazz.newInstance() as IPlugin)
                 }
             }
 
             return loadedPlugins.containsKey(metadata.uid)
-        } catch(io: IOException) {
+        } catch (io: IOException) {
             return false
         }
     }
@@ -107,15 +111,15 @@ object PluginManager: APIManager() {
     fun scanForUpdates() {
         val plugins = PLUGIN_FOLDER.listFiles { file -> file.extension == "jar" }.groupBy { potentialPlugin -> getMetadataForFile(potentialPlugin)?.uid }
         plugins.forEach { uid, pluginList ->
-            if(uid == null)
+            if (uid == null)
                 return@forEach
 
-            if(pluginList.size > 1) {
+            if (pluginList.size > 1) {
                 val sorted = pluginList.sortedWith(Comparator { o1, o2 -> semanticVersionToInts(getMetadataForFile(o1)!!.semantic_version).compareTo(semanticVersionToInts(getMetadataForFile(o2)!!.semantic_version)) }).reversed()
                 val latest = sorted[0]
                 val replacing = sorted[1]
 
-                sorted.forEachIndexed { index, file -> if(index > 0) file.delete() }
+                sorted.forEachIndexed { index, file -> if (index > 0) file.delete() }
                 latest.renameTo(replacing)
             }
         }
@@ -125,7 +129,7 @@ object PluginManager: APIManager() {
         get() {
             val (_, response, _) = Fuel.get("$BASE_URL/public.key").response()
 
-            if(response.httpStatusCode != 200)
+            if (response.statusCode != 200)
                 return null
 
             return RSAPublicKey(String(response.data))
@@ -134,7 +138,7 @@ object PluginManager: APIManager() {
     fun pluginConfigFor(uid: String, version: String): PluginConfig? {
         val (_, response, r) = Fuel.get("$API_BASE_URL/mods/$uid/$version/info").responseStream()
 
-        if(response.httpStatusCode == 200)
+        if (response.statusCode == 200)
             return SpiralData.MAPPER.readValue(r.component1() ?: return null, PluginConfig::class.java)
 
         return null
@@ -143,23 +147,34 @@ object PluginManager: APIManager() {
     fun pluginSize(uid: String, version: String): Long? {
         val (_, response, _) = Fuel.head("$API_BASE_URL/mods/$uid/$version/download").response()
 
-        if(response.httpStatusCode == 200)
-            return response.httpContentLength
+        if (response.statusCode == 200)
+            return response.contentLength
 
         return null
     }
 
     fun downloadPlugin(uid: String, version: String, progress: (Long, Long) -> Unit = { _, _ -> }): Boolean {
         val (name) = pluginConfigFor(uid, version) ?: return false
-        val (_, response, _) = Fuel.download("$API_BASE_URL/mods/$uid/$version/download").progress(progress).destination { response, url -> File(PLUGIN_FOLDER, "$name-$version.jar") }.responseStream()
+        val (_, result) = Fuel.get("$API_BASE_URL/mods/$uid/$version/download").largeResponse()
+        val (response) = result
 
-        return response.httpStatusCode == 200
+        if(response == null)
+            return false
+
+        FileOutputStream(File(PLUGIN_FOLDER, "$name-$version.jar")).use { out ->
+            response.dataStream.copyWithProgress(out, progress = { copied -> progress(copied, response.contentLength) })
+        }
+
+        return response.statusCode == 200
     }
 
     fun uidForName(name: String): String? {
-        if(pluginsInFolder.containsKey(name))
+        if (pluginsInFolder.containsKey(name))
             return name
 
         return pluginsInFolder.values.firstOrNull { (_, config, _) -> config.name == name }?.second?.uid
     }
+
+    override fun apiSearch(query: String): Array<SpiralModData>
+            = super.apiSearch(query).filter { modData -> modData.plugin }.toTypedArray()
 }

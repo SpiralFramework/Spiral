@@ -40,6 +40,18 @@ object HookManager {
     val BEFORE_ATTEMPT_FINGERPRINT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
     val ON_ATTEMPT_FINGERPRINT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
 
+    val BEFORE_PRINT_EXTRACT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
+    val ON_PRINT_EXTRACT_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
+
+    val BEFORE_PRINT_COMPILE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
+    val ON_PRINT_COMPILE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
+
+    val BEFORE_NO_FLUFF_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
+    val ON_NO_FLUFF_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
+
+    val BEFORE_MULTITHREADED_SIMPLE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
+    val ON_MULTITHREADED_SIMPLE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
+
     val BEFORE_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Boolean) -> Boolean>> = ArrayList()
     val ON_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
     val DURING_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Pair<String, DataSource>) -> Unit>> = ArrayList()
@@ -75,6 +87,18 @@ object HookManager {
     fun beforeAttemptFingerprintChange(old: Boolean, new: Boolean): Boolean
             = beforeChange(old, new, BEFORE_ATTEMPT_FINGERPRINT_CHANGE)
 
+    fun beforePrintExtractChange(old: Boolean, new: Boolean): Boolean
+            = beforeChange(old, new, BEFORE_PRINT_EXTRACT_CHANGE)
+
+    fun beforePrintCompileChange(old: Boolean, new: Boolean): Boolean
+            = beforeChange(old, new, BEFORE_PRINT_COMPILE_CHANGE)
+
+    fun beforeNoFluffChange(old: Boolean, new: Boolean): Boolean
+            = beforeChange(old, new, BEFORE_NO_FLUFF_CHANGE)
+
+    fun beforeMultithreadedSimpleChange(old: Boolean, new: Boolean): Boolean
+            = beforeChange(old, new, BEFORE_MULTITHREADED_SIMPLE_CHANGE)
+
     fun afterOperatingChange(old: File?, new: File?): Unit =
             afterChange(old, new, ON_OPERATING_CHANGE)
 
@@ -104,6 +128,18 @@ object HookManager {
 
     fun afterAttemptFingerprintChange(old: Boolean, new: Boolean): Unit
             = afterChange(old, new, ON_ATTEMPT_FINGERPRINT_CHANGE)
+
+    fun afterPrintExtractChange(old: Boolean, new: Boolean): Unit
+            = afterChange(old, new, ON_PRINT_EXTRACT_CHANGE)
+
+    fun afterPrintCompileChange(old: Boolean, new: Boolean): Unit
+            = afterChange(old, new, ON_PRINT_COMPILE_CHANGE)
+
+    fun afterNoFluffChange(old: Boolean, new: Boolean): Unit
+            = afterChange(old, new, ON_NO_FLUFF_CHANGE)
+
+    fun afterMultithreadedSimpleChange(old: Boolean, new: Boolean): Unit
+            = afterChange(old, new, ON_MULTITHREADED_SIMPLE_CHANGE)
 
     fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Boolean
             = BEFORE_EXTRACT

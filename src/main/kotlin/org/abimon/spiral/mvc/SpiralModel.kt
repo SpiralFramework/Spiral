@@ -1,5 +1,6 @@
 package org.abimon.spiral.mvc
 
+import com.github.kittinunf.fuel.core.FuelManager
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Job
@@ -12,6 +13,7 @@ import org.abimon.imperator.impl.InstanceWatchtower
 import org.abimon.spiral.core.data.ModelConfig
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.visi.lang.splitOutsideGroup
@@ -39,6 +41,12 @@ object SpiralModel {
     var patchFile: File? by hookable(null, HookManager::beforePatchFileChange, HookManager::afterPatchFileChange)
 
     var attemptFingerprinting: Boolean by hookable(true, HookManager::beforeAttemptFingerprintChange, HookManager::afterAttemptFingerprintChange)
+
+    var printExtractionPercentage: Boolean by hookable(true, HookManager::beforePrintExtractChange, HookManager::afterPrintExtractChange)
+    var printCompilationPercentage: Boolean by hookable(true, HookManager::beforePrintCompileChange, HookManager::afterPrintCompileChange)
+
+    var noFluffIO: Boolean by hookable(false, HookManager::beforeNoFluffChange, HookManager::afterNoFluffChange)
+    var multithreadSimpleOperations: Boolean by hookable(false, HookManager::beforeMultithreadedSimpleChange, HookManager::afterMultithreadedSimpleChange)
 
     val defaultParams: MutableMap<String, Any?> = HashMap()
 
@@ -83,7 +91,7 @@ object SpiralModel {
             autoConfirm = config.autoConfirm
             purgeCache = config.purgeCache
             patchOperation = config.patchOperation
-            patchFile = config.patchFile
+            patchFile = if(config.patchFile != null) File(config.patchFile) else null
 
             attemptFingerprinting = config.attemptFingerprinting
 
@@ -92,9 +100,6 @@ object SpiralModel {
 
             pluginData.clear()
             pluginData.putAll(config.pluginData)
-
-            if (config.debug != null)
-                loggerLevel = LoggerLevel.DEBUG
         }
     }
 
@@ -115,12 +120,15 @@ object SpiralModel {
 
     val config: ModelConfig
         get() = ModelConfig(
-                archives.map { it.absolutePath }.toSet(), loggerLevel, null, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
-                patchOperation, patchFile,
-                attemptFingerprinting, defaultParams, pluginData
+                archives.map { it.absolutePath }.toSet(), loggerLevel, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
+                patchOperation, patchFile?.absolutePath,
+                attemptFingerprinting, true, true, false, false, defaultParams, pluginData
         )
 
-    init { load() }
+    init {
+        load()
+        FuelManager.instance.addRequestInterceptor { requestInterceptor -> { request -> requestInterceptor(request); request.userAgent() } }
+    }
 
     fun <T> saveDelegate(initial: T): ReadWriteProperty<Any?, T> = Delegates.observable(initial) { _, _, _ -> if(!unsafe.get()) save() }
     fun <T> hookable(initialValue: T, beforeChange: (T, T) -> Boolean, afterChange: (T, T) -> Unit):

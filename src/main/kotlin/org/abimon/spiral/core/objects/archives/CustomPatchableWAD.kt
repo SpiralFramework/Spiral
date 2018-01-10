@@ -5,6 +5,7 @@ import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.util.longToByteArray
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
@@ -65,7 +66,11 @@ class CustomPatchableWAD(val wadFile: File) {
 
         var dataOffset = (rewrite.firstOrNull() ?: return).offset
 
-        rewrite.forEach outerLoop@{ entry ->
+        val per = 100.0 / rewrite.size
+        rewrite.forEachIndexed outerLoop@{ index, entry ->
+            if(SpiralModel.printCompilationPercentage)
+                println("Compilation Percentage: ${per * index}%")
+
             var offset = 20L
 
             patchingFile.seek(dataOffset + wad.dataOffset)

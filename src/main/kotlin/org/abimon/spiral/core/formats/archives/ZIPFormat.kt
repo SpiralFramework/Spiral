@@ -5,10 +5,11 @@ import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.CustomPak
 import org.abimon.spiral.core.objects.archives.CustomSPC
+import org.abimon.spiral.core.readInt
+import org.abimon.spiral.util.toInt
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
-import java.io.IOException
 import java.io.OutputStream
 import java.util.HashMap
 import java.util.zip.ZipInputStream
@@ -19,25 +20,32 @@ object ZIPFormat : SpiralFormat {
     override val extension = "zip"
     override val conversions: Array<SpiralFormat> = arrayOf(PAKFormat, SPCFormat)
 
-    override fun isFormat(source: DataSource): Boolean {
-        try {
-            return source.use { stream ->
-                val zip = ZipInputStream(stream)
-                var count = 0
-                while (zip.nextEntry != null)
-                    count++
-                zip.close()
-                return@use count > 0
-            }
-        } catch (e: NullPointerException) {
-        } catch (e: IOException) {
-        }
+    val VALID_HEADERS = intArrayOf(
+            toInt(byteArrayOf(0x50, 0x4B, 0x03, 0x04), little = true),
+            toInt(byteArrayOf(0x50, 0x4B, 0x05, 0x06), little = true),
+            toInt(byteArrayOf(0x50, 0x4B, 0x07, 0x08), little = true)
+    )
 
-        return false
+    override fun isFormat(source: DataSource): Boolean {
+//        try {
+//            return source.use { stream ->
+//                val zip = ZipInputStream(stream)
+//                var count = 0
+//                while (zip.nextEntry != null)
+//                    count++
+//                zip.close()
+//                return@use count > 0
+//            }
+//        } catch (e: NullPointerException) {
+//        } catch (e: IOException) {
+//        }
+
+
+        return source.use { stream -> stream.readInt(little = true).toInt() in VALID_HEADERS }
     }
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+        if (super.convert(format, source, output, params)) return true
 
         when (format) {
             is PAKFormat -> {
@@ -48,7 +56,7 @@ object ZIPFormat : SpiralFormat {
                         val entries = make<HashMap<String, DataSource>> {
                             zipIn.use { zip ->
                                 zip.forEach { entry ->
-                                    if(entry.name.startsWith('.') || entry.name.startsWith("__"))
+                                    if (entry.name.startsWith('.') || entry.name.startsWith("__"))
                                         return@forEach
 
                                     val (out, data) = CacheHandler.cacheStream()
@@ -85,7 +93,7 @@ object ZIPFormat : SpiralFormat {
                         val zipIn = ZipInputStream(stream)
                         zipIn.use { zip ->
                             zip.forEach { entry ->
-                                if(entry.name.startsWith(".") || entry.name.startsWith("__"))
+                                if (entry.name.startsWith(".") || entry.name.startsWith("__"))
                                     return@forEach
 
                                 val (out, data) = CacheHandler.cacheStream()

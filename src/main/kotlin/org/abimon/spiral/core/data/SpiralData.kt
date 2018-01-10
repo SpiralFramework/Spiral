@@ -247,4 +247,5 @@ object SpiralData {
     val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
     val SPIRAL_HEADER_NAME = "Spiral-Header"
     val SPIRAL_PRIORITY_LIST = "Spiral-Priority-List"
+    val SPIRAL_MOD_LIST = "Spiral-Mod-List"
 }
