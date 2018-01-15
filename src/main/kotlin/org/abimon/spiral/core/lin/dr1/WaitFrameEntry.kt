@@ -1,4 +1,6 @@
-package org.abimon.spiral.core.lin
+package org.abimon.spiral.core.lin.dr1
+
+import org.abimon.spiral.core.lin.LinScript
 
 class WaitFrameEntry: LinScript {
     

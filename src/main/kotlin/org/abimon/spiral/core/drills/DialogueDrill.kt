@@ -4,6 +4,7 @@ import org.abimon.spiral.core.SpiralConfig
 import org.abimon.visi.collections.get
 import org.abimon.spiral.core.lin.*
 import org.abimon.spiral.core.lin.WaitForInputEntry
+import org.abimon.spiral.core.lin.dr1.WaitFrameEntry
 import org.abimon.spiral.util.*
 import org.parboiled.BaseParser
 import org.parboiled.Rule

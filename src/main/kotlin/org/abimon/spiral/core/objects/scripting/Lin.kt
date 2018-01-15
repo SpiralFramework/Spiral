@@ -2,10 +2,7 @@ package org.abimon.spiral.core.objects.scripting
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.lin.*
-import org.abimon.spiral.core.lin.dr1.LoadMapEntry
-import org.abimon.spiral.core.lin.dr1.LoadScriptEntry
-import org.abimon.spiral.core.lin.dr1.RunScriptEntry
-import org.abimon.spiral.core.lin.dr1.TrialCameraEntry
+import org.abimon.spiral.core.lin.dr1.*
 import org.abimon.spiral.core.lin.dr2.*
 import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
@@ -230,7 +227,7 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                             0x3B -> { ensure(0x3B, 2, params); entries.add(WaitFrameDR1Entry(params[0], params[1])) }
                             0x3C -> { ensure(0x3C, 0, params); entries.add(EndFlagCheckEntry()) }
                             0x4B -> { ensure(0x4B, 0, params); entries.add(WaitForInputEntry()) }
-                            0x4C -> { ensure(0x4C, 0, params); entries.add(WaitFrameEntry()) }
+                            0x4C -> { ensure(0x4C, 0, params); entries.add(WaitFrameDR2Entry()) }
 
                             else -> entries.add(UnknownEntry(opCode, params))
                         }
