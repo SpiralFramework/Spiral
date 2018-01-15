@@ -1,6 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.50'
-    ext.jackson_version = '2.9.0'
+    ext.kotlin_version = '1.2.10'
 
     repositories {
         mavenCentral()
@@ -10,58 +9,21 @@ buildscript {
     }
 }
 
-plugins {
-    id 'java'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '1.2.4'
-}
+group 'org.abimon'
+version '0.1'
 
+apply plugin: 'java'
 apply plugin: 'kotlin'
 apply plugin: 'maven'
-
-group 'org.abimon'
-mainClassName = "org.abimon.spiral.mvc.CockpitKt"
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven { url 'https://jitpack.io' }
-    maven { url 'https://maven.abimon.org' }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
-
-    compile('org.abimon:Imperator:7')
-    compile('org.abimon:Visi:35')
-    compile('org.abimon:Karnage:4b12cc5')
-    compile('org.abimon:SpiralFormats:7602129')
-    compile('org.abimon:OpenSpiralLanguage:21fff59') {
-        exclude group: 'org.abimon', module: 'SpiralFormats'
-    }
-
-    compile "org.parboiled:parboiled-java:1.1.8"
-    compile "com.jakewharton.fliptables:fliptables:1.0.2"
-    compile "com.github.kittinunf.fuel:fuel:1.11.0"
-
-    compile "org.codehaus.woodstox:woodstox-core-asl:4.4.1"
-    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-
-    compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
-    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
-    compile "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
-
-    testCompile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -88,14 +50,9 @@ artifacts {
     archives javadocJar
 }
 
-kotlin {
-    experimental {
-        coroutines "enable"
-    }
-}
-
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
