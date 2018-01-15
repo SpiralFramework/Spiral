@@ -226,7 +226,7 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                             0x3A -> { ensure(0x3A, 4, params); entries.add(WaitForInputDR1Entry(params[0], params[1], params[2], params[3])) }
                             0x3B -> { ensure(0x3B, 2, params); entries.add(WaitFrameDR1Entry(params[0], params[1])) }
                             0x3C -> { ensure(0x3C, 0, params); entries.add(EndFlagCheckEntry()) }
-                            0x4B -> { ensure(0x4B, 0, params); entries.add(WaitForInputEntry()) }
+                            0x4B -> { ensure(0x4B, 0, params); entries.add(WaitForInputDR2Entry()) }
                             0x4C -> { ensure(0x4C, 0, params); entries.add(WaitFrameDR2Entry()) }
 
                             else -> entries.add(UnknownEntry(opCode, params))

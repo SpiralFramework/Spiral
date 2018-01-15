@@ -2,7 +2,7 @@ package org.abimon.spiral.core.drills
 
 import org.abimon.spiral.core.SpiralConfig
 import org.abimon.spiral.core.lin.*
-import org.abimon.spiral.core.lin.WaitForInputEntry
+import org.abimon.spiral.core.lin.dr1.WaitForInputEntry
 import org.abimon.spiral.core.lin.dr1.*
 import org.abimon.spiral.util.*
 import org.abimon.visi.io.errPrintln
