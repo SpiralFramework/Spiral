@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.utils
 
 import java.io.InputStream
+import java.io.OutputStream
 
 fun InputStream.readInt64LE(): Long {
     val a = read().toLong()
@@ -78,4 +79,48 @@ fun InputStream.readInt16BE(): Int {
     val b = read()
 
     return (a shl 8) or b
+}
+
+fun OutputStream.writeInt64LE(num: Number) {
+    val long = num.toLong()
+
+    write(long.toInt() % 256)
+    write((long shr 8).toInt() % 256)
+    write((long shr 16).toInt() % 256)
+    write((long shr 24).toInt() % 256)
+    write((long shr 32).toInt() % 256)
+    write((long shr 40).toInt() % 256)
+    write((long shr 48).toInt() % 256)
+    write((long shr 56).toInt() % 256)
+}
+
+fun OutputStream.writeInt64BE(num: Number) {
+    val long = num.toLong()
+
+    write((long shr 56).toInt() % 256)
+    write((long shr 48).toInt() % 256)
+    write((long shr 40).toInt() % 256)
+    write((long shr 32).toInt() % 256)
+    write((long shr 24).toInt() % 256)
+    write((long shr 16).toInt() % 256)
+    write((long shr 8).toInt() % 256)
+    write(long.toInt() % 256)
+}
+
+fun OutputStream.writeInt32LE(num: Number) {
+    val int = num.toInt()
+
+    write(int % 256)
+    write((int shr 8) % 256)
+    write((int shr 16) % 256)
+    write((int shr 24) % 256)
+}
+
+fun OutputStream.writeInt32BE(num: Number) {
+    val int = num.toInt()
+
+    write((int shr 24) % 256)
+    write((int shr 16) % 256)
+    write((int shr 8) % 256)
+    write(int % 256)
 }
