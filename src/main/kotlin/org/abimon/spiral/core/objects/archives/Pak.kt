@@ -32,11 +32,10 @@ class Pak(val dataSource: () -> InputStream) {
             }
 
             files = Array(fileCount) { index ->
-                val name = "$index"
                 val offset = offsets[index]
-                val size = if(index == fileCount - 1) -1 else offsets[index + 1]
+                val size = if(index == fileCount - 1) -1 else offsets[index + 1] - offset
 
-                return@Array PakEntry(name, size, offset)
+                return@Array PakEntry(index, size, offset)
             }
         } finally {
             stream.close()
