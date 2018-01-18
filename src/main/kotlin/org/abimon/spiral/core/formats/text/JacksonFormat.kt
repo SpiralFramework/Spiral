@@ -10,6 +10,7 @@ import org.abimon.spiral.core.readMapValue
 import org.abimon.spiral.core.writeShort
 import org.abimon.visi.io.DataSource
 import org.yaml.snakeyaml.error.YAMLException
+import java.io.CharConversionException
 import java.io.OutputStream
 import kotlin.reflect.KClass
 
@@ -28,6 +29,7 @@ abstract class JacksonFormat: SpiralFormat {
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
+        } catch (io: CharConversionException) {
         } catch (th: Throwable) {
             if(OTHER_EXCEPTION_TYPES.none { klass -> klass.isInstance(th) })
                 throw th
@@ -38,6 +40,7 @@ abstract class JacksonFormat: SpiralFormat {
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
+        } catch (io: CharConversionException) {
         } catch (th: Throwable) {
             if(OTHER_EXCEPTION_TYPES.none { klass -> klass.isInstance(th) })
                 throw th
