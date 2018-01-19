@@ -251,9 +251,9 @@ object GurrenOperation {
 
             val newEntries: MutableList<Pair<String, DataSource>> = ArrayList()
 
-            newEntries.addAll(matching.filter { (_, format) -> format == null }.map { (file) -> (file relativePathFrom directory) to FileDataSource(file) })
+            newEntries.addAll(matching.filter { (_, format) -> format == null || format.conversions.isEmpty() }.map { (file) -> (file relativePathFrom directory) to FileDataSource(file) })
 
-            newEntries.addAll(matching.filter { (_, format) -> format != null }.map { (entry, from) ->
+            newEntries.addAll(matching.filter { (_, format) -> format != null && format.conversions.isNotEmpty() }.map { (entry, from) ->
                 val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
                 val (formatOut, formatIn) = CacheHandler.cacheStream()
                 from.convert(operatingArchive.niceCompileFormats[from] ?: from.conversions.first(), FileDataSource(entry), formatOut, formatParams)
