@@ -4,6 +4,7 @@ import org.abimon.spiral.core.utils.and
 import org.abimon.spiral.core.utils.readInt16BE
 import org.abimon.spiral.core.utils.readInt32BE
 import org.abimon.spiral.core.utils.readInt64BE
+import java.io.IOException
 import java.io.InputStream
 
 data class UTFTableInfo(
@@ -50,7 +51,8 @@ data class UTFTableInfo(
                 }
 
                 val dataOffset = if (constant) schema[j].constantOffset else rowOffset
-                stream.skip(dataOffset)
+                try { stream.skip(dataOffset) }
+                catch (io: IOException) { io.printStackTrace() }
 
                 val columnType = CPKColumnType.getForMask(schema[j].type)
                 val dataObj: Any

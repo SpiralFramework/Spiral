@@ -124,3 +124,26 @@ fun OutputStream.writeInt32BE(num: Number) {
     write((int shr 8) % 256)
     write(int % 256)
 }
+
+fun OutputStream.writeUInt32BE(num: Number) {
+    val int = num.toInt()
+
+    write((int ushr 24) % 256)
+    write((int ushr 16) % 256)
+    write((int ushr 8) % 256)
+    write(int % 256)
+}
+
+fun OutputStream.writeInt16LE(num: Number) {
+    val int = num.toShort().toInt()
+
+    write(int % 256)
+    write((int shr 8) % 256)
+}
+
+fun OutputStream.writeInt16BE(num: Number) {
+    val int = num.toShort().toInt()
+
+    write((int shr 8) % 256)
+    write(int % 256)
+}

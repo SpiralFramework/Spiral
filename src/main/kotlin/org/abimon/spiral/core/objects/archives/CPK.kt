@@ -81,7 +81,7 @@ class CPK(val dataSource: () -> InputStream) {
                         column.type = stream.read()
                         column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(NULL_TERMINATOR)
 
-                        if (column.type and COLUMN_STORAGE_MASK == COLUMN_STORAGE_MASK) {
+                        if (column.type and COLUMN_STORAGE_MASK == COLUMN_STORAGE_CONSTANT) {
                             column.constantOffset = stream.count
 
                             when (column.type and COLUMN_TYPE_MASK) {
