@@ -15,7 +15,6 @@ import java.io.InputStream
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
 class Pak(val dataSource: () -> InputStream) {
-
     val files: Array<PakEntry>
 
     init {
@@ -27,7 +26,7 @@ class Pak(val dataSource: () -> InputStream) {
 
             val offsets = IntArray(fileCount) { index ->
                 val offset = stream.readInt32LE()
-                assert(offset > 0)
+                assert(offset >= 0) //That *one* file in DR2...
 
                 return@IntArray offset
             }
