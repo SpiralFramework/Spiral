@@ -15,6 +15,7 @@ import java.io.InputStream
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
 class Pak(val dataSource: () -> InputStream) {
+
     val files: Array<PakEntry>
 
     init {
