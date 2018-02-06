@@ -1,9 +1,12 @@
 package org.abimon.spiral.core.objects.scripting.osx
 
-import org.abimon.spiral.core.objects.scripting.DR1Executable
+import org.abimon.spiral.core.objects.scripting.DRExecutable
+import org.abimon.spiral.core.utils.readString
+import org.abimon.spiral.core.utils.readZeroString
+import org.abimon.spiral.core.utils.trimToBytes
 import java.io.File
 
-class MacDR1Executable(file: File): DR1Executable(file) {
+class MacDR1Executable(file: File): DRExecutable(file) {
     companion object {
         val DATA_OFFSET = 0x35C901L
         val PATCH_OFFSET = DATA_OFFSET + 21
