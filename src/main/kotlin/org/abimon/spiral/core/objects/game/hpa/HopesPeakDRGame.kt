@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.game.hpa
 
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.utils.OpCodeMap
 
 /**
  * The Hope's Peak arc of games.
@@ -9,4 +10,5 @@ import org.abimon.spiral.core.objects.game.DRGame
  */
 interface HopesPeakDRGame: DRGame {
     val pakNames: Map<String, Array<String>>
+    val opCodes: OpCodeMap
 }
