@@ -66,7 +66,7 @@ class Lin(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
                 val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
                 val arguments: IntArray
 
-                if(argumentCount == -1) {
+                if (argumentCount == -1) {
                     val args: MutableList<Int> = ArrayList()
 
                     while (index < maximumRead && linStream.peek() != 0x70) {
@@ -89,7 +89,7 @@ class Lin(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
                 index++
             }
 
-            if(stream.streamOffset < textBlock) {
+            if (stream.streamOffset < textBlock) {
                 val skipping = textBlock - stream.streamOffset
                 println("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
 
@@ -108,7 +108,7 @@ class Lin(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
                 val line = ByteArray(textPositions[textID + 1] - textPositions[textID] - 2)
                 stream.read(line)
                 stream.readInt16LE() //Strings *are* zero terminated
-                textEntries.first { textEntry -> textEntry.textID == textID }.text = String(line, Charsets.UTF_16)
+                textEntries.firstOrNull { textEntry -> textEntry.textID == textID }?.text = String(line, Charsets.UTF_16)
             }
 
             this.entries = entries.toTypedArray()
