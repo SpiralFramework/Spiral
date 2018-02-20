@@ -1,7 +1,12 @@
 package org.abimon.spiral.core.objects.game.hpa
 
 import org.abimon.spiral.core.objects.scripting.lin.*
-import org.abimon.spiral.core.objects.scripting.lin.dr1.*
+import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1LoadMapEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1LoadScriptEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1RunScript
+import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1TrialCameraEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2WaitForInputEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2WaitFrameEntry
 import org.abimon.spiral.core.utils.*
 
 object DR1 : HopesPeakDRGame {
@@ -12,10 +17,10 @@ object DR1 : HopesPeakDRGame {
                         ?: emptyArray()
             } ?: emptyMap()
 
-    fun StopScriptEntry(opCode: Int, args: IntArray): StopScriptEntry = org.abimon.spiral.core.objects.scripting.lin.StopScriptEntry()
-    fun DR1WaitForInputEntry(opCode: Int, args: IntArray): DR1WaitForInputEntry = org.abimon.spiral.core.objects.scripting.lin.dr1.DR1WaitForInputEntry()
-    fun DR1WaitFrameEntry(opCode: Int, args: IntArray): DR1WaitFrameEntry = org.abimon.spiral.core.objects.scripting.lin.dr1.DR1WaitFrameEntry()
-    fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = org.abimon.spiral.core.objects.scripting.lin.EndFlagCheckEntry()
+    fun StopScriptEntry(opCode: Int, args: IntArray): StopScriptEntry = StopScriptEntry()
+    fun WaitForInputEntry(opCode: Int, args: IntArray): DR2WaitForInputEntry = DR2WaitForInputEntry()
+    fun WaitFrameEntry(opCode: Int, args: IntArray): DR2WaitFrameEntry = DR2WaitFrameEntry()
+    fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = EndFlagCheckEntry()
 
     override val opCodes: OpCodeMap =
             OpCodeHashMap().apply {
@@ -78,8 +83,8 @@ object DR1 : HopesPeakDRGame {
                 this[0x37] = null to -1 and ::UnknownEntry
                 this[0x38] = null to -1 and ::UnknownEntry
                 this[0x39] = null to 5 and ::UnknownEntry
-                this[0x3A] = "Wait For Input" to 0 and DR1::DR1WaitForInputEntry
-                this[0x3B] = "Wait Frame" to 0 and DR1::DR1WaitFrameEntry
+                this[0x3A] = "Wait For Input" to 0 and DR1::WaitForInputEntry
+                this[0x3B] = "Wait Frame" to 0 and DR1::WaitFrameEntry
                 this[0x3C] = "End Flag Check" to 0 and DR1::EndFlagCheckEntry
             }
 }
