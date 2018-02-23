@@ -17,8 +17,8 @@ object DR2 : HopesPeakDRGame {
     fun WaitFrameEntry(opCode: Int, args: IntArray): DR2WaitFrameEntry = DR2WaitFrameEntry()
     fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = org.abimon.spiral.core.objects.scripting.lin.EndFlagCheckEntry()
 
-    override val opCodes: OpCodeMap =
-            OpCodeHashMap().apply {
+    override val opCodes: OpCodeMap<IntArray, LinScript> =
+            OpCodeHashMap<IntArray, LinScript>().apply {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
                 this[0x01] = null to 4 and ::UnknownEntry
                 this[0x02] = "Text" to 2 and ::TextEntry

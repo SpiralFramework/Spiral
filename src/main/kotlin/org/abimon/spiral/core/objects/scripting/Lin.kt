@@ -8,7 +8,6 @@ import org.abimon.spiral.core.utils.*
 import java.io.InputStream
 
 class Lin(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
-
     val linType: Int
     val headerSpace: Int
 
