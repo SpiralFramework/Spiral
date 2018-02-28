@@ -312,22 +312,8 @@ object GurrenOperation {
             is CPKArchive -> {
                 val cpk = (operatingArchive as CPKArchive).cpk
 
-                val matching = cpk.fileTable.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
+                val matching = cpk.files.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf("${file.directoryName}/${file.fileName}", "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStreamFor.bind(cpk)))?.mod_uid ?: "Unknown") }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
-            }
-        }
-    }
-
-    val test = Command("test", "operate") {
-        when (operatingArchive) {
-            is CPKArchive -> {
-                val cpk = (operatingArchive as CPKArchive).cpk
-                if (cpk.etocHeader == null)
-                    return@Command
-
-                File("Etoc-V3.txt").printWriter().use { writer ->
-                    cpk.etocHeader.dump(cpk.dataSource).forEach { columnName, (row, columnType, data) -> writer.println("$columnName[$row]: $columnType / $data") }
-                }
             }
         }
     }

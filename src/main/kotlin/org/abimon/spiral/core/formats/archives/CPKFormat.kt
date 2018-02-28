@@ -4,7 +4,8 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.core.objects.game.DRGame
-import org.abimon.spiral.util.InputStreamFuncDataSource
+import org.abimon.spiral.util.bind
+import org.abimon.spiral.util.rawInputStreamFor
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -17,7 +18,7 @@ object CPKFormat: SpiralFormat {
 
     override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            return CPK(InputStreamFuncDataSource(dataSource)).fileTable.isNotEmpty()
+            return CPK(dataSource).files.isNotEmpty()
         } catch(iea: IllegalArgumentException) {
             return false
         }
@@ -25,17 +26,17 @@ object CPKFormat: SpiralFormat {
 
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(game, format, name, dataSource, output, params)) return true
-        val cpk = CPK(InputStreamFuncDataSource(dataSource))
+        val cpk = CPK(dataSource)
 
         when(format) {
-            is ZIPFormat -> {
+            ZIPFormat -> {
                 val zip = ZipOutputStream(output)
-                cpk.fileTable.forEach { entry ->
-                    zip.putNextEntry(ZipEntry(entry.name))
+                cpk.files.forEach { entry ->
+                    zip.putNextEntry(ZipEntry("${entry.directoryName}/${entry.fileName}"))
                     if(entry.isCompressed)
-                        CRILAYLAFormat.convert(game, SpiralFormat.BinaryFormat, entry.name, entry::inputStream, zip, params)
+                        CRILAYLAFormat.convert(game, SpiralFormat.BinaryFormat, "${entry.directoryName}/${entry.fileName}", entry::rawInputStreamFor.bind(cpk), zip, params)
                     else
-                        entry.pipe(zip)
+                        entry.rawInputStreamFor(cpk).use { stream -> stream.copyTo(zip) }
                 }
                 zip.finish()
             }

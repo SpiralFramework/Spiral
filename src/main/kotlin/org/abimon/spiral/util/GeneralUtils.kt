@@ -1,7 +1,12 @@
 package org.abimon.spiral.util
 
+import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
+import org.abimon.spiral.core.objects.archives.CPK
+import org.abimon.spiral.core.objects.archives.CPKFileEntry
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.spiral.core.objects.archives.WADFileEntry
+import org.abimon.visi.io.ByteArrayIOStream
 import java.io.InputStream
 import kotlin.reflect.KFunction
 
@@ -44,3 +49,14 @@ fun Number.toUnsignedByte(): Int = this.toByte().toInt() and 0xFF
 fun <T> KFunction<T>.bind(vararg orderedParams: Any?): () -> T = { this.call(orderedParams) }
 
 fun WADFileEntry.inputStreamFor(wad: WAD): InputStream = OffsetInputStream(wad.dataSource(), wad.dataOffset + this.offset, this.size)
+fun CPKFileEntry.rawInputStreamFor(cpk: CPK): InputStream = OffsetInputStream(cpk.dataSource(), this.offset, this.fileSize)
+fun CPKFileEntry.inputStreamFor(cpk: CPK): InputStream {
+    if(this.isCompressed) {
+        val baos = ByteArrayIOStream()
+        CRILAYLAFormat.convert(null, SpiralFormat.BinaryFormat, null, ::OffsetInputStream.bind(cpk.dataSource(), this.offset, this.fileSize), baos.outputStream, emptyMap())
+        return baos.inputStream
+    }
+    else {
+        return OffsetInputStream(cpk.dataSource(), this.offset, this.fileSize)
+    }
+}
