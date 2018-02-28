@@ -41,10 +41,14 @@ class Pak(val dataSource: () -> InputStream) {
 
             files = Array(fileCount) { index ->
                 val offset = offsets[index]
-                val size = if(index == fileCount - 1) -1 else offsets[index + 1] - offset
-                assertAsArgument(size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
-                assertAsArgument(size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
-
+                val size: Int
+                if(index == fileCount - 1) {
+                    size = -1
+                } else {
+                    size = offsets[index + 1] - offset
+                    assertAsArgument(size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
+                    assertAsArgument(size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
+                }
                 return@Array PakEntry(index, size, offset)
             }
         } finally {
