@@ -2,18 +2,19 @@ package org.abimon.spiral.core.formats.images
 
 import net.npe.tga.TGAReader
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.core.objects.game.DRGame
 import java.awt.image.BufferedImage
 import java.io.IOException
+import java.io.InputStream
 
 object TGAFormat : SpiralImageFormat {
     override val name = "TGA"
     override val extension = "tga"
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, SHTXFormat)
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            TGAReader.readImage(source.data)
+            dataSource().use { stream -> TGAReader.readImage(stream.readBytes()) }
             return true
         } catch(e: IOException) {
         } catch(e: ArrayIndexOutOfBoundsException) {
@@ -22,5 +23,5 @@ object TGAFormat : SpiralImageFormat {
         return false
     }
 
-    override fun toBufferedImage(source: DataSource): BufferedImage = source.use { stream -> TGAReader.readImage(stream.readBytes()) }
+    override fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage = dataSource().use { stream -> TGAReader.readImage(stream.readBytes()) }
 }

@@ -1,12 +1,14 @@
 package org.abimon.spiral.core.formats.models
 
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.models.GMOMeshFacesChunk
 import org.abimon.spiral.core.objects.models.GMOModel
 import org.abimon.spiral.core.objects.models.GMOVertexArrayChunk
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.mvc.gurren.Gurren
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
 
@@ -15,12 +17,12 @@ object GMOModelFormat: SpiralFormat {
     override val extension: String? = "gmo"
     override val conversions: Array<SpiralFormat> = arrayOf(OBJModelFormat)
 
-    override fun isFormat(source: DataSource): Boolean = source.use { stream -> stream.readString(12) == "OMG.00.1PSP\u0000" }
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readString(12) == "OMG.00.1PSP\u0000" }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        val gmo = GMOModel(source)
+        val gmo = GMOModel(InputStreamFuncDataSource(dataSource))
         when(format) {
             is OBJModelFormat -> {
                 val out = PrintStream(output)

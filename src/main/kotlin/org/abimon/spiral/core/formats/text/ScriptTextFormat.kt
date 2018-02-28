@@ -7,14 +7,16 @@ import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.WRDFormat
 import org.abimon.spiral.core.lin.TextCountEntry
 import org.abimon.spiral.core.lin.UnknownEntry
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.CustomLin
 import org.abimon.spiral.core.objects.scripting.CustomWRD
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.shortToIntPair
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
 import org.abimon.visi.lang.times
 import java.io.BufferedReader
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 
@@ -23,8 +25,8 @@ object ScriptTextFormat : SpiralFormat {
     override val extension = "osl" //OP Scripting Language
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat, WRDFormat)
 
-    override fun isFormat(source: DataSource): Boolean {
-        return source.use { stream ->
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+        return dataSource().use { stream ->
             val reader = BufferedReader(InputStreamReader(stream))
 
             val opNames: List<String> = ArrayList<String>().apply {
@@ -54,16 +56,21 @@ object ScriptTextFormat : SpiralFormat {
         }
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
+
+        if (game == V3 && format == LINFormat)
+            throw IllegalArgumentException("Cannot convert to a V3 LIN File (No such thing; maybe you meant WRD?)")
+        if (game != V3 && format == WRDFormat)
+            throw IllegalArgumentException("Cannot convert to a non V3 WRD File (No such thing; maybe you meant LIN?)")
 
         debug("Begun Converting\n${"-" * 100}")
         when (format) {
-            is LINFormat -> {
+            LINFormat -> {
                 val dr1 = "${params["lin:dr1"] ?: true}".toBoolean()
                 val ops: TripleHashMap<Int, Int, String> = if(dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes
 
-                source.use { stream ->
+                dataSource().use { stream ->
                     val reader = BufferedReader(InputStreamReader(stream))
                     val lin = make<CustomLin> {
                         reader.forEachLine loop@ { line ->
@@ -95,8 +102,8 @@ object ScriptTextFormat : SpiralFormat {
                     lin.compile(output)
                 }
             }
-            is WRDFormat -> {
-                source.use { stream ->
+            WRDFormat -> {
+                dataSource().use { stream ->
                     val reader = BufferedReader(InputStreamReader(stream))
                     val wrd = make<CustomWRD> {
                         reader.forEachLine loop@ { line ->

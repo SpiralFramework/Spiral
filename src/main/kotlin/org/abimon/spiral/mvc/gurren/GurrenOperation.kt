@@ -12,13 +12,13 @@ import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.mvc.SpiralModel.operating
-import org.abimon.spiral.util.LoggerLevel
-import org.abimon.spiral.util.debug
+import org.abimon.spiral.util.*
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.ZipFile
@@ -84,7 +84,7 @@ object GurrenOperation {
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
                     val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.copyTo(outputStream) } }
+                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(InputStreamFuncDataSource(entry)).use { inputStream -> inputStream.copyTo(outputStream) } }
                     debug("[$operatingName] Wrote $entryName to $output")
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
@@ -143,7 +143,7 @@ object GurrenOperation {
                         val parents = File(directory, entryName.parents)
                         if (!parents.exists() && !parents.mkdirs() && !parents.exists())
                             return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
-                        val data = SpiralFormats.decompressFully(entry)
+                        val data = SpiralFormats.decompressFully(InputStreamFuncDataSource(entry))
                         val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
 
                         val convertingTo = format?.conversions?.firstOrNull()
@@ -158,8 +158,9 @@ object GurrenOperation {
                             rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
                         } else {
                             try {
+                                //TODO: Use an actual game/name
                                 val output = File(directory, entryName.replace(".${format.extension ?: "unk"}", "", true) + ".${convertingTo.extension ?: "unk"}")
-                                FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
+                                FileOutputStream(output).use { outputStream -> format.convert(null, convertingTo, entryName, data::inputStream, outputStream, formatParams) }
                                 rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
                             } catch (iea: IllegalArgumentException) {
                                 val output = File(directory, entryName)
@@ -253,10 +254,11 @@ object GurrenOperation {
 
             newEntries.addAll(matching.filter { (_, format) -> format == null || format.conversions.isEmpty() }.map { (file) -> (file relativePathFrom directory) to FileDataSource(file) })
 
+            //TODO: Use an actual game/name
             newEntries.addAll(matching.filter { (_, format) -> format != null && format.conversions.isNotEmpty() }.map { (entry, from) ->
                 val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
                 val (formatOut, formatIn) = CacheHandler.cacheStream()
-                from.convert(operatingArchive.niceCompileFormats[from] ?: from.conversions.first(), FileDataSource(entry), formatOut, formatParams)
+                from.convert(null, operatingArchive.niceCompileFormats[from] ?: from.conversions.first(), entry relativePathFrom directory, { FileInputStream(entry) }, formatOut, formatParams)
                 return@map name to formatIn
             })
 
@@ -303,7 +305,8 @@ object GurrenOperation {
             is WADArchive -> {
                 val wad = (operatingArchive as WADArchive).wad
 
-                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
+                //TODO: Use an actual game/name
+                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.size} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStreamFor.bind(wad)))?.mod_uid ?: "Unknown") }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
             }
             is CPKArchive -> {

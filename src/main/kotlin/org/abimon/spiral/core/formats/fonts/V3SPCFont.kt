@@ -4,9 +4,13 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.images.SRD
 import org.abimon.spiral.core.objects.images.TXRItem
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.core.utils.and
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -14,17 +18,17 @@ import javax.imageio.ImageIO
 
 object V3SPCFont {
     fun hook() {
-        SpiralFormat[SPCFormat to ZIPFormat] = this::convertFromArchive
+        SpiralFormat[V3 to SPCFormat and ZIPFormat] = this::convertFromArchive
     }
 
-    fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+    fun convertFromArchive(game: DRGame?, from: SpiralFormat, to: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (!"${params["font:convert"] ?: true}".toBoolean())
             return false
 
-        if(from !is SPCFormat)
+        if(from != SPCFormat)
             return false //Wot
 
-        val spc = SPC(dataSource)
+        val spc = SPC(InputStreamFuncDataSource(dataSource))
 
         //V3 operates on two files for their fonts.
 

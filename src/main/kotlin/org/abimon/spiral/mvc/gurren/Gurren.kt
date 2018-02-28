@@ -17,6 +17,7 @@ import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
+import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.rocketFuel.responseStream
@@ -31,6 +32,7 @@ import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileFilter
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.util.*
@@ -182,7 +184,8 @@ object Gurren {
         files.forEach { file ->
             if (file.isFile) {
                 val rows = ArrayList<Array<String>>()
-                val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
+                val format = SpiralFormats.formatForExtension(file.extension)
+                        ?: SpiralFormats.formatForData(FileDataSource(file))
                 if (format == null)
                     rows.add(arrayOf(file.name, "No Identifiable Format"))
                 else
@@ -192,7 +195,8 @@ object Gurren {
             } else if (file.isDirectory) {
                 val rows = ArrayList<Array<String>>()
                 file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
-                    val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile))
+                    val format = SpiralFormats.formatForExtension(subfile.extension)
+                            ?: SpiralFormats.formatForData(FileDataSource(subfile))
                     if (format == null)
                         rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "No Identifiable Format"))
                     else
@@ -208,12 +212,14 @@ object Gurren {
             return@Command errPrintln("Error: No file or directory provided")
 
         val file = File(params[1])
-        val convertTo: SpiralFormat? = if (params.size < 3) null else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2])
+        val convertTo: SpiralFormat? = if (params.size < 3) null else SpiralFormats.formatForName(params[2])
+                ?: SpiralFormats.formatForExtension(params[2])
         val formatParams: Map<String, String> = if (params.size < 4) emptyMap() else params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
-            val format = SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))
+            val format = SpiralFormats.formatForExtension(file.extension)
+                    ?: SpiralFormats.formatForData(FileDataSource(file))
             if (format == null)
                 rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
             else {
@@ -222,10 +228,12 @@ object Gurren {
                         rows.add(arrayOf(file.path, "N/a", format.name, "No Convertable Formats"))
                     else {
                         val tmpConvertTo = format.conversions.first()
-                        val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
+                        val output = File(file.absolutePath.replace(".${format.extension
+                                ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(file), out, formatParams) }
+                            //TODO: Use an actual game and/or name
+                            FileOutputStream(output).use { out -> format.convert(null, tmpConvertTo, null, { FileInputStream(file) }, out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, tmpConvertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -235,11 +243,13 @@ object Gurren {
                         }
                     }
                 } else {
-                    if (format.canConvert(convertTo)) {
-                        val output = File(file.absolutePath.replace(".${format.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+                    if (format.canConvert(null, convertTo)) {
+                        val output = File(file.absolutePath.replace(".${format.extension
+                                ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(file), out, formatParams) }
+                            //TODO: Use an actual game/name
+                            FileOutputStream(output).use { out -> format.convert(null, convertTo, null, { FileInputStream(file) }, out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -253,7 +263,8 @@ object Gurren {
             }
         } else if (file.isDirectory) {
             file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
-                val format = SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile))
+                val format = SpiralFormats.formatForExtension(subfile.extension)
+                        ?: SpiralFormats.formatForData(FileDataSource(subfile))
                 if (format == null)
                     rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "No Identifiable Format", "N/a"))
                 else {
@@ -262,13 +273,16 @@ object Gurren {
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "No Convertable Formats"))
                         else {
                             val tmpConvertTo = format.conversions.first()
-                            val output = File(subfile.absolutePath.replace(".${format.extension ?: subfile.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").run {
+                            val output = File(subfile.absolutePath.replace(".${format.extension
+                                    ?: subfile.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").run {
                                 if (exists())
-                                    return@run File(this.absolutePath.replaceLast(".${tmpConvertTo.extension ?: "unk"}", "-${UUID.randomUUID()}.${tmpConvertTo.extension ?: "unk"}"))
+                                    return@run File(this.absolutePath.replaceLast(".${tmpConvertTo.extension
+                                            ?: "unk"}", "-${UUID.randomUUID()}.${tmpConvertTo.extension ?: "unk"}"))
                                 return@run this
                             }
                             try {
-                                FileOutputStream(output).use { out -> format.convert(tmpConvertTo, FileDataSource(subfile), out, formatParams) }
+                                //TODO: Use an actual game
+                                FileOutputStream(output).use { out -> format.convert(null, tmpConvertTo, subfile relativePathFrom file, { FileInputStream(subfile) }, out, formatParams) }
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, tmpConvertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -278,15 +292,18 @@ object Gurren {
                             }
                         }
                     } else {
-                        if (format.canConvert(convertTo)) {
-                            val output = File(subfile.absolutePath.replace(".${format.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").run {
+                        //TODO: Use an actual game
+                        if (format.canConvert(null, convertTo)) {
+                            val output = File(subfile.absolutePath.replace(".${format.extension
+                                    ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").run {
                                 if (exists())
-                                    return@run File(this.absolutePath.replaceLast(".${convertTo.extension ?: "unk"}", "-${UUID.randomUUID()}.${convertTo.extension ?: "unk"}"))
+                                    return@run File(this.absolutePath.replaceLast(".${convertTo.extension
+                                            ?: "unk"}", "-${UUID.randomUUID()}.${convertTo.extension ?: "unk"}"))
                                 return@run this
                             }
 
                             try {
-                                FileOutputStream(output).use { out -> format.convert(convertTo, FileDataSource(subfile), out, formatParams) }
+                                FileOutputStream(output).use { out -> format.convert(null, convertTo, subfile relativePathFrom file, { FileInputStream(subfile) }, out, formatParams) }
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, convertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -310,21 +327,27 @@ object Gurren {
             return@Command identifyAndConvert.command(InstanceOrder("Redirected", null, str))
 
         val file = File(params[1])
-        val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2]) ?: SpiralFormats.formatForExtension(params[2]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
-        val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3]) ?: SpiralFormats.formatForExtension(params[3]) ?: return@Command errPrintln("Error: No format known by name or extension ${params[3]}")
+        val convertFrom: SpiralFormat = if (params.size == 2) return@Command errPrintln("Error: No format to convert from provided") else SpiralFormats.formatForName(params[2])
+                ?: SpiralFormats.formatForExtension(params[2])
+                ?: return@Command errPrintln("Error: No format known by name or extension ${params[2]}")
+        val convertTo: SpiralFormat = SpiralFormats.formatForName(params[3])
+                ?: SpiralFormats.formatForExtension(params[3])
+                ?: return@Command errPrintln("Error: No format known by name or extension ${params[3]}")
         val formatParams: Map<String, String> = if (params.size == 4) emptyMap() else params.copyFrom(4).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().toMap()
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
-            val data = FileDataSource(file)
-            if (!convertFrom.isFormat(data))
+            val data = { FileInputStream(file) }
+            //TODO: Use an actual game/name
+            if (!convertFrom.isFormat(null, null, data))
                 rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
             else {
-                if (convertFrom.canConvert(convertTo)) {
-                    val output = File(file.absolutePath.replace(".${convertFrom.extension ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+                if (convertFrom.canConvert(null, convertTo)) {
+                    val output = File(file.absolutePath.replace(".${convertFrom.extension
+                            ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                     try {
-                        FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, formatParams) }
+                        FileOutputStream(output).use { out -> convertFrom.convert(null, convertTo, null, data, out, formatParams) }
                         rows.add(arrayOf(file.path, output.path, convertFrom.name, convertTo.name))
                     } catch (iea: IllegalArgumentException) {
                         rows.add(arrayOf(file.path, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -337,15 +360,17 @@ object Gurren {
             }
         } else if (file.isDirectory) {
             file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
-                val data = FileDataSource(subfile)
-                if (!convertFrom.isFormat(data))
+                val data = { FileInputStream(subfile) }
+                //TODO: Use an actual game/name
+                if (!convertFrom.isFormat(null, subfile relativePathFrom file, data))
                     rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
                 else {
-                    if (convertFrom.canConvert(convertTo)) {
-                        val output = File(subfile.absolutePath.replace(".${convertFrom.extension ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+                    if (convertFrom.canConvert(null, convertTo)) {
+                        val output = File(subfile.absolutePath.replace(".${convertFrom.extension
+                                ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> convertFrom.convert(convertTo, data, out, formatParams) }
+                            FileOutputStream(output).use { out -> convertFrom.convert(null, convertTo, subfile relativePathFrom file, data, out, formatParams) }
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), file.name + output.absolutePath.replace(file.absolutePath, ""), convertFrom.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -369,11 +394,14 @@ object Gurren {
         val croppedCanvas = if (params.size < 4) true else params[3].toBoolean()
 
         if (file.isFile) {
-            val ds = FileDataSource(file)
-            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
-                    as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
+            //TODO: Use an actual game/name
+            val data = { FileInputStream(file) }
+            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)) as? SpiralImageFormat
+                    ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
 
-            val full = format.toBufferedImage(ds)
+            val full = format.toBufferedImage(null, data)
 
             val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
             val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
@@ -384,7 +412,7 @@ object Gurren {
 
             val squishied: BufferedImage
 
-            if(croppedCanvas) {
+            if (croppedCanvas) {
                 squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
                 g = squishied.createGraphics()
                 g.drawImage(topHalf, 0, 0, null)
@@ -407,17 +435,20 @@ object Gurren {
             val rows: MutableList<Array<String>> = ArrayList()
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
-                val ds = FileDataSource(subfile)
-                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
+                val data = { FileInputStream(subfile) }
+                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                        ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
+                        ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats))
                         as? SpiralImageFormat ?: run {
                     rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
                     return@forEach
                 }
 
-                if(!format.isFormat(ds))
+                //TODO: Use an actual game/name
+                if (!format.isFormat(null, subfile relativePathFrom file, data))
                     return@forEach
 
-                val full = format.toBufferedImage(ds)
+                val full = format.toBufferedImage(subfile relativePathFrom file, data)
 
                 val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
                 val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
@@ -427,10 +458,9 @@ object Gurren {
                 g.dispose()
 
 
-
                 val squishied: BufferedImage
 
-                if(croppedCanvas) {
+                if (croppedCanvas) {
                     squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
                     g = squishied.createGraphics()
                     g.drawImage(topHalf, 0, 0, null)
@@ -463,11 +493,14 @@ object Gurren {
         val croppedCanvas = if (params.size < 4) true else params[3].toBoolean()
 
         if (file.isFile) {
-            val ds = FileDataSource(file)
-            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
-                    as? SpiralImageFormat ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
+            //TODO: Use an actual game/name
+            val data = { FileInputStream(file) }
+            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)) as? SpiralImageFormat
+                    ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
 
-            val full = format.toBufferedImage(ds)
+            val full = format.toBufferedImage(null, data)
 
             val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
             val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
@@ -478,7 +511,7 @@ object Gurren {
 
             val squishied: BufferedImage
 
-            if(croppedCanvas) {
+            if (croppedCanvas) {
                 squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
                 g = squishied.createGraphics()
                 g.drawImage(topHalf, 0, 0, null)
@@ -497,20 +530,24 @@ object Gurren {
 
             println("Squished $file")
         } else if (file.isDirectory) {
+            //TODO: Use an actual game/name
             val rows: MutableList<Array<String>> = ArrayList()
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
-                val ds = FileDataSource(subfile)
-                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(ds, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(ds, SpiralFormats.imageFormats))
-                        as? SpiralImageFormat ?: run {
-                    rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
-                    return@forEach
-                }
+                //TODO: Use an actual game/name
+                val data = { FileInputStream(subfile) }
+                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                        ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
+                        ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats))as? SpiralImageFormat
+                        ?: run {
+                            rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
+                            return@forEach
+                        }
 
-                if(!format.isFormat(ds))
+                if (!format.isFormat(null, subfile relativePathFrom file, data))
                     return@forEach
 
-                val full = format.toBufferedImage(ds)
+                val full = format.toBufferedImage(subfile relativePathFrom file, data)
 
                 val topHalf = full.getSubimage(0, 0, full.width, full.height / 2)
                 val half = full.getSubimage(0, full.height / 2, full.width, full.height / 2)
@@ -521,7 +558,7 @@ object Gurren {
 
                 val squishied: BufferedImage
 
-                if(croppedCanvas) {
+                if (croppedCanvas) {
                     squishied = BufferedImage(full.width, topHalf.height + squish.height, BufferedImage.TYPE_INT_ARGB)
                     g = squishied.createGraphics()
                     g.drawImage(topHalf, 0, 0, null)
@@ -570,14 +607,16 @@ object Gurren {
                 }
                 val name = names.first()
                 val audio = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
-                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.audioFormats) ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.audioFormats)) != null
+                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.audioFormats)
+                            ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.audioFormats)) != null
                 } ?: run {
                     entries.add(arrayOf(name, "", "", "", "No audio file for provided name"))
                     return@forEach
                 }
 
                 val video = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
-                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.videoFormats) ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.videoFormats)) != null
+                    (SpiralFormats.formatForExtension(file.extension, SpiralFormats.videoFormats)
+                            ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.videoFormats)) != null
                 } ?: run {
                     entries.add(arrayOf(name, audio.name, "", "", "No video file for provided name"))
                     return@forEach
@@ -592,7 +631,7 @@ object Gurren {
                 } finally {
                     if (output.exists()) {
                         if (output.length() > 16) {
-                            if (MP4Format.isFormat(FileDataSource(output)))
+                            if (MP4Format.isFormat(null, null, { FileInputStream(output) } ))
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, ""))
                             else
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, "Output is not an MP4 file"))
@@ -622,7 +661,8 @@ object Gurren {
         if (response.httpStatusCode != 200)
             println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
         else
-            println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
+            println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
+                    ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
     }
 
     val checkForUpdates = Command("check_for_update") {
@@ -649,7 +689,7 @@ object Gurren {
     val downloadLatest = Command("download_latest") {
         val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().response()
 
-        if(headResponse.httpStatusCode != 200)
+        if (headResponse.httpStatusCode != 200)
             return@Command errPrintln("Error retrieving latest update: ${headResponse.httpStatusCode}")
 
         val latestBuild = this.latestBuild
@@ -664,7 +704,7 @@ object Gurren {
                 println("Downloaded ${GurrenPlugins.TWO_DECIMAL_PLACES.format(readBytes * 100.0 / totalBytes.toDouble())}%")
             }.destination { response, url -> destination }.responseStream()
 
-            if(response.httpStatusCode == 200)
+            if (response.httpStatusCode == 200)
                 println("Successfully downloaded update to $destination")
             else
                 errPrintln("Error: Was unable to download SPIRAL build $latestBuild")
@@ -681,7 +721,8 @@ object Gurren {
             if (response.httpStatusCode != 200)
                 return -1
             else
-                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
+                        ?: emptyMap<String, String>())["number"] as? Int ?: -1
         }
 
     val latestBuild: Int
@@ -691,6 +732,7 @@ object Gurren {
             if (response.httpStatusCode != 200)
                 return -1
             else
-                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *> ?: emptyMap<String, String>())["number"] as? Int ?: -1
+                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *>
+                        ?: emptyMap<String, String>())["number"] as? Int ?: -1
         }
 }

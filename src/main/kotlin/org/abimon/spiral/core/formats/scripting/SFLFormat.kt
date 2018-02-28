@@ -1,13 +1,14 @@
 package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readString
-import org.abimon.visi.io.DataSource
+import java.io.InputStream
 
 object SFLFormat: SpiralFormat {
     override val name: String = "SFL"
     override val extension: String? = "sfl"
     override val conversions: Array<SpiralFormat> = emptyArray()
 
-    override fun isFormat(source: DataSource): Boolean = source.use { stream -> stream.readString(4) == "LLFS" }
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readString(4) == "LLFS" }
 }

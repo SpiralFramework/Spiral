@@ -5,11 +5,13 @@ import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.CustomPak
 import org.abimon.spiral.core.objects.archives.CustomSPC
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readInt
 import org.abimon.spiral.util.toInt
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.HashMap
 import java.util.zip.ZipInputStream
@@ -26,7 +28,7 @@ object ZIPFormat : SpiralFormat {
             toInt(byteArrayOf(0x50, 0x4B, 0x07, 0x08), little = true)
     )
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
 //        try {
 //            return source.use { stream ->
 //                val zip = ZipInputStream(stream)
@@ -41,16 +43,16 @@ object ZIPFormat : SpiralFormat {
 //        }
 
 
-        return source.use { stream -> stream.readInt(little = true).toInt() in VALID_HEADERS }
+        return dataSource().use { stream -> stream.readInt(little = true).toInt() in VALID_HEADERS }
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, dataSource, output, params)) return true
 
         when (format) {
             is PAKFormat -> {
                 val convert = "${params["pak:convert"] ?: false}".toBoolean()
-                source.use { stream ->
+                dataSource().use { stream ->
                     val customPak = make<CustomPak> {
                         val zipIn = ZipInputStream(stream)
                         val entries = make<HashMap<String, DataSource>> {
@@ -68,7 +70,7 @@ object ZIPFormat : SpiralFormat {
 
                                         if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                             val (convOut, convData) = CacheHandler.cacheStream()
-                                            innerFormat.convert(convertTo, data, convOut, params)
+                                            innerFormat.convert(game, convertTo, data.location, data::inputStream, convOut, params)
 
                                             put(entry.name.substringBeforeLast('.'), convData)
                                             return@forEach
@@ -88,7 +90,7 @@ object ZIPFormat : SpiralFormat {
             }
             is SPCFormat -> {
                 val convert = "${params["spc:convert"] ?: false}".toBoolean()
-                source.use { stream ->
+                dataSource().use { stream ->
                     val customSpc = make<CustomSPC> {
                         val zipIn = ZipInputStream(stream)
                         zipIn.use { zip ->
@@ -105,7 +107,7 @@ object ZIPFormat : SpiralFormat {
 
                                     if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                         val (convOut, convData) = CacheHandler.cacheStream()
-                                        innerFormat.convert(convertTo, data, convOut, params)
+                                        innerFormat.convert(game, convertTo, data.location, data::inputStream, convOut, params)
                                         file(entry.name.replace(innerFormat.extension ?: "unk", convertTo.extension ?: "unk"), convData)
                                         return@forEach
                                     }

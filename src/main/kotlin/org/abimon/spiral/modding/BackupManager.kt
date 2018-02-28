@@ -17,7 +17,7 @@ object BackupManager {
         //We need to backup any and all files that **do not match**
         //So we perform a batch query for all the data presently *in the archive*
 
-        val fingerprintToName = archive.fileEntries.filter { (name) -> newEntries.any { (newName) -> name == newName } }.map { (filename, ds) -> ds.use { stream -> stream.sha512Hash() } to filename }.toMap()
+        val fingerprintToName = archive.fileEntries.filter { (name) -> newEntries.any { (newName) -> name == newName } }.map { (filename, ds) -> ds().use { stream -> stream.sha512Hash() } to filename }.toMap()
         val fingerprintsForWADFiles = ModManager.getModsForFingerprints(fingerprintToName.keys.toTypedArray())
 
         //Next up, we need to match the fingerprint values to the file with the name.
@@ -49,7 +49,7 @@ object BackupManager {
 
                 zipOut.putNextEntry(ZipEntry(name))
                 alreadyAdded.add(name)
-                fileData.pipe(zipOut)
+                fileData().use { stream -> stream.copyTo(zipOut) }
             }
 
             zipOut.close()

@@ -8,12 +8,13 @@ import org.abimon.spiral.modding.data.ModList
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import java.io.File
+import java.io.InputStream
 
 class CPKArchive(override val archiveFile: File): IArchive {
     val cpk: CPK = CPK(FileDataSource(archiveFile))
 
     override val archiveType: ArchiveType = ArchiveType.CPK
-    override val fileEntries: List<Pair<String, DataSource>> = cpk.fileTable.map { it.name to it }
+    override val fileEntries: List<Pair<String, () -> InputStream>> = cpk.fileTable.map { file -> file.name to file::inputStream }
     override val supportsCompilation: Boolean = false
     override val installedMods: ModList = run {
         val entry = cpk.fileTable.firstOrNull { entry -> entry.name == SpiralData.SPIRAL_MOD_LIST } ?: return@run ModList()

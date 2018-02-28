@@ -1,10 +1,12 @@
 package org.abimon.spiral.core.formats.models
 
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.models.SRDIMesh
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.mvc.gurren.Gurren
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import java.io.InputStream
 import java.io.OutputStream
 import java.io.PrintStream
 
@@ -13,9 +15,9 @@ object SRDIModelFormat: SpiralFormat {
     override val extension: String? = "srdi"
     override val conversions: Array<SpiralFormat> = arrayOf(OBJModelFormat)
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            return SRDIModel(source).meshes.any { mesh -> mesh.isValidMesh }
+            return SRDIModel(InputStreamFuncDataSource(dataSource)).meshes.any { mesh -> mesh.isValidMesh }
         } catch(illegal: IllegalArgumentException) {
 
         }
@@ -23,14 +25,14 @@ object SRDIModelFormat: SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
         val flipUVs = "${params["srdi:flipUVs"] ?: true}".toBoolean()
 
-        val srdi = SRDIModel(source)
+        val srdi = SRDIModel(InputStreamFuncDataSource(dataSource))
         when(format) {
-            is OBJModelFormat -> {
+            OBJModelFormat -> {
                 val out = PrintStream(output)
 
 

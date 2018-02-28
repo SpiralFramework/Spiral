@@ -1,7 +1,8 @@
 package org.abimon.spiral.core.formats
 
-import org.abimon.visi.io.DataSource
-import java.io.ByteArrayOutputStream
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.utils.and
+import java.io.InputStream
 import java.io.OutputStream
 
 interface SpiralFormat {
@@ -9,43 +10,37 @@ interface SpiralFormat {
     val extension: String?
     val conversions: Array<SpiralFormat>
 
-    fun isFormat(source: DataSource): Boolean
-    fun canConvert(format: SpiralFormat): Boolean = format in conversions || canConvertViaOverride(format)
-    fun canConvertViaOverride(format: SpiralFormat): Boolean = OVERRIDING_CONVERSIONS.containsKey(this to format)
+    fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean
+    fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format in conversions || canConvertViaOverride(game, format)
+    fun canConvertViaOverride(game: DRGame?, format: SpiralFormat): Boolean = OVERRIDING_CONVERSIONS.containsKey(game to this and format)
     /**
      * Convert from this format to another
      */
-    fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (!isFormat(source))
-            throw IllegalArgumentException("${source.location} does not conform to the $name format")
+    fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (!isFormat(game, name, dataSource))
+            throw IllegalArgumentException("$name does not conform to the $name format")
 
-        if (canConvertViaOverride(format)) {
-            for(conversion in SpiralFormat[this to format]) {
-                if (conversion.invoke(this, format, source, output, params))
+        if (canConvertViaOverride(game, format)) {
+            for(conversion in SpiralFormat[game to this and format]) {
+                if (conversion.invoke(game, this, format, name, dataSource, output, params))
                     return true
             }
         }
 
-        if (!canConvert(format))
+        if (!canConvert(game, format))
             throw IllegalArgumentException("Cannot convert to $format")
 
         return false
     }
 
-    fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean = format.convert(this, source, output, params)
-
-    fun convertToBytes(format: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
-        val baos = ByteArrayOutputStream()
-        convert(format, source, baos, params)
-        return baos.toByteArray()
-    }
+    fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean = format.convert(game, this, name, dataSource, output, params)
 
     object UnknownFormat : SpiralFormat {
         override val name = "Unknown"
         override val extension = null
         override val conversions: Array<SpiralFormat> = emptyArray()
 
-        override fun isFormat(source: DataSource): Boolean = false
+        override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = false
 
     }
 
@@ -54,18 +49,18 @@ interface SpiralFormat {
         override val extension = null
         override val conversions: Array<SpiralFormat> = emptyArray()
 
-        override fun isFormat(source: DataSource): Boolean = true
+        override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = true
     }
 
     companion object {
-        val OVERRIDING_CONVERSIONS: MutableMap<Pair<SpiralFormat, SpiralFormat>, MutableList<(SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean>> = HashMap()
+        val OVERRIDING_CONVERSIONS: MutableMap<Triple<DRGame?, SpiralFormat, SpiralFormat>, MutableList<(DRGame?, SpiralFormat, SpiralFormat, String?, () -> InputStream, OutputStream, Map<String, Any?>) -> Boolean>> = HashMap()
 
-        operator fun get(pair: Pair<SpiralFormat, SpiralFormat>): List<(SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean> = OVERRIDING_CONVERSIONS[pair] ?: emptyList()
-        operator fun set(pair: Pair<SpiralFormat, SpiralFormat>, func: (SpiralFormat, SpiralFormat, DataSource, OutputStream, Map<String, Any?>) -> Boolean) {
-            if(!OVERRIDING_CONVERSIONS.containsKey(pair))
-                OVERRIDING_CONVERSIONS[pair] = ArrayList()
+        operator fun get(triple: Triple<DRGame?, SpiralFormat, SpiralFormat>): List<(DRGame?, SpiralFormat, SpiralFormat, String?, () -> InputStream, OutputStream, Map<String, Any?>) -> Boolean> = OVERRIDING_CONVERSIONS[triple] ?: emptyList()
+        operator fun set(triple: Triple<DRGame?, SpiralFormat, SpiralFormat>, func: (DRGame?, SpiralFormat, SpiralFormat, String?, () -> InputStream, OutputStream, Map<String, Any?>) -> Boolean) {
+            if(!OVERRIDING_CONVERSIONS.containsKey(triple))
+                OVERRIDING_CONVERSIONS[triple] = ArrayList()
 
-            OVERRIDING_CONVERSIONS[pair]!!.add(func)
+            OVERRIDING_CONVERSIONS[triple]!!.add(func)
         }
     }
 }

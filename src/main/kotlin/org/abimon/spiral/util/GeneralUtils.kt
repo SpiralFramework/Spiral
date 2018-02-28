@@ -1,5 +1,10 @@
 package org.abimon.spiral.util
 
+import org.abimon.spiral.core.objects.archives.WAD
+import org.abimon.spiral.core.objects.archives.WADFileEntry
+import java.io.InputStream
+import kotlin.reflect.KFunction
+
 operator fun SemanticVersion.compareTo(semver: SemanticVersion): Int {
     if(this.first > semver.first)
         return 1
@@ -33,3 +38,9 @@ fun intArrayOfPairs(vararg pairs: Pair<Int, Int>): IntArray {
 fun Pair(array: IntArray): Pair<Int, Int> = Pair(array[0], array[1])
 
 fun Number.toUnsignedByte(): Int = this.toByte().toInt() and 0xFF
+
+//fun <T> KFunction<T>.bind(vararg params: Pair<String, Any?>): () -> T = { this.call() }
+
+fun <T> KFunction<T>.bind(vararg orderedParams: Any?): () -> T = { this.call(orderedParams) }
+
+fun WADFileEntry.inputStreamFor(wad: WAD): InputStream = OffsetInputStream(wad.dataSource(), wad.dataOffset + this.offset, this.size)

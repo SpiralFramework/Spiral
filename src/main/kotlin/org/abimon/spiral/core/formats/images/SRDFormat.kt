@@ -8,6 +8,8 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.util.*
 import org.abimon.visi.collections.remove
@@ -28,11 +30,11 @@ import kotlin.math.min
 
 object SRDFormat {
     fun hook() {
-        SpiralFormat[SPCFormat to PNGFormat] = this::convertFromArchive
-        SpiralFormat[SPCFormat to ZIPFormat] = this::convertFromArchive
+        SpiralFormat[V3 to SPCFormat and PNGFormat] = this::convertFromArchive
+        SpiralFormat[V3 to SPCFormat and ZIPFormat] = this::convertFromArchive
     }
 
-    fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
+    fun convertFromArchive(game: DRGame?, from: SpiralFormat, to: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(!"${params["srd:convert"] ?: true}".toBoolean())
             return false
 
@@ -42,8 +44,8 @@ object SRDFormat {
         var imageOverride: Boolean = false
 
         when (from) {
-            is SPCFormat -> {
-                val spc = SPC(dataSource)
+            SPCFormat -> {
+                val spc = SPC(InputStreamFuncDataSource(dataSource))
 
                 val files = spc.files.groupBy { entry -> entry.name.endsWith("srd") }
                 val srds = files[true] ?: emptyList()
@@ -79,14 +81,14 @@ object SRDFormat {
             is ZIPFormat -> {
                 val zos = ZipOutputStream(output)
 
-                otherEntries.forEach { name, data ->
-                    zos.putNextEntry(ZipEntry(name))
+                otherEntries.forEach { entryName, data ->
+                    zos.putNextEntry(ZipEntry(entryName))
                     data.pipe(zos)
                 }
 
-                images.forEach { name, image ->
-                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.extension!!)))
-                    if(format is PNGFormat)
+                images.forEach { imageName, image ->
+                    zos.putNextEntry(ZipEntry(imageName.replaceAfterLast('.', format.extension!!)))
+                    if(format == PNGFormat)
                         ImageIO.write(image, "PNG", zos)
                     else
                         PNGFormat.convert(format, image, zos, emptyMap())

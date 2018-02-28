@@ -4,12 +4,13 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.modding.data.ModList
 import org.abimon.visi.io.DataSource
 import java.io.File
+import java.io.InputStream
 
 interface IArchive {
     val archiveType: ArchiveType
     val archiveFile: File
 
-    val fileEntries: List<Pair<String, DataSource>>
+    val fileEntries: List<Pair<String, () -> InputStream>>
     val niceCompileFormats: Map<SpiralFormat, SpiralFormat>
     val installedMods: ModList
 

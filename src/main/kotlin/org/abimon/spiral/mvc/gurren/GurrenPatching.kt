@@ -11,15 +11,16 @@ import org.abimon.spiral.core.objects.archives.SPC
 import org.abimon.spiral.core.objects.images.CustomSRD
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
+import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.lang.child
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.FileInputStream
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -49,26 +50,29 @@ object GurrenPatching {
         val file = File(params[1])
 
         if (file.exists()) {
-            val data = FileDataSource(file)
-            val format = SpiralFormats.formatForExtension(file.extension, SpiralFormats.imageFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats) ?: return@Command errPrintln("Error: No image format recognised for $file")
+            //TODO: Use an actual game/name
+            val data = { FileInputStream(file) }
+            val format = SpiralFormats.formatForExtension(file.extension, SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)
+                    ?: return@Command errPrintln("Error: No image format recognised for $file")
             val img: BufferedImage
 
             if (format == PNGFormat)
                 img = ImageIO.read(file)
             else {
                 val (convOut, convIn) = CacheHandler.cacheStream()
-                format.convert(PNGFormat, data, convOut, emptyMap())
+                format.convert(null, PNGFormat, null, data, convOut, emptyMap())
                 img = convIn.use { stream -> ImageIO.read(stream) }
             }
 
-            val patchingData = FileDataSource(patchFile)
+            val patchingData = { FileInputStream(patchFile) }
             var srd: DataSource? = null
             var srdv: DataSource? = null
 
             var srdName: String? = null
             var srdvName: String? = null
 
-            if (ZIPFormat.isFormat(patchingData)) {
+            if (ZIPFormat.isFormat(null, null, patchingData)) {
                 val zip = ZipFile(patchFile)
                 val entries = zip.entries().toList()
 
@@ -145,8 +149,8 @@ object GurrenPatching {
                     srdv = srdvIn
                     srdvName = srdvFiles.first().name
                 }
-            } else if(SPCFormat.isFormat(patchingData)) {
-                val spc = SPC(patchingData)
+            } else if(SPCFormat.isFormat(null, null, patchingData)) {
+                val spc = SPC(InputStreamFuncDataSource(patchingData))
 
                 val srdFiles = spc.files.filter { entry -> entry.name.endsWith(".srd") }
                 val srdvFiles = spc.files.filter { entry -> entry.name.endsWith(".srdv") }
@@ -215,8 +219,8 @@ object GurrenPatching {
 
             customSRD.patch(srdOut, srdvOut)
 
-            if (ZIPFormat.isFormat(patchingData)) {
-                patchingData.use { patchDataStream ->
+            if (ZIPFormat.isFormat(null, null, patchingData)) {
+                patchingData().use { patchDataStream ->
                     val (cacheOut, cacheIn) = CacheHandler.cacheStream()
                     ZipOutputStream(cacheOut).use { zipOut ->
                         ZipInputStream(patchDataStream).use { zipIn ->
@@ -233,9 +237,9 @@ object GurrenPatching {
 
                     patchFile.outputStream().use(cacheIn::pipe)
                 }
-            } else if(SPCFormat.isFormat(patchingData)) {
+            } else if(SPCFormat.isFormat(null, null, patchingData)) {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
-                val spc = SPC(patchingData)
+                val spc = SPC(InputStreamFuncDataSource(patchingData))
 
                 val customSPC = make<CustomSPC> {
                     spc.files.forEach { entry ->
@@ -266,10 +270,10 @@ object GurrenPatching {
 
         val file = File(params[2])
         if (file.exists()) {
-            val data = FileDataSource(file)
+            val data = { FileInputStream(file) }
             when (patchOperation) {
                 PatchOperation.SRD -> {
-                    if (!ZIPFormat.isFormat(data) && !SPCFormat.isFormat(data))
+                    if (!ZIPFormat.isFormat(null, null, data) && !SPCFormat.isFormat(null, null, data))
                         return@Command errPrintln("Error: File type is incompatible for operation $patchOperation (Wanted .zip or .spc, got ${file.extension})")
                 }
             }

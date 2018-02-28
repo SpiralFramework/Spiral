@@ -1,13 +1,14 @@
 package org.abimon.spiral.core.formats.images
 
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.visi.collections.coerceAtMost
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.readChunked
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.io.InputStream
 import java.util.*
 
 object SHTXFormat : SpiralImageFormat {
@@ -15,14 +16,14 @@ object SHTXFormat : SpiralImageFormat {
     override val extension = null
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, TGAFormat)
 
-    override fun isFormat(source: DataSource): Boolean = source.use { it.readString(4) == "SHTX" }
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(4) == "SHTX" }
 
     /** This information is taken from BlackDragonHunt's Danganronpa-Tools */
-    override fun toBufferedImage(source: DataSource): BufferedImage = source.use { stream ->
+    override fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage = dataSource().use { stream ->
         val shtx = stream.readString(4)
 
         if (shtx != "SHTX")
-            throw IllegalArgumentException("${source.location} does not conform to the ${name} format (First four bytes do not spell [SHTX], spell $shtx)")
+            throw IllegalArgumentException("$name does not conform to the ${this.name} format (First four bytes do not spell [SHTX], spell $shtx)")
 
         val version = stream.readString(2)
 
@@ -123,6 +124,6 @@ object SHTXFormat : SpiralImageFormat {
             }
         }
 
-        throw IllegalArgumentException("${source.location} does not conform to the SHTX format (Reached end of function)")
+        throw IllegalArgumentException("$name does not conform to the SHTX format (Reached end of function)")
     }
 }

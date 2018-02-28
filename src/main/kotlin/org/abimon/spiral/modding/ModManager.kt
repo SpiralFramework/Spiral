@@ -16,10 +16,10 @@ import org.abimon.spiral.util.copyWithProgress
 import org.abimon.spiral.util.rocketFuel.largeResponse
 import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.lang.and
 import org.abimon.visi.security.sha512Hash
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipFile
@@ -38,7 +38,7 @@ object ModManager : APIManager() {
     fun scanForMods() {
         scanForUpdates()
         modsInFolder.clear()
-        MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(FileDataSource(file)) }.forEach { potentialMod ->
+        MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, { FileInputStream(file) }) }.forEach { potentialMod ->
             val metadata = getMetadataForFile(potentialMod) ?: return@forEach
 
             modsInFolder[metadata.uid] = (potentialMod to metadata and isSigned(metadata.uid, metadata.version, potentialMod))
@@ -46,7 +46,7 @@ object ModManager : APIManager() {
     }
 
     fun scanForUpdates() {
-        val mods = MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(FileDataSource(file)) }.groupBy { potentialPlugin -> getMetadataForFile(potentialPlugin)?.uid }
+        val mods = MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, { FileInputStream(file) }) }.groupBy { potentialPlugin -> getMetadataForFile(potentialPlugin)?.uid }
         mods.forEach { uid, modList ->
             if (uid == null)
                 return@forEach
@@ -170,7 +170,7 @@ object ModManager : APIManager() {
         val definiteMods: MutableList<String> = ArrayList()
         val mods: MutableMap<String, Pair<String, String>> = HashMap()
 
-        val rawFingerprints = archive.fileEntries.map { (name, ds) -> name to ds.use { stream -> stream.sha512Hash() } }.toMap()
+        val rawFingerprints = archive.fileEntries.map { (name, ds) -> name to ds().use { stream -> stream.sha512Hash() } }.toMap()
         val fingerprints = getModsForFingerprints(rawFingerprints.values.toTypedArray())
 
         val fileMods = fingerprints.values.toTypedArray().flatten().groupBy { fingerprint -> fingerprint.filename }.mapValues { (filename, fingerprints) -> fingerprints.filter { fingerprint -> fingerprint.fingerprint == rawFingerprints[filename] } }

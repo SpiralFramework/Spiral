@@ -2,20 +2,21 @@ package org.abimon.spiral.core.formats.images
 
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.core.objects.game.DRGame
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.io.InputStream
 import java.io.OutputStream
 import javax.imageio.ImageIO
 
 interface SpiralImageFormat : SpiralFormat {
-    override fun canConvert(format: SpiralFormat): Boolean = format is SpiralImageFormat || super.canConvert(format)
+    override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format is SpiralImageFormat || super.canConvert(game, format)
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(format, source, output, params))
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, dataSource, output, params))
             return true
 
-        return convert(format, toBufferedImage(source), output, params)
+        return convert(format, toBufferedImage(name, dataSource), output, params)
     }
 
     fun convert(format: SpiralFormat, img: BufferedImage, output: OutputStream, params: Map<String, Any?>): Boolean {
@@ -122,5 +123,5 @@ interface SpiralImageFormat : SpiralFormat {
         return true
     }
 
-    fun toBufferedImage(source: DataSource): BufferedImage
+    fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage
 }

@@ -3,8 +3,10 @@ package org.abimon.spiral.core.formats.scripting
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.text.JacksonFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import java.io.InputStream
 import java.io.OutputStream
 
 object NonstopFormat: SpiralFormat {
@@ -12,7 +14,7 @@ object NonstopFormat: SpiralFormat {
     override val extension: String = "dat"
     override val conversions: Array<SpiralFormat> = arrayOf(JacksonFormat.YAML, JacksonFormat.JSON)
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
 //        try {
 //            return NonstopDebate(source).sections.isNotEmpty()
 //        } catch (iea: IllegalArgumentException) {
@@ -21,10 +23,10 @@ object NonstopFormat: SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        val debate = NonstopDebate(source)
+        val debate = NonstopDebate(InputStreamFuncDataSource(dataSource))
 
         when(format) {
             is JacksonFormat -> {
