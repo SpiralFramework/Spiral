@@ -116,17 +116,17 @@ class CPK(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assert(magic == MAGIC_NUMBER)
+            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number for CPK File (Was $magic, expected $MAGIC_NUMBER)")
 
             headerInfo = readTable(dataSource, 0x10)
-            assert(headerInfo.rows == 1L)
+            assertAsArgument(headerInfo.rows == 1L, "Illegal number of header rows (Was ${headerInfo.rows}, expected 1)")
 
             val tocOffset = (headerInfo.getRow(dataSource, 0, TOC_OFFSET_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
             val contentOffset = (headerInfo.getRow(dataSource, 0, CONTENT_OFFSET_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
             val fileCount = (headerInfo.getRow(dataSource, 0, FILES_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
 
             tocHeader = readTable(dataSource, tocOffset + 0x10)
-            assert(tocHeader.rows == fileCount)
+            assertAsArgument(tocHeader.rows == fileCount, "Illegal number of header rows in TOC (Was ${tocHeader.rows}, expected $fileCount)")
 
             files = Array(tocHeader.rows.toInt()) { i ->
                 val filename = tocHeader.getRow(dataSource, i, FILENAME_COLUMN)?.second as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR)

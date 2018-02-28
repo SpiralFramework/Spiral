@@ -1,9 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.CountingInputStream
-import org.abimon.spiral.core.utils.readInt32LE
-import org.abimon.spiral.core.utils.readInt64LE
-import org.abimon.spiral.core.utils.readString
+import org.abimon.spiral.core.utils.*
 import java.io.InputStream
 
 /**
@@ -31,7 +28,7 @@ class WAD(val dataSource: () -> InputStream) {
 
         try {
             val localMagic = stream.readInt32LE()
-            assert(localMagic == MAGIC_NUMBER)
+            assertAsArgument(localMagic == MAGIC_NUMBER, "Illegal magic number for WAD File (Was $localMagic, expected $MAGIC_NUMBER)")
 
             major = stream.readInt32LE()
             minor = stream.readInt32LE()

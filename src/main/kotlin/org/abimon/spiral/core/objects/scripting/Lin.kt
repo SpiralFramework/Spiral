@@ -97,7 +97,7 @@ class Lin(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
                 throw IllegalStateException("${stream.streamOffset} is where we are, and we were meant to stop at $textBlock; what happened???")
             }
 
-            assert(stream.streamOffset == textBlock.toLong())
+            assertAsArgument(stream.streamOffset == textBlock.toLong(), "Illegal stream offset in Lin File (Was ${stream.streamOffset}, expected to be at $textBlock)")
 
             val textLines = stream.readInt32LE()
             val textPositions = IntArray(textLines + 1) { stream.readInt32LE() }

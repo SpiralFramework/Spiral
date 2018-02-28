@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
+import org.abimon.spiral.core.utils.assertAsArgument
 import org.abimon.spiral.core.utils.readInt32LE
 import java.io.InputStream
 
@@ -22,11 +23,11 @@ class Pak(val dataSource: () -> InputStream) {
 
         try {
             val fileCount = stream.readInt32LE()
-            assert(fileCount > 1)
+            assertAsArgument(fileCount > 1, "Illegal number of files in Pak File (Was $fileCount, expected > 1)")
 
             val offsets = IntArray(fileCount) { index ->
                 val offset = stream.readInt32LE()
-                assert(offset >= 0) //That *one* file in DR2...
+                assertAsArgument(offset >= 0, "Illegal offset for file $index in Pak File (Was $offset, expected >= 0)") //That *one* file in DR2...
 
                 return@IntArray offset
             }

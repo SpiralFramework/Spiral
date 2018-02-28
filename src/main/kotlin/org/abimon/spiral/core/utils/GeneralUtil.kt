@@ -16,3 +16,13 @@ operator fun <A, S> OpCodeMutableMap<A, S>.set(key: Int, value: Triple<String?, 
 operator fun <A, S> OpCodeMutableMap<A, S>.set(key: Int, value: Pair<Int, (Int, A) -> S>) {
     this[key] = Triple(emptyArray<String>(), value.first, value.second)
 }
+
+fun assertAsArgument(statement: Boolean, illegalArgument: String) {
+    if (!statement)
+        throw IllegalArgumentException(illegalArgument)
+}
+
+fun assertOrThrow(statement: Boolean, ammo: Throwable) {
+    if(!statement)
+        throw ammo
+}

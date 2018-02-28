@@ -18,7 +18,7 @@ class SPC(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assert(magic == MAGIC_NUMBER)
+            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number in SPC File (Was $magic, expected $MAGIC_NUMBER)")
             stream.skip(0x24)
 
             val fileCount = stream.readInt32LE()
@@ -26,7 +26,7 @@ class SPC(val dataSource: () -> InputStream) {
             stream.skip(0x10)
 
             val tableMagic = stream.readInt32LE()
-            assert(tableMagic == TABLE_MAGIC_NUMBER)
+            assertAsArgument(tableMagic == TABLE_MAGIC_NUMBER, "Illegal magic number in SPC Table (Was $tableMagic, expected $TABLE_MAGIC_NUMBER)")
             stream.skip(0x0C)
 
             files = Array<SPCEntry>(fileCount) { index ->
