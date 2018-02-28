@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
+import org.abimon.spiral.core.utils.assertAsArgument
 import org.abimon.spiral.core.utils.readInt16LE
 import org.abimon.spiral.core.utils.readInt32LE
 import org.abimon.spiral.core.utils.readUInt32LE
@@ -17,7 +18,7 @@ class AWB(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assert(magic == MAGIC_NUMBER)
+            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number for AWB File (Was $magic, expected $MAGIC_NUMBER)")
 
             val unk1 = stream.readInt32LE()
 
