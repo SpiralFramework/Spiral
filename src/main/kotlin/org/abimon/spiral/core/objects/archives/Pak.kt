@@ -16,6 +16,10 @@ import java.io.InputStream
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
 class Pak(val dataSource: () -> InputStream) {
+    companion object {
+        var SANITY_MAX_FILE_COUNT = 1024
+    }
+
     val files: Array<PakEntry>
 
     init {
@@ -24,6 +28,7 @@ class Pak(val dataSource: () -> InputStream) {
         try {
             val fileCount = stream.readInt32LE()
             assertAsArgument(fileCount > 1, "Illegal number of files in Pak File (Was $fileCount, expected > 1)")
+            assertAsArgument(fileCount < SANITY_MAX_FILE_COUNT, "Illegal number of files in Pak File (was $fileCount, expected < $SANITY_MAX_FILE_COUNT); If you are converting a valid file then you'll need to bump up the maximum file count!")
 
             val offsets = IntArray(fileCount) { index ->
                 val offset = stream.readInt32LE()
