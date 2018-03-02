@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.objects.archives
 
 import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.util.OffsetInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
@@ -25,7 +25,7 @@ data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long
         get() = dec_size
 
     val rawInputStream: InputStream
-        get() = OffsetInputStream(parent.dataSource.inputStream, offset, cmp_size)
+        get() = WindowedInputStream(parent.dataSource.inputStream, offset, cmp_size)
 
     val dataSource: DataSource by lazy {
         val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${"$location-$cmp_size".md5Hash()}.dat")

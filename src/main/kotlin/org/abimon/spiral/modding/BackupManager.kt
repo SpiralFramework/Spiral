@@ -1,10 +1,10 @@
 package org.abimon.spiral.modding
 
 import org.abimon.spiral.core.archives.IArchive
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.security.sha512Hash
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -12,7 +12,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.collections.ArrayList
 
 object BackupManager {
-    fun backupOverridingEntries(archive: IArchive, newEntries: List<Pair<String, DataSource>>) {
+    fun backupOverridingEntries(archive: IArchive, newEntries: List<Pair<String, () -> InputStream>>) {
         //FIRST OF ALL
         //We need to backup any and all files that **do not match**
         //So we perform a batch query for all the data presently *in the archive*

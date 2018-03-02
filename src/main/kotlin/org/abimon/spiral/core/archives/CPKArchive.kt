@@ -7,7 +7,6 @@ import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.modding.data.ModList
 import org.abimon.spiral.util.bind
 import org.abimon.spiral.util.inputStreamFor
-import org.abimon.visi.io.DataSource
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -31,7 +30,7 @@ class CPKArchive(override val archiveFile: File): IArchive {
             DDSFormat to TGAFormat
     )
 
-    override fun compile(newEntries: List<Pair<String, DataSource>>) {
+    override fun compile(newEntries: List<Pair<String, () -> InputStream>>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

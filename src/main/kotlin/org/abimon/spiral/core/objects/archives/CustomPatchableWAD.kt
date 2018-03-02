@@ -4,7 +4,7 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
 import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.util.OffsetInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.visi.io.DataSource
 import java.io.File
 import java.io.FileInputStream
@@ -12,7 +12,7 @@ import java.util.ArrayList
 import kotlin.collections.HashMap
 
 class CustomPatchableWAD(val wadFile: File) {
-    val wad = WAD { FileInputStream(wadFile) }
+    val wad = WAD { FileInputStream(wadFile) } ?: throw IllegalArgumentException("$wadFile doesn't point to a WAD file!")
 
     private val files: MutableMap<String, DataSource> = HashMap()
     private val dataCoroutines: MutableList<Job> = ArrayList()
@@ -22,14 +22,14 @@ class CustomPatchableWAD(val wadFile: File) {
 
         if(wad.files.any { entry -> entry.name == newName }) {
             val wadFile = wad.files.first { entry -> entry.name == newName }
-            val wadData = OffsetInputStream(wad.dataSource(), wad.dataOffset + wadFile.offset, wadFile.size).use { stream -> stream.readBytes() }
+            val wadData = WindowedInputStream(wad.dataSource(), wad.dataOffset + wadFile.offset, wadFile.size).use { stream -> stream.readBytes() }
             if(wadData contentEquals dataSource.data)
                 return
         }
 
         val (out, source) = CacheHandler.cacheStream()
         launchCoroutine { dataSource.pipe(out) }
-        files[newName] = source
+        //files[newName] = source
     }
 
     fun data(name: String, data: ByteArray) {
@@ -37,14 +37,14 @@ class CustomPatchableWAD(val wadFile: File) {
 
         if(wad.files.any { entry -> entry.name == newName }) {
             val wadFile = wad.files.first { entry -> entry.name == newName }
-            val wadData = OffsetInputStream(wad.dataSource(), wad.dataOffset + wadFile.offset, wadFile.size).use { stream -> stream.readBytes() }
+            val wadData = WindowedInputStream(wad.dataSource(), wad.dataOffset + wadFile.offset, wadFile.size).use { stream -> stream.readBytes() }
             if(wadData contentEquals data)
                 return
         }
 
         val (out, source) = CacheHandler.cacheStream()
         launchCoroutine { out.use { stream -> stream.write(data) } }
-        files[newName] = source
+        //files[newName] = source
     }
 
     fun patch() {

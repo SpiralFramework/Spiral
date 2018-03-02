@@ -3,7 +3,7 @@ package org.abimon.spiral.core.objects.archives
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.core.readUnsignedLittleInt
-import org.abimon.spiral.util.CountingInputStream
+import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.visi.io.DataSource
 
 class SPC(val dataSource: DataSource) {

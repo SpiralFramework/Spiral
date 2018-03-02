@@ -6,10 +6,7 @@ import org.abimon.visi.io.ByteArrayIOStream
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.lang.and
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.io.RandomAccessFile
+import java.io.*
 import java.nio.file.Files
 import java.nio.file.attribute.DosFileAttributeView
 import java.util.*
@@ -25,16 +22,16 @@ object CacheHandler {
         listFiles().forEach { it.delete() }
     }
 
-    fun cacheStream(name: String? = null): Pair<OutputStream, DataSource> {
+    fun cacheStream(name: String? = null): Pair<OutputStream, () -> InputStream> {
         if(SpiralModel.cacheEnabled) {
             val cacheFile = if(name == null) newCacheFile() else File(cacheDir, name)
             cacheFiles.add(cacheFile)
 
-            return FileOutputStream(cacheFile) to FileDataSource(cacheFile)
+            return FileOutputStream(cacheFile) to { FileInputStream(cacheFile) }
         } else {
             val bios = ByteArrayIOStream()
 
-            return bios.outputStream to bios.dataSource
+            return bios.outputStream to { bios.inputStream }
         }
     }
 

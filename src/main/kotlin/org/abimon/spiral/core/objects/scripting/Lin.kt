@@ -7,7 +7,7 @@ import org.abimon.spiral.core.lin.dr2.*
 import org.abimon.spiral.core.readDRString
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.toIntArray
-import org.abimon.spiral.util.CountingInputStream
+import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.util.trace
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
@@ -234,10 +234,10 @@ class Lin(val dataSource: DataSource, var dr1: Boolean = true) {
                     }
                 }
             }
-            lin.close()
         } catch(illegal: IllegalArgumentException) {
-            lin.close()
             throw illegal
+        } finally {
+            lin.close()
         }
     }
 

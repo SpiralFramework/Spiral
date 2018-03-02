@@ -5,7 +5,6 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.modding.data.ModList
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.iterate
 import org.abimon.visi.io.relativePathFrom
@@ -28,12 +27,12 @@ class FlatFileArchive(val dir: File): IArchive {
             ZIPFormat to SPCFormat //That's... that's it. "Nice" compiling won't really work with V3 for now
     )
 
-    override fun compile(newEntries: List<Pair<String, DataSource>>) {
+    override fun compile(newEntries: List<Pair<String, () -> InputStream>>) {
         for((name, data) in newEntries) {
             val file = File(dir, name)
             file.parentFile.mkdirs()
 
-            file.outputStream().use(data::pipe)
+            file.outputStream().use { out -> data().use { stream -> stream.copyTo(out) } }
         }
     }
 }

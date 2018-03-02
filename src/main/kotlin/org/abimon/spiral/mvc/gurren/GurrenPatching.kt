@@ -13,7 +13,6 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.visi.collections.joinToPrefixedString
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.lang.child
 import org.abimon.visi.lang.make
@@ -21,6 +20,7 @@ import org.abimon.visi.util.zip.forEach
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
+import java.io.InputStream
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -53,7 +53,7 @@ object GurrenPatching {
             //TODO: Use an actual game/name
             val data = { FileInputStream(file) }
             val format = SpiralFormats.formatForExtension(file.extension, SpiralFormats.imageFormats)
-                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats)
                     ?: return@Command errPrintln("Error: No image format recognised for $file")
             val img: BufferedImage
 
@@ -62,12 +62,12 @@ object GurrenPatching {
             else {
                 val (convOut, convIn) = CacheHandler.cacheStream()
                 format.convert(null, PNGFormat, null, data, convOut, emptyMap())
-                img = convIn.use { stream -> ImageIO.read(stream) }
+                img = convIn().use { stream -> ImageIO.read(stream) }
             }
 
             val patchingData = { FileInputStream(patchFile) }
-            var srd: DataSource? = null
-            var srdv: DataSource? = null
+            var srd: (() -> InputStream)? = null
+            var srdv: (() -> InputStream)? = null
 
             var srdName: String? = null
             var srdvName: String? = null
@@ -176,12 +176,12 @@ object GurrenPatching {
                         if (srdEntry == null)
                             println("Invalid srd file $srdName")
                         else {
-                            srd = srdEntry
+                            srd = srdEntry::inputStream
                             break
                         }
                     }
                 } else {
-                    srd = srdFiles.first()
+                    srd = srdFiles.first()::inputStream
                     srdName = srdFiles.first().name
                 }
                 if (srdvFiles.size > 1) {
@@ -199,18 +199,18 @@ object GurrenPatching {
                         if (srdvEntry == null)
                             println("Invalid srdv file $srdvName")
                         else {
-                            srdv = srdvEntry
+                            srdv = srdvEntry::inputStream
                             break
                         }
                     }
                 } else {
-                    srdv = srdvFiles.first()
+                    srdv = srdvFiles.first()::inputStream
                     srdvName = srdvFiles.first().name
                 }
             } else
                 throw IllegalStateException("$patchFile is not of a compatible format to be performing these operations")
 
-            val customSRD = CustomSRD(srd!!, srdv!!) //For these to be null something's gone really wrong
+            val customSRD = CustomSRD(InputStreamFuncDataSource(srd!!), InputStreamFuncDataSource(srdv!!)) //For these to be null something's gone really wrong
 
             customSRD.image(if(params.size > 2) params[2] else file.name.child, img)
 
@@ -227,15 +227,15 @@ object GurrenPatching {
                             zipIn.forEach { entry ->
                                 zipOut.putNextEntry(entry)
                                 when {
-                                    entry.name == srdName -> srdIn.pipe(zipOut)
-                                    entry.name == srdvName -> srdvIn.pipe(zipOut)
+                                    entry.name == srdName -> srdIn().use { stream -> stream.copyTo(zipOut) }
+                                    entry.name == srdvName -> srdvIn().use { stream -> stream.copyTo(zipOut) }
                                     else -> zipIn.copyTo(zipOut)
                                 }
                             }
                         }
                     }
 
-                    patchFile.outputStream().use(cacheIn::pipe)
+                    patchFile.outputStream().use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
                 }
             } else if(SPCFormat.isFormat(null, null, patchingData)) {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
@@ -244,14 +244,14 @@ object GurrenPatching {
                 val customSPC = make<CustomSPC> {
                     spc.files.forEach { entry ->
                         when {
-                            entry.name == srdName -> file(entry.name, srdIn)
-                            entry.name == srdvName -> file(entry.name, srdvIn)
+                            entry.name == srdName -> file(entry.name, InputStreamFuncDataSource(srdIn))
+                            entry.name == srdvName -> file(entry.name, InputStreamFuncDataSource(srdvIn))
                             else -> file(entry.name, entry)
                         }
                     }
                 }
                 cacheOut.use(customSPC::compile) //Cache it temporarily
-                patchFile.outputStream().use(cacheIn::pipe)
+                patchFile.outputStream().use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
             }
         } else
             errPrintln("[$patchingName] Error: $file does not exist")

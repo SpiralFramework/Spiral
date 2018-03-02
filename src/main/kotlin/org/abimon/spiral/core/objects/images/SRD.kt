@@ -1,7 +1,7 @@
 package org.abimon.spiral.core.objects.images
 
 import org.abimon.spiral.core.*
-import org.abimon.spiral.util.CountingInputStream
+import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.visi.io.DataSource
 
 class SRD(val srd: DataSource) {

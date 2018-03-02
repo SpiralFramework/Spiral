@@ -32,25 +32,25 @@ object SPCFormat : SpiralFormat {
         when (format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
-                spc.files.forEach {
-                    val data = SpiralFormats.decompressFully(it)
+                spc.files.forEach { entry ->
+                    val data = SpiralFormats.decompressFully(entry::inputStream)
                     if (convert) {
                         val innerFormat = SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
-                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(game, convertTo, data.location, data::inputStream, zip, params)
+                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
+                            innerFormat.convert(game, convertTo, entry.name, data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
-                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
-                            data.use { stream -> stream.copyTo(zip) }
+                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
+                            data().use { stream -> stream.copyTo(zip) }
                             return@forEach
                         }
                     }
 
-                    zip.putNextEntry(ZipEntry(it.name))
-                    data.use { stream -> stream.copyTo(zip) }
+                    zip.putNextEntry(ZipEntry(entry.name))
+                    data().use { stream -> stream.copyTo(zip) }
                 }
                 zip.finish()
             }

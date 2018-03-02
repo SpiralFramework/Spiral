@@ -17,7 +17,6 @@ import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
-import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.rocketFuel.responseStream
@@ -185,7 +184,7 @@ object Gurren {
             if (file.isFile) {
                 val rows = ArrayList<Array<String>>()
                 val format = SpiralFormats.formatForExtension(file.extension)
-                        ?: SpiralFormats.formatForData(FileDataSource(file))
+                        ?: SpiralFormats.formatForData { FileInputStream(file) }
                 if (format == null)
                     rows.add(arrayOf(file.name, "No Identifiable Format"))
                 else
@@ -196,7 +195,7 @@ object Gurren {
                 val rows = ArrayList<Array<String>>()
                 file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
                     val format = SpiralFormats.formatForExtension(subfile.extension)
-                            ?: SpiralFormats.formatForData(FileDataSource(subfile))
+                            ?: SpiralFormats.formatForData { FileInputStream(subfile) }
                     if (format == null)
                         rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "No Identifiable Format"))
                     else
@@ -219,7 +218,7 @@ object Gurren {
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
             val format = SpiralFormats.formatForExtension(file.extension)
-                    ?: SpiralFormats.formatForData(FileDataSource(file))
+                    ?: SpiralFormats.formatForData { FileInputStream(file) }
             if (format == null)
                 rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
             else {
@@ -264,7 +263,7 @@ object Gurren {
         } else if (file.isDirectory) {
             file.iterate(filters = ignoreFilters).forEach dirIteration@ { subfile ->
                 val format = SpiralFormats.formatForExtension(subfile.extension)
-                        ?: SpiralFormats.formatForData(FileDataSource(subfile))
+                        ?: SpiralFormats.formatForData { FileInputStream(subfile) }
                 if (format == null)
                     rows.add(arrayOf(file.name + subfile.absolutePath.replace(file.absolutePath, ""), "N/a", "No Identifiable Format", "N/a"))
                 else {
@@ -396,9 +395,9 @@ object Gurren {
         if (file.isFile) {
             //TODO: Use an actual game/name
             val data = { FileInputStream(file) }
-            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(data, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
                     ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
-                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)) as? SpiralImageFormat
+                    ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats)) as? SpiralImageFormat
                     ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
 
             val full = format.toBufferedImage(null, data)
@@ -436,9 +435,9 @@ object Gurren {
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
                 val data = { FileInputStream(subfile) }
-                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(data, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
                         ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
-                        ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats))
+                        ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats))
                         as? SpiralImageFormat ?: run {
                     rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
                     return@forEach
@@ -495,9 +494,9 @@ object Gurren {
         if (file.isFile) {
             //TODO: Use an actual game/name
             val data = { FileInputStream(file) }
-            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+            val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(data, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
                     ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
-                    ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats)) as? SpiralImageFormat
+                    ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats)) as? SpiralImageFormat
                     ?: return@Command errPrintln("Error: No image format could be found for the provided parameter or for the data.")
 
             val full = format.toBufferedImage(null, data)
@@ -536,9 +535,9 @@ object Gurren {
             file.iterate().filter { it.isFile }.forEach { subfile ->
                 //TODO: Use an actual game/name
                 val data = { FileInputStream(subfile) }
-                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
+                val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(data, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
                         ?: SpiralFormats.formatForExtension(params[2], SpiralFormats.imageFormats)
-                        ?: SpiralFormats.formatForData(InputStreamFuncDataSource(data), SpiralFormats.imageFormats))as? SpiralImageFormat
+                        ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats))as? SpiralImageFormat
                         ?: run {
                             rows.add(arrayOf(subfile relativePathFrom file, "ERR: No format"))
                             return@forEach
@@ -608,7 +607,7 @@ object Gurren {
                 val name = names.first()
                 val audio = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
                     (SpiralFormats.formatForExtension(file.extension, SpiralFormats.audioFormats)
-                            ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.audioFormats)) != null
+                            ?: SpiralFormats.formatForData({ FileInputStream(file) }, SpiralFormats.audioFormats)) != null
                 } ?: run {
                     entries.add(arrayOf(name, "", "", "", "No audio file for provided name"))
                     return@forEach
@@ -616,7 +615,7 @@ object Gurren {
 
                 val video = files.filter { it.nameWithoutExtension == name }.firstOrNull { file ->
                     (SpiralFormats.formatForExtension(file.extension, SpiralFormats.videoFormats)
-                            ?: SpiralFormats.formatForData(FileDataSource(file), SpiralFormats.videoFormats)) != null
+                            ?: SpiralFormats.formatForData({ FileInputStream(file) }, SpiralFormats.videoFormats)) != null
                 } ?: run {
                     entries.add(arrayOf(name, audio.name, "", "", "No video file for provided name"))
                     return@forEach

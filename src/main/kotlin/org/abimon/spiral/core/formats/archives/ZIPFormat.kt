@@ -7,8 +7,8 @@ import org.abimon.spiral.core.objects.archives.CustomPak
 import org.abimon.spiral.core.objects.archives.CustomSPC
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readInt
+import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.toInt
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.io.InputStream
@@ -55,7 +55,7 @@ object ZIPFormat : SpiralFormat {
                 dataSource().use { stream ->
                     val customPak = make<CustomPak> {
                         val zipIn = ZipInputStream(stream)
-                        val entries = make<HashMap<String, DataSource>> {
+                        val entries = HashMap<String, () -> InputStream>().apply {
                             zipIn.use { zip ->
                                 zip.forEach { entry ->
                                     if (entry.name.startsWith('.') || entry.name.startsWith("__"))
@@ -70,7 +70,7 @@ object ZIPFormat : SpiralFormat {
 
                                         if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                             val (convOut, convData) = CacheHandler.cacheStream()
-                                            innerFormat.convert(game, convertTo, data.location, data::inputStream, convOut, params)
+                                            innerFormat.convert(game, convertTo, entry.name, data, convOut, params)
 
                                             put(entry.name.substringBeforeLast('.'), convData)
                                             return@forEach
@@ -82,13 +82,13 @@ object ZIPFormat : SpiralFormat {
                             }
                         }
 
-                        entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> dataSource(data) }
+                        entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> dataSource(InputStreamFuncDataSource(data)) }
                     }
 
                     customPak.compile(output)
                 }
             }
-            is SPCFormat -> {
+            SPCFormat -> {
                 val convert = "${params["spc:convert"] ?: false}".toBoolean()
                 dataSource().use { stream ->
                     val customSpc = make<CustomSPC> {
@@ -107,13 +107,13 @@ object ZIPFormat : SpiralFormat {
 
                                     if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                         val (convOut, convData) = CacheHandler.cacheStream()
-                                        innerFormat.convert(game, convertTo, data.location, data::inputStream, convOut, params)
-                                        file(entry.name.replace(innerFormat.extension ?: "unk", convertTo.extension ?: "unk"), convData)
+                                        innerFormat.convert(game, convertTo, entry.name, data, convOut, params)
+                                        file(entry.name.replace(innerFormat.extension ?: "unk", convertTo.extension ?: "unk"), InputStreamFuncDataSource(convData))
                                         return@forEach
                                     }
                                 }
 
-                                file(entry.name, data)
+                                file(entry.name, InputStreamFuncDataSource(data))
                             }
                         }
                     }
