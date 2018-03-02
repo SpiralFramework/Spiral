@@ -10,12 +10,6 @@ import java.util.*
 
 class WADTest {
     @Test
-    fun localTest() {
-        val wad = WAD { FileInputStream(File("/Users/undermybrella/Workspace/SpiralFormats/src.wad")) }
-        println(wad)
-    }
-
-    @Test
     fun sourceWadHeader() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/src.wad")!!
         assert(wad.major == 1)

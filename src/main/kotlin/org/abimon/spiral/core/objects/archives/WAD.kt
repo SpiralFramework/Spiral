@@ -86,13 +86,12 @@ class WAD private constructor(val dataSource: () -> InputStream) {
             val directoryCount = stream.readInt32LE()
             directories = Array(directoryCount) { index ->
                 val nameLen = stream.readInt32LE()
-                assertAsArgument(nameLen in FILENAME_LENGTH_RANGE, "Illegal directory name length for WAD File (Was $nameLen, expected $MIN_FILENAME_LENGTH ≤ $nameLen ≤ $MAX_FILENAME_LENGTH)")
                 val name = stream.readString(nameLen)
                 val subEntryCount = stream.readInt32LE()
 
                 val subEntries = Array(subEntryCount) sub@{ subIndex ->
                     val subNameLen = stream.readInt32LE()
-                    assertAsArgument(nameLen in FILENAME_LENGTH_RANGE, "Illegal subfile name length for WAD File (Was $subNameLen, expected $MIN_FILENAME_LENGTH ≤ $subNameLen ≤ $MAX_FILENAME_LENGTH)")
+                    assertAsArgument(subNameLen in FILENAME_LENGTH_RANGE, "Illegal subfile name length for WAD File (Was $subNameLen, expected $MIN_FILENAME_LENGTH ≤ $subNameLen ≤ $MAX_FILENAME_LENGTH)")
                     val subName = stream.readString(subNameLen)
 
                     val isDirectory = stream.read() == 1
