@@ -15,11 +15,19 @@ import java.io.InputStream
  *
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
-class Pak(val dataSource: () -> InputStream) {
+class Pak private constructor(val dataSource: () -> InputStream) {
     companion object {
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0
         var SANITY_MAX_FILE_SIZE = 64 * 1024 * 1024
+
+        operator fun invoke(dataSource: () -> InputStream): Pak? {
+            try {
+                return Pak(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                return null
+            }
+        }
     }
 
     val files: Array<PakEntry>
@@ -49,7 +57,7 @@ class Pak(val dataSource: () -> InputStream) {
                     assertAsArgument(size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
                     assertAsArgument(size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
                 }
-                return@Array PakEntry(index, size, offset)
+                return@Array PakEntry(index, size, offset, this)
             }
         } finally {
             stream.close()

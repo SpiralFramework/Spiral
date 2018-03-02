@@ -4,6 +4,10 @@ typealias OpCodeMap<A, S> = Map<Int, Triple<Array<String>, Int, (Int, A) -> S>>
 typealias OpCodeMutableMap<A, S> = MutableMap<Int, Triple<Array<String>, Int, (Int, A) -> S>>
 typealias OpCodeHashMap<A, S> = HashMap<Int, Triple<Array<String>, Int, (Int, A) -> S>>
 
+typealias UV = Pair<Float, Float>
+typealias Vertex = Triple<Float, Float, Float>
+typealias TriFace = Triple<Int, Int, Int>
+
 infix fun <A, B, C> Pair<A, B>.and(c: C): Triple<A, B, C> = Triple(first, second, c)
 
 operator fun <A, S> OpCodeMutableMap<A, S>.set(key: Int, value: Triple<String?, Int, (Int, A) -> S>) {

@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.OffsetInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.core.utils.writeInt32LE
 import java.io.*
 import java.util.*
@@ -16,7 +16,7 @@ class CustomPak {
 
     fun add(pak: Pak) {
         for (entry in pak.files)
-            add(entry.index, entry.size.toLong()) { OffsetInputStream(pak.dataSource(), entry.offset.toLong(), entry.size.toLong()) }
+            add(entry.index, entry.size.toLong()) { WindowedInputStream(pak.dataSource(), entry.offset.toLong(), entry.size.toLong()) }
     }
 
     fun add(dir: File) {

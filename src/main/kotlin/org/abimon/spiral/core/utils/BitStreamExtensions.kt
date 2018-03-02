@@ -81,6 +81,9 @@ fun InputStream.readInt16BE(): Int {
     return (a shl 8) or b
 }
 
+fun InputStream.readFloatBE(): Float = java.lang.Float.intBitsToFloat(this.readInt32BE())
+fun InputStream.readFloatLE(): Float = java.lang.Float.intBitsToFloat(this.readInt32LE())
+
 fun OutputStream.writeInt64LE(num: Number) {
     val long = num.toLong()
 
@@ -146,4 +149,12 @@ fun OutputStream.writeInt16BE(num: Number) {
 
     write((int shr 8) % 256)
     write(int % 256)
+}
+
+fun makeMask(vararg bits: Int): Int {
+    var mask = 0
+    for (bit in bits)
+        mask = mask or ((1 shl (bit + 1)) - 1)
+
+    return mask
 }
