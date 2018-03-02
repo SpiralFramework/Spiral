@@ -1,13 +1,31 @@
 package org.abimon.spiral.core.utils
 
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
-    val data = ByteArray(len.coerceAtLeast(0))
+    val data = ByteArray(len.coerceAtLeast(0).coerceAtMost(255))
     read(data)
     return String(data, Charset.forName(encoding))
+}
+
+fun InputStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
+
+fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8): String {
+    val baos = ByteArrayOutputStream()
+    var byte: Int
+
+    while (true) {
+        val read = read()
+        if(read == 0x00 || read == -1)
+            break
+
+        baos.write(read)
+    }
+
+    return String(baos.toByteArray(), encoding)
 }
 
 fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: ((Long) -> Unit)?): Long {

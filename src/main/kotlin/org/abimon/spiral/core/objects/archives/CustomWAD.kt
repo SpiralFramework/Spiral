@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.OffsetInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.core.utils.writeInt32LE
 import org.abimon.spiral.core.utils.writeInt64LE
 import java.io.File
@@ -16,7 +16,7 @@ class CustomWAD {
 
     fun add(wad: WAD) {
         for (entry in wad.files)
-            add(entry.name, entry.size) { OffsetInputStream(wad.dataSource(), wad.dataOffset + entry.offset, entry.size) }
+            add(entry.name, entry.size) { WindowedInputStream(wad.dataSource(), wad.dataOffset + entry.offset, entry.size) }
     }
 
     fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
@@ -75,9 +75,10 @@ class CustomWAD {
             directories[""]!!.add(subbedName)
         }
 
-        output.writeInt32LE(directories.size)
+        val realDirectories = directories.filterKeys { directoryName -> directoryName !in fileNames }
+        output.writeInt32LE(realDirectories.size)
 
-        for ((directoryName, directoryListings) in directories) {
+        for ((directoryName, directoryListings) in realDirectories) {
             val encoded = directoryName.toByteArray(Charsets.UTF_8)
 
             output.writeInt32LE(encoded.size)
