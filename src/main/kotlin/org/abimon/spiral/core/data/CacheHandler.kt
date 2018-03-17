@@ -1,10 +1,7 @@
 package org.abimon.spiral.core.data
 
 import org.abimon.spiral.mvc.SpiralModel
-import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.ByteArrayIOStream
-import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.lang.and
 import java.io.*
 import java.nio.file.Files
@@ -27,7 +24,7 @@ object CacheHandler {
             val cacheFile = if(name == null) newCacheFile() else File(cacheDir, name)
             cacheFiles.add(cacheFile)
 
-            return FileOutputStream(cacheFile) to { FileInputStream(cacheFile) }
+            return FileOutputStream(cacheFile) to cacheFile::inputStream
         } else {
             val bios = ByteArrayIOStream()
 
@@ -35,7 +32,7 @@ object CacheHandler {
         }
     }
 
-    fun cacheRandomAccessStream(name: String? = null): Triple<DataSource, RandomAccessFile, Boolean> {
+    fun cacheRandomAccessStream(name: String? = null): Triple<() -> InputStream, RandomAccessFile, Boolean> {
         val initialised: Boolean
         val cacheFile: File
 
@@ -49,7 +46,7 @@ object CacheHandler {
 
         cacheFiles.add(cacheFile)
 
-        return FileDataSource(cacheFile) to RandomAccessFile(cacheFile, "rw") and initialised
+        return cacheFile::inputStream to RandomAccessFile(cacheFile, "rw") and initialised
     }
 
     fun cacheRandomAccessOutput(name: String? = null): Triple<OutputStream, RandomAccessFile, Boolean> {
@@ -69,16 +66,16 @@ object CacheHandler {
         return FileOutputStream(cacheFile) to RandomAccessFile(cacheFile, "rw") and initialised
     }
 
-    fun cache(data: ByteArray): DataSource {
+    fun cache(data: ByteArray): () -> InputStream {
         if(SpiralModel.cacheEnabled) {
             val cacheFile = newCacheFile()
             cacheFiles.add(cacheFile)
 
             cacheFile.writeBytes(data)
 
-            return FileDataSource(cacheFile)
+            return cacheFile::inputStream
         } else
-            return ByteArrayDataSource(data)
+            return data::inputStream
     }
 
     fun newCacheFile(): File {
