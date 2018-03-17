@@ -73,6 +73,14 @@ object SpiralFormats {
             PAKFormat
     )
 
+    val gameRequiredFormats = arrayOf(
+            LINFormat,
+            WRDFormat,
+            NonstopFormat
+    )
+
+    val gameAmbiguousFormats = formats.filterNot { format -> format in gameRequiredFormats }.toTypedArray()
+
     //TODO: Use an actual game
     fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, dataSource::inputStream) }
     //TODO: Use an actual game
@@ -93,13 +101,14 @@ object SpiralFormats {
         }
     }
 
-    fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.extension?.equals(extension, true) ?: false }
+    fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
     //TODO: Use an actual game
-    fun formatForData(dataSource: () -> InputStream): SpiralFormat? = formatForData(dataSource, formats)
-    fun formatForData(dataSource: () -> InputStream, selectiveFormats: Array<SpiralFormat>): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(null, null, dataSource) }
+    @JvmOverloads
+    fun formatForData(game: DRGame?, dataSource: () -> InputStream, name: String? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(game, name, dataSource) }
             .filter { (_, isFormat) -> isFormat.first }
             .sortedBy { (_, confidence) -> confidence.second }
             .lastOrNull()?.first
+
     fun formatForName(name: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.name.equals(name, true) } ?: if(name.equals("BINARY", true)) SpiralFormat.BinaryFormat else null
 
     fun formatForNameAndData(name: String, dataSource: () -> InputStream, game: DRGame? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? {
