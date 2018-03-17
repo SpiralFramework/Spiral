@@ -4,7 +4,6 @@ import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.SPC
 import org.abimon.spiral.core.objects.game.DRGame
-import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.visi.lang.replaceLast
 import java.io.InputStream
 import java.io.OutputStream
@@ -18,7 +17,7 @@ object SPCFormat : SpiralFormat {
 
     override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            return SPC(InputStreamFuncDataSource(dataSource)).files.size >= 1
+            return SPC(dataSource).files.isNotEmpty()
         } catch (e: IllegalArgumentException) {
         }
         return false
@@ -27,7 +26,7 @@ object SPCFormat : SpiralFormat {
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        val spc = SPC(InputStreamFuncDataSource(dataSource))
+        val spc = SPC(dataSource)
         val convert = "${params["spc:convert"] ?: false}".toBoolean()
         when (format) {
             is ZIPFormat -> {

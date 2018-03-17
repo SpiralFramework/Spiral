@@ -28,18 +28,18 @@ object V3SPCFont {
         if(from != SPCFormat)
             return false //Wot
 
-        val spc = SPC(InputStreamFuncDataSource(dataSource))
+        val spc = SPC(dataSource)
 
         //V3 operates on two files for their fonts.
 
-        val fontSpecFile = spc.files.firstOrNull { entry -> entry.name.endsWith("stx") }
-        val fontSpec = SRD(fontSpecFile ?: return false)
+        val fontSpecFile = spc.files.firstOrNull { entry -> entry.name.endsWith("stx") } ?: return false
+        val fontSpec = SRD(InputStreamFuncDataSource(fontSpecFile::inputStream))
         val fontTable = spc.files.firstOrNull { entry -> entry.name == fontSpecFile.name.replace("stx", "srdv") } ?: return false
 
         val zip = ZipOutputStream(output)
 
         zip.putNextEntry(ZipEntry(fontSpecFile.name.replace("stx", "srd")))
-        fontSpecFile.pipe(zip)
+        fontSpecFile.inputStream.use { stream -> stream.copyTo(zip) }
 
 
         fontSpec.items.filterIsInstance(TXRItem::class.java).forEach { txr ->
@@ -55,7 +55,7 @@ object V3SPCFont {
 //                return@run String(data.read(64), Charsets.UTF_16LE)
 //            }
 
-            val texture = txr.readTexture(fontTable.seekableInputStream) ?: return@forEach
+            val texture = txr.readTexture(fontTable.inputStream) ?: return@forEach
 
             zip.putNextEntry(ZipEntry(txr.name.replaceAfterLast('.', "png")))
             ImageIO.write(texture, "PNG", zip)

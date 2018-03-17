@@ -3,11 +3,13 @@ package org.abimon.spiral.core.formats.images
 import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.archives.SPCEntry
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
@@ -18,7 +20,6 @@ import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
 import org.abimon.visi.collections.remove
-import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 import org.abimon.visi.lang.exportStackTrace
@@ -43,36 +44,36 @@ object SRDFormat {
         if(!"${params["srd:convert"] ?: true}".toBoolean())
             return false
 
-        val otherEntries: MutableMap<String, DataSource> = HashMap()
+        val otherEntries: MutableMap<String, () -> InputStream> = HashMap()
         val images: MutableMap<String, BufferedImage> = HashMap()
         val mapToModels: Boolean = "${params["srd:mapToModels"] ?: true}".toBoolean()
-        var imageOverride: Boolean = false
+        var imageOverride = false
 
         when (from) {
             SPCFormat -> {
-                val spc = SPC(InputStreamFuncDataSource(dataSource))
+                val spc = SPC(dataSource)
 
                 val files = spc.files.groupBy { entry -> entry.name.endsWith("srd") }
                 val srds = files[true] ?: emptyList()
                 val others = files[false]!!.toMutableList()
 
                 srds.forEach { srdEntry ->
-                    val img: DataSource
+                    val img: SPCEntry
 
                     if (others.any { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") })
                         img = others.remove { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") } ?: return@forEach
                     else
-                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
+                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry::inputStream; return@forEach }
 
-                    val model: DataSource? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
+                    val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
-                    readSRD(srdEntry, img, if (model != null) SRDIModel(model) else null, otherEntries, images, params)
+                    readSRD(InputStreamFuncDataSource(srdEntry::inputStream), InputStreamFuncDataSource(img::inputStream), if (model != null) SRDIModel(InputStreamFuncDataSource(model::inputStream)) else null, otherEntries, images, params)
                     if (otherEntries.size != before)
                         imageOverride = true
                 }
 
-                others.forEach { entry -> otherEntries[entry.name] = entry }
+                others.forEach { entry -> otherEntries[entry.name] = entry::inputStream }
             }
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
@@ -89,7 +90,7 @@ object SRDFormat {
 
                 otherEntries.forEach { entryName, data ->
                     zos.putNextEntry(ZipEntry(entryName))
-                    data.pipe(zos)
+                    data().use { stream -> stream.copyTo(zos) }
                 }
 
                 images.forEach { imageName, image ->
@@ -108,7 +109,7 @@ object SRDFormat {
         return true
     }
 
-    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
+    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, () -> InputStream>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
         srd.seekableUse { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
@@ -238,7 +239,7 @@ object SRDFormat {
                                                     }
                                                     images[mipName] = resultingImage.mapToModel(model, params)
                                                 }
-                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
+                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processing).first
                                             }
 
                                             imageInfo["swizzled"] = swizzled
@@ -284,7 +285,7 @@ object SRDFormat {
                                                 0x0F -> images[mipName] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 0x1C -> images[mipName] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 else -> {
-                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
+                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processingStream).first
                                                 }
                                             }
 
@@ -295,11 +296,11 @@ object SRDFormat {
                                         } else {
                                             debug("Unknown format $fmt")
 
-                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
+                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = CacheHandler.cacheStream(new_img_stream).first
                                         }
 
                                         if (LoggerLevel.TRACE.enabled)
-                                            otherData["info-$mipName.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
+                                            otherData["info-$mipName.json"] = CacheHandler.cache(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
 
                                         disp_width = maxOf(1, disp_width / 2)
                                         disp_height = maxOf(1, disp_height / 2)

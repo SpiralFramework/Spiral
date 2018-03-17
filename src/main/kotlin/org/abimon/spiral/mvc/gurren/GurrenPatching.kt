@@ -148,7 +148,7 @@ object GurrenPatching {
                     srdvName = srdvFiles.first().name
                 }
             } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
-                val spc = SPC(InputStreamFuncDataSource(patchFile::inputStream))
+                val spc = SPC(patchFile::inputStream)
 
                 val srdFiles = spc.files.filter { entry -> entry.name.endsWith(".srd") }
                 val srdvFiles = spc.files.filter { entry -> entry.name.endsWith(".srdv") }
@@ -237,14 +237,14 @@ object GurrenPatching {
                 }
             } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
-                val spc = SPC(InputStreamFuncDataSource(patchFile::inputStream))
+                val spc = SPC(patchFile::inputStream)
 
                 val customSPC = make<CustomSPC> {
                     spc.files.forEach { entry ->
                         when {
                             entry.name == srdName -> file(entry.name, InputStreamFuncDataSource(srdIn))
                             entry.name == srdvName -> file(entry.name, InputStreamFuncDataSource(srdvIn))
-                            else -> file(entry.name, entry)
+                            else -> file(entry.name, InputStreamFuncDataSource(entry::inputStream))
                         }
                     }
                 }
