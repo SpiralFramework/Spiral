@@ -12,22 +12,23 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import kotlin.system.measureNanoTime
 
+//TODO: Properly fix this up
 data class SPCFileEntry(val cmp_flag: Int, val unk_flag: Int, val cmp_size: Long, val dec_size: Long, val name: String, val offset: Long, val parent: SPC) : DataSource {
     override val data: ByteArray
-        get() = dataSource.use { it.readBytes() }
+        get() = dataSource().use { it.readBytes() }
     override val inputStream: InputStream
-        get() = dataSource.inputStream
+        get() = dataSource()
     override val location: String
         get() = "SPC File ${parent.dataSource.location}, offset $offset bytes (name $name, flag $cmp_flag)"
     override val seekableInputStream: InputStream
-        get() = dataSource.seekableInputStream
+        get() = dataSource()
     override val size: Long
         get() = dec_size
 
     val rawInputStream: InputStream
         get() = WindowedInputStream(parent.dataSource.inputStream, offset, cmp_size)
 
-    val dataSource: DataSource by lazy {
+    val dataSource: () -> InputStream by lazy {
         val (data, raf, initialised) = CacheHandler.cacheRandomAccessStream("${"$location-$cmp_size".md5Hash()}.dat")
 
         if (!initialised) {
