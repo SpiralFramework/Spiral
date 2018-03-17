@@ -61,6 +61,7 @@ object Gurren {
         get() = Gurren::class.java.protectionDomain.codeSource.location.openStream().md5Hash()
 
     var game: DRGame? = null
+        get() = GurrenOperation.operatingGame ?: field
 
     private val helpTable: String = FlipTable.of(
             arrayOf("Command", "Arguments", "Description", "Example Command"),
