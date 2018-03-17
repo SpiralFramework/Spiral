@@ -2,8 +2,6 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.text.ScriptTextFormat
-import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.WordScriptFile
@@ -16,7 +14,7 @@ import java.io.OutputStream
 object WRDFormat : SpiralFormat {
     override val name = "WRD"
     override val extension = "wrd"
-    override val conversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(OpenSpiralLanguageFormat)
 
     val COMMAND_OP_CODE = 0x2B1D
     val COMMAND_OP_CODE_HEX = COMMAND_OP_CODE.toString(16)
@@ -38,6 +36,14 @@ object WRDFormat : SpiralFormat {
 
         val wrd = WordScriptFile(game as? V3 ?: return false, dataSource)
 
+        output.println("OSL Script")
+        output.println("Set Game To V3")
+
+        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
+        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
+        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
+        wrd.strings.forEach { str -> output.println("Word String: $str") }
+
         wrd.entries.forEach { entry ->
             val op = SpiralData.drv3OpCodes[entry.opCode]?.second ?: "0x${entry.opCode.toString(16)}"
             when(entry) {
@@ -52,13 +58,6 @@ object WRDFormat : SpiralFormat {
                 }
             }
         }
-
-        output.println("")
-
-        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
-        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
-        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
-        wrd.strings.forEach { str -> output.println("Word String: $str") }
 
         return true
     }

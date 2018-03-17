@@ -66,7 +66,6 @@ object OpenSpiralLanguageFormat: SpiralFormat {
             }
             WRDFormat -> {
                 val customWordScript = customWordScript {
-
                     stack.forEach { value ->
                         debug("Stack Value: $value")
                         if (value is List<*>) {
@@ -88,10 +87,13 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                     }
                 }
 
+                if (customWordScript.entries.isEmpty())
+                    return false
+
                 customWordScript.compile(output)
             }
         }
 
-        return false
+        return true
     }
 }
