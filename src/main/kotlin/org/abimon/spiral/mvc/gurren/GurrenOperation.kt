@@ -135,7 +135,7 @@ object GurrenOperation {
 
         val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
-        val archive = operatingArchive as WADArchive
+        val archive = operatingArchive
         val matching = archive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.sortedBy { (name) -> name }
 
         val proceed = SpiralModel.confirm {
@@ -167,7 +167,6 @@ object GurrenOperation {
                     //debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
                     SpiralModel.distribute(matching) launch@{ (entryName, entry) ->
                         onExtract(entryName, entry)
-                        val openStreams = archive.openStreams.get()
                         val parents = File(directory, entryName.parents)
                         if (!parents.exists() && !parents.mkdirs() && !parents.exists())
                             return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
@@ -204,14 +203,6 @@ object GurrenOperation {
                                 }
                             }
                         }
-
-                        val endOpenStreams = archive.openStreams.get()
-
-                        when {
-                            openStreams < endOpenStreams -> println("${endOpenStreams - openStreams} open streams after $entryName")
-                            openStreams > endOpenStreams -> println("Okay, so we *started* with $openStreams and ended with $endOpenStreams, that's good?")
-                            else -> println("No excess open streams, huzzah!")
-                        }
                     }
                 }
             }
@@ -219,13 +210,6 @@ object GurrenOperation {
             HookManager.finishedExtraction(archive, directory, matching)
 
             println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
-            debug(FlipTable.of(arrayOf("Duration", "Total Opened Streams", "Remaining Open Streams", "Read Ops", "Read Bytes"), arrayOf(arrayOf(
-                    duration.toString(),
-                    archive.openedStreams.get().toString(),
-                    archive.openStreams.get().toString(),
-                    archive.totalReadOperations.get().toString(),
-                    archive.totalReadBytes.get().toString() + " B"
-            ))))
 //            debug("Took $duration ms; opened a total of ${archive.openedStreams.get()}, and we have ${archive.openStreams.get()} left over")
         }
     }
