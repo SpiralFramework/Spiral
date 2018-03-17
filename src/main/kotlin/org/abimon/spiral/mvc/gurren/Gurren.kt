@@ -548,17 +548,20 @@ object Gurren {
         }
     }
 
-    val pack = Command("pack_dr1") { (params) ->
+    val packDr1 = Command("pack_dr1") { (params) ->
         if (params.size < 3)
-            return@Command errPrintln("Error: Not enough params provided (Syntax is 'pack [file] [files to pack]'")
+            return@Command errPrintln("Error: Not enough params provided (Syntax is 'pack_dr1 [file] [files to pack]'")
 
-        val packInto = params[1]
+        val packInto = File(params[1])
         val packing = params.copyFrom(1).map(::File).filter { file -> file.exists() }
 
         FileOutputStream(packInto).use { out ->
             val zip = ZipOutputStream(out)
 
             packing.forEach { file ->
+                if(!file.exists())
+                    return@forEach
+
                 if (file.isFile) {
                     val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
 
@@ -574,18 +577,18 @@ object Gurren {
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
-                    file.iterate().forEach { subfile ->
+                    file.iterate(includeDirs = false).forEach { subfile ->
                         val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
 
                         if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
-                            zip.putNextEntry(ZipEntry(subfile relativePathFrom subfile))
-                            FileInputStream(file).use { stream -> stream.copyTo(zip) }
+                            zip.putNextEntry(ZipEntry(subfile relativePathTo file))
+                            FileInputStream(subfile).use { stream -> stream.copyTo(zip) }
                             zip.closeEntry()
                         } else {
                             val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
-                            zip.putNextEntry(ZipEntry((subfile relativePathFrom subfile).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                             zip.closeEntry()
                         }}
                 }
@@ -593,6 +596,146 @@ object Gurren {
 
             zip.close()
         }
+
+        print("Mod Name: ")
+        val name = readLine() ?: return@Command
+
+        print("Mod Version: ")
+        val version = readLine() ?: return@Command
+
+        print("Mod ZIP URL: ")
+        val url = readLine() ?: return@Command
+
+        val modJson = File(packInto.parent,  "${packInto.nameWithoutExtension}.json")
+        SpiralData.MAPPER.writeValue(modJson, mapOf("name" to name, "version" to version, "zipUrl" to url, "requiredGame" to "dr1"))
+    }
+
+    val packDr2 = Command("pack_dr2") { (params) ->
+        if (params.size < 3)
+            return@Command errPrintln("Error: Not enough params provided (Syntax is 'pack_dr2 [file] [files to pack]'")
+
+        val packInto = File(params[1])
+        val packing = params.copyFrom(1).map(::File).filter { file -> file.exists() }
+
+        FileOutputStream(packInto).use { out ->
+            val zip = ZipOutputStream(out)
+
+            packing.forEach { file ->
+                if(!file.exists())
+                    return@forEach
+
+                if (file.isFile) {
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+
+                    if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                        zip.putNextEntry(ZipEntry(file.name))
+                        FileInputStream(file).use { stream -> stream.copyTo(zip) }
+                        zip.closeEntry()
+                    } else {
+                        val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                        zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                        zip.closeEntry()
+                    }
+                } else if (file.isDirectory) {
+                    file.iterate(includeDirs = false).forEach { subfile ->
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+
+                        if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                            zip.putNextEntry(ZipEntry(subfile relativePathTo file))
+                            FileInputStream(subfile).use { stream -> stream.copyTo(zip) }
+                            zip.closeEntry()
+                        } else {
+                            val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                            zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                            zip.closeEntry()
+                        }}
+                }
+            }
+
+            zip.close()
+        }
+
+        print("Mod Name: ")
+        val name = readLine() ?: return@Command
+
+        print("Mod Version: ")
+        val version = readLine() ?: return@Command
+
+        print("Mod ZIP URL: ")
+        val url = readLine() ?: return@Command
+
+        val modJson = File(packInto.parent,  "${packInto.nameWithoutExtension}.json")
+        SpiralData.MAPPER.writeValue(modJson, mapOf("name" to name, "version" to version, "zipUrl" to url, "requiredGame" to "dr2"))
+    }
+
+    val packGeneral = Command("pack_general") { (params) ->
+        if (params.size < 3)
+            return@Command errPrintln("Error: Not enough params provided (Syntax is 'pack_general [file] [files to pack]'")
+
+        val packInto = File(params[1])
+        val packing = params.copyFrom(1).map(::File).filter { file -> file.exists() }
+
+        FileOutputStream(packInto).use { out ->
+            val zip = ZipOutputStream(out)
+
+            packing.forEach packing@{ file ->
+                if(!file.exists())
+                    return@packing
+
+                if (file.isFile) {
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+
+                    if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                        zip.putNextEntry(ZipEntry(file.name))
+                        FileInputStream(file).use { stream -> stream.copyTo(zip) }
+                        zip.closeEntry()
+                    } else {
+                        val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                        if (convertTo == LINFormat)
+                            return@packing errPrintln("$file is a LIN file, which requires a game. Skipping...")
+                        zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true))
+                        zip.closeEntry()
+                    }
+                } else if (file.isDirectory) {
+                    file.iterate(includeDirs = false).forEach iterate@{ subfile ->
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+
+                        if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                            zip.putNextEntry(ZipEntry(subfile relativePathTo file))
+                            FileInputStream(subfile).use { stream -> stream.copyTo(zip) }
+                            zip.closeEntry()
+                        } else {
+                            val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                            if (convertTo == LINFormat)
+                                return@iterate errPrintln("$subfile is a LIN file, which requires a game. Skipping...")
+                            zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true))
+                            zip.closeEntry()
+                        }}
+                }
+            }
+
+            zip.close()
+        }
+
+        print("Mod Name: ")
+        val name = readLine() ?: return@Command
+
+        print("Mod Version: ")
+        val version = readLine() ?: return@Command
+
+        print("Mod ZIP URL: ")
+        val url = readLine() ?: return@Command
+
+        val modJson = File(packInto.parent,  "${packInto.nameWithoutExtension}.json")
+        SpiralData.MAPPER.writeValue(modJson, mapOf("name" to name, "version" to version, "zipUrl" to url))
     }
 
     val join = Command("join") { (params) ->
