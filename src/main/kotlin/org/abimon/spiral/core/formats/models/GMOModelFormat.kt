@@ -11,8 +11,6 @@ import java.io.OutputStream
 import java.io.PrintStream
 
 object GMOModelFormat: SpiralFormat {
-
-
     override val name: String = "GMO"
     override val extension: String? = "gmo"
     override val conversions: Array<SpiralFormat> = arrayOf(OBJModelFormat)
@@ -50,13 +48,15 @@ object GMOModelFormat: SpiralFormat {
                     }
 
                     meshes.forEachIndexed { meshIndex, mesh ->
-                        when (mesh.primType) {
-                            3 -> mesh.faces.forEach { (a, b, c) -> out.println("f ${a + 1 + addition} ${b + 1 + addition} ${c + 1 + addition}") }
-                            4 -> mesh.faces.forEach { (a, b, c, d) ->
-                                out.println("f ${a + 1 + addition} ${b + 1 + addition} ${d + 1 + addition}")
-                                out.println("f ${c + 1 + addition} ${d + 1 + addition} ${b + 1 + addition}")
-                            }
-                        }
+//                        when (mesh.primType) {
+//                            3 ->
+//                            4 -> mesh.faces.forEach { (a, b, c) ->
+//                                out.println("f ${a + 1 + addition} ${b + 1 + addition} ${d + 1 + addition}")
+//                                out.println("f ${c + 1 + addition} ${d + 1 + addition} ${b + 1 + addition}")
+//                            }
+//                        }
+
+                        mesh.faces.forEach { (a, b, c) -> out.println("f ${a + 1 + addition} ${b + 1 + addition} ${c + 1 + addition}") }
                     }
 
                     meshes.distinctBy { mesh -> mesh.arIndex }.forEach { mesh ->

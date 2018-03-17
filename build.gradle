@@ -4,8 +4,6 @@ buildscript {
 
     repositories {
         mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -41,7 +39,7 @@ dependencies {
     compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
-    compile('org.abimon:SpiralFormats:893d246')
+    compile('org.abimon:SpiralFormats:8a07f33')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
