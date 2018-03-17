@@ -15,7 +15,7 @@ import org.parboiled.annotations.BuildParseTree
 import org.parboiled.parserunners.ReportingParseRunner
 
 @BuildParseTree
-open class SpiralDrill: BaseParser<Any>() {
+open class SpiralDrill : BaseParser<Any>() {
     companion object {
         val parser: SpiralDrill = Parboiled.createParser(SpiralDrill::class.java)
         val stxtRunner: ReportingParseRunner<Any> = ReportingParseRunner(parser.SpiralTextFile())
@@ -24,8 +24,19 @@ open class SpiralDrill: BaseParser<Any>() {
     /** Spiral Text */
     open fun SpiralTextFile(): Rule = Sequence(
             clearState(),
-            ParamList("DRILL", SpiralTextLine()),
+            FirstOf(
+                    Sequence("OSL Script", ParamList("DRILL", SpiralTextLine())),
+                    ParamList("DRILL", SpiralOpCodeLine())
+            ),
             operateOnTmpStack(this, "DRILL") { push(it) }
+    )
+
+    open fun SpiralOpCodeLine(): Rule = FirstOf(
+            BasicTextDrill.Syntax(this),
+            BasicSpiralDrill.Syntax(this),
+            NamedSpiralDrill.Syntax(this),
+            Comment(),
+            EOI
     )
 
     open fun SpiralTextLine(): Rule = FirstOf(
@@ -33,7 +44,12 @@ open class SpiralDrill: BaseParser<Any>() {
             DialogueDrill.Syntax(this),
             BasicSpiralDrill.Syntax(this),
             NamedSpiralDrill.Syntax(this),
-            Sequence("//", ZeroOrMore(LineMatcher)),
+            Comment(),
             EOI
+    )
+
+    open fun Comment(): Rule = FirstOf(
+            Sequence("//", ZeroOrMore(LineMatcher)),
+            Sequence("#", ZeroOrMore(LineMatcher))
     )
 }
