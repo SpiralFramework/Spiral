@@ -7,7 +7,7 @@ import org.abimon.spiral.core.formats.images.SRDFormat
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.modding.PluginManager
 import org.abimon.spiral.mvc.gurren.*
-import java.io.File
+import java.io.*
 
 fun main(args: Array<String>) = startupSpiral(args)
 
@@ -36,29 +36,56 @@ fun startupSpiral(args: Array<String>) {
     SpiralModel.scope = "> " to "default"
     SpiralModel.autoConfirm = true
 
+
+    val baos = ByteArrayOutputStream()
+    val out = PrintStream(baos)
     args.forEach { param ->
-        if(param.startsWith("-Soperation=") || param.startsWith("cmd=")) {
-            val unknown = SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = param.split('=', limit = 2).last())).isEmpty()
-            Thread.sleep(250)
-            if(unknown)
-                println("Unknown command")
+        if (param.startsWith("-Soperation=") || param.startsWith("cmd=")) {
+            param.split('=', limit = 2).last().split('\n').forEach(out::println)
         } else if (param.startsWith("cmd_file=")) {
             val filename = param.split('=', limit = 2).last()
             val file = File(filename)
 
-            if(file.exists())
-                file.useLines { lines -> lines.forEach { line ->
-                    val unknown = SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = line)).isEmpty()
-                    Thread.sleep(250)
-                    if(unknown)
-                        println("Unknown command")
-                }
-                }
+            if (file.exists())
+                file.useLines { lines -> lines.filter { line -> line.isNotBlank() && !line.startsWith("#") && !line.startsWith("//") }.forEach(out::println) }
         }
     }
 
+    System.setIn(ByteArrayInputStream(baos.toByteArray()))
+
+    while(Gurren.keepLooping) {
+        try {
+            val unknown = SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine() ?: break)).isEmpty()
+            Thread.sleep(250)
+        } catch (th: Throwable) {
+            th.printStackTrace()
+        }
+    }
+
+//    args.forEach { param ->
+//        if(param.startsWith("-Soperation=") || param.startsWith("cmd=")) {
+//            val unknown = SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = param.split('=', limit = 2).last())).isEmpty()
+//            Thread.sleep(250)
+//            if(unknown)
+//                println("Unknown command")
+//        } else if (param.startsWith("cmd_file=")) {
+//            val filename = param.split('=', limit = 2).last()
+//            val file = File(filename)
+//
+//            if(file.exists())
+//                file.useLines { lines -> lines.forEach { line ->
+//                    val unknown = SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = line)).isEmpty()
+//                    Thread.sleep(250)
+//                    if(unknown)
+//                        println("Unknown command")
+//                }
+//                }
+//        }
+//    }
+
     SpiralModel.scope = startingScope
     SpiralModel.autoConfirm = startingAutoConfirm
+    System.setIn(FileInputStream(FileDescriptor.`in`))
 
     while(Gurren.keepLooping) {
         try {
