@@ -395,7 +395,10 @@ object GurrenOperation {
         }
     }
 
-    val exit = Command("exit", "operate") { SpiralModel.scope = "> " to "default" }
+    val exit = Command("exit", "operate") {
+        SpiralModel.scope = "> " to "default"
+        SpiralModel.operating = null
+    }
 
     val operateOn = Command("operate", "default") { (params) ->
         if (SpiralModel.archives.isEmpty())
