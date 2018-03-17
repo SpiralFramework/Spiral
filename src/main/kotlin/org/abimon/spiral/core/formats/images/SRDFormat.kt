@@ -33,7 +33,7 @@ object SRDFormat {
     }
 
     fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(!"${params["srd:convert"] ?: true}".toBoolean())
+        if (!"${params["srd:convert"] ?: true}".toBoolean())
             return false
 
         val otherEntries: MutableMap<String, DataSource> = HashMap()
@@ -57,11 +57,11 @@ object SRDFormat {
                     else
                         img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
 
-                    val model: DataSource? = if(mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
+                    val model: DataSource? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
                     readSRD(srdEntry, img, if (model != null) SRDIModel(model) else null, otherEntries, images, params)
-                    if(otherEntries.size != before)
+                    if (otherEntries.size != before)
                         imageOverride = true
                 }
 
@@ -73,7 +73,8 @@ object SRDFormat {
         if (!imageOverride && images.isEmpty() && !LoggerLevel.TRACE.enabled)
             return false
 
-        val format = SpiralFormats.formatForName(params["srd:format"]?.toString() ?: "PNG", SpiralFormats.imageFormats) ?: PNGFormat
+        val format = SpiralFormats.formatForName(params["srd:format"]?.toString() ?: "PNG", SpiralFormats.imageFormats)
+                ?: PNGFormat
         when (to) {
             is PNGFormat -> ImageIO.write(images.entries.first().value, "PNG", output)
             is ZIPFormat -> {
@@ -86,7 +87,7 @@ object SRDFormat {
 
                 images.forEach { name, image ->
                     zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.extension!!)))
-                    if(format is PNGFormat)
+                    if (format is PNGFormat)
                         ImageIO.write(image, "PNG", zos)
                     else
                         PNGFormat.convert(format, image, zos, emptyMap())
@@ -168,11 +169,11 @@ object SRDFormat {
 
                                     val name = img_data.readZeroString()
                                     val doMips = "${params["srd:extractMipmaps"] ?: false}".toBoolean()
-                                    if(!doMips)
+                                    if (!doMips)
                                         (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
 
                                     for (mip in mipmaps.indices) {
-                                        val mipName = if(doMips) "$mip-$name" else name
+                                        val mipName = if (doMips) "$mip-$name" else name
                                         val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
                                         val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
 //                                    var pal_data: ByteArray? = null
@@ -211,8 +212,7 @@ object SRDFormat {
 
                                             if (swizzled) {
                                                 val processingData = new_img_stream.use { it.readBytes() }
-                                                processingData.deswizzle(width / 4, height / 4, bytespp)
-                                                processing = processingData.inputStream()
+                                                processing = processingData.deswizzle(width / 4, height / 4, bytespp).inputStream()
                                             } else
                                                 processing = new_img_stream
 
@@ -269,8 +269,7 @@ object SRDFormat {
 
                                             if (swizzled && width >= 4 && height >= 4) {
                                                 val processingData = new_img_stream.use { it.readBytes() }
-                                                processingData.deswizzle(width / 4, height / 4, bytespp)
-                                                processingStream = processingData.inputStream()
+                                                processingStream = processingData.deswizzle(width / 4, height / 4, bytespp).inputStream()
                                             } else
                                                 processingStream = new_img_stream
 
@@ -322,10 +321,10 @@ object SRDFormat {
         val data_padding = (0x10 - data_len % 0x10) % 0x10
         val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
 
-        val data = OffsetInputStream(source.seekableInputStream, if(stream is OffsetInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
+        val data = OffsetInputStream(source.seekableInputStream, if (stream is OffsetInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
         stream.skip(data_padding + data_len)
 
-        val subdata = OffsetInputStream(source.seekableInputStream, if(stream is OffsetInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
+        val subdata = OffsetInputStream(source.seekableInputStream, if (stream is OffsetInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
         stream.skip(subdata_padding + subdata_len)
 
         return data_type to data and subdata
@@ -354,8 +353,8 @@ object SRDFormat {
     fun decodeMorton2X(num: Int): Int = compact1By1(num shr 0)
     fun decodeMorton2Y(num: Int): Int = compact1By1(num shr 1)
 
-    fun ByteArray.deswizzle(width: Int, height: Int, bytespp: Int) {
-        val copy = this.copyOf()
+    fun ByteArray.deswizzle(width: Int, height: Int, bytespp: Int): ByteArray {
+        val unswizzled = ByteArray(size)
         val min = min(width, height)
         val k = log(min.toDouble(), 2.0).toInt()
 
@@ -373,17 +372,18 @@ object SRDFormat {
                 y = j / width
             }
 
-            val p = ((y * width) + x) * 8
+            val p = ((y * width) + x) * bytespp
 
-            for (l in 0 until 8) {
-                if ((p + l) in this.indices && (i * bytespp + l) in copy.indices)
-                    this[(p + l)] = copy[(i * bytespp + l)]
+            for (l in 0 until bytespp) {
+                unswizzled[(p + l)] = this[(i * bytespp + l)]
             }
         }
+
+        return unswizzled
     }
 
     fun BufferedImage.mapToModel(model: SRDIModel?, params: Map<String, Any?>): BufferedImage {
-        if(model != null)
+        if (model != null)
             return mapImageToModel(this, model, params)
         return this
     }
@@ -398,13 +398,13 @@ object SRDFormat {
                 val u3 = model.meshes[0].uvs[three]
 
                 area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
-            } catch(ioob: IndexOutOfBoundsException) {
+            } catch (ioob: IndexOutOfBoundsException) {
                 debug(ioob.exportStackTrace())
                 return@forEach
             }
         }
 
-        if(antialias) {
+        if (antialias) {
             val newImg = BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_ARGB)
             val g = newImg.createGraphics()
 
