@@ -849,8 +849,8 @@ object Gurren {
     val jenkinsBuild = Command("build") {
         val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
 
-        if (response.httpStatusCode != 200)
-            println("Error retrieving the jenkins build; status code ${response.httpStatusCode}")
+        if (response.statusCode != 200)
+            println("Error retrieving the jenkins build; status code ${response.statusCode}")
         else
             println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
                     ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
@@ -880,8 +880,8 @@ object Gurren {
     val downloadLatest = Command("download_latest") {
         val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().response()
 
-        if (headResponse.httpStatusCode != 200)
-            return@Command errPrintln("Error retrieving latest update: ${headResponse.httpStatusCode}")
+        if (headResponse.statusCode != 200)
+            return@Command errPrintln("Error retrieving latest update: ${headResponse.statusCode}")
 
         val latestBuild = this.latestBuild
 
@@ -895,7 +895,7 @@ object Gurren {
                 println("Downloaded ${GurrenPlugins.TWO_DECIMAL_PLACES.format(readBytes * 100.0 / totalBytes.toDouble())}%")
             }.destination { response, url -> destination }.responseStream()
 
-            if (response.httpStatusCode == 200)
+            if (response.statusCode == 200)
                 println("Successfully downloaded update to $destination")
             else
                 errPrintln("Error: Was unable to download SPIRAL build $latestBuild")
@@ -912,7 +912,7 @@ object Gurren {
 
             val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
 
-            if (response.httpStatusCode != 200)
+            if (response.statusCode != 200)
                 return -1
             else
                 return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
@@ -926,7 +926,7 @@ object Gurren {
 
             val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
 
-            if (response.httpStatusCode != 200)
+            if (response.statusCode != 200)
                 return -1
             else
                 return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *>
