@@ -6,16 +6,16 @@ import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.formats.images.PNGFormat
-import org.abimon.spiral.core.objects.archives.CustomSPC
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.customSPC
 import org.abimon.spiral.core.objects.images.CustomSRD
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.lang.child
-import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
 import java.awt.image.BufferedImage
 import java.io.File
@@ -212,10 +212,10 @@ object GurrenPatching {
 
             customSRD.image(if(params.size > 2) params[2] else file.name.child, img)
 
-            val (srdOut, srdIn) = CacheHandler.cacheStream()
-            val (srdvOut, srdvIn) = CacheHandler.cacheStream()
+            val srdFile = CacheHandler.newCacheFile()
+            val srdvFile = CacheHandler.newCacheFile()
 
-            customSRD.patch(srdOut, srdvOut)
+            FileOutputStream(srdFile).use { srdOut -> FileOutputStream(srdvFile).use { srdvOut -> customSRD.patch(srdOut, srdvOut) } }
 
             if (ZIPFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
                 FileInputStream(patchFile).use { patchDataStream ->
@@ -225,8 +225,8 @@ object GurrenPatching {
                             zipIn.forEach { entry ->
                                 zipOut.putNextEntry(entry)
                                 when {
-                                    entry.name == srdName -> srdIn().use { stream -> stream.copyTo(zipOut) }
-                                    entry.name == srdvName -> srdvIn().use { stream -> stream.copyTo(zipOut) }
+                                    entry.name == srdName -> FileInputStream(srdFile).use { stream -> stream.copyTo(zipOut) }
+                                    entry.name == srdvName -> FileInputStream(srdvFile).use { stream -> stream.copyTo(zipOut) }
                                     else -> zipIn.copyTo(zipOut)
                                 }
                             }
@@ -239,15 +239,16 @@ object GurrenPatching {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
                 val spc = SPC(patchFile::inputStream)
 
-                val customSPC = make<CustomSPC> {
+                val customSPC = customSPC {
                     spc.files.forEach { entry ->
                         when {
-                            entry.name == srdName -> file(entry.name, InputStreamFuncDataSource(srdIn))
-                            entry.name == srdvName -> file(entry.name, InputStreamFuncDataSource(srdvIn))
-                            else -> file(entry.name, InputStreamFuncDataSource(entry::inputStream))
+                            entry.name == srdName -> add(entry.name, srdFile)
+                            entry.name == srdvName -> add(entry.name, srdvFile)
+                            else -> addCompressed(entry.name, entry.compressionFlag, entry.compressedSize, entry.decompressedSize) { WindowedInputStream(spc.dataSource(), entry.offset, entry.compressedSize) }
                         }
                     }
                 }
+
                 cacheOut.use(customSPC::compile) //Cache it temporarily
                 FileOutputStream(patchFile).use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
             }

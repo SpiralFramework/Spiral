@@ -5,14 +5,13 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.WRDFormat
 import org.abimon.spiral.core.objects.customLin
+import org.abimon.spiral.core.objects.customWordScript
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
-import org.abimon.spiral.core.objects.scripting.CustomWRD
 import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.utils.and
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.shortToIntPair
-import org.abimon.visi.lang.make
 import org.abimon.visi.lang.times
 import java.io.BufferedReader
 import java.io.InputStream
@@ -98,7 +97,7 @@ object ScriptTextFormat : SpiralFormat {
             WRDFormat -> {
                 dataSource().use { stream ->
                     val reader = BufferedReader(InputStreamReader(stream))
-                    val wrd = make<CustomWRD> {
+                    val wrd = customWordScript {
                         reader.forEachLine loop@ { line ->
                             val parts = line.split("|", limit = 2)
 
@@ -135,7 +134,7 @@ object ScriptTextFormat : SpiralFormat {
                                 string(parts[1].trim())
                             } else {
                                 if (parts.size == 1 || parts[1].isBlank())
-                                    entry(org.abimon.spiral.core.wrd.UnknownEntry(op, IntArray(0)))
+                                    add(org.abimon.spiral.core.objects.scripting.wrd.UnknownEntry(op, IntArray(0)))
                                 else {
                                     val args: MutableList<Int> = ArrayList()
 
@@ -156,7 +155,7 @@ object ScriptTextFormat : SpiralFormat {
                                         }
                                     }
 
-                                    entry(org.abimon.spiral.core.wrd.UnknownEntry(op, args.toIntArray()))
+                                    add(org.abimon.spiral.core.objects.scripting.wrd.UnknownEntry(op, args.toIntArray()))
                                 }
                             }
                         }
