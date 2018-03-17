@@ -1,9 +1,7 @@
 package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.osl.WordScriptCommand
-import org.abimon.osl.WordScriptString
-import org.abimon.osl.drills.DrillHead
+import org.abimon.osl.SpiralDrillBit
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.customLin
 import org.abimon.spiral.core.objects.customWordScript
@@ -58,14 +56,21 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                         debug("Stack Value: $value")
 
                         if (value is List<*>) {
-                            val head = (value[0] as? DrillHead<*>) ?: return@forEach
-                            val valueParams = value.subList(1, value.size).filterNotNull().toTypedArray()
+                            val drillBit = (value[0] as? SpiralDrillBit) ?: return@forEach
+                            val head = drillBit.head
+                            try {
+                                val valueParams = value.subList(1, value.size).filterNotNull().toTypedArray()
 
-                            val products = head.operate(parser, valueParams)
+                                val products = head.operate(parser, valueParams)
 
-                            when (head.klass) {
-                                LinScript::class -> add(products as LinScript)
-                                Array<LinScript>::class -> addAll(products as Array<LinScript>)
+                                when (head.klass) {
+                                    LinScript::class -> add(products as LinScript)
+                                    Array<LinScript>::class -> addAll(products as Array<LinScript>)
+                                    Unit::class -> { }
+                                    else -> System.err.println("${head.klass} not a recognised product type!")
+                                }
+                            } catch (th: Throwable) {
+                                throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
                             }
                         }
                     }
@@ -81,19 +86,21 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                     stack.forEach { value ->
                         debug("Stack Value: $value")
                         if (value is List<*>) {
-                            val head = (value[0] as? DrillHead<*>) ?: return@forEach
-                            val valueParams = value.subList(1, value.size).filterNotNull().toTypedArray()
+                            val drillBit = (value[0] as? SpiralDrillBit) ?: return@forEach
+                            val head = drillBit.head
+                            try {
+                                val valueParams = value.subList(1, value.size).filterNotNull().toTypedArray()
 
-                            val products = head.operate(parser, valueParams)
+                                val products = head.operate(parser, valueParams)
 
-                            when (head.klass) {
-                                WrdScript::class -> add(products as WrdScript)
-                                Array<WrdScript>::class -> addAll(products as Array<WrdScript>)
-                                WordScriptString::class -> string((products as WordScriptString).string)
-                                WordScriptCommand::class -> {
-                                    val command = (products as WordScriptCommand)
-                                    command(command.number, command.command)
+                                when (head.klass) {
+                                    WrdScript::class -> add(products as WrdScript)
+                                    Array<WrdScript>::class -> addAll(products as Array<WrdScript>)
+                                    Unit::class -> { }
+                                    else -> System.err.println("${head.klass} not a recognised product type!")
                                 }
+                            } catch (th: Throwable) {
+                                throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
                             }
                         }
                     }
