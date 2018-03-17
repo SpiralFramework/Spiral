@@ -20,7 +20,6 @@ import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
 import org.abimon.visi.collections.remove
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 import org.abimon.visi.lang.exportStackTrace
 import java.awt.*
@@ -68,7 +67,7 @@ object SRDFormat {
                     val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
-                    readSRD(InputStreamFuncDataSource(srdEntry::inputStream), InputStreamFuncDataSource(img::inputStream), if (model != null) SRDIModel(InputStreamFuncDataSource(model::inputStream)) else null, otherEntries, images, params)
+                    readSRD(srdEntry::inputStream, img::inputStream, if (model != null) SRDIModel(InputStreamFuncDataSource(model::inputStream)) else null, otherEntries, images, params)
                     if (otherEntries.size != before)
                         imageOverride = true
                 }
@@ -109,14 +108,14 @@ object SRDFormat {
         return true
     }
 
-    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, () -> InputStream>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
-        srd.seekableUse { original ->
+    fun readSRD(srd: () -> InputStream, img: () -> InputStream, model: SRDIModel?, otherData: MutableMap<String, () -> InputStream>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
+        srd().use { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
-                val (data_type, data_S, subdata_S) = readSRDItem(stream, srd) ?: break
+                val (data_type, dataSource, subdataSource) = readSRDItem(stream, srd) ?: break
 
-                subdata_S.use big@{ subdata ->
-                    data_S.use { data ->
+                subdataSource().use big@{ subdata ->
+                    dataSource().use { data ->
 
                         //debug(data_type)
 
@@ -139,9 +138,8 @@ object SRDFormat {
                                 val palette = data.read() and 0xFF
                                 val palette_id = data.read() and 0xFF
 
-                                val (img_data_type, img_data_S, img_subdata_S) = readSRDItem(subdata, srd)!!
-                                img_subdata_S.close()
-                                img_data_S.use { img_data ->
+                                val (img_data_type, imgDataSource) = readSRDItem(subdata, srd)!!
+                                imgDataSource().use { img_data ->
                                     img_data.skip(2)
                                     val unk5 = img_data.read() and 0xFF
                                     val mipmap_count = img_data.read() and 0xFF
@@ -172,10 +170,11 @@ object SRDFormat {
                                         pal_len = null
                                     }
 
-                                    img_data.reset()
-                                    img_data.skip(name_offset)
+                                    val name = imgDataSource().use { nameStream ->
+                                        nameStream.skip(name_offset)
+                                        nameStream.readZeroString()
+                                    }
 
-                                    val name = img_data.readZeroString()
                                     val doMips = "${params["srd:extractMipmaps"] ?: false}".toBoolean()
                                     if (!doMips)
                                         (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
@@ -183,17 +182,7 @@ object SRDFormat {
                                     for (mip in mipmaps.indices) {
                                         val mipName = if (doMips) "$mip-$name" else name
                                         val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
-                                        val new_img_stream = WindowedInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
-//                                    var pal_data: ByteArray? = null
-//
-//                                    img.seekableInputStream.use { img_stream ->
-//                                        if (pal_start != null) {
-//                                            img_stream.reset()
-//                                            img_stream.skip(pal_start.toLong())
-//
-//                                            pal_data = ByteArray(pal_len!!).apply { img_stream.read(this) }
-//                                        }
-//                                    }
+                                        val new_img_stream = WindowedInputStream(img(), mipmap_start.toLong(), mipmap_len.toLong())
 
                                         val swizzled = !(swiz hasBitSet 1)
                                         val imageInfo: MutableMap<String, Any> = hashMapOf("format" to fmt, "disp_width" to disp_width, "disp_height" to disp_height, "name" to name, "mipmap" to mip)
@@ -316,7 +305,7 @@ object SRDFormat {
         }
     }
 
-    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, WindowedInputStream, WindowedInputStream>? {
+    fun readSRDItem(stream: CountingInputStream, source: () -> InputStream): Triple<String, () -> WindowedInputStream, () -> WindowedInputStream>? {
         val data_type = stream.readString(4)
 
         if (data_type.length < 4 || !data_type.startsWith("$"))
@@ -329,10 +318,10 @@ object SRDFormat {
         val data_padding = (0x10 - data_len % 0x10) % 0x10
         val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
 
-        val data = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
+        val data = { WindowedInputStream(source(), if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len) } //ByteArray(data_len.toInt()).apply { stream.read(this) }
         stream.skip(data_padding + data_len)
 
-        val subdata = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
+        val subdata = { WindowedInputStream(source(), if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) } //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
         stream.skip(subdata_padding + subdata_len)
 
         return data_type to data and subdata
