@@ -17,7 +17,6 @@ import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.extension
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 object SpiralFormats {
@@ -81,29 +80,31 @@ object SpiralFormats {
 
     val gameAmbiguousFormats = formats.filterNot { format -> format in gameRequiredFormats }.toTypedArray()
 
-    //TODO: Use an actual game
-    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, dataSource::inputStream) }
-    //TODO: Use an actual game
+    fun nullContext(name: String): (() -> InputStream)? = null
+
+    //TODO: Use an actual game/context
+    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, this::nullContext, dataSource::inputStream) }
+    //TODO: Use an actual game/context
     fun decompress(dataSource: () -> InputStream): () -> InputStream {
-        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, dataSource) } ?: return dataSource
+        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, this::nullContext, dataSource) } ?: return dataSource
         val (output, source) = CacheHandler.cacheStream()
-        compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, dataSource, output, emptyMap())
+        compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, this::nullContext, dataSource, output, emptyMap())
         return source
     }
-    //TODO: Use an actual game
+    //TODO: Use an actual game/context
     fun decompressFully(dataSource: () -> InputStream): () -> InputStream {
         var data: () -> InputStream = dataSource
         while(true) {
-            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, data) } ?: return data
+            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, this::nullContext, data) } ?: return data
             val (output, source) = CacheHandler.cacheStream()
-            compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, data, output, emptyMap())
+            compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, this::nullContext, data, output, emptyMap())
             data = source
         }
     }
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
     @JvmOverloads
-    fun formatForData(game: DRGame?, dataSource: () -> InputStream, name: String? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(game, name, dataSource) }
+    fun formatForData(game: DRGame?, dataSource: () -> InputStream, name: String? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(game, name, this::nullContext, dataSource) }
             .filter { (_, isFormat) -> isFormat.first }
             .sortedBy { (_, confidence) -> confidence.second }
             .lastOrNull()?.first
@@ -113,10 +114,10 @@ object SpiralFormats {
     fun formatForNameAndData(name: String, dataSource: () -> InputStream, game: DRGame? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? {
         val nameByExtension = formatForExtension(name.extension)
 
-        if(nameByExtension?.isFormat(game, name, dataSource) == true)
+        if(nameByExtension?.isFormat(game, name, this::nullContext, dataSource) == true)
             return nameByExtension
 
-        return selectiveFormats.map { format -> format to format.isFormatWithConfidence(null, name, dataSource) }
+        return selectiveFormats.map { format -> format to format.isFormatWithConfidence(null, name, this::nullContext, dataSource) }
                 .filter { (_, isFormat) -> isFormat.first }
                 .sortedBy { (_, confidence) -> confidence.second }
                 .lastOrNull()?.first
@@ -128,12 +129,5 @@ object SpiralFormats {
 
     fun formatForFingerprint(fingerprint: String): SpiralFormat? {
         return null
-    }
-
-    //TODO: Use an actual game
-    fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
-        val baos = ByteArrayOutputStream()
-        from.convert(null, to, source.location, source::inputStream, baos, params)
-        return baos.toByteArray()
     }
 }

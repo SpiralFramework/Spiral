@@ -7,6 +7,7 @@ import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
+import org.abimon.spiral.core.data.FileContext
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.CPKFormat
@@ -24,6 +25,7 @@ import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
+import org.abimon.spiral.util.absoluteParentFile
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.collections.copyFrom
@@ -227,6 +229,8 @@ object Gurren {
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
+            val fileContext = FileContext(file.absoluteParentFile)
+
             val format = SpiralFormats.formatForExtension(file.extension)
                     ?: SpiralFormats.formatForData(game, file::inputStream, file.name, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
             if (format == null)
@@ -241,7 +245,7 @@ object Gurren {
                                 ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, file.name, file::inputStream, out, formatParams) }
+                            FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, tmpConvertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -256,7 +260,7 @@ object Gurren {
                                 ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> format.convert(game, convertTo, file.name, file::inputStream, out, formatParams) }
+                            FileOutputStream(output).use { out -> format.convert(game, convertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
                             rows.add(arrayOf(file.path, output.path, format.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(file.path, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -269,6 +273,8 @@ object Gurren {
                 }
             }
         } else if (file.isDirectory) {
+            val fileContext = FileContext(file)
+
             file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
                 val format = SpiralFormats.formatForExtension(subfile.extension)
                         ?: SpiralFormats.formatForData(game, subfile::inputStream, subfile relativePathFrom file, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
@@ -288,7 +294,7 @@ object Gurren {
                                 return@run this
                             }
                             try {
-                                FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, subfile relativePathFrom file, subfile::inputStream, out, formatParams) }
+                                FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
                                 rows.add(arrayOf(subfile relativePathTo file, file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, tmpConvertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(subfile relativePathTo file, "N/a", format.name, "Could not convert to ${tmpConvertTo.name}: ${iea.localizedMessage}"))
@@ -308,7 +314,7 @@ object Gurren {
                             }
 
                             try {
-                                FileOutputStream(output).use { out -> format.convert(game, convertTo, subfile relativePathFrom file, subfile::inputStream, out, formatParams) }
+                                FileOutputStream(output).use { out -> format.convert(game, convertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
                                 rows.add(arrayOf(subfile relativePathTo file, file.name + output.absolutePath.replace(file.absolutePath, ""), format.name, convertTo.name))
                             } catch (iea: IllegalArgumentException) {
                                 rows.add(arrayOf(subfile relativePathTo file, "N/a", format.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -342,7 +348,9 @@ object Gurren {
 
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
-            if (!convertFrom.isFormat(game, file.name, file::inputStream))
+            val fileContext = FileContext(file.absoluteParentFile)
+
+            if (!convertFrom.isFormat(game, file.name, fileContext::provide, file::inputStream))
                 rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
             else {
                 if (convertFrom.canConvert(game, convertTo)) {
@@ -350,7 +358,7 @@ object Gurren {
                             ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                     try {
-                        FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, file.name, file::inputStream, out, formatParams) }
+                        FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
                         rows.add(arrayOf(file.path, output.path, convertFrom.name, convertTo.name))
                     } catch (iea: IllegalArgumentException) {
                         rows.add(arrayOf(file.path, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -362,8 +370,10 @@ object Gurren {
                     rows.add(arrayOf(file.path, "N/a", "${convertFrom.name} cannot be converted to ${convertTo.name}", "N/a"))
             }
         } else if (file.isDirectory) {
+            val fileContext = FileContext(file)
+
             file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
-                if (!convertFrom.isFormat(game, subfile relativePathFrom file, subfile::inputStream))
+                if (!convertFrom.isFormat(game, subfile relativePathFrom file, fileContext::provide, subfile::inputStream))
                     rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
                 else {
                     if (convertFrom.canConvert(game, convertTo)) {
@@ -371,7 +381,7 @@ object Gurren {
                                 ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, subfile relativePathFrom file, subfile::inputStream, out, formatParams) }
+                            FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
                             rows.add(arrayOf(subfile relativePathTo file, output relativePathTo file, convertFrom.name, convertTo.name))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(subfile relativePathTo file, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
@@ -432,6 +442,7 @@ object Gurren {
             println("Squished $file into $output")
         } else if (file.isDirectory) {
             val rows: MutableList<Array<String>> = ArrayList()
+            val fileContext = FileContext(file)
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
                 val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(game, subfile::inputStream, subfile relativePathFrom file, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
@@ -442,7 +453,7 @@ object Gurren {
                     return@forEach
                 }
 
-                if (!format.isFormat(game, subfile relativePathFrom file, subfile::inputStream))
+                if (!format.isFormat(game, subfile relativePathFrom file, fileContext::provide, subfile::inputStream))
                     return@forEach
 
                 val full = format.toBufferedImage(subfile relativePathFrom file, subfile::inputStream)
@@ -525,6 +536,7 @@ object Gurren {
             println("Squished $file")
         } else if (file.isDirectory) {
             val rows: MutableList<Array<String>> = ArrayList()
+            val fileContext = FileContext(file)
 
             file.iterate().filter { it.isFile }.forEach { subfile ->
                 val format: SpiralImageFormat = (if (params.size < 3) SpiralFormats.formatForData(game, subfile::inputStream, subfile relativePathFrom file, SpiralFormats.imageFormats) else SpiralFormats.formatForName(params[2], SpiralFormats.imageFormats)
@@ -535,7 +547,7 @@ object Gurren {
                     return@forEach
                 }
 
-                if (!format.isFormat(game, subfile relativePathFrom file, subfile::inputStream))
+                if (!format.isFormat(game, subfile relativePathFrom file, fileContext::provide, subfile::inputStream))
                     return@forEach
 
                 val full = format.toBufferedImage(subfile relativePathFrom file, subfile::inputStream)
@@ -591,6 +603,7 @@ object Gurren {
                 if (file.isFile) {
                     val format = (SpiralFormats.formatForExtension(file.extension)
                             ?: SpiralFormats.formatForData(DR1, file::inputStream, file.name))
+                    val fileContext = FileContext(file.absoluteParentFile)
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -601,10 +614,12 @@ object Gurren {
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension
                                 ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(DR1, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                        format.convert(DR1, convertTo, file.name, fileContext::provide, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
+                    val fileContext = FileContext(file)
+
                     file.iterate().forEach { subfile ->
                         val format = (SpiralFormats.formatForExtension(subfile.extension)
                                 ?: SpiralFormats.formatForData(DR1, subfile::inputStream, subfile relativePathTo file))
@@ -618,7 +633,7 @@ object Gurren {
 
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension
                                     ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(DR1, convertTo, subfile relativePathTo file, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            format.convert(DR1, convertTo, subfile relativePathTo file, fileContext::provide, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                             zip.closeEntry()
                         }
                     }
@@ -658,6 +673,7 @@ object Gurren {
                 if (file.isFile) {
                     val format = (SpiralFormats.formatForExtension(file.extension)
                             ?: SpiralFormats.formatForData(DR2, file::inputStream, file.name))
+                    val fileContext = FileContext(file.absoluteParentFile)
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -668,10 +684,12 @@ object Gurren {
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension
                                 ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(DR2, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                        format.convert(DR2, convertTo, file.name, fileContext::provide, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
+                    val fileContext = FileContext(file.absoluteParentFile)
+
                     file.iterate(includeDirs = false).forEach { subfile ->
                         val format = (SpiralFormats.formatForExtension(subfile.extension)
                                 ?: SpiralFormats.formatForData(DR2, subfile::inputStream, subfile relativePathTo file))
@@ -685,7 +703,7 @@ object Gurren {
 
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension
                                     ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(DR2, convertTo, subfile relativePathTo file, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                            format.convert(DR2, convertTo, subfile relativePathTo file, fileContext::provide, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
                             zip.closeEntry()
                         }
                     }
@@ -725,6 +743,7 @@ object Gurren {
                 if (file.isFile) {
                     val format = (SpiralFormats.formatForExtension(file.extension)
                             ?: SpiralFormats.formatForData(null, file::inputStream, file.name, SpiralFormats.gameAmbiguousFormats))
+                    val fileContext = FileContext(file.absoluteParentFile)
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -735,10 +754,12 @@ object Gurren {
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension
                                 ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(null, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true))
+                        format.convert(null, convertTo, file.name, fileContext::provide, file::inputStream, zip, mapOf("pak:convert" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
+                    val fileContext = FileContext(file)
+
                     file.iterate(includeDirs = false).forEach iterate@{ subfile ->
                         val format = (SpiralFormats.formatForExtension(subfile.extension)
                                 ?: SpiralFormats.formatForData(null, subfile::inputStream, subfile relativePathTo file, SpiralFormats.gameAmbiguousFormats))
@@ -752,7 +773,7 @@ object Gurren {
 
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension
                                     ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(null, convertTo, (subfile relativePathTo file), file::inputStream, zip, mapOf("pak:convert" to true))
+                            format.convert(null, convertTo, (subfile relativePathTo file), fileContext::provide, file::inputStream, zip, mapOf("pak:convert" to true))
                             zip.closeEntry()
                         }
                     }
@@ -826,6 +847,8 @@ object Gurren {
             else if (!directory.isDirectory)
                 return@Command errPrintln("Error: Provided directory was not, in fact, a directory")
 
+            val fileContext = FileContext(directory)
+
             val entries = ArrayList<Array<String>>()
 
             val files = directory.listFiles().filter { file -> ignoreFilters.all { filter -> filter.accept(file) } }
@@ -860,7 +883,7 @@ object Gurren {
                 } finally {
                     if (output.exists()) {
                         if (output.length() > 16) {
-                            if (MP4Format.isFormat(null, null, { FileInputStream(output) }))
+                            if (MP4Format.isFormat(null, null, fileContext::provide, { FileInputStream(output) }))
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, ""))
                             else
                                 entries.add(arrayOf(name, audio.name, video.name, output.name, "Output is not an MP4 file"))

@@ -18,7 +18,7 @@ object PAKFormat : SpiralFormat {
     override val extension = "pak"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return Pak(dataSource)?.files?.isNotEmpty() == true
         } catch (oom: OutOfMemoryError) {
@@ -27,14 +27,14 @@ object PAKFormat : SpiralFormat {
         return false
     }
 
-    override fun isFormatWithConfidence(game: DRGame?, name: String?, dataSource: () -> InputStream): Pair<Boolean, Double> {
-        val isFormat = isFormat(game, name, dataSource)
+    override fun isFormatWithConfidence(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Pair<Boolean, Double> {
+        val isFormat = isFormat(game, name, context, dataSource)
         val confidence = if (name?.endsWith("pak") == true) 1.0 else 0.5
         return isFormat to confidence
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val pak = UnsafePak(dataSource)
         val convert = "${params["pak:convert"] ?: false}".toBoolean()
@@ -54,7 +54,7 @@ object PAKFormat : SpiralFormat {
 
                             if (innerFormat != null && convertTo != null) {
                                 zip.putNextEntry(ZipEntry(pakName.replaceLast(".${innerFormat.extension ?: pakName.extension}", ".${convertTo.extension ?: pakName.extension}")))
-                                innerFormat.convert(game, convertTo, pakName, data, zip, params)
+                                innerFormat.convert(game, convertTo, pakName, context, data, zip, params)
                                 return@forEachIndexed
                             }
                         }
@@ -68,7 +68,7 @@ object PAKFormat : SpiralFormat {
 
                         if (innerFormat != null && convertTo != null) {
                             zip.putNextEntry(ZipEntry("$index.${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(game, convertTo, null, data, zip, params)
+                            innerFormat.convert(game, convertTo, null, context, data, zip, params)
                             return@forEachIndexed
                         } else if (innerFormat != null) {
                             zip.putNextEntry(ZipEntry("$index.${innerFormat.extension}"))

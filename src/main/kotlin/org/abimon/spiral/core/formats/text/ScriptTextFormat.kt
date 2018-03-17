@@ -23,7 +23,7 @@ object ScriptTextFormat : SpiralFormat {
     override val extension = "osl" //OP Scripting Language
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat, WRDFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         return dataSource().use { stream ->
             val reader = BufferedReader(InputStreamReader(stream))
 
@@ -54,8 +54,8 @@ object ScriptTextFormat : SpiralFormat {
         }
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         debug("Begun Converting\n${"-" * 100}")
         when (format) {

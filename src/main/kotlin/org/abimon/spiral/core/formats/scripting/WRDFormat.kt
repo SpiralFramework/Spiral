@@ -24,7 +24,7 @@ object WRDFormat : SpiralFormat {
     val STRING_OP_CODE = 0x2B1E
     val STRING_OP_CODE_HEX = STRING_OP_CODE.toString(16)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return game === V3 && WordScriptFile(game, dataSource).entries.isNotEmpty()
         } catch(illegal: IllegalArgumentException) {
@@ -33,8 +33,8 @@ object WRDFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val wrd = WordScriptFile(game as? V3 ?: return false, dataSource)
 

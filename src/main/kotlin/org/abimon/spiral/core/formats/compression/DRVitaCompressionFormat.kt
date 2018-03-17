@@ -18,12 +18,12 @@ object DRVitaCompressionFormat : SpiralFormat {
     val CMP_MAGIC = byteArrayOfInts(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = byteArrayOfInts(0x47, 0x58, 0x33, 0x00)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = tryUnsafe { dataSource().use { it.read(4) equals CMP_MAGIC } }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = tryUnsafe { dataSource().use { it.read(4) equals CMP_MAGIC } }
 
     override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = true
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         dataSource().use { stream ->
             var magic = stream.read(4)
@@ -101,9 +101,9 @@ object DRVitaCompressionFormat : SpiralFormat {
         return true
     }
 
-    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(format.canConvert(game, this)) //Check if there's a built in way of doing it
-            return format.convert(game, this, name, dataSource, output, params)
+            return format.convert(game, this, name, context, dataSource, output, params)
         else { //Otherwise we roll up our sleeves and get dirty
             dataSource().use { stream ->
                 val result = ByteArrayOutputStream()

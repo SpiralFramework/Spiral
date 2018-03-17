@@ -16,7 +16,7 @@ object DDSFormat : SpiralImageFormat {
     override val extension: String = ".dds"
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, TGAFormat, SHTXFormat, JPEGFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(8) == "DDS1DDS " }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(8) == "DDS1DDS " }
 
     override fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage = dataSource().use { stream ->
         val header = stream.read(132)

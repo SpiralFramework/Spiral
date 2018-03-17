@@ -17,7 +17,7 @@ object LINFormat : SpiralFormat {
     override val extension = "lin"
     override val conversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return Lin(game as? HopesPeakDRGame ?: return false, dataSource)?.entries?.isNotEmpty() == true
         } catch (illegal: IllegalArgumentException) {
@@ -26,8 +26,8 @@ object LINFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
         output.println("OSL Script")
         UnsafeLin(game as? HopesPeakDRGame ?: return false, dataSource).entries.forEach { entry ->
