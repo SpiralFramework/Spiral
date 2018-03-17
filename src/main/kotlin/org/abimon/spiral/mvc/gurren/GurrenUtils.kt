@@ -2,17 +2,15 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.objects.game.hpa.*
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.debug
 import org.abimon.visi.collections.copyFrom
-import org.abimon.visi.io.errPrintln
-import org.abimon.visi.io.relativePathTo
-import java.io.File
-import java.io.PrintStream
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.errPrintln
+import org.abimon.visi.io.relativePathTo
 import org.abimon.visi.lang.exportStackTrace
 import java.awt.AlphaComposite
 import java.awt.Color
@@ -21,6 +19,8 @@ import java.awt.RenderingHints
 import java.awt.geom.AffineTransform
 import java.awt.geom.Area
 import java.awt.image.BufferedImage
+import java.io.File
+import java.io.PrintStream
 import javax.imageio.ImageIO
 
 object GurrenUtils {
@@ -28,7 +28,7 @@ object GurrenUtils {
         println(params.copyFrom(1).joinToString(" "))
     }
 
-    val portLin = Command("port_dr2_lin") { (params) ->
+    val portDr2Lin = Command("port_dr2_lin") { (params) ->
         if (params.size == 1)
             return@Command errPrintln("Error: No file(s) provided")
 
@@ -68,6 +68,54 @@ object GurrenUtils {
             }
 
             println(FlipTable.of(arrayOf("File", "Lines", "\"Wait For Input DR1\" Lines", "\"Wait Frame DR1\" Lines"), results.toTypedArray()))
+        }
+    }
+
+    val portOldOSL = Command("port_old_osl") { (params) ->
+        if (params.size == 1)
+            return@Command errPrintln("Error: No file(s) provided")
+
+        if (Gurren.game == null)
+            return@Command errPrintln("Error: No game defined!")
+
+        if (Gurren.game !is HopesPeakDRGame)
+            return@Command errPrintln("Error: Game ${Gurren.game} is not a Hope's Peak game!")
+
+        val results = ArrayList<Array<String>>()
+
+        params.copyFrom(1).forEach { fileName ->
+            val file = File(fileName)
+
+            if (!file.exists())
+                return@forEach
+
+            file.walk().forEach walk@{ subFile ->
+                if (subFile.isDirectory)
+                    return@walk
+
+                if (subFile.extension != "osl" && subFile.extension != "txt")
+                    return@walk
+
+                val lines = subFile.readLines()
+
+                PrintStream(subFile).use { out ->
+                    out.println("OSL Script")
+                    out.print("Set Game To ")
+                    when (Gurren.game) {
+                        DR1 -> out.println("DR1")
+                        DR2 -> out.println("DR2")
+                        UDG -> out.println("UDG")
+                        UnknownHopesPeakGame -> out.println("UNK")
+                        else -> error("Unsupported game: ${Gurren.game}")
+                    }
+
+                    lines.forEach(out::println)
+                }
+
+                results.add(arrayOf(subFile relativePathTo file, lines.size.toString()))
+            }
+
+            println(FlipTable.of(arrayOf("File", "Lines"), results.toTypedArray()))
         }
     }
 
