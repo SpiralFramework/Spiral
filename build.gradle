@@ -28,7 +28,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven { url 'https://jitpack.io' }
-    maven { url 'https://eternal.abimon.org/files/maven' }
+    maven { url 'https://maven.abimon.org' }
 }
 
 dependencies {
@@ -39,7 +39,7 @@ dependencies {
     compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
-    compile('org.abimon:SpiralFormats:4f98501')
+    compile('org.abimon:SpiralFormats:267e2fc')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
