@@ -7,6 +7,7 @@ import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.data.FileContext
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
@@ -16,7 +17,10 @@ import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.mvc.SpiralModel.operating
-import org.abimon.spiral.util.*
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import org.abimon.spiral.util.LoggerLevel
+import org.abimon.spiral.util.debug
+import org.abimon.spiral.util.fileSourceForname
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
@@ -192,7 +196,7 @@ object GurrenOperation {
                                 try {
                                     val output = File(directory, entryName.replace(".${format.extension
                                             ?: "unk"}", "", true) + ".${convertingTo.extension ?: "unk"}")
-                                    FileOutputStream(output).use { outputStream -> format.convert(operatingGame, convertingTo, entryName, data, outputStream, formatParams) }
+                                    FileOutputStream(output).use { outputStream -> format.convert(operatingGame, convertingTo, entryName, archive::fileSourceForname, data, outputStream, formatParams) }
                                     rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
                                 } catch (iea: IllegalArgumentException) {
                                     val output = File(directory, entryName)
@@ -303,6 +307,7 @@ object GurrenOperation {
 
         if (proceed) {
             val formatParams = mapOf("pak:convert" to true)
+            val fileContext = FileContext(directory)
 //            val customWad = make<CustomWAD> {
 //                wad(wad)
 //
@@ -322,7 +327,7 @@ object GurrenOperation {
                         ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
                 val (formatOut, formatIn) = CacheHandler.cacheStream()
                 from.convert(operatingGame, operatingArchive.niceCompileFormats[from]
-                        ?: from.conversions.first(), entry relativePathFrom directory, entry::inputStream, formatOut, formatParams)
+                        ?: from.conversions.first(), entry relativePathFrom directory, fileContext::provide, entry::inputStream, formatOut, formatParams)
                 return@map name to formatIn
             })
 
@@ -380,7 +385,7 @@ object GurrenOperation {
                 val cpk = (operatingArchive as CPKArchive).cpk
 
                 val matching = cpk.files.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file ->
-                    arrayOf("${file.directoryName}/${file.fileName}", "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStreamFor.bind(cpk)))?.mod_uid
+                    arrayOf("${file.directoryName}/${file.fileName}", "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStream))?.mod_uid
                             ?: "Unknown")
                 }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))

@@ -5,8 +5,6 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.modding.data.ModList
-import org.abimon.spiral.util.bind
-import org.abimon.spiral.util.inputStreamFor
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -15,12 +13,12 @@ class CPKArchive(override val archiveFile: File): IArchive {
     val cpk: CPK = CPK { FileInputStream(archiveFile) }
 
     override val archiveType: ArchiveType = ArchiveType.CPK
-    override val fileEntries: List<Pair<String, () -> InputStream>> = cpk.files.map { file -> "${file.directoryName}/${file.fileName}" to file::inputStreamFor.bind(cpk) }
+    override val fileEntries: List<Pair<String, () -> InputStream>> = cpk.files.map { file -> "${file.directoryName}/${file.fileName}" to file::inputStream }
     override val supportsCompilation: Boolean = false
     override val installedMods: ModList = run {
         val entry = cpk.files.firstOrNull { entry -> entry.fileName == SpiralData.SPIRAL_MOD_LIST } ?: return@run ModList()
 
-        return@run SpiralData.MAPPER.readValue(entry.inputStreamFor(cpk), ModList::class.java)
+        return@run SpiralData.MAPPER.readValue(entry.inputStream, ModList::class.java)
     }
 
     override val niceCompileFormats: Map<SpiralFormat, SpiralFormat> = mapOf(

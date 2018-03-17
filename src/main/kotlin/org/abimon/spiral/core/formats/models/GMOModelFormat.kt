@@ -15,10 +15,10 @@ object GMOModelFormat: SpiralFormat {
     override val extension: String? = "gmo"
     override val conversions: Array<SpiralFormat> = arrayOf(OBJModelFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readString(12) == "OMG.00.1PSP\u0000" }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readString(12) == "OMG.00.1PSP\u0000" }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val gmo = GMOModel(dataSource)
         when(format) {

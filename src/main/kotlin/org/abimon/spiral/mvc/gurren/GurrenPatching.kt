@@ -2,6 +2,7 @@ package org.abimon.spiral.mvc.gurren
 
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.data.FileContext
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
@@ -13,6 +14,7 @@ import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.InputStreamFuncDataSource
+import org.abimon.spiral.util.absoluteParentFile
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.lang.child
@@ -54,13 +56,15 @@ object GurrenPatching {
             val format = SpiralFormats.formatForExtension(file.extension, SpiralFormats.imageFormats)
                     ?: SpiralFormats.formatForData(Gurren.game, file::inputStream, file.name, SpiralFormats.imageFormats)
                     ?: return@Command errPrintln("Error: No image format recognised for $file")
+
+            val fileContext = FileContext(file.absoluteParentFile)
             val img: BufferedImage
 
             if (format == PNGFormat)
                 img = ImageIO.read(file)
             else {
                 val (convOut, convIn) = CacheHandler.cacheStream()
-                format.convert(Gurren.game, PNGFormat, file.name, file::inputStream, convOut, emptyMap())
+                format.convert(Gurren.game, PNGFormat, file.name, fileContext::provide, file::inputStream, convOut, emptyMap())
                 img = convIn().use { stream -> ImageIO.read(stream) }
             }
 
@@ -70,7 +74,7 @@ object GurrenPatching {
             var srdName: String? = null
             var srdvName: String? = null
 
-            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, fileContext::provide, patchFile::inputStream)) {
                 val zip = ZipFile(patchFile)
                 val entries = zip.entries().toList()
 
@@ -147,7 +151,7 @@ object GurrenPatching {
                     srdv = srdvIn
                     srdvName = srdvFiles.first().name
                 }
-            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, fileContext::provide, patchFile::inputStream)) {
                 val spc = SPC(patchFile::inputStream)
 
                 val srdFiles = spc.files.filter { entry -> entry.name.endsWith(".srd") }
@@ -217,7 +221,7 @@ object GurrenPatching {
 
             FileOutputStream(srdFile).use { srdOut -> FileOutputStream(srdvFile).use { srdvOut -> customSRD.patch(srdOut, srdvOut) } }
 
-            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, fileContext::provide, patchFile::inputStream)) {
                 FileInputStream(patchFile).use { patchDataStream ->
                     val (cacheOut, cacheIn) = CacheHandler.cacheStream()
                     ZipOutputStream(cacheOut).use { zipOut ->
@@ -235,7 +239,7 @@ object GurrenPatching {
 
                     patchFile.outputStream().use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
                 }
-            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, fileContext::provide, patchFile::inputStream)) {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
                 val spc = SPC(patchFile::inputStream)
 
@@ -269,10 +273,11 @@ object GurrenPatching {
 
         val file = File(params[2])
         if (file.exists()) {
-            val data = { FileInputStream(file) }
+            val fileContext = FileContext(file.absoluteParentFile)
+
             when (patchOperation) {
                 PatchOperation.SRD -> {
-                    if (!ZIPFormat.isFormat(null, null, data) && !SPCFormat.isFormat(null, null, data))
+                    if (!ZIPFormat.isFormat(null, null, fileContext::provide, file::inputStream) && !SPCFormat.isFormat(null, null, fileContext::provide, file::inputStream))
                         return@Command errPrintln("Error: File type is incompatible for operation $patchOperation (Wanted .zip or .spc, got ${file.extension})")
                 }
             }

@@ -29,10 +29,10 @@ object CRILAYLAFormat : SpiralFormat {
     val MAGIC = "CRILAYLA"
     val MAGIC_BYTES = MAGIC.toByteArray()
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(8) == MAGIC }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(8) == MAGIC }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         dataSource().use { stream ->
             val magic = stream.readString(8)
@@ -101,9 +101,9 @@ object CRILAYLAFormat : SpiralFormat {
         return true
     }
 
-    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(format.canConvert(game, this)) //Check if there's a built in way
-            return format.convert(game, this, name, dataSource, output, params)
+            return format.convert(game, this, name, context, dataSource, output, params)
         else { //Let's get our hands dirty
             val sourceData = dataSource().use { stream -> stream.readBytes() }
             if(sourceData.size < 0x100) {

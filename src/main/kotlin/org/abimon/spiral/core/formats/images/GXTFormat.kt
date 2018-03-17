@@ -22,7 +22,7 @@ object GXTFormat: SpiralImageFormat {
     val PALETTE_BGRA = byteArrayOf(0x00, 0x10, 0x00, 0x95.toByte())
     val LINEAR_TEXTURE = byteArrayOf(0x00, 0x00, 0x00, 0x60)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.read(4) contentEquals HEADER }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.read(4) contentEquals HEADER }
 
     override fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage {
         var stream = dataSource()

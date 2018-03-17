@@ -15,12 +15,12 @@ object WADFormat : SpiralFormat {
     override val extension = "wad"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         return WAD(dataSource)?.files?.isNotEmpty() == true
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val wad = UnsafeWAD(dataSource)
         when (format) {

@@ -40,7 +40,7 @@ dependencies {
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
     compile('org.abimon:SpiralFormats:8a07f33')
-    compile('org.abimon:OpenSpiralLanguage:672baa4')
+    compile('org.abimon:OpenSpiralLanguage:014e3fe')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
