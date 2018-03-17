@@ -35,12 +35,12 @@ object SPCFormat : SpiralFormat {
                 spc.files.forEach { entry ->
                     val data = SpiralFormats.decompressFully(entry::inputStream)
                     if (convert) {
-                        val innerFormat = SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+                        val innerFormat = SpiralFormats.formatForData(game, data, "$name/${entry.name}", SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
                             zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(game, convertTo, entry.name, data, zip, params)
+                            innerFormat.convert(game, convertTo, "$name/${entry.name}", data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
                             zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
