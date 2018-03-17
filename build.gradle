@@ -39,8 +39,10 @@ dependencies {
     compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
-    compile('org.abimon:SpiralFormats:47f555f')
-    compile('org.abimon:OpenSpiralLanguage:4308545')
+    compile('org.abimon:SpiralFormats:08da0a1')
+    compile('org.abimon:OpenSpiralLanguage:4308545') {
+        exclude group: 'org.abimon', module: 'SpiralFormats'
+    }
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
