@@ -3,19 +3,22 @@ package org.abimon.spiral.core.formats.archives
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.objects.archives.CustomPak
 import org.abimon.spiral.core.objects.archives.CustomSPC
+import org.abimon.spiral.core.objects.customPak
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readInt
 import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.toInt
 import org.abimon.visi.lang.make
 import org.abimon.visi.util.zip.forEach
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.HashMap
 import java.util.zip.ZipInputStream
 import kotlin.Comparator
+import kotlin.collections.ArrayList
 
 object ZIPFormat : SpiralFormat {
     override val name = "ZIP"
@@ -53,7 +56,8 @@ object ZIPFormat : SpiralFormat {
             is PAKFormat -> {
                 val convert = "${params["pak:convert"] ?: false}".toBoolean()
                 dataSource().use { stream ->
-                    val customPak = make<CustomPak> {
+                    val cacheFiles = ArrayList<File>()
+                    val customPak = customPak {
                         val zipIn = ZipInputStream(stream)
                         val entries = HashMap<String, () -> InputStream>().apply {
                             zipIn.use { zip ->
@@ -82,10 +86,19 @@ object ZIPFormat : SpiralFormat {
                             }
                         }
 
-                        entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { _, data -> dataSource(InputStreamFuncDataSource(data)) }
+                        entries.filterKeys { key -> key.toIntOrNull() != null }.toSortedMap(Comparator { o1, o2 -> o1.toInt().compareTo(o2.toInt()) }).forEach { i, data ->
+                            val cacheFile = CacheHandler.newCacheFile()
+                            FileOutputStream(cacheFile).use { outStream -> data().use { inStream -> inStream.copyTo(outStream) } }
+
+                            add(i.toInt(), cacheFile)
+                        }
                     }
 
-                    customPak.compile(output)
+                    try {
+                        customPak.compile(output)
+                    } finally {
+                        cacheFiles.forEach { file -> file.delete() }
+                    }
                 }
             }
             SPCFormat -> {
