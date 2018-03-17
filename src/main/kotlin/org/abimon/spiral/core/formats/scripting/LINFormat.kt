@@ -6,6 +6,7 @@ import org.abimon.spiral.core.formats.text.ScriptTextFormat
 import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.lin.TextEntry
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.scripting.Lin
 import org.abimon.spiral.core.println
 import org.abimon.spiral.util.InputStreamFuncDataSource
@@ -29,7 +30,7 @@ object LINFormat : SpiralFormat {
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        val dr1 = "${params["lin:dr1"] ?: true}".toBoolean()
+        val dr1 = game == DR1
         Lin(InputStreamFuncDataSource(dataSource), dr1).entries.forEach { entry ->
             if (entry is TextEntry)
                 output.println("${(if (dr1) SpiralData.dr1OpCodes else SpiralData.dr2OpCodes)[entry.getOpCode()]?.second ?: "0x${entry.getOpCode().toString(16)}"}|${entry.text.replace("\n", "\\n")}")
