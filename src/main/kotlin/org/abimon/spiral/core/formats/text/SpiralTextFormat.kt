@@ -14,7 +14,11 @@ object SpiralTextFormat : SpiralFormat {
     override val extension = "stxt"
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat)
 
-    override fun isFormat(source: DataSource): Boolean = !SpiralDrill.stxtRunner.run(String(source.data, Charsets.UTF_8)).hasErrors()
+    override fun isFormat(source: DataSource): Boolean {
+        val result = SpiralDrill.stxtRunner.run(String(source.data, Charsets.UTF_8))
+
+        return !result.hasErrors() && !result.valueStack.isEmpty
+    }
 
     override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(format, source, output, params)) return true
