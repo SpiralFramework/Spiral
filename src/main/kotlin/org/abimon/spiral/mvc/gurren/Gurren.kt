@@ -12,7 +12,6 @@ import org.abimon.spiral.core.formats.archives.PAKFormat
 import org.abimon.spiral.core.formats.archives.WADFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.formats.scripting.LINFormat
-import org.abimon.spiral.core.formats.scripting.NonstopFormat
 import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
@@ -77,15 +76,14 @@ object Gurren {
     val formatTable: String = FlipTable.of(
             arrayOf("Format", "Can Convert To"),
             arrayOf(
-                    arrayOf("WAD", WADFormat.conversions.joinToString { it.name }),
-                    arrayOf("CPK", CPKFormat.conversions.joinToString { it.name }),
-                    arrayOf("PAK", PAKFormat.conversions.joinToString { it.name }),
-                    arrayOf("TGA", TGAFormat.conversions.joinToString { it.name }),
-                    arrayOf("SHTX", SHTXFormat.conversions.joinToString { it.name }),
-                    arrayOf("PNG", PNGFormat.conversions.joinToString { it.name }),
-                    arrayOf("JPG", JPEGFormat.conversions.joinToString { it.name }),
-                    arrayOf("LIN", LINFormat.conversions.joinToString { it.name }),
-                    arrayOf("Nonstop DAT", NonstopFormat.conversions.joinToString { it.name })
+                    arrayOf("WAD", WADFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("CPK", CPKFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("PAK", PAKFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("TGA", TGAFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("SHTX", SHTXFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("PNG", PNGFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("JPG", JPEGFormat.conversions.joinToString(transform = SpiralFormat::name)),
+                    arrayOf("LIN", LINFormat.conversions.joinToString(transform = SpiralFormat::name))
             )
     )
 
