@@ -13,6 +13,8 @@ import org.abimon.spiral.core.put
 import org.abimon.visi.lang.make
 
 object SpiralData {
+    val billingDead = true
+
     val dr1OpCodes = make<TripleHashMap<Int, Int, String>> {
         put(0x00, 2, "Text Count")
         put(0x01, 3, "0x01")

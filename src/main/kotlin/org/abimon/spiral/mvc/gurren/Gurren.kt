@@ -676,6 +676,9 @@ object Gurren {
 
     val currentBuild: Int
         get() {
+            if(SpiralData.billingDead)
+                return -1
+
             val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
 
             if (response.httpStatusCode != 200)
@@ -686,6 +689,9 @@ object Gurren {
 
     val latestBuild: Int
         get() {
+            if(SpiralData.billingDead)
+                return -1
+
             val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
 
             if (response.httpStatusCode != 200)

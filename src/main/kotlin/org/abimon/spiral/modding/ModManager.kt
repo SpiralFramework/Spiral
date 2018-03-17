@@ -81,6 +81,9 @@ object ModManager : APIManager() {
     }
 
     fun modConfigFor(uid: String, version: String): ModConfig? {
+        if(SpiralData.billingDead)
+            return null
+
         val (_, response, r) = Fuel.get("$API_BASE_URL/mods/$uid/$version/info").responseStream()
 
         if (response.statusCode == 200)
@@ -90,6 +93,9 @@ object ModManager : APIManager() {
     }
 
     fun modSize(uid: String, version: String): Long? {
+        if(SpiralData.billingDead)
+            return null
+
         val (_, response, _) = Fuel.head("$API_BASE_URL/mods/$uid/$version/download").response()
 
         if (response.statusCode == 200)
@@ -99,6 +105,9 @@ object ModManager : APIManager() {
     }
 
     fun downloadMod(uid: String, version: String, progress: (Long, Long) -> Unit = { _, _ -> }): Boolean {
+        if(SpiralData.billingDead)
+            return false
+
         val (name) = modConfigFor(uid, version) ?: return false
         val (_, result) = Fuel.get("$API_BASE_URL/mods/$uid/$version/download").largeResponse()
         val (response) = result
@@ -120,6 +129,9 @@ object ModManager : APIManager() {
     fun getModForFingerprint(fingerprint: String): SpiralFingerprint? = getModsForFingerprint(fingerprint).firstOrNull()
     fun getModsForFingerprint(fingerprint: DataSource): Array<SpiralFingerprint> = getModsForFingerprint(fingerprint.use { it.sha512Hash() })
     fun getModsForFingerprint(fingerprint: String): Array<SpiralFingerprint> {
+        if(SpiralData.billingDead)
+            return emptyArray()
+
         val (_, response, _) = Fuel.Companion.get("$API_BASE_URL/fingerprint/$fingerprint").responseStream()
 
         if (response.statusCode == 404)
@@ -135,6 +147,9 @@ object ModManager : APIManager() {
     }
 
     fun getModsForFingerprints(fingerprints: Array<String>): Map<String, Array<SpiralFingerprint>> {
+        if(SpiralData.billingDead)
+            return emptyMap()
+
         val fingerprintMap: MutableMap<String, MutableList<SpiralFingerprint>> = HashMap()
         fingerprints.forEach { fingerprint -> fingerprintMap[fingerprint] = ArrayList() }
 
