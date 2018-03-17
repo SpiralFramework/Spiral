@@ -329,7 +329,7 @@ object GurrenOperation {
     }
 
     val compileNicelyAndRun = Command("compile_nicely_and_run", "operate") { (params) ->
-        compile.command(InstanceOrder<String>("COMPILE_NICELY_AND_RUN", scout = null, data = params.apply { this[0] = "compile_nicely" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
+        compileNicely.command(InstanceOrder<String>("COMPILE_NICELY_AND_RUN", scout = null, data = params.apply { this[0] = "compile_nicely" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
 
         if(Desktop.isDesktopSupported()) {
             operatingGame?.steamID?.let { steamID -> Desktop.getDesktop().browse(URI("steam://run/$steamID")) }
