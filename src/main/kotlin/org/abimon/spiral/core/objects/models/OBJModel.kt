@@ -5,6 +5,7 @@ import org.abimon.spiral.util.TriFace
 import org.abimon.spiral.util.UV
 import org.abimon.spiral.util.Vertex
 import org.abimon.visi.io.DataSource
+import org.parboiled.parserunners.ReportingParseRunner
 import java.io.InputStreamReader
 
 class OBJModel(val dataSource: DataSource) {
@@ -17,7 +18,9 @@ class OBJModel(val dataSource: DataSource) {
         val uvList: MutableList<UV> = ArrayList()
         val faceList: MutableList<TriFace> = ArrayList()
 
-        OBJParser.runner.run(InputStreamReader(dataSource.inputStream).use { it.readText() }).valueStack.forEach { value ->
+        val parser = OBJParser()
+        val runner = ReportingParseRunner<Any>(parser.Lines())
+        runner.run(InputStreamReader(dataSource.inputStream).use { it.readText() }).valueStack.forEach { value ->
             if (value is List<*>) {
                 when(value[0]) {
                     OBJParser.VERTEX_ID -> vertList.add(OBJParser.toVertex(value.subList(1, value.size)))

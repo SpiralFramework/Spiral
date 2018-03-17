@@ -37,7 +37,7 @@ open class OBJParser(isParboiledCreated: Boolean) : SpiralParser(isParboiledCrea
             return (a - 1) to (b - 1) and (c - 1)
         }
 
-        operator fun invoke(oslContext: (String) -> ByteArray?): OBJParser = Parboiled.createParser(OBJParser::class.java, oslContext, true)
+        operator fun invoke(): OBJParser = Parboiled.createParser(OBJParser::class.java, true)
     }
 
     open fun Lines(): Rule = Sequence(
