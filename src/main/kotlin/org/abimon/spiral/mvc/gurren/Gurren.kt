@@ -595,14 +595,6 @@ object Gurren {
         }
     }
 
-    val test = Command("test_echo") { (params) ->
-        println(params.joinToString())
-
-        print("What's your name: ")
-        val name = readLine() ?: return@Command
-        println("Your name is $name")
-    }
-
     val join = Command("join") { (params) ->
         if (!MediaWrapper.ffmpeg.isInstalled)
             return@Command errPrintln("Error: ffmpeg is not installed")
