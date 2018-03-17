@@ -8,9 +8,11 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.customLin
 import org.abimon.spiral.core.objects.customWordScript
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.abimon.spiral.util.debug
+import org.abimon.visi.lang.EnumOS
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -23,6 +25,11 @@ object OpenSpiralLanguageFormat: SpiralFormat {
         val text = String(dataSource().use { stream -> stream.readBytes() }, Charsets.UTF_8)
 
         val parser = OpenSpiralLanguageParser { fileName -> context(fileName)?.invoke()?.use { stream -> stream.readBytes() }}
+
+        parser.game = game ?: UnknownHopesPeakGame
+        parser["FILENAME"] = name
+        parser["OS"] = EnumOS.determineOS().name
+
         val result = parser.parse(text)
         return !result.hasErrors() && !result.valueStack.isEmpty
     }
@@ -33,6 +40,11 @@ object OpenSpiralLanguageFormat: SpiralFormat {
 
         val text = String(dataSource().use { stream -> stream.readBytes() }, Charsets.UTF_8)
         val parser = OpenSpiralLanguageParser { fileName -> context(fileName)?.invoke()?.use { stream -> stream.readBytes() }}
+
+        parser.game = game ?: UnknownHopesPeakGame
+        parser["FILENAME"] = name
+        parser["OS"] = EnumOS.determineOS().name
+
         val result = parser.parse(text)
         val stack = result.valueStack?.toList()?.asReversed() ?: return false
 
