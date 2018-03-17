@@ -402,7 +402,7 @@ object Gurren {
                             if (didConvert)
                                 rows.add(arrayOf(subfile relativePathTo file, output relativePathTo file, convertFrom.name, convertTo.name))
                             else
-                                rows.add(arrayOf(subfile relativePathTo file, "N/a", convertFrom.name, "Conversion to ${convertTo.name} failed")
+                                rows.add(arrayOf(subfile relativePathTo file, "N/a", convertFrom.name, "Conversion to ${convertTo.name} failed"))
                         } catch (iea: IllegalArgumentException) {
                             rows.add(arrayOf(subfile relativePathTo file, "N/a", convertFrom.name, "Could not convert to ${convertTo.name}: ${iea.localizedMessage}"))
                         } finally {
