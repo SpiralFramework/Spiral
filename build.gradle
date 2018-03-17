@@ -28,7 +28,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven { url 'https://jitpack.io' }
-    maven { url 'https://eternal.abimon.org/files/maven' }
+    maven { url 'https://maven.abimon.org' }
 }
 
 dependencies {
@@ -40,7 +40,7 @@ dependencies {
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
     compile('org.abimon:SpiralFormats:ffe97b8')
-    compile('org.abimon:OpenSpiralLanguage:7b2c1bf') {
+    compile('org.abimon:OpenSpiralLanguage:3a26f52') {
         exclude group: 'org.abimon', module: 'SpiralFormats'
     }
 

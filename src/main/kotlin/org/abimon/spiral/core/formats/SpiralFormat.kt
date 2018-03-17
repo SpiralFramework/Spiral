@@ -19,7 +19,7 @@ interface SpiralFormat {
      */
     fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (!isFormat(game, name, context, dataSource))
-            throw IllegalArgumentException("$name does not conform to the $name format")
+            throw IllegalArgumentException("$name does not conform to the ${this.name} format")
 
         if (canConvertViaOverride(game, format)) {
             for(conversion in SpiralFormat[game to this and format]) {
