@@ -18,6 +18,8 @@ import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
+import org.abimon.spiral.core.objects.game.hpa.UDG
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -771,6 +773,42 @@ object Gurren {
 
         val modJson = File(packInto.parent, "${packInto.nameWithoutExtension}.json")
         SpiralData.MAPPER.writeValue(modJson, mapOf("name" to name, "version" to version, "zipUrl" to url))
+    }
+
+    val getGame = Command("game") {
+        println("The current game in use is $game")
+    }
+
+    val setGame = Command("set_game", "default") { (params) ->
+        if (params.size == 1) {
+            println("Set current game to none")
+            game = null
+
+            return@Command
+        }
+
+        val gameName = params[1]
+
+        when(gameName.toLowerCase()) {
+            "dr1" -> game = DR1
+            "dr2" -> game = DR2
+
+            "ae" -> game = UDG
+            "udg" -> game = UDG
+            "drae" -> game = UDG
+            "drudg" -> game = UDG
+
+            "v3" -> game = V3
+            "drv3" -> game = V3
+            "ndrv3" -> game = V3
+
+            else -> {
+                errPrintln("Unknown game $gameName!")
+                return@Command
+            }
+        }
+
+        println("Set current game to $game")
     }
 
     val join = Command("join") { (params) ->
