@@ -28,6 +28,9 @@ abstract class APIManager {
     }
 
     open fun apiSearch(query: String): Array<SpiralModData> {
+        if(SpiralData.billingDead)
+            return emptyArray()
+
         val (_, response, r) = Fuel.get("$API_BASE_URL/search", listOf("q" to query)).userAgent().responseStream()
 
         if(response.statusCode == 200)
@@ -37,6 +40,9 @@ abstract class APIManager {
     }
 
     open fun isSigned(uid: String, version: String, file: File): EnumSignedStatus {
+        if(SpiralData.billingDead)
+            return EnumSignedStatus.UNSIGNED
+
         val (_, response, _) = Fuel.get("$API_BASE_URL/mods/$uid/$version/signature").response()
 
         if(response.statusCode != 200)

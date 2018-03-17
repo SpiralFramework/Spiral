@@ -127,6 +127,9 @@ object PluginManager : APIManager() {
 
     val publicKey: PublicKey?
         get() {
+            if(SpiralData.billingDead)
+                return null
+
             val (_, response, _) = Fuel.get("$BASE_URL/public.key").response()
 
             if (response.statusCode != 200)
@@ -136,6 +139,9 @@ object PluginManager : APIManager() {
         }
 
     fun pluginConfigFor(uid: String, version: String): PluginConfig? {
+        if(SpiralData.billingDead)
+            return null
+
         val (_, response, r) = Fuel.get("$API_BASE_URL/mods/$uid/$version/info").responseStream()
 
         if (response.statusCode == 200)
@@ -145,6 +151,9 @@ object PluginManager : APIManager() {
     }
 
     fun pluginSize(uid: String, version: String): Long? {
+        if(SpiralData.billingDead)
+            return null
+
         val (_, response, _) = Fuel.head("$API_BASE_URL/mods/$uid/$version/download").response()
 
         if (response.statusCode == 200)
@@ -154,6 +163,9 @@ object PluginManager : APIManager() {
     }
 
     fun downloadPlugin(uid: String, version: String, progress: (Long, Long) -> Unit = { _, _ -> }): Boolean {
+        if(SpiralData.billingDead)
+            return false
+
         val (name) = pluginConfigFor(uid, version) ?: return false
         val (_, result) = Fuel.get("$API_BASE_URL/mods/$uid/$version/download").largeResponse()
         val (response) = result
