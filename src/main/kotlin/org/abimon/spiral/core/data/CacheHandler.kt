@@ -78,6 +78,14 @@ object CacheHandler {
             return data::inputStream
     }
 
+    fun cacheStream(stream: InputStream): Pair<() -> InputStream, File> {
+        val file = newCacheFile()
+
+        FileOutputStream(file).use { outStream -> stream.copyTo(outStream) }
+
+        return file::inputStream to file
+    }
+
     fun newCacheFile(): File {
         var cacheFile: File
         do {

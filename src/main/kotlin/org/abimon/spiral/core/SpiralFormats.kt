@@ -102,7 +102,6 @@ object SpiralFormats {
     }
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
-    //TODO: Use an actual game
     @JvmOverloads
     fun formatForData(game: DRGame?, dataSource: () -> InputStream, name: String? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(game, name, dataSource) }
             .filter { (_, isFormat) -> isFormat.first }
