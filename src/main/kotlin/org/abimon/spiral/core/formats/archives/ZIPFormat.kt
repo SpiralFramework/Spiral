@@ -65,7 +65,7 @@ object ZIPFormat : SpiralFormat {
                                     out.use { stream -> zip.copyTo(stream) }
 
                                     if (convert) {
-                                        val innerFormat = SpiralFormats.formatForData(data)
+                                        val innerFormat = SpiralFormats.formatForData(game, data, "$name/${entry.name}")
                                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                                         if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
@@ -102,7 +102,7 @@ object ZIPFormat : SpiralFormat {
                                 out.use { stream -> zip.copyTo(stream) }
 
                                 if (convert) {
-                                    val innerFormat = SpiralFormats.formatForData(data)
+                                    val innerFormat = SpiralFormats.formatForData(game, data, "$name/${entry.name}")
                                     val convertTo = innerFormat?.conversions?.firstOrNull()
 
                                     if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {

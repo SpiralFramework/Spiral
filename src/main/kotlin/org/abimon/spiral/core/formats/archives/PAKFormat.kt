@@ -63,7 +63,7 @@ object PAKFormat : SpiralFormat {
                         data().use { stream -> stream.copyTo(zip) }
                         return@forEachIndexed
                     } else if (convert) {
-                        val innerFormat = SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+                        val innerFormat = SpiralFormats.formatForData(game, data, "$name/$index", SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
