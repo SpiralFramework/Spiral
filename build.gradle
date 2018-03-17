@@ -39,8 +39,8 @@ dependencies {
     compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
-    compile('org.abimon:SpiralFormats:ffe97b8')
-    compile('org.abimon:OpenSpiralLanguage:62cf9f9') {
+    compile('org.abimon:SpiralFormats:9c28a4d')
+    compile('org.abimon:OpenSpiralLanguage:5d49c76') {
         exclude group: 'org.abimon', module: 'SpiralFormats'
     }
 
