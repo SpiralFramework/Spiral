@@ -61,6 +61,16 @@ object SpiralFormats {
             DRVitaCompressionFormat, CRILAYLAFormat
     )
 
+    val drWadFormats = arrayOf(
+            TGAFormat,
+            LINFormat,
+            SFLFormat,
+            GMOModelFormat,
+            IVFFormat,
+            OggFormat,
+            PAKFormat
+    )
+
     fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(dataSource) }
     fun decompress(dataSource: DataSource): DataSource {
         val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(dataSource) } ?: return dataSource

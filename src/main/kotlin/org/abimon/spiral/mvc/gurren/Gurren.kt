@@ -31,9 +31,12 @@ import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileFilter
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.util.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.collections.ArrayList
 import kotlin.system.measureTimeMillis
 
@@ -543,6 +546,61 @@ object Gurren {
 
             println(FlipTable.of(arrayOf("Original", "Squished"), rows.toTypedArray()))
         }
+    }
+
+    val pack = Command("pack_dr1") { (params) ->
+        if (params.size < 3)
+            return@Command errPrintln("Error: Not enough params provided (Syntax is 'pack [file] [files to pack]'")
+
+        val packInto = params[1]
+        val packing = params.copyFrom(1).map(::File).filter { file -> file.exists() }
+
+        FileOutputStream(packInto).use { out ->
+            val zip = ZipOutputStream(out)
+
+            packing.forEach { file ->
+                if (file.isFile) {
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+
+                    if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                        zip.putNextEntry(ZipEntry(file.name))
+                        FileInputStream(file).use { stream -> stream.copyTo(zip) }
+                        zip.closeEntry()
+                    } else {
+                        val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                        zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                        zip.closeEntry()
+                    }
+                } else if (file.isDirectory) {
+                    file.iterate().forEach { subfile ->
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+
+                        if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
+                            zip.putNextEntry(ZipEntry(subfile relativePathFrom subfile))
+                            FileInputStream(file).use { stream -> stream.copyTo(zip) }
+                            zip.closeEntry()
+                        } else {
+                            val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
+
+                            zip.putNextEntry(ZipEntry((subfile relativePathFrom subfile).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
+                            format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            zip.closeEntry()
+                        }}
+                }
+            }
+
+            zip.close()
+        }
+    }
+
+    val test = Command("test_echo") { (params) ->
+        println(params.joinToString())
+
+        print("What's your name: ")
+        val name = readLine() ?: return@Command
+        println("Your name is $name")
     }
 
     val join = Command("join") { (params) ->
