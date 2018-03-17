@@ -886,7 +886,7 @@ object Gurren {
         val latestBuild = this.latestBuild
 
         println("SPIRAL build $currentBuild -> build $latestBuild")
-        println("Update Size: ${headResponse.httpContentLength} B / ${GurrenPlugins.TWO_DECIMAL_PLACES.format(headResponse.httpContentLength / 1000.0 / 1000.0)} MB")
+        println("Update Size: ${headResponse.contentLength} B / ${GurrenPlugins.TWO_DECIMAL_PLACES.format(headResponse.contentLength / 1000.0 / 1000.0)} MB")
 
         if (question("Do you wish to continue downloading this plugin (Y/n)? ", "Y")) {
             val destination = File("SPIRAL-$latestBuild.jar")
