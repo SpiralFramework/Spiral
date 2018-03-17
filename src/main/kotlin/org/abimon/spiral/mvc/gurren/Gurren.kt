@@ -14,6 +14,8 @@ import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.formats.scripting.LINFormat
 import org.abimon.spiral.core.formats.scripting.NonstopFormat
 import org.abimon.spiral.core.formats.video.MP4Format
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -608,7 +610,7 @@ object Gurren {
                         val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(null, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                        format.convert(DR1, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
@@ -623,7 +625,7 @@ object Gurren {
                             val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            format.convert(DR1, convertTo, subfile relativePathTo file, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                             zip.closeEntry()
                         }}
                 }
@@ -660,7 +662,7 @@ object Gurren {
                     return@forEach
 
                 if (file.isFile) {
-                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(file::inputStream))
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -670,12 +672,12 @@ object Gurren {
                         val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                        format.convert(DR2, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
                     file.iterate(includeDirs = false).forEach { subfile ->
-                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(subfile::inputStream))
 
                         if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                             zip.putNextEntry(ZipEntry(subfile relativePathTo file))
@@ -685,7 +687,7 @@ object Gurren {
                             val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true, "lin:dr2" to true))
+                            format.convert(DR2, convertTo, subfile relativePathTo file, subfile::inputStream, zip, mapOf("pak:convert" to true, "lin:dr2" to true))
                             zip.closeEntry()
                         }}
                 }
@@ -722,7 +724,7 @@ object Gurren {
                     return@packing
 
                 if (file.isFile) {
-                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(file::inputStream))
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -734,12 +736,12 @@ object Gurren {
                         if (convertTo == LINFormat)
                             return@packing errPrintln("$file is a LIN file, which requires a game. Skipping...")
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true))
+                        format.convert(null, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
                     file.iterate(includeDirs = false).forEach iterate@{ subfile ->
-                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(subfile::inputStream))
 
                         if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                             zip.putNextEntry(ZipEntry(subfile relativePathTo file))
@@ -751,9 +753,7 @@ object Gurren {
                             if (convertTo == LINFormat)
                                 return@iterate errPrintln("$subfile is a LIN file, which requires a game. Skipping...")
                             zip.putNextEntry(ZipEntry((subfile relativePathTo file).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(convertTo, FileDataSource(subfile), zip, mapOf("pak:convert" to true))
-                            zip.putNextEntry(ZipEntry((subfile relativePathFrom subfile).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(null, convertTo, (subfile relativePathFrom subfile), file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            format.convert(null, convertTo, (subfile relativePathFrom subfile), file::inputStream, zip, mapOf("pak:convert" to true))
                             zip.closeEntry()
                         }}
                 }
