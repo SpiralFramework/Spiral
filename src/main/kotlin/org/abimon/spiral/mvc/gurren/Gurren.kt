@@ -182,7 +182,19 @@ object Gurren {
         println("Registered $archive!")
         SpiralModel.save()
     }
-    val deregister = Command("deregister") {}
+    val deregister = Command("deregister") { (params) ->
+        if (params.size == 1) {
+            errPrintln("Error: No file provided!")
+            return@Command
+        }
+
+        val removed = SpiralModel.archives.removeAll { file -> file.nameWithoutExtension == params[1] || file.absolutePath == params[1] }
+
+        if (removed)
+            println("Degregistered ${params[1]}")
+        else
+            println("No registered archives match ${params[1]}")
+    }
     val registered = Command("registered") { println("Registered archives: ${SpiralModel.archives.joinToPrefixedString("", "\n\t")}") }
     val formats = Command("formats") { println(formatTable) }
 

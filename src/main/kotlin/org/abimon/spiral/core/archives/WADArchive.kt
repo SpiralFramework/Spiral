@@ -12,6 +12,8 @@ import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.modding.BackupManager
 import org.abimon.spiral.modding.data.ModList
 import java.io.*
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -96,8 +98,7 @@ class WADArchive(override val archiveFile: File) : IArchive {
 
         try {
             FileOutputStream(tmp).use(customWad::compile)
-            archiveFile.delete()
-            tmp.renameTo(archiveFile)
+            Files.copy(tmp.toPath(), archiveFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
         } finally {
             tmp.delete()
             cacheFiles.forEach { file -> file.delete() }
