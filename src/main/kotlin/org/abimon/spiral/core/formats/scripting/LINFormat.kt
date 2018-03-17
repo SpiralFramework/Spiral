@@ -1,8 +1,6 @@
 package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.text.ScriptTextFormat
-import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.objects.UnsafeLin
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
@@ -15,7 +13,7 @@ import java.io.OutputStream
 object LINFormat : SpiralFormat {
     override val name = "LIN"
     override val extension = "lin"
-    override val conversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(OpenSpiralLanguageFormat)
 
     override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
@@ -29,8 +27,12 @@ object LINFormat : SpiralFormat {
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
+        val hpaGame = game as? HopesPeakDRGame ?: return false
+
         output.println("OSL Script")
-        UnsafeLin(game as? HopesPeakDRGame ?: return false, dataSource).entries.forEach { entry ->
+        output.println("Set Game To ${hpaGame.names[0]}")
+
+        UnsafeLin(hpaGame, dataSource).entries.forEach { entry ->
             if (entry is LinTextScript)
                 output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
                         ?: "0x${entry.opCode.toString(16)}"}|${entry.text?.replace("\n", "\\n") ?: "Hello, Null!"}")
