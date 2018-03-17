@@ -595,7 +595,7 @@ object Gurren {
 
             packing.forEach { file ->
                 if (file.isFile) {
-                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file)))
+                    val format = (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(file::inputStream))
 
                     if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                         zip.putNextEntry(ZipEntry(file.name))
@@ -605,12 +605,12 @@ object Gurren {
                         val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                         zip.putNextEntry(ZipEntry(file.name.replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                        format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                        format.convert(null, convertTo, file.name, file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                         zip.closeEntry()
                     }
                 } else if (file.isDirectory) {
                     file.iterate().forEach { subfile ->
-                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(FileDataSource(subfile)))
+                        val format = (SpiralFormats.formatForExtension(subfile.extension) ?: SpiralFormats.formatForData(subfile::inputStream))
 
                         if (format == null || format.conversions.none { conv -> conv in SpiralFormats.drWadFormats }) {
                             zip.putNextEntry(ZipEntry(subfile relativePathFrom subfile))
@@ -620,7 +620,7 @@ object Gurren {
                             val convertTo = format.conversions.first { conv -> conv in SpiralFormats.drWadFormats }
 
                             zip.putNextEntry(ZipEntry((subfile relativePathFrom subfile).replaceLast(".${format.extension ?: "unk"}", ".${convertTo.extension ?: format.extension ?: "unk"}")))
-                            format.convert(convertTo, FileDataSource(file), zip, mapOf("pak:convert" to true, "lin:dr1" to true))
+                            format.convert(null, convertTo, (subfile relativePathFrom subfile), file::inputStream, zip, mapOf("pak:convert" to true, "lin:dr1" to true))
                             zip.closeEntry()
                         }}
                 }
