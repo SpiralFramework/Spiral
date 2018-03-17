@@ -11,7 +11,10 @@ import org.abimon.spiral.core.formats.models.GMOModelFormat
 import org.abimon.spiral.core.formats.models.OBJModelFormat
 import org.abimon.spiral.core.formats.models.SRDIModelFormat
 import org.abimon.spiral.core.formats.scripting.*
-import org.abimon.spiral.core.formats.text.*
+import org.abimon.spiral.core.formats.text.JacksonFormat
+import org.abimon.spiral.core.formats.text.STXTFormat
+import org.abimon.spiral.core.formats.text.SpiralTextFormat
+import org.abimon.spiral.core.formats.text.TextFormat
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.objects.game.DRGame
@@ -35,7 +38,8 @@ object SpiralFormats {
 
             JacksonFormat.YAML, JacksonFormat.JSON,
 
-            STXTFormat, ScriptTextFormat,
+            STXTFormat,
+            OpenSpiralLanguageFormat,
             NonstopFormat,
 
             TextFormat
