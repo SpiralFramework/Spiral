@@ -55,10 +55,10 @@ object WRDFormat : SpiralFormat {
 
         output.println("")
 
-        wrd.commandOneEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|1, $index, $s") }
-        wrd.commandTwoEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|2, $index, $s") }
-        wrd.commandThreeEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|3, $index, $s") }
-        wrd.strings.forEach { str -> output.println("0x${STRING_OP_CODE_HEX}|$str") }
+        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
+        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
+        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
+        wrd.strings.forEach { str -> output.println("Word String: $str") }
 
         return true
     }
