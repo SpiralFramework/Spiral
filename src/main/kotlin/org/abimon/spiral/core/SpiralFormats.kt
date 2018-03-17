@@ -63,6 +63,16 @@ object SpiralFormats {
             DRVitaCompressionFormat, CRILAYLAFormat
     )
 
+    val drWadFormats = arrayOf(
+            TGAFormat,
+            LINFormat,
+            SFLFormat,
+            GMOModelFormat,
+            IVFFormat,
+            OggFormat,
+            PAKFormat
+    )
+
     //TODO: Use an actual game
     fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, dataSource::inputStream) }
     //TODO: Use an actual game
