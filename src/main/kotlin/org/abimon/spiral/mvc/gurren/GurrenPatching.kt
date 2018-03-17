@@ -20,6 +20,7 @@ import org.abimon.visi.util.zip.forEach
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
@@ -50,10 +51,8 @@ object GurrenPatching {
         val file = File(params[1])
 
         if (file.exists()) {
-            //TODO: Use an actual game/name
-            val data = { FileInputStream(file) }
             val format = SpiralFormats.formatForExtension(file.extension, SpiralFormats.imageFormats)
-                    ?: SpiralFormats.formatForData(data, SpiralFormats.imageFormats)
+                    ?: SpiralFormats.formatForData(Gurren.game, file::inputStream, file.name, SpiralFormats.imageFormats)
                     ?: return@Command errPrintln("Error: No image format recognised for $file")
             val img: BufferedImage
 
@@ -61,18 +60,17 @@ object GurrenPatching {
                 img = ImageIO.read(file)
             else {
                 val (convOut, convIn) = CacheHandler.cacheStream()
-                format.convert(null, PNGFormat, null, data, convOut, emptyMap())
+                format.convert(Gurren.game, PNGFormat, file.name, file::inputStream, convOut, emptyMap())
                 img = convIn().use { stream -> ImageIO.read(stream) }
             }
 
-            val patchingData = { FileInputStream(patchFile) }
             var srd: (() -> InputStream)? = null
             var srdv: (() -> InputStream)? = null
 
             var srdName: String? = null
             var srdvName: String? = null
 
-            if (ZIPFormat.isFormat(null, null, patchingData)) {
+            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
                 val zip = ZipFile(patchFile)
                 val entries = zip.entries().toList()
 
@@ -149,8 +147,8 @@ object GurrenPatching {
                     srdv = srdvIn
                     srdvName = srdvFiles.first().name
                 }
-            } else if(SPCFormat.isFormat(null, null, patchingData)) {
-                val spc = SPC(InputStreamFuncDataSource(patchingData))
+            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+                val spc = SPC(InputStreamFuncDataSource(patchFile::inputStream))
 
                 val srdFiles = spc.files.filter { entry -> entry.name.endsWith(".srd") }
                 val srdvFiles = spc.files.filter { entry -> entry.name.endsWith(".srdv") }
@@ -219,8 +217,8 @@ object GurrenPatching {
 
             customSRD.patch(srdOut, srdvOut)
 
-            if (ZIPFormat.isFormat(null, null, patchingData)) {
-                patchingData().use { patchDataStream ->
+            if (ZIPFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
+                FileInputStream(patchFile).use { patchDataStream ->
                     val (cacheOut, cacheIn) = CacheHandler.cacheStream()
                     ZipOutputStream(cacheOut).use { zipOut ->
                         ZipInputStream(patchDataStream).use { zipIn ->
@@ -237,9 +235,9 @@ object GurrenPatching {
 
                     patchFile.outputStream().use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
                 }
-            } else if(SPCFormat.isFormat(null, null, patchingData)) {
+            } else if(SPCFormat.isFormat(Gurren.game, patchFile.name, patchFile::inputStream)) {
                 val (cacheOut, cacheIn) = CacheHandler.cacheStream()
-                val spc = SPC(InputStreamFuncDataSource(patchingData))
+                val spc = SPC(InputStreamFuncDataSource(patchFile::inputStream))
 
                 val customSPC = make<CustomSPC> {
                     spc.files.forEach { entry ->
@@ -251,7 +249,7 @@ object GurrenPatching {
                     }
                 }
                 cacheOut.use(customSPC::compile) //Cache it temporarily
-                patchFile.outputStream().use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
+                FileOutputStream(patchFile).use { out -> cacheIn().use { stream -> stream.copyTo(out) } }
             }
         } else
             errPrintln("[$patchingName] Error: $file does not exist")
