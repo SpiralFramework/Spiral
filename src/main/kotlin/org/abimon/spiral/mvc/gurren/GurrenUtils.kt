@@ -2,7 +2,10 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.objects.game.hpa.*
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
+import org.abimon.spiral.core.objects.game.hpa.UDG
+import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -78,9 +81,6 @@ object GurrenUtils {
         if (Gurren.game == null)
             return@Command errPrintln("Error: No game defined!")
 
-        if (Gurren.game !is HopesPeakDRGame)
-            return@Command errPrintln("Error: Game ${Gurren.game} is not a Hope's Peak game!")
-
         val results = ArrayList<Array<String>>()
 
         params.copyFrom(1).forEach { fileName ->
@@ -109,7 +109,17 @@ object GurrenUtils {
                         else -> error("Unsupported game: ${Gurren.game}")
                     }
 
-                    lines.forEach(out::println)
+                    lines.forEach { line ->
+                        if (line.trim().startsWith("0x2B1D|")) {
+
+                            out.println(line.replace("0x2B1D\\|1, \\d+".toRegex(), "Word Command 1: ")
+                                    .replace("0x2B1D\\|2, \\d+".toRegex(), "Word Command 2: ")
+                                    .replace("0x2B1D\\|3, \\d+".toRegex(), "Word Command 3: "))
+                        } else if (line.trim().startsWith("0x2B1E|")) {
+                            out.println(line.replace("0x2B1E|", "Word String: "))
+                        } else
+                            out.println(line)
+                    }
                 }
 
                 results.add(arrayOf(subFile relativePathTo file, lines.size.toString()))
