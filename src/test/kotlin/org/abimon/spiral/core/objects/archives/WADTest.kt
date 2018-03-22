@@ -9,7 +9,7 @@ import java.net.URL
 import java.util.*
 
 class WADTest {
-    @Test
+    //@Test
     fun sourceWadHeader() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/src.wad")!!
         assert(wad.major == 1)
@@ -19,7 +19,7 @@ class WADTest {
         assert(wad.directories.size == 32)
     }
 
-    @Test
+    //@Test
     fun cinnamonWadHeader() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/cinnamon.wad")!!
         assert(wad.major == 1)
@@ -29,7 +29,7 @@ class WADTest {
         assert(wad.directories.size == 1)
     }
 
-    @Test
+    //@Test
     fun usWadHeader() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/us.wad")!!
         assert(wad.major == 1)
@@ -39,7 +39,7 @@ class WADTest {
         assert(wad.directories.size == 1)
     }
 
-    @Test
+    //@Test
     fun sourceWadContents() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/src.wad")!!
 
@@ -80,7 +80,7 @@ class WADTest {
         }
     }
 
-    @Test
+    //@Test
     fun cinnamonWadContents() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/cinnamon.wad")!!
 
@@ -121,7 +121,7 @@ class WADTest {
         }
     }
 
-    @Test
+    //@Test
     fun usWadContents() {
         val wad = wadFor("https://dr.abimon.org/unit_tests/wad/valid/us.wad")!!
 
@@ -162,19 +162,19 @@ class WADTest {
         }
     }
 
-    @Test
+    //@Test
     fun invalidMagicNumber() = assert(wadFor("https://dr.abimon.org/unit_tests/wad/invalid/src_bad_magic.wad") == null)
 
-    @Test
+    //@Test
     fun invalidBelowFileCount() = assert(wadFor("https://dr.abimon.org/unit_tests/wad/invalid/src_below_file_count.wad") == null)
 
-    @Test
+    //@Test
     fun invalidAboveFileCount() = assert(wadFor("https://dr.abimon.org/unit_tests/wad/invalid/src_above_file_count.wad") == null)
 
-    @Test
+    //@Test
     fun invalidBelowMinNameLength() = assert(wadFor("https://dr.abimon.org/unit_tests/wad/invalid/src_below_filename_length.wad") == null)
 
-    @Test
+    //@Test
     fun invalidAboveMinNameLength() = assert(wadFor("https://dr.abimon.org/unit_tests/wad/invalid/src_above_filename_length.wad") == null)
 
     infix fun wadFor(str: String): WAD? {
