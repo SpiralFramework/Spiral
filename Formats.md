@@ -190,7 +190,7 @@ These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + 
 * `0x1F` - Unknown, seven arguments.
 * `0x20` - Unknown, five arguments.
 * `0x21` - Speaker, one argument. Singular argument is the character ID.
-* `0x22` - Unknown, three arguments.
+* `0x22` - Fade, three arguments. Argument 1 is 0 or 1, meaning fade in and fade out respectively. Second argument may be delay but testing is needed. Argument 3 is time. A fade in seems to be required at the start of any script that loads a new room or the game will be stuck at a black screen. Fade time must be more than 0.
 * `0x23` - Unknown, five arguments.
 * `0x24` - Unknown.
 * `0x25` - Change UI, two arguments. Argument 1 is the element to change, argument 2 is the state to change it to.
@@ -207,7 +207,7 @@ These will be denoted as `[ID]` and `{ID}` respectively (So `[ID]` for `arg 1 + 
 * `0x30` - Show Background, three arguments. Argument 1 and 2 make up the background `[ID]`, and argument 3 is the state.
 * `0x31` - Unknown
 * `0x32` - Unknown, one argument.
-* `0x33` - Unknown, four arguments.
+* `0x33` - Wait?, four arguments.
 * `0x34` - Goto Label, two arguments. Argument 1 and 2 make up the label `[ID]`. See `0x2A`.
 * `0x35` - Check Flag A, dynamic number of arguments. Combined with `0x36`, almost certainly the most complicated OP code in the game. See below.
 * `0x36` - Check Flag B, dynamic number of arguments. Combined with `0x35`, almost certainly the most complicated OP code in the game. See below.
