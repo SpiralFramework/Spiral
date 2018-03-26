@@ -26,6 +26,14 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+task pom {
+    doLast {
+        pom {
+
+        }.writeTo("$buildDir/pom.xml")
+    }
+}
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
