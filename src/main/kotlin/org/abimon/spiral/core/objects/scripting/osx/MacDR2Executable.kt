@@ -6,7 +6,7 @@ import org.abimon.spiral.core.utils.readZeroString
 import org.abimon.spiral.core.utils.trimToBytes
 import java.io.File
 
-class MacDR2Executable(file: File): DRExecutable(file) {
+abstract class MacDR2Executable(file: File): DRExecutable(file) {
     companion object {
         val DATA_OFFSET = 0x3C6280L
         val PATCH_OFFSET = DATA_OFFSET + 21
@@ -29,6 +29,8 @@ class MacDR2Executable(file: File): DRExecutable(file) {
 
         val LANGUAGE_ONE_DATA_LENGTH = 7
         val LANGUAGE_ONE_KEYBOARD_LENGTH = 7
+
+        val MAX_PAK_FILE_OFFSET = 0xa33d1
 
         val PAK_MAPPING = mapOf(
                 "bg_000" to (0x3D2930L to 7),
@@ -246,7 +248,7 @@ class MacDR2Executable(file: File): DRExecutable(file) {
         pakNames = mappings
     }
 
-    fun save() {
+    override fun save() {
         raf.seek(DATA_OFFSET)
         raf.write(dataWadName.trimToBytes(DATA_LENGTH))
 
@@ -272,7 +274,7 @@ class MacDR2Executable(file: File): DRExecutable(file) {
         raf.write(languageOneKeyboardExtension.trimToBytes(LANGUAGE_ONE_KEYBOARD_LENGTH))
     }
 
-    fun reset() {
+    override fun reset() {
         dataWadName = "dr1_data.wad"
         patchWadName = "dr1_patch.wad"
         keyboardWadName = "dr1_data_keyboard.wad"

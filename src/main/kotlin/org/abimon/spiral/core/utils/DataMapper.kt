@@ -1,9 +1,6 @@
 package org.abimon.spiral.core.utils
 
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
+import java.io.*
 
 object DataMapper {
     var byteArrayToMap: (ByteArray) -> Map<String, Any?>? = { streamToMap(ByteArrayInputStream(it)) }
@@ -17,4 +14,12 @@ object DataMapper {
     fun readMapFromStream(stream: InputStream): Map<String, Any?>? = streamToMap(stream)
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
+
+    val emptyPrintStream = PrintStream(object: OutputStream() {
+        override fun write(b: Int) {}
+        override fun write(b: ByteArray?) {}
+        override fun write(b: ByteArray?, off: Int, len: Int) {}
+    })
+
+    var errorPrintStream: PrintStream = emptyPrintStream
 }

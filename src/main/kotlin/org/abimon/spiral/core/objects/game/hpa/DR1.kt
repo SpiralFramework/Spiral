@@ -8,6 +8,7 @@ import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1TrialCameraEntry
 import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2WaitForInputEntry
 import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2WaitFrameEntry
 import org.abimon.spiral.core.utils.*
+import java.util.*
 
 object DR1 : HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> =
@@ -87,4 +88,24 @@ object DR1 : HopesPeakDRGame {
                 this[0x3B] = "Wait Frame" to 0 and DR1::WaitFrameEntry
                 this[0x3C] = "End Flag Check" to 0 and DR1::EndFlagCheckEntry
             }
+
+    override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
+            hashMapOf(
+                    0x35 to this::readCheckFlagA
+            )
+
+    fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
+        val args: MutableList<Int> = ArrayList()
+
+        while (stream.isNotEmpty()) {
+            if (stream.peek() == 0x70) {
+                if (stream.size > 1 && stream[1] == 0x3C)
+                    break
+            }
+
+            args.add(stream.poll() ?: break)
+        }
+
+        return args.toIntArray()
+    }
 }

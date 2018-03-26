@@ -35,6 +35,7 @@ class GMOModel(val dataSource: () -> InputStream) {
                 throw IllegalArgumentException("$dataSource is not a valid GMO model ($magic ≠ \"OMG.00.1PSP\u0000\")")
             val padding = stream.readInt32LE()
 
+            println(stream.available())
             val chunks = stream.readChunks(dataSource, null).toTypedArray()
             return@use chunks
         }
@@ -56,6 +57,7 @@ class GMOModel(val dataSource: () -> InputStream) {
                     when (chunkID) {
                         0x02 -> list.addAll(substream.readChunks(dataSource, chunk))
                         0x03 -> list.add(GMOSubfileChunk(chunkID, headerSize, dataSize, header, substream.readChunks(dataSource, chunk)))
+                        0x04 -> list.add(GMOBonesChunk(header, dataSize, substream.readChunks(dataSource, chunk)))
                         0x05 -> list.add(GMOModelSurfaceChunk(chunkID, headerSize, dataSize, header, substream.readChunks(dataSource, chunk)))
                         0x06 -> list.add(GMOMeshChunk(chunkID, headerSize, dataSize, header, substream.readChunks(dataSource, chunk)))
                         0x07 -> {
@@ -131,6 +133,8 @@ class GMOModel(val dataSource: () -> InputStream) {
                             list.add(GMO8014Chunk(floats, header))
                         }
 
+                        0x804E -> list.add(GMOBoneChunk(substream.read(), substream.read(), substream.read(), substream.read()))
+
                         0x8061 -> {
                             val materialID = substream.readInt16LE() - 8192
                             list.add(GMOMeshMaterialInfoChunk(materialID))
@@ -175,14 +179,20 @@ class GMOModel(val dataSource: () -> InputStream) {
                         }
 
                         else -> {
-                            list.add(chunk)
+                            //list.add(UnknownGMOModelChunk(chunkID, headerSize, dataSize, header, substream.readXBytes(substream.windowSize.toInt())))
                             println("Missing chunk ID 0x${chunkID.toString(16)} with parent $parentChunk")
                         }
                     }
+                } finally {
+                    if(parentChunk == null)
+                        println("Parent Chunk is null")
+
+                    if (substream.count != (dataSize - headerSize.coerceAtLeast(8)))
+                        println("Mismatching reads")
 
                     if (dataSize > 0)
-                        skip(dataSize - headerSize.coerceAtLeast(8))
-                } finally {
+                        println("Skipped " + skip(substream.windowSize))
+
                     substream.close()
                 }
             }

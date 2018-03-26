@@ -5,8 +5,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
 
-fun InputStream.readString(len: Int, encoding: String = "UTF-8"): String {
-    val data = ByteArray(len.coerceAtLeast(0).coerceAtMost(255))
+fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen: Boolean = false): String {
+    val data = ByteArray(len.coerceAtLeast(0).run { if(!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
     read(data)
     return String(data, Charset.forName(encoding))
 }

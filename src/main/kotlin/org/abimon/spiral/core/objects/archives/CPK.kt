@@ -137,7 +137,7 @@ class CPK(val dataSource: () -> InputStream) {
 
                 val isCompressed = extractSize > fileSize
 
-                return@Array CPKFileEntry(filename, dirname, fileSize, extractSize, fileOffset, isCompressed)
+                return@Array CPKFileEntry(filename, dirname, fileSize, extractSize, fileOffset, isCompressed, this)
             }
         } finally {
             stream.close()
