@@ -3,6 +3,7 @@ package org.abimon.spiral.core.objects.game.hpa
 import org.abimon.spiral.core.objects.scripting.lin.*
 import org.abimon.spiral.core.objects.scripting.lin.dr2.*
 import org.abimon.spiral.core.utils.*
+import java.util.*
 
 object DR2 : HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> =
@@ -78,10 +79,13 @@ object DR2 : HopesPeakDRGame {
                 this[0x37] = null to -1 and ::UnknownEntry
                 this[0x38] = null to -1 and ::UnknownEntry
                 this[0x39] = null to 5 and ::UnknownEntry
-                this[0x3A] = "DR1 Wait For Input" to 4 and ::DR1WaitForInput
-                this[0x3B] = "DR1 Wait Frame" to 2 and ::DR1WaitFrameEntry
+                this[0x3A] = null to 4 and ::UnknownEntry
+                this[0x3B] = null to 2 and ::UnknownEntry
                 this[0x3C] = "End Flag Check" to 0 and DR2::EndFlagCheckEntry
                 this[0x4B] = "Wait For Input" to 0 and DR2::WaitForInputEntry
                 this[0x4C] = "Wait Frame" to 0 and DR2::WaitFrameEntry
             }
+
+    override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
+            emptyMap()
 }

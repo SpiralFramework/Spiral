@@ -52,4 +52,11 @@ class GMOMaterialNameChunk(val materialName: String, dataSize: Long, header: Int
 
 class GMOTextureReferenceChunk(val padding: Long, val textureReference: Int, val unk: Int, header: IntArray): GMOModelChunk(0x0009, header.size, 36, header)
 
-class GMO8014Chunk(val floats: FloatArray, header: IntArray): GMOModelChunk(0x8014, header.size, 20, header)
+class GMOBonesChunk(header: IntArray, chunkSize: Long, val bones: List<GMOModelChunk>): GMOModelChunk(0x04, header.size, chunkSize, header)
+class GMOBoneChunk(val x: Int, val y: Int, val z: Int, val parent: Int): GMOModelChunk(0x804E, 0, 12, IntArray(0))
+
+class GMO8014Chunk(val floats: FloatArray, header: IntArray): GMOModelChunk(0x8014, header.size, (8 + header.size + (floats.size * 4)).toLong(), header)
+
+class UnknownGMOModelChunk(override val chunkType: Int, override val chunkHeaderSize: Int, override val chunkSize: Long, override val header: IntArray, val data: ByteArray): GMOModelChunk(chunkType, chunkHeaderSize, chunkSize, header) {
+
+}

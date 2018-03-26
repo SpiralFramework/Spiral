@@ -30,6 +30,12 @@ class MacDR1Executable(file: File): DRExecutable(file) {
         val LANGUAGE_ONE_DATA_LENGTH = 7
         val LANGUAGE_ONE_KEYBOARD_LENGTH = 7
 
+        val MAXIMUM_CHAPTER = 8
+        val MAXIMUM_CHARACTER = 33
+
+        val VOICE_LINE_OFFSET = 2748610L
+        val VOICE_LINE_ARRAY_LENGTH = ((MAXIMUM_CHARACTER + MAXIMUM_CHAPTER + (MAXIMUM_CHARACTER * MAXIMUM_CHAPTER)) * 2) + 1
+
         val PAK_MAPPING = mapOf(
                 "bg_000" to (0x35F748L to 6),
                 "bg_001" to (0x35F7F8L to 58),
@@ -179,6 +185,10 @@ class MacDR1Executable(file: File): DRExecutable(file) {
     var languageOneKeyboardExtension: String
 
     override val pakNames: Map<String, Array<String>>
+    override val maximumChapter = MAXIMUM_CHAPTER
+
+    val voiceLineOffset: Long
+    override val voiceLineArray: IntArray
 
     init {
         raf.seek(DATA_OFFSET)
@@ -216,9 +226,25 @@ class MacDR1Executable(file: File): DRExecutable(file) {
         raf.seek(initialOffset)
 
         pakNames = mappings
+
+        raf.seek(VOICE_LINE_OFFSET)
+        val originalOffsetArray = IntArray(VOICE_LINE_ARRAY_LENGTH) { (raf.read() or (raf.read() shl 8)) }
+
+        if (originalOffsetArray[0] != 0xFFFF) {
+            System.err.println("Error: Reading from $file at $VOICE_LINE_OFFSET for ${VOICE_LINE_ARRAY_LENGTH * 2} resulted in the first number being ${originalOffsetArray[0]}. This may be the result of an earlier game version, or a different compiler option.\nSearching for the correct offset now...")
+
+            voiceLineOffset = -1
+            voiceLineArray = intArrayOf()
+        } else {
+            if (originalOffsetArray[1] != 0x01)
+                System.err.println("Warning: Reading from $file at $VOICE_LINE_OFFSET for ${VOICE_LINE_ARRAY_LENGTH * 2} resulted in the first two numbers being ${originalOffsetArray[0]} and ${originalOffsetArray[1]}\nThis is likely an issue.")
+
+            voiceLineOffset = VOICE_LINE_OFFSET
+            voiceLineArray = originalOffsetArray
+        }
     }
 
-    fun save() {
+    override fun save() {
         raf.seek(DATA_OFFSET)
         raf.write(dataWadName.trimToBytes(DATA_LENGTH))
 
@@ -244,7 +270,7 @@ class MacDR1Executable(file: File): DRExecutable(file) {
         raf.write(languageOneKeyboardExtension.trimToBytes(LANGUAGE_ONE_KEYBOARD_LENGTH))
     }
 
-    fun reset() {
+    override fun reset() {
         dataWadName = "dr1_data.wad"
         patchWadName = "dr1_patch.wad"
         keyboardWadName = "dr1_data_keyboard.wad"
