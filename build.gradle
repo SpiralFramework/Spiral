@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.30'
+    ext.kotlin_version = '1.2.31'
 
     repositories {
         mavenCentral()
@@ -19,10 +19,16 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url 'http://eternal.abimon.org/files/maven' }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    compile "org.abimon:SpiralFormats:2f3d035"
+    compile "org.parboiled:parboiled-java:1.1.8"
+
+    testCompile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
