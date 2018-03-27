@@ -15,4 +15,7 @@ interface HopesPeakDRGame: DRGame {
     val opCodes: OpCodeMap<IntArray, LinScript>
 
     val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray>
+
+    val characterIdentifiers: MutableMap<String, Int>
+    val characterIDs: Map<Int, String>
 }

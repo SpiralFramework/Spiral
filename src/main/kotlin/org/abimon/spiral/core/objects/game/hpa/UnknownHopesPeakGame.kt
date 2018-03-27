@@ -8,4 +8,6 @@ object UnknownHopesPeakGame: HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> = emptyMap()
     override val opCodes: OpCodeMap<IntArray, LinScript> = emptyMap()
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> = emptyMap()
+    override val characterIDs: Map<Int, String> = emptyMap()
+    override val characterIdentifiers: MutableMap<String, Int> = HashMap<String, Int>()
 }

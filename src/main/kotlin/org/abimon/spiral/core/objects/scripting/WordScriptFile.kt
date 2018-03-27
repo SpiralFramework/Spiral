@@ -5,6 +5,7 @@ import org.abimon.spiral.core.objects.scripting.wrd.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.abimon.spiral.core.utils.*
 import java.io.InputStream
+import java.util.*
 
 class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     val entries: Array<WrdScript>
@@ -28,47 +29,40 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
             val cmd2Offset = stream.readInt32LE()
             val stringOffset = stream.readInt32LE()
 
-            val wrdStream = LinkedListStream(stream)
+            val wrdData = LinkedList<Int>(ByteArray(unkOffset - 0x20).apply { stream.read(this) }.map { byte -> byte.toInt() and 0xFF })
             val wrdEntries: MutableList<WrdScript> = ArrayList()
-            val maxRead = unkOffset - 0x20
+            
+            while (wrdData.isNotEmpty()) {
+                var byte = wrdData.poll() ?: break
 
-            var index = 0
+                while (byte != 0x70 && wrdData.isNotEmpty())
+                    byte = wrdData.poll() ?: break
 
-            while (index < maxRead) {
-                var byte = wrdStream.read()
-                index++
-
-                while (byte != 0x70 && index < maxRead) {
-                    index++
-                    byte = wrdStream.read()
-                }
-
-                if (index >= maxRead)
+                if (wrdData.isEmpty())
                     break
 
-                val opCode = wrdStream.read()
-                index++
-                val (names, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
+                val opCode = wrdData.poll() ?: break
+
+                val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
                 val arguments: IntArray
 
                 if (argumentCount == -1) {
                     val args: MutableList<Int> = ArrayList()
 
-                    while (index < maxRead && wrdStream.peek() != 0x70) {
-                        index++
-                        args.add(wrdStream.read())
+                    while (wrdData.peek() != 0x70 && wrdData.isNotEmpty()) {
+                        args.add(wrdData.poll() ?: break)
                     }
 
                     arguments = args.toIntArray()
                 } else {
-                    arguments = IntArray(argumentCount) { wrdStream.read() }
-                    index += argumentCount
+                    arguments = IntArray(argumentCount) { wrdData.poll() }
                 }
 
-                if (arguments.size == argumentCount || argumentCount == -1)
+                if (arguments.size == argumentCount || argumentCount == -1) {
                     wrdEntries.add(getEntry(opCode, arguments))
-                else
+                } else {
                     println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                }
             }
 
             entries = wrdEntries.toTypedArray()
