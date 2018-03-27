@@ -17,4 +17,10 @@ object UDG: HopesPeakDRGame {
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
             emptyMap()
+
+    override val characterIDs: Map<Int, String> =
+            emptyMap()
+
+    override val characterIdentifiers: MutableMap<String, Int> =
+            HashMap<String, Int>()
 }
