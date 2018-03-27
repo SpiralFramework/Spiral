@@ -16,6 +16,6 @@ interface HopesPeakDRGame: DRGame {
 
     val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray>
 
-    val characterIdentifiers: MutableMap<String, Int>
+    val characterIdentifiers: Map<String, Int>
     val characterIDs: Map<Int, String>
 }
