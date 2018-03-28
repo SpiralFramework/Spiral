@@ -80,8 +80,8 @@ object DR2 : HopesPeakDRGame {
                 this[0x37] = null to -1 and ::UnknownEntry
                 this[0x38] = null to -1 and ::UnknownEntry
                 this[0x39] = null to 5 and ::UnknownEntry
-                this[0x3A] = null to 4 and ::UnknownEntry
-                this[0x3B] = null to 2 and ::UnknownEntry
+                this[0x3A] = null to 4 and ::UnknownEntry //Wait For Input DR1
+                this[0x3B] = null to 2 and ::UnknownEntry //Wait Frame DR1
                 this[0x3C] = "End Flag Check" to 0 and DR2::EndFlagCheckEntry
                 this[0x4B] = "Wait For Input" to 0 and ::WaitForInputEntry
                 this[0x4C] = "Wait Frame" to 0 and ::WaitFrameEntry
