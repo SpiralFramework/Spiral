@@ -11,8 +11,8 @@ object UIDrill : DrillHead<LinScript> {
     val cmd: String = "UI-DRILL"
     val uiElements = mapOf(
             "Speaker Name" to 1,
-            "HUD" to 3,
             "HUD Disabler" to 7,
+            "HUD" to 3,
             "Class Trial" to 8,
             "Sprites" to 9,
             "Save Prompt" to 12,
@@ -36,6 +36,7 @@ object UIDrill : DrillHead<LinScript> {
                             Sequence(
                                     FirstOf("Enable", "Disable"),
                                     pushTmpAction(cmd),
+                                    ZeroOrMore(Whitespace()),
                                     FirstOf(
                                             FirstOf(uiElements.keys.toTypedArray()),
                                             OneOrMore(Digit())
@@ -50,7 +51,9 @@ object UIDrill : DrillHead<LinScript> {
                                             OneOrMore(Digit())
                                     ),
                                     Action<Any> { push(match()) },
-                                    " to ",
+                                    ZeroOrMore(Whitespace()),
+                                    "to",
+                                    ZeroOrMore(Whitespace()),
                                     OneOrMore(Digit()),
                                     pushTmpAction(cmd),
                                     Action<Any> { context -> pushTmpAction(cmd, pop()).run(context) }
