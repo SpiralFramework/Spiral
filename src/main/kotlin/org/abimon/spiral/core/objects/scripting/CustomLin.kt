@@ -12,12 +12,24 @@ class CustomLin {
     var header: ByteArray = ByteArray(0)
     val entries: ArrayList<LinScript> = ArrayList()
 
-    fun add(entry: LinScript) = entries.add(entry)
+    fun add(entry: LinScript) {
+        entries.add(entry)
+    }
+
+    fun addAll(entries: Array<LinScript>) {
+        this.entries.addAll(entries)
+    }
+
+    fun addAll(entries: List<LinScript>) {
+        this.entries.addAll(entries)
+    }
 
     /**
      * WARNING: This will not work with UDG!!
      */
-    fun add(text: String) = entries.add(TextEntry(text, 0))
+    fun add(text: String) {
+        entries.add(TextEntry(text, 0))
+    }
 
     fun compile(out: OutputStream) {
         out.writeInt32LE(type)
