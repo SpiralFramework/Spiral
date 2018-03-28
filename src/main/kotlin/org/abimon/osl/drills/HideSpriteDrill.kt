@@ -9,8 +9,8 @@ import org.parboiled.Rule
 import java.util.*
 import kotlin.reflect.KClass
 
-object BustSpriteDrill : DrillHead<LinScript> {
-    val cmd: String = "BUST-SPRITE"
+object HideSpriteDrill : DrillHead<LinScript> {
+    val cmd: String = "HIDE-SPRITE"
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
     val NUMERAL_REGEX = "\\d+".toRegex()
 
@@ -20,8 +20,10 @@ object BustSpriteDrill : DrillHead<LinScript> {
             FirstOf(
                     Sequence(
                             clearTmpStack(cmd),
-                            "Display sprite for ",
-                            pushTmpAction(cmd, this@BustSpriteDrill),
+                            "Hide" ,
+                            Whitespace(),
+                            Optional("sprite for "),
+                            pushTmpAction(cmd, this@HideSpriteDrill),
                             FirstOf(
                                     Parameter(cmd),
                                     Sequence(
@@ -33,9 +35,6 @@ object BustSpriteDrill : DrillHead<LinScript> {
                                 val name = peekTmpAction(cmd)?.toString() ?: ""
                                 return@Action name in customIdentifiers || name in game.characterIdentifiers || name.matches(NUMERAL_REGEX)
                             },
-                            " with ID ",
-                            OneOrMore(Digit()),
-                            pushTmpAction(cmd),
                             pushTmpStack(cmd)
                     ),
                     Sequence(
@@ -47,8 +46,6 @@ object BustSpriteDrill : DrillHead<LinScript> {
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val characterStr = rawParams[0].toString()
         val character = parser.customIdentifiers[characterStr] ?: parser.game.characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
-        val sprite = rawParams[1].toString().toIntOrNull() ?: 0
-
-        return SpriteEntry(0, character, sprite, 1, 2)
+        return SpriteEntry(0, character, 0, 4, 2)
     }
 }
