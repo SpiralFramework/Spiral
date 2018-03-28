@@ -1,27 +1,24 @@
 package org.abimon.osl.drills.circuits
 
-import org.abimon.osl.*
-import org.abimon.osl.drills.DrillHead
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
-import org.abimon.spiral.core.objects.scripting.lin.LinScript
+import org.abimon.osl.LineCodeMatcher
+import org.abimon.osl.OpenSpiralLanguageParser
+import org.parboiled.Action
 import org.parboiled.Rule
 
-object EchoDrill: DrillHead {
+object EchoDrill: DrillCircuit {
     val cmd = "ECHO"
 
-    override fun Syntax(parser: OpenSpiralLanguageParser): Rule = parser.makeCommand {
-        Sequence(
-                clearTmpStack(cmd),
-                "echo",
-                Whitespace(),
-                pushTmpAction(this, cmd, this@EchoDrill),
-                OneOrMore(LineCodeMatcher),
-                pushTmpAction(this, cmd),
-                pushTmpStack(this, cmd)
-        )
-    }
-
-    override fun formScripts(rawParams: Array<Any>, game: HopesPeakDRGame): Array<LinScript> = emptyArray()
+    override fun OpenSpiralLanguageParser.syntax(): Rule =
+            Sequence(
+                    clearTmpStack(cmd),
+                    "echo",
+                    Action<Any> { true },
+                    Whitespace(),
+                    pushTmpAction(cmd, this@EchoDrill),
+                    OneOrMore(LineCodeMatcher),
+                    pushTmpAction(cmd),
+                    pushTmpStack(cmd)
+            )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
         println(rawParams[0])

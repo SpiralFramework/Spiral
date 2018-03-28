@@ -1,48 +1,48 @@
 package org.abimon.osl.drills
 
-import org.abimon.osl.*
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.osl.LineCodeMatcher
+import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Action
 import org.parboiled.Rule
+import kotlin.reflect.KClass
 
-//TODO: Support DR2 op codes too
-object NamedSpiralDrill : DrillHead {
+object NamedSpiralDrill : DrillHead<LinScript> {
     val cmd = "NAMED"
 
-    override fun Syntax(parser: OpenSpiralLanguageParser): Rule = parser.makeCommand {
-        Sequence(
-                clearTmpStack(cmd),
-                OneOrMore(LineCodeMatcher),
-                Action<Any> {
-                    val name = match()
-                    parser.game.opCodes.values.any { (names) -> name in names }
-                },
-                pushTmpAction(this, cmd, this@NamedSpiralDrill),
-                pushTmpAction(this, cmd),
-                Optional(
-                        '|'
-                ),
-                Optional(
-                        ParamList(
-                                cmd,
-                                Sequence(
-                                        OneOrMore(Digit()),
-                                        pushToStack(this)
-                                ),
-                                Sequence(
-                                        ',',
-                                        Optional(Whitespace())
-                                )
-                        )
-                ),
-                pushTmpStack(this, cmd)
-        )
-    }
+    override val klass: KClass<LinScript> = LinScript::class
+    override fun OpenSpiralLanguageParser.syntax(): Rule =
+            Sequence(
+                    clearTmpStack(cmd),
+                    OneOrMore(LineCodeMatcher),
+                    Action<Any> {
+                        val name = match()
+                        game.opCodes.values.any { (names) -> name in names }
+                    },
+                    pushTmpAction(cmd, this@NamedSpiralDrill),
+                    pushTmpAction(cmd),
+                    Optional(
+                            '|'
+                    ),
+                    Optional(
+                            ParamList(
+                                    cmd,
+                                    Sequence(
+                                            OneOrMore(Digit()),
+                                            pushToStack(this)
+                                    ),
+                                    Sequence(
+                                            ',',
+                                            Optional(Whitespace())
+                                    )
+                            )
+                    ),
+                    pushTmpStack(cmd)
+            )
 
-
-    override fun formScripts(rawParams: Array<Any>, game: HopesPeakDRGame): Array<LinScript> {
-        //rawParams[0] = SpiralData.dr1OpCodes.entries.first { (_, pair) -> pair.second.equals("${rawParams[0]}", true) }.key.toString(16)
-        return BasicSpiralDrill.formScripts(rawParams, game)
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+        val opName = rawParams[0].toString()
+        rawParams[0] = parser.game.opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
+        return BasicSpiralDrill.formScript(rawParams, parser.game)
     }
 }

@@ -1,13 +1,12 @@
 package org.abimon.osl.drills
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
-import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Rule
+import kotlin.reflect.KClass
 
-interface DrillHead {
-    fun Syntax(parser: OpenSpiralLanguageParser): Rule
-    fun formScripts(rawParams: Array<Any>, game: HopesPeakDRGame): Array<LinScript>
-
-    fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {}
+interface DrillHead<T : Any> {
+    val klass: KClass<T>
+    fun OpenSpiralLanguageParser.syntax(): Rule
+    fun Syntax(parser: OpenSpiralLanguageParser): Rule = parser.syntax()
+    fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): T?
 }

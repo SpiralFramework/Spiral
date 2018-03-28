@@ -1,34 +1,42 @@
 package org.abimon.osl.drills
 
-import org.abimon.osl.*
+import org.abimon.osl.AllButMatcher
+import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.lin.*
 import org.parboiled.Action
 import org.parboiled.Rule
+import kotlin.reflect.KClass
 
-object DialogueDrill : DrillHead {
+object DialogueDrill : DrillHead<Array<LinScript>> {
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
     val cmd = "DIALOGUE"
 
-    override fun Syntax(parser: OpenSpiralLanguageParser): Rule = parser.makeCommand {
-        Sequence(
-                clearTmpStack(cmd),
-                OneOrMore(NAME),
-                Action<Any> { match() in game.characterIdentifiers },
-                pushTmpAction(this, cmd, this@DialogueDrill),
-                pushTmpAction(this, cmd),
-                ':',
-                OneOrMore(LineMatcher),
-                pushTmpAction(this, cmd),
-                pushTmpStack(this, cmd)
-        )
-    }
+    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    override fun OpenSpiralLanguageParser.syntax(): Rule =
+            Sequence(
+                    clearTmpStack(cmd),
+                    OneOrMore(NAME),
+                    Action<Any> { match() in customIdentifiers || match() in game.characterIdentifiers },
+                    pushTmpAction(cmd, this@DialogueDrill),
+                    pushTmpAction(cmd),
+                    ':',
+                    LinText(cmd),
+                    pushTmpAction(cmd),
+                    pushTmpStack(cmd)
+            )
 
-    override fun formScripts(rawParams: Array<Any>, game: HopesPeakDRGame): Array<LinScript> {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+        val game = parser.game
         return arrayOf(
-                SpeakerEntry(game.characterIdentifiers["${rawParams[0]}"] ?: game.characterIdentifiers["???"] ?: 0), //Replace with valid naming or numbers or whatever
+                SpeakerEntry(
+                        parser.customIdentifiers["${rawParams[0]}"]
+                                ?: game.characterIdentifiers["${rawParams[0]}"]
+                                ?: parser.customIdentifiers["???"]
+                                ?: game.characterIdentifiers["???"]
+                                ?: 0
+                ), //Replace with valid naming or numbers or whatever
                 TextEntry("${rawParams[1]}", -1),
                 game.run {
                     when (this) {
