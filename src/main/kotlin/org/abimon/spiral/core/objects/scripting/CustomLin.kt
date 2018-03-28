@@ -52,15 +52,9 @@ class CustomLin {
             entryData.write(entry.opCode)
 
             if (entry is TextEntry) {
-                val text = buildString {
-                    val raw = (entry.text ?: "Hello, Null!")
-                    if (!raw.startsWith("\uFFFE"))
-                        append("\uFFFE")
-                    append(raw)
-                }
-
-                val strData = text.toByteArray(Charsets.UTF_16LE)
+                val strData = (entry.text ?: "Hello, Null!").toByteArray(Charsets.UTF_16LE)
                 textData.writeInt32LE((numText * 4L) + 4 + textText.size())
+                textText.write(0xFFFE)
                 textText.write(strData)
 
                 entryData.write(textID / 256)
