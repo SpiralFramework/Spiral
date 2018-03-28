@@ -57,6 +57,8 @@ class CustomLin {
                 textText.write(0xFF)
                 textText.write(0xFE)
                 textText.write(strData)
+                textText.write(0x00)
+                textText.write(0x00)
 
                 entryData.write(textID / 256)
                 entryData.write(textID % 256)
