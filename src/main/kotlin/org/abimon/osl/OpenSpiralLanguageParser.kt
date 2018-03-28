@@ -181,7 +181,21 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun Comment(): Rule = FirstOf(
             Sequence("//", ZeroOrMore(LineMatcher)),
-            Sequence("#", ZeroOrMore(LineMatcher))
+            Sequence("#", ZeroOrMore(LineMatcher)),
+            Sequence(
+                    "/**",
+                    ZeroOrMore(
+                            FirstOf(
+                                    Sequence(
+                                            OneOrMore(AllButMatcher(charArrayOf('\\'))),
+                                            '\\',
+                                            '*'
+                                    ),
+                                    AllButMatcher(charArrayOf('*'))
+                            )
+                    ),
+                    "*/"
+            )
     )
 
     val COLOUR_CODES = mapOf(
@@ -228,107 +242,107 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     clearTmpStack("LIN-TEXT-$cmd"),
                     OneOrMore(FirstOf(
-                                    Sequence(
-                                            OneOrMore(AllButMatcher(charArrayOf('\\', '\n'))),
-                                            Action<Any> { push(match()) },
-                                            '\\',
-                                            FirstOf('&', '#'),
-                                            Action<Any> { context ->
-                                                pushTmpAction("LIN-TEXT-$cmd", "${pop()}&").run(context)
-                                                return@Action true
-                                            }
-                                    ),
-                                    Sequence(
-                                            ZeroOrMore(AllButMatcher(charArrayOf('&', '\n'))),
-                                            Action<Any> { push(match()) },
-                                            "&clear",
-                                            Action<Any> { context ->
-                                                val text = pop().toString()
+                            Sequence(
+                                    OneOrMore(AllButMatcher(charArrayOf('\\', '\n'))),
+                                    Action<Any> { push(match()) },
+                                    '\\',
+                                    FirstOf('&', '#'),
+                                    Action<Any> { context ->
+                                        pushTmpAction("LIN-TEXT-$cmd", "${pop()}&").run(context)
+                                        return@Action true
+                                    }
+                            ),
+                            Sequence(
+                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '\n'))),
+                                    Action<Any> { push(match()) },
+                                    "&clear",
+                                    Action<Any> { context ->
+                                        val text = pop().toString()
 
-                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT>").run(context)
-                                                return@Action true
-                                            }
-                                    ),
-                                    Sequence(
-                                            ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
-                                            Action<Any> { push(match()) },
-                                            FirstOf(
-                                                    Sequence(
-                                                            '&',
-                                                            FirstOf(COLOUR_CODES.keys.toTypedArray()),
-                                                            Action<Any> { push(match()) },
-                                                            Action<Any> { context ->
-                                                                val colour = pop().toString()
-                                                                val text = pop().toString()
+                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT>").run(context)
+                                        return@Action true
+                                    }
+                            ),
+                            Sequence(
+                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
+                                    Action<Any> { push(match()) },
+                                    FirstOf(
+                                            Sequence(
+                                                    '&',
+                                                    FirstOf(COLOUR_CODES.keys.toTypedArray()),
+                                                    Action<Any> { push(match()) },
+                                                    Action<Any> { context ->
+                                                        val colour = pop().toString()
+                                                        val text = pop().toString()
 
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
-                                                                        ?: 0}>").run(context)
-                                                                return@Action true
-                                                            }
-                                                    ),
-                                                    Sequence(
-                                                            '#',
-                                                            FirstOf(HEX_CODES.keys.toTypedArray()),
-                                                            Action<Any> { push(match()) },
-                                                            Action<Any> { context ->
-                                                                val colour = pop().toString()
-                                                                val text = pop().toString()
+                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
+                                                                ?: 0}>").run(context)
+                                                        return@Action true
+                                                    }
+                                            ),
+                                            Sequence(
+                                                    '#',
+                                                    FirstOf(HEX_CODES.keys.toTypedArray()),
+                                                    Action<Any> { push(match()) },
+                                                    Action<Any> { context ->
+                                                        val colour = pop().toString()
+                                                        val text = pop().toString()
 
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
-                                                                        ?: 0}>").run(context)
-                                                                return@Action true
-                                                            }
-                                                    )
+                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
+                                                                ?: 0}>").run(context)
+                                                        return@Action true
+                                                    }
                                             )
-                                    ),
-                                    Sequence(
-                                            ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
-                                            Action<Any> { push(match()) },
-                                            FirstOf(
-                                                    Sequence(
-                                                            '&',
-                                                            '{',
-                                                            FirstOf(COLOUR_CODES.keys.toTypedArray()),
-                                                            Action<Any> { push(match()) },
-                                                            '}',
-                                                            Whitespace(),
-                                                            Action<Any> { context ->
-                                                                val colour = pop().toString()
-                                                                val text = pop().toString()
-
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
-                                                                        ?: 0}>").run(context)
-                                                                return@Action true
-                                                            }
-                                                    ),
-                                                    Sequence(
-                                                            '#',
-                                                            '{',
-                                                            FirstOf(HEX_CODES.keys.toTypedArray()),
-                                                            Action<Any> { push(match()) },
-                                                            '}',
-                                                            Whitespace(),
-                                                            Action<Any> { context ->
-                                                                val colour = pop().toString()
-                                                                val text = pop().toString()
-
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
-                                                                        ?: 0}>").run(context)
-                                                                return@Action true
-                                                            }
-                                                    )
-                                            )
-                                    ),
-                                    Sequence(
-                                            OneOrMore(AllButMatcher(charArrayOf('\n'))),
-                                            pushTmpAction("LIN-TEXT-$cmd")
                                     )
-                            )),
+                            ),
+                            Sequence(
+                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
+                                    Action<Any> { push(match()) },
+                                    FirstOf(
+                                            Sequence(
+                                                    '&',
+                                                    '{',
+                                                    FirstOf(COLOUR_CODES.keys.toTypedArray()),
+                                                    Action<Any> { push(match()) },
+                                                    '}',
+                                                    Whitespace(),
+                                                    Action<Any> { context ->
+                                                        val colour = pop().toString()
+                                                        val text = pop().toString()
+
+                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
+                                                                ?: 0}>").run(context)
+                                                        return@Action true
+                                                    }
+                                            ),
+                                            Sequence(
+                                                    '#',
+                                                    '{',
+                                                    FirstOf(HEX_CODES.keys.toTypedArray()),
+                                                    Action<Any> { push(match()) },
+                                                    '}',
+                                                    Whitespace(),
+                                                    Action<Any> { context ->
+                                                        val colour = pop().toString()
+                                                        val text = pop().toString()
+
+                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
+                                                                ?: 0}>").run(context)
+                                                        return@Action true
+                                                    }
+                                            )
+                                    )
+                            ),
+                            Sequence(
+                                    OneOrMore(AllButMatcher(charArrayOf('\n'))),
+                                    pushTmpAction("LIN-TEXT-$cmd")
+                            )
+                    )),
                     operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
                         if (!tmpStack.containsKey(cmd))
                             tmpStack[cmd] = LinkedList()

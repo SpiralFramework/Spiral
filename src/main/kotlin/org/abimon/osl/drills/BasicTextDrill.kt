@@ -1,6 +1,5 @@
 package org.abimon.osl.drills
 
-import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.TextEntry
@@ -24,7 +23,7 @@ object BasicTextDrill : DrillHead<LinScript> {
                     ),
                     '|',
                     pushTmpAction(cmd, this@BasicTextDrill),
-                    OneOrMore(LineCodeMatcher),
+                    LinText(cmd),
                     pushTmpAction(cmd),
                     pushTmpStack(cmd)
             )
