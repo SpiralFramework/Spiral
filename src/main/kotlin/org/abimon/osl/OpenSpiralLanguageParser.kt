@@ -45,6 +45,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             BasicSpiralDrill,
             NamedSpiralDrill,
             BustSpriteDrill,
+            UIDrill,
 
             ChangeGameDrill,
             EchoDrill,

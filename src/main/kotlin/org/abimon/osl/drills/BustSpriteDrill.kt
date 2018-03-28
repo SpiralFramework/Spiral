@@ -48,6 +48,6 @@ object BustSpriteDrill : DrillHead<LinScript> {
         val character = parser.customIdentifiers[characterStr] ?: parser.game.characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
         val sprite = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return SpriteEntry(0, character, sprite, 1, 0)
+        return SpriteEntry(0, character, sprite, 1, 2)
     }
 }
