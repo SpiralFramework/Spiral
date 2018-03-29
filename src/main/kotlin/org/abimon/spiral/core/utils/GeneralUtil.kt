@@ -1,5 +1,10 @@
 package org.abimon.spiral.core.utils
 
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.attribute.DosFileAttributeView
+import java.util.*
+
 typealias OpCodeMap<A, S> = Map<Int, Triple<Array<String>, Int, (Int, A) -> S>>
 typealias OpCodeMutableMap<A, S> = MutableMap<Int, Triple<Array<String>, Int, (Int, A) -> S>>
 typealias OpCodeHashMap<A, S> = HashMap<Int, Triple<Array<String>, Int, (Int, A) -> S>>
@@ -29,4 +34,17 @@ fun assertAsArgument(statement: Boolean, illegalArgument: String) {
 fun assertOrThrow(statement: Boolean, ammo: Throwable) {
     if(!statement)
         throw ammo
+}
+
+fun CacheFile(): File {
+    var cacheFile: File
+    do {
+        cacheFile = File("." + UUID.randomUUID().toString())
+    } while (cacheFile.exists())
+
+    cacheFile.deleteOnExit()
+    if(Files.getFileAttributeView(cacheFile.toPath(), DosFileAttributeView::class.java) != null)
+        Files.setAttribute(cacheFile.toPath(), "dos:hidden", true)
+
+    return cacheFile
 }
