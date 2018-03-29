@@ -51,7 +51,7 @@ class SPC(val dataSource: () -> InputStream) {
 
                 stream.skip(compressedSize + dataPadding)
 
-                return@Array SPCEntry(compressionFlag, unknownFlag, compressedSize, decompressedSize, name, position)
+                return@Array SPCEntry(compressionFlag, unknownFlag, compressedSize, decompressedSize, name, position, this)
             }
         } finally {
             stream.close()
