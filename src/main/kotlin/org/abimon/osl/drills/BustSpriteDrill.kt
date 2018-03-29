@@ -6,7 +6,6 @@ import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.SpriteEntry
 import org.parboiled.Action
 import org.parboiled.Rule
-import java.util.*
 import kotlin.reflect.KClass
 
 object BustSpriteDrill : DrillHead<LinScript> {
@@ -39,8 +38,27 @@ object BustSpriteDrill : DrillHead<LinScript> {
                             pushTmpStack(cmd)
                     ),
                     Sequence(
-                            UUID.randomUUID().toString(),
-                            "s"
+                            clearTmpStack(cmd),
+                            "Display",
+                            pushTmpAction(cmd, this@BustSpriteDrill),
+                            Whitespace(),
+                            FirstOf(
+                                    Parameter(cmd),
+                                    Sequence(
+                                            OneOrMore(Digit()),
+                                            pushTmpAction(cmd)
+                                    )
+                            ),
+                            Action<Any> {
+                                val name = peekTmpAction(cmd)?.toString() ?: ""
+                                return@Action name in customIdentifiers || name in game.characterIdentifiers || name.matches(NUMERAL_REGEX)
+                            },
+                            Whitespace(),
+                            "pose",
+                            Whitespace(),
+                            OneOrMore(Digit()),
+                            pushTmpAction(cmd),
+                            pushTmpStack(cmd)
                     )
             )
 
