@@ -13,6 +13,8 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     val commandTwoEntries: Array<String>
     val commandThreeEntries: Array<String>
 
+    val strings: Array<String>
+
     init {
         val stream = CountingInputStream(dataSource())
         try {
@@ -96,6 +98,21 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                 stream.read() //Null Terminated
 
                 return@Array str
+            }
+
+            strings = dataSource().use { stringStream ->
+                stringStream.skip(stringOffset.toLong())
+                return@use Array<String>(stringCount) {
+                    var stringLen = stream.read()
+
+                    if(stringLen >= 0x80)
+                        stringLen += (stream.read() - 1) shl 8
+
+                    val string = stream.readString(stringLen, "UTF-16LE")
+                    stream.readInt16LE()
+
+                    return@Array string
+                }
             }
         } finally {
             stream.close()
