@@ -10,6 +10,7 @@ import java.io.InputStream
 
 data class SPCEntry(val compressionFlag: Int, val unknownFlag: Int, val compressedSize: Long, val decompressedSize: Long, val name: String, val offset: Long, val spc: SPC) {
     private val decompressedData: File by lazy {
+        println("Decompressing $this")
         val cacheFile = CacheFile()
         WindowedInputStream(spc.dataSource(), offset, compressedSize).use { baseStream ->
             FileOutputStream(cacheFile).use { outStream ->

@@ -1,9 +1,6 @@
 package org.abimon.spiral.core.objects
 
-import org.abimon.spiral.core.objects.archives.CustomPak
-import org.abimon.spiral.core.objects.archives.CustomWAD
-import org.abimon.spiral.core.objects.archives.Pak
-import org.abimon.spiral.core.objects.archives.WAD
+import org.abimon.spiral.core.objects.archives.*
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.CustomLin
 import org.abimon.spiral.core.objects.scripting.Lin
@@ -30,4 +27,10 @@ fun customLin(init: CustomLin.() -> Unit): CustomLin {
     val customLin = CustomLin()
     customLin.init()
     return customLin
+}
+
+fun customSPC(init: CustomSPC.() -> Unit): CustomSPC {
+    val customSPC = CustomSPC()
+    customSPC.init()
+    return customSPC
 }

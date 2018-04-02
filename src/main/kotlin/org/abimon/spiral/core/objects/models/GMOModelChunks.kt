@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.objects.models
 
+import org.abimon.spiral.core.utils.TriFace
 import org.abimon.spiral.core.utils.UV
 import org.abimon.spiral.core.utils.Vertex
 
@@ -43,7 +44,7 @@ class GMOMaterialChunk(chunkType: Int, chunkHeaderSize: Int, chunkSize: Long, he
 class GMOVertexArrayChunk(chunkType: Int, chunkHeaderSize: Int, chunkSize: Long, header: IntArray, val uvs: List<UV>, val vertices: List<Vertex>, val padding: List<ByteArray>):
         GMOModelChunk(chunkType, chunkHeaderSize, chunkSize, header)
 
-class GMOMeshFacesChunk(chunkType: Int, chunkHeaderSize: Int, chunkSize: Long, header: IntArray, val arIndex: Int, val unknown: Int, val primType: Int, val faces: List<IntArray>):
+class GMOMeshFacesChunk(chunkType: Int, chunkHeaderSize: Int, chunkSize: Long, header: IntArray, val arIndex: Int, val unknown: Int, val primType: Int, val faces: List<TriFace>):
         GMOModelChunk(chunkType, chunkHeaderSize, chunkSize, header)
 
 class GMOMeshMaterialInfoChunk(val material: Int): GMOModelChunk(0x8061, 0, 10, intArrayOf())

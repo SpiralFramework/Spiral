@@ -1,6 +1,5 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.core.utils.writeInt32LE
 import org.abimon.spiral.core.utils.writeInt64LE
 import java.io.File
@@ -16,7 +15,7 @@ class CustomWAD {
 
     fun add(wad: WAD) {
         for (entry in wad.files)
-            add(entry.name, entry.size) { WindowedInputStream(wad.dataSource(), wad.dataOffset + entry.offset, entry.size) }
+            add(entry.name, entry.size, entry::inputStream)
     }
 
     fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
@@ -31,24 +30,9 @@ class CustomWAD {
     fun add(name: String, data: File) = add(name, data.length()) { FileInputStream(data) }
     fun add(name: String, size: Long, supplier: () -> InputStream) = files.put(name.replace(File.separator, "/"), size to supplier)
 
-    fun compile(output: OutputStream) = compileToStreamWith(output) { fileNames ->
-        for (name in fileNames) {
-            val (_, source) = files[name] ?: continue
+    fun compile(output: OutputStream) = compileWithProgress(output) { _, _ -> }
 
-            source().use { stream -> stream.copyTo(output) }
-        }
-    }
-
-    fun compileWithProgress(output: OutputStream, progress: (String, Int) -> Unit) = compileToStreamWith(output) { fileNames ->
-        fileNames.forEachIndexed { index, name ->
-            val (_, source) = files[name] ?: return@forEachIndexed
-
-            source().use { stream -> stream.copyTo(output) }
-            progress(name, index)
-        }
-    }
-
-    fun compileToStreamWith(output: OutputStream, compileFunction: (List<String>) -> Unit) {
+    fun compileWithProgress(output: OutputStream, progress: (String, Int) -> Unit) {
         output.writeInt32LE(WAD.MAGIC_NUMBER)
 
         output.writeInt32LE(major)
@@ -116,6 +100,11 @@ class CustomWAD {
             }
         }
 
-        compileFunction(fileNames)
+        fileNames.forEachIndexed { index, name ->
+            val (_, source) = files[name] ?: return@forEachIndexed
+
+            source().use { stream -> stream.copyTo(output) }
+            progress(name, index)
+        }
     }
 }

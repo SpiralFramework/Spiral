@@ -107,10 +107,19 @@ class GMOModel(val dataSource: () -> InputStream) {
                                 verts.add((u to v) to (x to y and z) and (padding))
                             }
 
-                            //val sortedVerts = verts.sortedBy { (_, _, id) -> id }.asReversed()
-                            val uvs = verts.map { (uv) -> uv }
-                            val vertices = verts.map { (_, vertice) -> vertice }
-                            val padding = verts.map { (_, _, pad) -> pad }
+                            val sortedVerts = verts.chunked(4).flatMap { chunk -> chunk.sortedWith(Comparator { (uv1), (uv2) ->
+                                val (u1, v1) = uv1
+                                val (u2, v2) = uv2
+
+                                if (u1.compareTo(u2) == 0)
+                                    return@Comparator v1.compareTo(v2)
+                                return@Comparator 0
+                            }) }//.asReversed()
+                            val unsortedUVs = verts.map { (uv) -> uv }
+                            val unsortedVertices = verts.map { (_, vertice) -> vertice }
+                            val uvs = sortedVerts.map { (uv) -> uv }
+                            val vertices = sortedVerts.map { (_, vertice) -> vertice }
+                            val padding = sortedVerts.map { (_, _, pad) -> pad }
 
                             //println(header.joinToString(" ", prefix = "$numVerts: ") { byte -> (byte.toInt() and 0xFF).toString(16).padStart(2, '0') })
                             list.add(GMOVertexArrayChunk(chunkID, headerSize, dataSize, header, uvs, vertices, padding))
@@ -143,7 +152,7 @@ class GMOModel(val dataSource: () -> InputStream) {
                             val arIndex = substream.readInt16LE() - 4096
                             val unk = substream.readInt16LE()
                             val primType = substream.readInt32LE()
-                            val faces: MutableList<IntArray> = ArrayList()
+                            val faces: MutableList<TriFace> = ArrayList()
 
                             when (primType) {
                                 3 -> {
@@ -151,11 +160,13 @@ class GMOModel(val dataSource: () -> InputStream) {
                                     val idxStride = substream.readInt32LE()
 
                                     for (i in 0L until (numIdx * idxStride) / 3)
-                                        faces.add(intArrayOf(substream.readInt16LE(), substream.readInt16LE(), substream.readInt16LE()))
+                                        faces.add(substream.readInt16LE() to substream.readInt16LE() and substream.readInt16LE())
                                 }
                                 4 -> {
-                                    val idxStride = substream.readInt32LE()
                                     val numIdx = substream.readInt32LE()
+                                    val idxStride = substream.readInt32LE()
+
+                                    val verts = IntArray(numIdx * 4) { substream.readInt16LE() }
 
                                     for (i in 0L until (numIdx * idxStride) / 4) {
 //                                    val a = substream.readInt16LE()
@@ -166,10 +177,22 @@ class GMOModel(val dataSource: () -> InputStream) {
 //                                    faces.add(a to b and c)
 //                                    faces.add(a to c and d)
 
-                                        faces.add(intArrayOf(
-                                                substream.readInt16LE(), substream.readInt16LE(),
-                                                substream.readInt16LE(), substream.readInt16LE()
-                                        ))
+//                                        faces.add(intArrayOf(
+//                                                substream.readInt16LE(), substream.readInt16LE(),
+//                                                substream.readInt16LE(), substream.readInt16LE()
+//                                        ))
+                                    }
+
+//                                    for (i in 0 until numIdx) {
+//                                        faces.add(verts[i * 4 + 3] to verts[i * 4 + 2] and verts[i * 4 + 1])
+//                                        faces.add(verts[i * 4] to verts[i * 4 + 1] and verts[i * 4 + 2])
+//                                    }
+
+                                    for (i in 0 until verts.size - 2) {
+                                        if (i % 2 == 0)
+                                            faces.add(verts[i] to verts[i + 1] and verts[i + 2])
+                                        else
+                                            faces.add(verts[i + 2] to verts[i + 1] and verts[i])
                                     }
                                 }
                                 else -> println("Missing faces primType $primType")
