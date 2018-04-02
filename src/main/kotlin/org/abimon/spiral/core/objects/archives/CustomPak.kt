@@ -38,8 +38,10 @@ class CustomPak {
     fun add(index: Int, size: Long, supplier: () -> InputStream) = files.put(index, size to supplier)
     fun add(size: Long, supplier: () -> InputStream) = files.put(getFirstFreeIndex(), size to supplier)
 
-    fun compile(outputStream: OutputStream) {
-        outputStream.writeInt32LE(files.size)
+    fun compile(output: OutputStream) = compileWithProgress(output) { }
+
+    fun compileWithProgress(output: OutputStream, progress: (Int) -> Unit) {
+        output.writeInt32LE(files.size)
 
         var offset = 4L + (files.size * 4)
 
@@ -48,13 +50,15 @@ class CustomPak {
         for (index in 0 until range) {
             val size = files[index]?.first ?: continue
 
-            outputStream.writeInt32LE(offset)
+            output.writeInt32LE(offset)
             offset += size
         }
 
         for (index in 0 until range) {
             val source = files[index]?.second ?: continue
-            source().use { stream -> stream.copyTo(outputStream) }
+
+            source().use { stream -> stream.copyTo(output) }
+            progress(index)
         }
     }
 
