@@ -10,7 +10,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
-class CustomSPC {
+class CustomSPC: ICustomArchive {
     companion object {
         val SPC_MAGIC = intArrayOf(0x43, 0x50, 0x53, 0x2E).map(Int::toByte).toByteArray()
         val SPC_MAGIC_PADDING = intArrayOf(
@@ -38,7 +38,7 @@ class CustomSPC {
     }
 
 
-    fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
+    override fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
     fun add(parentLength: Int, dir: File) {
         for (subfile in dir.listFiles { file -> !file.isHidden && !file.name.startsWith(".") && !file.name.startsWith("__") })
             if (subfile.isDirectory)
@@ -47,8 +47,8 @@ class CustomSPC {
                 add(subfile.absolutePath.substring(parentLength), subfile)
     }
 
-    fun add(name: String, data: File) = add(name, data.length()) { FileInputStream(data) }
-    fun add(name: String, size: Long, supplier: () -> InputStream) {
+    override fun add(name: String, data: File) = add(name, data.length()) { FileInputStream(data) }
+    override fun add(name: String, size: Long, supplier: () -> InputStream) {
         files[name.replace(File.separator, "/")] = 0x01 to (size to size) and supplier
     }
 
@@ -58,7 +58,7 @@ class CustomSPC {
     }
 
 
-    fun compile(output: OutputStream) = compileWithProgress(output) { _, _ -> }
+    override fun compile(output: OutputStream) = compileWithProgress(output) { _, _ -> }
 
     fun compileWithProgress(output: OutputStream, progress: (String, Int) -> Unit) {
         output.write(SPC_MAGIC)

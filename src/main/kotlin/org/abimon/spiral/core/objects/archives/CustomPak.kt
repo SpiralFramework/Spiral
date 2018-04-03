@@ -6,7 +6,7 @@ import java.io.*
 import java.util.*
 import kotlin.collections.HashMap
 
-class CustomPak {
+class CustomPak: ICustomArchive {
     companion object {
         val DIGITS = "\\d+".toRegex()
     }
@@ -19,7 +19,7 @@ class CustomPak {
             add(entry.index, entry.size.toLong()) { WindowedInputStream(pak.dataSource(), entry.offset.toLong(), entry.size.toLong()) }
     }
 
-    fun add(dir: File) {
+    override fun add(dir: File) {
         for (subfile in dir.listFiles { file -> !file.isHidden && !file.name.startsWith(".") && !file.name.startsWith("__") })
             if (subfile.isDirectory) {
                 val randomPakFile = File.createTempFile(UUID.randomUUID().toString(), ".pak")
@@ -34,11 +34,17 @@ class CustomPak {
                 add(mapping[subfile.nameWithoutExtension] ?: subfile.nameWithoutExtension.toIntOrNull() ?: continue, subfile)
     }
 
-    fun add(index: Int, data: File) = add(index, data.length()) { FileInputStream(data) }
-    fun add(index: Int, size: Long, supplier: () -> InputStream) = files.put(index, size to supplier)
-    fun add(size: Long, supplier: () -> InputStream) = files.put(getFirstFreeIndex(), size to supplier)
+    override fun add(name: String, data: File) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), data.length(), data::inputStream)
+    override fun add(name: String, size: Long, supplier: () -> InputStream) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), size, supplier)
 
-    fun compile(output: OutputStream) = compileWithProgress(output) { }
+    fun add(index: Int, data: File) = add(index, data.length()) { FileInputStream(data) }
+    fun add(size: Long, supplier: () -> InputStream) = add(getFirstFreeIndex(), size, supplier)
+
+    fun add(index: Int, size: Long, supplier: () -> InputStream) {
+        files[index] = size to supplier
+    }
+
+    override fun compile(output: OutputStream) = compileWithProgress(output) { }
 
     fun compileWithProgress(output: OutputStream, progress: (Int) -> Unit) {
         output.writeInt32LE(files.size)

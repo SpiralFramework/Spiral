@@ -3,12 +3,11 @@ package org.abimon.spiral.core.objects.archives
 import org.abimon.spiral.core.utils.writeInt32LE
 import org.abimon.spiral.core.utils.writeInt64LE
 import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
-class CustomWAD {
+class CustomWAD: ICustomArchive {
     val files: MutableMap<String, Pair<Long, () -> InputStream>> = HashMap()
     var major: Int = 1
     var minor: Int = 1
@@ -18,7 +17,7 @@ class CustomWAD {
             add(entry.name, entry.size, entry::inputStream)
     }
 
-    fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
+    override fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
     fun add(parentLength: Int, dir: File) {
         for (subfile in dir.listFiles { file -> !file.isHidden && !file.name.startsWith(".") && !file.name.startsWith("__") })
             if (subfile.isDirectory)
@@ -27,10 +26,12 @@ class CustomWAD {
                 add(subfile.absolutePath.substring(parentLength), subfile)
     }
 
-    fun add(name: String, data: File) = add(name, data.length()) { FileInputStream(data) }
-    fun add(name: String, size: Long, supplier: () -> InputStream) = files.put(name.replace(File.separator, "/"), size to supplier)
+    override fun add(name: String, data: File) = add(name, data.length(), data::inputStream)
+    override fun add(name: String, size: Long, supplier: () -> InputStream) {
+        files[name.replace(File.separator, "/")] = size to supplier
+    }
 
-    fun compile(output: OutputStream) = compileWithProgress(output) { _, _ -> }
+    override fun compile(output: OutputStream) = compileWithProgress(output) { _, _ -> }
 
     fun compileWithProgress(output: OutputStream, progress: (String, Int) -> Unit) {
         output.writeInt32LE(WAD.MAGIC_NUMBER)
