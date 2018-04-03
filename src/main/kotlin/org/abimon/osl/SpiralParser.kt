@@ -1,15 +1,14 @@
 package org.abimon.osl
 
-import org.parboiled.*
+import org.parboiled.Action
+import org.parboiled.BaseParser
+import org.parboiled.Context
+import org.parboiled.Rule
 import org.parboiled.annotations.BuildParseTree
 import java.util.*
 
 @BuildParseTree
-open class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
-    companion object {
-        operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, true)
-    }
-
+abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
     fun pushValue(value: Any): Unit {
         this.push(value)
     }
