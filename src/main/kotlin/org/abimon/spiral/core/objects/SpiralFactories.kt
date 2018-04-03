@@ -3,6 +3,7 @@ package org.abimon.spiral.core.objects
 import org.abimon.spiral.core.objects.archives.*
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.CustomLin
+import org.abimon.spiral.core.objects.scripting.CustomWordScript
 import org.abimon.spiral.core.objects.scripting.Lin
 import java.io.InputStream
 
@@ -33,4 +34,10 @@ fun customSPC(init: CustomSPC.() -> Unit): CustomSPC {
     val customSPC = CustomSPC()
     customSPC.init()
     return customSPC
+}
+
+fun customWordScript(init: CustomWordScript.() -> Unit): CustomWordScript {
+    val customWordScript = CustomWordScript()
+    customWordScript.init()
+    return customWordScript
 }
