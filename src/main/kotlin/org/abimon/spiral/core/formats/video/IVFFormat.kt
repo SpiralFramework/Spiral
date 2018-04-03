@@ -2,15 +2,12 @@ package org.abimon.spiral.core.formats.video
 
 import org.abimon.spiral.core.byteArrayOfInts
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.util.MediaWrapper
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.errPrintln
 import org.abimon.visi.io.read
 import org.abimon.visi.io.skipBytes
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
+import java.io.*
 import java.util.*
 
 object IVFFormat : SpiralFormat {
@@ -21,7 +18,7 @@ object IVFFormat : SpiralFormat {
     val initialHeader = byteArrayOfInts(0x44, 0x4B, 0x49, 0x46)
     val secondHeader = byteArrayOfInts(0x56, 0x50, 0x38, 0x30)
 
-    override fun isFormat(source: DataSource): Boolean = source.use { stream ->
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream ->
         if (!Arrays.equals(stream.read(4), initialHeader))
             return@use false
         stream.skipBytes(4)
@@ -29,8 +26,8 @@ object IVFFormat : SpiralFormat {
         return@use Arrays.equals(stream.read(4), secondHeader)
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
         if (!MediaWrapper.ffmpeg.isInstalled) {
             errPrintln("ffmpeg is not installed, and thus we cannot convert from an IVF file to a ${format.name} file")
@@ -41,7 +38,7 @@ object IVFFormat : SpiralFormat {
         val tmpOut = File("${UUID.randomUUID()}.${format.extension ?: "mp4"}") //unk won't be a valid conversion, so if all else fails let's be useful
 
         try {
-            FileOutputStream(tmpIn).use { outputStream -> source.use { inputStream -> inputStream.copyTo(outputStream) } }
+            FileOutputStream(tmpIn).use { outputStream -> dataSource().use { inputStream -> inputStream.copyTo(outputStream) } }
 
             MediaWrapper.ffmpeg.convert(tmpIn, tmpOut)
 

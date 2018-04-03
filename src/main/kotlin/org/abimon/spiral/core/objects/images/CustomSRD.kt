@@ -1,9 +1,8 @@
 package org.abimon.spiral.core.objects.images
 
 import org.abimon.spiral.core.*
-import org.abimon.spiral.core.formats.images.SRDFormat
-import org.abimon.spiral.util.CountingInputStream
-import org.abimon.spiral.util.OffsetInputStream
+import org.abimon.spiral.core.utils.CountingInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import org.abimon.visi.lang.and
@@ -54,7 +53,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                     val palette = data.read() and 0xFF
                                     val palette_id = data.read() and 0xFF
 
-                                    val (img_data_type, img_data_S, img_subdata_S) = SRDFormat.readSRDItem(subdata, srd)!!
+                                    val (img_data_type, img_data_S, img_subdata_S) = readSRDItem(subdata, srd)!!
                                     img_subdata_S.close()
                                     img_data_S.use { img_data ->
                                         val initial = img_data.readNumber(2, true, true)
@@ -426,7 +425,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
         }
     }
 
-    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, OffsetInputStream, OffsetInputStream>? {
+    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, WindowedInputStream, WindowedInputStream>? {
         val data_type = stream.readString(4)
 
         if (data_type.length < 4 || !data_type.startsWith("$"))
@@ -439,10 +438,10 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
         val data_padding = (0x10 - data_len % 0x10) % 0x10
         val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
 
-        val data = OffsetInputStream(source.seekableInputStream, if(stream is OffsetInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
+        val data = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
         stream.skip(data_padding + data_len)
 
-        val subdata = OffsetInputStream(source.seekableInputStream, if(stream is OffsetInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
+        val subdata = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
         stream.skip(subdata_padding + subdata_len)
 
         return data_type to data and subdata

@@ -3,11 +3,12 @@ package org.abimon.spiral.core.formats.compression
 import org.abimon.spiral.core.data.BitPool
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.hasBitSet
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readString
 import org.abimon.spiral.core.readUnsignedLittleInt
 import org.abimon.spiral.core.writeInt
-import org.abimon.visi.io.DataSource
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
@@ -28,16 +29,16 @@ object CRILAYLAFormat : SpiralFormat {
     val MAGIC = "CRILAYLA"
     val MAGIC_BYTES = MAGIC.toByteArray()
 
-    override fun isFormat(source: DataSource): Boolean = source.use { it.readString(8) == MAGIC }
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(8) == MAGIC }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        source.use { stream ->
+        dataSource().use { stream ->
             val magic = stream.readString(8)
 
             if (magic != MAGIC) {
-                throw IllegalArgumentException("${source.location} does not conform to the ${name} format")
+                throw IllegalArgumentException("$name does not conform to the ${this.name} format")
             } else {
                 val uncompressedSize = stream.readUnsignedLittleInt()
                 val datasize = stream.readUnsignedLittleInt()
@@ -100,11 +101,11 @@ object CRILAYLAFormat : SpiralFormat {
         return true
     }
 
-    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(format.canConvert(this)) //Check if there's a build in way
-            return format.convert(this, source, output, params)
+    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(format.canConvert(game, this)) //Check if there's a built in way
+            return format.convert(game, this, name, dataSource, output, params)
         else { //Let's get our hands dirty
-            val sourceData = source.data
+            val sourceData = dataSource().use { stream -> stream.readBytes() }
             if(sourceData.size < 0x100) {
                 output.write(sourceData)
                 return false

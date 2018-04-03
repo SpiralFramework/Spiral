@@ -3,8 +3,9 @@ package org.abimon.spiral.core.formats.archives
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.archives.SPC
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.visi.lang.replaceLast
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -14,41 +15,41 @@ object SPCFormat : SpiralFormat {
     override val extension = "spc"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            return SPC(source).files.size >= 1
+            return SPC(dataSource).files.isNotEmpty()
         } catch (e: IllegalArgumentException) {
         }
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        val spc = SPC(source)
+        val spc = SPC(dataSource)
         val convert = "${params["spc:convert"] ?: false}".toBoolean()
         when (format) {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
-                spc.files.forEach {
-                    val data = SpiralFormats.decompressFully(it)
+                spc.files.forEach { entry ->
+                    val data = SpiralFormats.decompressFully(entry::inputStream)
                     if (convert) {
-                        val innerFormat = SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+                        val innerFormat = SpiralFormats.formatForData(game, data, "$name/${entry.name}", SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
-                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(convertTo, data, zip, params)
+                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
+                            innerFormat.convert(game, convertTo, "$name/${entry.name}", data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
-                            zip.putNextEntry(ZipEntry(it.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
-                            data.use { stream -> stream.copyTo(zip) }
+                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))
+                            data().use { stream -> stream.copyTo(zip) }
                             return@forEach
                         }
                     }
 
-                    zip.putNextEntry(ZipEntry(it.name))
-                    data.use { stream -> stream.copyTo(zip) }
+                    zip.putNextEntry(ZipEntry(entry.name))
+                    data().use { stream -> stream.copyTo(zip) }
                 }
                 zip.finish()
             }

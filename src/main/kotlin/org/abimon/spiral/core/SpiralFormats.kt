@@ -10,15 +10,15 @@ import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.formats.models.GMOModelFormat
 import org.abimon.spiral.core.formats.models.OBJModelFormat
 import org.abimon.spiral.core.formats.models.SRDIModelFormat
-import org.abimon.spiral.core.formats.scripting.LINFormat
-import org.abimon.spiral.core.formats.scripting.NonstopFormat
-import org.abimon.spiral.core.formats.scripting.SFLFormat
-import org.abimon.spiral.core.formats.scripting.WRDFormat
+import org.abimon.spiral.core.formats.scripting.*
 import org.abimon.spiral.core.formats.text.*
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.visi.io.DataSource
+import org.abimon.visi.lang.extension
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 object SpiralFormats {
 
@@ -31,6 +31,7 @@ object SpiralFormats {
             DRVitaCompressionFormat, CRILAYLAFormat,
             SFLFormat,
             GMOModelFormat, OBJModelFormat, SRDIModelFormat,
+            PakBGFormats,
             PAKFormat, SPCFormat,
 
             JacksonFormat.YAML, JacksonFormat.JSON,
@@ -57,6 +58,7 @@ object SpiralFormats {
             IVFFormat,
             OggFormat,
             PAKFormat, SPCFormat,
+            PakBGFormats,
             NonstopFormat,
             DRVitaCompressionFormat, CRILAYLAFormat
     )
@@ -71,26 +73,54 @@ object SpiralFormats {
             PAKFormat
     )
 
-    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(dataSource) }
-    fun decompress(dataSource: DataSource): DataSource {
-        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(dataSource) } ?: return dataSource
+    val gameRequiredFormats = arrayOf(
+            LINFormat,
+            WRDFormat,
+            NonstopFormat
+    )
+
+    val gameAmbiguousFormats = formats.filterNot { format -> format in gameRequiredFormats }.toTypedArray()
+
+    //TODO: Use an actual game
+    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, dataSource::inputStream) }
+    //TODO: Use an actual game
+    fun decompress(dataSource: () -> InputStream): () -> InputStream {
+        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, dataSource) } ?: return dataSource
         val (output, source) = CacheHandler.cacheStream()
-        compressionFormat.convert(SpiralFormat.BinaryFormat, dataSource, output, emptyMap())
+        compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, dataSource, output, emptyMap())
         return source
     }
-    fun decompressFully(dataSource: DataSource): DataSource {
-        var data: DataSource = dataSource
+    //TODO: Use an actual game
+    fun decompressFully(dataSource: () -> InputStream): () -> InputStream {
+        var data: () -> InputStream = dataSource
         while(true) {
-            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(data) } ?: return data
+            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, data) } ?: return data
             val (output, source) = CacheHandler.cacheStream()
-            compressionFormat.convert(SpiralFormat.BinaryFormat, data, output, emptyMap())
+            compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, data, output, emptyMap())
             data = source
         }
     }
 
-    fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.extension?.equals(extension, true) ?: false }
-    fun formatForData(dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.isFormat(dataSource) }
+    fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
+    @JvmOverloads
+    fun formatForData(game: DRGame?, dataSource: () -> InputStream, name: String? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.map { format -> format to format.isFormatWithConfidence(game, name, dataSource) }
+            .filter { (_, isFormat) -> isFormat.first }
+            .sortedBy { (_, confidence) -> confidence.second }
+            .lastOrNull()?.first
+
     fun formatForName(name: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { it.name.equals(name, true) } ?: if(name.equals("BINARY", true)) SpiralFormat.BinaryFormat else null
+
+    fun formatForNameAndData(name: String, dataSource: () -> InputStream, game: DRGame? = null, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? {
+        val nameByExtension = formatForExtension(name.extension)
+
+        if(nameByExtension?.isFormat(game, name, dataSource) == true)
+            return nameByExtension
+
+        return selectiveFormats.map { format -> format to format.isFormatWithConfidence(null, name, dataSource) }
+                .filter { (_, isFormat) -> isFormat.first }
+                .sortedBy { (_, confidence) -> confidence.second }
+                .lastOrNull()?.first
+    }
 
     fun formatForFile(filename: String, dataSource: DataSource, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? {
         return null
@@ -100,9 +130,10 @@ object SpiralFormats {
         return null
     }
 
+    //TODO: Use an actual game
     fun convert(from: SpiralFormat, to: SpiralFormat, source: DataSource, params: Map<String, Any?>): ByteArray {
         val baos = ByteArrayOutputStream()
-        from.convert(to, source, baos, params)
+        from.convert(null, to, source.location, source::inputStream, baos, params)
         return baos.toByteArray()
     }
 }

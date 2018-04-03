@@ -2,10 +2,11 @@ package org.abimon.spiral.core.formats.compression
 
 import org.abimon.spiral.core.*
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.visi.collections.asBase
-import org.abimon.visi.io.DataSource
 import org.abimon.visi.io.read
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
@@ -17,21 +18,21 @@ object DRVitaCompressionFormat : SpiralFormat {
     val CMP_MAGIC = byteArrayOfInts(0xFC, 0xAA, 0x55, 0xA7)
     val GX3_MAGIC = byteArrayOfInts(0x47, 0x58, 0x33, 0x00)
 
-    override fun isFormat(source: DataSource): Boolean = tryUnsafe { source.use { it.read(4) equals CMP_MAGIC } }
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = tryUnsafe { dataSource().use { it.read(4) equals CMP_MAGIC } }
 
-    override fun canConvert(format: SpiralFormat): Boolean = true
+    override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = true
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
-        source.use { stream ->
+        dataSource().use { stream ->
             var magic = stream.read(4)
 
             if (magic equals GX3_MAGIC)
                 magic = stream.read(4)
 
             if (magic doesntEqual CMP_MAGIC)
-                throw IllegalArgumentException("${source.location} does not conform to the ${name} format (Magic Number ≠ ${CMP_MAGIC asBase 16}; is actually ${magic asBase 16})")
+                throw IllegalArgumentException("$name does not conform to the ${this.name} format (Magic Number ≠ ${CMP_MAGIC asBase 16}; is actually ${magic asBase 16})")
 
             val rawSize = stream.readUnsignedLittleInt()
             val compressedSize = stream.readUnsignedLittleInt()
@@ -100,11 +101,11 @@ object DRVitaCompressionFormat : SpiralFormat {
         return true
     }
 
-    override fun convertFrom(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(format.canConvert(this)) //Check if there's a built in way of doing it
-            return format.convert(this, source, output, params)
+    override fun convertFrom(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(format.canConvert(game, this)) //Check if there's a built in way of doing it
+            return format.convert(game, this, name, dataSource, output, params)
         else { //Otherwise we roll up our sleeves and get dirty
-            source.use { stream ->
+            dataSource().use { stream ->
                 val result = ByteArrayOutputStream()
 
                 val buffer = ByteArray(15)

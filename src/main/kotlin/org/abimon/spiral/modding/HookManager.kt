@@ -6,8 +6,8 @@ import kotlinx.coroutines.experimental.launch
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.util.LoggerLevel
-import org.abimon.visi.io.DataSource
 import java.io.File
+import java.io.InputStream
 
 object HookManager {
     val BEFORE_OPERATING_CHANGE: MutableList<Pair<IPlugin, (File?, File?, Boolean) -> Boolean>> = ArrayList()
@@ -52,10 +52,10 @@ object HookManager {
     val BEFORE_MULTITHREADED_SIMPLE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
     val ON_MULTITHREADED_SIMPLE_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
 
-    val BEFORE_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Boolean) -> Boolean>> = ArrayList()
-    val ON_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
-    val DURING_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>, Pair<String, DataSource>) -> Unit>> = ArrayList()
-    val AFTER_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, DataSource>>) -> Unit>> = ArrayList()
+    val BEFORE_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, () -> InputStream>>, Boolean) -> Boolean>> = ArrayList()
+    val ON_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, () -> InputStream>>) -> Unit>> = ArrayList()
+    val DURING_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, () -> InputStream>>, Pair<String, () -> InputStream>) -> Unit>> = ArrayList()
+    val AFTER_EXTRACT: MutableList<Pair<IPlugin, (IArchive, File, List<Pair<String, () -> InputStream>>) -> Unit>> = ArrayList()
 
     fun beforeOperatingChange(old: File?, new: File?): Boolean =
             beforeChange(old, new, BEFORE_OPERATING_CHANGE)
@@ -141,18 +141,18 @@ object HookManager {
     fun afterMultithreadedSimpleChange(old: Boolean, new: Boolean): Unit
             = afterChange(old, new, ON_MULTITHREADED_SIMPLE_CHANGE)
 
-    fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Boolean
+    fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Boolean
             = BEFORE_EXTRACT
             .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .fold(true) { state, (_, hook) -> hook(archive, folder, files, state) }
 
-    fun extracting(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Unit
+    fun extracting(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Unit
             = ON_EXTRACT
             .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(archive, folder, files) }
 
     var prevExtractJob: Job? = null
-    fun extractingFile(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>, extracting: Pair<String, DataSource>): Unit {
+    fun extractingFile(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>, extracting: Pair<String, () -> InputStream>): Unit {
         val prev: Job? = prevExtractJob
         prevExtractJob = launch(CommonPool) {
             prev?.join()
@@ -163,7 +163,7 @@ object HookManager {
         }
     }
 
-    fun finishedExtraction(archive: IArchive, folder: File, files: List<Pair<String, DataSource>>): Unit
+    fun finishedExtraction(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Unit
             = AFTER_EXTRACT
             .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(archive, folder, files) }

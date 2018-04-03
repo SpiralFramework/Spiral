@@ -3,15 +3,23 @@ package org.abimon.spiral.core.formats.images
 import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.*
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.archives.SPCEntry
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
-import org.abimon.spiral.util.*
+import org.abimon.spiral.core.utils.CountingInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import org.abimon.spiral.util.LoggerLevel
+import org.abimon.spiral.util.debug
+import org.abimon.spiral.util.trace
 import org.abimon.visi.collections.remove
-import org.abimon.visi.io.ByteArrayDataSource
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.and
 import org.abimon.visi.lang.exportStackTrace
@@ -28,21 +36,21 @@ import kotlin.math.min
 
 object SRDFormat {
     fun hook() {
-        SpiralFormat[SPCFormat to PNGFormat] = this::convertFromArchive
-        SpiralFormat[SPCFormat to ZIPFormat] = this::convertFromArchive
+        SpiralFormat[V3 to SPCFormat and PNGFormat] = this::convertFromArchive
+        SpiralFormat[V3 to SPCFormat and ZIPFormat] = this::convertFromArchive
     }
 
-    fun convertFromArchive(from: SpiralFormat, to: SpiralFormat, dataSource: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (!"${params["srd:convert"] ?: true}".toBoolean())
+    fun convertFromArchive(game: DRGame?, from: SpiralFormat, to: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(!"${params["srd:convert"] ?: true}".toBoolean())
             return false
 
-        val otherEntries: MutableMap<String, DataSource> = HashMap()
+        val otherEntries: MutableMap<String, () -> InputStream> = HashMap()
         val images: MutableMap<String, BufferedImage> = HashMap()
         val mapToModels: Boolean = "${params["srd:mapToModels"] ?: true}".toBoolean()
-        var imageOverride: Boolean = false
+        var imageOverride = false
 
         when (from) {
-            is SPCFormat -> {
+            SPCFormat -> {
                 val spc = SPC(dataSource)
 
                 val files = spc.files.groupBy { entry -> entry.name.endsWith("srd") }
@@ -50,22 +58,22 @@ object SRDFormat {
                 val others = files[false]!!.toMutableList()
 
                 srds.forEach { srdEntry ->
-                    val img: DataSource
+                    val img: SPCEntry
 
                     if (others.any { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") })
                         img = others.remove { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") } ?: return@forEach
                     else
-                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry; return@forEach }
+                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry::inputStream; return@forEach }
 
-                    val model: DataSource? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
+                    val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
-                    readSRD(srdEntry, img, if (model != null) SRDIModel(model) else null, otherEntries, images, params)
+                    readSRD(InputStreamFuncDataSource(srdEntry::inputStream), InputStreamFuncDataSource(img::inputStream), if (model != null) SRDIModel(InputStreamFuncDataSource(model::inputStream)) else null, otherEntries, images, params)
                     if (otherEntries.size != before)
                         imageOverride = true
                 }
 
-                others.forEach { entry -> otherEntries[entry.name] = entry }
+                others.forEach { entry -> otherEntries[entry.name] = entry::inputStream }
             }
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
@@ -80,14 +88,14 @@ object SRDFormat {
             is ZIPFormat -> {
                 val zos = ZipOutputStream(output)
 
-                otherEntries.forEach { name, data ->
-                    zos.putNextEntry(ZipEntry(name))
-                    data.pipe(zos)
+                otherEntries.forEach { entryName, data ->
+                    zos.putNextEntry(ZipEntry(entryName))
+                    data().use { stream -> stream.copyTo(zos) }
                 }
 
-                images.forEach { name, image ->
-                    zos.putNextEntry(ZipEntry(name.replaceAfterLast('.', format.extension!!)))
-                    if (format is PNGFormat)
+                images.forEach { imageName, image ->
+                    zos.putNextEntry(ZipEntry(imageName.replaceAfterLast('.', format.extension!!)))
+                    if(format == PNGFormat)
                         ImageIO.write(image, "PNG", zos)
                     else
                         PNGFormat.convert(format, image, zos, emptyMap())
@@ -101,7 +109,7 @@ object SRDFormat {
         return true
     }
 
-    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, DataSource>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
+    fun readSRD(srd: DataSource, img: DataSource, model: SRDIModel?, otherData: MutableMap<String, () -> InputStream>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
         srd.seekableUse { original ->
             val stream = CountingInputStream(original)
             loop@ while (true) {
@@ -175,7 +183,7 @@ object SRDFormat {
                                     for (mip in mipmaps.indices) {
                                         val mipName = if (doMips) "$mip-$name" else name
                                         val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
-                                        val new_img_stream = OffsetInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
+                                        val new_img_stream = WindowedInputStream(img.seekableInputStream, mipmap_start.toLong(), mipmap_len.toLong())
 //                                    var pal_data: ByteArray? = null
 //
 //                                    img.seekableInputStream.use { img_stream ->
@@ -231,7 +239,7 @@ object SRDFormat {
                                                     }
                                                     images[mipName] = resultingImage.mapToModel(model, params)
                                                 }
-                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processing.use { it.readBytes() })
+                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processing).first
                                             }
 
                                             imageInfo["swizzled"] = swizzled
@@ -277,7 +285,7 @@ object SRDFormat {
                                                 0x0F -> images[mipName] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 0x1C -> images[mipName] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
                                                 else -> {
-                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = ByteArrayDataSource(processingStream.use { it.readBytes() })
+                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processingStream).first
                                                 }
                                             }
 
@@ -288,11 +296,11 @@ object SRDFormat {
                                         } else {
                                             debug("Unknown format $fmt")
 
-                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = ByteArrayDataSource(new_img_stream.use { it.readBytes() })
+                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = CacheHandler.cacheStream(new_img_stream).first
                                         }
 
                                         if (LoggerLevel.TRACE.enabled)
-                                            otherData["info-$mipName.json"] = ByteArrayDataSource(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
+                                            otherData["info-$mipName.json"] = CacheHandler.cache(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
 
                                         disp_width = maxOf(1, disp_width / 2)
                                         disp_height = maxOf(1, disp_height / 2)
@@ -308,7 +316,7 @@ object SRDFormat {
         }
     }
 
-    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, OffsetInputStream, OffsetInputStream>? {
+    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, WindowedInputStream, WindowedInputStream>? {
         val data_type = stream.readString(4)
 
         if (data_type.length < 4 || !data_type.startsWith("$"))
@@ -321,10 +329,10 @@ object SRDFormat {
         val data_padding = (0x10 - data_len % 0x10) % 0x10
         val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
 
-        val data = OffsetInputStream(source.seekableInputStream, if (stream is OffsetInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
+        val data = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
         stream.skip(data_padding + data_len)
 
-        val subdata = OffsetInputStream(source.seekableInputStream, if (stream is OffsetInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
+        val subdata = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
         stream.skip(subdata_padding + subdata_len)
 
         return data_type to data and subdata
@@ -391,13 +399,22 @@ object SRDFormat {
     fun mapImageToModel(img: BufferedImage, model: SRDIModel, params: Map<String, Any?>): BufferedImage {
         val antialias = "${params["srd:antialiasing"] ?: true}".toBoolean()
         val area = Area()
+        val mesh = Area()
+        
+        val w = img.width
+        val h = img.height
+        
         model.meshes[0].faces.forEach { (one, two, three) ->
             try {
                 val u1 = model.meshes[0].uvs[one]
                 val u2 = model.meshes[0].uvs[two]
                 val u3 = model.meshes[0].uvs[three]
 
-                area.add(Area(Polygon(intArrayOf((u1.first * img.width).toInt(), (u2.first * img.width).toInt(), (u3.first * img.width).toInt()), intArrayOf((u1.second * img.height).toInt(), (u2.second * img.height).toInt(), (u3.second * img.height).toInt()), 3)))
+                val v1 = model.meshes[0].vertices[one]
+                val v2 = model.meshes[0].vertices[two]
+                val v3 = model.meshes[0].vertices[three]
+
+                area.add(Area(Polygon(intArrayOf((u1.first * w).toInt(), (u2.first * w).toInt(), (u3.first * w).toInt()), intArrayOf((u1.second * h).toInt(), (u2.second * h).toInt(), (u3.second * h).toInt()), 3)))
             } catch (ioob: IndexOutOfBoundsException) {
                 debug(ioob.exportStackTrace())
                 return@forEach
