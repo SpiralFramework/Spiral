@@ -1,8 +1,11 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.WindowedInputStream
+import org.abimon.spiral.core.utils.copyFromStream
 import org.abimon.spiral.core.utils.writeInt32LE
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -11,12 +14,15 @@ class CustomPak: ICustomArchive {
         val DIGITS = "\\d+".toRegex()
     }
 
-    val files: MutableMap<Int, Pair<Long, () -> InputStream>> = HashMap()
+    val files: MutableMap<Int, Pair<Long, (OutputStream) -> Unit>> = HashMap()
     val mapping: MutableMap<String, Int> = HashMap()
+
+    override val dataSize: Long
+        get() = 4L + (4 * files.size) + (files.entries.sumBy { (_, value) -> value.first.toInt() })
 
     fun add(pak: Pak) {
         for (entry in pak.files)
-            add(entry.index, entry.size.toLong()) { WindowedInputStream(pak.dataSource(), entry.offset.toLong(), entry.size.toLong()) }
+            add(entry.index, entry.size.toLong(), entry::inputStream)
     }
 
     override fun add(dir: File) {
@@ -34,14 +40,14 @@ class CustomPak: ICustomArchive {
                 add(mapping[subfile.nameWithoutExtension] ?: subfile.nameWithoutExtension.toIntOrNull() ?: continue, subfile)
     }
 
-    override fun add(name: String, data: File) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), data.length(), data::inputStream)
-    override fun add(name: String, size: Long, supplier: () -> InputStream) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), size, supplier)
+    override fun addSink(name: String, size: Long, sink: (OutputStream) -> Unit) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), size, sink)
 
-    fun add(index: Int, data: File) = add(index, data.length()) { FileInputStream(data) }
+    fun add(index: Int, data: File) = add(index, data.length(), data::inputStream)
     fun add(size: Long, supplier: () -> InputStream) = add(getFirstFreeIndex(), size, supplier)
 
-    fun add(index: Int, size: Long, supplier: () -> InputStream) {
-        files[index] = size to supplier
+    fun add(index: Int, size: Long, supplier: () -> InputStream) = add(index, size) { out -> supplier().use(out::copyFromStream) }
+    fun add(index: Int, size: Long, sink: (OutputStream) -> Unit) {
+        files[index] = size to sink
     }
 
     override fun compile(output: OutputStream) = compileWithProgress(output) { }
@@ -61,9 +67,9 @@ class CustomPak: ICustomArchive {
         }
 
         for (index in 0 until range) {
-            val source = files[index]?.second ?: continue
+            val sink = files[index]?.second ?: continue
+            sink(output)
 
-            source().use { stream -> stream.copyTo(output) }
             progress(index)
         }
     }
