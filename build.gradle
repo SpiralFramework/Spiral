@@ -1,11 +1,9 @@
 buildscript {
-    ext.kotlin_version = '1.2.10'
+    ext.kotlin_version = '1.2.31'
     ext.jackson_version = '2.9.0'
 
     repositories {
         mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -39,8 +37,9 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 
     compile('org.abimon:Imperator:7')
-    compile('org.abimon:Visi:34')
+    compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
+    compile('org.abimon:SpiralFormats:8a07f33')
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"

@@ -5,7 +5,7 @@ import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.formats.images.SRDFormat.deswizzle
 import org.abimon.spiral.core.hasBitSet
-import org.abimon.spiral.util.OffsetInputStream
+import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import java.awt.Color
@@ -13,14 +13,14 @@ import java.awt.image.BufferedImage
 import java.io.InputStream
 
 open class SRDItem(val dataType: String, val dataOffset: Long, val dataLen: Long, val subdataOffset: Long, val subdataLen: Long, val parent: DataSource) {
-    val data: OffsetInputStream
-        get() = OffsetInputStream(parent.seekableInputStream, dataOffset, dataLen)
-    val subdata: OffsetInputStream
-        get() = OffsetInputStream(parent.seekableInputStream, subdataOffset, subdataLen)
+    val data: WindowedInputStream
+        get() = WindowedInputStream(parent.seekableInputStream, dataOffset, dataLen)
+    val subdata: WindowedInputStream
+        get() = WindowedInputStream(parent.seekableInputStream, subdataOffset, subdataLen)
 
     operator fun component1(): String = dataType
-    operator fun component2(): OffsetInputStream = data
-    operator fun component3(): OffsetInputStream = subdata
+    operator fun component2(): WindowedInputStream = data
+    operator fun component3(): WindowedInputStream = subdata
 }
 
 class TXRItem(
@@ -30,7 +30,7 @@ class TXRItem(
         val name: String, val parentItem: SRDItem, val imageItem: SRDItem
 ): SRDItem("\$TXR", parentItem.dataOffset, parentItem.dataLen, parentItem.subdataOffset, parentItem.subdataLen, parentItem.parent) {
     fun readTexture(srdv: InputStream): BufferedImage? {
-        val texture = OffsetInputStream(srdv, mipmaps[0][0].toLong(), mipmaps[0][1].toLong())
+        val texture = WindowedInputStream(srdv, mipmaps[0][0].toLong(), mipmaps[0][1].toLong())
 
         val swizzled = !(swiz hasBitSet 1)
         if (format in arrayOf(0x01, 0x02, 0x05, 0x1A)) {

@@ -5,20 +5,22 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.modding.data.ModList
-import org.abimon.visi.io.DataSource
-import org.abimon.visi.io.FileDataSource
+import org.abimon.spiral.util.bind
+import org.abimon.spiral.util.inputStreamFor
 import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 
 class CPKArchive(override val archiveFile: File): IArchive {
-    val cpk: CPK = CPK(FileDataSource(archiveFile))
+    val cpk: CPK = CPK { FileInputStream(archiveFile) }
 
     override val archiveType: ArchiveType = ArchiveType.CPK
-    override val fileEntries: List<Pair<String, DataSource>> = cpk.fileTable.map { it.name to it }
+    override val fileEntries: List<Pair<String, () -> InputStream>> = cpk.files.map { file -> "${file.directoryName}/${file.fileName}" to file::inputStreamFor.bind(cpk) }
     override val supportsCompilation: Boolean = false
     override val installedMods: ModList = run {
-        val entry = cpk.fileTable.firstOrNull { entry -> entry.name == SpiralData.SPIRAL_MOD_LIST } ?: return@run ModList()
+        val entry = cpk.files.firstOrNull { entry -> entry.fileName == SpiralData.SPIRAL_MOD_LIST } ?: return@run ModList()
 
-        return@run SpiralData.MAPPER.readValue(entry.inputStream, ModList::class.java)
+        return@run SpiralData.MAPPER.readValue(entry.inputStreamFor(cpk), ModList::class.java)
     }
 
     override val niceCompileFormats: Map<SpiralFormat, SpiralFormat> = mapOf(
@@ -28,7 +30,7 @@ class CPKArchive(override val archiveFile: File): IArchive {
             DDSFormat to TGAFormat
     )
 
-    override fun compile(newEntries: List<Pair<String, DataSource>>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun compile(newEntries: List<Pair<String, () -> InputStream>>) {
+        TODO("not implemented")
     }
 }

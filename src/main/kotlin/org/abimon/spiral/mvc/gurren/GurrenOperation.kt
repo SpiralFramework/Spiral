@@ -7,24 +7,29 @@ import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.mvc.SpiralModel.operating
-import org.abimon.spiral.util.LoggerLevel
-import org.abimon.spiral.util.debug
+import org.abimon.spiral.util.*
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.ZipFile
 import kotlin.system.measureTimeMillis
 
-@Suppress("unused")
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 object GurrenOperation {
     val helpTable: String = FlipTable.of(
             arrayOf("Command", "Arguments", "Description", "Example Command"),
@@ -36,9 +41,20 @@ object GurrenOperation {
     )
 
     val operatingArchive: IArchive
-        get() = IArchive(SpiralModel.operating ?: throw IllegalStateException("Attempt to get the archive while operating is null, this is a bug!")) ?: throw IllegalStateException("Attempts to create an archive return null, this is a bug!")
+        get() = IArchive(SpiralModel.operating
+                ?: throw IllegalStateException("Attempt to get the archive while operating is null, this is a bug!"))
+                ?: throw IllegalStateException("Attempts to create an archive return null, this is a bug!")
     val operatingName: String
         get() = SpiralModel.operating?.nameWithoutExtension ?: ""
+    val operatingGame: DRGame?
+        get() {
+            when (SpiralModel.operating?.name?.substringBefore('_') ?: return null) {
+                "dr1" -> return DR1
+                "dr2" -> return DR2
+                "partition" -> return V3
+                else -> return null
+            }
+        }
 
     val help = Command("help", "operate") { println(helpTable) }
 
@@ -64,27 +80,33 @@ object GurrenOperation {
 
         val matching = opArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
 
-        if(!HookManager.shouldExtract(opArchive, directory, matching))
+        if (!HookManager.shouldExtract(opArchive, directory, matching))
             return@Command errPrintln("[$operatingName] Extraction cancelled by plugin")
 
-        println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println("")
-        println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
-        println("")
-        if (question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")) {
+        val proceed = SpiralModel.confirm {
+            println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
+            println("")
+            println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { first })
+            println("")
+
+            return@confirm question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")
+        }
+
+        if (proceed) {
             HookManager.extracting(opArchive, directory, matching)
 
             val rows: MutableCollection<Array<String>> = ArrayList<Array<String>>()
             val duration = measureTimeMillis {
+                val onExtract: (String, () -> InputStream) -> Unit = if (SpiralModel.noFluffIO) { _, _ -> } else { entryName, entry -> HookManager.extractingFile(opArchive, directory, matching, entryName to entry) }
                 matching.forEach { (entryName, entry) ->
-                    HookManager.extractingFile(opArchive, directory, matching, entryName to entry)
+                    onExtract(entryName, entry)
 
                     val parents = File(directory, entryName.parents)
                     if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
                     val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry).use { inputStream -> inputStream.copyTo(outputStream) } }
+                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry)().use { inputStream -> inputStream.copyTo(outputStream) } }
                     debug("[$operatingName] Wrote $entryName to $output")
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
@@ -113,7 +135,8 @@ object GurrenOperation {
 
         val regex = (if (params.size > 2) params[2] else ".*").toRegex()
 
-        val matching = operatingArchive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }
+        val archive = operatingArchive as WADArchive
+        val matching = archive.fileEntries.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.sortedBy { (name) -> name }
 
         val proceed = SpiralModel.confirm {
             println("[$operatingName] Attempting to extract files matching the regex ${regex.pattern}, which is the following list of files: ")
@@ -123,12 +146,16 @@ object GurrenOperation {
 
             return@confirm question("[$operatingName] Proceed with extraction (Y/n)? ", "Y")
         }
-        if (proceed) {
-            val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
 
-            if (params.size > 3) params.copyFrom(3).map { it.split('=', limit = 2).takeIf { it.size == 2 }?.run { this[0] to this[1] } }.filterNotNull().forEach { (key, value) -> formatParams[key] = value }
+        if (proceed) {
+            HookManager.extracting(archive, directory, matching)
+            val formatParams: MutableMap<String, Any> = hashMapOf("pak:convert" to true)
+
+            if (params.size > 3) params.copyFrom(3).mapNotNull { param -> param.split('=', limit = 2).takeIf { paramList -> paramList.size == 2 }?.run { this[0] to this[1] } }.forEach { (key, value) -> formatParams[key] = value }
 
             val rows: MutableCollection<Array<String>> = ConcurrentLinkedQueue()
+            val onExtract: (String, () -> InputStream) -> Unit = if (SpiralModel.noFluffIO) { _, _ -> } else { entryName, entry -> HookManager.extractingFile(archive, directory, matching, entryName to entry) }
+
             val duration = measureTimeMillis {
                 runBlocking {
                     matching.forEach { (entryName) ->
@@ -138,44 +165,68 @@ object GurrenOperation {
                     }
 
                     //debug("Next ${SpiralModel.concurrentOperations.coerceAtLeast(1)}: ${sublist.joinToString { (entryName) -> entryName }}")
-                    SpiralModel.distribute(matching) launch@ { (entryName, entry) ->
-                        debug("Starting $entryName")
+                    SpiralModel.distribute(matching) launch@{ (entryName, entry) ->
+                        onExtract(entryName, entry)
+                        val openStreams = archive.openStreams.get()
                         val parents = File(directory, entryName.parents)
                         if (!parents.exists() && !parents.mkdirs() && !parents.exists())
                             return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
                         val data = SpiralFormats.decompressFully(entry)
-                        val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats) ?: SpiralFormats.formatForData(data, SpiralFormats.drArchiveFormats)
+                        val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats)
+                                ?: SpiralFormats.formatForData(operatingGame, data, entryName, SpiralFormats.drArchiveFormats)
 
                         val convertingTo = format?.conversions?.firstOrNull()
 
-                        if (format == null) {
-                            val output = File(directory, entryName)
-                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
-                            rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
-                        } else if (convertingTo == null) {
-                            val output = File(directory, entryName)
-                            FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
-                            rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
-                        } else {
-                            try {
-                                val output = File(directory, entryName.replace(".${format.extension ?: "unk"}", "", true) + ".${convertingTo.extension ?: "unk"}")
-                                FileOutputStream(output).use { outputStream -> format.convert(convertingTo, data, outputStream, formatParams) }
-                                rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
-                            } catch (iea: IllegalArgumentException) {
+                        when {
+                            format == null -> {
                                 val output = File(directory, entryName)
-                                FileOutputStream(output).use { outputStream -> data.use { inputStream -> inputStream.copyTo(outputStream) } }
-                                rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
-
-                                if (LoggerLevel.ERROR.enabled)
-                                    LoggerLevel.ERROR(iea.exportStackTrace())
+                                FileOutputStream(output).use { outputStream -> data().use { inputStream -> inputStream.copyTo(outputStream) } }
+                                rows.add(arrayOf(entryName, "Unknown", "None", output relativePathTo directory))
                             }
+                            convertingTo == null -> {
+                                val output = File(directory, entryName)
+                                FileOutputStream(output).use { outputStream -> data().use { inputStream -> inputStream.copyTo(outputStream) } }
+                                rows.add(arrayOf(entryName, format.name, "None", output relativePathTo directory))
+                            }
+                            else -> {
+                                try {
+                                    val output = File(directory, entryName.replace(".${format.extension
+                                            ?: "unk"}", "", true) + ".${convertingTo.extension ?: "unk"}")
+                                    FileOutputStream(output).use { outputStream -> format.convert(operatingGame, convertingTo, entryName, data, outputStream, formatParams) }
+                                    rows.add(arrayOf(entryName, format.name, convertingTo.name, output relativePathTo directory))
+                                } catch (iea: IllegalArgumentException) {
+                                    val output = File(directory, entryName)
+                                    FileOutputStream(output).use { outputStream -> data().use { inputStream -> inputStream.copyTo(outputStream) } }
+                                    rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
+
+                                    if (LoggerLevel.ERROR.enabled)
+                                        LoggerLevel.ERROR(iea.exportStackTrace())
+                                }
+                            }
+                        }
+
+                        val endOpenStreams = archive.openStreams.get()
+
+                        when {
+                            openStreams < endOpenStreams -> println("${endOpenStreams - openStreams} open streams after $entryName")
+                            openStreams > endOpenStreams -> println("Okay, so we *started* with $openStreams and ended with $endOpenStreams, that's good?")
+                            else -> println("No excess open streams, huzzah!")
                         }
                     }
                 }
             }
 
+            HookManager.finishedExtraction(archive, directory, matching)
+
             println(FlipTable.of(arrayOf("File", "File Format", "Converted Format", "Output"), rows.toTypedArray()))
-            debug("Took $duration ms")
+            debug(FlipTable.of(arrayOf("Duration", "Total Opened Streams", "Remaining Open Streams", "Read Ops", "Read Bytes"), arrayOf(arrayOf(
+                    duration.toString(),
+                    archive.openedStreams.get().toString(),
+                    archive.openStreams.get().toString(),
+                    archive.totalReadOperations.get().toString(),
+                    archive.totalReadBytes.get().toString() + " B"
+            ))))
+//            debug("Took $duration ms; opened a total of ${archive.openedStreams.get()}, and we have ${archive.openStreams.get()} left over")
         }
     }
 
@@ -196,12 +247,17 @@ object GurrenOperation {
 
         val matching = directory.iterate(filters = Gurren.ignoreFilters).filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
 
-        println("[$operatingName] Attempting to compile files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println("")
-        println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { this relativePathFrom directory })
-        println("")
-        if (question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")) {
-            operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to FileDataSource(file) })
+        val proceed = SpiralModel.confirm {
+            println("[$operatingName] Attempting to compile files matching the regex ${regex.pattern}, which is the following list of files: ")
+            println("")
+            println(matching.joinToPrefixedString("\n", "[$operatingName]\t") { this relativePathFrom directory })
+            println("")
+
+            return@confirm question("[$operatingName] Proceed with compilation (Y/n)? ", "Y")
+        }
+
+        if (proceed) {
+            operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to { FileInputStream(file) } })
             println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
         }
     }
@@ -223,22 +279,30 @@ object GurrenOperation {
 
         val matching = directory.iterate(filters = Gurren.ignoreFilters)
                 .filter { (it relativePathFrom directory).matches(regex) || it.name.matches(regex) }
-                .map { file -> file to (SpiralFormats.formatForExtension(file.extension) ?: SpiralFormats.formatForData(FileDataSource(file))) }
+                .map { file ->
+                    file to (SpiralFormats.formatForExtension(file.extension)
+                            ?: SpiralFormats.formatForData(operatingGame, file::inputStream, file relativePathFrom directory))
+                }
                 .map { (file, format) -> if (format in SpiralFormats.drArchiveFormats) file to null else file to format }
                 .toMap()
 
-        println("[$operatingName] Attempting to convert and compile files matching the regex ${regex.pattern}, which is the following list of files: ")
-        println("")
-        println(matching.entries.joinToPrefixedString("\n", "[$operatingName]\t") {
-            when {
-                this.value == null -> "${this.key relativePathFrom directory} (No known format)"
-                this.value!!.conversions.isEmpty() -> "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
-                else -> "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
-            }
-        })
-        println("")
-        if (question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")) {
-            val formatParams = mapOf("pak:convert" to true, "lin:dr1" to operatingName.startsWith("dr1"))
+        val proceed = SpiralModel.confirm {
+            println("[$operatingName] Attempting to convert and compile files matching the regex ${regex.pattern}, which is the following list of files: ")
+            println("")
+            println(matching.entries.joinToPrefixedString("\n", "[$operatingName]\t") {
+                when {
+                    this.value == null -> "${this.key relativePathFrom directory} (No known format)"
+                    this.value!!.conversions.isEmpty() -> "${this.key relativePathFrom directory} (Cannot convert from ${this.value!!.name})"
+                    else -> "${this.key relativePathFrom directory} (${this.value!!.name} -> ${this.value!!.conversions.first().name})"
+                }
+            })
+            println("")
+
+            return@confirm question("[$operatingName] Proceed with conversion and compilation (Y/n)? ", "Y")
+        }
+
+        if (proceed) {
+            val formatParams = mapOf("pak:convert" to true)
 //            val customWad = make<CustomWAD> {
 //                wad(wad)
 //
@@ -249,14 +313,16 @@ object GurrenOperation {
 //                }
 //            }
 
-            val newEntries: MutableList<Pair<String, DataSource>> = ArrayList()
+            val newEntries: MutableList<Pair<String, () -> InputStream>> = ArrayList()
 
-            newEntries.addAll(matching.filter { (_, format) -> format == null || format.conversions.isEmpty() }.map { (file) -> (file relativePathFrom directory) to FileDataSource(file) })
+            newEntries.addAll(matching.filter { (_, format) -> format == null || format.conversions.isEmpty() }.map { (file) -> (file relativePathFrom directory) to { FileInputStream(file) } })
 
             newEntries.addAll(matching.filter { (_, format) -> format != null && format.conversions.isNotEmpty() }.map { (entry, from) ->
-                val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
+                val name = (entry relativePathFrom directory).replaceLast(".${from!!.extension
+                        ?: "unk"}", ".${from.conversions.first().extension ?: "unk"}")
                 val (formatOut, formatIn) = CacheHandler.cacheStream()
-                from.convert(operatingArchive.niceCompileFormats[from] ?: from.conversions.first(), FileDataSource(entry), formatOut, formatParams)
+                from.convert(operatingGame, operatingArchive.niceCompileFormats[from]
+                        ?: from.conversions.first(), entry relativePathFrom directory, entry::inputStream, formatOut, formatParams)
                 return@map name to formatIn
             })
 
@@ -266,7 +332,8 @@ object GurrenOperation {
     }
 
     val restore = Command("restore", "operate") { (params) ->
-        val backupFile = File((SpiralModel.operating ?: return@Command errPrintln("Error: SpiralModel#operating is null, this is a bug!")).absolutePath.replaceAfterLast('.', "zip"))
+        val backupFile = File((SpiralModel.operating
+                ?: return@Command errPrintln("Error: SpiralModel#operating is null, this is a bug!")).absolutePath.replaceAfterLast('.', "zip"))
         val backupZip = ZipFile(backupFile)
         val regex = (if (params.size < 2) ".*" else params[1]).toRegex()
 
@@ -282,7 +349,7 @@ object GurrenOperation {
             return@confirm question("[${GurrenModding.operatingName}] Proceed with restoration (Y/n)? ", "Y")
         }
 
-        if(proceed) {
+        if (proceed) {
             val backupEntries = archiveBackupFiles.map { zipEntry ->
                 val (out, ds) = CacheHandler.cacheStream()
 
@@ -303,28 +370,20 @@ object GurrenOperation {
             is WADArchive -> {
                 val wad = (operatingArchive as WADArchive).wad
 
-                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
+                val matching = wad.files.filter { (name) -> name.matches(regex) || name.child.matches(regex) }.map { file ->
+                    arrayOf(file.name, "${file.size} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStream))?.mod_uid
+                            ?: "Unknown")
+                }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
             }
             is CPKArchive -> {
                 val cpk = (operatingArchive as CPKArchive).cpk
 
-                val matching = cpk.fileTable.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file -> arrayOf(file.name, "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(file)?.mod_uid ?: "Unknown") }.toTypedArray()
+                val matching = cpk.files.filter { (fileName, dirName) -> "$fileName/$dirName".matches(regex) || fileName.matches(regex) }.map { file ->
+                    arrayOf("${file.directoryName}/${file.fileName}", "${file.fileSize} B", "${file.offset} B from the beginning", ModManager.getModForFingerprint(InputStreamFuncDataSource(file::inputStreamFor.bind(cpk)))?.mod_uid
+                            ?: "Unknown")
+                }.toTypedArray()
                 println(FlipTable.of(arrayOf("Entry Name", "Entry Size", "Entry Offset", "Mod Origin"), matching))
-            }
-        }
-    }
-
-    val test = Command("test", "operate") {
-        when (operatingArchive) {
-            is CPKArchive -> {
-                val cpk = (operatingArchive as CPKArchive).cpk
-                if (cpk.etocHeader == null)
-                    return@Command
-
-                File("Etoc-V3.txt").printWriter().use { writer ->
-                    cpk.etocHeader.dump(cpk.dataSource).forEach { columnName, (row, columnType, data) -> writer.println("$columnName[$row]: $columnType / $data") }
-                }
             }
         }
     }

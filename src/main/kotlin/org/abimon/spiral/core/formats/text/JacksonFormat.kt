@@ -6,11 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.scripting.NonstopFormat
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.readMapValue
 import org.abimon.spiral.core.writeShort
-import org.abimon.visi.io.DataSource
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.CharConversionException
+import java.io.InputStream
 import java.io.OutputStream
 import kotlin.reflect.KClass
 
@@ -20,12 +21,12 @@ abstract class JacksonFormat: SpiralFormat {
 
     open val OTHER_EXCEPTION_TYPES: Array<KClass<out Throwable>> = emptyArray()
 
-    override fun canConvert(format: SpiralFormat): Boolean = format in manualConversions
+    override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format in manualConversions
     abstract val MAPPER: ObjectMapper
 
-    override fun isFormat(source: DataSource): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
         try {
-            source.use { stream -> MAPPER.readValue(stream, Map::class.java) }
+            dataSource().use { stream -> MAPPER.readValue(stream, Map::class.java) }
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
@@ -36,7 +37,7 @@ abstract class JacksonFormat: SpiralFormat {
         }
 
         try {
-            source.use { stream -> MAPPER.readValue(stream, List::class.java) }
+            dataSource().use { stream -> MAPPER.readValue(stream, List::class.java) }
             return true
         } catch (json: JsonParseException) {
         } catch (json: JsonMappingException) {
@@ -49,15 +50,15 @@ abstract class JacksonFormat: SpiralFormat {
         return false
     }
 
-    override fun convert(format: SpiralFormat, source: DataSource, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(format, source, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, dataSource, output, params)) return true
 
         when(format) {
             NonstopFormat -> {
-                val debateMap = source.use { stream -> MAPPER.readMapValue(stream, String::class, Any::class) }
+                val debateMap = dataSource().use { stream -> MAPPER.readMapValue(stream, String::class, Any::class) }
 
-                val duration = debateMap["duration"]?.toString()?.toIntOrNull() ?: throw IllegalArgumentException("${source.location} is an invalid Nonstop Debate $name file ('duration' is either not present or not a number)")
-                val sections = (debateMap["sections"] as? List<*> ?: throw IllegalArgumentException("${source.location} is an invalid Nonstop Debate $name file ('sections' is either not present or not a list)"))
+                val duration = debateMap["duration"]?.toString()?.toIntOrNull() ?: throw IllegalArgumentException("$name is an invalid Nonstop Debate $name file ('duration' is either not present or not a number)")
+                val sections = (debateMap["sections"] as? List<*> ?: throw IllegalArgumentException("$name is an invalid Nonstop Debate $name file ('sections' is either not present or not a list)"))
                         .filterIsInstance(Map::class.java)
                         .map { theMap -> theMap.filter { (a, b) -> a is String && b is Int }.mapKeys { (a) ->
                             val op = a as String
@@ -70,7 +71,7 @@ abstract class JacksonFormat: SpiralFormat {
                         }.mapValues { (_, b) -> b as Int } }
 
                 if(sections.isEmpty())
-                    throw throw IllegalArgumentException("${source.location} is an invalid Nonstop Debate $name file ('sections' is empty)")
+                    throw throw IllegalArgumentException("$name is an invalid Nonstop Debate $name file ('sections' is empty)")
 
                 output.writeShort(duration / 2, unsigned = true)
                 output.writeShort(sections.size, unsigned = true)

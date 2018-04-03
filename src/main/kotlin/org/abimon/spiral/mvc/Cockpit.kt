@@ -2,8 +2,10 @@ package org.abimon.spiral.mvc
 
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.fonts.V3SPCFont
 import org.abimon.spiral.core.formats.images.SRDFormat
+import org.abimon.spiral.core.utils.DataMapper
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.modding.PluginManager
 import org.abimon.spiral.mvc.gurren.*
@@ -12,6 +14,11 @@ import java.io.*
 fun main(args: Array<String>) = startupSpiral(args)
 
 fun startupSpiral(args: Array<String>) {
+    DataMapper.byteArrayToMap = { byteArray -> SpiralData.MAPPER.readValue(byteArray, Map::class.java).mapKeys { (key) -> key.toString() } }
+    DataMapper.stringToMap = { string -> SpiralData.MAPPER.readValue(string, Map::class.java).mapKeys { (key) -> key.toString() } }
+    DataMapper.fileToMap = { file -> SpiralData.MAPPER.readValue(file, Map::class.java).mapKeys { (key) -> key.toString() } }
+    DataMapper.streamToMap = { stream -> SpiralData.MAPPER.readValue(stream, Map::class.java).mapKeys { (key) -> key.toString() } }
+
     if(SpiralModel.purgeCache)
         CacheHandler.purge()
 
