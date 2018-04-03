@@ -2,20 +2,17 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.TextEntry
-import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
 object BasicLinTextDrill : DrillHead<LinScript> {
-    val cmd = "BASIC_TEXT"
+    val cmd = "BASIC-LIN-TEXT"
 
     override val klass: KClass<LinScript> = LinScript::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
-                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     FirstOf(
                             Sequence(

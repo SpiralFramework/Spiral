@@ -7,8 +7,14 @@ import org.abimon.osl.drills.circuits.ChangeGameDrill
 import org.abimon.osl.drills.circuits.EchoDrill
 import org.abimon.osl.drills.circuits.HeaderOSLDrill
 import org.abimon.osl.drills.lin.*
+import org.abimon.osl.drills.wrd.BasicWrdSpiralDrill
+import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
+import org.abimon.osl.drills.wrd.WordCommandDrill
+import org.abimon.osl.drills.wrd.WordStringDrill
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.parboiled.Action
 import org.parboiled.Parboiled
 import org.parboiled.Rule
@@ -16,8 +22,7 @@ import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.ParsingResult
 import java.util.*
 
-
-open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean): SpiralParser(isParboiledCreated) {
+open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
     }
@@ -42,23 +47,44 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun SpiralTextLine(): Rule = FirstOf(
             Comment(),
 
-            BasicLinTextDrill,
-            LinDialogueDrill,
-            BasicLinSpiralDrill,
-            NamedLinSpiralDrill,
-            LinBustSpriteDrill,
-            LinHideSpriteDrill,
-            LinUIDrill,
+            SpiralLinLine(),
+            SpiralWrdLine(),
 
             ChangeGameDrill,
             EchoDrill,
             AddNameAliasDrill,
             HeaderOSLDrill,
 
-//            Comment(),
-//            Whitespace()
+//          Comment(),
+//          Whitespace()
             EMPTY
     )
+
+
+    open fun SpiralLinLine(): Rule =
+            Sequence(
+                    Action<Any> { game is HopesPeakDRGame },
+                    FirstOf(
+                            BasicLinTextDrill,
+                            LinDialogueDrill,
+                            BasicLinSpiralDrill,
+                            NamedLinSpiralDrill,
+                            LinBustSpriteDrill,
+                            LinHideSpriteDrill,
+                            LinUIDrill
+                    )
+            )
+
+    open fun SpiralWrdLine(): Rule =
+            Sequence(
+                    Action<Any> { game === V3 },
+                    FirstOf(
+                            BasicWrdSpiralDrill,
+                            NamedWrdSpiralDrill,
+                            WordCommandDrill,
+                            WordStringDrill
+                    )
+            )
 
     override fun toRule(obj: Any?): Rule {
         when (obj) {

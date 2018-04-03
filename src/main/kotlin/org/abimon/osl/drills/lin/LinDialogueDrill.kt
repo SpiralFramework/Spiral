@@ -14,12 +14,11 @@ import kotlin.reflect.KClass
 
 object LinDialogueDrill : DrillHead<Array<LinScript>> {
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
-    val cmd = "DIALOGUE"
+    val cmd = "LIN-DIALOGUE"
 
     override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
-                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     OneOrMore(NAME),
                     Action<Any> { match() in customIdentifiers || match() in (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers },

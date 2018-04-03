@@ -13,7 +13,7 @@ import java.util.*
 import kotlin.reflect.KClass
 
 object LinHideSpriteDrill : DrillHead<LinScript> {
-    val cmd: String = "HIDE-SPRITE"
+    val cmd: String = "LIN-HIDE-SPRITE"
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
     val NUMERAL_REGEX = "\\d+".toRegex()
 
@@ -22,7 +22,6 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             FirstOf(
                     Sequence(
-                            Action<Any> { game is HopesPeakDRGame },
                             clearTmpStack(cmd),
                             "Hide" ,
                             Whitespace(),

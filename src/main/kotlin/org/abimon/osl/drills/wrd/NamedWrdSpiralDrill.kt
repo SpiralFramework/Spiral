@@ -1,28 +1,27 @@
-package org.abimon.osl.drills.lin
+package org.abimon.osl.drills.wrd
 
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
-import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
-import org.abimon.spiral.core.objects.scripting.lin.LinScript
+import org.abimon.spiral.core.objects.game.v3.V3
+import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object NamedLinSpiralDrill : DrillHead<LinScript> {
-    val cmd = "NAMED-LIN"
+object NamedWrdSpiralDrill : DrillHead<WrdScript> {
+    val cmd = "NAMED-WRD"
 
-    override val klass: KClass<LinScript> = LinScript::class
+    override val klass: KClass<WrdScript> = WrdScript::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
                     OneOrMore(LineCodeMatcher),
                     Action<Any> {
                         val name = match()
-                        (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
+                        V3.opCodes.values.any { (names) -> name in names }
                     },
-                    pushTmpAction(cmd, this@NamedLinSpiralDrill),
+                    pushTmpAction(cmd, this@NamedWrdSpiralDrill),
                     pushTmpAction(cmd),
                     Optional(
                             '|'
@@ -43,9 +42,9 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                     pushTmpStack(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): WrdScript {
         val opName = rawParams[0].toString()
-        rawParams[0] = (parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
-        return BasicLinSpiralDrill.formScript(rawParams, parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame)
+        rawParams[0] = V3.opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
+        return BasicWrdSpiralDrill.formScript(rawParams)
     }
 }

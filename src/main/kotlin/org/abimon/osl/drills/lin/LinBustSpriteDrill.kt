@@ -12,7 +12,7 @@ import org.parboiled.Rule
 import kotlin.reflect.KClass
 
 object LinBustSpriteDrill : DrillHead<LinScript> {
-    val cmd: String = "BUST-SPRITE"
+    val cmd: String = "LIN-BUST-SPRITE"
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
     val NUMERAL_REGEX = "\\d+".toRegex()
 
@@ -21,7 +21,6 @@ object LinBustSpriteDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             FirstOf(
                     Sequence(
-                            Action<Any> { game is HopesPeakDRGame },
                             clearTmpStack(cmd),
                             "Display sprite for ",
                             pushTmpAction(cmd, this@LinBustSpriteDrill),
