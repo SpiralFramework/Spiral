@@ -28,6 +28,9 @@ fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = 
     return String(baos.toByteArray(), encoding)
 }
 
+fun InputStream.copyToStream(out: OutputStream): Unit { this.copyTo(out) }
+fun OutputStream.copyFromStream(stream: InputStream): Unit { stream.copyTo(this) }
+
 fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: ((Long) -> Unit)?): Long {
     var bytesCopied = 0L
     val buffer = ByteArray(bufferSize)
