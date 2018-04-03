@@ -21,7 +21,6 @@ import java.awt.RenderingHints
 import java.awt.geom.AffineTransform
 import java.awt.geom.Area
 import java.awt.image.BufferedImage
-import java.io.File
 import javax.imageio.ImageIO
 
 object GurrenUtils {
