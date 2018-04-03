@@ -1,6 +1,8 @@
 package org.abimon.osl.drills.circuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.parboiled.Rule
 
 object AddNameAliasDrill : DrillCircuit {
@@ -31,7 +33,12 @@ object AddNameAliasDrill : DrillCircuit {
         val id: Int
         when (rawParams[1]) {
             is Int -> id = rawParams[2] as Int
-            else -> id = parser.game.characterIdentifiers[rawParams[1].toString()] ?: 0
+            else -> {
+                if(parser.game is HopesPeakDRGame)
+                    id = (parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
+                else
+                    id = 0
+            }
         }
 
         parser.customIdentifiers[rawParams[0].toString()] = id

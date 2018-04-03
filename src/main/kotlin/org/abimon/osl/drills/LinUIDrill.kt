@@ -1,13 +1,14 @@
 package org.abimon.osl.drills
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.lin.ChangeUIEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object UIDrill : DrillHead<LinScript> {
+object LinUIDrill : DrillHead<LinScript> {
     val cmd: String = "UI-DRILL"
     val uiElements = mapOf(
             "Speaker Name" to 1,
@@ -28,10 +29,11 @@ object UIDrill : DrillHead<LinScript> {
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
+                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     "UI:",
                     ZeroOrMore(Whitespace()),
-                    pushTmpAction(cmd, this@UIDrill),
+                    pushTmpAction(cmd, this@LinUIDrill),
                     FirstOf(
                             Sequence(
                                     FirstOf("Enable", "Disable"),

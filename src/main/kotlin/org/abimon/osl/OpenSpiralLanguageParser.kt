@@ -1,11 +1,13 @@
 package org.abimon.osl
 
-import org.abimon.osl.drills.*
+import org.abimon.osl.drills.DrillHead
+import org.abimon.osl.drills.LinUIDrill
 import org.abimon.osl.drills.circuits.AddNameAliasDrill
 import org.abimon.osl.drills.circuits.ChangeGameDrill
 import org.abimon.osl.drills.circuits.EchoDrill
 import org.abimon.osl.drills.circuits.HeaderOSLDrill
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.osl.drills.lin.*
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.parboiled.Action
 import org.parboiled.Parboiled
@@ -20,7 +22,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
     }
 
-    var game: HopesPeakDRGame = UnknownHopesPeakGame
+    var game: DRGame = UnknownHopesPeakGame
     val customIdentifiers = HashMap<String, Int>()
     val flags = HashMap<String, Boolean>()
 
@@ -40,13 +42,13 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun SpiralTextLine(): Rule = FirstOf(
             Comment(),
 
-            BasicTextDrill,
-            DialogueDrill,
-            BasicSpiralDrill,
-            NamedSpiralDrill,
-            BustSpriteDrill,
-            HideSpriteDrill,
-            UIDrill,
+            BasicLinTextDrill,
+            LinDialogueDrill,
+            BasicLinSpiralDrill,
+            NamedLinSpiralDrill,
+            LinBustSpriteDrill,
+            LinHideSpriteDrill,
+            LinUIDrill,
 
             ChangeGameDrill,
             EchoDrill,

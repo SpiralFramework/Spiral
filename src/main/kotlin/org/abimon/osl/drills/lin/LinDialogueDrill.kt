@@ -1,25 +1,29 @@
-package org.abimon.osl.drills
+package org.abimon.osl.drills.lin
 
 import org.abimon.osl.AllButMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.*
 import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object DialogueDrill : DrillHead<Array<LinScript>> {
+object LinDialogueDrill : DrillHead<Array<LinScript>> {
     val NAME = AllButMatcher(charArrayOf(':', '\n'))
     val cmd = "DIALOGUE"
 
     override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
+                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     OneOrMore(NAME),
-                    Action<Any> { match() in customIdentifiers || match() in game.characterIdentifiers },
-                    pushTmpAction(cmd, this@DialogueDrill),
+                    Action<Any> { match() in customIdentifiers || match() in (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers },
+                    pushTmpAction(cmd, this@LinDialogueDrill),
                     pushTmpAction(cmd),
                     ':',
                     LinText(cmd),
@@ -28,7 +32,7 @@ object DialogueDrill : DrillHead<Array<LinScript>> {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
-        val game = parser.game
+        val game = parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame
         return arrayOf(
                 SpeakerEntry(
                         parser.customIdentifiers["${rawParams[0]}"]

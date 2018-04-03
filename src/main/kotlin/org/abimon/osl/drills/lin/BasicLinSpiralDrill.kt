@@ -1,23 +1,27 @@
-package org.abimon.osl.drills
+package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.utils.and
+import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object BasicSpiralDrill : DrillHead<LinScript> {
+object BasicLinSpiralDrill : DrillHead<LinScript> {
     val cmd = "BASIC"
 
     override val klass: KClass<LinScript> = LinScript::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
+                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     "0x",
                     OneOrMore(Digit(16)),
-                    pushTmpAction(cmd, this@BasicSpiralDrill),
+                    pushTmpAction(cmd, this@BasicLinSpiralDrill),
                     pushTmpAction(cmd),
                     Optional(
                             '|'
@@ -38,7 +42,8 @@ object BasicSpiralDrill : DrillHead<LinScript> {
                     pushTmpStack(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = formScript(rawParams, parser.game)
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = formScript(rawParams, parser.game as? HopesPeakDRGame
+            ?: UnknownHopesPeakGame)
 
     fun formScript(rawParams: Array<Any>, game: HopesPeakDRGame): LinScript {
         val opCode = "${rawParams[0]}".toInt(16)

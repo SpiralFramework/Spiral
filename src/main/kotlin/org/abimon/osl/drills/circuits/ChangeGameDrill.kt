@@ -6,6 +6,7 @@ import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.UDG
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.parboiled.Action
 import org.parboiled.Rule
 
@@ -18,6 +19,9 @@ object ChangeGameDrill : DrillCircuit {
             "UDG" to UDG,
             "DRAE" to UDG,
             "AE" to UDG,
+            "V3" to V3,
+            "NDRV3" to V3,
+            "DRV3" to V3,
             "UNK" to UnknownHopesPeakGame
     )
 
