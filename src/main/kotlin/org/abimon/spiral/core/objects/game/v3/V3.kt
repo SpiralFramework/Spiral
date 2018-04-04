@@ -103,4 +103,13 @@ object V3 : DRGame {
             HashMap<Int, EnumWordScriptCommand>().apply {
                 this[0x14] = EnumWordScriptCommand.ONE
             }
+
+    override val names: Array<String> =
+            arrayOf(
+                    "DRv3",
+                    "NDRv3",
+                    "V3",
+                    "Danganronpa V3: Killing Harmony",
+                    "New Danganronpa V3: Killing Harmony"
+            )
 }

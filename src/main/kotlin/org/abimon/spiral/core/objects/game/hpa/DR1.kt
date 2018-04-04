@@ -256,6 +256,13 @@ object DR1 : HopesPeakDRGame {
                 this["Monokuma Backup (M)"] = 37
             }
 
+    override val names: Array<String> =
+            arrayOf(
+                    "DR1",
+                    "Danganronpa 1",
+                    "Danganronpa: Trigger Happy Havoc"
+            )
+
 
     fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
         val args: MutableList<Int> = ArrayList()
