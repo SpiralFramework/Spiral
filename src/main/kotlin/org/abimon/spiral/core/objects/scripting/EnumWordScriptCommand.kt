@@ -4,5 +4,5 @@ enum class EnumWordScriptCommand {
     ONE,
     TWO,
     THREE,
-    STRING
+    STRING;
 }

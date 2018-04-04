@@ -134,8 +134,8 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 val bom = if(line.size < 2) 0 else (((line[0].toInt() and 0xFF) shl 8) or (line[1].toInt() and 0xFF))
 
                 when (bom) {
-                    BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16BE)
-                    BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16LE)
+                    BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16)
+                    BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16)
                     else -> textEntry?.text = String(line, Charsets.UTF_16LE) //May need to do a when clause later
                 }
             }
