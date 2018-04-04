@@ -30,6 +30,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     var game: DRGame = UnknownHopesPeakGame
     val customIdentifiers = HashMap<String, Int>()
     val flags = HashMap<String, Boolean>()
+    val data = HashMap<String, Any>()
 
     val uuid = UUID.randomUUID().toString()
 
@@ -40,6 +41,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 game = UnknownHopesPeakGame
                 customIdentifiers.clear()
                 flags.clear()
+                data.clear()
                 return@Action true
             }
     )
@@ -89,6 +91,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     override fun toRule(obj: Any?): Rule {
         when (obj) {
             is DrillHead<*> -> return obj.Syntax(this)
+            is String -> return IgnoreCase(obj)
             else -> return super.toRule(obj)
         }
     }
