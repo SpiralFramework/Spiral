@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.game.v3
 
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
 import org.abimon.spiral.core.objects.scripting.wrd.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.abimon.spiral.core.utils.OpCodeHashMap
@@ -96,5 +97,10 @@ object V3 : DRGame {
                 this[0x51] = null to -1 and ::UnknownEntry
                 this[0x52] = null to -1 and ::UnknownEntry
                 this[0x53] = "Speaker" to 2 and ::UnknownEntry
+            }
+
+    val opCodeCommandEntries: Map<Int, EnumWordScriptCommand> =
+            HashMap<Int, EnumWordScriptCommand>().apply {
+                this[0x14] = EnumWordScriptCommand.ONE
             }
 }

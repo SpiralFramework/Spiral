@@ -118,4 +118,13 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
             stream.close()
         }
     }
+
+    operator fun get(command: EnumWordScriptCommand, index: Int): String {
+        when(command) {
+            EnumWordScriptCommand.ONE -> return commandOneEntries[index]
+            EnumWordScriptCommand.TWO -> return commandTwoEntries[index]
+            EnumWordScriptCommand.THREE -> return commandThreeEntries[index]
+            EnumWordScriptCommand.STRING -> return strings[index]
+        }
+    }
 }
