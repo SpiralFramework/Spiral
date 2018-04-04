@@ -1,11 +1,7 @@
 package org.abimon.osl
 
 import org.abimon.osl.drills.DrillHead
-import org.abimon.osl.drills.LinUIDrill
-import org.abimon.osl.drills.circuits.AddNameAliasDrill
-import org.abimon.osl.drills.circuits.ChangeGameDrill
-import org.abimon.osl.drills.circuits.EchoDrill
-import org.abimon.osl.drills.circuits.HeaderOSLDrill
+import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.lin.*
 import org.abimon.osl.drills.wrd.BasicWrdSpiralDrill
 import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
@@ -28,6 +24,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     var game: DRGame = UnknownHopesPeakGame
+    var strictParsing: Boolean = true
     val customIdentifiers = HashMap<String, Int>()
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
@@ -36,7 +33,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
-            Sequence("OSL Script\n", ZeroOrMore(Sequence(SpiralTextLine(), Ch('\n'))), SpiralTextLine(), EOI),
+            Sequence(
+                    "OSL Script\n",
+                    ZeroOrMore(Sequence(SpiralTextLine(), Ch('\n'))),
+                    SpiralTextLine(),
+                    FirstOf(
+                            Sequence(
+                                    Action<Any> { strictParsing },
+                                    EOI
+                            ),
+                            Action<Any> { !strictParsing }
+                    )
+            ),
             Action<Any> {
                 game = UnknownHopesPeakGame
                 customIdentifiers.clear()
@@ -56,6 +64,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             EchoDrill,
             AddNameAliasDrill,
             HeaderOSLDrill,
+            StrictParsingDrill,
 
 //          Comment(),
 //          Whitespace()

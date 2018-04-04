@@ -1,6 +1,7 @@
-package org.abimon.osl.drills
+package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.lin.ChangeUIEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Action
