@@ -23,4 +23,13 @@ object UDG: HopesPeakDRGame {
 
     override val characterIdentifiers: MutableMap<String, Int> =
             HashMap<String, Int>()
+
+    override val names: Array<String> =
+            arrayOf(
+                    "UDG",
+                    "Danganronpa Another Episode",
+                    "Danganronpa Another Episode: Ultra Despair Girls",
+                    "Danganronpa: Ultra Despair Girls",
+                    "Ultra Despair Girls"
+            )
 }

@@ -281,4 +281,12 @@ object DR2 : HopesPeakDRGame {
                 this["Guy F"] = 55
                 this["???"] = 56
             }
+
+    override val names: Array<String> =
+            arrayOf(
+                    "DR2",
+                    "SDR2",
+                    "Danganronpa 2",
+                    "Danganronpa 2: Goodbye Despair"
+            )
 }

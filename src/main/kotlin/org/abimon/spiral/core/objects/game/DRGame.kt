@@ -5,4 +5,5 @@ package org.abimon.spiral.core.objects.game
  * This is only used as a form of abstraction.
  */
 interface DRGame {
+    val names: Array<String>
 }
