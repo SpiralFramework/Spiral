@@ -57,8 +57,10 @@ class CustomLin {
                 textText.write(0xFF)
                 textText.write(0xFE)
                 textText.write(strData)
-                textText.write(0x00)
-                textText.write(0x00)
+                if(strData[strData.size - 1] != 0x00.toByte() && strData[strData.size - 2] != 0x00.toByte()) {
+                    textText.write(0x00)
+                    textText.write(0x00)
+                }
 
                 entryData.write(textID / 256)
                 entryData.write(textID % 256)
@@ -68,6 +70,8 @@ class CustomLin {
                 entry.rawArguments.forEach { arg -> entryData.write(arg) }
             }
         }
+
+        textData.writeInt32LE((numText * 4L) + 4 + textText.size())
 
         if (type == 1)
             out.writeInt32LE(12 + entryData.size() + textData.size() + textText.size())
