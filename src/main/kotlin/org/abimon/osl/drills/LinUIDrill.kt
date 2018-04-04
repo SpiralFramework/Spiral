@@ -1,7 +1,6 @@
 package org.abimon.osl.drills
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.lin.ChangeUIEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Action
@@ -29,7 +28,6 @@ object LinUIDrill : DrillHead<LinScript> {
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
-                    Action<Any> { game is HopesPeakDRGame },
                     clearTmpStack(cmd),
                     "UI:",
                     ZeroOrMore(Whitespace()),

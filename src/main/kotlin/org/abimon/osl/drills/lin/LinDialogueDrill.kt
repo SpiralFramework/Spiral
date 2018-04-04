@@ -25,6 +25,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                     pushTmpAction(cmd, this@LinDialogueDrill),
                     pushTmpAction(cmd),
                     ':',
+                    ZeroOrMore(Whitespace()),
                     LinText(cmd),
                     pushTmpAction(cmd),
                     pushTmpStack(cmd)

@@ -36,7 +36,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
-            Sequence("OSL Script\n", ZeroOrMore(Sequence(SpiralTextLine(), Ch('\n'))), SpiralTextLine()),
+            Sequence("OSL Script\n", ZeroOrMore(Sequence(SpiralTextLine(), Ch('\n'))), SpiralTextLine(), EOI),
             Action<Any> {
                 game = UnknownHopesPeakGame
                 customIdentifiers.clear()
@@ -98,7 +98,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     fun parse(lines: String): ParsingResult<Any> {
         val runner = ReportingParseRunner<Any>(OpenSpiralLanguage())
-        return runner.run(lines)
+        return runner.run(lines.replace("\r\n", "\n"))
     }
 
     fun load(name: String): ByteArray? = oslContext(name)

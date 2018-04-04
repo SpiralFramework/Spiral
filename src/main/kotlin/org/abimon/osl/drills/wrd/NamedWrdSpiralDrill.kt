@@ -43,7 +43,6 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                         val opCode = V3.opCodes.entries.first { (_, triple) -> opName in triple.first }.key
 
                         val wrdParams = stack.drop(2).map(Any::toString)
-                        val params = ArrayList<Int>()
 
                         val commandEnum = V3.opCodeCommandEntries[opCode] ?: EnumWordScriptCommand.TWO
                         val commands = data["wrd-command-$commandEnum"] as? MutableList<String> ?: ArrayList<String>()
