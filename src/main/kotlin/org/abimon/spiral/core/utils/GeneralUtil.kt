@@ -42,6 +42,7 @@ fun CacheFile(): File {
         cacheFile = File("." + UUID.randomUUID().toString())
     } while (cacheFile.exists())
 
+    cacheFile.createNewFile()
     cacheFile.deleteOnExit()
     if(Files.getFileAttributeView(cacheFile.toPath(), DosFileAttributeView::class.java) != null)
         Files.setAttribute(cacheFile.toPath(), "dos:hidden", true)
