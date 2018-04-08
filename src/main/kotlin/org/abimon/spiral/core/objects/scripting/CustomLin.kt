@@ -53,7 +53,7 @@ class CustomLin {
 
             if (entry is TextEntry) {
                 val strData = (entry.text ?: "Hello, Null!").replace("\\n", "\n").replace("\\t", "\t").toByteArray(Charsets.UTF_16LE)
-                textData.writeInt32LE((numText * 4L) + 4 + textText.size())
+                textData.writeInt32LE((numText * 4L) + 8 + textText.size())
                 textText.write(0xFF)
                 textText.write(0xFE)
                 textText.write(strData)
