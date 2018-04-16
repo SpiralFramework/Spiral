@@ -1,5 +1,6 @@
 package org.abimon.osl.drills.lin
 
+import org.abimon.osl.EnumLinFlagCheck
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.lin.*
@@ -42,7 +43,7 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     pushTmpAction(cmd),
                     ZeroOrMore(Whitespace()),
 
-                    "==", //TODO: Eventually support other comparisons
+                    FirstOf(EnumLinFlagCheck.NAMES),
                     pushTmpAction(cmd),
 
                     ZeroOrMore(Whitespace()),
@@ -70,12 +71,13 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
         val flagPartA = rawParams[0].toString().toIntOrNull() ?: 0
         val flagPartB = rawParams[1].toString().toIntOrNull() ?: 0
 
-        val operation = rawParams[2].toString()
+        val operationName = rawParams[2].toString()
+        val operation = EnumLinFlagCheck.values().first { enum -> operationName in enum.names }
 
         val comparison = rawParams[3].toString().toIntOrNull() ?: 0
 
         return arrayOf(
-                CheckFlagAEntry(0x35, intArrayOf(flagPartA, flagPartB, 0, comparison)),
+                CheckFlagAEntry(0x35, intArrayOf(flagPartA, flagPartB, operation.flag, comparison)),
                 EndFlagCheckEntry(),
                 GoToLabelEntry(128 * 256 + branch),
                 GoToLabelEntry(128 * 256 + branch + 1),
