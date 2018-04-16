@@ -1,7 +1,6 @@
 package org.abimon.osl.drills.circuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.parboiled.Action
 import org.parboiled.Rule
 
 object EchoDrill: DrillCircuit {
@@ -11,7 +10,6 @@ object EchoDrill: DrillCircuit {
             Sequence(
                     clearTmpStack(cmd),
                     "echo",
-                    Action<Any> { true },
                     Whitespace(),
                     pushTmpAction(cmd, this@EchoDrill),
                     Parameter(cmd),

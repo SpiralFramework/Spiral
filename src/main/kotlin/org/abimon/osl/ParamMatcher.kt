@@ -9,7 +9,6 @@ object ParamMatcher: AnyMatcher() {
         when(context.currentChar) {
             '\n' -> return false
             '|' -> return false
-            ',' -> return false
             '"' -> return !(context.currentIndex == 0 || context.inputBuffer.charAt(context.currentIndex - 1) != '\\')
             Chars.EOI -> return false
             else -> return super.match(context)

@@ -109,6 +109,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             HeaderOSLDrill,
             StrictParsingDrill,
             MetaIfDrill,
+            ErrorDrill,
 
 //          Comment(),
 //          Whitespace()

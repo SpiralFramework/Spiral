@@ -45,7 +45,15 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
         if (silence)
             return@Action true
 
-        if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(value ?: match()); true
+        if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(value ?: match())
+        return@Action true
+    }
+
+    fun pushTmp(cmd: String, value: Any) {
+        if (silence)
+            return
+
+        if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(value)
     }
 
     fun peekTmpAction(cmd: String): Any? = tmpStack[cmd]?.peek()
@@ -82,7 +90,7 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
         if (silence)
             return@Action true
 
-        tmpStack[cmd]?.forEach(operate);
+        tmpStack[cmd]?.reversed()?.forEach(operate);
         return@Action true
     }
 
