@@ -17,6 +17,8 @@ import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.ParsingResult
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.safeCast
 
 open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
@@ -30,13 +32,23 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val data = HashMap<String, Any>()
 
     val uuid = UUID.randomUUID().toString()
+    var branches = 0
+    var flagCheckIndentation = 0
+
+    operator fun get(key: String): Any? = data[key]
+    operator fun <T: Any> get(key: String, clazz: KClass<T>): T? = clazz.safeCast(data[key])
+
+    operator fun set(key: String, value: Any?): Any? {
+        if (value == null)
+            return data.remove(key)
+        return data.put(key, value)
+    }
 
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
             Sequence(
                     "OSL Script\n",
-                    ZeroOrMore(Sequence(SpiralTextLine(), Ch('\n'))),
-                    SpiralTextLine(),
+                    OpenSpiralLines(),
                     FirstOf(
                             Sequence(
                                     Action<Any> { strictParsing },
@@ -52,6 +64,12 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 data.clear()
                 return@Action true
             }
+    )
+
+    open fun OpenSpiralLines(): Rule = Sequence(
+            ZeroOrMore(Sequence(ZeroOrMore(Whitespace()), SpiralTextLine(), Ch('\n'))),
+            ZeroOrMore(Whitespace()),
+            SpiralTextLine()
     )
 
     open fun SpiralTextLine(): Rule = FirstOf(
@@ -82,7 +100,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             NamedLinSpiralDrill,
                             LinBustSpriteDrill,
                             LinHideSpriteDrill,
-                            LinUIDrill
+                            LinUIDrill,
+                            LinIfDrill
                     )
             )
 

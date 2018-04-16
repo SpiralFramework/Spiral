@@ -19,13 +19,13 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
-    maven { url 'http://eternal.abimon.org/files/maven' }
+    maven { url 'http://maven.abimon.org' }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    compile "org.abimon:SpiralFormats:47f555f"
+    compile "org.abimon:SpiralFormats:ffe97b8"
     compile "org.parboiled:parboiled-java:1.1.8"
 
     testCompile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
