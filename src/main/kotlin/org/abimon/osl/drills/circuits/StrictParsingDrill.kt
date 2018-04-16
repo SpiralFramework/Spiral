@@ -19,6 +19,9 @@ object StrictParsingDrill : DrillCircuit {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
+        if (parser.silence)
+            return
+
         parser.strictParsing = rawParams[0].toString().equals("enable", true)
     }
 }

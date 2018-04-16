@@ -31,6 +31,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
 
+    var startingGame: DRGame = UnknownHopesPeakGame
+    val startingCustomIdentifiers = HashMap<String, Int>()
+    val startingFlags = HashMap<String, Boolean>()
+    val startingData = HashMap<String, Any>()
+
     val uuid = UUID.randomUUID().toString()
     var branches = 0
     var flagCheckIndentation = 0
@@ -39,6 +44,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     operator fun <T: Any> get(key: String, clazz: KClass<T>): T? = clazz.safeCast(data[key])
 
     operator fun set(key: String, value: Any?): Any? {
+        if (silence)
+            return null
+
         if (value == null)
             return data.remove(key)
         return data.put(key, value)
@@ -46,6 +54,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
+            Action<Any> {
+                startingGame = game
+                startingCustomIdentifiers.clear()
+                startingFlags.clear()
+                startingData.clear()
+
+                startingCustomIdentifiers.putAll(customIdentifiers)
+                startingFlags.putAll(flags)
+                startingData.putAll(data)
+
+                return@Action true
+            },
             Sequence(
                     "OSL Script\n",
                     OpenSpiralLines(),
@@ -58,10 +78,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             ),
             Action<Any> {
-                game = UnknownHopesPeakGame
+                game = startingGame
                 customIdentifiers.clear()
                 flags.clear()
                 data.clear()
+
+                customIdentifiers.putAll(startingCustomIdentifiers)
+                flags.putAll(startingFlags)
+                data.putAll(startingData)
+
                 return@Action true
             }
     )
@@ -83,6 +108,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             AddNameAliasDrill,
             HeaderOSLDrill,
             StrictParsingDrill,
+            MetaIfDrill,
 
 //          Comment(),
 //          Whitespace()
@@ -186,8 +212,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     clearTmpStack("LIN-TEXT-$cmd"),
                     OneOrMore(FirstOf(
                             Sequence(
-                                    OneOrMore(AllButMatcher(charArrayOf('\\', '\n'))),
-                                    Action<Any> { push(match()) },
+                                    VariableText(OneOrMore(AllButMatcher(charArrayOf('\\', '\n')))),
                                     '\\',
                                     FirstOf('&', '#'),
                                     Action<Any> { context ->
@@ -196,8 +221,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     }
                             ),
                             Sequence(
-                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '\n'))),
-                                    Action<Any> { push(match()) },
+                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n')))),
                                     "&clear",
                                     Action<Any> { context ->
                                         val text = pop().toString()
@@ -208,8 +232,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     }
                             ),
                             Sequence(
-                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
-                                    Action<Any> { push(match()) },
+                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n')))),
                                     FirstOf(
                                             Sequence(
                                                     '&',
@@ -242,8 +265,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     )
                             ),
                             Sequence(
-                                    ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n'))),
-                                    Action<Any> { push(match()) },
+                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n')))),
                                     FirstOf(
                                             Sequence(
                                                     '&',
@@ -282,14 +304,55 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     )
                             ),
                             Sequence(
-                                    OneOrMore(AllButMatcher(charArrayOf('\n'))),
-                                    pushTmpAction("LIN-TEXT-$cmd")
+                                    VariableText(OneOrMore(AllButMatcher(charArrayOf('\n')))),
+                                    pushTmpFromStack("LIN-TEXT-$cmd")
                             )
                     )),
                     operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
                         if (!tmpStack.containsKey(cmd))
                             tmpStack[cmd] = LinkedList()
                         tmpStack[cmd]!!.push(stack.joinToString(""))
+                    }
+            )
+
+    override fun Parameter(cmd: String): Rule = FirstOf(
+            Sequence(
+                    '"',
+                    VariableText(OneOrMore(ParamMatcher)),
+                    pushTmpFromStack(cmd),
+                    '"'
+            ),
+            Sequence(
+                    VariableText(OneOrMore(AllButMatcher(whitespace))),
+                    pushTmpFromStack(cmd)
+            )
+    )
+
+    override fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
+            Sequence(
+                    '"',
+                    VariableText(OneOrMore(ParamMatcher)),
+                    pushTmpFromStack(cmd),
+                    '"'
+            ),
+            Sequence(
+                    VariableText(OneOrMore(AllButMatcher(whitespace.plus(allBut)))),
+                    pushTmpFromStack(cmd)
+            )
+    )
+
+    open fun VariableText(matching: Rule): Rule =
+            Sequence(
+                    matching,
+                    Action<Any> {
+                        var str = match()
+                        str = str.replace("%GAME", game.names.first())
+
+                        for ((key, value) in data)
+                            str = str.replace("%$key", value.toString())
+
+                        push(str)
+                        return@Action true
                     }
             )
 }

@@ -32,7 +32,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                                     cmd,
                                     Sequence(
                                             OneOrMore(Digit()),
-                                            pushToStack(this)
+                                            pushToStack()
                                     ),
                                     Sequence(
                                             ',',

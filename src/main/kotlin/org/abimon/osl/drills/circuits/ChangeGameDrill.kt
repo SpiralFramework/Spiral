@@ -35,6 +35,9 @@ object ChangeGameDrill : DrillCircuit {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
+        if (parser.silence)
+            return
+
         parser.game = games[rawParams[0].toString().toUpperCase()] ?: UnknownHopesPeakGame
     }
 }

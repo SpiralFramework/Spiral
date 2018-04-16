@@ -9,8 +9,17 @@ import java.util.*
 
 @BuildParseTree
 abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
+    var silence = false
+
     fun pushValue(value: Any): Unit {
-        this.push(value)
+        if(!silence)
+            this.push(value)
+    }
+
+    override fun push(value: Any?): Boolean {
+        if(!silence)
+            return super.push(value)
+        return true
     }
 
     //ParseUtils
@@ -25,49 +34,151 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
 
     fun clearState(): Action<Any> = Action { tmpStack.clear(); tmp = null; param = null; return@Action true }
 
-    fun clearTmpStack(cmd: String): Action<Any> = Action { tmpStack.remove(cmd); return@Action true }
+    fun clearTmpStack(cmd: String): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        tmpStack.remove(cmd)
+        return@Action true
+    }
     fun pushTmpAction(cmd: String, value: Any? = null): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
         if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); tmpStack[cmd]!!.push(value ?: match()); true
     }
 
     fun peekTmpAction(cmd: String): Any? = tmpStack[cmd]?.peek()
 
-    fun pushTmpFromStack(cmd: String): Action<Any> = Action { if (!tmpStack.containsKey(cmd)) tmpStack[cmd] = LinkedList(); if (!it.valueStack.isEmpty) tmpStack[cmd]!!.push(pop()); true }
+    fun pushTmpFromStack(cmd: String): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
+        if (!tmpStack.containsKey(cmd))
+            tmpStack[cmd] = LinkedList()
+        if (!context.valueStack.isEmpty)
+            tmpStack[cmd]!!.push(pop());
+        return@Action true
+    }
     fun pushTmpStack(cmd: String): Action<Any> = Action { context ->
-        context.valueStack.push(tmpStack.remove(cmd)?.reversed() ?: LinkedList<Any>()); true
+        if (silence)
+            return@Action true
+
+        context.valueStack.push(tmpStack.remove(cmd)?.reversed() ?: LinkedList<Any>())
+        return@Action true
     }
 
     fun pushAndOperateTmpStack(cmd: String, operate: (Context<Any>, List<Any>) -> Unit): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
         val stack = tmpStack.remove(cmd)?.reversed() ?: LinkedList<Any>()
         context.valueStack.push(stack)
         operate(context, stack)
         return@Action true
     }
 
-    fun operateOnTmpStack(cmd: String, operate: (Any) -> Unit): Action<Any> = Action { tmpStack[cmd]?.forEach(operate); true }
-    fun operateOnTmpActions(cmd: String, operate: (List<Any>) -> Unit): Action<Any> = Action { if (tmpStack.containsKey(cmd)) operate(tmpStack[cmd]!!.reversed()); true }
+    fun operateOnTmpStack(cmd: String, operate: (Any) -> Unit): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        tmpStack[cmd]?.forEach(operate);
+        return@Action true
+    }
+
+    fun operateOnTmpActions(cmd: String, operate: (List<Any>) -> Unit): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
+        if (tmpStack.containsKey(cmd))
+            operate(tmpStack[cmd]!!.reversed())
+        return@Action true
+    }
+    fun operateOnTmpActionsWithContext(cmd: String, operate: (Context<Any>, List<Any>) -> Unit): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
+        if (tmpStack.containsKey(cmd))
+            operate(context, tmpStack[cmd]!!.reversed());
+        return@Action true
+    }
+
     fun pushStackToTmp(cmd: String): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
         pushTmpAction(cmd, pop() ?: return@Action true).run(context)
     }
 
-    fun pushToStack(parser: BaseParser<Any>): Action<Any> = Action { parser.push(parser.match()) }
+    fun pushToStack(): Action<Any> = Action {
+        if (silence)
+            return@Action true
 
-    fun copyTmp(from: String, to: String): Action<Any> = Action {
-        if (!tmpStack.containsKey(to)) tmpStack[to] = LinkedList(); (tmpStack[from]
-            ?: return@Action true).reversed().forEach { tmpStack[to]!!.push(it) }; tmpStack[from]!!.clear(); true
+        push(match())
     }
 
-    fun popTmpFromStack(parser: BaseParser<Any>): Action<Any> = Action { tmp = parser.pop(); return@Action true }
-    fun pushTmpToStack(parser: BaseParser<Any>): Action<Any> = Action { parser.push(tmp ?: return@Action true) }
+    fun copyTmp(from: String, to: String): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
 
-    fun popParamFromStack(parser: BaseParser<Any>): Action<Any> = Action { param = if (it.valueStack.isEmpty) null else parser.pop(); return@Action true }
-    fun pushParamToStack(parser: BaseParser<Any>): Action<Any> = Action { parser.push(param ?: return@Action true) }
+        if (!tmpStack.containsKey(to))
+            tmpStack[to] = LinkedList()
+        (tmpStack[from] ?: return@Action true).reversed().forEach { item -> tmpStack[to]!!.push(item) }
+        tmpStack[from]!!.clear()
+        return@Action true
+    }
+
+    fun popTmpFromStack(): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        tmp = pop()
+        return@Action true
+    }
+    fun pushTmpToStack(): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        push(tmp ?: return@Action true)
+    }
+
+    fun popParamFromStack(): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
+        param = if (context.valueStack.isEmpty) null else pop()
+        return@Action true
+    }
+
+    fun pushParamToStack(): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        push(param ?: return@Action true)
+    }
+
     fun pushParamToTmp(cmd: String): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
         pushTmpAction(cmd, param ?: return@Action true).run(context)
     }
 
-    fun clearTmpStack(): Action<Any> = Action { tmp = null; return@Action true }
-    fun clearParam(): Action<Any> = Action { param = null; return@Action true }
+    fun clearTmpStack(): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        tmp = null
+        return@Action true
+    }
+
+    fun clearParam(): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        param = null
+        return@Action true
+    }
 
     open val digitsLower = charArrayOf(
             '0', '1', '2', '3', '4', '5',
@@ -105,8 +216,21 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
             )
     )
 
+    open fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
+            Sequence(
+                    '"',
+                    OneOrMore(ParamMatcher),
+                    pushTmpAction(cmd),
+                    '"'
+            ),
+            Sequence(
+                    OneOrMore(AllButMatcher(whitespace.plus(allBut))),
+                    pushTmpAction(cmd)
+            )
+    )
+
     /** param should push to the stack when matching */
-    open fun ParamList(cmd: String, param: Rule, delimiter: Rule): Rule = Sequence(ZeroOrMore(clearParam(), param, popParamFromStack(this), delimiter, pushParamToTmp("$cmd-params")), param, pushTmpFromStack("$cmd-params"), copyTmp("$cmd-params", cmd))
+    open fun ParamList(cmd: String, param: Rule, delimiter: Rule): Rule = Sequence(ZeroOrMore(clearParam(), param, popParamFromStack(), delimiter, pushParamToTmp("$cmd-params")), param, pushTmpFromStack("$cmd-params"), copyTmp("$cmd-params", cmd))
 
     open fun Comment(): Rule = FirstOf(
             Sequence("//", ZeroOrMore(LineMatcher)),

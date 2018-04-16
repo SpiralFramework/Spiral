@@ -1,6 +1,5 @@
 package org.abimon.osl.drills.circuits
 
-import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.parboiled.Action
 import org.parboiled.Rule
@@ -15,12 +14,14 @@ object EchoDrill: DrillCircuit {
                     Action<Any> { true },
                     Whitespace(),
                     pushTmpAction(cmd, this@EchoDrill),
-                    OneOrMore(LineCodeMatcher),
-                    pushTmpAction(cmd),
+                    Parameter(cmd),
                     pushTmpStack(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
+        if (parser.silence)
+            return
+
         println(rawParams[0])
     }
 }

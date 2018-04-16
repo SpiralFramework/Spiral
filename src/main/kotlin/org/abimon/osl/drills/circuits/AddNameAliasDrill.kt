@@ -30,6 +30,9 @@ object AddNameAliasDrill : DrillCircuit {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
+        if (parser.silence)
+            return
+
         val id: Int
         when (rawParams[1]) {
             is Int -> id = rawParams[2] as Int
