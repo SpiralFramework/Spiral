@@ -63,8 +63,8 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
         val indent = parser.flagCheckIndentation++
-        val branch = parser.branches
-        parser.branches += 2
+        val branch = parser.labels
+        parser.labels += 2
 
         parser["FLAG_CHECK_BRANCH_FOR_$indent"] = branch
 
