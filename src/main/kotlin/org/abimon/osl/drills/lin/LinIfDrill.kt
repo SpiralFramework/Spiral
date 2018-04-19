@@ -4,7 +4,6 @@ import org.abimon.osl.EnumLinFlagCheck
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.lin.*
-import org.parboiled.Action
 import org.parboiled.BaseParser.NOTHING
 import org.parboiled.Rule
 import kotlin.reflect.KClass
@@ -17,6 +16,28 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
         override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
             val indentation = --parser.flagCheckIndentation
             val branch = parser.data.remove("FLAG_CHECK_BRANCH_FOR_$indentation").toString().toIntOrNull() ?: 0
+            return arrayOf(SetLabelEntry(128 * 256 + branch + 2))
+        }
+    }
+
+    object JUMP_BACK : DrillHead<Array<LinScript>> {
+        override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+        override fun OpenSpiralLanguageParser.syntax(): Rule = NOTHING
+
+        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+            val indentation = parser.flagCheckIndentation - 1
+            val branch = parser["FLAG_CHECK_BRANCH_FOR_$indentation"].toString().toIntOrNull() ?: 0
+            return arrayOf(GoToLabelEntry(128 * 256 + branch + 2))
+        }
+    }
+
+    object ELSE : DrillHead<Array<LinScript>> {
+        override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+        override fun OpenSpiralLanguageParser.syntax(): Rule = NOTHING
+
+        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+            val indentation = parser.flagCheckIndentation - 1
+            val branch = parser["FLAG_CHECK_BRANCH_FOR_$indentation"].toString().toIntOrNull() ?: 0
             return arrayOf(SetLabelEntry(128 * 256 + branch + 1))
         }
     }
@@ -52,8 +73,19 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     '\n',
                     pushTmpStack(cmd),
                     OpenSpiralLines(),
-                    Action<Any> { push(listOf(JOIN_BACK)) },
-                    "}"
+                    pushAction(listOf(JUMP_BACK)),
+                    "}",
+                    pushAction(listOf(ELSE)),
+                    Optional(
+                            Whitespace(),
+                            "else",
+                            Whitespace(),
+                            "{",
+                            '\n',
+                            OpenSpiralLines(),
+                            "}"
+                    ),
+                    pushAction(listOf(JOIN_BACK))
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
