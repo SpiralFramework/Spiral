@@ -8,16 +8,16 @@ import org.parboiled.annotations.BuildParseTree
 import java.util.*
 
 @BuildParseTree
-abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
+abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
     var silence = false
 
     fun pushValue(value: Any): Unit {
-        if(!silence)
+        if (!silence)
             this.push(value)
     }
 
     override fun push(value: Any?): Boolean {
-        if(!silence)
+        if (!silence)
             return super.push(value)
         return true
     }
@@ -41,6 +41,7 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
         tmpStack.remove(cmd)
         return@Action true
     }
+
     fun pushTmpAction(cmd: String, value: Any? = null): Action<Any> = Action {
         if (silence)
             return@Action true
@@ -68,6 +69,7 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
             tmpStack[cmd]!!.push(pop());
         return@Action true
     }
+
     fun pushTmpStack(cmd: String): Action<Any> = Action { context ->
         if (silence)
             return@Action true
@@ -102,6 +104,7 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
             operate(tmpStack[cmd]!!.reversed())
         return@Action true
     }
+
     fun operateOnTmpActionsWithContext(cmd: String, operate: (Context<Any>, List<Any>) -> Unit): Action<Any> = Action { context ->
         if (silence)
             return@Action true
@@ -116,13 +119,6 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
             return@Action true
 
         pushTmpAction(cmd, pop() ?: return@Action true).run(context)
-    }
-
-    fun pushToStack(): Action<Any> = Action {
-        if (silence)
-            return@Action true
-
-        push(match())
     }
 
     fun copyTmp(from: String, to: String): Action<Any> = Action { context ->
@@ -143,6 +139,7 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
         tmp = pop()
         return@Action true
     }
+
     fun pushTmpToStack(): Action<Any> = Action {
         if (silence)
             return@Action true
@@ -186,6 +183,13 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
 
         param = null
         return@Action true
+    }
+
+    fun pushToStack(value: Any? = null): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        return@Action push(value ?: match())
     }
 
     open val digitsLower = charArrayOf(
@@ -258,4 +262,66 @@ abstract class SpiralParser(parboiledCreated: Boolean): BaseParser<Any>() {
                     "*/"
             )
     )
+
+    open fun Colour(): Rule = FirstOf(
+            Sequence(
+                    "#",
+                    NTimes(6, Digit(16)),
+                    Action<Any> {
+                        val rgb = match().toInt(16)
+
+                        val r = (rgb shr 16) and 0xFF
+                        val g = (rgb shr 8) and 0xFF
+                        val b = (rgb shr 0) and 0xFF
+
+                        push(r)
+                        push(g)
+                        push(b)
+
+                        return@Action true
+                    }
+            ),
+            Sequence(
+                    "rgb(",
+                    OneOrMore(Digit()),
+                    Action<Any> { push(match()) },
+
+                    ZeroOrMore(Whitespace()),
+                    ',',
+                    ZeroOrMore(Whitespace()),
+
+                    OneOrMore(Digit()),
+                    Action<Any> { push(match()) },
+
+                    ZeroOrMore(Whitespace()),
+                    ',',
+                    ZeroOrMore(Whitespace()),
+
+                    OneOrMore(Digit()),
+                    Action<Any> { push(match()) },
+                    ZeroOrMore(Whitespace()),
+                    ')',
+
+                    Action<Any> {
+                        val b = pop().toString().toIntOrNull() ?: 0
+                        val g = pop().toString().toIntOrNull() ?: 0
+                        val r = pop().toString().toIntOrNull() ?: 0
+
+                        push(r % 256)
+                        push(g % 256)
+                        push(b % 256)
+                    }
+            )
+    )
+
+    open fun Decimal(): Rule =
+            Sequence(
+                    OneOrMore(Digit()),
+                    Optional(
+                            Sequence(
+                                    '.',
+                                    OneOrMore(Digit())
+                            )
+                    )
+            )
 }

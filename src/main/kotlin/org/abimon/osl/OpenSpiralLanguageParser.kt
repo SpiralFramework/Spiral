@@ -22,6 +22,8 @@ import kotlin.reflect.full.safeCast
 
 open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
+        val FRAMES_PER_SECOND = 60
+
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
     }
 
@@ -147,7 +149,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinIfDrill,
                             LinChoicesDrill,
                             LinMarkLabelDrill,
-                            LinGoToDrill
+                            LinGoToDrill,
+
+                            LinScreenFadeDrill
                     )
             )
 
@@ -470,6 +474,25 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                 push(id % 256)
                                 push(id shr 8)
                             }
+                    )
+            )
+
+    open fun FrameCount(): Rule =
+            FirstOf(
+                    Sequence(
+                            Decimal(),
+                            pushToStack(),
+                            FirstOf('s', Sequence(OneOrMore(Whitespace()), "seconds")),
+                            Action<Any> {
+                                val seconds = pop().toString().toFloatOrNull() ?: 1.0f
+                                push((seconds * FRAMES_PER_SECOND).toInt())
+                            }
+                    ),
+                    Sequence(
+                            OneOrMore(Digit()),
+                            pushToStack(),
+                            OneOrMore(Whitespace()),
+                            Optional("frames")
                     )
             )
 }
