@@ -42,8 +42,8 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     pushTmpAction(cmd),
 
                     OptionalWhitespace(),
-                    OneOrMore(Digit()),
-                    pushTmpAction(cmd),
+                    FlagValue(),
+                    pushTmpFromStack(cmd),
                     OptionalWhitespace(),
 
                     ')',

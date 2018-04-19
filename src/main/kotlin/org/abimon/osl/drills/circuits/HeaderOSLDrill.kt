@@ -12,8 +12,16 @@ object HeaderOSLDrill: DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Header:",
-                    Whitespace(),
+                    FirstOf(
+                            Sequence(
+                                    "Header:",
+                                    OptionalWhitespace()
+                            ),
+                            Sequence(
+                                    "Load Header",
+                                    Whitespace()
+                            )
+                    ),
                     pushTmpAction(cmd, this@HeaderOSLDrill),
                     Parameter(cmd),
                     operateOnTmpActions(cmd) { params ->

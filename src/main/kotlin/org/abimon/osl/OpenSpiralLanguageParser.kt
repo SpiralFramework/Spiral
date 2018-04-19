@@ -150,6 +150,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinChoicesDrill,
                             LinMarkLabelDrill,
                             LinGoToDrill,
+                            LinSetFlagDrill,
 
                             LinScreenFadeDrill,
                             LinScreenFlashDrill
@@ -434,6 +435,22 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                 push(flagID)
                                 push(group)
                             }
+                    )
+            )
+
+    open fun FlagValue(): Rule =
+            FirstOf(
+                    Sequence(
+                            OneOrMore(Digit()),
+                            pushToStack()
+                    ),
+                    Sequence(
+                            "true",
+                            pushToStack(1)
+                    ),
+                    Sequence(
+                            "false",
+                            pushToStack(0)
                     )
             )
 
