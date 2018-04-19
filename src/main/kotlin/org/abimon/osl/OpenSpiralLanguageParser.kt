@@ -151,7 +151,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinMarkLabelDrill,
                             LinGoToDrill,
 
-                            LinScreenFadeDrill
+                            LinScreenFadeDrill,
+                            LinScreenFlashDrill
                     )
             )
 

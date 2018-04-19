@@ -5,6 +5,7 @@ import org.parboiled.BaseParser
 import org.parboiled.Context
 import org.parboiled.Rule
 import org.parboiled.annotations.BuildParseTree
+import java.awt.Color
 import java.util.*
 
 @BuildParseTree
@@ -265,6 +266,29 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
             )
     )
 
+    open val COLOURS = mapOf(
+            "WHITE" to Color.WHITE.rgb,
+            "LIGHT GRAY" to Color.LIGHT_GRAY.rgb,
+            "LIGHT GREY" to Color.LIGHT_GRAY.rgb,
+            "LIGHT_GRAY" to Color.LIGHT_GRAY.rgb,
+            "LIGHT_GREY" to Color.LIGHT_GRAY.rgb,
+            "GRAY" to Color.GRAY.rgb,
+            "GREY" to Color.GRAY.rgb,
+            "DARK GRAY" to Color.DARK_GRAY.rgb,
+            "DARK GREY" to Color.DARK_GRAY.rgb,
+            "DARK_GRAY" to Color.DARK_GRAY.rgb,
+            "DARK_GREY" to Color.DARK_GRAY.rgb,
+            "BLACK" to Color.BLACK.rgb,
+            "RED" to Color.RED.rgb,
+            "PINK" to Color.PINK.rgb,
+            "ORANGE" to Color.ORANGE.rgb,
+            "YELLOW" to Color.YELLOW.rgb,
+            "GREEN" to Color.GREEN.rgb,
+            "MAGENTA" to Color.MAGENTA.rgb,
+            "CYAN" to Color.CYAN.rgb,
+            "BLUE" to Color.BLUE.rgb
+    )
+
     open fun Colour(): Rule = FirstOf(
             Sequence(
                     "#",
@@ -276,9 +300,9 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                         val g = (rgb shr 8) and 0xFF
                         val b = (rgb shr 0) and 0xFF
 
-                        push(r)
-                        push(g)
                         push(b)
+                        push(g)
+                        push(r)
 
                         return@Action true
                     }
@@ -309,9 +333,25 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                         val g = pop().toString().toIntOrNull() ?: 0
                         val r = pop().toString().toIntOrNull() ?: 0
 
-                        push(r % 256)
-                        push(g % 256)
                         push(b % 256)
+                        push(g % 256)
+                        push(r % 256)
+                    }
+            ),
+            Sequence(
+                    FirstOf(COLOURS.keys.toTypedArray()),
+                    Action<Any> {
+                        val rgb = COLOURS[match().toUpperCase()] ?: return@Action false
+
+                        val r = (rgb shr 16) and 0xFF
+                        val g = (rgb shr 8) and 0xFF
+                        val b = (rgb shr 0) and 0xFF
+
+                        push(b)
+                        push(g)
+                        push(r)
+
+                        return@Action true
                     }
             )
     )
