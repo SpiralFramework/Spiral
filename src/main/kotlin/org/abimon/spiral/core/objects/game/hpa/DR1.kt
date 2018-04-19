@@ -53,7 +53,7 @@ object DR1 : HopesPeakDRGame {
                 this[0x1C] = null to 0 and ::UnknownEntry
                 this[0x1D] = null to -1 and ::UnknownEntry
                 this[0x1E] = "Sprite" to 5 and ::SpriteEntry
-                this[0x1F] = null to 7 and ::UnknownEntry
+                this[0x1F] = "Screen Flash" to 7 and ::ScreenFlashEntry
                 this[0x20] = null to 5 and ::UnknownEntry
                 this[0x21] = "Speaker" to 1 and ::SpeakerEntry
                 this[0x22] = "Screen Fade" to 3 and ::ScreenFadeEntry
