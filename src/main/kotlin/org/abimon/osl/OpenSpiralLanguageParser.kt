@@ -121,6 +121,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             EchoDrill,
             AddNameAliasDrill,
             AddFlagAliasDrill,
+            AddLabelAliasDrill,
             HeaderOSLDrill,
             StrictParsingDrill,
             MetaIfDrill,
@@ -144,7 +145,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinHideSpriteDrill,
                             LinUIDrill,
                             LinIfDrill,
-                            LinChoicesDrill
+                            LinChoicesDrill,
+                            LinMarkLabelDrill,
+                            LinGoToDrill
                     )
             )
 
@@ -425,6 +428,47 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                 push(flagID)
                                 push(group)
+                            }
+                    )
+            )
+
+    open fun Label(): Rule =
+            FirstOf(
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val labelName = pop()
+
+                                val id = customLabelNames[labelName] ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
+                            }
+                    ),
+                    Sequence(
+                            OneOrMore(Digit()),
+                            Action<Any> { push(match()) },
+
+                            ZeroOrMore(Whitespace()),
+                            ',',
+                            ZeroOrMore(Whitespace()),
+
+                            OneOrMore(Digit()),
+                            Action<Any> {
+                                val first = match()
+                                val second = pop()
+
+                                push(first)
+                                push(second)
+                            }
+                    ),
+                    Sequence(
+                            OneOrMore(Digit()),
+                            Action<Any> {
+                                val id = match().toIntOrNull() ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
                             }
                     )
             )
