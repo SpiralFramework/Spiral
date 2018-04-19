@@ -17,7 +17,7 @@ object LinMarkLabelDrill: DrillHead<LinScript> {
                     clearTmpStack(cmd),
                     FirstOf("Set Label", "Mark Label"),
                     pushTmpAction(cmd, this@LinMarkLabelDrill),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     Label(),
                     pushTmpFromStack(cmd),
                     pushTmpFromStack(cmd),

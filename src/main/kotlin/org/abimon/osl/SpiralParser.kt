@@ -214,7 +214,9 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
 
     open fun Digit(): Rule = Digit(10)
     open fun Digit(base: Int): Rule = FirstOf(AnyOf(digitsLower.sliceArray(0 until base)), AnyOf(digitsUpper.sliceArray(0 until base)))
-    open fun Whitespace(): Rule = OneOrMore(AnyOf(whitespace))
+    open fun WhitespaceCharacter(): Rule = AnyOf(whitespace)
+    open fun OptionalWhitespace(): Rule = ZeroOrMore(WhitespaceCharacter())
+    open fun Whitespace(): Rule = OneOrMore(WhitespaceCharacter())
     open fun Parameter(cmd: String): Rule = FirstOf(
             Sequence(
                     '"',
@@ -286,20 +288,20 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
 
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     ',',
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
 
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
 
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     ',',
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
 
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     ')',
 
                     Action<Any> {

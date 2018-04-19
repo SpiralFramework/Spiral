@@ -27,7 +27,7 @@ object ChangeGameDrill : DrillCircuit {
                     clearTmpStack(cmd),
                     FirstOf("Game:", "Game Is ", "Set Game To "),
                     pushTmpAction(cmd, this@ChangeGameDrill),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     Parameter(cmd),
                     Action<Any> { tmpStack[cmd]?.peek()?.toString()?.toUpperCase() in games },
                     operateOnTmpActions(cmd) { stack -> operate(this, stack.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) },

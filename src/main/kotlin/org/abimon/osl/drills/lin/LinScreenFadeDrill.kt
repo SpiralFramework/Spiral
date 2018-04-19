@@ -16,21 +16,21 @@ object LinScreenFadeDrill : DrillHead<LinScript> {
                     clearTmpStack(cmd),
                     "Fade",
                     pushTmpAction(cmd, this@LinScreenFadeDrill),
-                    OneOrMore(Whitespace()),
+                    Whitespace(),
                     FirstOf(
                             Sequence(
                                     "in",
                                     pushTmpAction(cmd, 0),
-                                    OneOrMore(Whitespace()),
+                                    Whitespace(),
                                     "from",
-                                    OneOrMore(Whitespace())
+                                    Whitespace()
                             ),
                             Sequence(
                                     "out",
                                     pushTmpAction(cmd, 1),
-                                    OneOrMore(Whitespace()),
+                                    Whitespace(),
                                     "to",
-                                    OneOrMore(Whitespace())
+                                    Whitespace()
                             )
                     ),
                     FirstOf(
@@ -47,9 +47,9 @@ object LinScreenFadeDrill : DrillHead<LinScript> {
                                     pushTmpAction(cmd, 3)
                             )
                     ),
-                    OneOrMore(Whitespace()),
+                    Whitespace(),
                     "for",
-                    OneOrMore(Whitespace()),
+                    Whitespace(),
                     FrameCount(),
                     pushTmpAction(cmd),
                     pushTmpStack(cmd)

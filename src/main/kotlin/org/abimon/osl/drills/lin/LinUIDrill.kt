@@ -31,13 +31,13 @@ object LinUIDrill : DrillHead<LinScript> {
             Sequence(
                     clearTmpStack(cmd),
                     "UI:",
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     pushTmpAction(cmd, this@LinUIDrill),
                     FirstOf(
                             Sequence(
                                     FirstOf("Enable", "Disable"),
                                     pushTmpAction(cmd),
-                                    ZeroOrMore(Whitespace()),
+                                    OptionalWhitespace(),
                                     FirstOf(
                                             FirstOf(uiElements.keys.toTypedArray()),
                                             OneOrMore(Digit())
@@ -52,9 +52,9 @@ object LinUIDrill : DrillHead<LinScript> {
                                             OneOrMore(Digit())
                                     ),
                                     Action<Any> { push(match()) },
-                                    ZeroOrMore(Whitespace()),
+                                    OptionalWhitespace(),
                                     "to",
-                                    ZeroOrMore(Whitespace()),
+                                    OptionalWhitespace(),
                                     OneOrMore(Digit()),
                                     pushTmpAction(cmd),
                                     Action<Any> { context -> pushTmpAction(cmd, pop()).run(context) }

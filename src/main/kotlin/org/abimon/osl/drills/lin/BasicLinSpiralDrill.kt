@@ -33,7 +33,7 @@ object BasicLinSpiralDrill : DrillHead<LinScript> {
                                     ),
                                     Sequence(
                                             ',',
-                                            Optional(Whitespace())
+                                            OptionalWhitespace()
                                     )
                             )
                     ),

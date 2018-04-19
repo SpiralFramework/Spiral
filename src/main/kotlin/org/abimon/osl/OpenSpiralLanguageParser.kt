@@ -108,8 +108,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     open fun OpenSpiralLines(): Rule = Sequence(
-            ZeroOrMore(Sequence(ZeroOrMore(Whitespace()), SpiralTextLine(), Ch('\n'))),
-            ZeroOrMore(Whitespace()),
+            ZeroOrMore(Sequence(OptionalWhitespace(), SpiralTextLine(), Ch('\n'))),
+            OptionalWhitespace(),
             SpiralTextLine()
     )
 
@@ -409,9 +409,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             OneOrMore(Digit()),
                             Action<Any> { push(match()) },
 
-                            ZeroOrMore(Whitespace()),
+                            OptionalWhitespace(),
                             ',',
-                            ZeroOrMore(Whitespace()),
+                            OptionalWhitespace(),
 
                             OneOrMore(Digit()),
                             Action<Any> {
@@ -453,9 +453,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             OneOrMore(Digit()),
                             Action<Any> { push(match()) },
 
-                            ZeroOrMore(Whitespace()),
+                            OptionalWhitespace(),
                             ',',
-                            ZeroOrMore(Whitespace()),
+                            OptionalWhitespace(),
 
                             OneOrMore(Digit()),
                             Action<Any> {
@@ -482,7 +482,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Sequence(
                             Decimal(),
                             pushToStack(),
-                            FirstOf('s', Sequence(OneOrMore(Whitespace()), "seconds")),
+                            FirstOf('s', Sequence(Whitespace(), "seconds")),
                             Action<Any> {
                                 val seconds = pop().toString().toFloatOrNull() ?: 1.0f
                                 push((seconds * FRAMES_PER_SECOND).toInt())
@@ -491,7 +491,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Sequence(
                             OneOrMore(Digit()),
                             pushToStack(),
-                            OneOrMore(Whitespace()),
+                            Whitespace(),
                             Optional("frames")
                     )
             )

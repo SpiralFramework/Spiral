@@ -34,7 +34,7 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                                     Parameter(BasicWrdSpiralDrill.cmd),
                                     Sequence(
                                             ',',
-                                            Optional(Whitespace())
+                                            OptionalWhitespace()
                                     )
                             )
                     ),

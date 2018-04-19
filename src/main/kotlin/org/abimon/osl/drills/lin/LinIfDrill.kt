@@ -28,26 +28,26 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
             Sequence(
                     clearTmpStack(cmd),
                     "if",
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     "(",
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     pushTmpAction(cmd, this@LinIfDrill),
 
                     Flag(),
                     pushTmpFromStack(cmd),
                     pushTmpFromStack(cmd),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
 
                     FirstOf(EnumLinFlagCheck.NAMES),
                     pushTmpAction(cmd),
 
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     OneOrMore(Digit()),
                     pushTmpAction(cmd),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
 
                     ')',
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     "{",
                     '\n',
                     pushTmpStack(cmd),

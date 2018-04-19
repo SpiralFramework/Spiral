@@ -13,13 +13,13 @@ object MetaIfDrill : DrillCircuit {
             Sequence(
                     clearTmpStack(cmd),
                     FirstOf("mif", "meta-if", "ifm"),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     "(",
                     ZeroOrMore(Sequence(Comparison(), FirstOf(EnumMetaJoiners.NAMES), operateOnTmpStack("$cmd-COMPARISON") { value -> pushTmp(cmd, value) }, pushTmpAction(cmd))),
                     Comparison(),
                     operateOnTmpStack("$cmd-COMPARISON") { value -> pushTmp(cmd, value) },
                     ')',
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     "{",
                     '\n',
                     FirstOf(
@@ -46,17 +46,17 @@ object MetaIfDrill : DrillCircuit {
     fun OpenSpiralLanguageParser.Comparison(): Rule =
             Sequence(
                     clearTmpStack("$cmd-COMPARISON"),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
 
                     Parameter("$cmd-COMPARISON"),
-                    OneOrMore(Whitespace()),
+                    Whitespace(),
 
                     FirstOf(EnumMetaIfOperations.NAMES),
                     pushTmpAction("$cmd-COMPARISON"),
 
-                    OneOrMore(Whitespace()),
+                    Whitespace(),
                     ParameterBut("$cmd-COMPARISON", ')'),
-                    ZeroOrMore(Whitespace())
+                    OptionalWhitespace()
             )
 
     fun evaluate(parser: OpenSpiralLanguageParser, params: List<Any>): Boolean {

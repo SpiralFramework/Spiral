@@ -36,7 +36,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                                     ),
                                     Sequence(
                                             ',',
-                                            Optional(Whitespace())
+                                            OptionalWhitespace()
                                     )
                             )
                     ),

@@ -17,7 +17,7 @@ object WordStringDrill: DrillHead<WordScriptString> {
                     clearTmpStack(cmd),
                     "Word String:",
                     pushTmpAction(cmd, this@WordStringDrill),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     Parameter(cmd),
                     operateOnTmpActions(cmd) { stack -> operate(this, stack.drop(1).toTypedArray()) },
                     pushTmpStack(cmd)

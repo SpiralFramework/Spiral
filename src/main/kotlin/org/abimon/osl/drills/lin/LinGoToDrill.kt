@@ -16,7 +16,7 @@ object LinGoToDrill: DrillHead<LinScript> {
                     clearTmpStack(cmd),
                     FirstOf("Goto", "Go To"),
                     pushTmpAction(cmd, this@LinGoToDrill),
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     Label(),
                     pushTmpFromStack(cmd),
                     pushTmpFromStack(cmd),

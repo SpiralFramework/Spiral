@@ -23,7 +23,7 @@ object WordCommandDrill: DrillHead<WordScriptCommand> {
                     pushTmpAction(cmd, this@WordCommandDrill),
                     pushTmpAction(cmd),
                     ':',
-                    ZeroOrMore(Whitespace()),
+                    OptionalWhitespace(),
                     Parameter(cmd),
                     operateOnTmpActions(cmd) { stack -> operate(this, stack.drop(1).toTypedArray()) },
                     pushTmpStack(cmd)
