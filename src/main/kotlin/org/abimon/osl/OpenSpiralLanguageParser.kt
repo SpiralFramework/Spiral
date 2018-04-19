@@ -27,12 +27,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     var game: DRGame = UnknownHopesPeakGame
     var strictParsing: Boolean = true
+
     val customIdentifiers = HashMap<String, Int>()
+    val customFlagNames = HashMap<String, Int>()
+    val customLabelNames = HashMap<String, Int>()
+
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
 
     var startingGame: DRGame = UnknownHopesPeakGame
     val startingCustomIdentifiers = HashMap<String, Int>()
+    val startingCustomFlagNames = HashMap<String, Int>()
+    val startingCustomLabelNames = HashMap<String, Int>()
     val startingFlags = HashMap<String, Boolean>()
     val startingData = HashMap<String, Any>()
 
@@ -57,10 +63,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Action<Any> {
                 startingGame = game
                 startingCustomIdentifiers.clear()
+                startingCustomFlagNames.clear()
+                startingCustomLabelNames.clear()
                 startingFlags.clear()
                 startingData.clear()
 
                 startingCustomIdentifiers.putAll(customIdentifiers)
+                startingCustomFlagNames.putAll(customFlagNames)
+                startingCustomLabelNames.putAll(customLabelNames)
                 startingFlags.putAll(flags)
                 startingData.putAll(data)
 
@@ -80,10 +90,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Action<Any> {
                 game = startingGame
                 customIdentifiers.clear()
+                customFlagNames.clear()
+                customLabelNames.clear()
                 flags.clear()
                 data.clear()
 
                 customIdentifiers.putAll(startingCustomIdentifiers)
+                customFlagNames.putAll(startingCustomFlagNames)
+                customLabelNames.putAll(startingCustomLabelNames)
                 flags.putAll(startingFlags)
                 data.putAll(startingData)
 
@@ -106,6 +120,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             ChangeGameDrill,
             EchoDrill,
             AddNameAliasDrill,
+            AddFlagAliasDrill,
             HeaderOSLDrill,
             StrictParsingDrill,
             MetaIfDrill,
@@ -365,5 +380,52 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                         push(str)
                         return@Action true
                     }
+            )
+
+    open fun Flag(): Rule =
+            FirstOf(
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val flagName = pop()
+
+                                val id = customFlagNames[flagName] ?: return@Action false
+
+                                val group = id shr 8
+                                val flagID = id % 256
+
+                                push(flagID)
+                                push(group)
+                            }
+                    ),
+                    Sequence(
+                            OneOrMore(Digit()),
+                            Action<Any> { push(match()) },
+
+                            ZeroOrMore(Whitespace()),
+                            ',',
+                            ZeroOrMore(Whitespace()),
+
+                            OneOrMore(Digit()),
+                            Action<Any> {
+                                val flagID = match()
+                                val groupID = pop()
+
+                                push(flagID)
+                                push(groupID)
+                            }
+                    ),
+                    Sequence(
+                            OneOrMore(Digit()),
+                            Action<Any> {
+                                val id = match().toIntOrNull() ?: return@Action false
+
+                                val group = id shr 8
+                                val flagID = id % 256
+
+                                push(flagID)
+                                push(group)
+                            }
+                    )
             )
 }

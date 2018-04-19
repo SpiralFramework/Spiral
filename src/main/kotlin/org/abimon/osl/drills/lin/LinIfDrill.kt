@@ -33,14 +33,9 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     ZeroOrMore(Whitespace()),
                     pushTmpAction(cmd, this@LinIfDrill),
 
-                    OneOrMore(Digit()),
-                    pushTmpAction(cmd),
-                    ZeroOrMore(Whitespace()),
-                    ",",
-
-                    ZeroOrMore(Whitespace()),
-                    OneOrMore(Digit()),
-                    pushTmpAction(cmd),
+                    Flag(),
+                    pushTmpFromStack(cmd),
+                    pushTmpFromStack(cmd),
                     ZeroOrMore(Whitespace()),
 
                     FirstOf(EnumLinFlagCheck.NAMES),
