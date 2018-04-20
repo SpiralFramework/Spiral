@@ -421,7 +421,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun RuleWithVariables(matching: Rule): Rule =
             Sequence(
-                    Action<Any> { true },
                     FirstOf(
                             matching,
                             Sequence(
@@ -436,7 +435,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))),
                                     Action<Any> { match() in data || match() == "GAME" }
                             ),
-                            Action<Any> { false }
                     ),
                     Action<Any> {
                         var str = match()
