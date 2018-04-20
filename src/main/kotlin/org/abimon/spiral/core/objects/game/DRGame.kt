@@ -6,4 +6,5 @@ package org.abimon.spiral.core.objects.game
  */
 interface DRGame {
     val names: Array<String>
+    val steamID: String?
 }

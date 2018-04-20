@@ -289,4 +289,6 @@ object DR2 : HopesPeakDRGame {
                     "Danganronpa 2",
                     "Danganronpa 2: Goodbye Despair"
             )
+
+    override val steamID: String = "413420"
 }

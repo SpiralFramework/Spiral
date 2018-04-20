@@ -15,4 +15,5 @@ object UnknownHopesPeakGame: HopesPeakDRGame {
             arrayOf(
                     "Unknown"
             )
+    override val steamID: String? = null
 }
