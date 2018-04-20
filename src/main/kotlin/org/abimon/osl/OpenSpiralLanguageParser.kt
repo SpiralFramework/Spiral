@@ -104,8 +104,13 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         )
     }
 
+    fun clearState(context: Context<Any>) {
+        states.remove(context.level)
+    }
+
     fun loadState(): Action<Any> = Action { context -> loadState(context); true }
     fun saveState(): Action<Any> = Action { context -> saveState(context); true }
+    fun clearStateAction(): Action<Any> = Action { context -> clearState(context); true }
 
     fun <K, V> MutableMap<K, V>.putAll(entries: Array<Map.Entry<K, V>>) {
         entries.forEach { (key, value) -> this[key] = value }

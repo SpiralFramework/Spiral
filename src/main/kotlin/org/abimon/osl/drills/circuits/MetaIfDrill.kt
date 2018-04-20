@@ -3,7 +3,6 @@ package org.abimon.osl.drills.circuits
 import org.abimon.osl.EnumMetaIfOperations
 import org.abimon.osl.EnumMetaJoiners
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.parboiled.Action
 import org.parboiled.Rule
 
 object MetaIfDrill : DrillCircuit {
@@ -22,28 +21,15 @@ object MetaIfDrill : DrillCircuit {
                     OptionalWhitespace(),
                     "{",
                     '\n',
-                    FirstOf(
-                            Sequence(
-                                    Action<Any> { silence },
-                                    OpenSpiralLines()
-                            ),
-                            Sequence(
-                                    operateOnTmpActionsWithContext(cmd) { context, stack ->
-                                        if (!evaluate(this, stack)) {
-                                            silence = true
-                                            saveState(context)
-                                        }
-                                    },
-                                    OpenSpiralLines(),
-                                    Action<Any> { context ->
-                                        if(silence) {
-                                            loadState(context)
-                                            silence = false
-                                        }
-                                        return@Action true
-                                    },
-                                    clearTmpStack(cmd)
-                            )
+                    Sequence(
+                            clearStateAction(),
+                            operateOnTmpActionsWithContext(cmd) { context, stack ->
+                                if (!evaluate(this, stack))
+                                    saveState(context)
+                            },
+                            OpenSpiralLines(),
+                            loadState(),
+                            clearTmpStack(cmd)
                     ),
                     "}"
             )
