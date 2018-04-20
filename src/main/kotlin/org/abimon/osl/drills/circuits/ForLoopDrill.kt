@@ -102,13 +102,10 @@ object ForLoopDrill : DrillCircuit {
                                     OpenSpiralLines()
                             ),
                             Sequence(
-                                    Action<Any> {
-                                        silence = true
-                                        return@Action true
-                                    },
+                                    saveState(),
                                     OpenSpiralLines(),
                                     Action<Any> { context ->
-                                        silence = false
+                                        loadState(context)
 
                                         val limit = pop().toString().toInt()
                                         val start = pop().toString().toInt()

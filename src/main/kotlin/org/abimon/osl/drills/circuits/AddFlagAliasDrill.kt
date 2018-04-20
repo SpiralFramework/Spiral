@@ -1,7 +1,6 @@
 package org.abimon.osl.drills.circuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.osl.drills.lin.BasicLinSpiralDrill
 import org.parboiled.Rule
 
 object AddFlagAliasDrill : DrillCircuit {
@@ -24,7 +23,7 @@ object AddFlagAliasDrill : DrillCircuit {
                             operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
                     ),
 
-                    pushStackWithHead(BasicLinSpiralDrill.cmd)
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {

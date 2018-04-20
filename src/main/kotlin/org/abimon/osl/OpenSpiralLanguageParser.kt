@@ -12,6 +12,7 @@ import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.parboiled.Action
+import org.parboiled.Context
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
@@ -37,6 +38,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
 
+    val states = HashMap<Int, ParserState>()
+
     var startingGame: DRGame = UnknownHopesPeakGame
     val startingCustomIdentifiers = HashMap<String, Int>()
     val startingCustomFlagNames = HashMap<String, Int>()
@@ -58,6 +61,54 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         if (value == null)
             return data.remove(key)
         return data.put(key, value)
+    }
+
+    fun loadState(context: Context<Any>) {
+        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, valueStackSnapshot) = (states.remove(context.level) ?: return)
+
+        this.silence = stateSilence
+        this.game = stateGame
+        this.strictParsing = stateStrictParsing
+
+        this.customIdentifiers.clear()
+        this.customIdentifiers.putAll(stateCustomIdentifiers)
+
+        this.customFlagNames.clear()
+        this.customFlagNames.putAll(stateCustomFlagNames)
+
+        this.customLabelNames.clear()
+        this.customLabelNames.putAll(stateCustomLabelNames)
+
+        this.flags.clear()
+        this.flags.putAll(stateFlags)
+
+        this.data.clear()
+        this.data.putAll(stateData)
+
+        context.valueStack.restoreSnapshot(valueStackSnapshot)
+    }
+
+    fun saveState(context: Context<Any>) {
+        states[context.level] = ParserState(
+                this.silence,
+                this.game,
+                this.strictParsing,
+
+                this.customIdentifiers.entries.toTypedArray(),
+                this.customFlagNames.entries.toTypedArray(),
+                this.customLabelNames.entries.toTypedArray(),
+                this.flags.entries.toTypedArray(),
+                this.data.entries.toTypedArray(),
+
+                context.valueStack.takeSnapshot()
+        )
+    }
+
+    fun loadState(): Action<Any> = Action { context -> loadState(context); true }
+    fun saveState(): Action<Any> = Action { context -> saveState(context); true }
+
+    fun <K, V> MutableMap<K, V>.putAll(entries: Array<Map.Entry<K, V>>) {
+        entries.forEach { (key, value) -> this[key] = value }
     }
 
     open fun OpenSpiralLanguage(): Rule = Sequence(
@@ -134,7 +185,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 //          Whitespace()
             EMPTY
     )
-
 
     open fun SpiralLinLine(): Rule =
             Sequence(

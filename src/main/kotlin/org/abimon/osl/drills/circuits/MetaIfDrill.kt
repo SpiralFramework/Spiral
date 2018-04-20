@@ -28,13 +28,18 @@ object MetaIfDrill : DrillCircuit {
                                     OpenSpiralLines()
                             ),
                             Sequence(
-                                    operateOnTmpActions(cmd) { stack ->
-                                        if (!evaluate(this, stack))
+                                    operateOnTmpActionsWithContext(cmd) { context, stack ->
+                                        if (!evaluate(this, stack)) {
                                             silence = true
+                                            saveState(context)
+                                        }
                                     },
                                     OpenSpiralLines(),
-                                    Action<Any> {
-                                        silence = false
+                                    Action<Any> { context ->
+                                        if(silence) {
+                                            loadState(context)
+                                            silence = false
+                                        }
                                         return@Action true
                                     },
                                     clearTmpStack(cmd)
