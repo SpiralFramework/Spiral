@@ -263,6 +263,7 @@ object DR1 : HopesPeakDRGame {
                     "Danganronpa: Trigger Happy Havoc"
             )
 
+    override val steamID: String = "413410"
 
     fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
         val args: MutableList<Int> = ArrayList()

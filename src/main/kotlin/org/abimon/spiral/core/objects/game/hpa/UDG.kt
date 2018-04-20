@@ -32,4 +32,6 @@ object UDG: HopesPeakDRGame {
                     "Danganronpa: Ultra Despair Girls",
                     "Ultra Despair Girls"
             )
+
+    override val steamID: String = "555950"
 }

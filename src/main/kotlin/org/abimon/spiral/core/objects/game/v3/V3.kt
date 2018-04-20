@@ -112,4 +112,6 @@ object V3 : DRGame {
                     "Danganronpa V3: Killing Harmony",
                     "New Danganronpa V3: Killing Harmony"
             )
+
+    override val steamID: String = "567640"
 }
