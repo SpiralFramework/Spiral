@@ -13,6 +13,9 @@ import java.util.*
 abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
     var silence = false
 
+    fun silence(): Action<Any> = Action { silence = true; true }
+    fun desilence(): Action<Any> = Action { silence = false; true }
+
     fun pushValue(value: Any): Unit {
         if (!silence)
             this.push(value)

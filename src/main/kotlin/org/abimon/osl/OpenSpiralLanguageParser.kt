@@ -403,7 +403,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     RuleWithVariables(OneOrMore(ParamMatcher)),
                     '"'
             ),
-            RuleWithVariables(OneOrMore(AllButMatcher(whitespace)))
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))))
     )
 
     override fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
@@ -414,13 +414,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     '"'
             ),
             Sequence(
-                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(allBut)))),
+                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')).plus(allBut)))),
                     pushTmpFromStack(cmd)
             )
     )
 
     open fun RuleWithVariables(matching: Rule): Rule =
             Sequence(
+                    Action<Any> { true },
                     FirstOf(
                             matching,
                             Sequence(
@@ -432,9 +433,10 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             ),
                             Sequence(
                                     '%',
-                                    OneOrMore(ParamMatcher),
+                                    OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))),
                                     Action<Any> { match() in data || match() == "GAME" }
-                            )
+                            ),
+                            Action<Any> { false }
                     ),
                     Action<Any> {
                         var str = match()
@@ -555,8 +557,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun FrameCount(): Rule =
             FirstOf(
                     Sequence(
-                            Decimal(),
-                            pushToStack(),
+                            RuleWithVariables(Decimal()),
                             FirstOf('s', Sequence(Whitespace(), "seconds")),
                             Action<Any> {
                                 val seconds = pop().toString().toFloatOrNull() ?: 1.0f
@@ -564,8 +565,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            OneOrMore(Digit()),
-                            pushToStack(),
+                            RuleWithVariables(OneOrMore(Digit())),
                             Whitespace(),
                             Optional("frames")
                     )

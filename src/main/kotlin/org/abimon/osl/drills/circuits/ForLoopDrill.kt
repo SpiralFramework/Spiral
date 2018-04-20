@@ -103,7 +103,14 @@ object ForLoopDrill : DrillCircuit {
                             ),
                             Sequence(
                                     saveState(),
+                                    Action<Any> {
+                                        this[peek(2).toString()] = 0
+
+                                        return@Action true
+                                    },
+                                    silence(),
                                     OpenSpiralLines(),
+                                    desilence(),
                                     Action<Any> { context ->
                                         loadState(context)
 
@@ -119,11 +126,15 @@ object ForLoopDrill : DrillCircuit {
                                                 for (value in result.valueStack.reversed()) {
                                                     if (value is List<*>) {
                                                         val drillBit = (value[0] as? SpiralDrillBit) ?: continue
-                                                        val head = drillBit.head
+                                                        try {
+                                                            val head = drillBit.head
 
-                                                        val headParams = value.subList(1, value.size).filterNotNull().toTypedArray()
-                                                        head.operate(this@syntax, headParams)
-                                                        push(value)
+                                                            val headParams = value.subList(1, value.size).filterNotNull().toTypedArray()
+                                                            head.operate(this@syntax, headParams)
+                                                            push(value)
+                                                        } catch (th: Throwable) {
+                                                            throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
+                                                        }
                                                     }
                                                 }
                                             }

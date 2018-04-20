@@ -33,10 +33,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                             Optional(
                                     ParamList(
                                             cmd,
-                                            Sequence(
-                                                    OneOrMore(Digit()),
-                                                    pushToStack()
-                                            ),
+                                            RuleWithVariables(OneOrMore(Digit())),
                                             Sequence(
                                                     ',',
                                                     OptionalWhitespace()
