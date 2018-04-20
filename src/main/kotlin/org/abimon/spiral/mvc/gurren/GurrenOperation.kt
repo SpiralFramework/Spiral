@@ -2,6 +2,7 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import kotlinx.coroutines.experimental.runBlocking
+import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.CPKArchive
 import org.abimon.spiral.core.archives.IArchive
@@ -25,10 +26,12 @@ import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
 import org.abimon.visi.lang.*
+import java.awt.Desktop
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.net.URI
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.ZipFile
 import kotlin.system.measureTimeMillis
@@ -250,6 +253,16 @@ object GurrenOperation {
         }
     }
 
+    val compileAndRun = Command("compile_and_run", "operate") { (params) ->
+        compile.command(InstanceOrder<String>("COMPILE_AND_RUN", scout = null, data = params.apply { this[0] = "compile" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
+
+        if(Desktop.isDesktopSupported()) {
+            operatingGame?.steamID?.let { steamID -> Desktop.getDesktop().browse(URI("steam://run/$steamID")) }
+        } else {
+            errPrintln("No desktop environment detected; running in headless most likely!")
+        }
+    }
+
     val compileNicely = Command("compile_nicely", "operate") { (params) ->
         if (params.size == 1)
             return@Command errPrintln("[$operatingName] Error: No directory to compile from provided")
@@ -317,6 +330,16 @@ object GurrenOperation {
 
             operatingArchive.compile(newEntries)
             println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
+        }
+    }
+
+    val compileNicelyAndRun = Command("compile_nicely_and_run", "operate") { (params) ->
+        compile.command(InstanceOrder<String>("COMPILE_NICELY_AND_RUN", scout = null, data = params.apply { this[0] = "compile_nicely" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
+
+        if(Desktop.isDesktopSupported()) {
+            operatingGame?.steamID?.let { steamID -> Desktop.getDesktop().browse(URI("steam://run/$steamID")) }
+        } else {
+            errPrintln("No desktop environment detected; running in headless most likely!")
         }
     }
 
