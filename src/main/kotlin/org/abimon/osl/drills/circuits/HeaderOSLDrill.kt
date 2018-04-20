@@ -7,11 +7,8 @@ import org.parboiled.Rule
 import org.parboiled.support.ValueStack
 
 object HeaderOSLDrill: DrillCircuit {
-    val cmd = "HEADER"
-
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
-                    clearTmpStack(cmd),
                     FirstOf(
                             Sequence(
                                     "Header:",
@@ -22,13 +19,11 @@ object HeaderOSLDrill: DrillCircuit {
                                     Whitespace()
                             )
                     ),
-                    pushTmpAction(cmd, this@HeaderOSLDrill),
-                    Parameter(cmd),
-                    operateOnTmpActions(cmd) { params ->
-                        val stack = (loadStack(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) ?: return@operateOnTmpActions).toList()
+                    ParameterToStack(),
+                    Action<Any> {
+                        val stack = loadStack(this, pop().toString())?.toList() ?: return@Action false
                         push(stack)
                     },
-                    clearTmpStack(cmd),
 
                     Action<Any> { context ->
                         val stack = context.valueStack.pop() as? List<*> ?: return@Action false
@@ -44,8 +39,7 @@ object HeaderOSLDrill: DrillCircuit {
                     }
             )
 
-    fun loadStack(parser: OpenSpiralLanguageParser, params: Array<Any>): ValueStack<*>? {
-        val headerFile = params[0].toString()
+    fun loadStack(parser: OpenSpiralLanguageParser, headerFile: String): ValueStack<*>? {
 
         if (parser.flags["Header-$headerFile-Loaded"] != true) {
             val data = parser.load(headerFile) ?: return null

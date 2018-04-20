@@ -2,6 +2,7 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.EnumLinFlagCheck
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.SpiralDrillBit
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.lin.*
 import org.parboiled.BaseParser.NOTHING
@@ -52,7 +53,7 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     OptionalWhitespace(),
                     "(",
                     OptionalWhitespace(),
-                    pushTmpAction(cmd, this@LinIfDrill),
+                    pushEmptyDrillHead(cmd, this@LinIfDrill),
 
                     Flag(),
                     pushTmpFromStack(cmd),
@@ -73,9 +74,9 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     '\n',
                     pushTmpStack(cmd),
                     OpenSpiralLines(),
-                    pushAction(listOf(JUMP_BACK)),
+                    pushAction(listOf(SpiralDrillBit(JUMP_BACK, ""))),
                     "}",
-                    pushAction(listOf(ELSE)),
+                    pushAction(listOf(SpiralDrillBit(ELSE, ""))),
                     Optional(
                             Whitespace(),
                             "else",
@@ -85,7 +86,7 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                             OpenSpiralLines(),
                             "}"
                     ),
-                    pushAction(listOf(JOIN_BACK))
+                    pushAction(listOf(SpiralDrillBit(JOIN_BACK, "")))
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {

@@ -4,18 +4,21 @@ import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.SpiralDrillException
 import org.parboiled.Rule
 
-object ErrorDrill: DrillCircuit {
+object ErrorDrill : DrillCircuit {
     val cmd = "ERROR"
-    
+
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    FirstOf("error", "throw", "throw error", "throw exception"),
-                    Whitespace(),
-                    Parameter(cmd),
-                    operateOnTmpActions(cmd) { (error) ->
+                    Sequence(
+                            FirstOf("error", "throw", "throw error", "throw exception"),
+                            Whitespace(),
+                            Parameter(cmd)
+                    ),
+
+                    operateOnTmpActionsWithContext(cmd) { context, (error) ->
                         if (silence)
-                            return@operateOnTmpActions
+                            return@operateOnTmpActionsWithContext
 
                         throw SpiralDrillException(error.toString())
                     }

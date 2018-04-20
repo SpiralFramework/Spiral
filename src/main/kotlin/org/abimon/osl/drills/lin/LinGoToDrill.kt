@@ -7,20 +7,24 @@ import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinGoToDrill: DrillHead<LinScript> {
+object LinGoToDrill : DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
     val cmd = "LIN-GOTO"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    FirstOf("Goto", "Go To"),
-                    pushTmpAction(cmd, this@LinGoToDrill),
-                    OptionalWhitespace(),
-                    Label(),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    pushTmpStack(cmd)
+
+                    Sequence(
+                            FirstOf("Goto", "Go To"),
+                            pushDrillHead(cmd, this@LinGoToDrill),
+                            OptionalWhitespace(),
+                            Label(),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd)
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

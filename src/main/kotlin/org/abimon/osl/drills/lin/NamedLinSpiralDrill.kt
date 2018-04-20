@@ -17,35 +17,41 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    OneOrMore(LineCodeMatcher),
-                    Action<Any> {
-                        val name = match()
-                        (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
-                    },
-                    pushTmpAction(cmd, this@NamedLinSpiralDrill),
-                    pushTmpAction(cmd),
-                    Optional(
-                            '|'
-                    ),
-                    Optional(
-                            ParamList(
-                                    cmd,
-                                    Sequence(
-                                            OneOrMore(Digit()),
-                                            pushToStack()
-                                    ),
-                                    Sequence(
-                                            ',',
-                                            OptionalWhitespace()
+
+                    Sequence(
+                            OneOrMore(LineCodeMatcher),
+                            Action<Any> {
+                                val name = match()
+                                (game as? HopesPeakDRGame
+                                        ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
+                            },
+                            pushDrillHead(cmd, this@NamedLinSpiralDrill),
+                            pushTmpAction(cmd),
+                            Optional(
+                                    '|'
+                            ),
+                            Optional(
+                                    ParamList(
+                                            cmd,
+                                            Sequence(
+                                                    OneOrMore(Digit()),
+                                                    pushToStack()
+                                            ),
+                                            Sequence(
+                                                    ',',
+                                                    OptionalWhitespace()
+                                            )
                                     )
                             )
                     ),
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val opName = rawParams[0].toString()
-        rawParams[0] = (parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
+        rawParams[0] = (parser.game as? HopesPeakDRGame
+                ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
         return BasicLinSpiralDrill.formScript(rawParams, parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame)
     }
 }

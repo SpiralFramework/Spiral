@@ -4,7 +4,6 @@ import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.lin.ChangeUIEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
-import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
@@ -30,37 +29,41 @@ object LinUIDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "UI:",
-                    OptionalWhitespace(),
-                    pushTmpAction(cmd, this@LinUIDrill),
-                    FirstOf(
-                            Sequence(
-                                    FirstOf("Enable", "Disable"),
-                                    pushTmpAction(cmd),
-                                    OptionalWhitespace(),
-                                    FirstOf(
-                                            FirstOf(uiElements.keys.toTypedArray()),
-                                            OneOrMore(Digit())
+
+                    Sequence(
+                            "UI:",
+                            OptionalWhitespace(),
+                            pushDrillHead(cmd, this@LinUIDrill),
+                            FirstOf(
+                                    Sequence(
+                                            FirstOf("Enable", "Disable"),
+                                            pushTmpAction(cmd),
+                                            OptionalWhitespace(),
+                                            FirstOf(
+                                                    FirstOf(uiElements.keys.toTypedArray()),
+                                                    OneOrMore(Digit())
+                                            ),
+                                            pushTmpAction(cmd)
                                     ),
-                                    pushTmpAction(cmd)
-                            ),
-                            Sequence(
-                                    "Set",
-                                    Whitespace(),
-                                    FirstOf(
-                                            FirstOf(uiElements.keys.toTypedArray()),
-                                            OneOrMore(Digit())
-                                    ),
-                                    Action<Any> { push(match()) },
-                                    OptionalWhitespace(),
-                                    "to",
-                                    OptionalWhitespace(),
-                                    OneOrMore(Digit()),
-                                    pushTmpAction(cmd),
-                                    Action<Any> { context -> pushTmpAction(cmd, pop()).run(context) }
+                                    Sequence(
+                                            "Set",
+                                            Whitespace(),
+                                            FirstOf(
+                                                    FirstOf(uiElements.keys.toTypedArray()),
+                                                    OneOrMore(Digit())
+                                            ),
+                                            pushAction(),
+                                            OptionalWhitespace(),
+                                            "to",
+                                            OptionalWhitespace(),
+                                            OneOrMore(Digit()),
+                                            pushTmpAction(cmd),
+                                            pushTmpFromStack(cmd)
+                                    )
                             )
                     ),
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

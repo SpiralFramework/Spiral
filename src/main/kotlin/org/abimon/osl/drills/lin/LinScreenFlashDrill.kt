@@ -7,51 +7,55 @@ import org.abimon.spiral.core.objects.scripting.lin.ScreenFlashEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinScreenFlashDrill: DrillHead<LinScript> {
+object LinScreenFlashDrill : DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
     val cmd = "LIN-SCREEN-FLASH"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Flash",
-                    pushTmpAction(cmd, this@LinScreenFlashDrill),
-                    Whitespace(),
-                    Optional("the screen", Whitespace()),
-                    Colour(),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    Whitespace(),
-                    "over",
-                    Whitespace(),
-                    FrameCount(),
-                    pushTmpFromStack(cmd),
-                    ",",
-                    OptionalWhitespace(),
-                    "hold for",
-                    Whitespace(),
-                    FrameCount(),
-                    pushTmpFromStack(cmd),
-                    ',',
-                    OptionalWhitespace(),
-                    Optional("and", Whitespace()),
-                    "fade out over",
-                    Whitespace(),
-                    FrameCount(),
-                    pushTmpFromStack(cmd),
-                    FirstOf(
-                            Sequence(
-                                    ',',
-                                    OptionalWhitespace(),
-                                    "with opacity",
-                                    Whitespace(),
-                                    OneOrMore(Digit()),
-                                    pushTmpAction(cmd)
-                            ),
-                            pushTmpAction(cmd, 255)
+
+                    Sequence(
+                            "Flash",
+                            pushDrillHead(cmd, this@LinScreenFlashDrill),
+                            Whitespace(),
+                            Optional("the screen", Whitespace()),
+                            Colour(),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd),
+                            Whitespace(),
+                            "over",
+                            Whitespace(),
+                            FrameCount(),
+                            pushTmpFromStack(cmd),
+                            ",",
+                            OptionalWhitespace(),
+                            "hold for",
+                            Whitespace(),
+                            FrameCount(),
+                            pushTmpFromStack(cmd),
+                            ',',
+                            OptionalWhitespace(),
+                            Optional("and", Whitespace()),
+                            "fade out over",
+                            Whitespace(),
+                            FrameCount(),
+                            pushTmpFromStack(cmd),
+                            FirstOf(
+                                    Sequence(
+                                            ',',
+                                            OptionalWhitespace(),
+                                            "with opacity",
+                                            Whitespace(),
+                                            OneOrMore(Digit()),
+                                            pushTmpAction(cmd)
+                                    ),
+                                    pushTmpAction(cmd, 255)
+                            )
                     ),
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

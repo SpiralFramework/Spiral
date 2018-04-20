@@ -9,18 +9,21 @@ object AddLabelAliasDrill : DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Add label alias",
-                    Whitespace(),
-                    pushTmpAction(cmd, this@AddLabelAliasDrill),
-                    Parameter(cmd),
-                    Whitespace(),
-                    "to",
-                    Whitespace(),
-                    Label(),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) },
-                    pushTmpStack(cmd)
+                    Sequence(
+                            "Add label alias",
+                            Whitespace(),
+                            pushDrillHead(cmd, this@AddLabelAliasDrill),
+                            Parameter(cmd),
+                            Whitespace(),
+                            "to",
+                            Whitespace(),
+                            Label(),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd),
+                            operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {

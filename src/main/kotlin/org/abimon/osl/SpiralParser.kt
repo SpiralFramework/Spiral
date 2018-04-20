@@ -1,5 +1,6 @@
 package org.abimon.osl
 
+import org.abimon.osl.drills.DrillHead
 import org.parboiled.Action
 import org.parboiled.BaseParser
 import org.parboiled.Context
@@ -43,6 +44,26 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
         return@Action true
     }
 
+    fun pushDrillHead(cmd: String, head: DrillHead<out Any>): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+        if (cmd !in tmpStack)
+            tmpStack[cmd] = LinkedList()
+        tmpStack[cmd]!!.push(SpiralDrillBit(head))
+
+        return@Action true
+    }
+
+    fun pushEmptyDrillHead(cmd: String, head: DrillHead<out Any>): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+        if (cmd !in tmpStack)
+            tmpStack[cmd] = LinkedList()
+        tmpStack[cmd]!!.push(SpiralDrillBit(head, ""))
+
+        return@Action true
+    }
+
     fun pushTmpAction(cmd: String, value: Any? = null): Action<Any> = Action {
         if (silence)
             return@Action true
@@ -76,6 +97,27 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
             return@Action true
 
         context.valueStack.push(tmpStack.remove(cmd)?.reversed() ?: LinkedList<Any>())
+        return@Action true
+    }
+
+    fun pushStackWithHead(cmd: String): Action<Any> = Action { context ->
+        if (silence)
+            return@Action true
+
+        val stackToPush = tmpStack.remove(cmd)?.asReversed() ?: run {
+            System.err.println("[$cmd] Error: ${context.match} does not have a stack")
+            return@Action false
+        }
+        val drillBit = stackToPush[0] as? SpiralDrillBit ?: run {
+            System.err.println("[$cmd] Error: ${context.match} did not set the first value of the stack to be a DrillBit, instead it is ${stackToPush[0]}")
+            return@Action false
+        }
+
+        drillBit.script = context.match
+        stackToPush[0] = drillBit
+
+        context.valueStack.push(stackToPush)
+
         return@Action true
     }
 

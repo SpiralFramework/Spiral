@@ -14,45 +14,49 @@ object LinScreenFadeDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Fade",
-                    pushTmpAction(cmd, this@LinScreenFadeDrill),
-                    Whitespace(),
-                    FirstOf(
-                            Sequence(
-                                    "in",
-                                    pushTmpAction(cmd, 0),
-                                    Whitespace(),
-                                    "from",
-                                    Whitespace()
+
+                    Sequence(
+                            "Fade",
+                            pushDrillHead(cmd, this@LinScreenFadeDrill),
+                            Whitespace(),
+                            FirstOf(
+                                    Sequence(
+                                            "in",
+                                            pushTmpAction(cmd, 0),
+                                            Whitespace(),
+                                            "from",
+                                            Whitespace()
+                                    ),
+                                    Sequence(
+                                            "out",
+                                            pushTmpAction(cmd, 1),
+                                            Whitespace(),
+                                            "to",
+                                            Whitespace()
+                                    )
                             ),
-                            Sequence(
-                                    "out",
-                                    pushTmpAction(cmd, 1),
-                                    Whitespace(),
-                                    "to",
-                                    Whitespace()
-                            )
+                            FirstOf(
+                                    Sequence(
+                                            "black",
+                                            pushTmpAction(cmd, 1)
+                                    ),
+                                    Sequence(
+                                            "white",
+                                            pushTmpAction(cmd, 2)
+                                    ),
+                                    Sequence(
+                                            "red",
+                                            pushTmpAction(cmd, 3)
+                                    )
+                            ),
+                            Whitespace(),
+                            "for",
+                            Whitespace(),
+                            FrameCount(),
+                            pushTmpAction(cmd)
                     ),
-                    FirstOf(
-                            Sequence(
-                                    "black",
-                                    pushTmpAction(cmd, 1)
-                            ),
-                            Sequence(
-                                    "white",
-                                    pushTmpAction(cmd, 2)
-                            ),
-                            Sequence(
-                                    "red",
-                                    pushTmpAction(cmd, 3)
-                            )
-                    ),
-                    Whitespace(),
-                    "for",
-                    Whitespace(),
-                    FrameCount(),
-                    pushTmpAction(cmd),
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

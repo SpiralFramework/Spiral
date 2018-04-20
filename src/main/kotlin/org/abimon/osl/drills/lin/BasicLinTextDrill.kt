@@ -14,19 +14,23 @@ object BasicLinTextDrill : DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    FirstOf(
-                            Sequence(
-                                    "0x",
-                                    Optional("0"),
-                                    "2"
+
+                    Sequence(
+                            FirstOf(
+                                    Sequence(
+                                            "0x",
+                                            Optional("0"),
+                                            "2"
+                                    ),
+                                    IgnoreCase("Text")
                             ),
-                            IgnoreCase("Text")
+                            '|',
+                            pushDrillHead(cmd, this@BasicLinTextDrill),
+                            LinText(cmd),
+                            pushTmpAction(cmd)
                     ),
-                    '|',
-                    pushTmpAction(cmd, this@BasicLinTextDrill),
-                    LinText(cmd),
-                    pushTmpAction(cmd),
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = TextEntry("${rawParams[0]}", -1)

@@ -238,7 +238,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     clearTmpStack("LIN-TEXT-$cmd"),
                     OneOrMore(FirstOf(
                             Sequence(
-                                    VariableText(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
+                                    RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
                                     '\\',
                                     FirstOf('&', '#'),
                                     Action<Any> { context ->
@@ -247,7 +247,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     }
                             ),
                             Sequence(
-                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
                                     "&clear",
                                     Action<Any> { context ->
                                         val text = pop().toString()
@@ -258,7 +258,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     }
                             ),
                             Sequence(
-                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                     FirstOf(
                                             Sequence(
                                                     '&',
@@ -291,7 +291,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     )
                             ),
                             Sequence(
-                                    VariableText(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                     FirstOf(
                                             Sequence(
                                                     '&',
@@ -330,7 +330,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     )
                             ),
                             Sequence(
-                                    VariableText(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
+                                    RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
                                     pushTmpFromStack("LIN-TEXT-$cmd")
                             )
                     )),
@@ -341,44 +341,50 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     }
             )
 
-    override fun Parameter(cmd: String): Rule = FirstOf(
-            Sequence(
-                    '"',
-                    VariableText(OneOrMore(ParamMatcher)),
-                    pushTmpFromStack(cmd),
-                    '"'
-            ),
-            Sequence(
-                    VariableText(OneOrMore(AllButMatcher(whitespace))),
-                    pushTmpFromStack(cmd)
-            )
+    override fun Parameter(cmd: String): Rule = Sequence(
+            ParameterToStack(),
+            pushTmpFromStack(cmd)
     )
 
     open fun ParameterToStack(): Rule = FirstOf(
             Sequence(
                     '"',
-                    VariableText(OneOrMore(ParamMatcher)),
+                    RuleWithVariables(OneOrMore(ParamMatcher)),
                     '"'
             ),
-            VariableText(OneOrMore(AllButMatcher(whitespace)))
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace)))
     )
 
     override fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
             Sequence(
                     '"',
-                    VariableText(OneOrMore(ParamMatcher)),
+                    RuleWithVariables(OneOrMore(ParamMatcher)),
                     pushTmpFromStack(cmd),
                     '"'
             ),
             Sequence(
-                    VariableText(OneOrMore(AllButMatcher(whitespace.plus(allBut)))),
+                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(allBut)))),
                     pushTmpFromStack(cmd)
             )
     )
 
-    open fun VariableText(matching: Rule): Rule =
+    open fun RuleWithVariables(matching: Rule): Rule =
             Sequence(
-                    matching,
+                    FirstOf(
+                            matching,
+                            Sequence(
+                                    '"',
+                                    '%',
+                                    OneOrMore(ParamMatcher),
+                                    Action<Any> { match() in data || match() == "GAME" },
+                                    '"'
+                            ),
+                            Sequence(
+                                    '%',
+                                    OneOrMore(ParamMatcher),
+                                    Action<Any> { match() in data || match() == "GAME" }
+                            )
+                    ),
                     Action<Any> {
                         var str = match()
                         str = str.replace("%GAME", game.names.first())

@@ -7,7 +7,7 @@ import org.abimon.spiral.core.objects.scripting.lin.SetFlagEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinSetFlagDrill: DrillHead<LinScript> {
+object LinSetFlagDrill : DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
 
     val cmd = "LIN-SET-FLAG"
@@ -15,18 +15,22 @@ object LinSetFlagDrill: DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Set Flag",
-                    OptionalWhitespace(),
-                    pushTmpAction(cmd, this@LinSetFlagDrill),
-                    Flag(),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    Whitespace(),
-                    "to",
-                    Whitespace(),
-                    FlagValue(),
-                    pushTmpFromStack(cmd),
-                    pushTmpStack(cmd)
+
+                    Sequence(
+                            "Set Flag",
+                            OptionalWhitespace(),
+                            pushDrillHead(cmd, this@LinSetFlagDrill),
+                            Flag(),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd),
+                            Whitespace(),
+                            "to",
+                            Whitespace(),
+                            FlagValue(),
+                            pushTmpFromStack(cmd)
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

@@ -7,7 +7,7 @@ import org.abimon.spiral.core.objects.scripting.lin.SetLabelEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinMarkLabelDrill: DrillHead<LinScript> {
+object LinMarkLabelDrill : DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
 
     val cmd = "LIN-MARK-LABEL"
@@ -15,13 +15,17 @@ object LinMarkLabelDrill: DrillHead<LinScript> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    FirstOf("Set Label", "Mark Label"),
-                    pushTmpAction(cmd, this@LinMarkLabelDrill),
-                    OptionalWhitespace(),
-                    Label(),
-                    pushTmpFromStack(cmd),
-                    pushTmpFromStack(cmd),
-                    pushTmpStack(cmd)
+
+                    Sequence(
+                            FirstOf("Set Label", "Mark Label"),
+                            pushDrillHead(cmd, this@LinMarkLabelDrill),
+                            OptionalWhitespace(),
+                            Label(),
+                            pushTmpFromStack(cmd),
+                            pushTmpFromStack(cmd)
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {

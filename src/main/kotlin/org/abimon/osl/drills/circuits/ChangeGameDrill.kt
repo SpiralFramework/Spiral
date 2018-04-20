@@ -25,13 +25,16 @@ object ChangeGameDrill : DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    FirstOf("Game:", "Game Is ", "Set Game To "),
-                    pushTmpAction(cmd, this@ChangeGameDrill),
-                    OptionalWhitespace(),
-                    Parameter(cmd),
-                    Action<Any> { tmpStack[cmd]?.peek()?.toString()?.toUpperCase() in games },
-                    operateOnTmpActions(cmd) { stack -> operate(this, stack.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) },
-                    pushTmpStack(cmd)
+                    Sequence(
+                            FirstOf("Game:", "Game Is ", "Set Game To "),
+                            pushDrillHead(cmd, this@ChangeGameDrill),
+                            OptionalWhitespace(),
+                            Parameter(cmd),
+                            Action<Any> { tmpStack[cmd]?.peek()?.toString()?.toUpperCase() in games },
+                            operateOnTmpActions(cmd) { stack -> operate(this, stack.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {

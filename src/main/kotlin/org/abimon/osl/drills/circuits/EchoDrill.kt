@@ -3,17 +3,20 @@ package org.abimon.osl.drills.circuits
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.parboiled.Rule
 
-object EchoDrill: DrillCircuit {
+object EchoDrill : DrillCircuit {
     val cmd = "ECHO"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "echo",
-                    Whitespace(),
-                    pushTmpAction(cmd, this@EchoDrill),
-                    Parameter(cmd),
-                    pushTmpStack(cmd)
+                    Sequence(
+                            "echo",
+                            Whitespace(),
+                            pushDrillHead(cmd, this@EchoDrill),
+                            Parameter(cmd)
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {

@@ -20,15 +20,22 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    OneOrMore(NAME),
-                    Action<Any> { match() in customIdentifiers || match() in (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers },
-                    pushTmpAction(cmd, this@LinDialogueDrill),
-                    pushTmpAction(cmd),
-                    ':',
-                    OptionalWhitespace(),
-                    LinText(cmd),
-                    pushTmpAction(cmd),
-                    pushTmpStack(cmd)
+
+                    Sequence(
+                            OneOrMore(NAME),
+                            Action<Any> {
+                                match() in customIdentifiers || match() in (game as? HopesPeakDRGame
+                                        ?: UnknownHopesPeakGame).characterIdentifiers
+                            },
+                            pushDrillHead(cmd, this@LinDialogueDrill),
+                            pushTmpAction(cmd),
+                            ':',
+                            OptionalWhitespace(),
+                            LinText(cmd),
+                            pushTmpAction(cmd)
+                    ),
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {

@@ -20,35 +20,41 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
-            FirstOf(
-                    Sequence(
-                            clearTmpStack(cmd),
-                            "Hide" ,
-                            Whitespace(),
-                            Optional("sprite for "),
-                            pushTmpAction(cmd, this@LinHideSpriteDrill),
-                            FirstOf(
-                                    Parameter(cmd),
-                                    Sequence(
-                                            OneOrMore(Digit()),
-                                            pushTmpAction(cmd)
-                                    )
+            Sequence(
+                    clearTmpStack(cmd),
+
+                    FirstOf(
+                            Sequence(
+                                    "Hide",
+                                    Whitespace(),
+                                    Optional("sprite for "),
+                                    pushDrillHead(cmd, this@LinHideSpriteDrill),
+                                    FirstOf(
+                                            Parameter(cmd),
+                                            Sequence(
+                                                    OneOrMore(Digit()),
+                                                    pushTmpAction(cmd)
+                                            )
+                                    ),
+                                    Action<Any> {
+                                        val name = peekTmpAction(cmd)?.toString() ?: ""
+                                        return@Action name in customIdentifiers || name in (game as? HopesPeakDRGame
+                                                ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
+                                    }
                             ),
-                            Action<Any> {
-                                val name = peekTmpAction(cmd)?.toString() ?: ""
-                                return@Action name in customIdentifiers || name in (game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
-                            },
-                            pushTmpStack(cmd)
+                            Sequence(
+                                    UUID.randomUUID().toString(),
+                                    "s"
+                            )
                     ),
-                    Sequence(
-                            UUID.randomUUID().toString(),
-                            "s"
-                    )
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val characterStr = rawParams[0].toString()
-        val character = parser.customIdentifiers[characterStr] ?: (parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
+        val character = parser.customIdentifiers[characterStr] ?: (parser.game as? HopesPeakDRGame
+                ?: UnknownHopesPeakGame).characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
         return SpriteEntry(0, character, 0, 4, 2)
     }
 }

@@ -11,22 +11,25 @@ object AddNameAliasDrill : DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Add alias",
-                    Whitespace(),
-                    pushTmpAction(cmd, this@AddNameAliasDrill),
-                    Parameter(cmd),
-                    Whitespace(),
-                    "to",
-                    Whitespace(),
-                    FirstOf(
+                    Sequence(
+                            "Add alias",
+                            Whitespace(),
+                            pushDrillHead(cmd, this@AddNameAliasDrill),
                             Parameter(cmd),
-                            Sequence(
-                                    Digit(),
-                                    pushTmpAction(cmd)
-                            )
+                            Whitespace(),
+                            "to",
+                            Whitespace(),
+                            FirstOf(
+                                    Parameter(cmd),
+                                    Sequence(
+                                            Digit(),
+                                            pushTmpAction(cmd)
+                                    )
+                            ),
+                            operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
                     ),
-                    operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) },
-                    pushTmpStack(cmd)
+
+                    pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
@@ -37,8 +40,9 @@ object AddNameAliasDrill : DrillCircuit {
         when (rawParams[1]) {
             is Int -> id = rawParams[2] as Int
             else -> {
-                if(parser.game is HopesPeakDRGame)
-                    id = (parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
+                if (parser.game is HopesPeakDRGame)
+                    id = (parser.game as? HopesPeakDRGame
+                            ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
                 else
                     id = 0
             }
