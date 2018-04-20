@@ -434,7 +434,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     '%',
                                     OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))),
                                     Action<Any> { match() in data || match() == "GAME" }
-                            ),
+                            )
                     ),
                     Action<Any> {
                         var str = match()
