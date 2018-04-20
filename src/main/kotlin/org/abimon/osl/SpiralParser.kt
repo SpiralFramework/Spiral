@@ -24,6 +24,18 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
         return true
     }
 
+    override fun pop(): Any {
+        if (!silence)
+            return super.pop()
+        return super.peek()
+    }
+
+    override fun pop(down: Int): Any {
+        if (!silence)
+            return super.pop(down)
+        return super.peek(down)
+    }
+
     //ParseUtils
 
     fun pushAction(value: Any? = null): Action<Any> = Action {
