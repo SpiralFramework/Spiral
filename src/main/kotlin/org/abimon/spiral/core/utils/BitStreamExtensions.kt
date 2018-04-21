@@ -84,6 +84,9 @@ fun InputStream.readInt16BE(): Int {
 fun InputStream.readFloatBE(): Float = java.lang.Float.intBitsToFloat(this.readInt32BE())
 fun InputStream.readFloatLE(): Float = java.lang.Float.intBitsToFloat(this.readInt32LE())
 
+fun OutputStream.writeFloatBE(float: Float) = writeInt32BE(java.lang.Float.floatToIntBits(float))
+fun OutputStream.writeFloatLE(float: Float) = writeInt32LE(java.lang.Float.floatToIntBits(float))
+
 fun OutputStream.writeInt64LE(num: Number) {
     val long = num.toLong()
 
