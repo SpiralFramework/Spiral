@@ -72,7 +72,7 @@ class CustomLin {
             }
         }
 
-        textData.writeInt32LE((numText * 4L) + 4 + textText.size())
+        textData.writeInt32LE((numText * 4L) + 8 + textText.size())
 
         if (type == 1)
             out.writeInt32LE(12 + entryData.size() + textData.size() + textText.size())
