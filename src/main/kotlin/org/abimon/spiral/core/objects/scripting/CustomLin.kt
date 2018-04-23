@@ -40,13 +40,13 @@ class CustomLin {
         val textData = ByteArrayOutputStream()
         val textText = ByteArrayOutputStream()
 
-        textData.writeInt32LE(entries.count { entry -> entry is TextEntry })
+        textData.writeInt32LE(entries.count { entry -> entry is LinTextScript })
 
         var textID = 0
 
         if (entries[0] !is TextCountEntry)
-            entries.add(0, TextCountEntry(entries.count { entry -> entry is TextEntry }))
-        val numText = entries.count { entry -> entry is TextEntry }
+            entries.add(0, TextCountEntry(entries.count { entry -> entry is LinTextScript }))
+        val numText = entries.count { entry -> entry is LinTextScript }
 
         entries.forEach { entry ->
             entryData.write(0x70)
