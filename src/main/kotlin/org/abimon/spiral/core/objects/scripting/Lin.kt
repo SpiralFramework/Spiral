@@ -12,6 +12,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
     companion object {
         val BOM_BE = 0xFEFF
         val BOM_LE = 0xFFFE
+        val NULL_TERMINATOR = 0x00.toChar()
 
         operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin? {
             try {
@@ -118,6 +119,9 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
             textLines = stream.readInt32LE()
             val textPositions = IntArray(textLines + 1) { stream.readInt32LE() }
+            if(textPositions[textLines] == 0)
+                textPositions[textLines] = this.size - this.textBlock
+
             val textEntries = entries.filterIsInstance(LinTextScript::class.java)
 
             for (textID in 0 until textLines) {
@@ -134,9 +138,9 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 val bom = if(line.size < 2) 0 else (((line[0].toInt() and 0xFF) shl 8) or (line[1].toInt() and 0xFF))
 
                 when (bom) {
-                    BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16)
-                    BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16)
-                    else -> textEntry?.text = String(line, Charsets.UTF_16LE) //May need to do a when clause later
+                    BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
+                    BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
+                    else -> textEntry?.text = String(line, Charsets.UTF_16LE).trimEnd(NULL_TERMINATOR) //May need to do a when clause later
                 }
             }
 
