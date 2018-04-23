@@ -5,4 +5,5 @@ data class TextEntry(override var text: String?, override val textID: Int): LinS
 
     override val opCode: Int = 0x02
     override val rawArguments: IntArray = intArrayOf()
+    override val writeBOM: Boolean = true
 }

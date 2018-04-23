@@ -8,4 +8,5 @@ data class UDGTextEntry(override var text: String?, override val textID: Int): L
 
     override val opCode: Int = 0x01
     override val rawArguments: IntArray = intArrayOf()
+    override val writeBOM: Boolean = false
 }

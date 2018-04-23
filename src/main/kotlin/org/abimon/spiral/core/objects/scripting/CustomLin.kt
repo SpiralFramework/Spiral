@@ -55,8 +55,11 @@ class CustomLin {
             if (entry is LinTextScript) {
                 val strData = (entry.text ?: "Hello, Null!").replace("\\n", "\n").replace("\\t", "\t").toByteArray(Charsets.UTF_16LE)
                 textData.writeInt32LE((numText * 4L) + 8 + textText.size())
-                textText.write(0xFF)
-                textText.write(0xFE)
+                if(entry.writeBOM) {
+                    textText.write(0xFF)
+                    textText.write(0xFE)
+                }
+
                 textText.write(strData)
                 if(strData[strData.size - 1] != 0x00.toByte() || strData[strData.size - 2] != 0x00.toByte()) {
                     textText.write(0x00)
