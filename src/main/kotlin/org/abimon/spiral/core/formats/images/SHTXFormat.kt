@@ -16,7 +16,7 @@ object SHTXFormat : SpiralImageFormat {
     override val extension = null
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, TGAFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(4) == "SHTX" }
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(4) == "SHTX" }
 
     /** This information is taken from BlackDragonHunt's Danganronpa-Tools */
     override fun toBufferedImage(name: String?, dataSource: () -> InputStream): BufferedImage = dataSource().use { stream ->

@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.31'
+    ext.kotlin_version = '1.2.40'
     ext.jackson_version = '2.9.0'
 
     repositories {
@@ -40,6 +40,9 @@ dependencies {
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:11')
     compile('org.abimon:SpiralFormats:267e2fc')
+    compile('org.abimon:OpenSpiralLanguage:9f117bb') {
+        exclude group: 'org.abimon', module: 'SpiralFormats'
+    }
 
     compile "org.parboiled:parboiled-java:1.1.8"
     compile "com.jakewharton.fliptables:fliptables:1.0.2"

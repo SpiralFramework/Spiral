@@ -15,7 +15,7 @@ object SPCFormat : SpiralFormat {
     override val extension = "spc"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return SPC(dataSource).files.isNotEmpty()
         } catch (e: IllegalArgumentException) {
@@ -23,8 +23,8 @@ object SPCFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val spc = SPC(dataSource)
         val convert = "${params["spc:convert"] ?: false}".toBoolean()
@@ -39,7 +39,7 @@ object SPCFormat : SpiralFormat {
 
                         if (innerFormat != null && convertTo != null) {
                             zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
-                            innerFormat.convert(game, convertTo, "$name/${entry.name}", data, zip, params)
+                            innerFormat.convert(game, convertTo, "$name/${entry.name}", context, data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
                             zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${innerFormat.extension}"))

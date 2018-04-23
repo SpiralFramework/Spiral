@@ -32,7 +32,7 @@ object ZIPFormat : SpiralFormat {
             toInt(byteArrayOf(0x50, 0x4B, 0x07, 0x08), little = true)
     )
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
 //        try {
 //            return source.use { stream ->
 //                val zip = ZipInputStream(stream)
@@ -50,8 +50,8 @@ object ZIPFormat : SpiralFormat {
         return dataSource().use { stream -> stream.readInt(little = true).toInt() in VALID_HEADERS }
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if (super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
         if (format === PAKFormat) {
             val convert = "${params["pak:convert"] ?: false}".toBoolean()
@@ -74,7 +74,7 @@ object ZIPFormat : SpiralFormat {
 
                                     if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                                         val (convOut, convData) = CacheHandler.cacheStream()
-                                        innerFormat.convert(game, convertTo, entry.name, data, convOut, params)
+                                        innerFormat.convert(game, convertTo, entry.name, context, data, convOut, params)
 
                                         put(entry.name.substringBeforeLast('.'), convData)
                                         return@forEach
@@ -119,7 +119,7 @@ object ZIPFormat : SpiralFormat {
 
                         if (innerFormat != null && convertTo != null && innerFormat !in SpiralFormats.drArchiveFormats) {
                             val cacheFile = CacheHandler.newCacheFile()
-                            FileOutputStream(cacheFile).use { convOut -> innerFormat.convert(game, convertTo, entry.name, data, convOut, params) }
+                            FileOutputStream(cacheFile).use { convOut -> innerFormat.convert(game, convertTo, entry.name, context, data, convOut, params) }
                             add(entry.name.replace(innerFormat.extension ?: "unk", convertTo.extension
                                     ?: "unk"), cacheFile)
                             return@forEach
