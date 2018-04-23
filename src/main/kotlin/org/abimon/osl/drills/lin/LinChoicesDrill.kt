@@ -68,7 +68,8 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                                         ?: 0))), "")))
                                             },
                                             '}',
-                                            '\n'
+                                            '\n',
+                                            OptionalWhitespace()
                                     )
                             ),
                             '}',
@@ -83,11 +84,15 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                             }
                     ),
 
-                    pushStackWithHead(cmd)
+                    pushStackWithHead(cmd),
+                    Action<Any> {
+                        if (cmd in tmpStack)
+                            System.err.println("Nested choice selection detected; this is unsupported! If you wish to nest choices, you will need to use labels.")
+                        return@Action true
+                    }
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
-        println(rawParams.joinToString { "[$it]" })
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull()
                     ?: 0)))
