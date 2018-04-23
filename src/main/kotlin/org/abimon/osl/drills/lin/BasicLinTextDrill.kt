@@ -8,6 +8,7 @@ import org.abimon.spiral.core.objects.game.hpa.UDG
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.TextEntry
 import org.abimon.spiral.core.objects.scripting.lin.udg.UDGTextEntry
+import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
@@ -22,9 +23,16 @@ object BasicLinTextDrill : DrillHead<LinScript> {
                     Sequence(
                             FirstOf(
                                     Sequence(
+                                            Action<Any> { game == DR1 || game == DR2 },
                                             "0x",
                                             Optional("0"),
                                             "2"
+                                    ),
+                                    Sequence(
+                                            Action<Any> { game == UDG },
+                                            "0x",
+                                            Optional("0"),
+                                            "1"
                                     ),
                                     IgnoreCase("Text")
                             ),
