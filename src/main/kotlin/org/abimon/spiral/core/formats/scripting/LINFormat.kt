@@ -32,7 +32,9 @@ object LINFormat : SpiralFormat {
         output.println("OSL Script")
         output.println("Set Game To ${hpaGame.names[0]}")
 
-        UnsafeLin(hpaGame, dataSource).entries.forEach { entry ->
+        val lin = UnsafeLin(hpaGame, dataSource)
+
+        lin.entries.forEach { entry ->
             if (entry is LinTextScript)
                 output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
                         ?: "0x${entry.opCode.toString(16)}"}|${entry.text?.replace("\n", "\\n") ?: "Hello, Null!"}")
