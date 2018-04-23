@@ -20,7 +20,7 @@ object MP4Format: SpiralFormat {
     val chunkTypes = arrayOf("ftyp", "mdat", "moov", "pnot", "udta", "uuid", "moof", "free", "skip", "jP2 ", "wide", "load", "ctab", "imap", "matt", "kmat", "clip", "crgn", "sync", "chap", "tmcd", "scpt", "ssrc", "PICT")
     val subtypes = arrayOf("avc1", "iso2", "isom", "mmp4", "mp41", "mp42", "mp71", "msnv", "ndas", "ndsc", "ndsh", "ndsm", "ndsp", "ndss", "ndxc", "ndxh", "ndxm", "ndxp", "ndxs")
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = dataSource().use { stream ->
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { stream ->
         stream.skipBytes(4)
         val chunkType = stream.readString(4)
 
@@ -34,8 +34,8 @@ object MP4Format: SpiralFormat {
 
     //override fun canConvert(format: SpiralFormat): Boolean = super.canConvert(format) && MediaWrapper.ffmpeg.isInstalled
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         if (!MediaWrapper.ffmpeg.isInstalled) {
             errPrintln("ffmpeg is not installed, and thus we cannot convert from an MP4 file to a ${format.name} file")

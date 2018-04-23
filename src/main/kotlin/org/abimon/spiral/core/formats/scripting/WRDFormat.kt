@@ -2,8 +2,6 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.text.ScriptTextFormat
-import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.WordScriptFile
@@ -16,7 +14,7 @@ import java.io.OutputStream
 object WRDFormat : SpiralFormat {
     override val name = "WRD"
     override val extension = "wrd"
-    override val conversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(OpenSpiralLanguageFormat)
 
     val COMMAND_OP_CODE = 0x2B1D
     val COMMAND_OP_CODE_HEX = COMMAND_OP_CODE.toString(16)
@@ -24,7 +22,7 @@ object WRDFormat : SpiralFormat {
     val STRING_OP_CODE = 0x2B1E
     val STRING_OP_CODE_HEX = STRING_OP_CODE.toString(16)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return game === V3 && WordScriptFile(game, dataSource).entries.isNotEmpty()
         } catch(illegal: IllegalArgumentException) {
@@ -33,10 +31,18 @@ object WRDFormat : SpiralFormat {
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val wrd = WordScriptFile(game as? V3 ?: return false, dataSource)
+
+        output.println("OSL Script")
+        output.println("Set Game To V3")
+
+        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
+        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
+        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
+        wrd.strings.forEach { str -> output.println("Word String: $str") }
 
         wrd.entries.forEach { entry ->
             val op = SpiralData.drv3OpCodes[entry.opCode]?.second ?: "0x${entry.opCode.toString(16)}"
@@ -52,13 +58,6 @@ object WRDFormat : SpiralFormat {
                 }
             }
         }
-
-        output.println("")
-
-        wrd.commandOneEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|1, $index, $s") }
-        wrd.commandTwoEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|2, $index, $s") }
-        wrd.commandThreeEntries.forEachIndexed { index, s -> output.println("0x${COMMAND_OP_CODE_HEX}|3, $index, $s") }
-        wrd.strings.forEach { str -> output.println("0x${STRING_OP_CODE_HEX}|$str") }
 
         return true
     }

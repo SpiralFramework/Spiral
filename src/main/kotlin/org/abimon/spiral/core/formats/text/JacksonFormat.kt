@@ -24,7 +24,7 @@ abstract class JacksonFormat: SpiralFormat {
     override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format in manualConversions
     abstract val MAPPER: ObjectMapper
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             dataSource().use { stream -> MAPPER.readValue(stream, Map::class.java) }
             return true
@@ -50,8 +50,8 @@ abstract class JacksonFormat: SpiralFormat {
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
         when(format) {
             NonstopFormat -> {

@@ -11,7 +11,7 @@ object JPEGFormat : SpiralImageFormat {
     override val extension = "jpg"
     override val conversions: Array<SpiralFormat> = arrayOf(TGAFormat, SHTXFormat, JPEGFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean =
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean =
             dataSource().use {
                 ImageIO.getImageReaders(ImageIO.createImageInputStream(it))
                         .asSequence()

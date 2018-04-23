@@ -21,7 +21,7 @@ object V3SPCFont {
         SpiralFormat[V3 to SPCFormat and ZIPFormat] = this::convertFromArchive
     }
 
-    fun convertFromArchive(game: DRGame?, from: SpiralFormat, to: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+    fun convertFromArchive(game: DRGame?, from: SpiralFormat, to: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (!"${params["font:convert"] ?: true}".toBoolean())
             return false
 

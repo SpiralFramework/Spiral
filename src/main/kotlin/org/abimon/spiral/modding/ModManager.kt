@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.github.kittinunf.fuel.Fuel
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.EnumSignedStatus
+import org.abimon.spiral.core.data.FileContext
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.userAgent
@@ -30,6 +31,8 @@ object ModManager : APIManager() {
             mkdir()
     }
 
+    val MOD_CONTEXT = FileContext(MOD_FOLDER)
+
     val OFFICIAL_DR_MODS = arrayOf("DR1_DATA", "DR1_DATA_US", "DR1_DATA_KEYBOARD", "DR1_DATA_KEYBOARD_US", "DR2_DATA", "DR2_DATA_US", "DR2_DATA_KEYBOARD", "DR2_DATA_KEYBOARD_US")
 
     val modsInFolder: MutableMap<String, Triple<File, ModConfig, EnumSignedStatus>> = HashMap() //File to PluginConfig to Signed
@@ -38,7 +41,7 @@ object ModManager : APIManager() {
     fun scanForMods() {
         scanForUpdates()
         modsInFolder.clear()
-        MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, { FileInputStream(file) }) }.forEach { potentialMod ->
+        MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, MOD_CONTEXT::provide, { FileInputStream(file) }) }.forEach { potentialMod ->
             val metadata = getMetadataForFile(potentialMod) ?: return@forEach
 
             modsInFolder[metadata.uid] = (potentialMod to metadata and isSigned(metadata.uid, metadata.version, potentialMod))
@@ -46,7 +49,7 @@ object ModManager : APIManager() {
     }
 
     fun scanForUpdates() {
-        val mods = MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, { FileInputStream(file) }) }.groupBy { potentialPlugin -> getMetadataForFile(potentialPlugin)?.uid }
+        val mods = MOD_FOLDER.listFiles { file -> ZIPFormat.isFormat(null, file.name, MOD_CONTEXT::provide, { FileInputStream(file) }) }.groupBy { potentialPlugin -> getMetadataForFile(potentialPlugin)?.uid }
         mods.forEach { uid, modList ->
             if (uid == null)
                 return@forEach

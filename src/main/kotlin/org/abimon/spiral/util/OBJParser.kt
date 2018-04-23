@@ -1,18 +1,15 @@
 package org.abimon.spiral.util
 
+import org.abimon.osl.LineMatcher
+import org.abimon.osl.SpiralParser
 import org.abimon.visi.lang.and
-import org.parboiled.BaseParser
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.annotations.BuildParseTree
-import org.parboiled.parserunners.ReportingParseRunner
 
 @BuildParseTree
-open class OBJParser : BaseParser<Any>() {
+open class OBJParser(isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
-        val parser: OBJParser = Parboiled.createParser(OBJParser::class.java)
-        val runner: ReportingParseRunner<Any> = ReportingParseRunner(parser.Lines())
-
         val VERTEX_ID = "OBJ-MODEL-VERTEX"
         val UV_ID = "OBJ-MODEL-UV"
         val FACE_ID = "OBJ-MODEL-FACE"
@@ -39,12 +36,13 @@ open class OBJParser : BaseParser<Any>() {
 
             return (a - 1) to (b - 1) and (c - 1)
         }
+
+        operator fun invoke(): OBJParser = Parboiled.createParser(OBJParser::class.java, true)
     }
 
     open fun Lines(): Rule = Sequence(
             clearState(),
-            ParamList("OBJ", Line()),
-            operateOnTmpStack(this, "OBJ") { push(it) }
+            Sequence(ZeroOrMore(Sequence(Line(), Ch('\n'))), Line())
     )
 
     open fun Line(): Rule = FirstOf(
@@ -56,53 +54,50 @@ open class OBJParser : BaseParser<Any>() {
             EOI
     )
 
-    open fun Comment(): Rule = Sequence("#", ZeroOrMore(LineMatcher))
+
     open fun Vertex(): Rule = Sequence(
             clearTmpStack(VERTEX_ID),
             'v',
             ' ',
-            pushTmpAction(this, VERTEX_ID, VERTEX_ID),
+            pushTmpAction(VERTEX_ID, VERTEX_ID),
             Float(),
-            pushTmpAction(this, VERTEX_ID),
+            pushTmpAction(VERTEX_ID),
             ' ',
             Float(),
-            pushTmpAction(this, VERTEX_ID),
+            pushTmpAction(VERTEX_ID),
             ' ',
             Float(),
-            pushTmpAction(this, VERTEX_ID),
-            pushTmpStack(this, VERTEX_ID),
-            ZeroOrMore(LineMatcher)
+            pushTmpAction(VERTEX_ID),
+            pushTmpStack(VERTEX_ID)
     )
 
     open fun UV(): Rule = Sequence(
             clearTmpStack(UV_ID),
             "vt",
             ' ',
-            pushTmpAction(this, UV_ID, UV_ID),
+            pushTmpAction(UV_ID, UV_ID),
             Float(),
-            pushTmpAction(this, UV_ID),
+            pushTmpAction(UV_ID),
             ' ',
             Float(),
-            pushTmpAction(this, UV_ID),
-            pushTmpStack(this, UV_ID),
-            ZeroOrMore(LineMatcher)
+            pushTmpAction(UV_ID),
+            pushTmpStack(UV_ID)
     )
 
     open fun Face(): Rule = Sequence(
             clearTmpStack(FACE_ID),
             'f',
             ' ',
-            pushTmpAction(this, FACE_ID, FACE_ID),
+            pushTmpAction(FACE_ID, FACE_ID),
             FaceID(),
-            pushTmpAction(this, FACE_ID),
+            pushTmpAction(FACE_ID),
             ' ',
             FaceID(),
-            pushTmpAction(this, FACE_ID),
+            pushTmpAction(FACE_ID),
             ' ',
             FaceID(),
-            pushTmpAction(this, FACE_ID),
-            pushTmpStack(this, FACE_ID),
-            ZeroOrMore(LineMatcher)
+            pushTmpAction(FACE_ID),
+            pushTmpStack(FACE_ID)
     )
 
     open fun FaceID(): Rule = FirstOf(

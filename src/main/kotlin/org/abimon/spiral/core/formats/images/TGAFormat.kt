@@ -12,7 +12,7 @@ object TGAFormat : SpiralImageFormat {
     override val extension = "tga"
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, SHTXFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             dataSource().use { stream -> TGAReader.readImage(stream.readBytes()) }
             return true

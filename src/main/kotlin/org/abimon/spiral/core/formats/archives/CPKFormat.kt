@@ -5,6 +5,7 @@ import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.util.bind
+import org.abimon.spiral.util.fileSourceForName
 import org.abimon.spiral.util.rawInputStreamFor
 import java.io.InputStream
 import java.io.OutputStream
@@ -16,7 +17,7 @@ object CPKFormat: SpiralFormat {
     override val extension: String = "cpk"
     override val conversions: Array<SpiralFormat> = arrayOf(ZIPFormat, WADFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         try {
             return CPK(dataSource).files.isNotEmpty()
         } catch(iea: IllegalArgumentException) {
@@ -24,8 +25,8 @@ object CPKFormat: SpiralFormat {
         }
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
         val cpk = CPK(dataSource)
 
         when(format) {
@@ -34,9 +35,11 @@ object CPKFormat: SpiralFormat {
                 cpk.files.forEach { entry ->
                     zip.putNextEntry(ZipEntry("${entry.directoryName}/${entry.fileName}"))
                     if(entry.isCompressed)
-                        CRILAYLAFormat.convert(game, SpiralFormat.BinaryFormat, "${entry.directoryName}/${entry.fileName}", entry::rawInputStreamFor.bind(cpk), zip, params)
+                        CRILAYLAFormat.convert(game, SpiralFormat.BinaryFormat, "${entry.directoryName}/${entry.fileName}", cpk::fileSourceForName, entry::rawInputStreamFor.bind(cpk), zip, params)
                     else
                         entry.rawInputStreamFor(cpk).use { stream -> stream.copyTo(zip) }
+
+                    return@forEach
                 }
                 zip.finish()
             }

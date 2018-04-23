@@ -13,5 +13,5 @@ object TextFormat: SpiralFormat {
     val manualConversions: Array<SpiralFormat> = arrayOf(ScriptTextFormat, SpiralTextFormat, LINFormat, WRDFormat, STXTFormat) //But we should allow manual conversions
 
     override fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format in manualConversions
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean = true
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = true
 }

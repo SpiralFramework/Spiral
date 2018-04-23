@@ -12,15 +12,15 @@ object SpiralTextFormat : SpiralFormat {
     override val extension = "stxt"
     override val conversions: Array<SpiralFormat> = arrayOf(LINFormat)
 
-    override fun isFormat(game: DRGame?, name: String?, dataSource: () -> InputStream): Boolean {
+    override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
 //        val data = dataSource().use { stream -> stream.readBytes() }
 //
 //        return !SpiralDrill.stxtRunner.run(String(data, Charsets.UTF_8)).hasErrors()
         return false
     }
 
-    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, dataSource, output, params)) return true
+    override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
+        if(super.convert(game, format, name, context, dataSource, output, params)) return true
         TODO("This doesn't work at the moment, but it will soon; stay tuned")
 
 //        val data = dataSource().use { stream -> stream.readBytes() }
