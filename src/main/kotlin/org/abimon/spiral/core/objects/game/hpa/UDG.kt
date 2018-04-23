@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.game.hpa
 
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
+import org.abimon.spiral.core.objects.scripting.lin.TextCountEntry
 import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.lin.udg.UDGTextEntry
 import org.abimon.spiral.core.utils.OpCodeHashMap
@@ -13,6 +14,7 @@ object UDG: HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> = emptyMap() //Probably never gonna get this huh
     override val opCodes: OpCodeMap<IntArray, LinScript> =
             OpCodeHashMap<IntArray, LinScript>().apply {
+                this[0x00] = "Text Count" to 2 and ::TextCountEntry
                 this[0x01] = "Text" to 2 and ::UDGTextEntry
                 this[0x05] = "Movie" to 3 and ::UnknownEntry
                 this[0x08] = arrayOf("Music", "BGM") to 3 and ::UnknownEntry
