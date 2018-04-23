@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.ScreenFadeEntry
 import org.parboiled.Rule
@@ -64,6 +66,10 @@ object LinScreenFadeDrill : DrillHead<LinScript> {
         val colour = rawParams[1].toString().toIntOrNull() ?: 1
         val frameCount = rawParams[2].toString().toIntOrNull() ?: 60
 
-        return ScreenFadeEntry(fadeIn, colour, frameCount)
+        return when(parser.game) {
+            DR1 -> ScreenFadeEntry(fadeIn, colour, frameCount)
+            DR2 -> ScreenFadeEntry(fadeIn, colour, frameCount)
+            else -> TODO("Screen Fades are not documented for ${parser.game}")
+        }
     }
 }

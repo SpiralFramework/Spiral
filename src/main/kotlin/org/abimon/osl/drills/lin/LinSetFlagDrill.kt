@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.SetFlagEntry
 import org.parboiled.Rule
@@ -39,6 +41,10 @@ object LinSetFlagDrill : DrillHead<LinScript> {
 
         val value = rawParams[2].toString().toIntOrNull() ?: 0
 
-        return SetFlagEntry(group, flagID, value)
+        return when(parser.game) {
+            DR1 -> SetFlagEntry(group, flagID, value)
+            DR2 -> SetFlagEntry(group, flagID, value)
+            else -> TODO("Flag Sets are not documented for ${parser.game}")
+        }
     }
 }

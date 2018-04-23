@@ -91,17 +91,24 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull()
                     ?: 0)))
-        return arrayOf(
-                ChoiceEntry(18),
-                ChoiceEntry(19),
-                TextEntry(rawParams[0].toString(), -1),
-                when (parser.game) {
-                    DR1 -> WaitFrameEntry.DR1
-                    DR2 -> WaitFrameEntry.DR2
-                    else -> TODO("Unknown game ${parser.game} (Text hasn't been completely documented!)")
-                },
-                ChoiceEntry(255),
-                SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull() ?: 0))
-        )
+        return when (parser.game) {
+            DR1 -> arrayOf(
+                    ChoiceEntry(18),
+                    ChoiceEntry(19),
+                    TextEntry(rawParams[0].toString(), -1),
+                    WaitFrameEntry.DR1,
+                    ChoiceEntry(255),
+                    SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull() ?: 0))
+            )
+            DR2 -> arrayOf(
+                    ChoiceEntry(18),
+                    ChoiceEntry(19),
+                    TextEntry(rawParams[0].toString(), -1),
+                    WaitFrameEntry.DR1,
+                    ChoiceEntry(255),
+                    SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull() ?: 0))
+            )
+            else -> TODO("Choices are not documented for ${parser.game}")
+        }
     }
 }

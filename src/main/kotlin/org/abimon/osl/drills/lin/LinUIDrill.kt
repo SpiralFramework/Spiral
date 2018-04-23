@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.ChangeUIEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Rule
@@ -79,6 +81,10 @@ object LinUIDrill : DrillHead<LinScript> {
         else
             uiState = uiStateStr.toIntOrNull() ?: 0
 
-        return ChangeUIEntry(uiElements[uiElement] ?: uiElement.toIntOrNull() ?: 0, uiState)
+        return when(parser.game) {
+            DR1 -> ChangeUIEntry(uiElements[uiElement] ?: uiElement.toIntOrNull() ?: 0, uiState)
+            DR2 -> ChangeUIEntry(uiElements[uiElement] ?: uiElement.toIntOrNull() ?: 0, uiState)
+            else -> TODO("UI Changes are not documented for ${parser.game}")
+        }
     }
 }

@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.ScreenFlashEntry
 import org.parboiled.Rule
@@ -68,6 +70,10 @@ object LinScreenFlashDrill : DrillHead<LinScript> {
         val fadeOutOver = rawParams[5].toString().toIntOrNull() ?: 0
         val opacity = rawParams[6].toString().toIntOrNull() ?: 0
 
-        return ScreenFlashEntry(r, g, b, fadeInOver, holdFor, fadeOutOver, opacity)
+        return when(parser.game) {
+            DR1 -> ScreenFlashEntry(r, g, b, fadeInOver, holdFor, fadeOutOver, opacity)
+            DR2 -> ScreenFlashEntry(r, g, b, fadeInOver, holdFor, fadeOutOver, opacity)
+            else -> TODO("Screen Flashes are not documented for ${parser.game}")
+        }
     }
 }

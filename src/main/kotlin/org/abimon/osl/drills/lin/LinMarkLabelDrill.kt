@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.SetLabelEntry
 import org.parboiled.Rule
@@ -32,6 +34,11 @@ object LinMarkLabelDrill : DrillHead<LinScript> {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return SetLabelEntry((first shl 8) or second)
+        return when(parser.game) {
+            DR1 -> SetLabelEntry((first shl 8) or second)
+            DR2 -> SetLabelEntry((first shl 8) or second)
+
+            else -> TODO("Label Marking is not documented for ${parser.game}")
+        }
     }
 }

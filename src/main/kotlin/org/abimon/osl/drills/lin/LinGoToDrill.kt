@@ -2,6 +2,8 @@ package org.abimon.osl.drills.lin
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.GoToLabelEntry
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Rule
@@ -31,6 +33,10 @@ object LinGoToDrill : DrillHead<LinScript> {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return GoToLabelEntry((first shl 8) or second)
+        return when(parser.game) {
+            DR1 -> GoToLabelEntry((first shl 8) or second)
+            DR2 -> GoToLabelEntry((first shl 8) or second)
+            else -> TODO("Label Goto's are not documented in ${parser.game}")
+        }
     }
 }

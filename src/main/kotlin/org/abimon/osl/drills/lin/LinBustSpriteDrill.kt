@@ -3,6 +3,8 @@ package org.abimon.osl.drills.lin
 import org.abimon.osl.AllButMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
@@ -75,6 +77,10 @@ object LinBustSpriteDrill : DrillHead<LinScript> {
                 ?: UnknownHopesPeakGame).characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
         val sprite = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return SpriteEntry(0, character, sprite, 1, 2)
+        return when(parser.game) {
+            DR1 -> SpriteEntry(0, character, sprite, 1, 2)
+            DR2 -> SpriteEntry(0, character, sprite, 1, 2)
+            else -> TODO("Bust Sprites haven't been documented for ${parser.game}")
+        }
     }
 }

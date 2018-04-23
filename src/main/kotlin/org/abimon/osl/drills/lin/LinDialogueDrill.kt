@@ -40,29 +40,32 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
         val game = parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame
-        return arrayOf(
-                SpeakerEntry(
-                        parser.customIdentifiers["${rawParams[0]}"]
-                                ?: game.characterIdentifiers["${rawParams[0]}"]
-                                ?: parser.customIdentifiers["???"]
-                                ?: game.characterIdentifiers["???"]
-                                ?: 0
-                ), //Replace with valid naming or numbers or whatever
-                TextEntry("${rawParams[1]}", -1),
-                game.run {
-                    when (this) {
-                        DR1 -> WaitFrameEntry.DR1
-                        DR2 -> WaitFrameEntry.DR2
-                        else -> TODO("Unknown game $game (Text hasn't been completely documented!)")
-                    }
-                },
-                game.run {
-                    when (this) {
-                        DR1 -> WaitForInputEntry.DR1
-                        DR2 -> WaitForInputEntry.DR2
-                        else -> TODO("Unknown game $game (Text hasn't been completely documented!)")
-                    }
-                }
-        )
+        return when(game) {
+            DR1 -> arrayOf(
+                    SpeakerEntry(
+                            parser.customIdentifiers["${rawParams[0]}"]
+                                    ?: game.characterIdentifiers["${rawParams[0]}"]
+                                    ?: parser.customIdentifiers["???"]
+                                    ?: game.characterIdentifiers["???"]
+                                    ?: 0
+                    ), //Replace with valid naming or numbers or whatever
+                    TextEntry("${rawParams[1]}", -1),
+                    WaitFrameEntry.DR1,
+                    WaitForInputEntry.DR1
+            )
+            DR2 -> arrayOf(
+                    SpeakerEntry(
+                            parser.customIdentifiers["${rawParams[0]}"]
+                                    ?: game.characterIdentifiers["${rawParams[0]}"]
+                                    ?: parser.customIdentifiers["???"]
+                                    ?: game.characterIdentifiers["???"]
+                                    ?: 0
+                    ), //Replace with valid naming or numbers or whatever
+                    TextEntry("${rawParams[1]}", -1),
+                    WaitFrameEntry.DR1,
+                    WaitForInputEntry.DR1
+            )
+            else -> TODO("Dialogue is not documented for $game")
+        }
     }
 }
