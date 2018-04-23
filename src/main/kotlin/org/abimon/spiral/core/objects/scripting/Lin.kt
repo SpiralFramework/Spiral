@@ -117,30 +117,35 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
             assertAsArgument(stream.streamOffset == textBlock.toLong(), "Illegal stream offset in Lin File (Was ${stream.streamOffset}, expected to be at $textBlock)")
 
-            textLines = stream.readInt32LE()
-            val textPositions = IntArray(textLines + 1) { stream.readInt32LE() }
-            if(textPositions[textLines] == 0)
-                textPositions[textLines] = this.size - this.textBlock
+            val textLineCount = stream.readInt32LE()
+            if (textBlock == size || textLineCount == -1) {
+                textLines = 0
+            } else {
+                textLines = textLineCount
+                val textPositions = IntArray(textLines + 1) { stream.readInt32LE() }
+                if (textPositions[textLines] == 0)
+                    textPositions[textLines] = this.size - this.textBlock
 
-            val textEntries = entries.filterIsInstance(LinTextScript::class.java)
+                val textEntries = entries.filterIsInstance(LinTextScript::class.java)
 
-            for (textID in 0 until textLines) {
-                val size = textPositions[textID + 1] - textPositions[textID] - 2
-                if (size <= 0) {
-                    //System.err.println("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
-                    continue
-                }
+                for (textID in 0 until textLines) {
+                    val size = textPositions[textID + 1] - textPositions[textID] - 2
+                    if (size <= 0) {
+                        //System.err.println("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
+                        continue
+                    }
 
-                val line = ByteArray(size)
-                stream.read(line)
-                stream.readInt16LE() //Strings *are* zero terminated
-                val textEntry = textEntries.firstOrNull { textEntry -> textEntry.textID == textID }
-                val bom = if(line.size < 2) 0 else (((line[0].toInt() and 0xFF) shl 8) or (line[1].toInt() and 0xFF))
+                    val line = ByteArray(size)
+                    stream.read(line)
+                    stream.readInt16LE() //Strings *are* zero terminated
+                    val textEntry = textEntries.firstOrNull { textEntry -> textEntry.textID == textID }
+                    val bom = if (line.size < 2) 0 else (((line[0].toInt() and 0xFF) shl 8) or (line[1].toInt() and 0xFF))
 
-                when (bom) {
-                    BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
-                    BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
-                    else -> textEntry?.text = String(line, Charsets.UTF_16LE).trimEnd(NULL_TERMINATOR) //May need to do a when clause later
+                    when (bom) {
+                        BOM_BE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
+                        BOM_LE -> textEntry?.text = String(line, Charsets.UTF_16).trimEnd(NULL_TERMINATOR)
+                        else -> textEntry?.text = String(line, Charsets.UTF_16LE).trimEnd(NULL_TERMINATOR) //May need to do a when clause later
+                    }
                 }
             }
 
