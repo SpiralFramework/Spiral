@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.game.hpa
 
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
+import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.lin.udg.UDGTextEntry
 import org.abimon.spiral.core.utils.OpCodeHashMap
 import org.abimon.spiral.core.utils.OpCodeMap
@@ -13,6 +14,8 @@ object UDG: HopesPeakDRGame {
     override val opCodes: OpCodeMap<IntArray, LinScript> =
             OpCodeHashMap<IntArray, LinScript>().apply {
                 this[0x01] = "Text" to 2 and ::UDGTextEntry
+                this[0x05] = "Movie" to 3 and ::UnknownEntry
+                this[0x08] = arrayOf("Music", "BGM") to 3 and ::UnknownEntry
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
