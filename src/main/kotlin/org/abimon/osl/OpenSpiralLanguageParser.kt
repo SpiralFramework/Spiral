@@ -339,7 +339,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     FirstOf(
                                             Sequence(
                                                     '&',
-                                                    FirstOf(COLOUR_CODES.keys.toTypedArray()),
+                                                    FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                     Action<Any> { push(match()) },
                                                     Action<Any> { context ->
                                                         val colour = pop().toString()
@@ -353,7 +353,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             ),
                                             Sequence(
                                                     '#',
-                                                    FirstOf(HEX_CODES.keys.toTypedArray()),
+                                                    FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                     Action<Any> { push(match()) },
                                                     Action<Any> { context ->
                                                         val colour = pop().toString()
@@ -373,7 +373,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             Sequence(
                                                     '&',
                                                     '{',
-                                                    FirstOf(COLOUR_CODES.keys.toTypedArray()),
+                                                    FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                     Action<Any> { push(match()) },
                                                     '}',
                                                     Whitespace(),
@@ -390,7 +390,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             Sequence(
                                                     '#',
                                                     '{',
-                                                    FirstOf(HEX_CODES.keys.toTypedArray()),
+                                                    FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                     Action<Any> { push(match()) },
                                                     '}',
                                                     Whitespace(),
