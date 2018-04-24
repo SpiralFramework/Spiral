@@ -19,6 +19,7 @@ object UDG: HopesPeakDRGame {
                 this[0x05] = "Movie" to 3 and ::UnknownEntry
                 this[0x07] = "Voice Line" to 5 and ::UnknownEntry
                 this[0x08] = arrayOf("Music", "BGM") to 3 and ::UnknownEntry
+                this[0x0C] = "Wait For Input" to 0 and ::UnknownEntry
                 this[0x12] = "Sprite" to 5 and ::UnknownEntry
                 this[0x13] = "Screen Flash" to 7 and ::UnknownEntry
                 this[0x15] = "Speaker" to 1 and ::UnknownEntry
