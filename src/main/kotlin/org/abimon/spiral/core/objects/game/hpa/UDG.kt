@@ -17,7 +17,16 @@ object UDG: HopesPeakDRGame {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
                 this[0x01] = "Text" to 2 and ::UDGTextEntry
                 this[0x05] = "Movie" to 3 and ::UnknownEntry
+                this[0x07] = "Voice Line" to 5 and ::UnknownEntry
                 this[0x08] = arrayOf("Music", "BGM") to 3 and ::UnknownEntry
+                this[0x12] = "Sprite" to 5 and ::UnknownEntry
+                this[0x13] = "Screen Flash" to 7 and ::UnknownEntry
+                this[0x15] = "Speaker" to 1 and ::UnknownEntry
+
+                this[0x18] = "Fade Out" to 2 and ::UnknownEntry
+                this[0x1B] = "Fade In" to 2 and ::UnknownEntry
+//                this[0x30] = "Set Flag" to 8 and ::UnknownEntry
+
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
