@@ -26,7 +26,7 @@ object UDG: HopesPeakDRGame {
                 this[0x1B] = "Fade In" to 2 and ::UnknownEntry
 //                this[0x30] = "Set Flag" to 8 and ::UnknownEntry
 
-                val udgOpCodes = File("udg.json")
+                val udgOpCodes = File("udg-ops.json")
 
                 if (udgOpCodes.exists()) {
 
