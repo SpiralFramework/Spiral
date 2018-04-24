@@ -2,10 +2,7 @@ package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.core.objects.game.hpa.DR1
-import org.abimon.spiral.core.objects.game.hpa.DR2
-import org.abimon.spiral.core.objects.game.hpa.UDG
-import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
+import org.abimon.spiral.core.objects.game.hpa.*
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.spiral.mvc.SpiralModel.Command
@@ -144,7 +141,7 @@ object GurrenUtils {
         val debateMap: MutableMap<String, Any> = HashMap()
 
         debateMap["duration"] = nonstop.secondsForDebate
-        debateMap["sections"] = nonstop.sections.map { section -> section.data.mapIndexed { index, data -> (if(index in SpiralData.nonstopOpCodes) SpiralData.nonstopOpCodes[index] else "0x${index.toString(16)}") to data }.toMap() }
+        debateMap["sections"] = nonstop.sections.map { section -> section.data.mapIndexed { index, data -> (if (index in SpiralData.nonstopOpCodes) SpiralData.nonstopOpCodes[index] else "0x${index.toString(16)}") to data }.toMap() }
 
         SpiralData.YAML_MAPPER.writeValue(nonstopOutput, debateMap)
     }
@@ -315,6 +312,12 @@ object GurrenUtils {
 
             ImageIO.write(img, "PNG", File(dir, "model-mesh.png"))
         }
+    }
+
+    val opCodes = Command("op_codes") {
+        println((Gurren.game as? HopesPeakDRGame)?.opCodes?.entries?.sortedBy { (key) -> key }?.joinToString("\n") { (key, value) ->
+            return@joinToString "[0x${key.toString(16)}] {${value.first.joinToString()}}, {${value.second}}"
+        })
     }
 
     fun BufferedImage.antialias(): BufferedImage {
