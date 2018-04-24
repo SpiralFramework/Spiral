@@ -8,6 +8,8 @@ import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
 import org.abimon.osl.drills.wrd.WordCommandDrill
 import org.abimon.osl.drills.wrd.WordStringDrill
 import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.spiral.core.objects.game.hpa.DR1
+import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.game.v3.V3
@@ -64,7 +66,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     fun loadState(context: Context<Any>) {
-        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, valueStackSnapshot) = (states.remove(context.level) ?: return)
+        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, valueStackSnapshot) = (states.remove(context.level)
+                ?: return)
 
         this.silence = stateSilence
         this.game = stateGame
@@ -250,43 +253,59 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     val COLOUR_CODES = mapOf(
-            "white_big" to 9,
-            "white" to 0,
-            "pink" to 1,
-            "purple" to 2,
-            "yellow" to 3,
-            "blue_glow" to 23,
-            "blue" to 4,
-            "grey" to 5,
-            "gray" to 5,
-            "green" to 6,
-            "red_big" to 11,
-            "red" to 10,
-            "cyan" to 24,
-            "salmon" to 33,
-            "slightly_darker_blue" to 34,
+            DR1 to mapOf(
+                    "pink" to 1,
+                    "purple" to 2,
+                    "yellow" to 3,
+                    "blue" to 4,
+                    "grey" to 7,
+                    "gray" to 7,
+                    "orange" to 9,
+                    "turquoise" to 10,
+                    "salmon" to 11,
+                    "green" to 23
+            ),
+            DR2 to mapOf(
+                    "white_big" to 9,
+                    "white" to 0,
+                    "pink" to 1,
+                    "purple" to 2,
+                    "yellow" to 3,
+                    "blue_glow" to 23,
+                    "blue" to 4,
+                    "grey" to 5,
+                    "gray" to 5,
+                    "green" to 6,
+                    "red_big" to 11,
+                    "red" to 10,
+                    "cyan" to 24,
+                    "salmon" to 33,
+                    "slightly_darker_blue" to 34,
 
-            "break" to 17,
-            "noise" to 20,
-            "consent" to 69
+                    "break" to 17,
+                    "noise" to 20,
+                    "consent" to 69
+            )
     )
 
     val HEX_CODES = mapOf(
-            "FFFFFF" to 0,
-            "B766F4" to 1,
-            "5C1598" to 2,
-            "DEAB00" to 3,
-            "54E1FF" to 4,
-            "383838" to 5,
-            "52FF13" to 6,
-            "FE0008" to 10,
-            "1A51E8" to 11,
-            "FF6A6E" to 33,
-            "6DCAFF" to 34,
-            "252525" to 45,
-            "3F3F3F" to 47,
-            "585858" to 48,
-            "FF9900" to 61
+            DR2 to mapOf(
+                    "FFFFFF" to 0,
+                    "B766F4" to 1,
+                    "5C1598" to 2,
+                    "DEAB00" to 3,
+                    "54E1FF" to 4,
+                    "383838" to 5,
+                    "52FF13" to 6,
+                    "FE0008" to 10,
+                    "1A51E8" to 11,
+                    "FF6A6E" to 33,
+                    "6DCAFF" to 34,
+                    "252525" to 45,
+                    "3F3F3F" to 47,
+                    "585858" to 48,
+                    "FF9900" to 61
+            )
     )
 
     open fun LinText(cmd: String, vararg allBut: Char): Rule =
@@ -325,7 +344,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                         val text = pop().toString()
 
                                                         pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game] ?: emptyMap())[colour]
                                                                 ?: 0}>").run(context)
                                                         return@Action true
                                                     }
@@ -339,7 +358,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                         val text = pop().toString()
 
                                                         pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game] ?: emptyMap())[colour]
                                                                 ?: 0}>").run(context)
                                                         return@Action true
                                                     }
@@ -361,7 +380,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                         val text = pop().toString()
 
                                                         pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${COLOUR_CODES[colour]
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game] ?: emptyMap())[colour]
                                                                 ?: 0}>").run(context)
                                                         return@Action true
                                                     }
@@ -378,7 +397,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                         val text = pop().toString()
 
                                                         pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${HEX_CODES[colour]
+                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game] ?: emptyMap())[colour]
                                                                 ?: 0}>").run(context)
                                                         return@Action true
                                                     }
