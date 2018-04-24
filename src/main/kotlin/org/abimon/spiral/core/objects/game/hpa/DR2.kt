@@ -6,6 +6,7 @@ import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2LoadScriptEntry
 import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2RunScriptEntry
 import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2TrialCameraEntry
 import org.abimon.spiral.core.utils.*
+import java.io.File
 import java.util.*
 
 object DR2 : HopesPeakDRGame {
@@ -85,6 +86,21 @@ object DR2 : HopesPeakDRGame {
                 this[0x3C] = "End Flag Check" to 0 and DR2::EndFlagCheckEntry
                 this[0x4B] = "Wait For Input" to 0 and ::WaitForInputEntry
                 this[0x4C] = "Wait Frame" to 0 and ::WaitFrameEntry
+
+                val opCodes = File("dr2-ops.json")
+
+                if (opCodes.exists()) {
+
+                    DataMapper.fileToMap(opCodes)?.forEach { opName, params ->
+                        val array = (params as? Array<*>)?.mapNotNull { any ->
+                            val str = any.toString()
+                            if (str.startsWith("0x"))
+                                return@mapNotNull str.substring(2).toIntOrNull(16)
+                            return@mapNotNull str.toIntOrNull()
+                        } ?: return@forEach
+                        this[array[0]] = opName to array[1] and ::UnknownEntry
+                    }
+                }
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =

@@ -4,10 +4,8 @@ import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
 import org.abimon.spiral.core.objects.scripting.wrd.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
-import org.abimon.spiral.core.utils.OpCodeHashMap
-import org.abimon.spiral.core.utils.OpCodeMap
-import org.abimon.spiral.core.utils.and
-import org.abimon.spiral.core.utils.set
+import org.abimon.spiral.core.utils.*
+import java.io.File
 
 object V3 : DRGame {
     val opCodes: OpCodeMap<IntArray, WrdScript> =
@@ -97,6 +95,21 @@ object V3 : DRGame {
                 this[0x51] = null to -1 and ::UnknownEntry
                 this[0x52] = null to -1 and ::UnknownEntry
                 this[0x53] = "Speaker" to 2 and ::UnknownEntry
+
+                val opCodes = File("v3-ops.json")
+
+                if (opCodes.exists()) {
+
+                    DataMapper.fileToMap(opCodes)?.forEach { opName, params ->
+                        val array = (params as? Array<*>)?.mapNotNull { any ->
+                            val str = any.toString()
+                            if (str.startsWith("0x"))
+                                return@mapNotNull str.substring(2).toIntOrNull(16)
+                            return@mapNotNull str.toIntOrNull()
+                        } ?: return@forEach
+                        this[array[0]] = opName to array[1] and ::UnknownEntry
+                    }
+                }
             }
 
     val opCodeCommandEntries: Map<Int, EnumWordScriptCommand> =
