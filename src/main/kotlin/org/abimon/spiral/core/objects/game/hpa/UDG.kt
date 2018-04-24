@@ -4,10 +4,8 @@ import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.TextCountEntry
 import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.objects.scripting.lin.udg.UDGTextEntry
-import org.abimon.spiral.core.utils.OpCodeHashMap
-import org.abimon.spiral.core.utils.OpCodeMap
-import org.abimon.spiral.core.utils.and
-import org.abimon.spiral.core.utils.set
+import org.abimon.spiral.core.utils.*
+import java.io.File
 import java.util.*
 
 object UDG: HopesPeakDRGame {
@@ -28,6 +26,20 @@ object UDG: HopesPeakDRGame {
                 this[0x1B] = "Fade In" to 2 and ::UnknownEntry
 //                this[0x30] = "Set Flag" to 8 and ::UnknownEntry
 
+                val udgOpCodes = File("udg.json")
+
+                if (udgOpCodes.exists()) {
+
+                    DataMapper.fileToMap(udgOpCodes)?.forEach { opName, params ->
+                        val array = (params as? Array<*>)?.mapNotNull { any ->
+                            val str = any.toString()
+                            if (str.startsWith("0x"))
+                                return@mapNotNull str.substring(2).toIntOrNull(16)
+                            return@mapNotNull str.toIntOrNull()
+                        } ?: return@forEach
+                        this[array[0]] = opName to array[1] and ::UnknownEntry
+                    }
+                }
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =
