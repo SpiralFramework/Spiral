@@ -263,7 +263,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     "orange" to 9,
                     "turquoise" to 10,
                     "salmon" to 11,
-                    "green" to 23
+                    "green" to 23,
+                    "small_grey" to 24,
+                    "small_gray" to 24
             ),
             DR2 to mapOf(
                     "white_big" to 9,
