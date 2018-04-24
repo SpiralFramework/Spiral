@@ -101,7 +101,7 @@ object V3 : DRGame {
                 if (opCodes.exists()) {
 
                     DataMapper.fileToMap(opCodes)?.forEach { opName, params ->
-                        val array = (params as? Array<*>)?.mapNotNull { any ->
+                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
                             val str = any.toString()
                             if (str.startsWith("0x"))
                                 return@mapNotNull str.substring(2).toIntOrNull(16)
