@@ -38,9 +38,12 @@ object AddNameAliasDrill : DrillCircuit {
 
         val id: Int
         when (rawParams[1]) {
-            is Int -> id = rawParams[2] as Int
+            is Int -> id = rawParams[1] as Int
             else -> {
-                if (parser.game is HopesPeakDRGame)
+                val intID = (rawParams[1].toString()).toIntOrNull()
+                if(intID != null)
+                    id = intID
+                else if (parser.game is HopesPeakDRGame)
                     id = (parser.game as? HopesPeakDRGame
                             ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
                 else
