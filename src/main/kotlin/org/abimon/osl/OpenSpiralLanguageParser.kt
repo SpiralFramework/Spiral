@@ -19,6 +19,7 @@ import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.ParsingResult
+import java.io.File
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
@@ -32,6 +33,17 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     var game: DRGame = UnknownHopesPeakGame
     var strictParsing: Boolean = true
+
+    var localiser: (String) -> String = String::toString
+
+    var localisationFile: File?
+        get() = null
+        set(file) {
+            localiser = { unlocalised ->
+                file?.useLines { lines -> lines.firstOrNull { localised -> localised.startsWith("$unlocalised=") }?.substringAfter("$unlocalised=")?.replace("\\n", "\n") }
+                        ?: unlocalised
+            }
+        }
 
     val customIdentifiers = HashMap<String, Int>()
     val customFlagNames = HashMap<String, Int>()
@@ -50,8 +62,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val startingData = HashMap<String, Any>()
 
     val uuid = UUID.randomUUID().toString()
-    var labels = 0
+    val labels: MutableList<Int> = LinkedList()
     var flagCheckIndentation = 0
+
+    fun findLabel(): Int {
+        var labelID = (0xFF * 0xFF) - 1
+
+        while (labelID in labels)
+            labelID--
+
+        labels.add(labelID)
+        return labelID
+    }
 
     operator fun get(key: String): Any? = data[key]
     operator fun <T : Any> get(key: String, clazz: KClass<T>): T? = clazz.safeCast(data[key])
@@ -65,8 +87,50 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         return data.put(key, value)
     }
 
+    fun loadParserState(state: ParserState) {
+        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, labels) = state
+
+        this.silence = stateSilence
+        this.game = stateGame
+        this.strictParsing = stateStrictParsing
+
+        this.customIdentifiers.clear()
+        this.customIdentifiers.putAll(stateCustomIdentifiers)
+
+        this.customFlagNames.clear()
+        this.customFlagNames.putAll(stateCustomFlagNames)
+
+        this.customLabelNames.clear()
+        this.customLabelNames.putAll(stateCustomLabelNames)
+
+        this.flags.clear()
+        this.flags.putAll(stateFlags)
+
+        this.data.clear()
+        this.data.putAll(stateData)
+
+        this.labels.clear()
+        this.labels.addAll(labels)
+    }
+
+    fun saveParserState(): ParserState = ParserState(
+            this.silence,
+            this.game,
+            this.strictParsing,
+
+            this.customIdentifiers.entries.toTypedArray(),
+            this.customFlagNames.entries.toTypedArray(),
+            this.customLabelNames.entries.toTypedArray(),
+            this.flags.entries.toTypedArray(),
+            this.data.entries.toTypedArray(),
+
+            this.labels.toTypedArray(),
+
+            null
+    )
+
     fun loadState(context: Context<Any>) {
-        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, valueStackSnapshot) = (states.remove(context.level)
+        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, labels, valueStackSnapshot) = (states.remove(context.level)
                 ?: return)
 
         this.silence = stateSilence
@@ -88,6 +152,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         this.data.clear()
         this.data.putAll(stateData)
 
+        this.labels.clear()
+        this.labels.addAll(labels)
+
         context.valueStack.restoreSnapshot(valueStackSnapshot)
     }
 
@@ -102,6 +169,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 this.customLabelNames.entries.toTypedArray(),
                 this.flags.entries.toTypedArray(),
                 this.data.entries.toTypedArray(),
+
+                this.labels.toTypedArray(),
 
                 context.valueStack.takeSnapshot()
         )
@@ -206,13 +275,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinHideSpriteDrill,
                             LinUIDrill,
                             LinIfDrill,
+                            LinIfGameStateDrill,
+                            LinIfRandDrill,
                             LinChoicesDrill,
                             LinMarkLabelDrill,
                             LinGoToDrill,
                             LinSetFlagDrill,
 
                             LinScreenFadeDrill,
-                            LinScreenFlashDrill
+                            LinScreenFlashDrill,
+
+                            LinArithmeticGameState,
+                            LinRandChoicesDrill
                     )
             )
 
@@ -244,10 +318,10 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     fun copy(): OpenSpiralLanguageParser {
         val copy = OpenSpiralLanguageParser(oslContext)
+        val state = saveParserState()
 
-        copy.game = game
-        copy.customIdentifiers.putAll(customIdentifiers)
-        copy.flags.putAll(flags)
+        copy.localiser = localiser
+        copy.loadParserState(state)
 
         return copy
     }
@@ -311,111 +385,160 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     open fun LinText(cmd: String, vararg allBut: Char): Rule =
-            Sequence(
-                    clearTmpStack("LIN-TEXT-$cmd"),
-                    OneOrMore(FirstOf(
-                            Sequence(
-                                    RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
-                                    '\\',
-                                    FirstOf('&', '#'),
-                                    Action<Any> { context ->
-                                        pushTmpAction("LIN-TEXT-$cmd", "${pop()}&").run(context)
-                                        return@Action true
-                                    }
-                            ),
-                            Sequence(
-                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
-                                    "&clear",
-                                    Action<Any> { context ->
-                                        val text = pop().toString()
+            FirstOf(
+                    Sequence(
+                            clearTmpStack("LIN-TEXT-$cmd"),
+                            "local.",
+                            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
+                            Action<Any> { context ->
+                                val localString = localiser(pop().toString())
+                                val parserCopy = copy()
+                                val stack = parserCopy.parse("OSL Script\nText|$localString").valueStack
 
-                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT>").run(context)
-                                        return@Action true
-                                    }
-                            ),
-                            Sequence(
-                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
-                                    FirstOf(
-                                            Sequence(
-                                                    '&',
-                                                    FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
-                                                    Action<Any> { push(match()) },
-                                                    Action<Any> { context ->
-                                                        val colour = pop().toString()
-                                                        val text = pop().toString()
+                                if (stack.isEmpty) {
+                                    pushTmp("LIN-TEXT-$cmd", localString)
+                                    return@Action true
+                                }
 
-                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game] ?: emptyMap())[colour]
-                                                                ?: 0}>").run(context)
-                                                        return@Action true
-                                                    }
-                                            ),
-                                            Sequence(
-                                                    '#',
-                                                    FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
-                                                    Action<Any> { push(match()) },
-                                                    Action<Any> { context ->
-                                                        val colour = pop().toString()
-                                                        val text = pop().toString()
+                                val value = stack.pop()
 
-                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game] ?: emptyMap())[colour]
-                                                                ?: 0}>").run(context)
-                                                        return@Action true
-                                                    }
+                                if (value is List<*>) {
+                                    val text = value[1].toString()
+                                    pushTmp("LIN-TEXT-$cmd", text)
+                                } else {
+                                    pushTmp("LIN-TEXT-$cmd", localString)
+                                }
+
+                                return@Action true
+                            },
+                            operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
+                                if (!tmpStack.containsKey(cmd))
+                                    tmpStack[cmd] = LinkedList()
+                                tmpStack[cmd]!!.push(stack.joinToString(""))
+                            }
+                    ),
+                    Sequence(
+                            clearTmpStack("LIN-TEXT-$cmd"),
+                            OneOrMore(FirstOf(
+                                    Sequence(
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
+                                            '\\',
+                                            FirstOf('&', '#'),
+                                            Action<Any> { context ->
+                                                pushTmpAction("LIN-TEXT-$cmd", "${pop()}&").run(context)
+                                                return@Action true
+                                            }
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            "&clear",
+                                            Action<Any> { context ->
+                                                val text = pop().toString()
+
+                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT>").run(context)
+                                                return@Action true
+                                            }
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            FirstOf(
+                                                    Sequence(
+                                                            '&',
+                                                            FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: 0}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    ),
+                                                    Sequence(
+                                                            '#',
+                                                            FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: 0}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    )
                                             )
-                                    )
-                            ),
-                            Sequence(
-                                    RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
-                                    FirstOf(
-                                            Sequence(
-                                                    '&',
-                                                    '{',
-                                                    FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
-                                                    Action<Any> { push(match()) },
-                                                    '}',
-                                                    Whitespace(),
-                                                    Action<Any> { context ->
-                                                        val colour = pop().toString()
-                                                        val text = pop().toString()
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            FirstOf(
+                                                    Sequence(
+                                                            '&',
+                                                            "{clear}",
+                                                            Whitespace(),
+                                                            Action<Any> { context ->
+                                                                val text = pop().toString()
 
-                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game] ?: emptyMap())[colour]
-                                                                ?: 0}>").run(context)
-                                                        return@Action true
-                                                    }
-                                            ),
-                                            Sequence(
-                                                    '#',
-                                                    '{',
-                                                    FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
-                                                    Action<Any> { push(match()) },
-                                                    '}',
-                                                    Whitespace(),
-                                                    Action<Any> { context ->
-                                                        val colour = pop().toString()
-                                                        val text = pop().toString()
+                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    ),
+                                                    Sequence(
+                                                            '&',
+                                                            '{',
+                                                            FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            '}',
+                                                            Whitespace(),
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
 
-                                                        pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game] ?: emptyMap())[colour]
-                                                                ?: 0}>").run(context)
-                                                        return@Action true
-                                                    }
+                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(COLOUR_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: 0}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    ),
+                                                    Sequence(
+                                                            '#',
+                                                            '{',
+                                                            FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            '}',
+                                                            Whitespace(),
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(HEX_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: 0}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    )
                                             )
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
+                                            pushTmpFromStack("LIN-TEXT-$cmd")
                                     )
-                            ),
-                            Sequence(
-                                    RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
-                                    pushTmpFromStack("LIN-TEXT-$cmd")
-                            )
-                    )),
-                    operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
-                        if (!tmpStack.containsKey(cmd))
-                            tmpStack[cmd] = LinkedList()
-                        tmpStack[cmd]!!.push(stack.joinToString(""))
-                    }
+                            )),
+                            operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
+                                if (!tmpStack.containsKey(cmd))
+                                    tmpStack[cmd] = LinkedList()
+                                tmpStack[cmd]!!.push(stack.joinToString(""))
+                            }
+                    )
             )
 
     override fun Parameter(cmd: String): Rule = Sequence(
@@ -458,7 +581,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             ),
                             Sequence(
                                     '%',
-                                    OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))),
+                                    OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')))),
                                     Action<Any> { match() in data || match() == "GAME" }
                             )
                     ),
@@ -491,16 +614,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            OneOrMore(Digit()),
-                            Action<Any> { push(match()) },
+                            RuleWithVariables(OneOrMore(Digit())),
 
                             OptionalWhitespace(),
                             ',',
                             OptionalWhitespace(),
 
-                            OneOrMore(Digit()),
+                            RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
-                                val flagID = match()
+                                val flagID = pop()
                                 val groupID = pop()
 
                                 push(flagID)
@@ -508,9 +630,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            OneOrMore(Digit()),
+                            RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
-                                val id = match().toIntOrNull() ?: return@Action false
+                                val id = pop().toString().toIntOrNull() ?: return@Action false
 
                                 val group = id shr 8
                                 val flagID = id % 256
@@ -521,12 +643,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    open fun GameState(): Rule = RuleWithVariables(OneOrMore(Digit()))
+
     open fun FlagValue(): Rule =
             FirstOf(
-                    Sequence(
-                            OneOrMore(Digit()),
-                            pushToStack()
-                    ),
+                    RuleWithVariables(OneOrMore(Digit())),
                     Sequence(
                             "true",
                             pushToStack(1)
@@ -551,16 +672,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            OneOrMore(Digit()),
-                            Action<Any> { push(match()) },
+                            RuleWithVariables(OneOrMore(Digit())),
 
                             OptionalWhitespace(),
                             ',',
                             OptionalWhitespace(),
 
-                            OneOrMore(Digit()),
+                            RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
-                                val first = match()
+                                val first = pop()
                                 val second = pop()
 
                                 push(first)
@@ -568,9 +688,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            OneOrMore(Digit()),
+                            RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
-                                val id = match().toIntOrNull() ?: return@Action false
+                                val id = pop().toString().toIntOrNull() ?: return@Action false
 
                                 push(id % 256)
                                 push(id shr 8)

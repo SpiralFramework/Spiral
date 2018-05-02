@@ -115,6 +115,7 @@ object ForLoopDrill : DrillCircuit {
                                     val parser = this.copy()
                                     parser[variableName] = i
                                     val result = parser.parse("OSL Script\n${context.match}")
+
                                     if (!result.hasErrors()) {
                                         for (value in result.valueStack.reversed()) {
                                             if (value is List<*>) {
@@ -130,6 +131,9 @@ object ForLoopDrill : DrillCircuit {
                                                 }
                                             }
                                         }
+
+                                        labels.clear()
+                                        labels.addAll(parser.labels.toTypedArray())
                                     }
                                 }
 

@@ -12,7 +12,7 @@ import org.parboiled.BaseParser.NOTHING
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinIfDrill : DrillHead<Array<LinScript>> {
+object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
     object JOIN_BACK : DrillHead<Array<LinScript>> {
         override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
         override fun OpenSpiralLanguageParser.syntax(): Rule = NOTHING
@@ -58,20 +58,19 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
         }
     }
 
-    val cmd = "LIN-IF"
+    val cmd = "LIN-IF-GAME"
     override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "if",
+                    FirstOf("g-if", "game-if", "ifg", "if-g", "if-s", "ifs", "sif", "state-if", "if-state"),
                     OptionalWhitespace(),
                     "(",
                     OptionalWhitespace(),
-                    pushEmptyDrillHead(cmd, this@LinIfDrill),
+                    pushEmptyDrillHead(cmd, this@LinIfGameStateDrill),
 
-                    Flag(),
-                    pushTmpFromStack(cmd),
+                    GameState(),
                     pushTmpFromStack(cmd),
                     OptionalWhitespace(),
 
@@ -113,17 +112,16 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
         parser["FLAG_JUMP_BRANCH_FOR_$indent"] = jumpTo
         parser["FLAG_ELSE_BRANCH_FOR_$indent"] = jumpElse
 
-        val flagPartA = rawParams[0].toString().toIntOrNull() ?: 0
-        val flagPartB = rawParams[1].toString().toIntOrNull() ?: 0
+        val state = rawParams[0].toString().toIntOrNull() ?: 0
 
-        val operationName = rawParams[2].toString()
+        val operationName = rawParams[1].toString()
         val operation = EnumLinFlagCheck.values().first { enum -> operationName in enum.names }
 
-        val comparison = rawParams[3].toString().toIntOrNull() ?: 0
+        val comparison = rawParams[2].toString().toIntOrNull() ?: 0
 
         return when(parser.game) {
             DR1 -> arrayOf(
-                    CheckFlagAEntry(0x35, intArrayOf(flagPartA, flagPartB, operation.flag, comparison)),
+                    UnknownEntry(0x36, intArrayOf(0, state, operation.flag, 0, comparison)),
                     EndFlagCheckEntry(),
                     GoToLabelEntry(ifTrue),
                     GoToLabelEntry(jumpElse),
@@ -131,7 +129,7 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
                     SetLabelEntry(ifTrue)
             )
             DR2 -> arrayOf(
-                    CheckFlagAEntry(0x35, intArrayOf(flagPartA, flagPartB, operation.flag, comparison)),
+                    UnknownEntry(0x36, intArrayOf(0, state, operation.flag, 0, comparison)),
                     EndFlagCheckEntry(),
                     GoToLabelEntry(ifTrue),
                     GoToLabelEntry(jumpElse),

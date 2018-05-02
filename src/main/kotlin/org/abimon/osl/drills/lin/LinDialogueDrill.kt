@@ -31,8 +31,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                             pushTmpAction(cmd),
                             ':',
                             OptionalWhitespace(),
-                            LinText(cmd),
-                            pushTmpAction(cmd)
+                            LinText(cmd)
                     ),
 
                     pushStackWithHead(cmd)

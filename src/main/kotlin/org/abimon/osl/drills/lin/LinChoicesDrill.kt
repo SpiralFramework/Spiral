@@ -39,13 +39,18 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                             '{',
                             '\n',
                             Action<Any> {
-                                data["$cmd-LABEL"] = labels++
+                                data["$cmd-LABEL"] = findLabel()
                                 push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChangeUIEntry(18, 4)), "")))
                             },
                             OneOrMore(
                                     Sequence(
                                             OptionalWhitespace(),
                                             ParameterToStack(),
+                                            Optional(
+                                                    OptionalWhitespace(),
+                                                    "->",
+                                                    OptionalWhitespace()
+                                            ),
                                             Action<Any> {
                                                 val name = pop()
                                                 val currentChoice = data["$cmd-CHOICE"]?.toString()?.toIntOrNull() ?: 0
@@ -64,8 +69,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                             '\n',
                                             OpenSpiralLines(),
                                             Action<Any> {
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry((128 * 256) + (data["$cmd-LABEL"] as? Int
-                                                        ?: 0))), "")))
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry((data["$cmd-LABEL"] as Int))), "")))
                                             },
                                             '}',
                                             '\n',
@@ -75,7 +79,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                             '}',
 
                             Action<Any> {
-                                pushTmp(cmd, data["$cmd-LABEL"] as? Int ?: 0)
+                                pushTmp(cmd, data["$cmd-LABEL"] as Int)
 
                                 this["$cmd-CHOICE"] = null
                                 this["$cmd-LABEL"] = null
@@ -93,9 +97,9 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
+        val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
-            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull()
-                    ?: 0)))
+            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry(label))
         return when (parser.game) {
             DR1 -> arrayOf(
                     ChoiceEntry(18),
@@ -103,7 +107,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                     TextEntry(rawParams[0].toString(), -1),
                     WaitFrameEntry.DR1,
                     ChoiceEntry(255),
-                    SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull() ?: 0))
+                    SetLabelEntry(label)
             )
             DR2 -> arrayOf(
                     ChoiceEntry(18),
@@ -111,7 +115,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                     TextEntry(rawParams[0].toString(), -1),
                     WaitFrameEntry.DR1,
                     ChoiceEntry(255),
-                    SetLabelEntry((128 * 256) + (rawParams[1].toString().toIntOrNull() ?: 0))
+                    SetLabelEntry(label)
             )
             else -> TODO("Choices are not documented for ${parser.game}")
         }
