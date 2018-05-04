@@ -35,7 +35,7 @@ object DR1 : HopesPeakDRGame {
                 this[0x0A] = "SFX A" to 3 and ::SoundEffectAEntry
                 this[0x0B] = "SFX B" to 2 and ::SoundEffectBEntry
                 this[0x0C] = "Truth Bullet" to 2 and ::TruthBulletEntry
-                this[0x0D] = null to 3 and ::UnknownEntry
+                this[0x0D] = "Manage Item" to 3 and ::UnknownEntry
                 this[0x0E] = null to 2 and ::UnknownEntry
                 this[0x0F] = "Set Title" to 3 and ::SetStudentTitleEntry
                 this[0x10] = "Set Report Info" to 3 and ::SetStudentReportInfo

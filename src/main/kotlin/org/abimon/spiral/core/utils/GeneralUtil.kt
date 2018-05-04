@@ -1,8 +1,11 @@
 package org.abimon.spiral.core.utils
 
+import org.abimon.spiral.core.objects.archives.srd.RSIEntry
 import java.io.File
+import java.math.BigDecimal
 import java.nio.file.Files
 import java.nio.file.attribute.DosFileAttributeView
+import java.text.DecimalFormat
 import java.util.*
 
 typealias OpCodeMap<A, S> = Map<Int, Triple<Array<String>, Int, (Int, A) -> S>>
@@ -12,6 +15,11 @@ typealias OpCodeHashMap<A, S> = HashMap<Int, Triple<Array<String>, Int, (Int, A)
 typealias UV = Pair<Float, Float>
 typealias Vertex = Triple<Float, Float, Float>
 typealias TriFace = Triple<Int, Int, Int>
+
+typealias Mipmap = RSIEntry.ResourceArray
+typealias VertexBlock = RSIEntry.ResourceArray
+typealias IndexBlock = RSIEntry.ResourceArray
+typealias FaceBlock = RSIEntry.ResourceArray
 
 infix fun <A, B, C> Pair<A, B>.and(c: C): Triple<A, B, C> = Triple(first, second, c)
 
@@ -36,6 +44,19 @@ fun assertOrThrow(statement: Boolean, ammo: Throwable) {
         throw ammo
 }
 
+fun Float.roundToPrecision(places: Int = 4): Float {
+    try {
+        return BigDecimal(java.lang.Float.toString(this)).setScale(places, BigDecimal.ROUND_HALF_UP).toFloat()
+    } catch (nfe: NumberFormatException) {
+        nfe.printStackTrace()
+        throw nfe
+    }
+}
+
+fun DecimalFormat.formatPair(pair: Pair<Float, Float>): Pair<String, String> = Pair(format(pair.first), format(pair.second))
+fun DecimalFormat.formatTriple(triple: Triple<Float, Float, Float>): Triple<String, String, String> = Triple(format(triple.first), format(triple.second), format(triple.third))
+
+fun Int.paddingFor(size: Int = 0x10): Int = (size - this % size) % size
 fun CacheFile(): File {
     var cacheFile: File
     do {
