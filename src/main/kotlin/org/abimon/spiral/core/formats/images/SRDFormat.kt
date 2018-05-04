@@ -10,12 +10,12 @@ import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
 import org.abimon.spiral.core.objects.archives.SPCEntry
+import org.abimon.spiral.core.objects.archives.SRD
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
-import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.trace
@@ -67,7 +67,7 @@ object SRDFormat {
                     val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
-                    readSRD(srdEntry::inputStream, img::inputStream, if (model != null) SRDIModel(InputStreamFuncDataSource(model::inputStream)) else null, otherEntries, images, params)
+                    readSRD(srdEntry::inputStream, img::inputStream, if (model != null) SRDIModel(SRD(srdEntry::inputStream), model::inputStream) else null, otherEntries, images, params)
                     if (otherEntries.size != before)
                         imageOverride = true
                 }

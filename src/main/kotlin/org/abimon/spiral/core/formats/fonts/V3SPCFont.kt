@@ -4,12 +4,11 @@ import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
+import org.abimon.spiral.core.objects.archives.SRD
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
-import org.abimon.spiral.core.objects.images.SRD
 import org.abimon.spiral.core.objects.images.TXRItem
 import org.abimon.spiral.core.utils.and
-import org.abimon.spiral.util.InputStreamFuncDataSource
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -33,7 +32,7 @@ object V3SPCFont {
         //V3 operates on two files for their fonts.
 
         val fontSpecFile = spc.files.firstOrNull { entry -> entry.name.endsWith("stx") } ?: return false
-        val fontSpec = SRD(InputStreamFuncDataSource(fontSpecFile::inputStream))
+        val fontSpec = SRD(fontSpecFile::inputStream)
         val fontTable = spc.files.firstOrNull { entry -> entry.name == fontSpecFile.name.replace("stx", "srdv") } ?: return false
 
         val zip = ZipOutputStream(output)
@@ -42,7 +41,7 @@ object V3SPCFont {
         fontSpecFile.inputStream.use { stream -> stream.copyTo(zip) }
 
 
-        fontSpec.items.filterIsInstance(TXRItem::class.java).forEach { txr ->
+        fontSpec.entries.filterIsInstance(TXRItem::class.java).forEach { txr ->
 //            val fontName = txr.run {
 //                val data = imageItem.data
 //                data.skip(12)
