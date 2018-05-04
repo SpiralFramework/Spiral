@@ -4,8 +4,6 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.io.ByteArrayIOStream
 import org.abimon.visi.lang.and
 import java.io.*
-import java.nio.file.Files
-import java.nio.file.attribute.DosFileAttributeView
 import java.util.*
 
 object CacheHandler {
@@ -13,8 +11,6 @@ object CacheHandler {
     private val cacheDir: File = File(".spiral_cache").apply {
         if(!exists())
             mkdir()
-        if(Files.getFileAttributeView(toPath(), DosFileAttributeView::class.java) != null)
-            Files.setAttribute(toPath(), "dos:hidden", true)
 
         listFiles().forEach { it.delete() }
     }
