@@ -152,6 +152,7 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
                     SRDIMesh(vertices.toTypedArray(), emptyArray(), faces.toTypedArray())
                 }
                 else -> {
+                    val normals: MutableList<Vertex> = ArrayList()
                     dataSource().use { stream ->
                         stream.skip(vtx.vertexBlock.start.toLong())
 
@@ -160,9 +161,16 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
                             val y = stream.readFloatLE().roundToPrecision()
                             val z = stream.readFloatLE().roundToPrecision()
 
-                            stream.skip(36)
+                            stream.skip(4)
+
+                            val nx = stream.readFloatLE().roundToPrecision()
+                            val ny = stream.readFloatLE().roundToPrecision()
+                            val nz = stream.readFloatLE().roundToPrecision()
+
+                            stream.skip(20)
 
                             vertices.add(Vertex(x, y, z))
+                            normals.add(Vertex(nx, ny, nz))
                         }
                     }
 
@@ -183,7 +191,7 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
                         }
                     }
 
-                    SRDIMesh(vertices.toTypedArray(), uvs.toTypedArray(), faces.toTypedArray())
+                    SRDIMesh(vertices.toTypedArray(), uvs.toTypedArray(), faces.toTypedArray()).apply { this.normals = normals.toTypedArray() }
                 }
             }
 
