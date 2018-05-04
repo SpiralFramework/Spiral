@@ -3,8 +3,6 @@ package org.abimon.spiral.core.utils
 import org.abimon.spiral.core.objects.archives.srd.RSIEntry
 import java.io.File
 import java.math.BigDecimal
-import java.nio.file.Files
-import java.nio.file.attribute.DosFileAttributeView
 import java.text.DecimalFormat
 import java.util.*
 
@@ -65,8 +63,6 @@ fun CacheFile(): File {
 
     cacheFile.createNewFile()
     cacheFile.deleteOnExit()
-    if(Files.getFileAttributeView(cacheFile.toPath(), DosFileAttributeView::class.java) != null)
-        Files.setAttribute(cacheFile.toPath(), "dos:hidden", true)
 
     return cacheFile
 }
