@@ -1,15 +1,23 @@
 package org.abimon.spiral.core.data
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import org.abimon.spiral.core.TripleHashMap
+import org.abimon.spiral.core.objects.models.SRDIMesh
 import org.abimon.spiral.core.put
+import org.abimon.spiral.core.utils.TriFace
+import org.abimon.spiral.core.utils.Vertex
 import org.abimon.visi.lang.make
 
 object SpiralData {
@@ -245,9 +253,24 @@ object SpiralData {
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
 
+    val XML_MAPPER: ObjectMapper = XmlMapper(JacksonXmlModule().apply { setDefaultUseWrapper(false) })
+            .registerKotlinModule()
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+            .setDefaultSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
+
     val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
     val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"
     val SPIRAL_HEADER_NAME = "Spiral-Header"
     val SPIRAL_PRIORITY_LIST = "Spiral-Priority-List"
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
+
+    val cube = SRDIMesh(
+            arrayOf(Vertex(1f, 1f, -1f), Vertex(1f, -1f, -1f), Vertex(-1f, -1f, -1f), Vertex(-1f, 1f, -1f), Vertex(1f, 1f, 1f), Vertex(1f, -1f, 1f), Vertex(-1f, -1f, 1f), Vertex(-1f, 1f, 1f)),
+            emptyArray(),
+            arrayOf(TriFace(0, 2, 3), TriFace(7, 5, 4), TriFace(4, 1, 0), TriFace(5, 2, 1), TriFace(2, 7, 3), TriFace(0, 7, 4), TriFace(0, 1, 2), TriFace(7, 6, 5), TriFace(4, 5, 1), TriFace(5, 6, 2), TriFace(2, 6, 7), TriFace(0, 3, 7))
+    )
 }

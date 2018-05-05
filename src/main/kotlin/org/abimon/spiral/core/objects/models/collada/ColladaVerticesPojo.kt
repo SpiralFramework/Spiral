@@ -8,7 +8,7 @@ data class ColladaVerticesPojo(
         @JacksonXmlProperty(isAttribute = true)
         val id: String,
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
 
         val input: List<ColladaInputUnsharedPojo>
 )

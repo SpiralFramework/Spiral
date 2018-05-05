@@ -6,9 +6,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 @JsonRootName("visual_scene")
 data class ColladaVisualScenePojo(
         @JacksonXmlProperty(isAttribute = true)
-        val id: String?,
+        val id: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
 
         val node: List<ColladaNodePojo>
 )

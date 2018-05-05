@@ -10,14 +10,18 @@ class ColladaFloatArrayPojo (
         @JacksonXmlProperty(isAttribute = true)
         val count: Int,
         @JacksonXmlProperty(isAttribute = true)
-        val id: String?,
+        val id: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
         @JacksonXmlProperty(isAttribute = true)
         val digits: Byte = 6,
         @JacksonXmlProperty(isAttribute = true)
         val magnitude: Short = 38
 ) {
+    constructor(id: String, value: FloatArray) : this(id = id, count = value.size) {
+        this.floatArrayValue = value
+    }
+
     @JacksonXmlText
     private var value: String? = null
 
