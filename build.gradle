@@ -48,6 +48,8 @@ dependencies {
     compile "com.jakewharton.fliptables:fliptables:1.0.2"
     compile "com.github.kittinunf.fuel:fuel:1.11.0"
 
+    compile "org.codehaus.woodstox:woodstox-core-asl:4.4.1"
+
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
@@ -56,6 +58,7 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
 
     testCompile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     testCompile group: 'junit', name: 'junit', version: '4.12'
