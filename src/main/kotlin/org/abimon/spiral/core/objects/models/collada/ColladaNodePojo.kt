@@ -6,15 +6,15 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 @JsonRootName("node")
 data class ColladaNodePojo(
         @JacksonXmlProperty(isAttribute = true)
-        val id: String?,
+        val id: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val sid: String?,
+        val sid: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val type: String?,
+        val type: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val layer: String?,
+        val layer: String? = null,
 
         val instance_geometry: List<ColladaInstanceGeometryPojo> = emptyList()
 )

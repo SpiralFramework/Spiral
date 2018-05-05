@@ -12,5 +12,5 @@ data class ColladaInputSharedPojo(
         @JacksonXmlProperty(isAttribute = true)
         val offset: Int,
         @JacksonXmlProperty(isAttribute = true)
-        val set: Int?
+        val set: Int? = null
 )

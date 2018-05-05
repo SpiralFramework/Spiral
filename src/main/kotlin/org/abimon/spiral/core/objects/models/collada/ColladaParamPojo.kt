@@ -6,11 +6,17 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 @JsonRootName("param")
 data class ColladaParamPojo(
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
         @JacksonXmlProperty(isAttribute = true)
-        val sid: String?,
+        val sid: String? = null,
         @JacksonXmlProperty(isAttribute = true)
         val type: String,
         @JacksonXmlProperty(isAttribute = true)
-        val semantic: String?
-)
+        val semantic: String? = null
+) {
+    companion object {
+        val X = ColladaParamPojo(name = "X", type = "float")
+        val Y = ColladaParamPojo(name = "Y", type = "float")
+        val Z = ColladaParamPojo(name = "Z", type = "float")
+    }
+}

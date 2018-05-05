@@ -8,22 +8,26 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 @JsonRootName("triangles")
 class ColladaTrianglesPojo(
         @JacksonXmlProperty(isAttribute = true)
-        val name: String?,
+        val name: String? = null,
         @JacksonXmlProperty(isAttribute = true)
         val count: Int,
         @JacksonXmlProperty(isAttribute = true)
-        val material: String?,
+        val material: String? = null,
 
         val input: List<ColladaInputSharedPojo>
 ) {
+    constructor(input: List<ColladaInputSharedPojo>, triangles: IntArray) : this(input = input, count = triangles.size / 3) {
+        this.triangles = triangles
+    }
+
     @JsonProperty("p")
     private var trianglesString: String? = null
 
-    var triangles: FloatArray
+    var triangles: IntArray
         @JsonIgnore
-        get() = trianglesString?.split(' ')?.map(String::toFloat)?.toFloatArray() ?: floatArrayOf()
-        set(floatValue) {
-            trianglesString = floatValue.joinToString(" ", transform = Float::toString)
+        get() = trianglesString?.split(' ')?.map(String::toInt)?.toIntArray() ?: intArrayOf()
+        set(intValues) {
+            trianglesString = intValues.joinToString(" ", transform = Int::toString)
         }
 
     override fun toString(): String {

@@ -7,6 +7,7 @@ import org.abimon.spiral.core.formats.audio.OggFormat
 import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
 import org.abimon.spiral.core.formats.compression.DRVitaCompressionFormat
 import org.abimon.spiral.core.formats.images.*
+import org.abimon.spiral.core.formats.models.ColladaModelFormat
 import org.abimon.spiral.core.formats.models.GMOModelFormat
 import org.abimon.spiral.core.formats.models.OBJModelFormat
 import org.abimon.spiral.core.formats.scripting.*
@@ -31,7 +32,7 @@ object SpiralFormats {
             LINFormat, SpiralTextFormat, WRDFormat,
             DRVitaCompressionFormat, CRILAYLAFormat,
             SFLFormat,
-            GMOModelFormat, OBJModelFormat,
+            GMOModelFormat, OBJModelFormat, ColladaModelFormat,
             PakBGFormats,
             PAKFormat, SPCFormat,
 
