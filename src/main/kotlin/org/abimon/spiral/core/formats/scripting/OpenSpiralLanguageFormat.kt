@@ -38,6 +38,13 @@ object OpenSpiralLanguageFormat: SpiralFormat {
 
         val text = String(dataSource().use { stream -> stream.readBytes() }, Charsets.UTF_8)
         val parser = OpenSpiralLanguageParser { fileName -> context(fileName)?.invoke()?.use { stream -> stream.readBytes() }}
+        val lang = context("en_US.lang")
+
+        if (lang != null)
+            parser.localiser = { unlocalised ->
+                lang().use { stream -> String(stream.readBytes()) }.split('\n').firstOrNull { localised -> localised.startsWith("$unlocalised=") }?.substringAfter("$unlocalised=")?.replace("\\n", "\n")
+                        ?: unlocalised
+            }
 
         parser.game = game ?: UnknownHopesPeakGame
         parser["FILENAME"] = name
