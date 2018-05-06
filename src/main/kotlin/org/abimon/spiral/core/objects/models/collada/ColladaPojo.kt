@@ -10,7 +10,7 @@ data class ColladaPojo(
         @JacksonXmlProperty(isAttribute = true)
         val xmlns: String = "http://www.collada.org/2005/11/COLLADASchema",
 
-        //val asset: ColladaAssetPojo,
+        val asset: ColladaAssetPojo,
         val library_geometries: ColladaLibraryGeometriesPojo,
         val library_visual_scenes: ColladaLibraryVisualScenesPojo?,
         val scene: ColladaScenePojo?

@@ -10,5 +10,9 @@ data class ColladaTechniqueCommonPojo(
         fun vertexAccessorFor(count: Int, source: String): ColladaTechniqueCommonPojo {
             return ColladaTechniqueCommonPojo(ColladaAccessorPojo(count, stride = 3, param = listOf(ColladaParamPojo.X, ColladaParamPojo.Y, ColladaParamPojo.Z), source = source))
         }
+
+        fun uvAccessorFor(count: Int, source: String): ColladaTechniqueCommonPojo {
+            return ColladaTechniqueCommonPojo(ColladaAccessorPojo(count, stride = 2, param = listOf(ColladaParamPojo.U, ColladaParamPojo.V), source = source))
+        }
     }
 }
