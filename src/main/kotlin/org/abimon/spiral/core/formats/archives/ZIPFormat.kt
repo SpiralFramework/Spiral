@@ -254,6 +254,12 @@ object ZIPFormat : SpiralFormat {
                                 ColladaTechniqueCommonPojo.uvAccessorFor(uvs.size, "#uv_array_mesh_${index}")
                         )
 
+                        val normalSource = ColladaSourcePojo(
+                                "normals_source_mesh_${index}", "normals_array_${mesh.name ?: "mesh_$index"}",
+                                ColladaFloatArrayPojo("normals_array_mesh_${index}", normals.flatMap(Vertex::toList).toFloatArray()),
+                                ColladaTechniqueCommonPojo.vertexAccessorFor(normals.size, "#normals_array_mesh_${index}")
+                        )
+
                         val verticesPojo = ColladaVerticesPojo(
                                 "vertices_mesh_${index}",
                                 "vertices_${mesh.name ?: "mesh_$index"}",
@@ -263,13 +269,24 @@ object ZIPFormat : SpiralFormat {
                         val triangles: ColladaTrianglesPojo
 
                         if (mesh.faces.all { (a, b, c) -> a in uvs.indices && b in uvs.indices && c in uvs.indices }) {
-                            triangles = ColladaTrianglesPojo(
-                                    listOf(
-                                            ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
-                                            ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1)
-                                    ),
-                                    mesh.faces.flatMap { (a, b, c) -> listOf(a, a, b, b, c, c) }.toIntArray()
-                            )
+                            if (mesh.faces.all { (a, b, c) -> a in normals.indices && b in normals.indices && c in normals.indices }) {
+                                triangles = ColladaTrianglesPojo(
+                                        listOf(
+                                                ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
+                                                ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1),
+                                                ColladaInputSharedPojo("NORMAL", "#normals_source_mesh_${index}", 2)
+                                        ),
+                                        mesh.faces.flatMap { (a, b, c) -> listOf(a, a, a, b, b, b, c, c, c) }.toIntArray()
+                                )
+                            } else {
+                                triangles = ColladaTrianglesPojo(
+                                        listOf(
+                                                ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
+                                                ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1)
+                                        ),
+                                        mesh.faces.flatMap { (a, b, c) -> listOf(a, a, b, b, c, c) }.toIntArray()
+                                )
+                            }
                         } else {
                             triangles = ColladaTrianglesPojo(
                                     listOf(ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0)),
@@ -278,7 +295,7 @@ object ZIPFormat : SpiralFormat {
                         }
 
                         return@mapIndexed ColladaGeometryPojo(id = "mesh_$index", name = mesh.name
-                                ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource, textureSource), verticesPojo, listOf(triangles)))
+                                ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource, textureSource, normalSource), verticesPojo, listOf(triangles)))
 //                        out.println("g ${mesh.name ?: "mesh_$index"}")
 //                        out.println("# ${mesh::class.simpleName}")
 //
