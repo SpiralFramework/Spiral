@@ -18,5 +18,8 @@ data class ColladaParamPojo(
         val X = ColladaParamPojo(name = "X", type = "float")
         val Y = ColladaParamPojo(name = "Y", type = "float")
         val Z = ColladaParamPojo(name = "Z", type = "float")
+
+        val U = ColladaParamPojo(name = "S", type = "float")
+        val V = ColladaParamPojo(name = "T", type = "float")
     }
 }

@@ -157,7 +157,8 @@ object ZIPFormat : SpiralFormat {
                     val zip = ZipFile(file)
                     val entries = zip.entries().toList()
                     val baseNames = entries.map { entry -> entry.name.substringBeforeLast('.') }.distinct()
-                    val modelName = baseNames.firstOrNull { rootName -> entries.any { entry -> entry.name == "$rootName.srd" } && entries.any { entry -> entry.name == "$rootName.srdi" } } ?: return false
+                    val modelName = baseNames.firstOrNull { rootName -> entries.any { entry -> entry.name == "$rootName.srd" } && entries.any { entry -> entry.name == "$rootName.srdi" } }
+                            ?: return false
 
                     val srdEntry = entries.first { entry -> entry.name == "$modelName.srd" }
                     val srdiEntry = entries.first { entry -> entry.name == "$modelName.srdi" }
@@ -193,7 +194,7 @@ object ZIPFormat : SpiralFormat {
                         mesh.faces.map { (a, b, c) -> TriFace(c, b, a) }.forEach { (a, b, c) ->
                             if (a in uvs.indices && b in uvs.indices && c in uvs.indices) {
                                 if (a in normals.indices && b in normals.indices && c in normals.indices) {
-                                //    out.println("f ${a + 1 + offset}/${a + 1 + offset}/${a + 1 + offset} ${b + 1 + offset}/${b + 1 + offset}/${b + 1 + offset} ${c + 1 + offset}/${c + 1 + offset}/${c + 1 + offset}")
+                                    //    out.println("f ${a + 1 + offset}/${a + 1 + offset}/${a + 1 + offset} ${b + 1 + offset}/${b + 1 + offset}/${b + 1 + offset} ${c + 1 + offset}/${c + 1 + offset}/${c + 1 + offset}")
                                     out.println("f ${a + 1 + vertexOffset}/${a + 1 + uvOffset}/${a + 1 + normalOffset} ${b + 1 + vertexOffset}/${b + 1 + uvOffset}/${b + 1 + normalOffset} ${c + 1 + vertexOffset}/${c + 1 + uvOffset}/${c + 1 + normalOffset}")
                                 } else {
                                     out.println("f ${a + 1 + vertexOffset}/${a + 1 + uvOffset} ${b + 1 + vertexOffset}/${b + 1 + uvOffset} ${c + 1 + vertexOffset}/${c + 1 + uvOffset}")
@@ -235,25 +236,49 @@ object ZIPFormat : SpiralFormat {
                     val out = PrintStream(output)
 
                     val colladaMeshes = srdi.meshes.mapIndexed { index, mesh ->
+
+                        val vertices: List<Vertex> = if (invertXAxis) mesh.vertices.map { (x, y, z) -> Vertex(x * -1, y, z) } else mesh.vertices.toList()
+                        val uvs: List<UV> = if (flipUVs) mesh.uvs.map { (u, v) -> UV(u, 1.0f - v) } else mesh.uvs.toList()
+                        val normals: List<Vertex> = if (invertXAxis) mesh.normals?.map { (x, y, z) -> Vertex(x * -1, y, z) }
+                                ?: emptyList() else mesh.normals?.toList() ?: emptyList()
+
                         val verticeSource = ColladaSourcePojo(
                                 "vertices_source_mesh_${index}", "vertices_array_${mesh.name ?: "mesh_$index"}",
-                                ColladaFloatArrayPojo("vertices_array_mesh_${index}", mesh.vertices.flatMap(Vertex::toList).toFloatArray()),
-                                ColladaTechniqueCommonPojo.vertexAccessorFor(mesh.vertices.size, "#vertices_array_mesh_${index}")
+                                ColladaFloatArrayPojo("vertices_array_mesh_${index}", vertices.flatMap(Vertex::toList).toFloatArray()),
+                                ColladaTechniqueCommonPojo.vertexAccessorFor(vertices.size, "#vertices_array_mesh_${index}")
                         )
 
-                        val vertices = ColladaVerticesPojo(
+                        val textureSource = ColladaSourcePojo(
+                                "uv_source_mesh_${index}", "uv_array_${mesh.name ?: "mesh_$index"}",
+                                ColladaFloatArrayPojo("uv_array_mesh_${index}", uvs.flatMap(UV::toList).toFloatArray()),
+                                ColladaTechniqueCommonPojo.uvAccessorFor(uvs.size, "#uv_array_mesh_${index}")
+                        )
+
+                        val verticesPojo = ColladaVerticesPojo(
                                 "vertices_mesh_${index}",
                                 "vertices_${mesh.name ?: "mesh_$index"}",
                                 listOf(ColladaInputUnsharedPojo("POSITION", "#vertices_source_mesh_${index}"))
                         )
 
-                        val triangles = ColladaTrianglesPojo(
-                                listOf(ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0)),
-                                mesh.faces.flatMap(TriFace::toList).toIntArray()
-                        )
+                        val triangles: ColladaTrianglesPojo
+
+                        if (mesh.faces.all { (a, b, c) -> a in uvs.indices && b in uvs.indices && c in uvs.indices }) {
+                            triangles = ColladaTrianglesPojo(
+                                    listOf(
+                                            ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
+                                            ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1)
+                                    ),
+                                    mesh.faces.flatMap { (a, b, c) -> listOf(a, a, b, b, c, c) }.toIntArray()
+                            )
+                        } else {
+                            triangles = ColladaTrianglesPojo(
+                                    listOf(ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0)),
+                                    mesh.faces.flatMap(TriFace::toList).toIntArray()
+                            )
+                        }
 
                         return@mapIndexed ColladaGeometryPojo(id = "mesh_$index", name = mesh.name
-                                ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource), vertices, listOf(triangles)))
+                                ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource, textureSource), verticesPojo, listOf(triangles)))
 //                        out.println("g ${mesh.name ?: "mesh_$index"}")
 //                        out.println("# ${mesh::class.simpleName}")
 //
@@ -282,11 +307,12 @@ object ZIPFormat : SpiralFormat {
 //                        vertexOffset += vertices.size
 //                        uvOffset += uvs.size
 //                        normalOffset = normals.size
-//
+//3
 //                        out.println()
                     }
 
                     val collada = ColladaPojo(
+                            asset = ColladaAssetPojo(contributor = ColladaContributorPojo(authoring_tool = "SPIRAL v${Gurren.version}", comments = "Autogenerated from $name"), up_axis = ColladaUpAxis.Y_UP),
                             library_geometries = ColladaLibraryGeometriesPojo(geometry = colladaMeshes),
                             library_visual_scenes = ColladaLibraryVisualScenesPojo(visual_scene = listOf(ColladaVisualScenePojo(id = "Scene", node = colladaMeshes.map { mesh ->
                                 return@map ColladaNodePojo(type = "NODE", instance_geometry = listOf(ColladaInstanceGeometryPojo(url = "#${mesh.id}")))
