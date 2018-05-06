@@ -40,6 +40,8 @@ object SpiralModel {
     var patchOperation: PatchOperation? by hookable(null, HookManager::beforePatchOperationChange, HookManager::afterPatchOperationChange)
     var patchFile: File? by hookable(null, HookManager::beforePatchFileChange, HookManager::afterPatchFileChange)
 
+    var fileOperation: File? by hookable(null, HookManager::beforeFileOperatingChange, HookManager::afterFileOperatingChange)
+
     var attemptFingerprinting: Boolean by hookable(true, HookManager::beforeAttemptFingerprintChange, HookManager::afterAttemptFingerprintChange)
 
     var printExtractionPercentage: Boolean by hookable(true, HookManager::beforePrintExtractChange, HookManager::afterPrintExtractChange)
@@ -87,11 +89,13 @@ object SpiralModel {
             loggerLevel = config.loggerLevel
             concurrentOperations = config.concurrentOperations
             scope = config.scope
-            operating = if (config.operating == null) null else File(config.operating)
+            operating = config.operating?.let(::File)
             autoConfirm = config.autoConfirm
             purgeCache = config.purgeCache
             patchOperation = config.patchOperation
-            patchFile = if(config.patchFile != null) File(config.patchFile) else null
+            patchFile = config.patchFile?.let(::File)
+
+            fileOperation = config.fileOperation?.let(::File)
 
             attemptFingerprinting = config.attemptFingerprinting
 
@@ -121,7 +125,7 @@ object SpiralModel {
     val config: ModelConfig
         get() = ModelConfig(
                 archives.map { it.absolutePath }.toSet(), loggerLevel, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
-                patchOperation, patchFile?.absolutePath,
+                patchOperation, patchFile?.absolutePath, fileOperation?.absolutePath,
                 attemptFingerprinting, true, true, false, false, defaultParams, pluginData
         )
 

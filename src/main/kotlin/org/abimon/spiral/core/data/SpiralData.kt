@@ -3,6 +3,7 @@ package org.abimon.spiral.core.data
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonSetter
 import com.fasterxml.jackson.annotation.Nulls
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -13,11 +14,13 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import org.abimon.imperator.handle.Imperator
 import org.abimon.spiral.core.TripleHashMap
 import org.abimon.spiral.core.objects.models.SRDIMesh
 import org.abimon.spiral.core.put
 import org.abimon.spiral.core.utils.TriFace
 import org.abimon.spiral.core.utils.Vertex
+import org.abimon.spiral.modding.IPlugin
 import org.abimon.visi.lang.make
 
 object SpiralData {
@@ -243,6 +246,7 @@ object SpiralData {
             .registerKotlinModule()
             .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
 
@@ -250,6 +254,7 @@ object SpiralData {
             .registerKotlinModule()
             .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
 
@@ -259,6 +264,7 @@ object SpiralData {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(SerializationFeature.INDENT_OUTPUT)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
             .setDefaultSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
 
@@ -267,6 +273,11 @@ object SpiralData {
     val SPIRAL_HEADER_NAME = "Spiral-Header"
     val SPIRAL_PRIORITY_LIST = "Spiral-Priority-List"
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
+
+    val BASE_PLUGIN = object : IPlugin {
+        override fun enable(imperator: Imperator) {}
+        override fun disable(imperator: Imperator) {}
+    }
 
     val cube = SRDIMesh(
             arrayOf(Vertex(1f, 1f, -1f), Vertex(1f, -1f, -1f), Vertex(-1f, -1f, -1f), Vertex(-1f, 1f, -1f), Vertex(1f, 1f, 1f), Vertex(1f, -1f, 1f), Vertex(-1f, -1f, 1f), Vertex(-1f, 1f, 1f)),

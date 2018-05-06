@@ -9,6 +9,7 @@ import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.archives.WADArchive
 import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.FileContext
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
@@ -47,10 +48,12 @@ object GurrenOperation {
             )
     )
 
+    private var backingOperatingArchive: IArchive? = null
+
     val operatingArchive: IArchive
-        get() = IArchive(SpiralModel.operating
-                ?: throw IllegalStateException("Attempt to get the archive while operating is null, this is a bug!"))
-                ?: throw IllegalStateException("Attempts to create an archive return null, this is a bug!")
+        get() = backingOperatingArchive
+                ?: throw IllegalStateException("Attempt to get the archive while operating is null, this is a bug!")
+
     val operatingName: String
         get() = SpiralModel.operating?.nameWithoutExtension ?: ""
     val operatingGame: DRGame?
@@ -443,5 +446,14 @@ object GurrenOperation {
                 break
             }
         }
+    }
+
+    fun onArchiveChange(old: File?, new: File?) {
+        backingOperatingArchive = new?.let(IArchive.Companion::invoke)
+    }
+
+    init {
+        HookManager.ON_OPERATING_CHANGE.add(SpiralData.BASE_PLUGIN to this::onArchiveChange)
+        onArchiveChange(null, SpiralModel.operating)
     }
 }

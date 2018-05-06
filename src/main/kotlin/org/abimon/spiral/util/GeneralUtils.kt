@@ -1,13 +1,21 @@
 package org.abimon.spiral.util
 
+import org.abimon.karnage.raw.BC4PixelData
+import org.abimon.karnage.raw.BC7PixelData
+import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.archives.IArchive
+import org.abimon.spiral.core.formats.images.SRDFormat.deswizzle
+import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.core.objects.archives.CPKFileEntry
 import org.abimon.spiral.core.objects.archives.WAD
+import org.abimon.spiral.core.objects.archives.srd.TXREntry
 import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.io.skipBytes
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -97,3 +105,93 @@ fun IArchive.fileSourceForname(name: String): (() -> InputStream)? {
 
 val File.absoluteParentFile: File
     get() = File(absolutePath.substringBeforeLast(File.separator))
+
+fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
+    val texture = WindowedInputStream(srdv(), rsiEntry.mipmaps[0].start.toLong(), rsiEntry.mipmaps[0].length.toLong())
+
+    val swizzled = !(swizzle hasBitSet 1)
+    if (format in arrayOf(0x01, 0x02, 0x05, 0x1A)) {
+        val bytespp: Int
+
+        when (format) {
+            0x01 -> bytespp = 4
+            0x02 -> bytespp = 2
+            0x05 -> bytespp = 2
+            0x1A -> bytespp = 4
+            else -> bytespp = 2
+        }
+
+        val width: Int = displayWidth.toInt() //(scanline / bytespp).toInt()
+        val height: Int = displayHeight.toInt()
+
+        val processing: InputStream
+
+        if (swizzled) {
+            val processingData = texture.use { it.readBytes() }
+            processingData.deswizzle(width / 4, height / 4, bytespp)
+            processing = processingData.inputStream()
+        } else
+            processing = texture
+
+        when (format) {
+            0x01 -> {
+                val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                for (y in 0 until height) {
+                    for (x in 0 until width) {
+                        val b = processing.read()
+                        val g = processing.read()
+                        val r = processing.read()
+                        val a = processing.read()
+
+                        resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
+                    }
+                }
+
+                return resultingImage
+            }
+            else -> {
+                debug("Raw format: $format (${format.toString(16)})")
+                return null
+            }
+        }
+    } else if (format in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
+        val bytespp: Int
+
+        when (format) {
+            0x0F -> bytespp = 8
+            0x1C -> bytespp = 16
+            else -> bytespp = 8
+        }
+
+        var width: Int = displayWidth
+        var height: Int = displayHeight
+
+        if (width % 4 != 0)
+            width += 4 - (width % 4)
+
+        if (height % 4 != 0)
+            height += 4 - (height % 4)
+
+        val processingStream: InputStream
+
+        if (swizzled && width >= 4 && height >= 4) {
+            val processingData = texture.use { it.readBytes() }
+            processingData.deswizzle(width / 4, height / 4, bytespp)
+            processingStream = processingData.inputStream()
+        } else
+            processingStream = texture
+
+        when (format) {
+            0x0F -> return DXT1PixelData.read(width, height, processingStream)
+            0x16 -> return BC4PixelData.read(width, height, processingStream)
+            0x1C -> return BC7PixelData.read(width, height, processingStream)
+            else -> {
+                debug("Block format: $format (${format.toString(16)}) [${width}x${height}]")
+                return null
+            }
+        }
+    } else
+        debug("Other format: $format (0x${format.toString(16)})")
+
+    return null
+}

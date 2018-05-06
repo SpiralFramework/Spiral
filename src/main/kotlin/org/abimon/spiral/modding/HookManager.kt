@@ -5,6 +5,7 @@ import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.launch
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.PatchOperation
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.util.LoggerLevel
 import java.io.File
 import java.io.InputStream
@@ -12,6 +13,9 @@ import java.io.InputStream
 object HookManager {
     val BEFORE_OPERATING_CHANGE: MutableList<Pair<IPlugin, (File?, File?, Boolean) -> Boolean>> = ArrayList()
     val ON_OPERATING_CHANGE: MutableList<Pair<IPlugin, (File?, File?) -> Unit>> = ArrayList()
+
+    val BEFORE_FILE_OPERATING_CHANGE: MutableList<Pair<IPlugin, (File?, File?, Boolean) -> Boolean>> = ArrayList()
+    val ON_FILE_OPERATING_CHANGE: MutableList<Pair<IPlugin, (File?, File?) -> Unit>> = ArrayList()
 
     val BEFORE_SCOPE_CHANGE: MutableList<Pair<IPlugin, (Pair<String, String>, Pair<String, String>, Boolean) -> Boolean>> = ArrayList()
     val ON_SCOPE_CHANGE: MutableList<Pair<IPlugin, (Pair<String, String>, Pair<String, String>) -> Unit>> = ArrayList()
@@ -60,6 +64,10 @@ object HookManager {
     fun beforeOperatingChange(old: File?, new: File?): Boolean =
             beforeChange(old, new, BEFORE_OPERATING_CHANGE)
 
+    fun beforeFileOperatingChange(old: File?, new: File?): Boolean =
+            beforeChange(old, new, BEFORE_FILE_OPERATING_CHANGE)
+
+
     fun beforeScopeChange(old: Pair<String, String>, new: Pair<String, String>): Boolean
             = beforeChange(old, new, BEFORE_SCOPE_CHANGE)
 
@@ -102,6 +110,9 @@ object HookManager {
     fun afterOperatingChange(old: File?, new: File?): Unit =
             afterChange(old, new, ON_OPERATING_CHANGE)
 
+    fun afterFileOperatingChange(old: File?, new: File?): Unit =
+            afterChange(old, new, ON_FILE_OPERATING_CHANGE)
+
     fun afterScopeChange(old: Pair<String, String>, new: Pair<String, String>): Unit
             = afterChange(old, new, ON_SCOPE_CHANGE)
 
@@ -143,12 +154,12 @@ object HookManager {
 
     fun shouldExtract(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Boolean
             = BEFORE_EXTRACT
-            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .fold(true) { state, (_, hook) -> hook(archive, folder, files, state) }
 
     fun extracting(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Unit
             = ON_EXTRACT
-            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(archive, folder, files) }
 
     var prevExtractJob: Job? = null
@@ -158,23 +169,23 @@ object HookManager {
             prev?.join()
 
             DURING_EXTRACT
-                    .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+                    .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
                     .forEach { (_, hook) -> hook(archive, folder, files, extracting) }
         }
     }
 
     fun finishedExtraction(archive: IArchive, folder: File, files: List<Pair<String, () -> InputStream>>): Unit
             = AFTER_EXTRACT
-            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(archive, folder, files) }
 
     fun <T : Any?> beforeChange(old: T, new: T, beforeChanges: List<Pair<IPlugin, (T, T, Boolean) -> Boolean>>): Boolean
             = beforeChanges
-            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .fold(true) { state, (_, hook) -> hook(old, new, state) }
 
     fun <T : Any?> afterChange(old: T, new: T, afterChanges: List<Pair<IPlugin, (T, T) -> Unit>>): Unit
             = afterChanges
-            .filter { (plugin) -> PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
+            .filter { (plugin) -> plugin == SpiralData.BASE_PLUGIN || PluginManager.loadedPlugins.values.any { (_, _, c) -> plugin == c } }
             .forEach { (_, hook) -> hook(old, new) }
 }
