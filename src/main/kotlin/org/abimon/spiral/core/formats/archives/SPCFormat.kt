@@ -1,12 +1,15 @@
 package org.abimon.spiral.core.formats.archives
 
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
+import org.abimon.spiral.core.formats.models.ColladaModelFormat
 import org.abimon.spiral.core.formats.models.OBJModelFormat
 import org.abimon.spiral.core.objects.archives.SPC
 import org.abimon.spiral.core.objects.archives.SRD
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.models.SRDIModel
+import org.abimon.spiral.core.objects.models.collada.ColladaPojo
 import org.abimon.spiral.core.utils.*
 import org.abimon.spiral.mvc.gurren.Gurren
 import org.abimon.visi.lang.replaceLast
@@ -32,7 +35,7 @@ object SPCFormat : SpiralFormat {
     }
 
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
-        if(super.convert(game, format, name, context, dataSource, output, params)) return true
+        if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
         val spc = SPC(dataSource)
         val convert = "${params["spc:convert"] ?: false}".toBoolean()
@@ -46,7 +49,8 @@ object SPCFormat : SpiralFormat {
                         val convertTo = innerFormat?.conversions?.firstOrNull()
 
                         if (innerFormat != null && convertTo != null) {
-                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension ?: "unk"}"))
+                            zip.putNextEntry(ZipEntry(entry.name.replaceLast(".${innerFormat.extension}", "") + ".${convertTo.extension
+                                    ?: "unk"}"))
                             innerFormat.convert(game, convertTo, "$name/${entry.name}", context, data, zip, params)
                             return@forEach
                         } else if (innerFormat != null) {
@@ -63,7 +67,8 @@ object SPCFormat : SpiralFormat {
             }
             is OBJModelFormat -> {
                 val baseNames = spc.files.map { entry -> entry.name.substringBeforeLast('.') }.distinct()
-                val modelName = baseNames.firstOrNull { rootName -> spc.files.any { entry -> entry.name == "$rootName.srd" } && spc.files.any { entry -> entry.name == "$rootName.srdi" } } ?: return false
+                val modelName = baseNames.firstOrNull { rootName -> spc.files.any { entry -> entry.name == "$rootName.srd" } && spc.files.any { entry -> entry.name == "$rootName.srdi" } }
+                        ?: return false
 
                 val srd = SRD(spc.files.first { entry -> entry.name == "$modelName.srd" }::inputStream)
                 val srdi = SRDIModel(srd, spc.files.first { entry -> entry.name == "$modelName.srdi" }::inputStream)
@@ -85,7 +90,8 @@ object SPCFormat : SpiralFormat {
 
                     val vertices: List<Vertex> = if (invertXAxis) mesh.vertices.map { (x, y, z) -> Vertex(x * -1, y, z) } else mesh.vertices.toList()
                     val uvs: List<UV> = if (flipUVs) mesh.uvs.map { (u, v) -> UV(u, 1.0f - v) } else mesh.uvs.toList()
-                    val normals: List<Vertex> = if (invertXAxis) mesh.normals?.map { (x, y, z) -> Vertex(x * -1, y, z) } ?: emptyList() else mesh.normals?.toList() ?: emptyList()
+                    val normals: List<Vertex> = if (invertXAxis) mesh.normals?.map { (x, y, z) -> Vertex(x * -1, y, z) }
+                            ?: emptyList() else mesh.normals?.toList() ?: emptyList()
 
                     vertices.map(decimalFormat::formatTriple).forEach { (x, y, z) -> out.println("v $x $y $z") }
                     uvs.map(decimalFormat::formatPair).forEach { (u, v) -> out.println("vt $u $v") }
@@ -107,6 +113,20 @@ object SPCFormat : SpiralFormat {
 
                     out.println()
                 }
+            }
+
+            ColladaModelFormat -> {
+                val baseNames = spc.files.map { entry -> entry.name.substringBeforeLast('.') }.distinct()
+                val modelName = baseNames.firstOrNull { rootName -> spc.files.any { entry -> entry.name == "$rootName.srd" } && spc.files.any { entry -> entry.name == "$rootName.srdi" } }
+                        ?: return false
+
+                val srd = SRD(spc.files.first { entry -> entry.name == "$modelName.srd" }::inputStream)
+                val srdi = SRDIModel(srd, spc.files.first { entry -> entry.name == "$modelName.srdi" }::inputStream)
+
+                val flipUVs = "${params["srdi:flipUVs"] ?: true}".toBoolean()
+                val invertXAxis = "${params["srdi:invertX"] ?: true}".toBoolean()
+
+                SpiralData.XML_MAPPER.writeValue(output, ColladaPojo(srdi, flipUVs, invertXAxis, name))
             }
         }
 
