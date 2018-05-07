@@ -1,7 +1,6 @@
 package org.abimon.spiral.core.utils
 
 import org.abimon.spiral.core.objects.archives.srd.RSIEntry
-import java.io.File
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.util.*
@@ -55,14 +54,3 @@ fun DecimalFormat.formatPair(pair: Pair<Float, Float>): Pair<String, String> = P
 fun DecimalFormat.formatTriple(triple: Triple<Float, Float, Float>): Triple<String, String, String> = Triple(format(triple.first), format(triple.second), format(triple.third))
 
 fun Int.paddingFor(size: Int = 0x10): Int = (size - this % size) % size
-fun CacheFile(): File {
-    var cacheFile: File
-    do {
-        cacheFile = File("." + UUID.randomUUID().toString())
-    } while (cacheFile.exists())
-
-    cacheFile.createNewFile()
-    cacheFile.deleteOnExit()
-
-    return cacheFile
-}

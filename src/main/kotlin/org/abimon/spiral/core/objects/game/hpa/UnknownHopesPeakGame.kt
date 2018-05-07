@@ -14,7 +14,7 @@ object UnknownHopesPeakGame: HopesPeakDRGame {
 
                     if (opCodes.exists()) {
 
-                        DataMapper.fileToMap(opCodes)?.forEach { opName, params ->
+                        DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
                             val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
                                 val str = any.toString()
                                 if (str.startsWith("0x"))

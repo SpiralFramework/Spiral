@@ -1,8 +1,9 @@
 package org.abimon.spiral.core.utils
 
 import java.io.*
+import java.util.*
 
-object DataMapper {
+object DataHandler {
     var byteArrayToMap: (ByteArray) -> Map<String, Any?>? = { streamToMap(ByteArrayInputStream(it)) }
     var stringToMap: (String) -> Map<String, Any?>? = { streamToMap(ByteArrayInputStream(it.toByteArray())) }
     var fileToMap: (File) -> Map<String, Any?>? = { streamToMap(FileInputStream(it)) }
@@ -22,4 +23,28 @@ object DataMapper {
     })
 
     var errorPrintStream: PrintStream = emptyPrintStream
+
+    var cacheFileInitialiser: (String?) -> File = func@{ name ->
+        var cacheFile: File
+        do {
+            cacheFile = File("." + UUID.randomUUID().toString())
+        } while (cacheFile.exists())
+
+        cacheFile.createNewFile()
+        cacheFile.deleteOnExit()
+
+        return@func cacheFile
+    }
+
+    var cacheFileWithNameAndDataInitialiser: (String, (File) -> Unit) -> File = func@{ name, dataFunc ->
+        val file = cacheFileInitialiser(name)
+
+        if (!file.exists() || file.length() == 0L)
+            dataFunc(file)
+
+        return@func file
+    }
+
+    fun newCacheFile(name: String? = null): File = cacheFileInitialiser(name)
+    fun cacheFileWithNameAndData(name: String, dataFunc: (File) -> Unit): File = cacheFileWithNameAndData(name, dataFunc)
 }
