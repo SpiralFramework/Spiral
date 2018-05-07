@@ -18,7 +18,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
             try {
                 return Lin(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                iae.printStackTrace(DataMapper.errorPrintStream)
+                iae.printStackTrace(DataHandler.errorPrintStream)
 
                 return null
             }

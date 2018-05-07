@@ -11,7 +11,7 @@ import java.util.*
 
 object DR1 : HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> =
-            DataMapper.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr1.json"))?.mapValues { (_, value) ->
+            DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr1.json"))?.mapValues { (_, value) ->
                 ((value as? List<*>)?.asIterable()
                         ?: (value as? Array<*>)?.asIterable())?.mapNotNull { str -> str as? String }?.toTypedArray()
                         ?: emptyArray()
@@ -89,7 +89,7 @@ object DR1 : HopesPeakDRGame {
 
                 if (opCodes.exists()) {
 
-                    DataMapper.fileToMap(opCodes)?.forEach { opName, params ->
+                    DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
                         val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
                             val str = any.toString()
                             if (str.startsWith("0x"))
