@@ -12,7 +12,7 @@ data class CPKFileEntry(val fileName: String, val directoryName: String, val fil
     val inputStream: InputStream
         get() {
             if (isCompressed) {
-                val baseStream = WindowedInputStream(cpk.dataSource(), offset, fileSize)
+                val baseStream = rawInputStream
 
                 val magic = baseStream.readInt64LE()
                 if (magic != CRILAYLACompression.MAGIC_NUMBER) {
@@ -28,6 +28,9 @@ data class CPKFileEntry(val fileName: String, val directoryName: String, val fil
                 }
             }
 
-            return WindowedInputStream(cpk.dataSource(), offset, fileSize)
+            return rawInputStream
         }
+
+    val rawInputStream: InputStream
+        get() = WindowedInputStream(cpk.dataSource(), offset, fileSize)
 }
