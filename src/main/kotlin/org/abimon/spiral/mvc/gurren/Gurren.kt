@@ -7,6 +7,7 @@ import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.data.FileContext
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
@@ -22,6 +23,7 @@ import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.UDG
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.userAgent
+import org.abimon.spiral.core.utils.ChunkProcessingInputStream
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
@@ -37,15 +39,14 @@ import org.abimon.visi.lang.replaceLast
 import org.abimon.visi.security.md5Hash
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
-import java.io.File
-import java.io.FileFilter
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import java.io.*
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.collections.ArrayList
+import kotlin.reflect.jvm.jvmName
 import kotlin.system.measureTimeMillis
 
 @Suppress("unused", "ConstantConditionIf")
@@ -862,6 +863,208 @@ object Gurren {
         }
 
         println("Set current game to $game")
+    }
+
+    val idenityCompression = Command("identify_compression") { (params) ->
+        if (params.size == 1)
+            errPrintln("Error: No file or directory provided")
+
+        val files = params.map(::File)
+
+        files.forEach { file ->
+            if (file.isFile) {
+                val rows = ArrayList<Array<String>>()
+                val methods = ArrayList<String>()
+
+                var dataSource: () -> InputStream = file::inputStream
+
+                loop@ while (true) {
+                    for (method in SpiralFormats.compressionMethods) {
+                        if (method.isCompressed(dataSource)) {
+                            methods.add(method::class.simpleName ?: method::class.jvmName)
+                            if (method.supportsChunking) {
+                                val tmpDataSource = dataSource
+                                dataSource = func@{
+                                    val stream = tmpDataSource()
+                                    method.prepareChunkStream(stream)
+                                    return@func ChunkProcessingInputStream { method.decompressStreamChunk(stream) }
+                                }
+
+                                continue@loop
+                            } else {
+                                val data = method.decompress(dataSource)
+                                dataSource = { ByteArrayInputStream(data) }
+
+                                continue@loop
+                            }
+                        }
+                    }
+
+                    break
+                }
+
+                if (methods.isEmpty())
+                    rows.add(arrayOf(file.name, "Not Compressed"))
+                else
+                    rows.add(arrayOf(file.name, methods.joinToString()))
+
+                println(FlipTable.of(arrayOf("File", "Compression Method(s)"), rows.toTypedArray()))
+            } else if (file.isDirectory) {
+                val rows = ArrayList<Array<String>>()
+                file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
+                    val methods = ArrayList<String>()
+
+                    var dataSource: () -> InputStream = subfile::inputStream
+
+                    loop@ while (true) {
+                        for (method in SpiralFormats.compressionMethods) {
+                            if (method.isCompressed(dataSource)) {
+                                methods.add(method::class.simpleName ?: method::class.jvmName)
+                                if (method.supportsChunking) {
+                                    val tmpDataSource = dataSource
+                                    dataSource = func@{
+                                        val stream = tmpDataSource()
+                                        method.prepareChunkStream(stream)
+                                        return@func ChunkProcessingInputStream { method.decompressStreamChunk(stream) }
+                                    }
+
+                                    continue@loop
+                                } else {
+                                    val data = method.decompress(dataSource)
+                                    dataSource = { ByteArrayInputStream(data) }
+
+                                    continue@loop
+                                }
+                            }
+                        }
+
+                        break
+                    }
+
+                    if (methods.isEmpty())
+                        rows.add(arrayOf(subfile.name, "Not Compressed"))
+                    else
+                        rows.add(arrayOf(subfile.name, methods.joinToString()))
+                }
+
+                println(FlipTable.of(arrayOf("File", "Format"), rows.toTypedArray()))
+            }
+        }
+    }
+
+    val decompress = Command("decompress") { (params) ->
+        if (params.size == 1)
+            errPrintln("Error: No file or directory provided")
+
+        val files = params.map(::File)
+
+        files.forEach { file ->
+            if (file.isFile) {
+                val rows = ArrayList<Array<String>>()
+                val methods = ArrayList<String>()
+
+                val tmpFile = CacheHandler.newCacheFile()
+                Files.copy(file.toPath(), tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+
+                try {
+                    var dataSource: () -> InputStream = tmpFile::inputStream
+
+                    loop@ while (true) {
+                        for (method in SpiralFormats.compressionMethods) {
+                            if (method.isCompressed(dataSource)) {
+                                methods.add(method::class.simpleName ?: method::class.jvmName)
+                                if (method.supportsChunking) {
+                                    val tmpDataSource = dataSource
+                                    dataSource = func@{
+                                        val stream = tmpDataSource()
+                                        method.prepareChunkStream(stream)
+                                        return@func ChunkProcessingInputStream { method.decompressStreamChunk(stream) }
+                                    }
+
+                                    continue@loop
+                                } else {
+                                    val data = method.decompress(dataSource)
+                                    dataSource = { ByteArrayInputStream(data) }
+
+                                    continue@loop
+                                }
+                            }
+                        }
+
+                        break
+                    }
+
+                    FileOutputStream(file).use { out -> dataSource().use { stream -> stream.copyTo(out) } }
+
+                    if (methods.isEmpty())
+                        rows.add(arrayOf(file.name, "Not Compressed"))
+                    else
+                        rows.add(arrayOf(file.name, methods.joinToString()))
+                } catch (th: Throwable) {
+                    rows.add(arrayOf(file.name, "Decompression threw ${th::class.simpleName
+                            ?: th::class.jvmName}: ${th.message}. Saved to ${CacheHandler.logStackTrace(th)}"))
+
+                    Files.copy(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                } finally {
+                    tmpFile.delete()
+                }
+
+                println(FlipTable.of(arrayOf("File", "Compression Method(s)"), rows.toTypedArray()))
+            } else if (file.isDirectory) {
+                val rows = ArrayList<Array<String>>()
+                file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
+                    val methods = ArrayList<String>()
+
+                    val tmpFile = CacheHandler.newCacheFile()
+                    Files.copy(subfile.toPath(), tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+
+                    try {
+                        var dataSource: () -> InputStream = tmpFile::inputStream
+
+                        loop@ while (true) {
+                            for (method in SpiralFormats.compressionMethods) {
+                                if (method.isCompressed(dataSource)) {
+                                    methods.add(method::class.simpleName ?: method::class.jvmName)
+                                    if (method.supportsChunking) {
+                                        val tmpDataSource = dataSource
+                                        dataSource = func@{
+                                            val stream = tmpDataSource()
+                                            method.prepareChunkStream(stream)
+                                            return@func ChunkProcessingInputStream { method.decompressStreamChunk(stream) }
+                                        }
+
+                                        continue@loop
+                                    } else {
+                                        val data = method.decompress(dataSource)
+                                        dataSource = { ByteArrayInputStream(data) }
+
+                                        continue@loop
+                                    }
+                                }
+                            }
+
+                            break
+                        }
+
+                        FileOutputStream(subfile).use { out -> dataSource().use { stream -> stream.copyTo(out) } }
+
+                        if (methods.isEmpty())
+                            rows.add(arrayOf(subfile.name, "Not Compressed"))
+                        else
+                            rows.add(arrayOf(subfile.name, methods.joinToString()))
+                    } catch (th: Throwable) {
+                        rows.add(arrayOf(subfile.name, "Decompression threw ${th::class.simpleName
+                                ?: th::class.jvmName}: ${th.message}. Saved to ${CacheHandler.logStackTrace(th)}"))
+
+                        Files.copy(tmpFile.toPath(), subfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    } finally {
+                        tmpFile.delete()
+                    }
+                }
+
+                println(FlipTable.of(arrayOf("File", "Format"), rows.toTypedArray()))
+            }
+        }
     }
 
     val join = Command("join") { (params) ->

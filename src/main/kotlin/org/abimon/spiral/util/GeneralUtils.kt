@@ -3,19 +3,23 @@ package org.abimon.spiral.util
 import org.abimon.karnage.raw.BC4PixelData
 import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
+import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
+import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.images.SRDFormat.deswizzle
 import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.core.objects.archives.CPKFileEntry
 import org.abimon.spiral.core.objects.archives.WAD
 import org.abimon.spiral.core.objects.archives.srd.TXREntry
+import org.abimon.spiral.core.utils.ChunkProcessingInputStream
 import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.io.skipBytes
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -194,4 +198,32 @@ fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
         debug("Other format: $format (0x${format.toString(16)})")
 
     return null
+}
+
+fun <T> catchAndLog(operation: () -> T): T? {
+    try {
+        return operation()
+    } catch (th: Throwable) {
+        CacheHandler.logStackTrace(th)
+        return null
+    }
+}
+
+fun decompress(dataSource: () -> InputStream): () -> InputStream {
+    for (method in SpiralFormats.compressionMethods) {
+        if (method.isCompressed(dataSource)) {
+            if (method.supportsChunking) {
+                return decompress func@{
+                    val stream = dataSource()
+                    method.prepareChunkStream(stream)
+                    return@func ChunkProcessingInputStream { method.decompressStreamChunk(stream) }
+                }
+            } else {
+                val data = method.decompress(dataSource)
+                return decompress { ByteArrayInputStream(data) }
+            }
+        }
+    }
+
+    return dataSource
 }
