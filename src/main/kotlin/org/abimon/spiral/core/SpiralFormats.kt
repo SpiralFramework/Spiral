@@ -1,11 +1,8 @@
 package org.abimon.spiral.core
 
-import org.abimon.spiral.core.data.CacheHandler
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.*
 import org.abimon.spiral.core.formats.audio.OggFormat
-import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
-import org.abimon.spiral.core.formats.compression.DRVitaCompressionFormat
 import org.abimon.spiral.core.formats.images.*
 import org.abimon.spiral.core.formats.models.ColladaModelFormat
 import org.abimon.spiral.core.formats.models.GMOModelFormat
@@ -17,6 +14,9 @@ import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.formats.text.TextFormat
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
+import org.abimon.spiral.core.objects.compression.CRILAYLACompression
+import org.abimon.spiral.core.objects.compression.ICompression
+import org.abimon.spiral.core.objects.compression.V3Compression
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.visi.io.DataSource
 import org.abimon.visi.lang.extension
@@ -30,7 +30,6 @@ object SpiralFormats {
             OggFormat,
             IVFFormat, MP4Format,
             LINFormat, SpiralTextFormat, WRDFormat,
-            DRVitaCompressionFormat, CRILAYLAFormat,
             SFLFormat,
             GMOModelFormat, OBJModelFormat, ColladaModelFormat,
             PakBGFormats,
@@ -50,8 +49,6 @@ object SpiralFormats {
 
     val imageFormats: Array<SpiralFormat> = arrayOf(TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat)
 
-    val compressionFormats = arrayOf(DRVitaCompressionFormat, CRILAYLAFormat)
-
     val drArchiveFormats = arrayOf(
             WADFormat, CPKFormat,
             TGAFormat, SHTXFormat, DDSFormat,
@@ -62,8 +59,7 @@ object SpiralFormats {
             OggFormat,
             PAKFormat, SPCFormat,
             PakBGFormats,
-            NonstopFormat,
-            DRVitaCompressionFormat, CRILAYLAFormat
+            NonstopFormat
     )
 
     val drWadFormats = arrayOf(
@@ -86,25 +82,9 @@ object SpiralFormats {
 
     fun nullContext(name: String): (() -> InputStream)? = null
 
-    //TODO: Use an actual game/context
-    fun isCompressed(dataSource: DataSource): Boolean = compressionFormats.any { format -> format.isFormat(null, dataSource.location, this::nullContext, dataSource::inputStream) }
-    //TODO: Use an actual game/context
-    fun decompress(dataSource: () -> InputStream): () -> InputStream {
-        val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, this::nullContext, dataSource) } ?: return dataSource
-        val (output, source) = CacheHandler.cacheStream()
-        compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, this::nullContext, dataSource, output, emptyMap())
-        return source
-    }
-    //TODO: Use an actual game/context
-    fun decompressFully(dataSource: () -> InputStream): () -> InputStream {
-        var data: () -> InputStream = dataSource
-        while(true) {
-            val compressionFormat = compressionFormats.firstOrNull { format -> format.isFormat(null, null, this::nullContext, data) } ?: return data
-            val (output, source) = CacheHandler.cacheStream()
-            compressionFormat.convert(null, SpiralFormat.BinaryFormat, null, this::nullContext, data, output, emptyMap())
-            data = source
-        }
-    }
+    val compressionMethods: Array<ICompression> = arrayOf(
+            V3Compression, CRILAYLACompression
+    )
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
     @JvmOverloads

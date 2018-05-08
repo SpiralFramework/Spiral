@@ -12,6 +12,7 @@ import org.abimon.spiral.core.objects.models.SRDIModel
 import org.abimon.spiral.core.objects.models.collada.ColladaPojo
 import org.abimon.spiral.core.utils.*
 import org.abimon.spiral.mvc.gurren.Gurren
+import org.abimon.spiral.util.decompress
 import org.abimon.visi.lang.replaceLast
 import java.io.InputStream
 import java.io.OutputStream
@@ -43,7 +44,7 @@ object SPCFormat : SpiralFormat {
             is ZIPFormat -> {
                 val zip = ZipOutputStream(output)
                 spc.files.forEach { entry ->
-                    val data = SpiralFormats.decompressFully(entry::inputStream)
+                    val data = decompress(entry::inputStream)
                     if (convert) {
                         val innerFormat = SpiralFormats.formatForData(game, data, "$name/${entry.name}", SpiralFormats.drArchiveFormats)
                         val convertTo = innerFormat?.conversions?.firstOrNull()

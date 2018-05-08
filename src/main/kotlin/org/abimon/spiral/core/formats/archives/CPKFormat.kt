@@ -1,12 +1,8 @@
 package org.abimon.spiral.core.formats.archives
 
 import org.abimon.spiral.core.formats.SpiralFormat
-import org.abimon.spiral.core.formats.compression.CRILAYLAFormat
 import org.abimon.spiral.core.objects.archives.CPK
 import org.abimon.spiral.core.objects.game.DRGame
-import org.abimon.spiral.util.bind
-import org.abimon.spiral.util.fileSourceForName
-import org.abimon.spiral.util.rawInputStreamFor
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
@@ -34,10 +30,7 @@ object CPKFormat: SpiralFormat {
                 val zip = ZipOutputStream(output)
                 cpk.files.forEach { entry ->
                     zip.putNextEntry(ZipEntry("${entry.directoryName}/${entry.fileName}"))
-                    if(entry.isCompressed)
-                        CRILAYLAFormat.convert(game, SpiralFormat.BinaryFormat, "${entry.directoryName}/${entry.fileName}", cpk::fileSourceForName, entry::rawInputStreamFor.bind(cpk), zip, params)
-                    else
-                        entry.rawInputStreamFor(cpk).use { stream -> stream.copyTo(zip) }
+                    entry.inputStream.use { stream -> stream.copyTo(zip) }
 
                     return@forEach
                 }

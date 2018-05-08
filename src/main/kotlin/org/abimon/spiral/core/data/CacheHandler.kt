@@ -4,7 +4,9 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.visi.io.ByteArrayIOStream
 import org.abimon.visi.lang.and
 import java.io.*
+import java.time.LocalDateTime
 import java.util.*
+import kotlin.reflect.jvm.jvmName
 
 object CacheHandler {
     private val cacheFiles: MutableSet<File> = HashSet()
@@ -91,6 +93,24 @@ object CacheHandler {
         cacheFile.deleteOnExit()
 
         return cacheFile
+    }
+
+    fun logStackTrace(th: Throwable): File {
+        val logs = File("logs")
+        if (!logs.exists())
+            logs.mkdir()
+
+        var logFile = File("${LocalDateTime.now()} - ${th::class.simpleName ?: th::class.qualifiedName
+        ?: th::class.jvmName}.log")
+        var counter = 2
+
+        while (logFile.exists())
+            logFile = File("${LocalDateTime.now()} - ${th::class.simpleName ?: th::class.qualifiedName
+            ?: th::class.jvmName} ${counter++}.log")
+
+        PrintStream(logFile).use(th::printStackTrace)
+
+        return logFile
     }
 
     init {

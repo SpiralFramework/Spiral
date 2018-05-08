@@ -19,10 +19,7 @@ import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.mvc.SpiralModel.operating
-import org.abimon.spiral.util.InputStreamFuncDataSource
-import org.abimon.spiral.util.LoggerLevel
-import org.abimon.spiral.util.debug
-import org.abimon.spiral.util.fileSourceForname
+import org.abimon.spiral.util.*
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
@@ -116,7 +113,7 @@ object GurrenOperation {
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
                     val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> SpiralFormats.decompressFully(entry)().use { inputStream -> inputStream.copyTo(outputStream) } }
+                    FileOutputStream(output).use { outputStream -> decompress(entry)().use { inputStream -> inputStream.copyTo(outputStream) } }
                     debug("[$operatingName] Wrote $entryName to $output")
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
@@ -180,7 +177,7 @@ object GurrenOperation {
                         val parents = File(directory, entryName.parents)
                         if (!parents.exists() && !parents.mkdirs() && !parents.exists())
                             return@launch errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
-                        val data = SpiralFormats.decompressFully(entry)
+                        val data = decompress(entry)
                         val format = SpiralFormats.formatForExtension(entryName.extension, SpiralFormats.drArchiveFormats)
                                 ?: SpiralFormats.formatForData(operatingGame, data, entryName, SpiralFormats.drArchiveFormats)
 

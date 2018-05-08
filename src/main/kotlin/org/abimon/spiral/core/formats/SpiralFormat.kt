@@ -14,6 +14,7 @@ interface SpiralFormat {
     fun isFormatWithConfidence(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Pair<Boolean, Double> = isFormat(game, name, context, dataSource) to 1.0
     fun canConvert(game: DRGame?, format: SpiralFormat): Boolean = format in conversions || canConvertViaOverride(game, format)
     fun canConvertViaOverride(game: DRGame?, format: SpiralFormat): Boolean = OVERRIDING_CONVERSIONS.containsKey(game to this and format)
+
     /**
      * Convert from this format to another
      */

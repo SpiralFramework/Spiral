@@ -6,6 +6,7 @@ import org.abimon.spiral.core.objects.UnsafePak
 import org.abimon.spiral.core.objects.archives.Pak
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.util.decompress
 import org.abimon.visi.lang.extension
 import org.abimon.visi.lang.replaceLast
 import java.io.InputStream
@@ -43,7 +44,7 @@ object PAKFormat : SpiralFormat {
                 val zip = ZipOutputStream(output)
                 val pakNames = if (game is HopesPeakDRGame && name != null) game.pakNames[name] else null
                 pak.files.forEachIndexed { index, entry ->
-                    val data = SpiralFormats.decompressFully(entry::inputStream)
+                    val data = decompress(entry::inputStream)
 
                     if (pakNames != null && pakNames.size > index) {
                         val pakName = pakNames[index]
