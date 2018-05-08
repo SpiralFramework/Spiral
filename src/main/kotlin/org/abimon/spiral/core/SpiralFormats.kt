@@ -15,6 +15,7 @@ import org.abimon.spiral.core.formats.text.TextFormat
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
 import org.abimon.spiral.core.objects.compression.CRILAYLACompression
+import org.abimon.spiral.core.objects.compression.DRVitaCompression
 import org.abimon.spiral.core.objects.compression.ICompression
 import org.abimon.spiral.core.objects.compression.V3Compression
 import org.abimon.spiral.core.objects.game.DRGame
@@ -83,7 +84,7 @@ object SpiralFormats {
     fun nullContext(name: String): (() -> InputStream)? = null
 
     val compressionMethods: Array<ICompression> = arrayOf(
-            V3Compression, CRILAYLACompression
+            V3Compression, CRILAYLACompression, DRVitaCompression
     )
 
     fun formatForExtension(extension: String, selectiveFormats: Array<SpiralFormat> = formats): SpiralFormat? = selectiveFormats.firstOrNull { format -> format.extension?.equals(extension, true) ?: false }
