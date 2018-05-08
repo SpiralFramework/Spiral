@@ -14,6 +14,7 @@ import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.v3.V3
+import org.abimon.spiral.core.utils.use
 import org.abimon.spiral.modding.HookManager
 import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
@@ -113,7 +114,7 @@ object GurrenOperation {
                         return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
 
                     val output = File(directory, entryName)
-                    FileOutputStream(output).use { outputStream -> decompress(entry)().use { inputStream -> inputStream.copyTo(outputStream) } }
+                    FileOutputStream(output).use { outputStream -> decompress(entry).use { inputStream -> inputStream.copyTo(outputStream) } }
                     debug("[$operatingName] Wrote $entryName to $output")
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
