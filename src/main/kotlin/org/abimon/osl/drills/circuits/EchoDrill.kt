@@ -23,6 +23,6 @@ object EchoDrill : DrillCircuit {
         if (parser.silence)
             return
 
-        println(rawParams[0])
+        parser.stdout.println(rawParams[0])
     }
 }

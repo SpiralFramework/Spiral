@@ -4,11 +4,11 @@ import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.SpiralDrillBit
 import org.parboiled.Action
 import org.parboiled.Rule
+import java.lang.Math.abs
 
 object ForLoopDrill : DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
-                    //"for (i in 0 until 10) {",
                     "for",
                     OptionalWhitespace(),
                     "(",
@@ -107,9 +107,18 @@ object ForLoopDrill : DrillCircuit {
                             Action<Any> { context ->
                                 loadState(context)
 
-                                val limit = pop().toString().toInt()
+                                var limit = pop().toString().toInt()
                                 val start = pop().toString().toInt()
                                 val variableName = pop().toString()
+
+                                val range = abs(limit - start)
+
+                                if (range > maxForLoopFange) {
+                                    if (start < limit)
+                                        limit = start + maxForLoopFange
+                                    else
+                                        limit = start - maxForLoopFange
+                                }
 
                                 for (i in (if (start < limit) start until limit else start downTo limit)) {
                                     val parser = this.copy()

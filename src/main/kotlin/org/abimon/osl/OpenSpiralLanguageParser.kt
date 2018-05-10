@@ -20,6 +20,7 @@ import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.ParsingResult
 import java.io.File
+import java.io.PrintStream
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
@@ -27,6 +28,9 @@ import kotlin.reflect.full.safeCast
 open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
         val FRAMES_PER_SECOND = 60
+
+        var DEFAULT_STDOUT: PrintStream = System.out
+        var DEFAULT_MAX_FOR_RANGE: Int = 100
 
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
     }
@@ -64,6 +68,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val uuid = UUID.randomUUID().toString()
     val labels: MutableList<Int> = LinkedList()
     var flagCheckIndentation = 0
+
+    var stdout: PrintStream = DEFAULT_STDOUT
+    var maxForLoopFange: Int = DEFAULT_MAX_FOR_RANGE
 
     fun findLabel(): Int {
         var labelID = (0xFF * 0xFF) - 1
@@ -320,6 +327,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         val copy = OpenSpiralLanguageParser(oslContext)
         val state = saveParserState()
 
+        copy.stdout = stdout
+        copy.maxForLoopFange = maxForLoopFange
         copy.localiser = localiser
         copy.loadParserState(state)
 
