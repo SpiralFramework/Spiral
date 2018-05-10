@@ -46,5 +46,5 @@ object DataHandler {
     }
 
     fun newCacheFile(name: String? = null): File = cacheFileInitialiser(name)
-    fun cacheFileWithNameAndData(name: String, dataFunc: (File) -> Unit): File = cacheFileWithNameAndData(name, dataFunc)
+    fun cacheFileWithNameAndData(name: String, dataFunc: (File) -> Unit): File = cacheFileWithNameAndDataInitialiser(name, dataFunc)
 }
