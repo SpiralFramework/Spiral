@@ -17,6 +17,7 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
             stream.skip((dataLength + subdataLength + dataLength.paddingFor() + subdataLength.paddingFor()).toLong())
 
             when(dataType) {
+                "\$TXI" -> return TXIEntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$TXR" -> return TXREntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$RSI" -> return RSIEntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$VTX" -> return VTXEntry(dataType, offset, dataLength, subdataLength, srd)
