@@ -20,6 +20,7 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
                 "\$TXR" -> return TXREntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$RSI" -> return RSIEntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$VTX" -> return VTXEntry(dataType, offset, dataLength, subdataLength, srd)
+                "\$MAT" -> return MATEntry(dataType, offset, dataLength, subdataLength, srd)
                 else -> return SRDEntry(dataType, offset, dataLength, subdataLength, srd)
             }
         }
