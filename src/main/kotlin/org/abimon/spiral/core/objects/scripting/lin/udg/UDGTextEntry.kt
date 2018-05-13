@@ -7,6 +7,6 @@ data class UDGTextEntry(override var text: String?, override val textID: Int): L
     constructor(op: Int, args: IntArray): this(null, (args[0] shl 8) or args[1])
 
     override val opCode: Int = 0x01
-    override val rawArguments: IntArray = intArrayOf()
+    override val rawArguments: IntArray = intArrayOf(textID shr 8 and 0xFF, textID and 0xFF)
     override val writeBOM: Boolean = false
 }
