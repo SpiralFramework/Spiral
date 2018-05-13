@@ -25,7 +25,7 @@ import java.io.InputStream
 
 object SpiralFormats {
 
-    val formats: Array<SpiralFormat> = arrayOf(
+    var formats: Array<SpiralFormat> = arrayOf(
             WADFormat, CPKFormat, ZIPFormat,
             GXTFormat, TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
@@ -45,12 +45,12 @@ object SpiralFormats {
             TextFormat
     )
 
-    val audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
-    val videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
+    var audioFormats: Array<SpiralFormat> = arrayOf(OggFormat, MP4Format)
+    var videoFormats: Array<SpiralFormat> = arrayOf(IVFFormat, MP4Format)
 
-    val imageFormats: Array<SpiralFormat> = arrayOf(TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat)
+    var imageFormats: Array<SpiralFormat> = arrayOf(TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat)
 
-    val drArchiveFormats = arrayOf(
+    var drArchiveFormats = arrayOf(
             WADFormat, CPKFormat,
             TGAFormat, SHTXFormat, DDSFormat,
             LINFormat,
@@ -63,7 +63,7 @@ object SpiralFormats {
             NonstopFormat
     )
 
-    val drWadFormats = arrayOf(
+    var drWadFormats = arrayOf(
             TGAFormat,
             LINFormat,
             SFLFormat,
@@ -73,17 +73,17 @@ object SpiralFormats {
             PAKFormat
     )
 
-    val gameRequiredFormats = arrayOf(
+    var gameRequiredFormats = arrayOf(
             LINFormat,
             WRDFormat,
             NonstopFormat
     )
 
-    val gameAmbiguousFormats = formats.filterNot { format -> format in gameRequiredFormats }.toTypedArray()
+    var gameAmbiguousFormats = formats.filterNot { format -> format in gameRequiredFormats }.toTypedArray()
 
     fun nullContext(name: String): (() -> InputStream)? = null
 
-    val compressionMethods: Array<ICompression> = arrayOf(
+    var compressionMethods: Array<ICompression> = arrayOf(
             V3Compression, CRILAYLACompression, DRVitaCompression
     )
 
