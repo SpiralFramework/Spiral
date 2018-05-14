@@ -33,4 +33,6 @@ data class CPKFileEntry(val fileName: String, val directoryName: String, val fil
 
     val rawInputStream: InputStream
         get() = WindowedInputStream(cpk.dataSource(), offset, fileSize)
+
+    val name: String = if (directoryName.isNotBlank()) "$directoryName/$fileName" else fileName
 }

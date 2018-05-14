@@ -54,5 +54,6 @@ fun Float.roundToPrecision(places: Int = 4): Float {
 fun DecimalFormat.formatPair(pair: Pair<Float, Float>): Pair<String, String> = Pair(format(pair.first), format(pair.second))
 fun DecimalFormat.formatTriple(triple: Triple<Float, Float, Float>): Triple<String, String, String> = Triple(format(triple.first), format(triple.second), format(triple.third))
 
-fun Int.paddingFor(size: Int = 0x10): Int = (size - this % size) % size
+fun Int.align(size: Int = 0x10): Int = (size - this % size) % size
+fun Long.align(size: Int = 0x10): Int = ((size - this % size) % size).toInt()
 fun <T> (() -> InputStream).use(op: (InputStream) -> T): T = this().use(op)

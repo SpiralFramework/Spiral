@@ -1,9 +1,6 @@
 package org.abimon.spiral.core.objects.archives
 
-import org.abimon.spiral.core.utils.and
-import org.abimon.spiral.core.utils.readInt16BE
-import org.abimon.spiral.core.utils.readInt32BE
-import org.abimon.spiral.core.utils.readInt64BE
+import org.abimon.spiral.core.utils.*
 import java.io.IOException
 import java.io.InputStream
 
@@ -89,7 +86,7 @@ data class UTFTableInfo(
                         bytesRead = 2
                     }
                     CPKColumnType.TYPE_FLOAT -> {
-                        dataObj = (0.0f to stream.readInt32BE())
+                        dataObj = (0.0f to stream.readFloatBE())
                         bytesRead = 4
                     }
                     CPKColumnType.TYPE_1BYTE2 -> {

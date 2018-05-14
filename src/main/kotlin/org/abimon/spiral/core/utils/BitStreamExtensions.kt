@@ -90,68 +90,68 @@ fun OutputStream.writeFloatLE(float: Float) = writeInt32LE(java.lang.Float.float
 fun OutputStream.writeInt64LE(num: Number) {
     val long = num.toLong()
 
-    write(long.toInt() % 256)
-    write((long shr 8).toInt() % 256)
-    write((long shr 16).toInt() % 256)
-    write((long shr 24).toInt() % 256)
-    write((long shr 32).toInt() % 256)
-    write((long shr 40).toInt() % 256)
-    write((long shr 48).toInt() % 256)
-    write((long shr 56).toInt() % 256)
+    write(long.toInt() and 0xFF)
+    write((long shr 8).toInt() and 0xFF)
+    write((long shr 16).toInt() and 0xFF)
+    write((long shr 24).toInt() and 0xFF)
+    write((long shr 32).toInt() and 0xFF)
+    write((long shr 40).toInt() and 0xFF)
+    write((long shr 48).toInt() and 0xFF)
+    write((long shr 56).toInt() and 0xFF)
 }
 
 fun OutputStream.writeInt64BE(num: Number) {
     val long = num.toLong()
 
-    write((long shr 56).toInt() % 256)
-    write((long shr 48).toInt() % 256)
-    write((long shr 40).toInt() % 256)
-    write((long shr 32).toInt() % 256)
-    write((long shr 24).toInt() % 256)
-    write((long shr 16).toInt() % 256)
-    write((long shr 8).toInt() % 256)
-    write(long.toInt() % 256)
+    write((long shr 56).toInt() and 0xFF)
+    write((long shr 48).toInt() and 0xFF)
+    write((long shr 40).toInt() and 0xFF)
+    write((long shr 32).toInt() and 0xFF)
+    write((long shr 24).toInt() and 0xFF)
+    write((long shr 16).toInt() and 0xFF)
+    write((long shr 8).toInt() and 0xFF)
+    write(long.toInt() and 0xFF)
 }
 
 fun OutputStream.writeInt32LE(num: Number) {
     val int = num.toInt()
 
-    write(int % 256)
-    write((int shr 8) % 256)
-    write((int shr 16) % 256)
-    write((int shr 24) % 256)
+    write(int and 0xFF)
+    write((int shr 8) and 0xFF)
+    write((int shr 16) and 0xFF)
+    write((int shr 24) and 0xFF)
 }
 
 fun OutputStream.writeInt32BE(num: Number) {
     val int = num.toInt()
 
-    write((int shr 24) % 256)
-    write((int shr 16) % 256)
-    write((int shr 8) % 256)
-    write(int % 256)
+    write((int shr 24) and 0xFF)
+    write((int shr 16) and 0xFF)
+    write((int shr 8) and 0xFF)
+    write(int and 0xFF)
 }
 
 fun OutputStream.writeUInt32BE(num: Number) {
     val int = num.toInt()
 
-    write((int ushr 24) % 256)
-    write((int ushr 16) % 256)
-    write((int ushr 8) % 256)
-    write(int % 256)
+    write((int ushr 24) and 0xFF)
+    write((int ushr 16) and 0xFF)
+    write((int ushr 8) and 0xFF)
+    write(int and 0xFF)
 }
 
 fun OutputStream.writeInt16LE(num: Number) {
     val int = num.toShort().toInt()
 
-    write(int % 256)
-    write((int shr 8) % 256)
+    write(int and 0xFF)
+    write((int shr 8) and 0xFF)
 }
 
 fun OutputStream.writeInt16BE(num: Number) {
     val int = num.toShort().toInt()
 
-    write((int shr 8) % 256)
-    write(int % 256)
+    write((int shr 8) and 0xFF)
+    write(int and 0xFF)
 }
 
 fun makeMask(vararg bits: Int): Int {
