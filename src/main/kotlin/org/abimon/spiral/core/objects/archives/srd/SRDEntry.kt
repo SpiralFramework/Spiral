@@ -14,7 +14,7 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
             val padding = stream.readInt32BE()
 
             val offset = stream.streamOffset
-            stream.skip((dataLength + subdataLength + dataLength.paddingFor() + subdataLength.paddingFor()).toLong())
+            stream.skip((dataLength + subdataLength + dataLength.align() + subdataLength.align()).toLong())
 
             when(dataType) {
                 "\$TXI" -> return TXIEntry(dataType, offset, dataLength, subdataLength, srd)
@@ -31,7 +31,7 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
         get() = WindowedInputStream(srd.dataSource(), offset.toLong(), dataLength.toLong())
 
     val subdataStream: InputStream
-        get() = WindowedInputStream(srd.dataSource(), (offset + dataLength + dataLength.paddingFor()), subdataLength.toLong())
+        get() = WindowedInputStream(srd.dataSource(), (offset + dataLength + dataLength.align()), subdataLength.toLong())
 
-    val size: Int = dataLength + subdataLength + dataLength.paddingFor() + subdataLength.paddingFor()
+    val size: Int = dataLength + subdataLength + dataLength.align() + subdataLength.align()
 }

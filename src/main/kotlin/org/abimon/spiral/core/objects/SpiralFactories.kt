@@ -48,3 +48,9 @@ fun customRoomObject(init: RoomObject.() -> Unit): RoomObject {
     roomObject.init()
     return roomObject
 }
+
+fun utfTable(init: UTFTableInfo.() -> Unit): UTFTableInfo {
+    val utfTableInfo = UTFTableInfo()
+    utfTableInfo.init()
+    return utfTableInfo
+}

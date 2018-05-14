@@ -2,12 +2,14 @@ package org.abimon.spiral.core.objects.archives
 
 import org.abimon.spiral.core.utils.*
 import java.io.InputStream
+import java.time.LocalDateTime
 
 class CPK(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x204b5043
         val UTF_MAGIC_NUMBER = 0x46545540
         val TOC_MAGIC_NUMBER = 0x20434f54
+        val ETOC_MAGIC_NUMBER = 0x434f5445
 
         val COLUMN_STORAGE_MASK = 0xF0
         val COLUMN_STORAGE_PERROW = 0x50
@@ -27,6 +29,7 @@ class CPK(val dataSource: () -> InputStream) {
         val COLUMN_TYPE_1BYTE = 0x00
 
         val TOC_OFFSET_COLUMN = "TocOffset"
+        val ETOC_OFFSET_COLUMN = "EtocOffset"
         val CONTENT_OFFSET_COLUMN = "ContentOffset"
         val FILES_COLUMN = "Files"
 
@@ -104,10 +107,39 @@ class CPK(val dataSource: () -> InputStream) {
 
                     return@use info
                 }
+
+        val VALID_MONTHS = 1L .. 12
+        val VALID_DAYS = 1L .. 31
+        val VALID_HOURS = 0L until 24
+        val VALID_MINUTES = 0L until 60
+        val VALID_SECONDS = 0L until 60
+
+        fun convertFromEtocTime(time: Long): LocalDateTime {
+            val year = ((time shr 48)).toString().padStart(4, '0')
+            val month = ((time shr 40) and 0xFF).coerceIn(VALID_MONTHS).toString().padStart(2, '0')
+            val day = ((time shr 32) and 0xFF).coerceIn(VALID_DAYS).toString().padStart(2, '0')
+            val hour = ((time shr 24) and 0xFF).coerceIn(VALID_HOURS).toString().padStart(2, '0')
+            val minute = ((time shr 16) and 0xFF).coerceIn(VALID_MINUTES).toString().padStart(2, '0')
+            val second = ((time shr 8) and 0xFF).coerceIn(VALID_SECONDS).toString().padStart(2, '0')
+
+            return LocalDateTime.parse("${year}-${month}-${day}T${hour}:${minute}:${second}")
+        }
+
+        fun convertToEtocTime(time: LocalDateTime): Long {
+            val year = time.year.toLong()
+            val month = time.monthValue.toLong()
+            val day = time.dayOfMonth.toLong()
+            val hour = time.hour.toLong()
+            val minute = time.minute.toLong()
+            val second = time.second.toLong()
+
+            return (year shl 48) or (month shl 40) or (day shl 32) or (hour shl 24) or (minute shl 16) or (second shl 8)
+        }
     }
 
     val headerInfo: UTFTableInfo
     val tocHeader: UTFTableInfo
+    val etocHeader: UTFTableInfo?
 
     val files: Array<CPKFileEntry>
 
@@ -122,11 +154,14 @@ class CPK(val dataSource: () -> InputStream) {
             assertAsArgument(headerInfo.rows == 1L, "Illegal number of header rows (Was ${headerInfo.rows}, expected 1)")
 
             val tocOffset = (headerInfo.getRow(dataSource, 0, TOC_OFFSET_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
+            val etocOffset = (headerInfo.getRow(dataSource, 0, ETOC_OFFSET_COLUMN)?.second as? Number)?.toLong()
             val contentOffset = (headerInfo.getRow(dataSource, 0, CONTENT_OFFSET_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
             val fileCount = (headerInfo.getRow(dataSource, 0, FILES_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
 
             tocHeader = readTable(dataSource, tocOffset + 0x10)
             assertAsArgument(tocHeader.rows == fileCount, "Illegal number of header rows in TOC (Was ${tocHeader.rows}, expected $fileCount)")
+
+            etocHeader = etocOffset?.let { offset -> readTable(dataSource, offset + 0x10) }
 
             files = Array(tocHeader.rows.toInt()) { i ->
                 val filename = tocHeader.getRow(dataSource, i, FILENAME_COLUMN)?.second as? String ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR)
