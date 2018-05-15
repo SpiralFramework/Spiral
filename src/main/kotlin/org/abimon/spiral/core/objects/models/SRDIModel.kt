@@ -1,8 +1,7 @@
 package org.abimon.spiral.core.objects.models
 
 import org.abimon.spiral.core.objects.archives.SRD
-import org.abimon.spiral.core.objects.archives.srd.EnumSRDIMeshType
-import org.abimon.spiral.core.objects.archives.srd.VTXEntry
+import org.abimon.spiral.core.objects.archives.srd.*
 import org.abimon.spiral.core.utils.*
 import java.io.InputStream
 
@@ -15,6 +14,10 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
 
     init {
         val vertexMeshEntries = meshInfo.entries.filterIsInstance(VTXEntry::class.java)
+        val meshEntries = meshInfo.entries.filterIsInstance(MSHEntry::class.java)
+        val materialEntries = meshInfo.entries.filterIsInstance(MATEntry::class.java)
+        val textureInfoEntries = meshInfo.entries.filterIsInstance(TXIEntry::class.java)
+        val textureEntries = meshInfo.entries.filterIsInstance(TXREntry::class.java)
 
         meshes = vertexMeshEntries.map { vtx ->
             val vertices: MutableList<Vertex> = ArrayList()
@@ -196,6 +199,15 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
             }
 
             mesh.name = vtx.rsiEntry.name
+
+            val meshEntry = meshEntries.first { entry -> entry.meshName == vtx.rsiEntry.name }
+            val materialEntry = materialEntries.first { entry -> entry.rsiEntry.name == meshEntry.materialName }
+
+            mesh.materialName = meshEntry.materialName
+            mesh.textures = materialEntry.materials.mapValues { (_, textureName) ->
+                textureInfoEntries.first { entry -> entry.rsiEntry.name == textureName }.filename
+            }.mapValues { (_, textureName) -> textureEntries.first { entry -> entry.rsiEntry.name == textureName } }
+
             return@map mesh
         }.toTypedArray()
     }
