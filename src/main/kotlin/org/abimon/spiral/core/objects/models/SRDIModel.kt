@@ -200,13 +200,17 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
 
             mesh.name = vtx.rsiEntry.name
 
-            val meshEntry = meshEntries.first { entry -> entry.meshName == vtx.rsiEntry.name }
-            val materialEntry = materialEntries.first { entry -> entry.rsiEntry.name == meshEntry.materialName }
+            try {
+                val meshEntry = meshEntries.first { entry -> entry.meshName == vtx.rsiEntry.name }
+                val materialEntry = materialEntries.first { entry -> entry.rsiEntry.name == meshEntry.materialName }
 
-            mesh.materialName = meshEntry.materialName
-            mesh.textures = materialEntry.materials.mapValues { (_, textureName) ->
-                textureInfoEntries.first { entry -> entry.rsiEntry.name == textureName }.filename
-            }.mapValues { (_, textureName) -> textureEntries.first { entry -> entry.rsiEntry.name == textureName } }
+                mesh.materialName = meshEntry.materialName
+                mesh.textures = materialEntry.materials.mapValues { (_, textureName) ->
+                    textureInfoEntries.first { entry -> entry.rsiEntry.name == textureName }.filename
+                }.mapValues { (_, textureName) -> textureEntries.first { entry -> entry.rsiEntry.name == textureName } }
+            } catch (th: Throwable) {
+                throw th
+            }
 
             return@map mesh
         }.toTypedArray()
