@@ -1,13 +1,17 @@
 package org.abimon.spiral.core.objects.models
 
+import org.abimon.spiral.core.objects.archives.srd.TXREntry
 import org.abimon.spiral.core.utils.TriFace
 import org.abimon.spiral.core.utils.UV
 import org.abimon.spiral.core.utils.Vertex
 import java.util.*
 
 open class SRDIMesh(val vertices: Array<Vertex>, val uvs: Array<UV>, val faces: Array<TriFace>) {
-    var name: String? = null
+    lateinit var name: String
+    lateinit var materialName: String
+
     var normals: Array<Vertex>? = null
+    var textures: Map<String, TXREntry> = emptyMap()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
