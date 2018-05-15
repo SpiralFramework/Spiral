@@ -15,6 +15,7 @@ fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen:
 
 fun InputStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
 
+fun InputStream.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = Charsets.UTF_8)
 fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8): String {
     val baos = ByteArrayOutputStream()
     var byte: Int

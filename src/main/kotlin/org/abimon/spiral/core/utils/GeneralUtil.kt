@@ -22,7 +22,7 @@ typealias FaceBlock = RSIEntry.ResourceArray
 infix fun <A, B, C> Pair<A, B>.and(c: C): Triple<A, B, C> = Triple(first, second, c)
 
 operator fun <A, S> OpCodeMutableMap<A, S>.set(key: Int, value: Triple<String?, Int, (Int, A) -> S>) {
-    if(value.first == null)
+    if (value.first == null)
         this[key] = Triple(emptyArray<String>(), value.second, value.third)
     else
         this[key] = Triple(arrayOf(value.first!!), value.second, value.third)
@@ -38,7 +38,7 @@ fun assertAsArgument(statement: Boolean, illegalArgument: String) {
 }
 
 fun assertOrThrow(statement: Boolean, ammo: Throwable) {
-    if(!statement)
+    if (!statement)
         throw ammo
 }
 
@@ -56,4 +56,9 @@ fun DecimalFormat.formatTriple(triple: Triple<Float, Float, Float>): Triple<Stri
 
 fun Int.align(size: Int = 0x10): Int = (size - this % size) % size
 fun Long.align(size: Int = 0x10): Int = ((size - this % size) % size).toInt()
+
 fun <T> (() -> InputStream).use(op: (InputStream) -> T): T = this().use(op)
+fun <T> (() -> InputStream).useAt(offset: Number, op: (InputStream) -> T): T = this().use { stream ->
+    stream.skip(offset.toLong())
+    return@use op(stream)
+}

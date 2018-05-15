@@ -31,7 +31,7 @@ open class RSIEntry(dataType: String, offset: Long, dataLength: Int, subdataLeng
 
             nameOffset = stream.readInt32LE()
 
-            mipmaps = Array(mipmapCount) { Mipmap(stream.readInt32LE() and 0x00FFFFFF, stream.readInt32LE(), stream.readInt32LE(), stream.readInt32LE()) }
+            mipmaps = Array(mipmapCount) { Mipmap(stream.readInt32LE() and 0x0FFFFFFF, stream.readInt32LE(), stream.readInt32LE(), stream.readInt32LE()) }
         } finally {
             stream.close()
         }
