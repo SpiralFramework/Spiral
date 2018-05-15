@@ -22,6 +22,7 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
                 "\$RSI" -> return RSIEntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$VTX" -> return VTXEntry(dataType, offset, dataLength, subdataLength, srd)
                 "\$MAT" -> return MATEntry(dataType, offset, dataLength, subdataLength, srd)
+                "\$MSH" -> return MSHEntry(dataType, offset, dataLength, subdataLength, srd)
                 else -> return SRDEntry(dataType, offset, dataLength, subdataLength, srd)
             }
         }
@@ -34,4 +35,10 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
         get() = WindowedInputStream(srd.dataSource(), (offset + dataLength + dataLength.align()), subdataLength.toLong())
 
     val size: Int = dataLength + subdataLength + dataLength.align() + subdataLength.align()
+
+    open val rsiEntry: RSIEntry? by lazy {
+        if (subdataLength > 16)
+            return@lazy (subdataStream as WindowedInputStream).use { substream -> SRDEntry(substream, srd) } as? RSIEntry
+        return@lazy null
+    }
 }
