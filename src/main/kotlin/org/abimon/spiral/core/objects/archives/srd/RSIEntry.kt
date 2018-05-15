@@ -8,6 +8,7 @@ import org.abimon.spiral.core.utils.readNullTerminatedString
 
 open class RSIEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
     data class ResourceArray(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
+    override val rsiEntry: RSIEntry? = null
 
     val unk1: Int
     val unk2: Int

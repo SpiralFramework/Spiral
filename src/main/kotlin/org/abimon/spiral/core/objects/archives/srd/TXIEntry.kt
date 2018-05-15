@@ -1,14 +1,13 @@
 package org.abimon.spiral.core.objects.archives.srd
 
 import org.abimon.spiral.core.objects.archives.SRD
-import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.core.utils.readNullTerminatedString
 
 open class TXIEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
     val filename: String
     val fileID: String
         get() = rsiEntry.name
-    val rsiEntry: RSIEntry
+    override val rsiEntry: RSIEntry = super.rsiEntry!!
 
     init {
         val stream = dataStream
@@ -19,7 +18,6 @@ open class TXIEntry(dataType: String, offset: Long, dataLength: Int, subdataLeng
             stream.skip(20)
 
             filename = stream.readNullTerminatedString()
-            rsiEntry = (subdataStream as WindowedInputStream).use { substream -> SRDEntry(substream, srd) } as RSIEntry
         } finally {
             stream.close()
         }

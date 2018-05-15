@@ -6,6 +6,7 @@ import org.abimon.spiral.core.utils.readNullTerminatedString
 
 open class MATEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
     val materials: Map<String, String>
+    override val rsiEntry: RSIEntry = super.rsiEntry!!
     
     init {
         val stream = dataStream

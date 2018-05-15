@@ -1,7 +1,6 @@
 package org.abimon.spiral.core.objects.archives.srd
 
 import org.abimon.spiral.core.objects.archives.SRD
-import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.core.utils.readInt16LE
 import org.abimon.spiral.core.utils.readInt32LE
 
@@ -16,7 +15,7 @@ open class TXREntry(dataType: String, offset: Long, dataLength: Int, subdataLeng
     val palette: Int
     val paletteID: Int
 
-    val rsiEntry: RSIEntry
+    override val rsiEntry: RSIEntry = super.rsiEntry!!
 
     init {
         val stream = dataStream
@@ -31,8 +30,6 @@ open class TXREntry(dataType: String, offset: Long, dataLength: Int, subdataLeng
             unk2 = stream.read() and 0xFF
             palette = stream.read() and 0xFF
             paletteID = stream.read() and 0xFF
-
-            rsiEntry = (subdataStream as WindowedInputStream).use { substream -> SRDEntry(substream, srd) } as RSIEntry
         } finally {
             stream.close()
         }
