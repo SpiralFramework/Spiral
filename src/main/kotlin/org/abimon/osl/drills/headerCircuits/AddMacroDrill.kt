@@ -1,6 +1,7 @@
-package org.abimon.osl.drills.circuits
+package org.abimon.osl.drills.headerCircuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.drills.circuits.DrillCircuit
 import org.parboiled.Rule
 
 object AddMacroDrill : DrillCircuit {
@@ -26,24 +27,13 @@ object AddMacroDrill : DrillCircuit {
                                     Whitespace(),
                                     Parameter(cmd)
                             ),
-                            operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
+                            operateOnTmpActions(cmd) { params ->
+                                val macro = params[1].toString()
+
+                                for (i in 2 until params.size)
+                                    macros[params[i].toString().toLowerCase()] = macro
+                            }
                     ),
-                    pushStackWithHead(cmd)
+                    clearTmpStack(cmd)
             )
-
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
-        if (parser.silence)
-            return
-
-        val macro = rawParams[0].toString()
-
-        val result = parser.copy().parse("OSL Script\n$macro")
-        if (result.hasErrors())
-            return
-
-        val macroData = result.valueStack.reversed()
-
-        for (i in 1 until rawParams.size)
-            parser.macros[rawParams[i].toString()] = macroData
-    }
 }
