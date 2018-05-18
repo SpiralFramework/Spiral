@@ -35,4 +35,9 @@ class FlatFileArchive(val dir: File): IArchive {
             file.outputStream().use { out -> data().use { stream -> stream.copyTo(out) } }
         }
     }
+
+    override fun clear() {
+        dir.deleteRecursively()
+        dir.mkdirs()
+    }
 }

@@ -11,6 +11,7 @@ import org.abimon.spiral.core.utils.DelegatedInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.modding.BackupManager
 import org.abimon.spiral.modding.data.ModList
+import org.abimon.spiral.mvc.gurren.Gurren
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -103,5 +104,14 @@ class WADArchive(override val archiveFile: File) : IArchive {
             tmp.delete()
             cacheFiles.forEach { file -> file.delete() }
         }
+    }
+
+    override fun clear() {
+        val customWad = customWAD {
+            val info = "Compiled with SPIRAL v${Gurren.version}".toByteArray(Charsets.UTF_8)
+            add("Info.txt", info.size.toLong(), info::inputStream)
+        }
+
+        FileOutputStream(archiveFile).use(customWad::compile)
     }
 }

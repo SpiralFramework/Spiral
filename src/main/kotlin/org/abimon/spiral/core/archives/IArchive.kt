@@ -16,6 +16,7 @@ interface IArchive {
     val supportsCompilation: Boolean
 
     fun compile(newEntries: List<Pair<String, () -> InputStream>>)
+    fun clear()
 
     companion object {
         private val archiveExtensions: Map<String, (File) -> IArchive> = mapOf(

@@ -344,6 +344,15 @@ object GurrenOperation {
         }
     }
 
+    val clear = Command("clear_archive", "operate") {
+        if (question("Are you ***sure*** you want to clear ${operatingArchive.fileEntries.size} files (Y/n)? ", "Y")) {
+            operatingArchive.clear()
+            println("Cleared $operatingName")
+        } else {
+            println("Returning to menu...")
+        }
+    }
+
     val restore = Command("restore", "operate") { (params) ->
         val backupFile = File((SpiralModel.operating
                 ?: return@Command errPrintln("Error: SpiralModel#operating is null, this is a bug!")).absolutePath.replaceAfterLast('.', "zip"))
