@@ -1,5 +1,4 @@
 OSL Script
 
 Add Macro "UI: Enable Sprites" as showSprites() or "Show Sprites"
-Add Macro "UI: Enable Present Selection" as ShowPresents() or "Show Presents"
 Add Macro "UI: Enable Speaker Name" as showSpeakerName() or "Show Speaker Name"
