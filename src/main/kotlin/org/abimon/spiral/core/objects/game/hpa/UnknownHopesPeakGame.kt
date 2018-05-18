@@ -34,4 +34,5 @@ object UnknownHopesPeakGame: HopesPeakDRGame {
                     "Unknown"
             )
     override val steamID: String? = null
+    override val itemNames: Array<String> = emptyArray()
 }

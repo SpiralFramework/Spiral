@@ -18,4 +18,6 @@ interface HopesPeakDRGame: DRGame {
 
     val characterIdentifiers: Map<String, Int>
     val characterIDs: Map<Int, String>
+
+    val itemNames: Array<String>
 }
