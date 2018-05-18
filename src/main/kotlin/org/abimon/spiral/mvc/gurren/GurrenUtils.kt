@@ -3,6 +3,7 @@ package org.abimon.spiral.mvc.gurren
 import com.jakewharton.fliptables.FlipTable
 import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.objects.customWAD
 import org.abimon.spiral.core.objects.game.hpa.*
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.spiral.mvc.SpiralModel
@@ -349,6 +350,19 @@ object GurrenUtils {
         println((Gurren.game as? HopesPeakDRGame)?.opCodes?.entries?.sortedBy { (key) -> key }?.joinToString("\n") { (key, value) ->
             return@joinToString "[0x${key.toString(16)}] {${value.first.joinToString()}}, {${value.second}}"
         })
+    }
+
+    val blankWad = Command("blank_wad") { (params) ->
+        val file = if (params.size == 1) File("blank.wad") else File(params[1])
+
+        val customWad = customWAD {
+            val info = "Compiled with SPIRAL v${Gurren.version}".toByteArray(Charsets.UTF_8)
+            add("Info.txt", info.size.toLong(), info::inputStream)
+        }
+
+        FileOutputStream(file).use(customWad::compile)
+
+        println("Compiled a blank wad to $file")
     }
 
     fun BufferedImage.antialias(): BufferedImage {
