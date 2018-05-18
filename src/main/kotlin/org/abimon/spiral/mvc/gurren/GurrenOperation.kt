@@ -250,6 +250,7 @@ object GurrenOperation {
 
         if (proceed) {
             operatingArchive.compile(matching.map { file -> (file relativePathFrom directory) to { FileInputStream(file) } })
+            refreshArchive(operating)
             println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
         }
     }
@@ -257,7 +258,7 @@ object GurrenOperation {
     val compileAndRun = Command("compile_and_run", "operate") { (params) ->
         compile.command(InstanceOrder<String>("COMPILE_AND_RUN", scout = null, data = params.apply { this[0] = "compile" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
 
-        if(Desktop.isDesktopSupported()) {
+        if (Desktop.isDesktopSupported()) {
             operatingGame?.steamID?.let { steamID -> Desktop.getDesktop().browse(URI("steam://run/$steamID")) }
         } else {
             errPrintln("No desktop environment detected; running in headless most likely!")
@@ -330,6 +331,8 @@ object GurrenOperation {
             })
 
             operatingArchive.compile(newEntries)
+            refreshArchive(operating)
+
             println("[$operatingName] Successfully compiled ${matching.size} files into ${operating!!.name}")
         }
     }
@@ -337,7 +340,7 @@ object GurrenOperation {
     val compileNicelyAndRun = Command("compile_nicely_and_run", "operate") { (params) ->
         compileNicely.command(InstanceOrder<String>("COMPILE_NICELY_AND_RUN", scout = null, data = params.apply { this[0] = "compile_nicely" }.joinToString(" ") { cmd -> "\"$cmd\"" }))
 
-        if(Desktop.isDesktopSupported()) {
+        if (Desktop.isDesktopSupported()) {
             operatingGame?.steamID?.let { steamID -> Desktop.getDesktop().browse(URI("steam://run/$steamID")) }
         } else {
             errPrintln("No desktop environment detected; running in headless most likely!")
@@ -347,6 +350,8 @@ object GurrenOperation {
     val clear = Command("clear_archive", "operate") {
         if (question("Are you ***sure*** you want to clear ${operatingArchive.fileEntries.size} files (Y/n)? ", "Y")) {
             operatingArchive.clear()
+            refreshArchive(operating)
+
             println("Cleared $operatingName")
         } else {
             println("Returning to menu...")
@@ -455,8 +460,10 @@ object GurrenOperation {
         }
     }
 
-    fun onArchiveChange(old: File?, new: File?) {
-        backingOperatingArchive = new?.let(IArchive.Companion::invoke)
+    fun onArchiveChange(old: File?, new: File?) = refreshArchive(new)
+
+    fun refreshArchive(file: File?) {
+        backingOperatingArchive = file?.let(IArchive.Companion::invoke)
     }
 
     init {
