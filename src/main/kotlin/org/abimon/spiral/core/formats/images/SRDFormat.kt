@@ -1,24 +1,19 @@
 package org.abimon.spiral.core.formats.images
 
-import org.abimon.karnage.raw.BC7PixelData
-import org.abimon.karnage.raw.DXT1PixelData
-import org.abimon.spiral.core.*
-import org.abimon.spiral.core.data.CacheHandler
-import org.abimon.spiral.core.data.SpiralData
+import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
 import org.abimon.spiral.core.objects.archives.SPC
 import org.abimon.spiral.core.objects.archives.SPCEntry
 import org.abimon.spiral.core.objects.archives.SRD
+import org.abimon.spiral.core.objects.archives.srd.TXREntry
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
-import org.abimon.spiral.core.utils.CountingInputStream
-import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.util.LoggerLevel
 import org.abimon.spiral.util.debug
-import org.abimon.spiral.util.trace
+import org.abimon.spiral.util.readTexture
 import org.abimon.visi.collections.remove
 import org.abimon.visi.lang.and
 import org.abimon.visi.lang.exportStackTrace
@@ -67,7 +62,15 @@ object SRDFormat {
                     val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
                     val before = otherEntries.size
-                    readSRD(srdEntry::inputStream, img::inputStream, if (model != null) SRDIModel(SRD(srdEntry::inputStream), model::inputStream) else null, otherEntries, images, params)
+                    //readSRD(srdEntry::inputStream, img::inputStream, if (model != null) SRDIModel(SRD(srdEntry::inputStream), model::inputStream) else null, otherEntries, images, params)
+
+                    val srd = SRD(srdEntry::inputStream)
+                    srd.entries.filterIsInstance(TXREntry::class.java).forEach txrLoop@{ txr ->
+                        images[txr.rsiEntry.name] = txr.readTexture(img::inputStream) ?: return@txrLoop
+                    }
+
+
+
                     if (otherEntries.size != before)
                         imageOverride = true
                 }
@@ -106,225 +109,6 @@ object SRDFormat {
         }
 
         return true
-    }
-
-    fun readSRD(srd: () -> InputStream, img: () -> InputStream, model: SRDIModel?, otherData: MutableMap<String, () -> InputStream>, images: MutableMap<String, BufferedImage>, params: Map<String, Any?>) {
-        srd().use { original ->
-            val stream = CountingInputStream(original)
-            loop@ while (true) {
-                val (data_type, dataSource, subdataSource) = readSRDItem(stream, srd) ?: break
-
-                subdataSource().use big@{ subdata ->
-                    dataSource().use { data ->
-
-                        //debug(data_type)
-
-                        when (data_type) {
-                            "\$CFH" -> return@big
-                            "\$CT0" -> return@big
-                            "\$RSF" -> {
-                                data.skip(16)
-                                val name = data.readZeroString()
-                                //println(name)
-                            }
-                            "\$TXR" -> {
-                                val unk1 = data.readUnsignedLittleInt()
-                                val swiz = data.readNumber(2, unsigned = true, little = true)
-                                var disp_width = data.readNumber(2, unsigned = true, little = true)
-                                var disp_height = data.readNumber(2, unsigned = true, little = true)
-                                var scanline = data.readNumber(2, unsigned = true, little = true)
-                                val fmt = data.read() and 0xFF
-                                val unk2 = data.read() and 0xFF
-                                val palette = data.read() and 0xFF
-                                val palette_id = data.read() and 0xFF
-
-                                val (img_data_type, imgDataSource) = readSRDItem(subdata, srd)!!
-                                imgDataSource().use { img_data ->
-                                    img_data.skip(2)
-                                    val unk5 = img_data.read() and 0xFF
-                                    val mipmap_count = img_data.read() and 0xFF
-                                    img_data.skip(8)
-                                    val name_offset = img_data.readUnsignedLittleInt()
-
-                                    val mipmaps: MutableList<IntArray> = ArrayList()
-
-                                    for (i in 0 until mipmap_count) {
-                                        val mipmap_start = img_data.readUnsignedLittleInt() and 0x00FFFFFF
-                                        val mipmap_len = img_data.readUnsignedLittleInt()
-                                        val mipmap_unk1 = img_data.readUnsignedLittleInt()
-                                        val mipmap_unk2 = img_data.readUnsignedLittleInt()
-
-                                        mipmaps.add(intArrayOf(mipmap_start.toInt(), mipmap_len.toInt(), mipmap_unk1.toInt(), mipmap_unk2.toInt()))
-                                    }
-
-                                    val pal_start: Int?
-                                    val pal_len: Int?
-
-                                    if (palette == 0x01) {
-                                        pal_start = mipmaps[palette_id][0]
-                                        pal_len = mipmaps[palette_id][1]
-
-                                        mipmaps.removeAt(palette_id)
-                                    } else {
-                                        pal_start = null
-                                        pal_len = null
-                                    }
-
-                                    val name = imgDataSource().use { nameStream ->
-                                        nameStream.skip(name_offset)
-                                        nameStream.readZeroString()
-                                    }
-
-                                    val doMips = "${params["srd:extractMipmaps"] ?: false}".toBoolean()
-                                    if (!doMips)
-                                        (1 until mipmaps.size).forEach { mipmaps.removeAt(1) }
-
-                                    for (mip in mipmaps.indices) {
-                                        val mipName = if (doMips) "$mip-$name" else name
-                                        val (mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2) = mipmaps[mip]
-                                        val new_img_stream = WindowedInputStream(img(), mipmap_start.toLong(), mipmap_len.toLong())
-
-                                        val swizzled = !(swiz hasBitSet 1)
-                                        val imageInfo: MutableMap<String, Any> = hashMapOf("format" to fmt, "disp_width" to disp_width, "disp_height" to disp_height, "name" to name, "mipmap" to mip)
-
-                                        val mode = "RGBA"
-                                        if (fmt in arrayOf(0x01, 0x02, 0x05, 0x1A)) {
-                                            debug("Raw $fmt")
-                                            val decoder = "raw"
-
-                                            val bytespp: Int
-
-                                            when (fmt) {
-                                                0x01 -> bytespp = 4
-                                                0x02 -> bytespp = 2
-                                                0x05 -> bytespp = 2
-                                                0x1A -> bytespp = 4
-                                                else -> bytespp = 2
-                                            }
-
-                                            val width: Int = disp_width.toInt() //(scanline / bytespp).toInt()
-                                            val height: Int = disp_height.toInt()
-
-                                            val processing: InputStream
-
-                                            if (swizzled) {
-                                                val processingData = new_img_stream.use { it.readBytes() }
-                                                processing = processingData.deswizzle(width / 4, height / 4, bytespp).inputStream()
-                                            } else
-                                                processing = new_img_stream
-
-                                            when (fmt) {
-                                                0x01 -> {
-                                                    val resultingImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                                                    for (y in 0 until height) {
-                                                        for (x in 0 until width) {
-                                                            val b = processing.read()
-                                                            val g = processing.read()
-                                                            val r = processing.read()
-                                                            val a = processing.read()
-
-                                                            resultingImage.setRGB(x, y, Color(r, g, b, a).rgb)
-                                                        }
-                                                    }
-                                                    images[mipName] = resultingImage.mapToModel(model, params)
-                                                }
-                                                else -> otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processing).first
-                                            }
-
-                                            imageInfo["swizzled"] = swizzled
-                                            imageInfo["bytes_per_pixel"] = bytespp
-
-                                        } else if (fmt in arrayOf(0x0F, 0x11, 0x14, 0x16, 0x1C)) {
-                                            val bytespp: Int
-
-                                            when (fmt) {
-                                                0x0F -> bytespp = 8
-                                                0x1C -> bytespp = 16
-                                                else -> bytespp = 8
-                                            }
-
-                                            var width: Int
-                                            var height: Int
-
-                                            if (unk5 == 0x08) {
-                                                width = lowestPowerOfTwo(disp_width.toInt())
-                                                height = lowestPowerOfTwo(disp_height.toInt())
-                                            } else {
-                                                width = disp_width.toInt()
-                                                height = disp_height.toInt()
-                                            }
-
-                                            if (width % 4 != 0)
-                                                width += 4 - (width % 4)
-
-                                            if (height % 4 != 0)
-                                                height += 4 - (height % 4)
-
-                                            val processingStream: InputStream
-
-                                            trace("Does $mipName need deswizzling? ${swizzled && width >= 4 && height >= 4}")
-
-                                            if (swizzled && width >= 4 && height >= 4) {
-                                                val processingData = new_img_stream.use { it.readBytes() }
-                                                processingStream = processingData.deswizzle(width / 4, height / 4, bytespp).inputStream()
-                                            } else
-                                                processingStream = new_img_stream
-
-                                            when (fmt) {
-                                                0x0F -> images[mipName] = processingStream.use { processing -> DXT1PixelData.read(width, height, processing) }.mapToModel(model, params)
-                                                0x1C -> images[mipName] = processingStream.use { processing -> BC7PixelData.read(width, height, processing) }.mapToModel(model, params)
-                                                else -> {
-                                                    debug("Block Compression $fmt"); otherData["$mip-$name ($fmt,$width,$height).dat"] = CacheHandler.cacheStream(processingStream).first
-                                                }
-                                            }
-
-                                            imageInfo["swizzled"] = swizzled && width >= 4 && height >= 4
-                                            imageInfo["bytes_per_pixel"] = bytespp
-                                            imageInfo["width"] = width
-                                            imageInfo["height"] = height
-                                        } else {
-                                            debug("Unknown format $fmt")
-
-                                            otherData["$mip-$name ($fmt,$disp_width,$disp_height).dat"] = CacheHandler.cacheStream(new_img_stream).first
-                                        }
-
-                                        if (LoggerLevel.TRACE.enabled)
-                                            otherData["info-$mipName.json"] = CacheHandler.cache(SpiralData.MAPPER.writeValueAsBytes(imageInfo))
-
-                                        disp_width = maxOf(1, disp_width / 2)
-                                        disp_height = maxOf(1, disp_height / 2)
-                                        scanline = maxOf(1, scanline / 2)
-                                    }
-                                }
-                            }
-                            else -> debug("Unknown data type: $data_type")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun readSRDItem(stream: CountingInputStream, source: () -> InputStream): Triple<String, () -> WindowedInputStream, () -> WindowedInputStream>? {
-        val data_type = stream.readString(4)
-
-        if (data_type.length < 4 || !data_type.startsWith("$"))
-            return null
-
-        val data_len = stream.readUnsignedBigInt()
-        val subdata_len = stream.readUnsignedBigInt()
-        val padding = stream.readUnsignedBigInt()
-
-        val data_padding = (0x10 - data_len % 0x10) % 0x10
-        val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
-
-        val data = { WindowedInputStream(source(), if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len) } //ByteArray(data_len.toInt()).apply { stream.read(this) }
-        stream.skip(data_padding + data_len)
-
-        val subdata = { WindowedInputStream(source(), if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) } //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
-        stream.skip(subdata_padding + subdata_len)
-
-        return data_type to data and subdata
     }
 
     fun lowestPowerOfTwo(num: Int): Int {

@@ -3,14 +3,12 @@ package org.abimon.spiral.core.objects.models.collada
 import com.fasterxml.jackson.annotation.JsonRootName
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 
-@JsonRootName("instance_geometry")
-data class ColladaInstanceGeometryPojo(
+@JsonRootName("technique")
+data class ColladaTechniqueFxPojo(
         @JacksonXmlProperty(isAttribute = true)
-        val sid: String? = null,
+        val sid: String,
         @JacksonXmlProperty(isAttribute = true)
-        val name: String? = null,
-        @JacksonXmlProperty(isAttribute = true)
-        val url: String,
+        val id: String? = null,
 
-        val bind_material: ColladaBindMaterialPojo? = null
+        val phong: ColladaPhongPojo
 )

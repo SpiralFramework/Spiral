@@ -16,9 +16,12 @@ data class ColladaPojo(
         val xmlns: String = "http://www.collada.org/2005/11/COLLADASchema",
 
         val asset: ColladaAssetPojo,
+        val library_images: ColladaLibraryImagesPojo? = null,
+        val library_effects: ColladaLibraryEffectsPojo? = null,
         val library_geometries: ColladaLibraryGeometriesPojo,
-        val library_visual_scenes: ColladaLibraryVisualScenesPojo?,
-        val scene: ColladaScenePojo?
+        val library_materials: ColladaLibraryMaterialsPojo? = null,
+        val library_visual_scenes: ColladaLibraryVisualScenesPojo? = null,
+        val scene: ColladaScenePojo? = null
 ) {
     companion object {
         operator fun invoke(model: SRDIModel, flipUVs: Boolean = false, invertXAxis: Boolean = false, name: String? = null): ColladaPojo {
