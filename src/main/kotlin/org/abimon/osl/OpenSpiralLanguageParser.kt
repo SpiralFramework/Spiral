@@ -22,7 +22,10 @@ import org.parboiled.support.ParsingResult
 import java.io.File
 import java.io.PrintStream
 import java.util.*
+import kotlin.collections.HashMap
+import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.safeCast
 
 open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
@@ -32,7 +35,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         var DEFAULT_STDOUT: PrintStream = System.out
         var DEFAULT_MAX_FOR_RANGE: Int = 100
 
+
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
+
+        fun readFromJar(name: String): ByteArray? =
+                this::class.java.classLoader.getResourceAsStream(name)?.readBytes()
     }
 
     var game: DRGame = UnknownHopesPeakGame
@@ -49,19 +56,17 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             }
         }
 
-    val customIdentifiers = HashMap<String, Int>()
-    val customFlagNames = HashMap<String, Int>()
-    val customLabelNames = HashMap<String, Int>()
-
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
+
+    val customIdentifiers: HashMap<String, Int> by dataProperty("custom_identifiers", HashMap())
+    val customFlagNames: HashMap<String, Int> by dataProperty("custom_flag_names", HashMap())
+    val customLabelNames: HashMap<String, Int> by dataProperty("custom_label_names", HashMap())
+    val macros: HashMap<String, List<Any>> by dataProperty("macros", HashMap())
 
     val states = HashMap<Int, ParserState>()
 
     var startingGame: DRGame = UnknownHopesPeakGame
-    val startingCustomIdentifiers = HashMap<String, Int>()
-    val startingCustomFlagNames = HashMap<String, Int>()
-    val startingCustomLabelNames = HashMap<String, Int>()
     val startingFlags = HashMap<String, Boolean>()
     val startingData = HashMap<String, Any>()
 
@@ -71,6 +76,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     var stdout: PrintStream = DEFAULT_STDOUT
     var maxForLoopFange: Int = DEFAULT_MAX_FOR_RANGE
+    var allowReadingFromJar: Boolean = true
 
     fun findLabel(): Int {
         var labelID = (0xFF * 0xFF) - 1
@@ -95,20 +101,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     fun loadParserState(state: ParserState) {
-        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, labels) = state
+        val (stateSilence, stateGame, stateStrictParsing, stateFlags, stateData, labels) = state
 
         this.silence = stateSilence
         this.game = stateGame
         this.strictParsing = stateStrictParsing
-
-        this.customIdentifiers.clear()
-        this.customIdentifiers.putAll(stateCustomIdentifiers)
-
-        this.customFlagNames.clear()
-        this.customFlagNames.putAll(stateCustomFlagNames)
-
-        this.customLabelNames.clear()
-        this.customLabelNames.putAll(stateCustomLabelNames)
 
         this.flags.clear()
         this.flags.putAll(stateFlags)
@@ -125,9 +122,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             this.game,
             this.strictParsing,
 
-            this.customIdentifiers.entries.toTypedArray(),
-            this.customFlagNames.entries.toTypedArray(),
-            this.customLabelNames.entries.toTypedArray(),
             this.flags.entries.toTypedArray(),
             this.data.entries.toTypedArray(),
 
@@ -137,21 +131,12 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     fun loadState(context: Context<Any>) {
-        val (stateSilence, stateGame, stateStrictParsing, stateCustomIdentifiers, stateCustomFlagNames, stateCustomLabelNames, stateFlags, stateData, labels, valueStackSnapshot) = (states.remove(context.level)
+        val (stateSilence, stateGame, stateStrictParsing, stateFlags, stateData, labels, valueStackSnapshot) = (states.remove(context.level)
                 ?: return)
 
         this.silence = stateSilence
         this.game = stateGame
         this.strictParsing = stateStrictParsing
-
-        this.customIdentifiers.clear()
-        this.customIdentifiers.putAll(stateCustomIdentifiers)
-
-        this.customFlagNames.clear()
-        this.customFlagNames.putAll(stateCustomFlagNames)
-
-        this.customLabelNames.clear()
-        this.customLabelNames.putAll(stateCustomLabelNames)
 
         this.flags.clear()
         this.flags.putAll(stateFlags)
@@ -171,9 +156,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 this.game,
                 this.strictParsing,
 
-                this.customIdentifiers.entries.toTypedArray(),
-                this.customFlagNames.entries.toTypedArray(),
-                this.customLabelNames.entries.toTypedArray(),
                 this.flags.entries.toTypedArray(),
                 this.data.entries.toTypedArray(),
 
@@ -199,15 +181,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             clearState(),
             Action<Any> {
                 startingGame = game
-                startingCustomIdentifiers.clear()
-                startingCustomFlagNames.clear()
-                startingCustomLabelNames.clear()
                 startingFlags.clear()
                 startingData.clear()
 
-                startingCustomIdentifiers.putAll(customIdentifiers)
-                startingCustomFlagNames.putAll(customFlagNames)
-                startingCustomLabelNames.putAll(customLabelNames)
                 startingFlags.putAll(flags)
                 startingData.putAll(data)
 
@@ -226,15 +202,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             ),
             Action<Any> {
                 game = startingGame
-                customIdentifiers.clear()
-                customFlagNames.clear()
-                customLabelNames.clear()
                 flags.clear()
                 data.clear()
 
-                customIdentifiers.putAll(startingCustomIdentifiers)
-                customFlagNames.putAll(startingCustomFlagNames)
-                customLabelNames.putAll(startingCustomLabelNames)
                 flags.putAll(startingFlags)
                 data.putAll(startingData)
 
@@ -264,6 +234,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             MetaIfDrill,
             ErrorDrill,
             ForLoopDrill,
+
+            AddMacroDrill,
+            MacroDrill,
 
 //          Comment(),
 //          Whitespace()
@@ -321,7 +294,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         return runner.run(lines.replace("\r\n", "\n"))
     }
 
-    fun load(name: String): ByteArray? = oslContext(name)
+    fun load(name: String): ByteArray? = oslContext(name) ?: if (allowReadingFromJar) readFromJar(name) else null
 
     fun copy(): OpenSpiralLanguageParser {
         val copy = OpenSpiralLanguageParser(oslContext)
@@ -330,6 +303,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         copy.stdout = stdout
         copy.maxForLoopFange = maxForLoopFange
         copy.localiser = localiser
+        copy.allowReadingFromJar = allowReadingFromJar
         copy.loadParserState(state)
 
         return copy
@@ -723,4 +697,29 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             Optional("frames")
                     )
             )
+
+    /**
+     * get() {
+    if ("custom_identifiers" !in data || data["custom_identifiers"] !is HashMap<*, *>)
+    data["custom_identifiers"] = HashMap<String, Int>()
+
+    return data["custom_identifiers"] as? HashMap<String, Int> ?: HashMap()
+    }
+     */
+
+    inline fun <reified T : Any> dataProperty(key: String, defaultValue: T):
+            ReadOnlyProperty<Any?, T> = object : ReadOnlyProperty<Any?, T> {
+        /**
+         * Returns the value of the property for the given object.
+         * @param thisRef the object for which the value is requested.
+         * @param property the metadata for the property.
+         * @return the property value.
+         */
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+            if (key !in data || data[key] !is T)
+                data[key] = defaultValue
+
+            return data[key] as? T ?: defaultValue
+        }
+    }
 }

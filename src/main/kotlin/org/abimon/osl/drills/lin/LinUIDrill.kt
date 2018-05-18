@@ -18,7 +18,10 @@ object LinUIDrill : DrillHead<LinScript> {
             "Class Trial" to 8,
             "Sprites" to 9,
             "Save Prompt" to 12,
+            "Map Load Animation" to 14,
             "Map Transition" to 15,
+            "Object Selection" to 16,
+            "Present Selection" to 19,
             "Camera Control" to 26,
             "MonoMono Machine" to 41,
             "Minimal UI" to 51
