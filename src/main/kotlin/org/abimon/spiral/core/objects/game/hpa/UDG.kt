@@ -61,4 +61,6 @@ object UDG: HopesPeakDRGame {
             )
 
     override val steamID: String = "555950"
+
+    override val itemNames: Array<String> = SharedHPA.itemNames["udg"] ?: emptyArray()
 }

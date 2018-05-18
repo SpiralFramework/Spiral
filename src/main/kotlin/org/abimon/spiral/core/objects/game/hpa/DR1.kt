@@ -11,11 +11,9 @@ import java.util.*
 
 object DR1 : HopesPeakDRGame {
     override val pakNames: Map<String, Array<String>> =
-            DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr1.json"))?.mapValues { (_, value) ->
-                ((value as? List<*>)?.asIterable()
-                        ?: (value as? Array<*>)?.asIterable())?.mapNotNull { str -> str as? String }?.toTypedArray()
-                        ?: emptyArray()
-            } ?: emptyMap()
+            DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr1.json"))
+                    ?.mapValues { (_, value) -> value?.castToTypedArray<String>() ?: emptyArray() }
+                    ?: emptyMap()
 
     fun StopScriptEntry(opCode: Int, args: IntArray): StopScriptEntry = StopScriptEntry()
     fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = EndFlagCheckEntry()
@@ -280,6 +278,8 @@ object DR1 : HopesPeakDRGame {
             )
 
     override val steamID: String = "413410"
+
+    override val itemNames: Array<String> = SharedHPA.itemNames["dr1"] ?: emptyArray()
 
     fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
         val args: MutableList<Int> = ArrayList()

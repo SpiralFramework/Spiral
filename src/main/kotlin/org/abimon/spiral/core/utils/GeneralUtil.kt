@@ -62,3 +62,11 @@ fun <T> (() -> InputStream).useAt(offset: Number, op: (InputStream) -> T): T = t
     stream.skip(offset.toLong())
     return@use op(stream)
 }
+
+inline fun <reified T: Any> Any.castToTypedArray(): Array<T>? {
+    when (this) {
+        is Array<*> -> return this.mapNotNull { any -> if (any is T) any else null }.toTypedArray()
+        is Iterable<*> -> return this.mapNotNull { any -> if (any is T) any else null }.toTypedArray()
+        else -> return null
+    }
+}
