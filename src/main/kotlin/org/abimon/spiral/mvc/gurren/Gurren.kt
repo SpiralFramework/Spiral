@@ -62,8 +62,9 @@ object Gurren {
 
     val separator: String = File.separator
     var keepLooping: Boolean = true
-    val version: String
-        get() = Gurren::class.java.protectionDomain.codeSource.location.openStream().md5Hash()
+    val version: String by lazy { Gurren::class.java.protectionDomain.codeSource.location.openStream().md5Hash() }
+    val jarFile = File(Gurren::class.java.protectionDomain.codeSource.location.toURI())
+    val dir = jarFile.parentFile
 
     var game: DRGame? = null
         get() = GurrenOperation.operatingGame ?: field
@@ -1143,13 +1144,13 @@ object Gurren {
     val versionCommand = Command("version") { println("SPIRAL version $version") }
     val whereAmI = Command("whereami") { println("You are here: ${Gurren::class.java.protectionDomain.codeSource.location}\nAnd you are: ${Gurren::class.java.protectionDomain.codeSource.location.openStream().use { it.toString() }}") }
     val jenkinsBuild = Command("build") {
-        val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
+        val build = this.currentBuild
 
-        if (response.statusCode != 200)
-            println("Error retrieving the jenkins build; status code ${response.statusCode}")
-        else
-            println("SPIRAL version $version; Jenkins build ${(SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
-                    ?: emptyMap<String, String>())["number"] as? Int ?: -1}")
+        if (currentBuild == -1) {
+            println("Error retrieving current build")
+            return@Command
+        } else
+            println("SPIRAL version $version; Jenkins build $build")
     }
 
     val checkForUpdates = Command("check_for_update") {
@@ -1174,7 +1175,7 @@ object Gurren {
     }
 
     val downloadLatest = Command("download_latest") {
-        val (_, headResponse, _) = Fuel.head("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().response()
+        val (_, headResponse, _) = Fuel.head("${SpiralData.JENKINS_PATH}/job/${SpiralData.JENKINS_PROJECT_NAME}/lastSuccessfulBuild/artifact/build/libs/${SpiralData.JENKINS_PROJECT_FILE}").userAgent().response()
 
         if (headResponse.statusCode != 200)
             return@Command errPrintln("Error retrieving latest update: ${headResponse.statusCode}")
@@ -1184,15 +1185,17 @@ object Gurren {
         println("SPIRAL build $currentBuild -> build $latestBuild")
         println("Update Size: ${headResponse.contentLength} B / ${GurrenPlugins.TWO_DECIMAL_PLACES.format(headResponse.contentLength / 1000.0 / 1000.0)} MB")
 
-        if (question("Do you wish to continue downloading this plugin (Y/n)? ", "Y")) {
+        if (question("Do you wish to continue downloading this update (Y/n)? ", "Y")) {
             val destination = File("SPIRAL-$latestBuild.jar")
+            val origin = File(Gurren::class.java.protectionDomain.codeSource.location.toURI())
 
-            val (_, response, _) = Fuel.download("https://jenkins-ci.abimon.org/job/KSPIRAL/lastSuccessfulBuild/artifact/build/libs/KSPIRAL-all.jar").userAgent().progress { readBytes, totalBytes ->
+            val (_, response, _) = Fuel.download("${SpiralData.JENKINS_PATH}/job/${SpiralData.JENKINS_PROJECT_NAME}/lastSuccessfulBuild/artifact/build/libs/${SpiralData.JENKINS_PROJECT_FILE}").userAgent().progress { readBytes, totalBytes ->
                 println("Downloaded ${GurrenPlugins.TWO_DECIMAL_PLACES.format(readBytes * 100.0 / totalBytes.toDouble())}%")
             }.destination { _, _ -> destination }.responseStream()
 
-            if (response.statusCode == 200)
-                println("Successfully downloaded update to $destination")
+            if (response.statusCode == 200) {
+                println("Successfully downloaded update to $destination.\nTo run this version, delete this file ($origin) and rename ${destination.name} to ${origin.name}")
+            }
             else
                 errPrintln("Error: Was unable to download SPIRAL build $latestBuild")
         }
@@ -1201,26 +1204,11 @@ object Gurren {
     //val toggleDebug = Command("toggle_debug") { SpiralModel.isDebug = !SpiralModel.isDebug; println("Debug status is now ${SpiralModel.isDebug}"); SpiralModel.save() }
     val exit = Command("exit", "default") { println("Bye!"); keepLooping = false }
 
-    val currentBuild: Int
-        get() {
-            if (SpiralData.billingDead)
-                return -1
-
-            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/fingerprint/$version/api/json").userAgent().responseString()
-
-            if (response.statusCode != 200)
-                return -1
-            else
-                return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
-                        ?: emptyMap<String, String>())["number"] as? Int ?: -1
-        }
+    val currentBuild: Int by lazy { buildFor(version) }
 
     val latestBuild: Int
         get() {
-            if (SpiralData.billingDead)
-                return -1
-
-            val (_, response, r) = Fuel.get("https://jenkins-ci.abimon.org/job/KSPIRAL/api/json").userAgent().responseString()
+            val (_, response, r) = Fuel.get("${SpiralData.JENKINS_PATH}/job/${SpiralData.JENKINS_PROJECT_NAME}/api/json").userAgent().responseString()
 
             if (response.statusCode != 200)
                 return -1
@@ -1228,4 +1216,14 @@ object Gurren {
                 return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["lastSuccessfulBuild"] as? Map<*, *>
                         ?: emptyMap<String, String>())["number"] as? Int ?: -1
         }
+
+    fun buildFor(hash: String): Int {
+        val (_, response, r) = Fuel.get("${SpiralData.JENKINS_PATH}/fingerprint/$hash/api/json").userAgent().responseString()
+
+        if (response.statusCode != 200)
+            return -1
+        else
+            return (SpiralData.MAPPER.readValue(r.component1(), Map::class.java)["original"] as? Map<*, *>
+                    ?: emptyMap<String, String>())["number"] as? Int ?: -1
+    }
 }

@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonRootName
 
 @JsonRootName("technique_common")
 data class ColladaTechniqueCommonPojo(
-        val accessor: ColladaAccessorPojo
+        val accessor: ColladaAccessorPojo? = null,
+        val instance_material: List<ColladaInstanceMaterialPojo>? = null
 ) {
     companion object {
         fun vertexAccessorFor(count: Int, source: String): ColladaTechniqueCommonPojo {

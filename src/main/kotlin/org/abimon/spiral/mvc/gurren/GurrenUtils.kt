@@ -1,18 +1,20 @@
 package org.abimon.spiral.mvc.gurren
 
 import com.jakewharton.fliptables.FlipTable
+import org.abimon.imperator.impl.InstanceOrder
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.objects.game.hpa.*
 import org.abimon.spiral.core.objects.scripting.NonstopDebate
+import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.io.FileDataSource
 import org.abimon.visi.io.errPrintln
+import org.abimon.visi.io.relativePathFrom
 import org.abimon.visi.io.relativePathTo
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
-import java.io.File
-import java.io.PrintStream
+import java.io.*
 
 object GurrenUtils {
     val echo = Command("echo") { (params) ->
@@ -99,12 +101,15 @@ object GurrenUtils {
 
                     lines.forEach { line ->
                         if (line.trim().startsWith("0x2B1D|")) {
-
                             out.println(line.replace("0x2B1D\\|1, \\d+".toRegex(), "Word Command 1: ")
                                     .replace("0x2B1D\\|2, \\d+".toRegex(), "Word Command 2: ")
                                     .replace("0x2B1D\\|3, \\d+".toRegex(), "Word Command 3: "))
                         } else if (line.trim().startsWith("0x2B1E|")) {
                             out.println(line.replace("0x2B1E|", "Word String: "))
+                        } else if (line.trim().startsWith("DR1 Wait For Input|")) {
+                            out.println(line.replace("DR1 Wait For Input|", "0x3A|"))
+                        } else if (line.trim().startsWith("DR1 Wait Frame|")) {
+                            out.println(line.replace("DR1 Wait Frame|", "0x3B|"))
                         } else
                             out.println(line)
                     }
@@ -135,6 +140,41 @@ object GurrenUtils {
         debateMap["sections"] = nonstop.sections.map { section -> section.data.mapIndexed { index, data -> (if (index in SpiralData.nonstopOpCodes) SpiralData.nonstopOpCodes[index] else "0x${index.toString(16)}") to data }.toMap() }
 
         SpiralData.YAML_MAPPER.writeValue(nonstopOutput, debateMap)
+    }
+
+    val batchOperation = Command("batch_operation") { (params) ->
+        if (params.size < 4)
+            return@Command errPrintln("Missing parameters (batch_operation [folder] [regex] [operation])")
+
+        val folder = File(params[1])
+        val regex = params[2].toRegex()
+        val operation = params[3]
+
+        if (!folder.isDirectory)
+            return@Command errPrintln("$folder is not a folder")
+
+        folder.walk().mapNotNull { file ->
+            if (!file.isFile)
+                return@mapNotNull null
+
+            val path = (file relativePathFrom folder)
+            if (path.matches(regex))
+                return@mapNotNull file
+            return@mapNotNull null
+        }.joinToString("\n") { file ->
+            val path = (file relativePathFrom folder)
+            val fullPath = file.absolutePath
+
+            operation
+                    .replace("\$path_no_extension", path.substringBeforeLast('.', missingDelimiterValue = path))
+                    .replace("\$path", path)
+                    .replace("%path_no_extension", path.substringBeforeLast('.', missingDelimiterValue = path))
+                    .replace("%path", path)
+                    .replace("\$full_path_no_extension", fullPath.substringBeforeLast('.', missingDelimiterValue = path))
+                    .replace("\$full_path", fullPath)
+                    .replace("%full_path_no_extension", fullPath.substringBeforeLast('.', missingDelimiterValue = path))
+                    .replace("%full_path", fullPath)
+        }.run(this::runCommands)
     }
 
 //    val modelTest = Command("model_test") {
@@ -322,5 +362,28 @@ object GurrenUtils {
 
         g.dispose()
         return img
+    }
+
+    fun runCommands(input: String) = runCommands(input.toByteArray(Charsets.UTF_8))
+    fun runCommands(input: ByteArray) {
+        val startingScope = SpiralModel.scope
+        val startingAutoConfirm = SpiralModel.autoConfirm
+        SpiralModel.scope = "> " to "default"
+        SpiralModel.autoConfirm = true
+
+        System.setIn(ByteArrayInputStream(input))
+
+        while (Gurren.keepLooping) {
+            try {
+                SpiralModel.imperator.dispatch(InstanceOrder<String>("STDIN", scout = null, data = readLine()
+                        ?: break)).isEmpty()
+            } catch (th: Throwable) {
+                th.printStackTrace()
+            }
+        }
+
+        SpiralModel.scope = startingScope
+        SpiralModel.autoConfirm = startingAutoConfirm
+        System.setIn(FileInputStream(FileDescriptor.`in`))
     }
 }

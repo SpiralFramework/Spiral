@@ -25,6 +25,9 @@ import org.abimon.visi.lang.make
 
 object SpiralData {
     val billingDead = true
+    val JENKINS_PATH = "http://jenkins.abimon.org:8666"
+    val JENKINS_PROJECT_NAME = "SPIRAL"
+    val JENKINS_PROJECT_FILE = "SPIRAL-all.jar"
 
     val dr1OpCodes = make<TripleHashMap<Int, Int, String>> {
         put(0x00, 2, "Text Count")

@@ -17,12 +17,16 @@ import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.io.skipBytes
+import org.abimon.visi.lang.StringGroup
+import org.abimon.visi.lang.StringGroups
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.*
+import java.util.regex.Pattern
 import kotlin.reflect.KFunction
 
 operator fun SemanticVersion.compareTo(semver: SemanticVersion): Int {
@@ -110,6 +114,57 @@ fun IArchive.fileSourceForname(name: String): (() -> InputStream)? {
 val File.absoluteParentFile: File
     get() = File(absolutePath.substringBeforeLast(File.separator))
 
+fun String.splitOutside(delimiter: String = "\\s", cap: Int = 0, group: StringGroup = StringGroups.SPEECH): Array<String> {
+    val strings = ArrayList<String>()
+    val m = Pattern.compile("${group.start}[^${group.end}\\\\]*(?:\\\\.[^${group.end}\\\\]*)*${group.end}|[^$delimiter]+").matcher(this)
+    while (m.find()) {
+        val param = m.group(0)
+
+        if (param[0] == '"')
+            strings.add(param.substring(1, param.length - 1).removeEscapes())
+        else
+            strings.add(param.removeEscapes())
+    }
+
+    return strings.toTypedArray()
+}
+
+fun String.removeEscapes(): String =
+        buildString {
+            var escaping: Boolean = false
+            var controlCharacter = false
+
+            this@removeEscapes.forEach { c ->
+                if (escaping) {
+                    if (c == '\\') {
+                        controlCharacter = true
+                        escaping = false
+                    } else {
+                        append(c)
+                        escaping = false
+                    }
+                } else if (controlCharacter) {
+                    when (c) {
+                        'n' -> append('\n')
+                        't' -> append('\t')
+                        'b' -> append('\b')
+                        'r' -> append('\r')
+                        '0' -> append(0x00.toChar())
+                        else -> {
+                            append('\\')
+                            append(c)
+                        }
+                    }
+
+                    controlCharacter = false
+                } else if (c == '\\') {
+                    escaping = true
+                } else {
+                    append(c)
+                }
+            }
+        }
+
 fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
     val texture = WindowedInputStream(srdv(), rsiEntry.mipmaps[0].start.toLong(), rsiEntry.mipmaps[0].length.toLong())
 
@@ -154,7 +209,7 @@ fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
                 return resultingImage
             }
             else -> {
-                debug("Raw format: $format (${format.toString(16)})")
+                debug("Raw format for ${this.rsiEntry.name}: $format (${format.toString(16)})")
                 return null
             }
         }
@@ -183,19 +238,19 @@ fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
             processingData.deswizzle(width / 4, height / 4, bytespp)
             processingStream = processingData.inputStream()
         } else
-            processingStream = texture
+            processingStream = ByteArrayInputStream(texture.readBytes())
 
         when (format) {
             0x0F -> return DXT1PixelData.read(width, height, processingStream)
             0x16 -> return BC4PixelData.read(width, height, processingStream)
             0x1C -> return BC7PixelData.read(width, height, processingStream)
             else -> {
-                debug("Block format: $format (${format.toString(16)}) [${width}x${height}]")
+                debug("Block format for ${this.rsiEntry.name}: $format (0x${format.toString(16)}) [${width}x${height}]")
                 return null
             }
         }
     } else
-        debug("Other format: $format (0x${format.toString(16)})")
+        debug("Other format for ${this.rsiEntry.name}: $format (0x${format.toString(16)})")
 
     return null
 }

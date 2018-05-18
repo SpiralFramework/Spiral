@@ -16,7 +16,7 @@ class ColladaTrianglesPojo(
 
         val input: List<ColladaInputSharedPojo>
 ) {
-    constructor(input: List<ColladaInputSharedPojo>, triangles: IntArray) : this(input = input, count = triangles.size / 3) {
+    constructor(input: List<ColladaInputSharedPojo>, triangles: IntArray, material: String? = null) : this(input = input, count = triangles.size / 3, material = material) {
         this.triangles = triangles
     }
 
