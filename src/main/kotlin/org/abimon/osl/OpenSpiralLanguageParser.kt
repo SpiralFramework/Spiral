@@ -22,7 +22,6 @@ import org.parboiled.Context
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
-import org.parboiled.parserunners.TracingParseRunner
 import org.parboiled.support.Chars
 import org.parboiled.support.ParsingResult
 import java.io.File
@@ -260,9 +259,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     open fun OpenSpiralLines(): Rule = Sequence(
-            ZeroOrMore(Sequence(OptionalWhitespace(), SpiralTextLine(), Ch('\n'))),
-            OptionalWhitespace(),
-            SpiralTextLine()
+            SpiralTextLine(),
+            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralTextLine()))
     )
 
     open fun SpiralHeaderLine(): Rule =
