@@ -1,7 +1,7 @@
-package org.abimon.osl.drills.circuits
+package org.abimon.osl.drills.headerCircuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.osl.SpiralDrillBit
+import org.abimon.osl.drills.circuits.DrillCircuit
 import org.parboiled.Action
 import org.parboiled.Rule
 import java.lang.Math.abs
@@ -103,7 +103,7 @@ object ForLoopDrill : DrillCircuit {
                     },
                     Sequence(
                             saveState(),
-                            OpenSpiralLines(),
+                            OpenSpiralHeaderLines(),
                             Action<Any> { context ->
                                 loadState(context)
 
@@ -121,34 +121,16 @@ object ForLoopDrill : DrillCircuit {
                                 }
 
                                 for (i in (if (start < limit) start until limit else start downTo limit)) {
-                                    val parser = this.copy()
-                                    parser[variableName] = i
-                                    val result = parser.parse("OSL Script\n${context.match}")
-
-                                    if (!result.hasErrors()) {
-                                        for (value in result.valueStack.reversed()) {
-                                            if (value is List<*>) {
-                                                val drillBit = (value[0] as? SpiralDrillBit) ?: continue
-                                                try {
-                                                    val head = drillBit.head
-
-                                                    val headParams = value.subList(1, value.size).filterNotNull().toTypedArray()
-                                                    head.operate(this@syntax, headParams)
-                                                    push(value)
-                                                } catch (th: Throwable) {
-                                                    throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
-                                                }
-                                            }
-                                        }
-
-                                        labels.clear()
-                                        labels.addAll(parser.labels.toTypedArray())
-                                    }
+                                    val data = context.match
+                                    push(arrayOf(this, "Set Variable \"$variableName\" to \"$i\""))
+                                    push(arrayOf(this, data))
                                 }
 
                                 return@Action true
                             }
                     ),
+                    '\n',
+                    OptionalWhitespace(),
                     "}"
             )
 }

@@ -2,6 +2,10 @@ package org.abimon.osl
 
 import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
+import org.abimon.osl.drills.headerCircuits.AddMacroDrill
+import org.abimon.osl.drills.headerCircuits.ForLoopDrill
+import org.abimon.osl.drills.headerCircuits.HeaderOSLDrill
+import org.abimon.osl.drills.headerCircuits.MacroDrill
 import org.abimon.osl.drills.lin.*
 import org.abimon.osl.drills.wrd.BasicWrdSpiralDrill
 import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
@@ -18,6 +22,7 @@ import org.parboiled.Context
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
+import org.parboiled.support.Chars
 import org.parboiled.support.ParsingResult
 import java.io.File
 import java.io.PrintStream
@@ -62,7 +67,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customIdentifiers: HashMap<String, Int> by dataProperty("custom_identifiers", HashMap())
     val customFlagNames: HashMap<String, Int> by dataProperty("custom_flag_names", HashMap())
     val customLabelNames: HashMap<String, Int> by dataProperty("custom_label_names", HashMap())
-    val macros: HashMap<String, List<Any>> by dataProperty("macros", HashMap())
+    val macros: HashMap<String, String> by dataProperty("macros", HashMap())
 
     val states = HashMap<Int, ParserState>()
 
@@ -177,6 +182,42 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         entries.forEach { (key, value) -> this[key] = value }
     }
 
+    open fun OpenSpiralHeader(): Rule = Sequence(
+            clearState(),
+            Action<Any> {
+                startingGame = game
+                startingFlags.clear()
+                startingData.clear()
+
+                startingFlags.putAll(flags)
+                startingData.putAll(data)
+
+                return@Action true
+            },
+            Sequence(
+                    "OSL Script\n",
+                    Action<Any> { push(arrayOf(null, match())) },
+                    OpenSpiralHeaderLines(),
+                    FirstOf(
+                            Sequence(
+                                    Action<Any> { strictParsing },
+                                    EOI
+                            ),
+                            Action<Any> { !strictParsing }
+                    )
+            ),
+            Action<Any> {
+                game = startingGame
+                flags.clear()
+                data.clear()
+
+                flags.putAll(startingFlags)
+                data.putAll(startingData)
+
+                return@Action true
+            }
+    )
+
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
             Action<Any> {
@@ -212,11 +253,38 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             }
     )
 
-    open fun OpenSpiralLines(): Rule = Sequence(
-            ZeroOrMore(Sequence(OptionalWhitespace(), SpiralTextLine(), Ch('\n'))),
-            OptionalWhitespace(),
-            SpiralTextLine()
+    open fun OpenSpiralHeaderLines(): Rule = Sequence(
+            SpiralHeaderLine(),
+            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralHeaderLine()))
     )
+
+    open fun OpenSpiralLines(): Rule = Sequence(
+            SpiralTextLine(),
+            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralTextLine()))
+    )
+
+    open fun SpiralHeaderLine(): Rule =
+            FirstOf(
+                    Action<Any> { false },
+                    AddMacroDrill,
+                    ForLoopDrill,
+                    HeaderOSLDrill,
+                    MacroDrill,
+
+                    Sequence(
+                            OneOrMore(AllButMatcher(charArrayOf('\n', '{'))),
+                            Action<Any> { true },
+                            '{',
+                            '\n',
+                            OpenSpiralHeaderLines(),
+                            Action<Any> { true },
+                            '}'
+                    ),
+                    Sequence(
+                            OneOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
+                            Action<Any> { push(arrayOf(null, match())) }
+                    )
+            )
 
     open fun SpiralTextLine(): Rule = FirstOf(
             Comment(),
@@ -229,14 +297,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             AddNameAliasDrill,
             AddFlagAliasDrill,
             AddLabelAliasDrill,
-            HeaderOSLDrill,
             StrictParsingDrill,
             MetaIfDrill,
             ErrorDrill,
-            ForLoopDrill,
 
-            AddMacroDrill,
-            MacroDrill,
+            SetDataDrill,
 
 //          Comment(),
 //          Whitespace()
@@ -290,8 +355,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     fun parse(lines: String): ParsingResult<Any> {
+        val headerRunner = ReportingParseRunner<Any>(OpenSpiralHeader())
+
+        var stack: List<Any>
+        var script: String = lines.replace("\r\n", "\n")
+
+        do {
+            stack = headerRunner.run(script).valueStack.reversed()
+            script = stack.joinToString("\n") { str -> (str as Array<*>)[1].toString().trim() }
+        } while (stack.any { value -> (value as Array<*>)[0] != null })
+
         val runner = ReportingParseRunner<Any>(OpenSpiralLanguage())
-        return runner.run(lines.replace("\r\n", "\n"))
+        return runner.run(script)
     }
 
     fun load(name: String): ByteArray? = oslContext(name) ?: if (allowReadingFromJar) readFromJar(name) else null
