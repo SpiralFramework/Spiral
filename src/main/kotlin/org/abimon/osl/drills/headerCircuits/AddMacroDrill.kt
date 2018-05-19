@@ -18,7 +18,7 @@ object AddMacroDrill : DrillCircuit {
                             pushDrillHead(cmd, this@AddMacroDrill),
                             Parameter(cmd),
                             Whitespace(),
-                            "as",
+                            FirstOf("as", "to"),
                             Whitespace(),
                             Parameter(cmd),
                             ZeroOrMore(
