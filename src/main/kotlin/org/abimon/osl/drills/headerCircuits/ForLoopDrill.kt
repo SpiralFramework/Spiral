@@ -103,7 +103,7 @@ object ForLoopDrill : DrillCircuit {
                     },
                     Sequence(
                             saveState(),
-                            OpenSpiralLines(),
+                            OpenSpiralHeaderLines(),
                             Action<Any> { context ->
                                 loadState(context)
 
@@ -129,6 +129,8 @@ object ForLoopDrill : DrillCircuit {
                                 return@Action true
                             }
                     ),
+                    '\n',
+                    OptionalWhitespace(),
                     "}"
             )
 }

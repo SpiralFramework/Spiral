@@ -22,6 +22,8 @@ import org.parboiled.Context
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
+import org.parboiled.parserunners.TracingParseRunner
+import org.parboiled.support.Chars
 import org.parboiled.support.ParsingResult
 import java.io.File
 import java.io.PrintStream
@@ -253,9 +255,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     open fun OpenSpiralHeaderLines(): Rule = Sequence(
-            ZeroOrMore(Sequence(OptionalWhitespace(), SpiralHeaderLine(), Ch('\n'))),
-            OptionalWhitespace(),
-            SpiralHeaderLine()
+            SpiralHeaderLine(),
+            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralHeaderLine()))
     )
 
     open fun OpenSpiralLines(): Rule = Sequence(
@@ -264,17 +265,28 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             SpiralTextLine()
     )
 
-    open fun SpiralHeaderLine(): Rule = FirstOf(
-            AddMacroDrill,
-            ForLoopDrill,
-            HeaderOSLDrill,
-            MacroDrill,
+    open fun SpiralHeaderLine(): Rule =
+            FirstOf(
+                    Action<Any> { false },
+                    AddMacroDrill,
+                    ForLoopDrill,
+                    HeaderOSLDrill,
+                    MacroDrill,
 
-            Sequence(
-                    OneOrMore(LineMatcher),
-                    Action<Any> { push(arrayOf(null, match())) }
+                    Sequence(
+                            OneOrMore(AllButMatcher(charArrayOf('\n', '{'))),
+                            Action<Any> { true },
+                            '{',
+                            '\n',
+                            OpenSpiralHeaderLines(),
+                            Action<Any> { true },
+                            '}'
+                    ),
+                    Sequence(
+                            OneOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
+                            Action<Any> { push(arrayOf(null, match())) }
+                    )
             )
-    )
 
     open fun SpiralTextLine(): Rule = FirstOf(
             Comment(),
