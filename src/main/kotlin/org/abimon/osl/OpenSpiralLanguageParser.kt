@@ -314,6 +314,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             AddNameAliasDrill,
             AddFlagAliasDrill,
             AddLabelAliasDrill,
+            AddItemNameAliasDrill,
             StrictParsingDrill,
             MetaIfDrill,
             ErrorDrill,
@@ -818,6 +819,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             ParameterToStack(),
                             Action<Any> {
                                 val name = pop().toString()
+                                if (name in customItemNames)
+                                    return@Action push(customItemNames[name] ?: 0)
+
                                 val index = ((game as? HopesPeakDRGame)?.itemNames ?: emptyArray()).indexOf(name)
 
                                 if (index == -1)
