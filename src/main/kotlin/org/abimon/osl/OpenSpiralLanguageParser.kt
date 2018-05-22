@@ -252,11 +252,13 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     )
 
     open fun OpenSpiralHeaderLines(): Rule = Sequence(
+            OptionalWhitespace(),
             SpiralHeaderLine(),
             ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralHeaderLine()))
     )
 
     open fun OpenSpiralLines(): Rule = Sequence(
+            OptionalWhitespace(),
             SpiralTextLine(),
             ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralTextLine()))
     )
