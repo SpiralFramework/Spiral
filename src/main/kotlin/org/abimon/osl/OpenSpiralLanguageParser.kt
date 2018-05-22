@@ -2,10 +2,7 @@ package org.abimon.osl
 
 import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
-import org.abimon.osl.drills.headerCircuits.AddMacroDrill
-import org.abimon.osl.drills.headerCircuits.ForLoopDrill
-import org.abimon.osl.drills.headerCircuits.HeaderOSLDrill
-import org.abimon.osl.drills.headerCircuits.MacroDrill
+import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
 import org.abimon.osl.drills.wrd.BasicWrdSpiralDrill
 import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
@@ -67,6 +64,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customIdentifiers: HashMap<String, Int> by dataProperty("custom_identifiers", HashMap())
     val customFlagNames: HashMap<String, Int> by dataProperty("custom_flag_names", HashMap())
     val customLabelNames: HashMap<String, Int> by dataProperty("custom_label_names", HashMap())
+    val customItemNames: HashMap<String, Int> by dataProperty("custom_item_names", HashMap())
     val macros: HashMap<String, String> by dataProperty("macros", HashMap())
 
     val states = HashMap<Int, ParserState>()
@@ -270,15 +268,34 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     ForLoopDrill,
                     HeaderOSLDrill,
                     MacroDrill,
+                    ItemSelectionDrill,
 
                     Sequence(
-                            OneOrMore(AllButMatcher(charArrayOf('\n', '{'))),
-                            Action<Any> { true },
-                            '{',
-                            '\n',
+                            Sequence(
+                                    OneOrMore(
+                                            OneOrMore(AllButMatcher(charArrayOf('\n', '&'))),
+                                            '&',
+                                            '{',
+                                            OneOrMore(AllButMatcher(charArrayOf('"', '}'))),
+                                            '}'
+                                    ),
+                                    ZeroOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}')))
+                            ),
+                            Action<Any> { push(arrayOf(null, match())) }
+                    ),
+                    Sequence(
+                            Sequence(
+                                    OneOrMore(AllButMatcher(charArrayOf('\n', '{'))),
+                                    '{',
+                                    '\n'
+                            ),
+                            Action<Any> { push(arrayOf(null, match())) },
                             OpenSpiralHeaderLines(),
-                            Action<Any> { true },
-                            '}'
+                            Sequence(
+                                    OptionalWhitespace(),
+                                    '}'
+                            ),
+                            Action<Any> { push(arrayOf(null, match())) }
                     ),
                     Sequence(
                             OneOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
@@ -314,8 +331,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     FirstOf(
                             BasicLinTextDrill,
                             LinDialogueDrill,
-                            BasicLinSpiralDrill,
-                            NamedLinSpiralDrill,
                             LinBustSpriteDrill,
                             LinHideSpriteDrill,
                             LinUIDrill,
@@ -326,12 +341,17 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinMarkLabelDrill,
                             LinGoToDrill,
                             LinSetFlagDrill,
+                            LinSpeakerDrill,
+                            InternalLinItemSelectionDrill,
 
                             LinScreenFadeDrill,
                             LinScreenFlashDrill,
 
                             LinArithmeticGameState,
-                            LinRandChoicesDrill
+                            LinRandChoicesDrill,
+
+                            BasicLinSpiralDrill,
+                            NamedLinSpiralDrill
                     )
             )
 
@@ -756,6 +776,24 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    open fun SpeakerName(): Rule =
+            FirstOf(
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val speakerName = pop()
+
+                                val game = game as? HopesPeakDRGame ?: UnknownHopesPeakGame
+                                val id = customIdentifiers[speakerName]
+                                        ?: game.characterIdentifiers[speakerName]
+                                        ?: return@Action false
+
+                                push(id % 256)
+                            }
+                    ),
+                    RuleWithVariables(OneOrMore(Digit()))
+            )
+
     open fun FrameCount(): Rule =
             FirstOf(
                     Sequence(
@@ -773,14 +811,23 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
-    /**
-     * get() {
-    if ("custom_identifiers" !in data || data["custom_identifiers"] !is HashMap<*, *>)
-    data["custom_identifiers"] = HashMap<String, Int>()
+    open fun ItemID(): Rule =
+            FirstOf(
+                    RuleWithVariables(OneOrMore(Digit())),
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val name = pop().toString()
+                                val index = ((game as? HopesPeakDRGame)?.itemNames ?: emptyArray()).indexOf(name)
 
-    return data["custom_identifiers"] as? HashMap<String, Int> ?: HashMap()
-    }
-     */
+                                if (index == -1)
+                                    return@Action false
+
+                                return@Action push(index)
+                            }
+                    )
+            )
+
 
     inline fun <reified T : Any> dataProperty(key: String, defaultValue: T):
             ReadOnlyProperty<Any?, T> = object : ReadOnlyProperty<Any?, T> {

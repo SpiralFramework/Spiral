@@ -71,6 +71,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                             Action<Any> {
                                                 push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry((data["$cmd-LABEL"] as Int))), "")))
                                             },
+                                            OptionalWhitespace(),
                                             '}',
                                             '\n',
                                             OptionalWhitespace()
