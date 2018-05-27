@@ -13,7 +13,6 @@ import org.abimon.spiral.core.objects.images.CustomSRD
 import org.abimon.spiral.core.utils.WindowedInputStream
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
-import org.abimon.spiral.util.InputStreamFuncDataSource
 import org.abimon.spiral.util.absoluteParentFile
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.errPrintln
@@ -212,7 +211,7 @@ object GurrenPatching {
             } else
                 throw IllegalStateException("$patchFile is not of a compatible format to be performing these operations")
 
-            val customSRD = CustomSRD(InputStreamFuncDataSource(srd!!), InputStreamFuncDataSource(srdv!!)) //For these to be null something's gone really wrong
+            val customSRD = CustomSRD(srd!!, srdv!!) //For these to be null something's gone really wrong
 
             customSRD.image(if(params.size > 2) params[2] else file.name.child, img)
 
