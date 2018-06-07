@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.formats.images
 
 import org.abimon.spiral.core.SpiralFormats
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.archives.SPCFormat
 import org.abimon.spiral.core.formats.archives.ZIPFormat
@@ -11,12 +12,9 @@ import org.abimon.spiral.core.objects.archives.srd.TXREntry
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.models.SRDIModel
-import org.abimon.spiral.util.LoggerLevel
-import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.readTexture
 import org.abimon.visi.collections.remove
 import org.abimon.visi.lang.and
-import org.abimon.visi.lang.exportStackTrace
 import java.awt.*
 import java.awt.geom.Area
 import java.awt.image.BufferedImage
@@ -57,7 +55,7 @@ object SRDFormat {
                     if (others.any { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") })
                         img = others.remove { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdv") } ?: return@forEach
                     else
-                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { debug("No such element for ${srdEntry.name.substringBeforeLast('.')}"); otherEntries[srdEntry.name] = srdEntry::inputStream; return@forEach }
+                        img = others.firstOrNull { entry -> entry.name == srdEntry.name.replaceAfterLast('.', "srdi") } ?: run { SpiralData.LOGGER.debug("No such element for {}", srdEntry.name.substringBeforeLast('.')); otherEntries[srdEntry.name] = srdEntry::inputStream; return@forEach }
 
                     val model: SPCEntry? = if (mapToModels) others.firstOrNull { entry -> entry.name == srdEntry.name.split('.')[0] + ".srdi" } else null
 
@@ -80,7 +78,7 @@ object SRDFormat {
             else -> throw IllegalArgumentException("Unknown archive to convert from!")
         }
 
-        if (!imageOverride && images.isEmpty() && !LoggerLevel.TRACE.enabled)
+        if (!imageOverride && images.isEmpty() && !SpiralData.LOGGER.isTraceEnabled)
             return false
 
         val format = SpiralFormats.formatForName(params["srd:format"]?.toString() ?: "PNG", SpiralFormats.imageFormats)
@@ -189,7 +187,7 @@ object SRDFormat {
 
                 area.add(Area(Polygon(intArrayOf((u1.first * w).toInt(), (u2.first * w).toInt(), (u3.first * w).toInt()), intArrayOf((u1.second * h).toInt(), (u2.second * h).toInt(), (u3.second * h).toInt()), 3)))
             } catch (ioob: IndexOutOfBoundsException) {
-                debug(ioob.exportStackTrace())
+                SpiralData.LOGGER.debug("An error occurred while mapping {} to {}: ", img, model, ioob)
                 return@forEach
             }
         }

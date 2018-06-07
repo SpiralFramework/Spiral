@@ -6,7 +6,7 @@ import kotlinx.coroutines.experimental.launch
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.data.SpiralData
-import org.abimon.spiral.util.LoggerLevel
+import ch.qos.logback.classic.Level
 import java.io.File
 import java.io.InputStream
 
@@ -20,8 +20,8 @@ object HookManager {
     val BEFORE_SCOPE_CHANGE: MutableList<Pair<IPlugin, (Pair<String, String>, Pair<String, String>, Boolean) -> Boolean>> = ArrayList()
     val ON_SCOPE_CHANGE: MutableList<Pair<IPlugin, (Pair<String, String>, Pair<String, String>) -> Unit>> = ArrayList()
 
-    val BEFORE_LOGGER_LEVEL_CHANGE: MutableList<Pair<IPlugin, (LoggerLevel, LoggerLevel, Boolean) -> Boolean>> = ArrayList()
-    val ON_LOGGER_LEVEL_CHANGE: MutableList<Pair<IPlugin, (LoggerLevel, LoggerLevel) -> Unit>> = ArrayList()
+    val BEFORE_LOGGER_LEVEL_CHANGE: MutableList<Pair<IPlugin, (Level, Level, Boolean) -> Boolean>> = ArrayList()
+    val ON_LOGGER_LEVEL_CHANGE: MutableList<Pair<IPlugin, (Level, Level) -> Unit>> = ArrayList()
 
     val BEFORE_CACHE_ENABLED_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean, Boolean) -> Boolean>> = ArrayList()
     val ON_CACHE_ENABLED_CHANGE: MutableList<Pair<IPlugin, (Boolean, Boolean) -> Unit>> = ArrayList()
@@ -71,7 +71,7 @@ object HookManager {
     fun beforeScopeChange(old: Pair<String, String>, new: Pair<String, String>): Boolean
             = beforeChange(old, new, BEFORE_SCOPE_CHANGE)
 
-    fun beforeLoggerLevelChange(old: LoggerLevel, new: LoggerLevel): Boolean
+    fun beforeLoggerLevelChange(old: Level, new: Level): Boolean
             = beforeChange(old, new, BEFORE_LOGGER_LEVEL_CHANGE)
 
     fun beforeCacheEnabledChange(old: Boolean, new: Boolean): Boolean
@@ -116,7 +116,7 @@ object HookManager {
     fun afterScopeChange(old: Pair<String, String>, new: Pair<String, String>): Unit
             = afterChange(old, new, ON_SCOPE_CHANGE)
 
-    fun afterLoggerLevelChange(old: LoggerLevel, new: LoggerLevel): Unit
+    fun afterLoggerLevelChange(old: Level, new: Level): Unit
             = afterChange(old, new, ON_LOGGER_LEVEL_CHANGE)
 
     fun afterCacheEnabledChange(old: Boolean, new: Boolean): Unit

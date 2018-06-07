@@ -39,7 +39,7 @@ dependencies {
     compile('org.abimon:Imperator:7')
     compile('org.abimon:Visi:35')
     compile('org.abimon:Karnage:4b12cc5')
-    compile('org.abimon:SpiralFormats:91d5269')
+    compile('org.abimon:SpiralFormats:f642838')
     compile('org.abimon:OpenSpiralLanguage:6b9ce56') {
         exclude group: 'org.abimon', module: 'SpiralFormats'
     }
@@ -49,6 +49,7 @@ dependencies {
     compile "com.github.kittinunf.fuel:fuel:1.11.0"
 
     compile "org.codehaus.woodstox:woodstox-core-asl:4.4.1"
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"

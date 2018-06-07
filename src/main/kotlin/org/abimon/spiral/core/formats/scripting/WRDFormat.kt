@@ -1,12 +1,9 @@
 package org.abimon.spiral.core.formats.scripting
 
-import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.WordScriptFile
-import org.abimon.spiral.core.objects.scripting.wrd.LabelEntry
-import org.abimon.spiral.core.objects.scripting.wrd.TextEntry
 import org.abimon.spiral.core.println
 import java.io.InputStream
 import java.io.OutputStream
@@ -39,25 +36,26 @@ object WRDFormat : SpiralFormat {
         output.println("OSL Script")
         output.println("Set Game To V3")
 
-        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
-        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
-        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
-        wrd.strings.forEach { str -> output.println("Word String: $str") }
-
-        wrd.entries.forEach { entry ->
-            val op = SpiralData.drv3OpCodes[entry.opCode]?.second ?: "0x${entry.opCode.toString(16)}"
-            when(entry) {
-                is LabelEntry -> output.println("$op|${wrd.commandOneEntries[entry.labelID]}")
-                is TextEntry -> output.println("$op|${entry.id}")
-                else -> {
-                    try {
-                        output.println("$op|${entry.cmdArguments.joinToString { arg -> wrd.commandTwoEntries[arg] }}")
-                    } catch(aioob: ArrayIndexOutOfBoundsException) {
-                        output.println("$op|${entry.rawArguments.joinToString { arg -> "raw:$arg" }}")
-                    }
-                }
-            }
-        }
+        //TODO: Re implement WRD conversion
+//        wrd.commandOneEntries.forEach { s -> output.println("Word Command 1: $s") }
+//        wrd.commandTwoEntries.forEach { s -> output.println("Word Command 2: $s") }
+//        wrd.commandThreeEntries.forEach { s -> output.println("Word Command 3: $s") }
+//        wrd.strings.forEach { str -> output.println("Word String: $str") }
+//
+//        wrd.entries.forEach { entry ->
+//            val op = SpiralData.drv3OpCodes[entry.opCode]?.second ?: "0x${entry.opCode.toString(16)}"
+//            when(entry) {
+//                is LabelEntry -> output.println("$op|${wrd.commandOneEntries[entry.labelID]}")
+//                is TextEntry -> output.println("$op|${entry.id}")
+//                else -> {
+//                    try {
+//                        output.println("$op|${entry.cmdArguments.joinToString { arg -> wrd.commandTwoEntries[arg] }}")
+//                    } catch(aioob: ArrayIndexOutOfBoundsException) {
+//                        output.println("$op|${entry.rawArguments.joinToString { arg -> "raw:$arg" }}")
+//                    }
+//                }
+//            }
+//        }
 
         return true
     }

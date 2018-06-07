@@ -3,10 +3,9 @@ package org.abimon.spiral.core
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.kittinunf.fuel.core.Request
 import net.npe.tga.TGAWriter
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.objects.images.GXTByteColourOrder
-import org.abimon.spiral.util.traceWithCaller
 import org.abimon.visi.io.read
-import org.abimon.visi.lang.exportStackTrace
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_ARGB
@@ -273,16 +272,6 @@ infix fun ByteArray.doesntEqual(other: ByteArray): Boolean = !(this equals other
 infix fun <T : Number> T.hasBitSet(bit: T): Boolean = (this.toLong() and bit.toLong()) == bit.toLong()
 
 fun Request.userAgent(agent: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:54.0) Gecko/20100101 Firefox/54.0"): Request = this.header("User-Agent" to agent)
-
-fun tryUnsafe(action: () -> Boolean): Boolean {
-    try {
-        return action()
-    } catch (th: Throwable) {
-        traceWithCaller("Error: ${th.exportStackTrace().replace("\n", " / ")}")
-    }
-
-    return false
-}
 
 fun IntArray.swizzle(colourOrder: GXTByteColourOrder): Int {
     val (first, second, third, fourth) = this
