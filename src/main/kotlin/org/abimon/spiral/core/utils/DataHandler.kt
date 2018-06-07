@@ -1,6 +1,10 @@
 package org.abimon.spiral.core.utils
 
-import java.io.*
+import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 import java.util.*
 
 object DataHandler {
@@ -16,13 +20,7 @@ object DataHandler {
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
-    val emptyPrintStream = PrintStream(object: OutputStream() {
-        override fun write(b: Int) {}
-        override fun write(b: ByteArray?) {}
-        override fun write(b: ByteArray?, off: Int, len: Int) {}
-    })
-
-    var errorPrintStream: PrintStream = emptyPrintStream
+    var logger = LoggerFactory.getLogger("SpiralFormats")
 
     var cacheFileInitialiser: (String?) -> File = func@{ name ->
         var cacheFile: File
