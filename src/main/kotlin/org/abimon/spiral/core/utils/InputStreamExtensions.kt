@@ -8,7 +8,7 @@ import java.nio.charset.Charset
 import java.security.MessageDigest
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen: Boolean = false): String {
-    val data = ByteArray(len.coerceAtLeast(0).run { if(!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
+    val data = ByteArray(len.coerceAtLeast(0).run { if (!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
     read(data)
     return String(data, Charset.forName(encoding))
 }
@@ -16,23 +16,39 @@ fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen:
 fun InputStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
 
 fun InputStream.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = Charsets.UTF_8)
-fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8): String {
+fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8, bytesPer: Int = 1): String {
     val baos = ByteArrayOutputStream()
-    var byte: Int
+    var nullTerms = 0
 
     while (true) {
         val read = read()
-        if(read == 0x00 || read == -1)
+        if (read == -1)
             break
+        if (read == 0x00) {
+            nullTerms++
 
-        baos.write(read)
+            if (nullTerms >= bytesPer)
+                break
+        } else {
+            if (nullTerms > 0) {
+                baos.write(ByteArray(nullTerms))
+                nullTerms = 0
+            }
+
+            baos.write(read)
+        }
     }
 
     return String(baos.toByteArray(), encoding)
 }
 
-fun InputStream.copyToStream(out: OutputStream): Unit { this.copyTo(out) }
-fun OutputStream.copyFromStream(stream: InputStream): Unit { stream.copyTo(this) }
+fun InputStream.copyToStream(out: OutputStream): Unit {
+    this.copyTo(out)
+}
+
+fun OutputStream.copyFromStream(stream: InputStream): Unit {
+    stream.copyTo(this)
+}
 
 fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: ((Long) -> Unit)?): Long {
     var bytesCopied = 0L
@@ -49,7 +65,7 @@ fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BU
 
 fun InputStream.readOrNull(): Int? {
     val read = read()
-    if(read == -1)
+    if (read == -1)
         return null
     return read
 }
@@ -62,11 +78,11 @@ fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, 
 
     while (read > -1) {
         read = read(buffer)
-        if(read < 0)
+        if (read < 0)
             break
-        if(read == 0) {
+        if (read == 0) {
             count++
-            if(count > 3)
+            if (count > 3)
                 break
         }
 
@@ -74,7 +90,7 @@ fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, 
         total += read
     }
 
-    if(closeAfter)
+    if (closeAfter)
         close()
 
     return total
@@ -87,17 +103,24 @@ fun InputStream.hash(algorithm: String): String {
     val hashBytes = md.digest()
     return String.format("%032x", BigInteger(1, hashBytes))
 }
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.md2Hash(): String = hash("MD2")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.md5Hash(): String = hash("MD5")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha1Hash(): String = hash("SHA-1")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha224Hash(): String = hash("SHA-224")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha256Hash(): String = hash("SHA-256")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha384Hash(): String = hash("SHA-384")
+
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha512Hash(): String = hash("SHA-512")
