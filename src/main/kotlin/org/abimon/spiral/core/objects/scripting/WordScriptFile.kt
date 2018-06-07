@@ -8,10 +8,9 @@ import java.io.InputStream
 import java.util.*
 
 class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
-    val entries: Array<WrdScript>
-    val commandOneEntries: Array<String>
-    val commandTwoEntries: Array<String>
-    val commandThreeEntries: Array<String>
+    val entries: Array<Array<WrdScript>>
+    val labels: Array<String>
+    val parameters: Array<String>
 
     val strings: Array<String>
 
@@ -19,99 +18,103 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
         val stream = CountingInputStream(dataSource())
         try {
             val stringCount = stream.readInt16LE()
-            val cmd1Count = stream.readInt16LE()
-            val cmd2Count = stream.readInt16LE()
-            val cmd3Count = stream.readInt16LE()
+            val labelCount = stream.readInt16LE()
+            val parameterCount = stream.readInt16LE()
+            val unkCount = stream.readInt16LE()
 
-            val unk = stream.readInt32LE()
+            val padding = stream.readInt32LE()
             val unkOffset = stream.readInt32LE()
 
-            val cmd3Offset = stream.readInt32LE()
-            val cmd1Offset = stream.readInt32LE()
-            val cmd2Offset = stream.readInt32LE()
+            val sectionOffset = stream.readInt32LE()
+            val labelOffset = stream.readInt32LE()
+            val parameterOffset = stream.readInt32LE()
             val stringOffset = stream.readInt32LE()
 
-            val wrdData = LinkedList<Int>(ByteArray(unkOffset - 0x20).apply { stream.read(this) }.map { byte -> byte.toInt() and 0xFF })
-            val wrdEntries: MutableList<WrdScript> = ArrayList()
-            
-            while (wrdData.isNotEmpty()) {
-                var byte = wrdData.poll() ?: break
+            labels = dataSource().use { commandStream ->
+                commandStream.skip(labelOffset.toLong())
 
-                while (byte != 0x70 && wrdData.isNotEmpty())
-                    byte = wrdData.poll() ?: break
+                return@use Array(labelCount) {
+                    val length = commandStream.read()
 
-                if (wrdData.isEmpty())
-                    break
-
-                val opCode = wrdData.poll() ?: break
-
-                val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
-                val arguments: IntArray
-
-                if (argumentCount == -1) {
-                    val args: MutableList<Int> = ArrayList()
-
-                    while (wrdData.peek() != 0x70 && wrdData.isNotEmpty()) {
-                        args.add(wrdData.poll() ?: break)
-                    }
-
-                    arguments = args.toIntArray()
-                } else {
-                    arguments = IntArray(argumentCount) { wrdData.poll() }
-                }
-
-                if (arguments.size == argumentCount || argumentCount == -1) {
-                    wrdEntries.add(getEntry(opCode, arguments))
-                } else {
-                    println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                    return@Array commandStream.readNullTerminatedString(length + 1, Charsets.UTF_8)
                 }
             }
 
-            entries = wrdEntries.toTypedArray()
+            parameters = dataSource().use { commandStream ->
+                commandStream.skip(parameterOffset.toLong())
 
-            val unkItems = IntArray(unk) { stream.read() }
-            stream.skip((cmd3Offset - stream.count).coerceAtLeast(0))
+                return@use Array(parameterCount) {
+                    val length = commandStream.read()
 
-            commandThreeEntries = Array(cmd3Count) {
-                val length = stream.read()
-                val str = stream.readString(length, "UTF-8")
-                stream.read() //Null Terminated
-
-                return@Array str
-            }
-
-            stream.skip((cmd1Offset - stream.count).coerceAtLeast(0))
-
-            commandOneEntries = Array(cmd1Count) {
-                val length = stream.read()
-                val str = stream.readString(length, "UTF-8")
-                stream.read() //Null Terminated
-
-                return@Array str
-            }
-
-            stream.skip((cmd2Offset - stream.count).coerceAtLeast(0))
-
-            commandTwoEntries = Array(cmd2Count) {
-                val length = stream.read()
-                val str = stream.readString(length, "UTF-8")
-                stream.read() //Null Terminated
-
-                return@Array str
+                    return@Array commandStream.readNullTerminatedString(length + 1, Charsets.UTF_8)
+                }
             }
 
             strings = dataSource().use { stringStream ->
                 stringStream.skip(stringOffset.toLong())
-                return@use Array<String>(stringCount) {
+                return@use Array(stringCount) {
                     var stringLen = stream.read()
 
                     if(stringLen >= 0x80)
                         stringLen += (stream.read() - 1) shl 8
 
-                    val string = stream.readString(stringLen, "UTF-16LE")
-                    stream.readInt16LE()
+                    return@Array stream.readNullTerminatedString(stringLen + 2, Charsets.UTF_16LE, 2)
+                }
+            }
 
-                    return@Array string
+            val sectionOffsets = dataSource().use { commandStream ->
+                commandStream.skip(sectionOffset.toLong())
+
+                return@use IntArray(labelCount) { commandStream.readInt16LE() + 0x20 }
+            }
+
+            entries = Array(labelCount) { index ->
+                val size: Int
+
+                if (index == labelCount - 1)
+                    size = unkOffset - sectionOffsets[index]
+                else
+                    size = sectionOffsets[index + 1] - sectionOffsets[index]
+
+                return@Array dataSource().use { wrdStream ->
+                    wrdStream.skip(sectionOffsets[index].toLong())
+                    val wrdData = LinkedList<Int>(ByteArray(size).apply { wrdStream.read(this) }.map { byte -> byte.toInt() and 0xFF })
+                    val wrdEntries: MutableList<WrdScript> = ArrayList()
+
+                    while (wrdData.isNotEmpty()) {
+                        var byte = wrdData.poll() ?: break
+
+                        while (byte != 0x70 && wrdData.isNotEmpty())
+                            byte = wrdData.poll() ?: break
+
+                        if (wrdData.isEmpty())
+                            break
+
+                        val opCode = wrdData.poll() ?: break
+
+                        val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
+                        val arguments: IntArray
+
+                        if (argumentCount == -1) {
+                            val args: MutableList<Int> = ArrayList()
+
+                            while (wrdData.peek() != 0x70 && wrdData.isNotEmpty()) {
+                                args.add(wrdData.poll() ?: break)
+                            }
+
+                            arguments = args.toIntArray()
+                        } else {
+                            arguments = IntArray(argumentCount) { wrdData.poll() }
+                        }
+
+                        if (arguments.size == argumentCount || argumentCount == -1) {
+                            wrdEntries.add(getEntry(opCode, arguments))
+                        } else {
+                            println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                        }
+                    }
+
+                    return@use wrdEntries.toTypedArray()
                 }
             }
         } finally {
@@ -120,11 +123,11 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     }
 
     operator fun get(command: EnumWordScriptCommand, index: Int): String {
-        when(command) {
-            EnumWordScriptCommand.ONE -> return commandOneEntries[index]
-            EnumWordScriptCommand.TWO -> return commandTwoEntries[index]
-            EnumWordScriptCommand.THREE -> return commandThreeEntries[index]
-            EnumWordScriptCommand.STRING -> return strings[index]
+        return when(command) {
+            EnumWordScriptCommand.LABEL -> labels[index]
+            EnumWordScriptCommand.PARAMETER -> parameters[index]
+            EnumWordScriptCommand.STRING -> strings[index]
+            else -> index.toString()
         }
     }
 }
