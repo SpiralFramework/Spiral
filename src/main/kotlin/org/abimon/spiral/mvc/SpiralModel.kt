@@ -86,7 +86,7 @@ object SpiralModel {
 
             archives.clear()
             archives.addAll(config.archives.map { File(it) })
-            loggerLevel = config.loggerLevel
+            loggerLevel = Level.toLevel(config.loggerLevel, Level.OFF)
             concurrentOperations = config.concurrentOperations
             scope = config.scope
             operating = config.operating?.let(::File)
@@ -124,7 +124,7 @@ object SpiralModel {
 
     val config: ModelConfig
         get() = ModelConfig(
-                archives.map { it.absolutePath }.toSet(), loggerLevel, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
+                archives.map { it.absolutePath }.toSet(), loggerLevel.levelStr, concurrentOperations, scope, operating?.absolutePath, autoConfirm, purgeCache,
                 patchOperation, patchFile?.absolutePath, fileOperation?.absolutePath,
                 attemptFingerprinting, true, true, false, false, defaultParams, pluginData
         )
