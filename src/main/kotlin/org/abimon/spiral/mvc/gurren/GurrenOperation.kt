@@ -20,11 +20,16 @@ import org.abimon.spiral.modding.ModManager
 import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.mvc.SpiralModel.operating
-import org.abimon.spiral.util.*
+import org.abimon.spiral.util.InputStreamFuncDataSource
+import org.abimon.spiral.util.decompress
+import org.abimon.spiral.util.fileSourceForname
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.joinToPrefixedString
 import org.abimon.visi.io.*
-import org.abimon.visi.lang.*
+import org.abimon.visi.lang.child
+import org.abimon.visi.lang.extension
+import org.abimon.visi.lang.parents
+import org.abimon.visi.lang.replaceLast
 import java.awt.Desktop
 import java.io.File
 import java.io.FileInputStream
@@ -111,18 +116,18 @@ object GurrenOperation {
 
                     val parents = File(directory, entryName.parents)
                     if (!parents.exists() && !parents.mkdirs()) //Second check due to concurrency
-                        return@forEach errPrintln("[$operatingName] Warn: $parents could not be created; skipping $entryName")
+                        return@forEach SpiralData.LOGGER.warn("[{}] Warn: {} could not be created; skipping {}", operatingName, parents, entryName)
 
                     val output = File(directory, entryName)
                     FileOutputStream(output).use { outputStream -> decompress(entry).use { inputStream -> inputStream.copyTo(outputStream) } }
-                    debug("[$operatingName] Wrote $entryName to $output")
+                    SpiralData.LOGGER.info("[{}] Wrote {} to {}", operatingName, entryName, output)
                     rows.add(arrayOf(entryName, output relativePathTo directory))
                 }
             }
 
             HookManager.finishedExtraction(opArchive, directory, matching)
             println(FlipTable.of(arrayOf("File", "Output"), rows.toTypedArray()))
-            debug("Took $duration ms")
+            SpiralData.LOGGER.info("Took {} ms", duration)
         }
     }
     val extractNicely = Command("extract_nicely", "operate") { (params) ->
@@ -206,8 +211,8 @@ object GurrenOperation {
                                     FileOutputStream(output).use { outputStream -> data().use { inputStream -> inputStream.copyTo(outputStream) } }
                                     rows.add(arrayOf(entryName, format.name, "ERR", output relativePathTo directory))
 
-                                    if (LoggerLevel.ERROR.enabled)
-                                        LoggerLevel.ERROR(iea.exportStackTrace())
+                                    if (SpiralData.LOGGER.isErrorEnabled)
+                                        SpiralData.LOGGER.error("Error extracting {}: ", entryName, iea)
                                 }
                             }
                         }

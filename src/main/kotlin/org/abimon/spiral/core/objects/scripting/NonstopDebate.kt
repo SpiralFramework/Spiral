@@ -1,12 +1,13 @@
 package org.abimon.spiral.core.objects.scripting
 
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.readNumber
 import org.abimon.spiral.core.readShort
-import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 
 /**
  * Data file for the nonstop debates
+ * TODO: Overhaul with OSL support
  */
 class NonstopDebate(val dataSource: DataSource, sectionSize: Int? = null) {
     val secondsForDebate: Int
@@ -25,7 +26,8 @@ class NonstopDebate(val dataSource: DataSource, sectionSize: Int? = null) {
             if(bytesPerSection % 2 == 1)
                 throw IllegalArgumentException("${dataSource.location} is an invalid/corrupt nonstop debate file (bytes per section is not even; is $bytesPerSection)")
 
-            if(bytesPerSection != 60 && bytesPerSection != 68) debug("[Nonstop Debate ${dataSource.location}] Abnormal bytes per section of $bytesPerSection; be wary")
+            if (bytesPerSection != 60 && bytesPerSection != 68)
+                SpiralData.LOGGER.warn("[Nonstop Debate ${dataSource.location}] Abnormal bytes per section of $bytesPerSection; be wary")
 
             val entriesPerSection = bytesPerSection / 2
             for(sectionNumber in 0 until numberOfSections) {

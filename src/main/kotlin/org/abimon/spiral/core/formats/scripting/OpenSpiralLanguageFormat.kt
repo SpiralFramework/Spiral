@@ -2,6 +2,7 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.SpiralDrillBit
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.customLin
 import org.abimon.spiral.core.objects.customWordScript
@@ -9,7 +10,6 @@ import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
-import org.abimon.spiral.util.debug
 import org.abimon.visi.lang.EnumOS
 import java.io.InputStream
 import java.io.OutputStream
@@ -60,7 +60,7 @@ object OpenSpiralLanguageFormat: SpiralFormat {
             LINFormat -> {
                 val customLin = customLin {
                     stack.forEach { value ->
-                        debug("Stack Value: $value")
+                        SpiralData.LOGGER.trace("Stack Value: {}", value)
 
                         if (value is List<*>) {
                             val drillBit = (value[0] as? SpiralDrillBit) ?: return@forEach
@@ -91,7 +91,7 @@ object OpenSpiralLanguageFormat: SpiralFormat {
             WRDFormat -> {
                 val customWordScript = customWordScript {
                     stack.forEach { value ->
-                        debug("Stack Value: $value")
+                        SpiralData.LOGGER.trace("Stack Value: {}", value)
                         if (value is List<*>) {
                             val drillBit = (value[0] as? SpiralDrillBit) ?: return@forEach
                             val head = drillBit.head

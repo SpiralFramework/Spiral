@@ -1,10 +1,10 @@
 package org.abimon.spiral.core.data
 
-import org.abimon.spiral.util.LoggerLevel
+import ch.qos.logback.classic.Level
 
 data class ModelConfig(
         val archives: Set<String> = emptySet(), //The registered archives
-        val loggerLevel: LoggerLevel = LoggerLevel.NONE, //What logger level we operate on
+        val loggerLevel: Level = Level.OFF, //What logger level we operate on
         val concurrentOperations: Int = 16, //How many concurrent operations we run, used for extraction
         val scope: Pair<String, String> = "> " to "default", //The last scope we used
         val operating: String? = null, //The operating file path

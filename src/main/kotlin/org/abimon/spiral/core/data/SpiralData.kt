@@ -21,7 +21,9 @@ import org.abimon.spiral.core.put
 import org.abimon.spiral.core.utils.TriFace
 import org.abimon.spiral.core.utils.Vertex
 import org.abimon.spiral.modding.IPlugin
+import org.abimon.spiral.mvc.gurren.Gurren
 import org.abimon.visi.lang.make
+import org.slf4j.LoggerFactory
 
 object SpiralData {
     val billingDead = true
@@ -270,6 +272,8 @@ object SpiralData {
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
             .setDefaultSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
+
+    val LOGGER = LoggerFactory.getLogger("Spiral v${Gurren.version}")
 
     val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
     val STEAM_DANGANRONPA_2_GOODBYE_DESPAIR = "413420"

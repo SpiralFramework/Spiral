@@ -28,7 +28,6 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.absoluteParentFile
-import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
@@ -1110,7 +1109,7 @@ object Gurren {
                     return@forEach
                 }
 
-                debug("Joining ${audio.name} and ${video.name}")
+                SpiralData.LOGGER.debug("Joining {} and {}", audio.name, video.name)
 
                 val output = File(directory, "$name.mp4")
 

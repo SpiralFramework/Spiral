@@ -10,9 +10,7 @@ import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.scripting.lin.UnknownEntry
 import org.abimon.spiral.core.utils.and
-import org.abimon.spiral.util.debug
 import org.abimon.spiral.util.shortToIntPair
-import org.abimon.visi.lang.times
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -57,7 +55,6 @@ object ScriptTextFormat : SpiralFormat {
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if(super.convert(game, format, name, context, dataSource, output, params)) return true
 
-        debug("Begun Converting\n${"-" * 100}")
         when (format) {
             LINFormat -> {
                 if (game !is HopesPeakDRGame)

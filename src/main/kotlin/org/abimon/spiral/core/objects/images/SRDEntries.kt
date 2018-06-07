@@ -3,10 +3,10 @@ package org.abimon.spiral.core.objects.images
 import org.abimon.karnage.raw.BC4PixelData
 import org.abimon.karnage.raw.BC7PixelData
 import org.abimon.karnage.raw.DXT1PixelData
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.images.SRDFormat.deswizzle
 import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.core.utils.WindowedInputStream
-import org.abimon.spiral.util.debug
 import org.abimon.visi.io.DataSource
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -73,7 +73,7 @@ class TXRItem(
                     return resultingImage
                 }
                 else -> {
-                    debug("Raw format: $format (${format.toString(16)})")
+                    SpiralData.LOGGER.debug("Raw format: {} (0x{})", format, format.toString(16))
                     return null
                 }
             }
@@ -109,12 +109,12 @@ class TXRItem(
                 0x16 -> return BC4PixelData.read(width, height, processingStream)
                 0x1C -> return BC7PixelData.read(width, height, processingStream)
                 else -> {
-                    debug("Block format: $format (${format.toString(16)}) [${width}x${height}]")
+                    SpiralData.LOGGER.debug("Block format: {} (0x{}) [{}x{}]", format, format.toString(16), width, height)
                     return null
                 }
             }
         } else
-            debug("Other format: $format (0x${format.toString(16)})")
+            SpiralData.LOGGER.debug("Other format: {} (0x{})", format, format.toString(16))
 
         return null
     }

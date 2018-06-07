@@ -6,6 +6,7 @@ import org.abimon.karnage.raw.DXT1PixelData
 import org.abimon.spiral.core.SpiralFormats
 import org.abimon.spiral.core.archives.IArchive
 import org.abimon.spiral.core.data.CacheHandler
+import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.images.SRDFormat.deswizzle
 import org.abimon.spiral.core.hasBitSet
 import org.abimon.spiral.core.objects.archives.CPK
@@ -143,25 +144,26 @@ fun String.removeEscapes(): String =
                         append(c)
                         escaping = false
                     }
-                } else if (controlCharacter) {
-                    when (c) {
-                        'n' -> append('\n')
-                        't' -> append('\t')
-                        'b' -> append('\b')
-                        'r' -> append('\r')
-                        '0' -> append(0x00.toChar())
-                        else -> {
-                            append('\\')
-                            append(c)
+                } else
+                    if (escaping) {
+                        when (c) {
+                            'n' -> append('\n')
+                            't' -> append('\t')
+                            'b' -> append('\b')
+                            'r' -> append('\r')
+                            '0' -> append(0x00.toChar())
+                            else -> {
+                                append('\\')
+                                append(c)
+                            }
                         }
-                    }
 
-                    controlCharacter = false
-                } else if (c == '\\') {
-                    escaping = true
-                } else {
-                    append(c)
-                }
+                        escaping = false
+                    } else if (c == '\\') {
+                        escaping = true
+                    } else {
+                        append(c)
+                    }
             }
         }
 
@@ -209,7 +211,7 @@ fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
                 return resultingImage
             }
             else -> {
-                debug("Raw format for ${this.rsiEntry.name}: $format (${format.toString(16)})")
+                SpiralData.LOGGER.debug("Raw format for {}: {} ({})", this.rsiEntry.name, format, format.toString(16))
                 return null
             }
         }
@@ -245,12 +247,12 @@ fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
             0x16 -> return BC4PixelData.read(width, height, processingStream)
             0x1C -> return BC7PixelData.read(width, height, processingStream)
             else -> {
-                debug("Block format for ${this.rsiEntry.name}: $format (0x${format.toString(16)}) [${width}x${height}]")
+                SpiralData.LOGGER.debug("Block format for {}: {} (0x{}) [{}x{}]", this.rsiEntry.name, format, format.toString(16), width, height)
                 return null
             }
         }
     } else
-        debug("Other format for ${this.rsiEntry.name}: $format (0x${format.toString(16)})")
+        SpiralData.LOGGER.debug("Other format for {}: {} (0x{})", rsiEntry.name, format, format.toString(16))
 
     return null
 }

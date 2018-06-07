@@ -1,5 +1,6 @@
 package org.abimon.spiral.mvc
 
+import ch.qos.logback.classic.Level
 import com.github.kittinunf.fuel.core.FuelManager
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
@@ -15,8 +16,7 @@ import org.abimon.spiral.core.data.PatchOperation
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.userAgent
 import org.abimon.spiral.modding.HookManager
-import org.abimon.spiral.util.LoggerLevel
-import org.abimon.spiral.util.splitOutside
+import org.abimon.visi.lang.splitOutsideGroup
 import java.io.File
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -31,7 +31,7 @@ object SpiralModel {
     val archives: MutableSet<File> = ConcurrentSkipListSet()
     var operating: File? by hookable(null, HookManager::beforeOperatingChange, HookManager::afterOperatingChange)
     var scope: Pair<String, String> by hookable("> " to "default", HookManager::beforeScopeChange, HookManager::afterScopeChange)
-    var loggerLevel: LoggerLevel by hookable(LoggerLevel.NONE, HookManager::beforeLoggerLevelChange, HookManager::afterLoggerLevelChange)
+    var loggerLevel: Level by hookable(Level.OFF, HookManager::beforeLoggerLevelChange, HookManager::afterLoggerLevelChange)
     var cacheEnabled: Boolean by hookable(true, HookManager::beforeCacheEnabledChange, HookManager::afterCacheEnabledChange)
     var concurrentOperations: Int by hookable(4, HookManager::beforeConcurrentOperationsChange, HookManager::afterConcurrentOperationsChange)
     var autoConfirm: Boolean by hookable(false, HookManager::beforeAutoConfirmChange, HookManager::afterAutoConfirmChange)
@@ -59,8 +59,8 @@ object SpiralModel {
         return InstanceSoldier<InstanceOrder<*>>(InstanceOrder::class.java, commandName, arrayListOf(InstanceWatchtower<InstanceOrder<*>> {
             return@InstanceWatchtower (scope == null || SpiralModel.scope.second == scope) &&
                     it.data is String &&
-                    ((it.data as String).splitOutside().firstOrNull() ?: "") == commandName
-        })) { command((it.data as String).splitOutside() to it.data as String) }
+                    ((it.data as String).splitOutsideGroup().firstOrNull() ?: "") == commandName
+        })) { command((it.data as String).splitOutsideGroup() to it.data as String) }
     }
 
     private val JSON_CONFIG = File("config.json")
@@ -130,6 +130,7 @@ object SpiralModel {
         )
 
     init {
+        HookManager.ON_LOGGER_LEVEL_CHANGE.add(SpiralData.BASE_PLUGIN to this::onLoggerLevelChange)
         load()
         FuelManager.instance.addRequestInterceptor { requestInterceptor -> { request -> requestInterceptor(request); request.userAgent() } }
     }
@@ -144,6 +145,10 @@ object SpiralModel {
             if(!SpiralModel.unsafe.get())
                 SpiralModel.save()
         }
+    }
+
+    fun onLoggerLevelChange(old: Level, new: Level) {
+        (SpiralData.LOGGER as ch.qos.logback.classic.Logger).level = new
     }
 
     fun confirm(question: () -> Boolean): Boolean = autoConfirm || question()
