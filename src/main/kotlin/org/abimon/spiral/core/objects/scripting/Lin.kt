@@ -21,7 +21,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
             try {
                 return Lin(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.logger.error("Failed to compile Lin for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("Failed to compile Lin for dataSource {}", dataSource, iae)
 
                 return null
             }
@@ -107,13 +107,13 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 if (arguments.size == argumentCount || argumentCount == -1) {
                     entries.add(getEntry(opCode, arguments))
                 } else {
-                    println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                    DataHandler.LOGGER.warn("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
                 }
             }
 
             if (stream.streamOffset < textBlock) {
                 val skipping = textBlock - stream.streamOffset
-                DataHandler.logger.debug("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
+                DataHandler.LOGGER.debug("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
 
                 stream.skip(skipping)
             } else if (stream.streamOffset > textBlock) {
@@ -136,7 +136,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 for (textID in 0 until textLines) {
                     val size = textPositions[textID + 1] - textPositions[textID] - 2
                     if (size <= 0) {
-                        DataHandler.logger.debug("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
+                        DataHandler.LOGGER.debug("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
                         continue
                     }
 

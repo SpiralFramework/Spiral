@@ -20,7 +20,7 @@ object DataHandler {
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
-    var logger = LoggerFactory.getLogger("SpiralFormats")
+    var LOGGER = LoggerFactory.getLogger("SpiralFormats")
 
     var cacheFileInitialiser: (String?) -> File = func@{ name ->
         var cacheFile: File
