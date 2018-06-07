@@ -1,40 +1,39 @@
 package org.abimon.spiral.core.objects.images
 
 import org.abimon.spiral.core.*
-import org.abimon.spiral.core.utils.CountingInputStream
-import org.abimon.spiral.core.utils.WindowedInputStream
-import org.abimon.visi.io.DataSource
+import org.abimon.spiral.core.utils.*
 import org.abimon.visi.io.read
 import org.abimon.visi.lang.and
 import java.awt.Color
 import java.awt.geom.Dimension2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 
-class CustomSRD(val srd: DataSource, val srdv: DataSource) {
+class CustomSRD(val srd: () -> InputStream, val srdv: () -> InputStream) {
     companion object {
         val STATIC_SRD_END = byteArrayOfInts(0x24, 0x43, 0x54, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
         val STATIC_RSI = byteArrayOfInts(0x24, 0x52, 0x53, 0x49)
     }
 
     val images: MutableMap<String, BufferedImage> = HashMap()
-    val customMipmaps: MutableMap<String, Triple<Int, Dimension2D, Array<DataSource>>> = HashMap()
+    val customMipmaps: MutableMap<String, Triple<Int, Dimension2D, Array<Pair<Long, () -> InputStream>>>> = HashMap()
 
     fun image(name: String, img: BufferedImage): CustomSRD {
         images[name] = img
         return this
     }
 
-    fun mipmap(name: String, format: Int, dimensions: Dimension2D, images: Array<DataSource>): CustomSRD {
+    fun mipmap(name: String, format: Int, dimensions: Dimension2D, images: Array<Pair<Long, () -> InputStream>>): CustomSRD {
         customMipmaps[name] = format to dimensions and images
         return this
     }
 
     fun patch(srdOut: OutputStream, srdvOut: OutputStream) {
         var imgOffset: Long = 0
-        srdv.seekableUse { srdvStream ->
-            srd.seekableUse { original ->
+        srdv.use { srdvStream ->
+            srd.use { original ->
                 val stream = CountingInputStream(original)
                 loop@ while (true) {
                     val (data_type, data_S, subdata_S) = readSRDItem(stream, srd) ?: break
@@ -53,8 +52,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                     val palette = data.read() and 0xFF
                                     val palette_id = data.read() and 0xFF
 
-                                    val (img_data_type, img_data_S, img_subdata_S) = readSRDItem(subdata, srd)!!
-                                    img_subdata_S.close()
+                                    val (img_data_type, img_data_S, img_subdata_S) = readSRDItem(subdata as WindowedInputStream, srd)!!
                                     img_data_S.use { img_data ->
                                         val initial = img_data.readNumber(2, true, true)
                                         val unk5 = img_data.read() and 0xFF
@@ -73,17 +71,14 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                             mipmaps.add(intArrayOf(mipmap_start.toInt(), mipmap_len.toInt(), mipmap_unk1.toInt(), mipmap_unk2.toInt()))
                                         }
 
-                                        img_data.reset()
-                                        img_data.skip(name_offset)
+                                        val name = img_data_S.useAt(name_offset, InputStream::readNullTerminatedUTF8String)
 
-                                        val name = img_data.readZeroString()
                                         if (images.containsKey(name)) {
                                             val origImage = images[name]!!
                                             var img = origImage
                                             val nameBytes = name.toByteArray()
 
-                                            data.reset()
-                                            val dataLen = data.available()
+                                            val dataLen = (data as WindowedInputStream).windowSize
 
                                             //First, we construct the subdata so we can write.
 
@@ -198,8 +193,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                             val (mipmapFormat, dimensions, newMipmaps) = customMipmaps[name]!!
                                             val nameBytes = name.toByteArray()
 
-                                            data.reset()
-                                            val dataLen = data.available()
+                                            val dataLen = (data as WindowedInputStream).windowSize
 
                                             //First, we construct the subdata so we can write.
 
@@ -222,8 +216,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
 
                                             //Mipmap values are also fairly static, and we need a number of them.
                                             for (i in 0 until newMipmaps.size) {
-                                                val mip = newMipmaps[i]
-                                                val size = mip.size
+                                                val (size, mip) = newMipmaps[i]
                                                 //Image Offset - Write only the first three bytes. For whatever reason, the fourth byte is also 0x40
                                                 newSubdata.writeNumber(imgOffset, 3)
                                                 newSubdata.write(0x40)
@@ -236,7 +229,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                                 newSubdata.writeInt(0)
 
                                                 //Then write the image to the srdv stream
-                                                mip.pipe(srdvOut)
+                                                mip.use { stream -> stream.copyTo(srdvOut) }
 
                                                 imgOffset += size
                                             }
@@ -298,8 +291,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                                 srdOut.write(0)
                                         } else {
                                             val nameBytes = name.toByteArray()
-                                            data.reset()
-                                            val dataLen = data.available()
+                                            val dataLen = (data as WindowedInputStream).windowSize
 
                                             //First, we construct the subdata so we can write.
 
@@ -333,9 +325,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
                                                 newSubdata.writeInt(mipmaps[i][2])
                                                 newSubdata.writeInt(mipmaps[i][3])
 
-                                                srdvStream.reset()
-                                                srdvStream.skip(mipmaps[i][0].toLong())
-                                                val imgData = srdvStream.read(mipmaps[i][1])
+                                                val imgData = srdv.useAt(mipmaps[i][0].toLong()) { stream -> stream.read(mipmaps[i][1]) }
 
                                                 srdvOut.write(imgData)
 
@@ -425,7 +415,7 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
         }
     }
 
-    fun readSRDItem(stream: CountingInputStream, source: DataSource): Triple<String, WindowedInputStream, WindowedInputStream>? {
+    fun readSRDItem(stream: CountingInputStream, source: () -> InputStream): Triple<String, () -> WindowedInputStream, () -> WindowedInputStream>? {
         val data_type = stream.readString(4)
 
         if (data_type.length < 4 || !data_type.startsWith("$"))
@@ -438,10 +428,12 @@ class CustomSRD(val srd: DataSource, val srdv: DataSource) {
         val data_padding = (0x10 - data_len % 0x10) % 0x10
         val subdata_padding = (0x10 - subdata_len % 0x10) % 0x10
 
-        val data = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, data_len)  //ByteArray(data_len.toInt()).apply { stream.read(this) }
+        val dataOffset = stream.streamOffset
+        val data = { WindowedInputStream(source(), dataOffset, data_len) }  //ByteArray(data_len.toInt()).apply { stream.read(this) }
         stream.skip(data_padding + data_len)
 
-        val subdata = WindowedInputStream(source.seekableInputStream, if (stream is WindowedInputStream) stream.offset + stream.count else stream.count, subdata_len) //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
+        val subdataOffset = stream.streamOffset
+        val subdata = { WindowedInputStream(source(), subdataOffset, subdata_len) } //ByteArray(subdata_len.toInt()).apply { stream.read(this) }
         stream.skip(subdata_padding + subdata_len)
 
         return data_type to data and subdata
