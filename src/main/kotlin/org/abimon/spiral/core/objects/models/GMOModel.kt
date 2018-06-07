@@ -92,14 +92,14 @@ class GMOModel(val dataSource: () -> InputStream) {
 //                            val y = substream.readInt16LE()
 //                            val z = substream.readInt16LE()
 
-                                val u = substream.readFloatLE()
-                                val v = substream.readFloatLE()
+                                val u = substream.readFloatLE().roundToPrecision()
+                                val v = substream.readFloatLE().roundToPrecision()
 
                                 val padding = substream.readXBytes((vertSize - 20).toInt()) //Not sure what this is
 
-                                val x = substream.readFloatLE()
-                                val y = substream.readFloatLE()
-                                val z = substream.readFloatLE()
+                                val x = substream.readFloatLE().roundToPrecision()
+                                val y = substream.readFloatLE().roundToPrecision()
+                                val z = substream.readFloatLE().roundToPrecision()
 
 //                                uvs.add(u to v)
 //                                vertices.add(x to y and z)
@@ -188,11 +188,9 @@ class GMOModel(val dataSource: () -> InputStream) {
 //                                        faces.add(verts[i * 4] to verts[i * 4 + 1] and verts[i * 4 + 2])
 //                                    }
 
-                                    for (i in 0 until verts.size - 2) {
-                                        if (i % 2 == 0)
-                                            faces.add(verts[i] to verts[i + 1] and verts[i + 2])
-                                        else
-                                            faces.add(verts[i + 2] to verts[i + 1] and verts[i])
+                                    for (i in 0 until 32 step 2) {
+                                        faces.add(verts[i + 1] to verts[i] and verts[i + 3])
+                                        faces.add(verts[i + 2] to verts[i + 3] and verts[i])
                                     }
                                 }
                                 else -> println("Missing faces primType $primType")

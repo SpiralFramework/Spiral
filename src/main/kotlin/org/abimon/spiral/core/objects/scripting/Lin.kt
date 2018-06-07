@@ -14,11 +14,14 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
         val BOM_LE = 0xFFFE
         val NULL_TERMINATOR = 0x00.toChar()
 
+        var MAXIMUM_LIN_READ = 1024 * 1024 * 8 // 8 MB maximum read
+        var MAXIMUM_LIN_STRING = 1024 * 8 // 8 KB String
+
         operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin? {
             try {
                 return Lin(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                iae.printStackTrace(DataHandler.errorPrintStream)
+                DataHandler.logger.error("Failed to compile Lin for dataSource {}", dataSource, iae)
 
                 return null
             }
@@ -67,6 +70,8 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
             val maximumRead = textBlock - headerSpace
 
+            assertAsArgument(maximumRead < MAXIMUM_LIN_READ, "Invalid Lin File (expected maximumRead to be less than $MAXIMUM_LIN_READ B, got $maximumRead > $MAXIMUM_LIN_READ)")
+
             val linData = LinkedList<Int>(ByteArray(maximumRead).apply { stream.read(this) }.map { byte -> byte.toInt() and 0xFF })
 
             while (linData.isNotEmpty()) {
@@ -108,7 +113,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
             if (stream.streamOffset < textBlock) {
                 val skipping = textBlock - stream.streamOffset
-                println("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
+                DataHandler.logger.debug("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
 
                 stream.skip(skipping)
             } else if (stream.streamOffset > textBlock) {
@@ -131,9 +136,11 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 for (textID in 0 until textLines) {
                     val size = textPositions[textID + 1] - textPositions[textID] - 2
                     if (size <= 0) {
-                        //System.err.println("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
+                        DataHandler.logger.debug("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
                         continue
                     }
+
+                    assertAsArgument(size < MAXIMUM_LIN_STRING, "Invalid string in Lin File (Expected string size to be less than $MAXIMUM_LIN_STRING, got $size ≥ $MAXIMUM_LIN_STRING)")
 
                     val line = ByteArray(size)
                     stream.read(line)
