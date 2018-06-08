@@ -11,6 +11,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     val entries: Array<Array<WrdScript>>
     val labels: Array<String>
     val parameters: Array<String>
+    val localBranchNumbers: Array<Pair<Int, Int>>
 
     val strings: Array<String>
 
@@ -20,10 +21,10 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
             val stringCount = stream.readInt16LE()
             val labelCount = stream.readInt16LE()
             val parameterCount = stream.readInt16LE()
-            val unkCount = stream.readInt16LE()
+            val localBranchCount = stream.readInt16LE()
 
             val padding = stream.readInt32LE()
-            val unkOffset = stream.readInt32LE()
+            val localBranchOffset = stream.readInt32LE()
 
             val sectionOffset = stream.readInt32LE()
             val labelOffset = stream.readInt32LE()
@@ -55,11 +56,16 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                 return@use Array(stringCount) {
                     var stringLen = stream.read()
 
-                    if(stringLen >= 0x80)
+                    if (stringLen >= 0x80)
                         stringLen += (stream.read() - 1) shl 8
 
                     return@Array stream.readNullTerminatedString(stringLen + 2, Charsets.UTF_16LE, 2)
                 }
+            }
+
+            localBranchNumbers = dataSource().use { stringStream ->
+                stringStream.skip(localBranchOffset.toLong())
+                return@use Array(localBranchCount) { stream.readInt16LE() to stream.readInt16LE() }
             }
 
             val sectionOffsets = dataSource().use { commandStream ->
@@ -72,7 +78,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                 val size: Int
 
                 if (index == labelCount - 1)
-                    size = unkOffset - sectionOffsets[index]
+                    size = localBranchOffset - sectionOffsets[index]
                 else
                     size = sectionOffsets[index + 1] - sectionOffsets[index]
 
@@ -93,7 +99,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                         val opCode = wrdData.poll() ?: break
 
                         val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
-                        val arguments: IntArray
+                        val rawArguments: IntArray
 
                         if (argumentCount == -1) {
                             val args: MutableList<Int> = ArrayList()
@@ -102,10 +108,13 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                                 args.add(wrdData.poll() ?: break)
                             }
 
-                            arguments = args.toIntArray()
+                            args.dropLast(args.size % 2)
+                            rawArguments = args.toIntArray()
                         } else {
-                            arguments = IntArray(argumentCount) { wrdData.poll() }
+                            rawArguments = IntArray(argumentCount) { wrdData.poll() }
                         }
+
+                        val arguments = IntArray(rawArguments.size / 2) { index -> ((rawArguments[index * 2] shl 8) or rawArguments[index * 2 + 1]) }
 
                         if (arguments.size == argumentCount || argumentCount == -1) {
                             wrdEntries.add(getEntry(opCode, arguments))
@@ -123,7 +132,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     }
 
     operator fun get(command: EnumWordScriptCommand, index: Int): String {
-        return when(command) {
+        return when (command) {
             EnumWordScriptCommand.LABEL -> labels[index]
             EnumWordScriptCommand.PARAMETER -> parameters[index]
             EnumWordScriptCommand.STRING -> strings[index]
