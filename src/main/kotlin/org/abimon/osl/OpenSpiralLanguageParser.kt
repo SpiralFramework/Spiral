@@ -61,11 +61,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
 
-    val customIdentifiers: HashMap<String, Int> by dataProperty("custom_identifiers", HashMap())
-    val customFlagNames: HashMap<String, Int> by dataProperty("custom_flag_names", HashMap())
-    val customLabelNames: HashMap<String, Int> by dataProperty("custom_label_names", HashMap())
-    val customItemNames: HashMap<String, Int> by dataProperty("custom_item_names", HashMap())
-    val macros: HashMap<String, String> by dataProperty("macros", HashMap())
+    val customIdentifiers: MutableMap<String, Int> by dataProperty("custom_identifiers", HashMap())
+    val customFlagNames: MutableMap<String, Int> by dataProperty("custom_flag_names", HashMap())
+    val customLabelNames: MutableMap<String, Int> by dataProperty("custom_label_names", HashMap())
+    val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", HashMap())
+    val macros: MutableMap<String, String> by dataProperty("macros", HashMap())
+
+    val wordScriptLabels: MutableList<String> by dataProperty("word_script_labels", ArrayList())
+    val wordScriptParameters: MutableList<String> by dataProperty("word_script_parameters", ArrayList())
+    val wordScriptStrings: MutableList<String> by dataProperty("word_script_labels", ArrayList())
 
     val states = HashMap<Int, ParserState>()
 

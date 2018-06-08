@@ -39,24 +39,29 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                             )
                     ),
                     operateOnTmpActions(BasicWrdSpiralDrill.cmd) { stack ->
-                        val opName = stack[1].toString()
-                        val opCode = V3.opCodes.entries.first { (_, triple) -> opName in triple.first }.key
-
                         val wrdParams = stack.drop(2).map(Any::toString)
 
-                        val commandEnum = V3.opCodeCommandEntries[opCode] ?: EnumWordScriptCommand.TWO
-                        val commands = data["wrd-command-$commandEnum"] as? MutableList<String> ?: ArrayList<String>()
-
                         for (param in wrdParams) {
-                            if (!param.startsWith("raw:")) {
-                                if (param !in commands) {
-                                    commands.add(param)
-                                    push(listOf(WordCommandDrill, commandEnum.ordinal + 1, param))
+                            if (param.startsWith("LABEL|")) {
+                                val label = param.substringAfter("LABEL|")
+                                if (label !in wordScriptLabels) {
+                                    wordScriptLabels.add(label)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.LABEL, label))
+                                }
+                            } else if (param.startsWith("PARAMETER|")) {
+                                val parameter = param.substringAfter("PARAMETER|")
+                                if (parameter !in wordScriptParameters) {
+                                    wordScriptParameters.add(parameter)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.PARAMETER, parameter))
+                                }
+                            } else if (param.startsWith("STRING|")) {
+                                val string = param.substringAfter("STRING|")
+                                if (string !in wordScriptStrings) {
+                                    wordScriptStrings.add(string)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.STRING, string))
                                 }
                             }
                         }
-
-                        data["wrd-command-$commandEnum"] = commands
                     },
                     pushTmpStack(cmd)
             )

@@ -8,9 +8,8 @@ import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object WordCommandDrill: DrillHead<WordScriptCommand> {
+object WordCommandDrill : DrillHead<WordScriptCommand> {
     val cmd = "WRD-COMMAND"
-    val VALID = intArrayOf(1, 2, 3)
 
     override val klass: KClass<WordScriptCommand> = WordScriptCommand::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
@@ -18,28 +17,31 @@ object WordCommandDrill: DrillHead<WordScriptCommand> {
                     clearTmpStack(cmd),
                     "Word Command",
                     Whitespace(),
-                    Digit(),
-                    Action<Any> { (match().toIntOrNull() ?: 1) in VALID },
+                    ParameterToStack(),
+                    Action<Any> {
+                        val name = pop().toString()
+                        push(name)
+                        return@Action EnumWordScriptCommand.values().any { enum -> enum.name.equals(name, true) }
+                    },
                     pushTmpAction(cmd, this@WordCommandDrill),
-                    pushTmpAction(cmd),
-                    ':',
+                    pushTmpFromStack(cmd),
+                    AnyOf(":|"),
                     OptionalWhitespace(),
                     Parameter(cmd),
-                    operateOnTmpActions(cmd) { stack -> operate(this, stack.drop(1).toTypedArray()) },
+                    operateOnTmpActions(cmd)
+                    { stack -> operate(this, stack.drop(1).toTypedArray()) },
                     pushTmpStack(cmd)
             )
 
     @Suppress("UNCHECKED_CAST")
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): WordScriptCommand? {
-        val num = rawParams[0].toString().toIntOrNull() ?: 1
-        if (num !in VALID)
-            return null
+        val name = rawParams[0].toString()
+        val scriptCommand = EnumWordScriptCommand.values().firstOrNull { enum -> enum.name.equals(name, true) } ?: return null
 
-        val enum = EnumWordScriptCommand.values()[num - 1]
-        val existing = parser.data["wrd-command-$enum"] as? MutableList<String> ?: ArrayList<String>()
+        val existing = parser.data["wrd-command-$scriptCommand"] as? MutableList<String> ?: ArrayList<String>()
         existing.add(rawParams[1].toString())
-        parser.data["wrd-command-$enum"] = existing
+        parser.data["wrd-command-$scriptCommand"] = existing
 
-        return WordScriptCommand(num, rawParams[1].toString())
+        return WordScriptCommand(scriptCommand, rawParams[1].toString())
     }
 }

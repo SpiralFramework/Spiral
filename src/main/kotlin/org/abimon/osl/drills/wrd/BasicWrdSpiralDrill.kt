@@ -37,23 +37,32 @@ object BasicWrdSpiralDrill : DrillHead<WrdScript> {
                             )
                     ),
                     operateOnTmpActions(cmd) { stack ->
-                        val opCode = "${stack[1]}".toInt(16)
                         val wrdParams = stack.drop(2).map(Any::toString)
-                        val params = ArrayList<Int>()
 
-                        val commandEnum = V3.opCodeCommandEntries[opCode] ?: EnumWordScriptCommand.TWO
-                        val commands = data["wrd-command-$commandEnum"] as? MutableList<String> ?: ArrayList<String>()
+//                        val commandEnum = V3.opCodeCommandEntries[opCode]
+//                        val commands = data["wrd-command-$commandEnum"] as? MutableList<String> ?: ArrayList<String>()
 
                         for (param in wrdParams) {
-                            if (!param.startsWith("raw:")) {
-                                if (param !in commands) {
-                                    commands.add(param)
-                                    push(listOf(WordCommandDrill, commandEnum.ordinal + 1, param))
+                            if (param.startsWith("LABEL|")) {
+                                val label = param.substringAfter("LABEL|")
+                                if (label !in wordScriptLabels) {
+                                    wordScriptLabels.add(label)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.LABEL, label))
+                                }
+                            } else if (param.startsWith("PARAMETER|")) {
+                                val parameter = param.substringAfter("PARAMETER|")
+                                if (parameter !in wordScriptParameters) {
+                                    wordScriptParameters.add(parameter)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.PARAMETER, parameter))
+                                }
+                            } else if (param.startsWith("STRING|")) {
+                                val string = param.substringAfter("STRING|")
+                                if (string !in wordScriptStrings) {
+                                    wordScriptStrings.add(string)
+                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.STRING, string))
                                 }
                             }
                         }
-
-                        data["wrd-command-$commandEnum"] = commands
                     },
                     pushTmpStack(cmd)
             )
@@ -66,18 +75,27 @@ object BasicWrdSpiralDrill : DrillHead<WrdScript> {
         val wrdParams = rawParams.copyOfRange(1, rawParams.size).map(Any::toString)
         val params = ArrayList<Int>()
 
-        val commandEnum = V3.opCodeCommandEntries[opCode] ?: EnumWordScriptCommand.TWO
-        val commands = parser.data["wrd-command-$commandEnum"] as? List<String> ?: ArrayList<String>()
-
         for (param in wrdParams) {
-            if (param.startsWith("raw:"))
-                params.add(param.substring(4).toIntOrNull() ?: 0)
-            else if (param in commands) {
-                val index = commands.indexOf(param)
+            if (param.startsWith("LABEL|")) {
+                val label = param.substringAfter("LABEL|")
+                val index = parser.wordScriptLabels.indexOf(label)
+                if (index == -1)
+                    error("$label is not in our set of labels, something has gone wrong")
                 params.add(index shr 8, index and 0xFF)
-            } else {
-                error("$param is not in $commands; something has gone horribly wrong")
-            }
+            } else if (param.startsWith("PARAMETER|")) {
+                val parameter = param.substringAfter("PARAMETER|")
+                val index = parser.wordScriptLabels.indexOf(parameter)
+                if (index == -1)
+                    error("$parameter is not in our set of parameters, something has gone wrong")
+                params.add(index shr 8, index and 0xFF)
+            } else if (param.startsWith("STRING|")) {
+                val string = param.substringAfter("STRING|")
+                val index = parser.wordScriptLabels.indexOf(string)
+                if (index == -1)
+                    error("$string is not in our set of strings, something has gone wrong")
+                params.add(index shr 8, index and 0xFF)
+            } else
+                params.add(param.toIntOrNull() ?: 0)
         }
 
         val (_, argumentCount, getEntry) = V3.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)

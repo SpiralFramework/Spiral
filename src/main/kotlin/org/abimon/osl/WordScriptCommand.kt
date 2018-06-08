@@ -1,3 +1,5 @@
 package org.abimon.osl
 
-data class WordScriptCommand(val number: Int, val command: String)
+import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
+
+data class WordScriptCommand(val type: EnumWordScriptCommand, val command: String)
