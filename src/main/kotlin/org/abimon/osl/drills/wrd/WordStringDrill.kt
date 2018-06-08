@@ -15,7 +15,8 @@ object WordStringDrill: DrillHead<WordScriptString> {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
-                    "Word String:",
+                    "Word String",
+                    AnyOf(":|"),
                     pushTmpAction(cmd, this@WordStringDrill),
                     OptionalWhitespace(),
                     Parameter(cmd),
