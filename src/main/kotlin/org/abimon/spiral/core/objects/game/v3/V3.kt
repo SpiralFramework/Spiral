@@ -112,9 +112,9 @@ object V3 : DRGame {
                 }
             }
 
-    val opCodeCommandEntries: Map<Int, EnumWordScriptCommand> =
-            HashMap<Int, EnumWordScriptCommand>().apply {
-                this[0x14] = EnumWordScriptCommand.LABEL
+    val opCodeCommandEntries: Map<Int, Array<EnumWordScriptCommand>> =
+            HashMap<Int, Array<EnumWordScriptCommand>>().apply {
+                this[0x14] = arrayOf(EnumWordScriptCommand.LABEL)
             }
 
     override val names: Array<String> =
