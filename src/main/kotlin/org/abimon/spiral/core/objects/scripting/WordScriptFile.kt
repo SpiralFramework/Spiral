@@ -116,7 +116,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
 
                         val arguments = IntArray(rawArguments.size / 2) { index -> ((rawArguments[index * 2] shl 8) or rawArguments[index * 2 + 1]) }
 
-                        if (arguments.size == argumentCount || argumentCount == -1) {
+                        if (arguments.size == argumentCount / 2 || argumentCount == -1) {
                             wrdEntries.add(getEntry(opCode, arguments))
                         } else {
                             println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
