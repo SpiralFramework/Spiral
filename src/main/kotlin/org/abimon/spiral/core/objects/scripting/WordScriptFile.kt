@@ -14,11 +14,12 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
     val localBranchNumbers: Array<Pair<Int, Int>>
 
     val strings: Array<String>
+    val stringCount: Int
 
     init {
         val stream = CountingInputStream(dataSource())
         try {
-            val stringCount = stream.readInt16LE()
+            stringCount = stream.readInt16LE()
             val labelCount = stream.readInt16LE()
             val parameterCount = stream.readInt16LE()
             val localBranchCount = stream.readInt16LE()
@@ -51,7 +52,8 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                 }
             }
 
-            strings = dataSource().use { stringStream ->
+            if (stringOffset > 0)
+                strings = dataSource().use { stringStream ->
                 stringStream.skip(stringOffset.toLong())
                 return@use Array(stringCount) {
                     var stringLen = stream.read()
@@ -62,6 +64,8 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                     return@Array stream.readNullTerminatedString(stringLen + 2, Charsets.UTF_16LE, 2)
                 }
             }
+            else
+                strings = emptyArray()
 
             localBranchNumbers = dataSource().use { stringStream ->
                 stringStream.skip(localBranchOffset.toLong())
