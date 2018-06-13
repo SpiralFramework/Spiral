@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.scripting
 
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
+import org.abimon.spiral.core.utils.writeInt16BE
 import org.abimon.spiral.core.utils.writeInt16LE
 import org.abimon.spiral.core.utils.writeInt32LE
 import java.io.ByteArrayOutputStream
@@ -8,8 +9,11 @@ import java.io.OutputStream
 
 class CustomWordScript {
     val entries: ArrayList<WrdScript> = ArrayList()
-    val cmds: Array<MutableList<String>> = Array(3, ::ArrayList)
-    val strings: ArrayList<String> = arrayListOf("")
+    val labels: MutableList<String> = ArrayList()
+    val parameters: MutableList<String> = ArrayList()
+    val strings: MutableList<String> = ArrayList()
+
+    var externalStringCount: Int = 0
 
     fun add(entry: WrdScript) {
         entries.add(entry)
@@ -23,55 +27,88 @@ class CustomWordScript {
         this.entries.addAll(entries)
     }
 
-    fun command(type: Int, cmd: String): Int {
-        if(cmd !in cmds[type])
-            cmds[type].add(cmd)
-        return cmds[type].indexOf(cmd)
+    fun string(str: String): Int {
+        if (str !in strings)
+            strings.add(str)
+        return strings.indexOf(str)
     }
 
-    fun commandOne(cmd: String): Int = command(0, cmd)
-    fun commandTwo(cmd: String): Int = command(1, cmd)
-    fun commandThree(cmd: String): Int = command(2, cmd)
+    fun label(label: String): Int {
+        if (label !in labels)
+            labels.add(label)
 
-    fun string(str: String): Int {
-        val index = strings.size
-        strings.add(str)
-        return index
+        return labels.indexOf(label)
+    }
+
+    fun parameter(parameter: String): Int {
+        if (parameter !in parameters)
+            parameters.add(parameter)
+
+        return parameters.indexOf(parameter)
     }
 
     fun compile(wrd: OutputStream) {
         val entryData = ByteArrayOutputStream()
-        val cmdData: Array<ByteArrayOutputStream> = Array(3, ::ByteArrayOutputStream)
+        val labelData = ByteArrayOutputStream()
+        val parameterData = ByteArrayOutputStream()
 
-        cmds.forEachIndexed { index, commands -> commands.forEach { cmd ->
-            val str = cmd.toByteArray(Charsets.UTF_8)
-            cmdData[index].write(str.size)
-            cmdData[index].write(str)
-            cmdData[index].write(0x00)
-        } }
+        val localBranches: MutableList<Pair<Int, Int>> = ArrayList()
+        val sections: MutableList<Int> = ArrayList()
 
         entries.forEach { entry ->
+            if (entry.opCode == 0x4A)
+                localBranches.add(entryData.size() to entry.rawArguments[0])
+            else if (entry.opCode == 0x14)
+                sections.add(entryData.size())
+
             entryData.write(0x70)
             entryData.write(entry.opCode)
-            entry.rawArguments.forEach { arg -> entryData.write(arg) }
+            entry.rawArguments.forEach { arg -> entryData.writeInt16BE(arg) }
         }
 
-        wrd.writeInt16LE(strings.size) //String Count
-        wrd.writeInt16LE(cmds[0].size) //cmd1Count
-        wrd.writeInt16LE(cmds[1].size) //cmd2Count
-        wrd.writeInt16LE(cmds[2].size) //cmd3Count
+        labels.forEach { label ->
+            val bytes = label.toByteArray(Charsets.UTF_8)
 
-        wrd.writeInt32LE(0) //unk
-        wrd.writeInt32LE(0x20 + entryData.size()) //unkOffset
-        wrd.writeInt32LE(0x20 + entryData.size()) //cmd3Offset
-        wrd.writeInt32LE(0x20 + entryData.size() + cmdData[2].size()) //cmd1Offset
-        wrd.writeInt32LE(0x20 + entryData.size() + cmdData[2].size() + cmdData[0].size()) //cmd2Offset
-        wrd.writeInt32LE(0x20 + entryData.size() + cmdData[2].size() + cmdData[0].size() + cmdData[1].size()) //strOffset
+            labelData.write(bytes.size and 0xFF)
+            labelData.write(bytes)
+            labelData.write(0x00)
+        }
+
+        parameters.forEach { parameter ->
+            val bytes = parameter.toByteArray(Charsets.UTF_8)
+
+            parameterData.write(bytes.size and 0xFF)
+            parameterData.write(bytes)
+            parameterData.write(0x00)
+        }
+
+        wrd.writeInt16LE(if (strings.isEmpty()) externalStringCount else strings.size) //String Count
+        wrd.writeInt16LE(labels.size)
+        wrd.writeInt16LE(parameters.size)
+        wrd.writeInt16LE(localBranches.size)
+
+        wrd.writeInt32LE(0)
+        wrd.writeInt32LE(0x20 + entryData.size()) //localBranchOffset
+        wrd.writeInt32LE(0x20 + entryData.size() + (4 * localBranches.size)) //sectionOffset
+        wrd.writeInt32LE(0x20 + entryData.size() + (4 * localBranches.size) + 2 * sections.size) //labelOffset
+        wrd.writeInt32LE(0x20 + entryData.size() + (4 * localBranches.size) + 2 * sections.size + labelData.size()) //parameterOffset
+
+        if (strings.isEmpty())
+            wrd.writeInt32LE(0)
+        else
+            wrd.writeInt32LE(0x20 + entryData.size() + (4 * localBranches.size) + 2 * sections.size + labelData.size() + parameterData.size()) //stringOffset
 
         entryData.writeTo(wrd)
-        cmdData[2].writeTo(wrd)
-        cmdData[0].writeTo(wrd)
-        cmdData[1].writeTo(wrd)
+
+        localBranches.forEach { (offset, arg) ->
+            wrd.writeInt16LE(arg)
+            wrd.writeInt16LE(offset)
+        }
+
+        sections.forEach(wrd::writeInt16LE)
+
+        labelData.writeTo(wrd)
+        parameterData.writeTo(wrd)
 
         strings.forEach { str ->
             val bytes = str.toByteArray(Charsets.UTF_16LE)
