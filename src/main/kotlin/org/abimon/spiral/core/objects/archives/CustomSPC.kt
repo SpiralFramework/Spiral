@@ -41,7 +41,7 @@ class CustomSPC : ICustomArchive {
 
     fun add(spc: SPC) {
         for (entry in spc.files)
-            addCompressed(entry.name, entry.compressionFlag, entry.decompressedSize, entry.compressedSize) { WindowedInputStream(spc.dataSource(), entry.offset, entry.compressedSize) }
+            addCompressed(entry.name, entry.compressionFlag, entry.compressedSize, entry.decompressedSize) { WindowedInputStream(spc.dataSource(), entry.offset, entry.compressedSize) }
     }
 
     override fun add(dir: File) = add(dir.absolutePath.length + 1, dir)
