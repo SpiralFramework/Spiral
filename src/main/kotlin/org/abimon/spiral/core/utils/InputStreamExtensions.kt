@@ -18,25 +18,15 @@ fun InputStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXB
 fun InputStream.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = Charsets.UTF_8)
 fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8, bytesPer: Int = 1): String {
     val baos = ByteArrayOutputStream()
-    var nullTerms = 0
 
     while (true) {
-        val read = read()
+        val read = readIntXLE(bytesPer)
         if (read == -1)
             break
-        if (read == 0x00) {
-            nullTerms++
+        if (read == 0x00)
+            break
 
-            if (nullTerms >= bytesPer)
-                break
-        } else {
-            if (nullTerms > 0) {
-                baos.write(ByteArray(nullTerms))
-                nullTerms = 0
-            }
-
-            baos.write(read)
-        }
+        baos.writeIntXLE(read, bytesPer)
     }
 
     return String(baos.toByteArray(), encoding)
