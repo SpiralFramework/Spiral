@@ -6,6 +6,7 @@ import org.abimon.spiral.core.objects.models.RoomObject
 import org.abimon.spiral.core.objects.scripting.CustomLin
 import org.abimon.spiral.core.objects.scripting.CustomWordScript
 import org.abimon.spiral.core.objects.scripting.Lin
+import org.abimon.spiral.core.objects.text.CustomSTXT
 import java.io.InputStream
 
 fun UnsafePak(dataSource: () -> InputStream): Pak = Pak(dataSource)!!
@@ -41,6 +42,12 @@ fun customWordScript(init: CustomWordScript.() -> Unit): CustomWordScript {
     val customWordScript = CustomWordScript()
     customWordScript.init()
     return customWordScript
+}
+
+fun customSTXT(init: CustomSTXT.() -> Unit): CustomSTXT {
+    val customSTXT = CustomSTXT()
+    customSTXT.init()
+    return customSTXT
 }
 
 fun customRoomObject(init: RoomObject.() -> Unit): RoomObject {
