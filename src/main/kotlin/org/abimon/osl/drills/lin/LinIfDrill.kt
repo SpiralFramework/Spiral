@@ -65,23 +65,23 @@ object LinIfDrill : DrillHead<Array<LinScript>> {
             Sequence(
                     clearTmpStack(cmd),
                     "if",
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     "(",
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     pushEmptyDrillHead(cmd, this@LinIfDrill),
 
                     Flag(),
                     pushTmpFromStack(cmd),
                     pushTmpFromStack(cmd),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     FirstOf(EnumLinFlagCheck.NAMES),
                     pushTmpAction(cmd),
 
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     FlagValue(),
                     pushTmpFromStack(cmd),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     ')',
                     OptionalWhitespace(),

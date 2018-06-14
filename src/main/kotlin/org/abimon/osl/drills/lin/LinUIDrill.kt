@@ -37,13 +37,13 @@ object LinUIDrill : DrillHead<LinScript> {
 
                     Sequence(
                             "UI:",
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             pushDrillHead(cmd, this@LinUIDrill),
                             FirstOf(
                                     Sequence(
                                             FirstOf("Enable", "Disable"),
                                             pushTmpAction(cmd),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             FirstOf(
                                                     FirstOf(uiElements.keys.toTypedArray()),
                                                     OneOrMore(Digit())
@@ -52,15 +52,15 @@ object LinUIDrill : DrillHead<LinScript> {
                                     ),
                                     Sequence(
                                             "Set",
-                                            Whitespace(),
+                                            InlineWhitespace(),
                                             FirstOf(
                                                     FirstOf(uiElements.keys.toTypedArray()),
                                                     OneOrMore(Digit())
                                             ),
                                             pushAction(),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             "to",
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             OneOrMore(Digit()),
                                             pushTmpAction(cmd),
                                             pushTmpFromStack(cmd)

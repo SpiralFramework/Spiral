@@ -2,6 +2,7 @@ package org.abimon.osl.drills.wrd
 
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.abimon.osl.SpiralDrillBit
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
@@ -23,7 +24,7 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                         val name = match()
                         V3.opCodes.values.any { (names) -> name in names }
                     },
-                    pushTmpAction(cmd, this@NamedWrdSpiralDrill),
+                    pushDrillHead(cmd, this@NamedWrdSpiralDrill),
                     pushTmpAction(cmd),
                     Optional(
                             '|'
@@ -31,34 +32,34 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                     Optional(
                             ParamList(
                                     cmd,
-                                    Parameter(BasicWrdSpiralDrill.cmd),
+                                    ParameterToStack(),
                                     Sequence(
                                             ',',
-                                            OptionalWhitespace()
+                                            OptionalInlineWhitespace()
                                     )
                             )
                     ),
-                    operateOnTmpActions(BasicWrdSpiralDrill.cmd) { stack ->
+                    operateOnTmpActions(cmd) { stack ->
                         val wrdParams = stack.drop(2).map(Any::toString)
 
                         for (param in wrdParams) {
-                            if (param.startsWith("LABEL|")) {
-                                val label = param.substringAfter("LABEL|")
+                            if (param.startsWith("LABEL:")) {
+                                val label = param.substringAfter("LABEL:")
                                 if (label !in wordScriptLabels) {
                                     wordScriptLabels.add(label)
-                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.LABEL, label))
+                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.LABEL, label))
                                 }
-                            } else if (param.startsWith("PARAMETER|")) {
-                                val parameter = param.substringAfter("PARAMETER|")
+                            } else if (param.startsWith("PARAMETER:")) {
+                                val parameter = param.substringAfter("PARAMETER:")
                                 if (parameter !in wordScriptParameters) {
                                     wordScriptParameters.add(parameter)
-                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.PARAMETER, parameter))
+                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.PARAMETER, parameter))
                                 }
-                            } else if (param.startsWith("STRING|")) {
-                                val string = param.substringAfter("STRING|")
+                            } else if (param.startsWith("STRING:")) {
+                                val string = param.substringAfter("STRING:")
                                 if (string !in wordScriptStrings) {
                                     wordScriptStrings.add(string)
-                                    push(listOf(WordCommandDrill, EnumWordScriptCommand.STRING, string))
+                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.STRING, string))
                                 }
                             }
                         }

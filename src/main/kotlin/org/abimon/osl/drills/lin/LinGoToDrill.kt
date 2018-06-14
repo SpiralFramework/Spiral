@@ -20,7 +20,7 @@ object LinGoToDrill : DrillHead<LinScript> {
                     Sequence(
                             FirstOf("Goto", "Go To"),
                             pushDrillHead(cmd, this@LinGoToDrill),
-                            OptionalWhitespace(),
+                            InlineWhitespace(),
                             Label(),
                             pushTmpFromStack(cmd),
                             pushTmpFromStack(cmd)

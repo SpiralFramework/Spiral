@@ -36,7 +36,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                                             RuleWithVariables(OneOrMore(Digit())),
                                             Sequence(
                                                     ',',
-                                                    OptionalWhitespace()
+                                                    OptionalInlineWhitespace()
                                             )
                                     )
                             )

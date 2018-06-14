@@ -65,22 +65,22 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
             Sequence(
                     clearTmpStack(cmd),
                     FirstOf("g-if", "game-if", "ifg", "if-g", "if-s", "ifs", "sif", "state-if", "if-state"),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     "(",
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     pushEmptyDrillHead(cmd, this@LinIfGameStateDrill),
 
                     GameState(),
                     pushTmpFromStack(cmd),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     FirstOf(EnumLinFlagCheck.NAMES),
                     pushTmpAction(cmd),
 
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     FlagValue(),
                     pushTmpFromStack(cmd),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     ')',
                     OptionalWhitespace(),

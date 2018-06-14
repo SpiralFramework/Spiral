@@ -20,7 +20,7 @@ object LinSpeakerDrill : DrillHead<LinScript> {
                     Sequence(
                             "Speaker|",
                             pushDrillHead(cmd, this@LinSpeakerDrill),
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             SpeakerName(),
                             pushTmpFromStack(cmd)
                     ),

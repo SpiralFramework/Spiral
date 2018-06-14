@@ -6,6 +6,7 @@ import org.parboiled.BaseParser
 import org.parboiled.Context
 import org.parboiled.Rule
 import org.parboiled.annotations.BuildParseTree
+import org.parboiled.support.Var
 import java.awt.Color
 import java.util.*
 
@@ -275,6 +276,9 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
     open fun WhitespaceCharacter(): Rule = AnyOf(whitespace)
     open fun OptionalWhitespace(): Rule = ZeroOrMore(WhitespaceCharacter())
     open fun Whitespace(): Rule = OneOrMore(WhitespaceCharacter())
+    open fun InlineWhitespaceCharacter(): Rule = AnyOf(charArrayOf('\t', ' '))
+    open fun InlineWhitespace(): Rule = OneOrMore(InlineWhitespaceCharacter())
+    open fun OptionalInlineWhitespace(): Rule = ZeroOrMore(InlineWhitespaceCharacter())
     open fun Parameter(cmd: String): Rule = FirstOf(
             Sequence(
                     '"',
@@ -302,7 +306,23 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
     )
 
     /** param should push to the stack when matching */
-    open fun ParamList(cmd: String, param: Rule, delimiter: Rule): Rule = Sequence(ZeroOrMore(clearParam(), param, popParamFromStack(), delimiter, pushParamToTmp("$cmd-params")), param, pushTmpFromStack("$cmd-params"), copyTmp("$cmd-params", cmd))
+    open fun ParamList(cmd: String, param: Rule, delimiter: Rule): Rule {
+        val parameters = Var<MutableList<Any>>(ArrayList())
+        return Sequence(
+                Action<Any> { parameters.get().clear(); true },
+                OptionalInlineWhitespace(),
+                param,
+                Action<Any> { parameters.get().add(pop()) },
+                ZeroOrMore(Sequence(delimiter, OptionalInlineWhitespace(), param, Action<Any> { parameters.get().add(pop()) })),
+                Action<Any> {
+                    if (!tmpStack.containsKey(cmd))
+                        tmpStack[cmd] = LinkedList()
+                    val stack = tmpStack[cmd]!!
+                    parameters.get().forEach(stack::push)
+                    return@Action true
+                }
+        )
+    }
 
     open fun Comment(): Rule = FirstOf(
             Sequence("//", ZeroOrMore(LineMatcher)),
@@ -369,20 +389,20 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
 
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     ',',
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
 
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     ',',
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
 
                     OneOrMore(Digit()),
                     Action<Any> { push(match()) },
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     ')',
 
                     Action<Any> {

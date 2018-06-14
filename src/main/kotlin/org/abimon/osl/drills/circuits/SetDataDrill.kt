@@ -8,11 +8,11 @@ object SetDataDrill: DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     "Set Variable",
-                    Whitespace(),
+                    InlineWhitespace(),
                     ParameterToStack(),
-                    Whitespace(),
+                    InlineWhitespace(),
                     "to",
-                    Whitespace(),
+                    InlineWhitespace(),
                     ParameterToStack(),
 
                     Action<Any> {

@@ -12,11 +12,13 @@ object StrictParsingDrill : DrillCircuit {
                     clearTmpStack(cmd),
 
                     Sequence(
-                            FirstOf("Enable", "Disable"),
+                            Sequence(
+                                    FirstOf("Enable", "Disable"),
+                                    InlineWhitespace(),
+                                    "Strict Parsing"
+                            ),
                             pushDrillHead(cmd, this@StrictParsingDrill),
                             pushTmpAction(cmd),
-                            Whitespace(),
-                            "Strict Parsing",
                             operateOnTmpActions(cmd) { stack -> operate(this, stack.drop(1).toTypedArray()) }
                     ),
 
@@ -27,6 +29,6 @@ object StrictParsingDrill : DrillCircuit {
         if (parser.silence)
             return
 
-        parser.strictParsing = rawParams[0].toString().equals("enable", true)
+        parser.strictParsing = rawParams[0].toString().split("\\s+".toRegex())[0].equals("enable", true)
     }
 }

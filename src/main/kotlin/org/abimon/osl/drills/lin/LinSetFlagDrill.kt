@@ -20,14 +20,14 @@ object LinSetFlagDrill : DrillHead<LinScript> {
 
                     Sequence(
                             "Set Flag",
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             pushDrillHead(cmd, this@LinSetFlagDrill),
                             Flag(),
                             pushTmpFromStack(cmd),
                             pushTmpFromStack(cmd),
-                            Whitespace(),
+                            InlineWhitespace(),
                             "to",
-                            Whitespace(),
+                            InlineWhitespace(),
                             FlagValue(),
                             pushTmpFromStack(cmd)
                     ),

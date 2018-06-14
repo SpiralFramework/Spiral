@@ -30,7 +30,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                             pushDrillHead(cmd, this@LinDialogueDrill),
                             pushTmpAction(cmd),
                             ':',
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             LinText(cmd)
                     ),
 

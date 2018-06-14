@@ -15,9 +15,9 @@ object AddItemNameAliasDrill : DrillCircuit {
                             "alias ",
                             pushDrillHead(cmd, this@AddItemNameAliasDrill),
                             Parameter(cmd),
-                            Whitespace(),
+                            InlineWhitespace(),
                             "to",
-                            Whitespace(),
+                            InlineWhitespace(),
                             ItemID(),
                             pushTmpFromStack(cmd),
                             operateOnTmpActions(cmd) { params -> operate(this, params.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }

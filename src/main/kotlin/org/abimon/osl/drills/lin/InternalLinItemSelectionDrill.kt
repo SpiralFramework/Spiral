@@ -33,10 +33,10 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                                 return@Action name in ItemSelectionDrill.MISSING_ITEMS
                                             },
                                             Optional(
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     "->"
                                             ),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
                                             Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(252)), ""))) },
@@ -54,10 +54,10 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                                 return@Action name in ItemSelectionDrill.ON_EXIT
                                             },
                                             Optional(
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     "->"
                                             ),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
                                             Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(253)), ""))) },
@@ -75,10 +75,10 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                                 return@Action name in ItemSelectionDrill.OPENING_LINES
                                             },
                                             Optional(
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     "->"
                                             ),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
                                             Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(254)), ""))) },
@@ -96,10 +96,10 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                                 return@Action push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(id)), "")))
                                             },
                                             Optional(
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     "->"
                                             ),
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
                                             OpenSpiralLines(),

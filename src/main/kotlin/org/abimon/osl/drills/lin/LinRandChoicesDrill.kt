@@ -10,6 +10,7 @@ import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
+/** This may be easier to do with 0x33's op code 14 */
 object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
     val cmd = "LIN-RANDOM-CHOICES"
     override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
@@ -18,47 +19,47 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
             Sequence(
                     //"for (i in 0 until 10) {",
                     "for-rand",
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     "(",
                     FirstOf(
                             Sequence(
                                     ParameterToStack(),
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     "in",
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     FirstOf(
                                             Sequence(
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    Whitespace(),
+                                                    InlineWhitespace(),
                                                     FirstOf("until", "downTo", "down_to"),
-                                                    Whitespace(),
+                                                    InlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit()))
                                             ),
                                             Sequence(
                                                     "range",
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     '(',
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     ',',
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     ')'
                                             )
                                     )
                             ),
                             Sequence(
-                                    Optional("int", OptionalWhitespace()),
+                                    Optional("int", OptionalInlineWhitespace()),
                                     ParameterToStack(),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     "=",
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     RuleWithVariables(OneOrMore(Digit())),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     ';',
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     ParameterToStack(),
                                     Action<Any> {
                                         val current = pop()
@@ -66,14 +67,14 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         return@Action current == original
                                     },
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     FirstOf("<", ">"),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     RuleWithVariables(OneOrMore(Digit())),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     Optional(
                                             ';',
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             ParameterToStack(),
                                             Action<Any> {
                                                 val current = pop()
@@ -81,25 +82,25 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                                 return@Action current == original
                                             },
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             FirstOf(
                                                     "++",
                                                     "--",
                                                     Sequence(
                                                             "+=",
-                                                            OptionalWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             RuleWithVariables(OneOrMore(Digit()))
                                                     ),
                                                     Sequence(
                                                             "-=",
-                                                            OptionalWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             RuleWithVariables(OneOrMore(Digit()))
                                                     )
                                             )
                                     )
                             )
                     ),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     ')',
                     OptionalWhitespace(),
                     '{',
