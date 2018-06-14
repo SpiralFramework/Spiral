@@ -212,4 +212,85 @@ object V3 : DRGame {
                     135 to "C135_Pekoy",
                     136 to "C136_Kamuk"
             )
+
+    val characterIdentifiers: Map<String, Int> =
+            HashMap<String, Int>().apply {
+                this["Shuichi Saihara"] = 0
+                this["Shuichi"] = 0
+                this["Saihara"] = 0
+
+                this["Kaito Momota"] = 1
+                this["Kaito"] = 1
+                this["Momota"] = 1
+
+                this["Ryoma Hoshi"] = 2
+                this["Ryoma"] = 2
+                this["Hoshi"] = 2
+
+                this["Rantaro Amami"] = 3
+                this["Rantaro"] = 3
+                this["Amami"] = 3
+
+                this["Gonta Gokuhara"] = 4
+                this["Gonta"] = 4
+                this["Gokuhara"] = 4
+
+                this["Kokichi Oma"] = 5
+                this["Kokichi Ouma"] = 5
+                this["Kokichi"] = 5
+                this["Oma"] = 5
+                this["Ouma"] = 5
+
+                this["Korekiyo Shinguji"] = 6
+                this["Korekiyo"] = 6
+                this["Shinguji"] = 6
+
+                this["Ki-Bo"] = 7
+                this["ki-bo"] = 7
+                this["KiBo"] = 7
+                this["Kibo"] = 7
+                this["Keebo"] = 7
+
+                this["Kirumi Tojo"] = 8
+                this["Kirumi"] = 8
+                this["Tojo"] = 8
+
+                this["Himiko Yumeno"] = 9
+                this["Himiko"] = 9
+                this["Yumeno"] = 9
+
+                this["Maki Harukawa"] = 10
+                this["Maki"] = 10
+                this["Harukawa"] = 10
+
+                this["Tenko Chabashira"] = 11
+                this["Tenko"] = 11
+                this["Chabashira"] = 11
+
+                this["Tsumugi Shirogane"] = 12
+                this["Tsumugi"] = 12
+                this["Shirogane"] = 12
+
+                this["Angie Yonaga"] = 13
+                this["Angie"] = 13
+                this["Yonaga"] = 13
+
+                this["Miu Iruma"] = 14
+                this["Miu"] = 14
+                this["Iruma"] = 14
+
+                this["Kaede Akamatsu"] = 15
+                this["Kaede"] = 15
+                this["Akamatsu"] = 15
+
+                this["Monokuma"] = 20
+                this["Monotaro"] = 21
+                this["Monosuke"] = 22
+                this["Monophanie"] = 23
+                this["Monofunny"] = 23
+                this["Monodam"] = 24
+                this["Monokid"] = 25
+
+                this["Exisal"] = 26
+            }
 }
