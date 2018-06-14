@@ -4,16 +4,14 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
-import org.abimon.osl.drills.wrd.BasicWrdSpiralDrill
-import org.abimon.osl.drills.wrd.NamedWrdSpiralDrill
-import org.abimon.osl.drills.wrd.WordCommandDrill
-import org.abimon.osl.drills.wrd.WordStringDrill
+import org.abimon.osl.drills.wrd.*
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.game.v3.V3
+import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
 import org.parboiled.Action
 import org.parboiled.Context
 import org.parboiled.Parboiled
@@ -35,7 +33,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         val FRAMES_PER_SECOND = 60
 
         var DEFAULT_STDOUT: PrintStream = System.out
-        var DEFAULT_MAX_FOR_RANGE: Int = 100
+        var DEFAULT_MAX_FOR_RANGE: Int = 1000
 
 
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
@@ -61,15 +59,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val flags = HashMap<String, Boolean>()
     val data = HashMap<String, Any>()
 
-    val customIdentifiers: MutableMap<String, Int> by dataProperty("custom_identifiers", HashMap())
-    val customFlagNames: MutableMap<String, Int> by dataProperty("custom_flag_names", HashMap())
-    val customLabelNames: MutableMap<String, Int> by dataProperty("custom_label_names", HashMap())
-    val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", HashMap())
-    val macros: MutableMap<String, String> by dataProperty("macros", HashMap())
+    val customIdentifiers: MutableMap<String, Int> by dataProperty("custom_identifiers", ::HashMap)
+    val customFlagNames: MutableMap<String, Int> by dataProperty("custom_flag_names", ::HashMap)
+    val customLabelNames: MutableMap<String, Int> by dataProperty("custom_label_names", ::HashMap)
+    val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", ::HashMap)
+    val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
-    val wordScriptLabels: MutableList<String> by dataProperty("word_script_labels", ArrayList())
-    val wordScriptParameters: MutableList<String> by dataProperty("word_script_parameters", ArrayList())
-    val wordScriptStrings: MutableList<String> by dataProperty("word_script_labels", ArrayList())
+    val wordScriptLabels: MutableList<String> by dataProperty("word_script_labels", ::ArrayList)
+    val wordScriptParameters: MutableList<String> by dataProperty("word_script_parameters", ::ArrayList)
+    val wordScriptStrings: MutableList<String> by dataProperty("word_script_strings", ::ArrayList)
 
     val states = HashMap<Int, ParserState>()
 
@@ -366,10 +364,16 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     Action<Any> { game === V3 },
                     FirstOf(
-                            BasicWrdSpiralDrill,
-                            NamedWrdSpiralDrill,
                             WordCommandDrill,
-                            WordStringDrill
+                            WordStringDrill,
+
+                            WrdDialogueDrill,
+
+                            BasicWrdTextDrill,
+                            WrdSpeakerDrill,
+
+                            BasicWrdSpiralDrill,
+                            NamedWrdSpiralDrill
                     )
             )
 
@@ -566,7 +570,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                     Sequence(
                                                             '&',
                                                             "{clear}",
-                                                            Whitespace(),
+                                                            InlineWhitespace(),
                                                             Action<Any> { context ->
                                                                 val text = pop().toString()
 
@@ -581,7 +585,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                             FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                             Action<Any> { push(match()) },
                                                             '}',
-                                                            Whitespace(),
+                                                            InlineWhitespace(),
                                                             Action<Any> { context ->
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
@@ -599,7 +603,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                             FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                             Action<Any> { push(match()) },
                                                             '}',
-                                                            Whitespace(),
+                                                            InlineWhitespace(),
                                                             Action<Any> { context ->
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
@@ -619,6 +623,64 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     )
                             )),
                             operateOnTmpActions("LIN-TEXT-$cmd") { stack ->
+                                if (!tmpStack.containsKey(cmd))
+                                    tmpStack[cmd] = LinkedList()
+                                tmpStack[cmd]!!.push(stack.joinToString(""))
+                            }
+                    )
+            )
+
+    open fun WrdText(cmd: String, vararg allBut: Char): Rule =
+            FirstOf(
+                    Sequence(
+                            clearTmpStack("WRD-TEXT-$cmd"),
+                            "local.",
+                            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
+                            Action<Any> { context ->
+                                val localString = localiser(pop().toString())
+                                val parserCopy = copy()
+                                val stack = parserCopy.parse("OSL Script\nText|$localString").valueStack
+
+                                if (stack.isEmpty) {
+                                    pushTmp("WRD-TEXT-$cmd", localString)
+                                    return@Action true
+                                }
+
+                                val value = stack.pop()
+
+                                if (value is List<*>) {
+                                    val text = value[1].toString()
+                                    pushTmp("WRD-TEXT-$cmd", text)
+                                } else {
+                                    pushTmp("WRD-TEXT-$cmd", localString)
+                                }
+
+                                return@Action true
+                            },
+                            operateOnTmpActions("WRD-TEXT-$cmd") { stack ->
+                                if (!tmpStack.containsKey(cmd))
+                                    tmpStack[cmd] = LinkedList()
+                                tmpStack[cmd]!!.push(stack.joinToString(""))
+                            }
+                    ),
+                    Sequence(
+                            clearTmpStack("WRD-TEXT-$cmd"),
+                            OneOrMore(FirstOf(
+                                    Sequence(
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
+                                            '\\',
+                                            FirstOf('&', '#'),
+                                            Action<Any> { context ->
+                                                pushTmpAction("WRD-TEXT-$cmd", "${pop()}&").run(context)
+                                                return@Action true
+                                            }
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
+                                            pushTmpFromStack("WRD-TEXT-$cmd")
+                                    )
+                            )),
+                            operateOnTmpActions("WRD-TEXT-$cmd") { stack ->
                                 if (!tmpStack.containsKey(cmd))
                                     tmpStack[cmd] = LinkedList()
                                 tmpStack[cmd]!!.push(stack.joinToString(""))
@@ -701,9 +763,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Sequence(
                             RuleWithVariables(OneOrMore(Digit())),
 
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             ',',
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
 
                             RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
@@ -759,9 +821,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Sequence(
                             RuleWithVariables(OneOrMore(Digit())),
 
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             ',',
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
 
                             RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
@@ -805,7 +867,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             FirstOf(
                     Sequence(
                             RuleWithVariables(Decimal()),
-                            FirstOf('s', Sequence(Whitespace(), "seconds")),
+                            FirstOf('s', Sequence(InlineWhitespace(), "seconds")),
                             Action<Any> {
                                 val seconds = pop().toString().toFloatOrNull() ?: 1.0f
                                 push((seconds * FRAMES_PER_SECOND).toInt())
@@ -813,7 +875,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     ),
                     Sequence(
                             RuleWithVariables(OneOrMore(Digit())),
-                            Whitespace(),
+                            InlineWhitespace(),
                             Optional("frames")
                     )
             )
@@ -838,8 +900,28 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    fun ensureString(string: String, cmd: EnumWordScriptCommand) {
+        when (cmd) {
+            EnumWordScriptCommand.LABEL -> if (string !in wordScriptLabels) wordScriptLabels.add(string)
+            EnumWordScriptCommand.PARAMETER -> if (string !in wordScriptParameters) wordScriptParameters.add(string)
+            EnumWordScriptCommand.STRING -> if (string !in wordScriptStrings) wordScriptStrings.add(string)
+            EnumWordScriptCommand.RAW -> return
+        }
 
-    inline fun <reified T : Any> dataProperty(key: String, defaultValue: T):
+        push(listOf(SpiralDrillBit(WordCommandDrill), cmd, string))
+    }
+
+    fun ensureParam(cmd: String, index: Int, wordCmd: EnumWordScriptCommand): Action<Any> = Action {
+        if (silence)
+            return@Action true
+
+        if (tmpStack.containsKey(cmd))
+            ensureString(tmpStack[cmd]!!.reversed()[index].toString(), wordCmd)
+
+        return@Action true
+    }
+
+    inline fun <reified T : Any> dataProperty(key: String, crossinline defaultValue: () -> T):
             ReadOnlyProperty<Any?, T> = object : ReadOnlyProperty<Any?, T> {
         /**
          * Returns the value of the property for the given object.
@@ -849,9 +931,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
          */
         override fun getValue(thisRef: Any?, property: KProperty<*>): T {
             if (key !in data || data[key] !is T)
-                data[key] = defaultValue
+                data[key] = defaultValue()
 
-            return data[key] as? T ?: defaultValue
+            return data[key] as? T ?: defaultValue()
         }
     }
 }

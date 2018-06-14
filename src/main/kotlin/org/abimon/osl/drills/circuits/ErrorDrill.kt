@@ -12,7 +12,7 @@ object ErrorDrill : DrillCircuit {
                     clearTmpStack(cmd),
                     Sequence(
                             FirstOf("error", "throw", "throw error", "throw exception"),
-                            Whitespace(),
+                            InlineWhitespace(),
                             Parameter(cmd)
                     ),
 

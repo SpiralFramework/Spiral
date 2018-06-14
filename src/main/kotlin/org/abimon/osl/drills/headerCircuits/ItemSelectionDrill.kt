@@ -53,7 +53,7 @@ object ItemSelectionDrill : DrillCircuit {
         return Sequence(
                 "Select ",
                 FirstOf("Present", "Presents", "Item", "Items"),
-                OptionalWhitespace(),
+                OptionalInlineWhitespace(),
                 '{',
                 '\n',
                 Action<Any> { choices.set("") },
@@ -72,10 +72,10 @@ object ItemSelectionDrill : DrillCircuit {
                                             return@Action name in MISSING_ITEMS
                                         },
                                         Optional(
-                                                OptionalWhitespace(),
+                                                OptionalInlineWhitespace(),
                                                 "->"
                                         ),
-                                        OptionalWhitespace(),
+                                        OptionalInlineWhitespace(),
                                         '{',
                                         '\n',
                                         saveState(),
@@ -103,10 +103,10 @@ object ItemSelectionDrill : DrillCircuit {
                                             return@Action name in ON_EXIT
                                         },
                                         Optional(
-                                                OptionalWhitespace(),
+                                                OptionalInlineWhitespace(),
                                                 "->"
                                         ),
-                                        OptionalWhitespace(),
+                                        OptionalInlineWhitespace(),
                                         '{',
                                         '\n',
                                         saveState(),
@@ -134,10 +134,10 @@ object ItemSelectionDrill : DrillCircuit {
                                             return@Action name in OPENING_LINES
                                         },
                                         Optional(
-                                                OptionalWhitespace(),
+                                                OptionalInlineWhitespace(),
                                                 "->"
                                         ),
-                                        OptionalWhitespace(),
+                                        OptionalInlineWhitespace(),
                                         '{',
                                         '\n',
                                         saveState(),
@@ -165,16 +165,16 @@ object ItemSelectionDrill : DrillCircuit {
                                                 Action<Any> { itemIDs.get().add(pop().toString()) },
                                                 ZeroOrMore(
                                                         ",",
-                                                        OptionalWhitespace(),
+                                                        OptionalInlineWhitespace(),
                                                         ParameterToStack(),
                                                         Action<Any> { itemIDs.get().add(pop().toString()) }
                                                 )
                                         ),
                                         Optional(
-                                                OptionalWhitespace(),
+                                                OptionalInlineWhitespace(),
                                                 "->"
                                         ),
-                                        OptionalWhitespace(),
+                                        OptionalInlineWhitespace(),
                                         '{',
                                         '\n',
                                         saveState(),

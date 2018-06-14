@@ -47,7 +47,7 @@ object LinBustSpriteDrill : DrillHead<LinScript> {
                             Sequence(
                                     "Display",
                                     pushDrillHead(cmd, this@LinBustSpriteDrill),
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     FirstOf(
                                             Parameter(cmd),
                                             Sequence(
@@ -60,9 +60,9 @@ object LinBustSpriteDrill : DrillHead<LinScript> {
                                         return@Action name in customIdentifiers || name in (game as? HopesPeakDRGame
                                                 ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
                                     },
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     "pose",
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     OneOrMore(Digit()),
                                     pushTmpAction(cmd)
                             )

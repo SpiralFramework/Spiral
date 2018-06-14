@@ -11,17 +11,17 @@ object HeaderOSLDrill: DrillCircuit {
                     FirstOf(
                             Sequence(
                                     "Header:",
-                                    OptionalWhitespace()
+                                    OptionalInlineWhitespace()
                             ),
                             Sequence(
                                     "Load Header",
-                                    Whitespace()
+                                    InlineWhitespace()
                             ),
                             Sequence(
                                     "Import",
                                     FirstOf(
-                                            Sequence(":", OptionalWhitespace()),
-                                            Whitespace()
+                                            Sequence(":", OptionalInlineWhitespace()),
+                                            InlineWhitespace()
                                     )
                             )
                     ),

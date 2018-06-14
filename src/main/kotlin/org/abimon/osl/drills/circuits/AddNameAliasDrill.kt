@@ -13,12 +13,12 @@ object AddNameAliasDrill : DrillCircuit {
                     clearTmpStack(cmd),
                     Sequence(
                             "Add alias",
-                            Whitespace(),
+                            InlineWhitespace(),
                             pushDrillHead(cmd, this@AddNameAliasDrill),
                             Parameter(cmd),
-                            Whitespace(),
+                            InlineWhitespace(),
                             "to",
-                            Whitespace(),
+                            InlineWhitespace(),
                             FirstOf(
                                     Parameter(cmd),
                                     Sequence(

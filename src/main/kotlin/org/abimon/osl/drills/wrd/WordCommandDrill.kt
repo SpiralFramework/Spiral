@@ -4,7 +4,6 @@ import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.WordScriptCommand
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
-import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
@@ -16,20 +15,14 @@ object WordCommandDrill : DrillHead<WordScriptCommand> {
             Sequence(
                     clearTmpStack(cmd),
                     "Word Command",
-                    Whitespace(),
-                    ParameterToStack(),
-                    Action<Any> {
-                        val name = pop().toString()
-                        push(name)
-                        return@Action EnumWordScriptCommand.values().any { enum -> enum.name.equals(name, true) }
-                    },
-                    pushTmpAction(cmd, this@WordCommandDrill),
-                    pushTmpFromStack(cmd),
+                    InlineWhitespace(),
+                    FirstOf(EnumWordScriptCommand.values().map { enum -> enum.name }.toTypedArray()),
+                    pushDrillHead(cmd, this@WordCommandDrill),
+                    pushTmpAction(cmd),
                     AnyOf(":|"),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     Parameter(cmd),
-                    operateOnTmpActions(cmd)
-                    { stack -> operate(this, stack.drop(1).toTypedArray()) },
+                    operateOnTmpActions(cmd) { stack -> operate(this, stack.drop(1).toTypedArray()) },
                     pushTmpStack(cmd)
             )
 
@@ -37,11 +30,15 @@ object WordCommandDrill : DrillHead<WordScriptCommand> {
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): WordScriptCommand? {
         val name = rawParams[0].toString()
         val scriptCommand = EnumWordScriptCommand.values().firstOrNull { enum -> enum.name.equals(name, true) } ?: return null
+        val command = rawParams[1].toString()
 
-        val existing = parser.data["wrd-command-$scriptCommand"] as? MutableList<String> ?: ArrayList<String>()
-        existing.add(rawParams[1].toString())
-        parser.data["wrd-command-$scriptCommand"] = existing
+        when (scriptCommand) {
+            EnumWordScriptCommand.LABEL -> parser.wordScriptLabels.add(command)
+            EnumWordScriptCommand.PARAMETER -> parser.wordScriptParameters.add(command)
+            EnumWordScriptCommand.STRING -> parser.wordScriptStrings.add(command)
+            EnumWordScriptCommand.RAW -> {}
+        }
 
-        return WordScriptCommand(scriptCommand, rawParams[1].toString())
+        return WordScriptCommand(scriptCommand, command)
     }
 }

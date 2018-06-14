@@ -11,7 +11,7 @@ object EchoDrill : DrillCircuit {
                     clearTmpStack(cmd),
                     Sequence(
                             "echo",
-                            Whitespace(),
+                            InlineWhitespace(),
                             pushDrillHead(cmd, this@EchoDrill),
                             Parameter(cmd)
                     ),

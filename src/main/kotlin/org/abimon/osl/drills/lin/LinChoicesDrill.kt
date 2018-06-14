@@ -26,7 +26,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                             },
                             clearTmpStack(cmd),
                             pushDrillHead(cmd, this@LinChoicesDrill),
-                            OptionalWhitespace(),
+                            OptionalInlineWhitespace(),
                             FirstOf(
                                     Sequence(
                                             '(',
@@ -47,9 +47,8 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                             OptionalWhitespace(),
                                             ParameterToStack(),
                                             Optional(
-                                                    OptionalWhitespace(),
-                                                    "->",
-                                                    OptionalWhitespace()
+                                                    OptionalInlineWhitespace(),
+                                                    "->"
                                             ),
                                             Action<Any> {
                                                 val name = pop()
@@ -64,7 +63,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                                     else -> TODO("Unknown game $game (Text hasn't been completely documented!)")
                                                 }), "")))
                                             },
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
                                             OpenSpiralLines(),

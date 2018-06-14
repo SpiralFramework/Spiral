@@ -10,47 +10,47 @@ object ForLoopDrill : DrillCircuit {
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     "for",
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     "(",
                     FirstOf(
                             Sequence(
                                     ParameterToStack(),
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     "in",
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     FirstOf(
                                             Sequence(
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    Whitespace(),
+                                                    InlineWhitespace(),
                                                     FirstOf("until", "downTo", "down_to"),
-                                                    Whitespace(),
+                                                    InlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit()))
                                             ),
                                             Sequence(
                                                     "range",
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     '(',
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     ',',
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     RuleWithVariables(OneOrMore(Digit())),
-                                                    OptionalWhitespace(),
+                                                    OptionalInlineWhitespace(),
                                                     ')'
                                             )
                                     )
                             ),
                             Sequence(
-                                    Optional("int", OptionalWhitespace()),
+                                    Optional("int", OptionalInlineWhitespace()),
                                     ParameterToStack(),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     "=",
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     RuleWithVariables(OneOrMore(Digit())),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     ';',
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     ParameterToStack(),
                                     Action<Any> {
                                         val current = pop()
@@ -58,14 +58,14 @@ object ForLoopDrill : DrillCircuit {
 
                                         return@Action current == original
                                     },
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     FirstOf("<", ">"),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     RuleWithVariables(OneOrMore(Digit())),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     Optional(
                                             ';',
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             ParameterToStack(),
                                             Action<Any> {
                                                 val current = pop()
@@ -73,25 +73,25 @@ object ForLoopDrill : DrillCircuit {
 
                                                 return@Action current == original
                                             },
-                                            OptionalWhitespace(),
+                                            OptionalInlineWhitespace(),
                                             FirstOf(
                                                     "++",
                                                     "--",
                                                     Sequence(
                                                             "+=",
-                                                            OptionalWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             RuleWithVariables(OneOrMore(Digit()))
                                                     ),
                                                     Sequence(
                                                             "-=",
-                                                            OptionalWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             RuleWithVariables(OneOrMore(Digit()))
                                                     )
                                             )
                                     )
                             )
                     ),
-                    OptionalWhitespace(),
+                    OptionalInlineWhitespace(),
                     ')',
                     OptionalWhitespace(),
                     '{',

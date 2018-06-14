@@ -28,7 +28,7 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
                     FirstOf(
                             Sequence(
                                     "Hide",
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     Optional("sprite for "),
                                     pushDrillHead(cmd, this@LinHideSpriteDrill),
                                     FirstOf(

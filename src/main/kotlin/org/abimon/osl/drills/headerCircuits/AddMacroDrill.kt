@@ -14,17 +14,17 @@ object AddMacroDrill : DrillCircuit {
                                     "Add Macro",
                                     "Define Macro"
                             ),
-                            Whitespace(),
+                            InlineWhitespace(),
                             pushDrillHead(cmd, this@AddMacroDrill),
                             Parameter(cmd),
-                            Whitespace(),
+                            InlineWhitespace(),
                             FirstOf("as", "to"),
-                            Whitespace(),
+                            InlineWhitespace(),
                             Parameter(cmd),
                             ZeroOrMore(
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     FirstOf("or", "and"),
-                                    Whitespace(),
+                                    InlineWhitespace(),
                                     Parameter(cmd)
                             ),
                             operateOnTmpActions(cmd) { params ->

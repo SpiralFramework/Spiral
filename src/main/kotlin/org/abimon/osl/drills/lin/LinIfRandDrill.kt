@@ -70,11 +70,11 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
                     pushEmptyDrillHead(cmd, this@LinIfRandDrill),
                     FirstOf(
                             Sequence(
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     '(',
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     RuleWithVariables(OneOrMore(Digit())),
-                                    OptionalWhitespace(),
+                                    OptionalInlineWhitespace(),
                                     ')'
                             ),
                             pushToStack(50)
