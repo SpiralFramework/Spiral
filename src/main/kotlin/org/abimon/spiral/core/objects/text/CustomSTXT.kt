@@ -76,6 +76,6 @@ class CustomSTXT: ICompilable {
     }
 
     private fun recalculateSize() {
-        _dataSize = 32L + (strings.size * 8) + strings.values.fold(0) { size, str -> size + str.toByteArray(Charsets.UTF_16LE).size + 2 }
+        _dataSize = 32L + (strings.size * 8) + strings.values.distinct().fold(0) { size, str -> size + str.toByteArray(Charsets.UTF_16LE).size + 2 }
     }
 }
