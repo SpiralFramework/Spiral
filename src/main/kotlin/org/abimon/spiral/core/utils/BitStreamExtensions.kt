@@ -154,6 +154,27 @@ fun OutputStream.writeInt16BE(num: Number) {
     write(int and 0xFF)
 }
 
+/**
+ * Only supports 1, 2, 4, or 8
+ */
+inline fun InputStream.readIntXLE(x: Int): Number =
+        when (x) {
+            1 -> read()
+            2 -> readInt16LE()
+            4 -> readInt32LE()
+            8 -> readInt64LE()
+            else -> throw IllegalArgumentException("$x is not 1, 2, 4, or 8")
+        }
+
+inline fun OutputStream.writeIntXLE(num: Number, x: Int) =
+        when (x) {
+            1 -> write(num.toInt())
+            2 -> writeInt16LE(num)
+            4 -> writeInt32LE(num)
+            8 -> writeInt64LE(num)
+            else -> throw IllegalArgumentException("$x is not 1, 2, 4, or 8")
+        }
+
 fun makeMask(vararg bits: Int): Int {
     var mask = 0
     for (bit in bits)
