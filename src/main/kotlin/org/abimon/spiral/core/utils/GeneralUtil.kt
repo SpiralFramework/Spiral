@@ -63,10 +63,37 @@ fun <T> (() -> InputStream).useAt(offset: Number, op: (InputStream) -> T): T = t
     return@use op(stream)
 }
 
-inline fun <reified T: Any> Any.castToTypedArray(): Array<T>? {
+inline fun <reified T : Any> Any.castToTypedArray(): Array<T>? {
     when (this) {
         is Array<*> -> return this.mapNotNull { any -> if (any is T) any else null }.toTypedArray()
         is Iterable<*> -> return this.mapNotNull { any -> if (any is T) any else null }.toTypedArray()
         else -> return null
     }
 }
+
+fun String.removeEscapes(): String =
+        buildString {
+            var escaping: Boolean = false
+
+            this@removeEscapes.forEach { c ->
+                if (escaping) {
+                    when (c) {
+                        'n' -> append('\n')
+                        't' -> append('\t')
+                        'b' -> append('\b')
+                        'r' -> append('\r')
+                        '0' -> append(0x00.toChar())
+                        else -> {
+                            append('\\')
+                            append(c)
+                        }
+                    }
+
+                    escaping = false
+                } else if (c == '\\') {
+                    escaping = true
+                } else {
+                    append(c)
+                }
+            }
+        }
