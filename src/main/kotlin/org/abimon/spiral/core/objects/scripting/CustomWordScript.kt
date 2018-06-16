@@ -1,6 +1,7 @@
 package org.abimon.spiral.core.objects.scripting
 
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
+import org.abimon.spiral.core.utils.removeEscapes
 import org.abimon.spiral.core.utils.writeInt16BE
 import org.abimon.spiral.core.utils.writeInt16LE
 import org.abimon.spiral.core.utils.writeInt32LE
@@ -27,20 +28,23 @@ class CustomWordScript {
         this.entries.addAll(entries)
     }
 
-    fun string(str: String): Int {
+    fun string(base: String): Int {
+        val str = base.removeEscapes()
         if (str !in strings)
             strings.add(str)
         return strings.indexOf(str)
     }
 
-    fun label(label: String): Int {
+    fun label(base: String): Int {
+        val label = base.removeEscapes()
         if (label !in labels)
             labels.add(label)
 
         return labels.indexOf(label)
     }
 
-    fun parameter(parameter: String): Int {
+    fun parameter(base: String): Int {
+        val parameter = base.removeEscapes()
         if (parameter !in parameters)
             parameters.add(parameter)
 

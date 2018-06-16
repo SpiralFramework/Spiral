@@ -4,6 +4,7 @@ import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.LinTextScript
 import org.abimon.spiral.core.objects.scripting.lin.TextCountEntry
 import org.abimon.spiral.core.objects.scripting.lin.TextEntry
+import org.abimon.spiral.core.utils.removeEscapes
 import org.abimon.spiral.core.utils.writeInt32LE
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -53,7 +54,7 @@ class CustomLin {
             entryData.write(entry.opCode)
 
             if (entry is LinTextScript) {
-                val strData = (entry.text ?: "Hello, Null!").replace("\\n", "\n").replace("\\t", "\t").toByteArray(Charsets.UTF_16LE)
+                val strData = (entry.text ?: "Hello, Null!").removeEscapes().toByteArray(Charsets.UTF_16LE)
                 textData.writeInt32LE((numText * 4L) + 8 + textText.size())
                 if(entry.writeBOM) {
                     textText.write(0xFF)
