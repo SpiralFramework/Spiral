@@ -115,6 +115,8 @@ object V3 : DRGame {
     val opCodeCommandEntries: Map<Int, Array<EnumWordScriptCommand>> =
             HashMap<Int, Array<EnumWordScriptCommand>>().apply {
                 this[0x14] = arrayOf(EnumWordScriptCommand.LABEL)
+                this[0x1D] = arrayOf(EnumWordScriptCommand.PARAMETER)
+                this[0x46] = arrayOf(EnumWordScriptCommand.STRING)
             }
 
     override val names: Array<String> =
