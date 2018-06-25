@@ -12,7 +12,7 @@ object V3 : DRGame {
             OpCodeHashMap<IntArray, WrdScript>().apply {
                 this[0x00] = "Set Flag" to 4 and ::UnknownEntry
                 this[0x01] = null to -1 and ::UnknownEntry
-                this[0x02] = "Check Flag" to 6 and ::UnknownEntry
+                this[0x02] = null to 6 and ::UnknownEntry //The good ol' 0x33
                 this[0x03] = null to 6 and ::UnknownEntry
                 this[0x04] = null to 2 and ::UnknownEntry
                 this[0x05] = null to 2 and ::UnknownEntry
@@ -114,9 +114,26 @@ object V3 : DRGame {
 
     val opCodeCommandEntries: Map<Int, Array<EnumWordScriptCommand>> =
             HashMap<Int, Array<EnumWordScriptCommand>>().apply {
+                this[0x00] = arrayOf(EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER)
+                this[0x02] = arrayOf(EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER)
                 this[0x14] = arrayOf(EnumWordScriptCommand.LABEL)
+                this[0x17] = arrayOf(EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER)
                 this[0x1D] = arrayOf(EnumWordScriptCommand.PARAMETER)
+                this[0x1F] = arrayOf(EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER)
                 this[0x46] = arrayOf(EnumWordScriptCommand.STRING)
+
+                val opCodes = File("v3-command-entries.json")
+
+                if (opCodes.exists()) {
+                    DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
+                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
+                            val str = any.toString()
+                            return@mapNotNull EnumWordScriptCommand.values().firstOrNull { enum -> enum.name.equals(str, true) }
+                        } ?: return@forEach
+
+                        this[opName.toInt(16)] = array.toTypedArray()
+                    }
+                }
             }
 
     override val names: Array<String> =
