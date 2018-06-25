@@ -97,3 +97,8 @@ fun String.removeEscapes(): String =
                 }
             }
         }
+
+fun Byte.toHex(): String = "0x" + toString(16)
+fun Short.toHex(): String = "0x" + toString(16)
+fun Int.toHex(): String = "0x" + toString(16)
+fun Long.toHex(): String = "0x" + toString(16)
