@@ -20,11 +20,19 @@ object WordStringDrill : DrillHead<WordScriptString> {
                             FirstOf(
                                     Sequence(
                                             Whitespace(),
+                                            '(',
+                                            OptionalInlineWhitespace(),
                                             "ID",
-                                            AnyOf(":|"),
-                                            OptionalWhitespace(),
+                                            FirstOf(
+                                                    ':',
+                                                    '|',
+                                                    " is "
+                                            ),
+                                            OptionalInlineWhitespace(),
                                             RuleWithVariables(OneOrMore(Digit())),
-                                            pushTmpFromStack(cmd)
+                                            pushTmpFromStack(cmd),
+                                            OptionalInlineWhitespace(),
+                                            ')'
                                     ),
                                     pushTmpAction(cmd, "-1")
                             ),
