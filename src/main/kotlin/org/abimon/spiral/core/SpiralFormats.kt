@@ -10,7 +10,6 @@ import org.abimon.spiral.core.formats.models.OBJModelFormat
 import org.abimon.spiral.core.formats.scripting.*
 import org.abimon.spiral.core.formats.text.JacksonFormat
 import org.abimon.spiral.core.formats.text.STXTFormat
-import org.abimon.spiral.core.formats.text.SpiralTextFormat
 import org.abimon.spiral.core.formats.text.TextFormat
 import org.abimon.spiral.core.formats.video.IVFFormat
 import org.abimon.spiral.core.formats.video.MP4Format
@@ -30,7 +29,7 @@ object SpiralFormats {
             GXTFormat, TGAFormat, SHTXFormat, DDSFormat, PNGFormat, JPEGFormat,
             OggFormat,
             IVFFormat, MP4Format,
-            LINFormat, SpiralTextFormat, WRDFormat,
+            LINFormat, WRDFormat,
             SFLFormat,
             GMOModelFormat, OBJModelFormat, ColladaModelFormat,
             PakBGFormats,
