@@ -2,12 +2,14 @@ package org.abimon.spiral.core.formats.scripting
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.SpiralDrillBit
+import org.abimon.osl.WordScriptCommand
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.objects.customLin
 import org.abimon.spiral.core.objects.customWordScript
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
+import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.abimon.visi.lang.EnumOS
@@ -35,6 +37,8 @@ object OpenSpiralLanguageFormat: SpiralFormat {
     @Suppress("UNCHECKED_CAST")
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (super.convert(game, format, name, context, dataSource, output, params)) return true
+
+        val compileText = params["wrd:compile_text"]?.toString()?.toBoolean() ?: false
 
         val text = String(dataSource().use { stream -> stream.readBytes() }, Charsets.UTF_8)
         val parser = OpenSpiralLanguageParser { fileName -> context(fileName)?.invoke()?.use { stream -> stream.readBytes() }}
@@ -103,6 +107,19 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                                 when (head.klass) {
                                     WrdScript::class -> add(products as WrdScript)
                                     Array<WrdScript>::class -> addAll(products as Array<WrdScript>)
+                                    WordScriptCommand::class -> {
+                                        val command = products as WordScriptCommand
+
+                                        command.command.let { cmdStr ->
+                                            when (command.type) {
+                                                EnumWordScriptCommand.LABEL -> if (cmdStr !in labels) label(cmdStr)
+                                                EnumWordScriptCommand.PARAMETER -> if (cmdStr !in parameters) parameter(cmdStr)
+                                                EnumWordScriptCommand.STRING -> if (cmdStr !in strings && compileText) strings.add(cmdStr)
+                                                EnumWordScriptCommand.RAW -> {
+                                                }
+                                            }
+                                        }
+                                    }
                                     Unit::class -> { }
                                     else -> System.err.println("${head.klass} not a recognised product type!")
                                 }
