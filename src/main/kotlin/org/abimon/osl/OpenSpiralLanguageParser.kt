@@ -4,6 +4,7 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
+import org.abimon.osl.drills.stx.STXSetLanguageDrill
 import org.abimon.osl.drills.wrd.*
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.DR1
@@ -373,7 +374,9 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             WrdSpeakerDrill,
 
                             BasicWrdSpiralDrill,
-                            NamedWrdSpiralDrill
+                            NamedWrdSpiralDrill,
+
+                            STXSetLanguageDrill //TODO: Move this into its own section
                     )
             )
 
