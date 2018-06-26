@@ -33,9 +33,9 @@ object WordCommandDrill : DrillHead<WordScriptCommand> {
         val command = rawParams[1].toString()
 
         when (scriptCommand) {
-            EnumWordScriptCommand.LABEL -> parser.wordScriptLabels.add(command)
-            EnumWordScriptCommand.PARAMETER -> parser.wordScriptParameters.add(command)
-            EnumWordScriptCommand.STRING -> parser.wordScriptStrings.add(command)
+            EnumWordScriptCommand.LABEL -> if (command !in parser.wordScriptLabels) parser.wordScriptLabels.add(command)
+            EnumWordScriptCommand.PARAMETER -> if (command !in parser.wordScriptParameters) parser.wordScriptParameters.add(command)
+            EnumWordScriptCommand.STRING -> if (command !in parser.wordScriptStrings) parser.wordScriptStrings.add(command)
             EnumWordScriptCommand.RAW -> {}
         }
 

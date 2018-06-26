@@ -8,7 +8,7 @@ data class SpiralDrillBit(val head: DrillHead<out Any>) {
         inline operator fun <reified T: Any> invoke(value: T): SpiralDrillBit = SpiralDrillBit(StaticDrill(value, T::class), "")
     }
 
-    lateinit var script: String
+    var script: String = ""
 
     constructor(head: DrillHead<out Any>, script: String): this(head) {
         this.script = script

@@ -29,7 +29,8 @@ object WordStringDrill : DrillHead<WordScriptCommand> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): WordScriptCommand {
         val string = rawParams[0].toString()
-        parser.wordScriptStrings.add(string)
+        if (string !in parser.wordScriptStrings)
+            parser.wordScriptStrings.add(string)
         return WordScriptCommand(EnumWordScriptCommand.STRING, string)
     }
 }

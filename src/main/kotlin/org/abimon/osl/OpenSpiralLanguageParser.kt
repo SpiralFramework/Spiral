@@ -453,6 +453,22 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             )
     )
 
+    val WRD_COLOUR_CODES = mapOf(
+            V3 to mapOf(
+                    "yellow" to "cltSTRONG",
+                    "blue" to "cltMIND",
+                    "green" to "cltSYSTEM",
+
+                    "bold" to "cltSTRONG",
+                    "strong" to "cltSTRONG",
+
+                    "mind" to "cltMIND",
+
+                    "narrator" to "cltSYSTEM",
+                    "system" to "cltSYSTEM"
+            )
+    )
+
     val HEX_CODES = mapOf(
             DR2 to mapOf(
                     "FFFFFF" to 0,
@@ -674,6 +690,70 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                 pushTmpAction("WRD-TEXT-$cmd", "${pop()}&").run(context)
                                                 return@Action true
                                             }
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            "&clear",
+                                            Action<Any> { context ->
+                                                val text = pop().toString()
+
+                                                pushTmpAction("WRD-TEXT-$cmd", text).run(context)
+                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT>").run(context)
+                                                return@Action true
+                                            }
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                                    Sequence(
+                                                            '&',
+                                                            FirstOf(WRD_COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("WRD-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT=${(COLOUR_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: "cltNORMAL"}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    )
+                                    ),
+                                    Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            FirstOf(
+                                                    Sequence(
+                                                            '&',
+                                                            "{clear}",
+                                                            InlineWhitespace(),
+                                                            Action<Any> { context ->
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("WRD-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    ),
+                                                    Sequence(
+                                                            '&',
+                                                            '{',
+                                                            FirstOf(WRD_COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
+                                                            Action<Any> { push(match()) },
+                                                            '}',
+                                                            InlineWhitespace(),
+                                                            Action<Any> { context ->
+                                                                val colour = pop().toString()
+                                                                val text = pop().toString()
+
+                                                                pushTmpAction("WRD-TEXT-$cmd", text).run(context)
+                                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT=${(WRD_COLOUR_CODES[game]
+                                                                        ?: emptyMap())[colour]
+                                                                        ?: "cltNORMAL"}>").run(context)
+                                                                return@Action true
+                                                            }
+                                                    )
+                                            )
                                     ),
                                     Sequence(
                                             RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
