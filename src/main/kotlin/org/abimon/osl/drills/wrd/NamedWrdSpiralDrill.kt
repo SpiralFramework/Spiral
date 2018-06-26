@@ -2,7 +2,6 @@ package org.abimon.osl.drills.wrd
 
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.osl.SpiralDrillBit
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
@@ -40,27 +39,24 @@ object NamedWrdSpiralDrill : DrillHead<WrdScript> {
                             )
                     ),
                     operateOnTmpActions(cmd) { stack ->
+                        val opName = stack[1].toString()
+                        val opCode = V3.opCodes.entries.first { (_, triple) -> opName in triple.first }.key
+                        val commandEnums = V3.opCodeCommandEntries[opCode]
+
                         val wrdParams = stack.drop(2).map(Any::toString)
 
-                        for (param in wrdParams) {
+                        wrdParams.forEachIndexed { index, param ->
                             if (param.startsWith("LABEL:")) {
                                 val label = param.substringAfter("LABEL:")
-                                if (label !in wordScriptLabels) {
-                                    wordScriptLabels.add(label)
-                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.LABEL, label))
-                                }
+                                ensureString(label, EnumWordScriptCommand.LABEL)
                             } else if (param.startsWith("PARAMETER:")) {
                                 val parameter = param.substringAfter("PARAMETER:")
-                                if (parameter !in wordScriptParameters) {
-                                    wordScriptParameters.add(parameter)
-                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.PARAMETER, parameter))
-                                }
+                                ensureString(parameter, EnumWordScriptCommand.PARAMETER)
                             } else if (param.startsWith("STRING:")) {
                                 val string = param.substringAfter("STRING:")
-                                if (string !in wordScriptStrings) {
-                                    wordScriptStrings.add(string)
-                                    push(listOf(SpiralDrillBit(WordCommandDrill), EnumWordScriptCommand.STRING, string))
-                                }
+                                ensureString(string, EnumWordScriptCommand.STRING)
+                            } else if (!param.startsWith("RAW:") && commandEnums != null && index < commandEnums.size) {
+                                ensureString(param, commandEnums[index])
                             }
                         }
                     },
