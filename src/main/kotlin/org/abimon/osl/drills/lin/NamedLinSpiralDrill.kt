@@ -1,5 +1,6 @@
 package org.abimon.osl.drills.lin
 
+import org.abimon.osl.GameContext
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
@@ -22,7 +23,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                             OneOrMore(LineCodeMatcher),
                             Action<Any> {
                                 val name = match()
-                                (game as? HopesPeakDRGame
+                                ((gameContext as? GameContext.HopesPeakGameContext)?.game
                                         ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
                             },
                             pushDrillHead(cmd, this@NamedLinSpiralDrill),
@@ -47,8 +48,8 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val opName = rawParams[0].toString()
-        rawParams[0] = (parser.game as? HopesPeakDRGame
+        rawParams[0] = (parser.gameContext as? HopesPeakDRGame
                 ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
-        return BasicLinSpiralDrill.formScript(rawParams, parser.game as? HopesPeakDRGame ?: UnknownHopesPeakGame)
+        return BasicLinSpiralDrill.formScript(rawParams, parser.gameContext as? HopesPeakDRGame ?: UnknownHopesPeakGame)
     }
 }

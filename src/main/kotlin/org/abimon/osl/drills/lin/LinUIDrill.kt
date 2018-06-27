@@ -84,10 +84,10 @@ object LinUIDrill : DrillHead<LinScript> {
         else
             uiState = uiStateStr.toIntOrNull() ?: 0
 
-        return when(parser.game) {
+        return when(parser.gameContext) {
             DR1 -> ChangeUIEntry(uiElements[uiElement] ?: uiElement.toIntOrNull() ?: 0, uiState)
             DR2 -> ChangeUIEntry(uiElements[uiElement] ?: uiElement.toIntOrNull() ?: 0, uiState)
-            else -> TODO("UI Changes are not documented for ${parser.game}")
+            else -> TODO("UI Changes are not documented for ${parser.gameContext}")
         }
     }
 }

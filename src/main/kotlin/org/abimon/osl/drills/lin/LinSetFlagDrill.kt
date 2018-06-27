@@ -41,10 +41,10 @@ object LinSetFlagDrill : DrillHead<LinScript> {
 
         val value = rawParams[2].toString().toIntOrNull() ?: 0
 
-        return when(parser.game) {
+        return when(parser.gameContext) {
             DR1 -> SetFlagEntry(group, flagID, value)
             DR2 -> SetFlagEntry(group, flagID, value)
-            else -> TODO("Flag Sets are not documented for ${parser.game}")
+            else -> TODO("Flag Sets are not documented for ${parser.gameContext}")
         }
     }
 }
