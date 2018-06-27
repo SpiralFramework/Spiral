@@ -3,7 +3,7 @@ package org.abimon.osl
 object ComparisonOperations {
     fun equal(parser: OpenSpiralLanguageParser, variable: String, value: String): Boolean {
         if(variable == "GAME")
-            return value in parser.game.names
+            return parser.gameContext is GameContext.DRGameContext && value in (parser.gameContext as GameContext.DRGameContext).game.names
 
         return parser[variable].toString() == value
     }

@@ -57,10 +57,10 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
 
                                                 push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(currentChoice + 1)), "")))
                                                 push(listOf(SpiralDrillBit(BasicLinTextDrill, ""), name))
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(when (game) {
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(when (gameContext) {
                                                     DR1 -> WaitFrameEntry.DR1
                                                     DR2 -> WaitFrameEntry.DR2
-                                                    else -> TODO("Unknown game $game (Text hasn't been completely documented!)")
+                                                    else -> TODO("Unknown gameContext $gameContext (Text hasn't been completely documented!)")
                                                 }), "")))
                                             },
                                             OptionalInlineWhitespace(),
@@ -100,7 +100,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry(label))
-        return when (parser.game) {
+        return when (parser.gameContext) {
             DR1 -> arrayOf(
                     ChoiceEntry(18),
                     ChoiceEntry(19),
@@ -117,7 +117,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                     ChoiceEntry(255),
                     SetLabelEntry(label)
             )
-            else -> TODO("Choices are not documented for ${parser.game}")
+            else -> TODO("Choices are not documented for ${parser.gameContext}")
         }
     }
 }

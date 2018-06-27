@@ -33,10 +33,10 @@ object LinGoToDrill : DrillHead<LinScript> {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return when(parser.game) {
+        return when(parser.gameContext) {
             DR1 -> GoToLabelEntry((first shl 8) or second)
             DR2 -> GoToLabelEntry((first shl 8) or second)
-            else -> TODO("Label Goto's are not documented in ${parser.game}")
+            else -> TODO("Label Goto's are not documented in ${parser.gameContext}")
         }
     }
 }

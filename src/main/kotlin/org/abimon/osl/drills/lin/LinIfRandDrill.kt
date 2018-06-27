@@ -20,10 +20,10 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
             val indentation = --parser.flagCheckIndentation
             val branch = parser.data.remove("FLAG_JUMP_BRANCH_FOR_$indentation").toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag jump branch found for $indentation")
-            return when (parser.game) {
+            return when (parser.gameContext) {
                 DR1 -> arrayOf(SetLabelEntry(branch))
                 DR2 -> arrayOf(SetLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.game}")
+                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
             }
         }
     }
@@ -36,10 +36,10 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_JUMP_BRANCH_FOR_$indentation"].toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag jump branch found for $indentation")
-            return when (parser.game) {
+            return when (parser.gameContext) {
                 DR1 -> arrayOf(GoToLabelEntry(branch))
                 DR2 -> arrayOf(GoToLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.game}")
+                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
             }
         }
     }
@@ -52,10 +52,10 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_ELSE_BRANCH_FOR_$indentation"].toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag else branch found for $indentation")
-            return when (parser.game) {
+            return when (parser.gameContext) {
                 DR1 -> arrayOf(SetLabelEntry(branch))
                 DR2 -> arrayOf(SetLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.game}")
+                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
             }
         }
     }
@@ -111,7 +111,7 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
 
         val chance = rawParams[0].toString().toIntOrNull() ?: 50
 
-        return when (parser.game) {
+        return when (parser.gameContext) {
             DR1 -> arrayOf(
                     UnknownEntry(0x36, intArrayOf(0, 14, 2, 0, chance)),
                     EndFlagCheckEntry(),
@@ -128,7 +128,7 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
 
                     SetLabelEntry(ifTrue)
             )
-            else -> TODO("Flag Checks are not documented for ${parser.game}")
+            else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
         }
     }
 }

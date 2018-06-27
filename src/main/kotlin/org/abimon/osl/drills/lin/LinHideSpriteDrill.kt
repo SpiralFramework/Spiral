@@ -1,6 +1,7 @@
 package org.abimon.osl.drills.lin
 
 import org.abimon.osl.AllButMatcher
+import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
@@ -40,7 +41,7 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
                                     ),
                                     Action<Any> {
                                         val name = peekTmpAction(cmd)?.toString() ?: ""
-                                        return@Action name in customIdentifiers || name in (game as? HopesPeakDRGame
+                                        return@Action name in customIdentifiers || name in ((gameContext as? GameContext.HopesPeakGameContext)?.game
                                                 ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
                                     }
                             ),
@@ -55,12 +56,12 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val characterStr = rawParams[0].toString()
-        val character = parser.customIdentifiers[characterStr] ?: (parser.game as? HopesPeakDRGame
+        val character = parser.customIdentifiers[characterStr] ?: (parser.gameContext as? HopesPeakDRGame
                 ?: UnknownHopesPeakGame).characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
-        return when(parser.game) {
+        return when((parser.gameContext as? GameContext.HopesPeakGameContext)?.game ?: UnknownHopesPeakGame) {
             DR1 -> SpriteEntry(0, character, 0, 4, 2)
             DR2 -> SpriteEntry(0, character, 0, 4, 2)
-            else -> TODO("Sprites are not documented for ${parser.game}")
+            else -> TODO("Sprites are not documented for ${parser.gameContext}")
         }
     }
 }
