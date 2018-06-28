@@ -17,7 +17,7 @@ object STXSetLanguageDrill: DrillHead<STXT.Language> {
             Sequence(
                     clearTmpStack(cmd),
                     Sequence(
-                            FirstOf("Set Language:", "Language Is ", "Set Language To "),
+                            FirstOf("Language:", "Set Language:", "Language Is ", "Set Language To "),
                             pushDrillHead(cmd, this@STXSetLanguageDrill),
                             OptionalInlineWhitespace(),
                             Parameter(cmd),

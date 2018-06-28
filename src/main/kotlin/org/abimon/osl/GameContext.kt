@@ -18,5 +18,10 @@ sealed class GameContext {
     object V3GameContextObject: V3GameContext(V3)
     open class CatchAllV3GameContext(game: V3): V3GameContext(game)
 
-    open class STXGameContext: GameContext()
+    open class STXGameContext: GameContext() {
+        companion object {
+            val INSTANCE = STXGameContext()
+        }
+    }
+
 }
