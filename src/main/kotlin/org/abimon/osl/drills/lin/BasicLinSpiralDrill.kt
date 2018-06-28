@@ -1,6 +1,5 @@
 package org.abimon.osl.drills.lin
 
-import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
@@ -41,8 +40,7 @@ object BasicLinSpiralDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = formScript(rawParams, (parser.gameContext as? GameContext.HopesPeakGameContext)?.game
-            ?: UnknownHopesPeakGame)
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = formScript(rawParams, parser.hopesPeakGame ?: UnknownHopesPeakGame)
 
     fun formScript(rawParams: Array<Any>, game: HopesPeakDRGame): LinScript {
         val opCode = "${rawParams[0]}".toInt(16)

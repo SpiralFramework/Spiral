@@ -6,6 +6,7 @@ import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
 import org.abimon.osl.drills.stx.STXSetLanguageDrill
 import org.abimon.osl.drills.wrd.*
+import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.*
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
@@ -40,6 +41,19 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     }
 
     var gameContext: GameContext? = null
+    var drGame: DRGame?
+        get() = (gameContext as? GameContext.DRGameContext)?.game
+        set(value) {
+            gameContext = when (value) {
+                DR1 -> GameContext.DR1GameContext
+                DR2 -> GameContext.DR2GameContext
+                UDG -> GameContext.UDGGameContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
+                V3 -> GameContext.V3GameContextObject
+                is HopesPeakDRGame -> GameContext.CatchAllHopesPeakGameContext(value)
+                else -> null
+            }
+        }
     var hopesPeakGame: HopesPeakDRGame?
         get() = (gameContext as? GameContext.HopesPeakGameContext)?.game
         set(value) {
@@ -50,6 +64,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
                 null -> null
                 else -> GameContext.CatchAllHopesPeakGameContext(value)
+            }
+        }
+    var v3Game: V3?
+        get() = (gameContext as? GameContext.V3GameContext)?.game
+        set(value) {
+            gameContext = when (value) {
+                V3 -> GameContext.V3GameContextObject
+                null -> null
+                else -> GameContext.CatchAllV3GameContext(value)
             }
         }
     var strictParsing: Boolean = true
@@ -619,8 +642,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                                 val text = pop().toString()
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(
-                                                                    (gameContext as? GameContext.HopesPeakGameContext)?.let { linGame -> COLOUR_CODES[linGame.game] }
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
+                                                                    (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -638,8 +661,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                                 val text = pop().toString()
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${(
-                                                                        (gameContext as? GameContext.HopesPeakGameContext)?.let { linGame -> HEX_CODES[linGame.game] }
+                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
+                                                                        (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -727,8 +750,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                         val text = pop().toString()
 
                                                         pushTmpAction("WRD-TEXT-$cmd", text).run(context)
-                                                        pushTmpAction("WRD-TEXT-$cmd", "<CLT=${(
-                                                                (gameContext as? GameContext.V3GameContext)?.let { v3Game -> WRD_COLOUR_CODES[v3Game.game] }
+                                                        pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
+                                                                (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
                                                                 ?: emptyMap())[colour]
                                                                 ?: "cltNORMAL"}>").run(context)
                                                         return@Action true
@@ -762,8 +785,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                                 val text = pop().toString()
 
                                                                 pushTmpAction("WRD-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT=${(
-                                                                        (gameContext as? GameContext.V3GameContext)?.let { v3Game -> WRD_COLOUR_CODES[v3Game.game] }
+                                                                pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
+                                                                        (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
                                                                         ?: emptyMap())[colour]
                                                                         ?: "cltNORMAL"}>").run(context)
                                                                 return@Action true
@@ -830,7 +853,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     ),
                     Action<Any> {
                         var str = match()
-                        str = str.replace("%GAME", (gameContext as? GameContext.DRGameContext)?.game?.names?.firstOrNull() ?: "None")
+                        str = str.replace("%GAME", drGame?.names?.firstOrNull() ?: "None")
 
                         for ((key, value) in data)
                             str = str.replace("%$key", value.toString())
@@ -948,7 +971,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             Action<Any> {
                                 val speakerName = pop()
 
-                                val game = (gameContext as? GameContext.HopesPeakGameContext)?.game ?: UnknownHopesPeakGame
+                                val game = hopesPeakGame ?: UnknownHopesPeakGame
                                 val id = customIdentifiers[speakerName]
                                         ?: game.characterIdentifiers[speakerName]
                                         ?: return@Action false

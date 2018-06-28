@@ -20,10 +20,10 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
         override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
             val indentation = --parser.flagCheckIndentation
             val branch = parser.data.remove("FLAG_JUMP_BRANCH_FOR_$indentation").toString().toIntOrNull() ?: throw SpiralDrillException("No flag jump branch found for $indentation")
-            return when(parser.gameContext) {
+            return when(parser.hopesPeakGame) {
                 DR1 -> arrayOf(SetLabelEntry(branch))
                 DR2 -> arrayOf(SetLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
+                else -> TODO("Flag Checks are not documented for ${parser.hopesPeakGame}")
             }
         }
     }
@@ -35,10 +35,10 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
         override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_JUMP_BRANCH_FOR_$indentation"].toString().toIntOrNull() ?: throw SpiralDrillException("No flag jump branch found for $indentation")
-            return when(parser.gameContext) {
+            return when(parser.hopesPeakGame) {
                 DR1 -> arrayOf(GoToLabelEntry(branch))
                 DR2 -> arrayOf(GoToLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
+                else -> TODO("Flag Checks are not documented for ${parser.hopesPeakGame}")
             }
         }
     }
@@ -50,10 +50,10 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
         override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_ELSE_BRANCH_FOR_$indentation"].toString().toIntOrNull() ?: throw SpiralDrillException("No flag else branch found for $indentation")
-            return when(parser.gameContext) {
+            return when(parser.hopesPeakGame) {
                 DR1 -> arrayOf(SetLabelEntry(branch))
                 DR2 -> arrayOf(SetLabelEntry(branch))
-                else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
+                else -> TODO("Flag Checks are not documented for ${parser.hopesPeakGame}")
             }
         }
     }
@@ -119,7 +119,7 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
 
         val comparison = rawParams[2].toString().toIntOrNull() ?: 0
 
-        return when(parser.gameContext) {
+        return when(parser.hopesPeakGame) {
             DR1 -> arrayOf(
                     UnknownEntry(0x36, intArrayOf(0, state, operation.flag, 0, comparison)),
                     EndFlagCheckEntry(),
@@ -136,7 +136,7 @@ object LinIfGameStateDrill : DrillHead<Array<LinScript>> {
 
                     SetLabelEntry(ifTrue)
             )
-            else -> TODO("Flag Checks are not documented for ${parser.gameContext}")
+            else -> TODO("Flag Checks are not documented for ${parser.hopesPeakGame}")
         }
     }
 }

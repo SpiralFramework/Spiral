@@ -334,7 +334,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry(label))
-        return when (parser.gameContext) {
+        return when (parser.hopesPeakGame) {
             DR1 -> arrayOf(
                     ChoiceEntry(18),
                     ChoiceEntry(19),
@@ -351,7 +351,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                     ChoiceEntry(255),
                     SetLabelEntry(label)
             )
-            else -> TODO("Choices are not documented for ${parser.gameContext}")
+            else -> TODO("Choices are not documented for ${parser.hopesPeakGame}")
         }
     }
     

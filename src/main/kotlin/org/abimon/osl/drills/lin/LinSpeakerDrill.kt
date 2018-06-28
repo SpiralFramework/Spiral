@@ -31,10 +31,10 @@ object LinSpeakerDrill : DrillHead<LinScript> {
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
 
-        return when (parser.gameContext) {
+        return when (parser.hopesPeakGame) {
             DR1 -> SpeakerEntry(first)
             DR2 -> SpeakerEntry(first)
-            else -> TODO("Label Goto's are not documented in ${parser.gameContext}")
+            else -> TODO("Label Goto's are not documented in ${parser.hopesPeakGame}")
         }
     }
 }

@@ -1,12 +1,10 @@
 package org.abimon.osl.drills.lin
 
 import org.abimon.osl.AllButMatcher
-import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.lin.SpriteEntry
@@ -41,7 +39,7 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
                                     ),
                                     Action<Any> {
                                         val name = peekTmpAction(cmd)?.toString() ?: ""
-                                        return@Action name in customIdentifiers || name in ((gameContext as? GameContext.HopesPeakGameContext)?.game
+                                        return@Action name in customIdentifiers || name in (hopesPeakGame
                                                 ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
                                     }
                             ),
@@ -56,12 +54,14 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val characterStr = rawParams[0].toString()
-        val character = parser.customIdentifiers[characterStr] ?: (parser.gameContext as? HopesPeakDRGame
-                ?: UnknownHopesPeakGame).characterIdentifiers[characterStr] ?: characterStr.toIntOrNull() ?: 0
-        return when((parser.gameContext as? GameContext.HopesPeakGameContext)?.game ?: UnknownHopesPeakGame) {
+        val character = parser.customIdentifiers[characterStr]
+                ?: (parser.hopesPeakGame ?: UnknownHopesPeakGame).characterIdentifiers[characterStr]
+                ?: characterStr.toIntOrNull() ?: 0
+
+        return when(parser.hopesPeakGame) {
             DR1 -> SpriteEntry(0, character, 0, 4, 2)
             DR2 -> SpriteEntry(0, character, 0, 4, 2)
-            else -> TODO("Sprites are not documented for ${parser.gameContext}")
+            else -> TODO("Sprites are not documented for ${parser.hopesPeakGame}")
         }
     }
 }

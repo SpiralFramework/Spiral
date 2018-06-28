@@ -70,10 +70,10 @@ object LinScreenFlashDrill : DrillHead<LinScript> {
         val fadeOutOver = rawParams[5].toString().toIntOrNull() ?: 0
         val opacity = rawParams[6].toString().toIntOrNull() ?: 0
 
-        return when(parser.gameContext) {
+        return when(parser.hopesPeakGame) {
             DR1 -> ScreenFlashEntry(r, g, b, fadeInOver, holdFor, fadeOutOver, opacity)
             DR2 -> ScreenFlashEntry(r, g, b, fadeInOver, holdFor, fadeOutOver, opacity)
-            else -> TODO("Screen Flashes are not documented for ${parser.gameContext}")
+            else -> TODO("Screen Flashes are not documented for ${parser.hopesPeakGame}")
         }
     }
 }

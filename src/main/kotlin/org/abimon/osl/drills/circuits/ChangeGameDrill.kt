@@ -41,6 +41,6 @@ object ChangeGameDrill : DrillCircuit {
         if (parser.silence)
             return
 
-        parser.gameContext = games[rawParams[0].toString().toUpperCase()] ?: UnknownHopesPeakGame
+        parser.drGame = games[rawParams[0].toString().toUpperCase()] ?: UnknownHopesPeakGame
     }
 }
