@@ -66,10 +66,10 @@ object LinScreenFadeDrill : DrillHead<LinScript> {
         val colour = rawParams[1].toString().toIntOrNull() ?: 1
         val frameCount = rawParams[2].toString().toIntOrNull() ?: 60
 
-        return when(parser.gameContext) {
+        return when(parser.hopesPeakGame) {
             DR1 -> ScreenFadeEntry(fadeIn, colour, frameCount)
             DR2 -> ScreenFadeEntry(fadeIn, colour, frameCount)
-            else -> TODO("Screen Fades are not documented for ${parser.gameContext}")
+            else -> TODO("Screen Fades are not documented for ${parser.hopesPeakGame}")
         }
     }
 }

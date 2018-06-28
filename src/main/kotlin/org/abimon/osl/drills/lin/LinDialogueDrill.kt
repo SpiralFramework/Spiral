@@ -1,7 +1,6 @@
 package org.abimon.osl.drills.lin
 
 import org.abimon.osl.AllButMatcher
-import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
@@ -24,7 +23,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                     Sequence(
                             OneOrMore(NAME),
                             Action<Any> {
-                                match() in customIdentifiers || match() in ((gameContext as? GameContext.HopesPeakGameContext)?.game
+                                match() in customIdentifiers || match() in (hopesPeakGame
                                         ?: UnknownHopesPeakGame).characterIdentifiers
                             },
                             pushDrillHead(cmd, this@LinDialogueDrill),
@@ -38,7 +37,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
-        val game = (parser.gameContext as? GameContext.HopesPeakGameContext)?.game ?: UnknownHopesPeakGame
+        val game = parser.hopesPeakGame ?: UnknownHopesPeakGame
         return when(game) {
             DR1 -> arrayOf(
                     SpeakerEntry(

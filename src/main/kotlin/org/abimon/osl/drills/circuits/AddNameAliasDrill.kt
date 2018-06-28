@@ -44,8 +44,7 @@ object AddNameAliasDrill : DrillCircuit {
                 if(intID != null)
                     id = intID
                 else if (parser.gameContext is GameContext.HopesPeakGameContext)
-                    id = ((parser.gameContext as? GameContext.HopesPeakGameContext)?.game
-                            ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
+                    id = (parser.hopesPeakGame ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
                 else
                     id = 0
             }

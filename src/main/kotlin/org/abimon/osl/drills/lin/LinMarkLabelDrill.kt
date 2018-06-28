@@ -34,11 +34,11 @@ object LinMarkLabelDrill : DrillHead<LinScript> {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 
-        return when(parser.gameContext) {
+        return when(parser.hopesPeakGame) {
             DR1 -> SetLabelEntry((first shl 8) or second)
             DR2 -> SetLabelEntry((first shl 8) or second)
 
-            else -> TODO("Label Marking is not documented for ${parser.gameContext}")
+            else -> TODO("Label Marking is not documented for ${parser.hopesPeakGame}")
         }
     }
 }

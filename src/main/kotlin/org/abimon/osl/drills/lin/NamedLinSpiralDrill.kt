@@ -1,10 +1,8 @@
 package org.abimon.osl.drills.lin
 
-import org.abimon.osl.GameContext
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.parboiled.Action
@@ -23,8 +21,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                             OneOrMore(LineCodeMatcher),
                             Action<Any> {
                                 val name = match()
-                                ((gameContext as? GameContext.HopesPeakGameContext)?.game
-                                        ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
+                                (hopesPeakGame ?: UnknownHopesPeakGame).opCodes.values.any { (names) -> name in names }
                             },
                             pushDrillHead(cmd, this@NamedLinSpiralDrill),
                             pushTmpAction(cmd),
@@ -48,8 +45,8 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val opName = rawParams[0].toString()
-        rawParams[0] = (parser.gameContext as? HopesPeakDRGame
+        rawParams[0] = (parser.hopesPeakGame
                 ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)
-        return BasicLinSpiralDrill.formScript(rawParams, parser.gameContext as? HopesPeakDRGame ?: UnknownHopesPeakGame)
+        return BasicLinSpiralDrill.formScript(rawParams, parser.hopesPeakGame ?: UnknownHopesPeakGame)
     }
 }
