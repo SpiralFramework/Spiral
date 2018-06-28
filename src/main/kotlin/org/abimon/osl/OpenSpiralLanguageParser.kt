@@ -344,8 +344,10 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
             SpiralLinLine(),
             SpiralWrdLine(),
+            SpiralSTXLine(),
 
             ChangeGameDrill,
+            ChangeContextDrill,
             EchoDrill,
             AddNameAliasDrill,
             AddFlagAliasDrill,
@@ -405,9 +407,16 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             WrdSpeakerDrill,
 
                             BasicWrdSpiralDrill,
-                            NamedWrdSpiralDrill,
+                            NamedWrdSpiralDrill
+                    )
+            )
 
-                            STXSetLanguageDrill //TODO: Move this into its own section
+    open fun SpiralSTXLine(): Rule =
+            Sequence(
+                    Action<Any> { gameContext is GameContext.STXGameContext },
+                    FirstOf(
+                            WordStringDrill,
+                            STXSetLanguageDrill
                     )
             )
 
