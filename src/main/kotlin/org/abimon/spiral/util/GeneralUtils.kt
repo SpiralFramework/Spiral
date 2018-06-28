@@ -16,6 +16,7 @@ import org.abimon.spiral.core.objects.archives.srd.TXREntry
 import org.abimon.spiral.core.utils.ChunkProcessingInputStream
 import org.abimon.spiral.core.utils.CountingInputStream
 import org.abimon.spiral.core.utils.WindowedInputStream
+import org.abimon.spiral.core.utils.removeEscapes
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.io.skipBytes
 import org.abimon.visi.lang.StringGroup
@@ -129,43 +130,6 @@ fun String.splitOutside(delimiter: String = "\\s", cap: Int = 0, group: StringGr
 
     return strings.toTypedArray()
 }
-
-fun String.removeEscapes(): String =
-        buildString {
-            var escaping: Boolean = false
-            var controlCharacter = false
-
-            this@removeEscapes.forEach { c ->
-                if (escaping) {
-                    if (c == '\\') {
-                        controlCharacter = true
-                        escaping = false
-                    } else {
-                        append(c)
-                        escaping = false
-                    }
-                } else
-                    if (escaping) {
-                        when (c) {
-                            'n' -> append('\n')
-                            't' -> append('\t')
-                            'b' -> append('\b')
-                            'r' -> append('\r')
-                            '0' -> append(0x00.toChar())
-                            else -> {
-                                append('\\')
-                                append(c)
-                            }
-                        }
-
-                        escaping = false
-                    } else if (c == '\\') {
-                        escaping = true
-                    } else {
-                        append(c)
-                    }
-            }
-        }
 
 fun TXREntry.readTexture(srdv: () -> InputStream): BufferedImage? {
     val texture = WindowedInputStream(srdv(), rsiEntry.mipmaps[0].start.toLong(), rsiEntry.mipmaps[0].length.toLong())
