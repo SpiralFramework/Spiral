@@ -15,7 +15,7 @@ import java.io.InputStream
  *
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
-class Pak private constructor(val dataSource: () -> InputStream) {
+class Pak private constructor(val dataSource: () -> InputStream, overrideSanityChecks: Boolean = false) {
     companion object {
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0
@@ -38,7 +38,7 @@ class Pak private constructor(val dataSource: () -> InputStream) {
         try {
             val fileCount = stream.readInt32LE()
             assertAsArgument(fileCount > 1, "Illegal number of files in Pak File (Was $fileCount, expected > 1)")
-            assertAsArgument(fileCount < SANITY_MAX_FILE_COUNT, "Illegal number of files in Pak File (was $fileCount, expected < $SANITY_MAX_FILE_COUNT); If you are converting a valid file then you'll need to bump up the maximum file count!")
+            assertAsArgument(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT, "Illegal number of files in Pak File (was $fileCount, expected < $SANITY_MAX_FILE_COUNT); If you are converting a valid file then you'll need to bump up the maximum file count or override the sanity checks!")
 
             val offsets = IntArray(fileCount) { index ->
                 val offset = stream.readInt32LE()
@@ -54,8 +54,8 @@ class Pak private constructor(val dataSource: () -> InputStream) {
                     size = -1
                 } else {
                     size = offsets[index + 1] - offset
-                    assertAsArgument(size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
-                    assertAsArgument(size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
+                    assertAsArgument(overrideSanityChecks || size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
+                    assertAsArgument(overrideSanityChecks || size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
                 }
                 return@Array PakEntry(index, size, offset, this)
             }
