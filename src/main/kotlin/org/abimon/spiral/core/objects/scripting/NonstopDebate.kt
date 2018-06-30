@@ -1,5 +1,6 @@
 package org.abimon.spiral.core.objects.scripting
 
+import org.abimon.spiral.core.objects.archives.Pak
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
@@ -8,11 +9,21 @@ import org.abimon.spiral.core.utils.foldToInt16LE
 import org.abimon.spiral.core.utils.readInt16LE
 import java.io.InputStream
 
-class NonstopDebate(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
+class NonstopDebate private constructor(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
+    companion object {
+        operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): NonstopDebate? {
+            try {
+                return NonstopDebate(game, dataSource)
+            } catch (iae: IllegalArgumentException) {
+                return null
+            }
+        }
+    }
+
     /** Time limit in seconds */
     val timeLimit: Int
 
-    /** 1.2 * timeLimit */
+    /** 2 * timeLimit */
     val gentleTimeLimit: Int
 
     /** 0.8 * timeLimit */
@@ -46,6 +57,8 @@ class NonstopDebate(val game: HopesPeakDRGame, val dataSource: () -> InputStream
 
                 return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
             }
+
+            assertAsArgument(stream.read() == -1, "Illegal stream size for Nonstop Debate (More data present after sections!)")
         } finally {
             stream.close()
         }

@@ -6,6 +6,7 @@ import org.abimon.spiral.core.objects.models.RoomObject
 import org.abimon.spiral.core.objects.scripting.CustomLin
 import org.abimon.spiral.core.objects.scripting.CustomWordScript
 import org.abimon.spiral.core.objects.scripting.Lin
+import org.abimon.spiral.core.objects.scripting.NonstopDebate
 import org.abimon.spiral.core.objects.text.CustomSTXT
 import java.io.InputStream
 
@@ -13,6 +14,8 @@ fun UnsafePak(dataSource: () -> InputStream): Pak = Pak(dataSource)!!
 fun UnsafeWAD(dataSource: () -> InputStream): WAD = WAD(dataSource)!!
 
 fun UnsafeLin(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = Lin(game, dataSource)!!
+
+fun UnsafeNonstopDebate(game: HopesPeakDRGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)!!
 
 fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     val customWAD = CustomWAD()
