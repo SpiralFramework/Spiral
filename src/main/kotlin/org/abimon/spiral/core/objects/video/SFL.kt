@@ -9,6 +9,7 @@ class SFL(val dataSource: () -> InputStream) {
     }
 
     data class SFLImage(val width: Int, val height: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int)
+    data class SFLDisplayImage(val originalWidth: Int, val displayWidth: Int, val originalHeight: Int, val displayHeight: Int, val unk1: Int, val unk2: Int)
     
     val headerUnk1: Int
     val headerUnk2: Int
@@ -32,6 +33,7 @@ class SFL(val dataSource: () -> InputStream) {
     val unk11: Int
 
     val images: Array<SFLImage>
+    val displayImages: Array<SFLDisplayImage>
 
     init {
         val stream = dataSource()
@@ -88,6 +90,23 @@ class SFL(val dataSource: () -> InputStream) {
                         stream.readInt32LE()
                 )
             }
+
+            stream.skip(24)
+
+            displayImages = Array(frameCount) {
+                return@Array SFLDisplayImage(
+                        stream.readInt32LE(),
+                        stream.readInt32LE(),
+
+                        stream.readInt32LE(),
+                        stream.readInt32LE(),
+
+                        stream.readInt32LE(),
+                        stream.readInt32LE()
+                )
+            }
+
+            /** SFL COMMAND: <data size, uint32> <some header? 2 uint16s> <command itself, 8 bytes>, <data size bytes> */
         } finally {
             stream.close()
         }
