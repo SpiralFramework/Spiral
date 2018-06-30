@@ -98,7 +98,5 @@ fun String.removeEscapes(): String =
             }
         }
 
-fun Byte.toHex(): String = "0x" + toString(16)
-fun Short.toHex(): String = "0x" + toString(16)
-fun Int.toHex(): String = "0x" + toString(16)
-fun Long.toHex(): String = "0x" + toString(16)
+fun ByteArray.foldToInt16LE(): IntArray = IntArray(size / 2) { i -> (this[i * 2 + 1].toInt() and 0xFF shl 8) or (this[i * 2].toInt() and 0xFF) }
+fun ByteArray.foldToInt16BE(): IntArray = IntArray(size / 2) { i -> (this[i * 2].toInt() and 0xFF shl 8) or (this[i * 2 + 1].toInt() and 0xFF) }
