@@ -3,10 +3,7 @@ package org.abimon.spiral.core.objects
 import org.abimon.spiral.core.objects.archives.*
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.models.RoomObject
-import org.abimon.spiral.core.objects.scripting.CustomLin
-import org.abimon.spiral.core.objects.scripting.CustomWordScript
-import org.abimon.spiral.core.objects.scripting.Lin
-import org.abimon.spiral.core.objects.scripting.NonstopDebate
+import org.abimon.spiral.core.objects.scripting.*
 import org.abimon.spiral.core.objects.text.CustomSTXT
 import java.io.InputStream
 
@@ -57,6 +54,12 @@ fun customRoomObject(init: RoomObject.() -> Unit): RoomObject {
     val roomObject = RoomObject(0, 0, 0, 0f, 0f, 0f, 0f, 0f, 0f, 0)
     roomObject.init()
     return roomObject
+}
+
+fun customNonstopDebate(init: CustomNonstopDebate.() -> Unit): CustomNonstopDebate {
+    val customNonstop = CustomNonstopDebate()
+    customNonstop.init()
+    return customNonstop
 }
 
 fun utfTable(init: UTFTableInfo.() -> Unit): UTFTableInfo {
