@@ -4,6 +4,9 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
+import org.abimon.osl.drills.nonstopDebate.NonstopDebateBasicDrill
+import org.abimon.osl.drills.nonstopDebate.NonstopDebateNamedDrill
+import org.abimon.osl.drills.nonstopDebate.NonstopDebateNewObjectDrill
 import org.abimon.osl.drills.stx.STXSetLanguageDrill
 import org.abimon.osl.drills.wrd.*
 import org.abimon.spiral.core.objects.game.DRGame
@@ -75,6 +78,19 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 else -> GameContext.CatchAllV3GameContext(value)
             }
         }
+
+    var nonstopDebateGame: HopesPeakKillingGame?
+        get() = (gameContext as? GameContext.NonstopDebateContext)?.game
+        set(value) {
+            gameContext = when (value) {
+                DR1 -> GameContext.DR1NonstopDebateContext
+                DR2 -> GameContext.DR2NonstopDebateContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakNonstopDebateContext
+                null -> null
+                else -> GameContext.CatchAllNonstopDebateContext(value)
+            }
+        }
+
     var strictParsing: Boolean = true
 
     var localiser: (String) -> String = String::toString
@@ -345,6 +361,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             SpiralLinLine(),
             SpiralWrdLine(),
             SpiralSTXLine(),
+            SpiralNonstopDebateLine(),
 
             ChangeGameDrill,
             ChangeContextDrill,
@@ -417,6 +434,17 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     FirstOf(
                             WordStringDrill,
                             STXSetLanguageDrill
+                    )
+            )
+
+    open fun SpiralNonstopDebateLine(): Rule =
+            Sequence(
+                    Action<Any> { gameContext is GameContext.NonstopDebateContext },
+                    FirstOf(
+                            NonstopDebateNewObjectDrill,
+
+                            NonstopDebateBasicDrill,
+                            NonstopDebateNamedDrill
                     )
             )
 

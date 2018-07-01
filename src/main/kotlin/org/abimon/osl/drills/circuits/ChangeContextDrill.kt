@@ -23,6 +23,9 @@ object ChangeContextDrill : DrillCircuit {
 
         this["STX"] = GameContext.STXGameContext.INSTANCE
         this["STXT"] = GameContext.STXGameContext.INSTANCE
+
+        DR1.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR1NonstopDebateContext) }
+        DR2.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR2NonstopDebateContext) }
     }
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
