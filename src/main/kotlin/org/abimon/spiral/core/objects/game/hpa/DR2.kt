@@ -9,7 +9,7 @@ import org.abimon.spiral.core.utils.*
 import java.io.File
 import java.util.*
 
-object DR2 : HopesPeakDRGame {
+object DR2 : HopesPeakKillingGame {
     override val pakNames: Map<String, Array<String>> =
             DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr2.json"))?.mapValues { (_, value) ->
                 ((value as? List<*>)?.asIterable()
@@ -309,4 +309,27 @@ object DR2 : HopesPeakDRGame {
     override val steamID: String = "413420"
 
     override val itemNames: Array<String> = SharedHPA.itemNames["dr2"] ?: emptyArray()
+
+    override val nonstopDebateOpCodeNames: Map<Int, String> = HashMap<Int, String>().apply {
+        this[0x00] = "TextID"
+        this[0x01] = "Type"
+        this[0x03] = "Shoot With Evidence"
+        this[0x06] = "Has Weak Point"
+        this[0x07] = "Advance"
+        this[0x0A] = "Transition"
+        this[0x0B] = "Fade Out"
+        this[0x0C] = "Horizontal"
+        this[0x0D] = "Vertical"
+        this[0x0E] = "Angle Acceleration"
+        this[0x0F] = "Angle"
+        this[0x10] = "Scale"
+        this[0x11] = "Final Scale"
+        this[0x13] = "Rotation"
+        this[0x14] = "Rotation Speed"
+        this[0x15] = "Character"
+        this[0x16] = "Sprite"
+        this[0x17] = "Background Animation"
+        this[0x19] = "Voice"
+        this[0x1B] = "Chapter"
+    }
 }
