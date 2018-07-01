@@ -106,7 +106,8 @@ class NonstopSection(entries: Int) {
     operator fun component14(): Int = rotation
     operator fun component15(): Int = rotationSpeed
     operator fun component16(): Int = sprite
-    operator fun component17(): Int = backgroundAnimation
-    operator fun component18(): Int = voice
-    operator fun component19(): Int = chapter
+    operator fun component17(): Int = sprite
+    operator fun component18(): Int = backgroundAnimation
+    operator fun component19(): Int = voice
+    operator fun component20(): Int = chapter
 }
