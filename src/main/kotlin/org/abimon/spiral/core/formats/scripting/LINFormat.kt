@@ -27,6 +27,8 @@ object LINFormat : SpiralFormat {
     override fun convert(game: DRGame?, format: SpiralFormat, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream, output: OutputStream, params: Map<String, Any?>): Boolean {
         if (super.convert(game, format, name, context, dataSource, output, params)) return true
 
+        val translateNames = params["lin:translateNames"]?.toString()?.toBoolean() ?: true
+
         val hpaGame = game as? HopesPeakDRGame ?: return false
 
         output.println("OSL Script")
@@ -35,12 +37,20 @@ object LINFormat : SpiralFormat {
         val lin = UnsafeLin(hpaGame, dataSource)
 
         lin.entries.forEach { entry ->
-            if (entry is LinTextScript)
-                output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
-                        ?: "0x${entry.opCode.toString(16)}"}|${entry.text?.replace("\n", "\\n") ?: "Hello, Null!"}")
-            else
-                output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
-                        ?: "0x${entry.opCode.toString(16)}"}|${entry.rawArguments.joinToString()}")
+            if (translateNames) {
+                if (entry is LinTextScript)
+                    output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
+                            ?: "0x${entry.opCode.toString(16)}"}|${entry.text?.replace("\n", "\\n") ?: "Hello, Null!"}")
+                else
+                    output.println("${game.opCodes[entry.opCode]?.first?.firstOrNull()
+                            ?: "0x${entry.opCode.toString(16)}"}|${entry.rawArguments.joinToString()}")
+            } else {
+                if (entry is LinTextScript)
+                    output.println("0x${entry.opCode.toString(16)}|${entry.text?.replace("\n", "\\n")
+                            ?: "Hello, Null!"}")
+                else
+                    output.println("0x${entry.opCode.toString(16)}|${entry.rawArguments.joinToString()}")
+            }
         }
 
         return true
