@@ -1,9 +1,7 @@
 package org.abimon.spiral.core.objects.scripting
 
 import org.abimon.spiral.core.objects.ICompilable
-import org.abimon.spiral.core.objects.game.hpa.DR1
-import org.abimon.spiral.core.objects.game.hpa.DR2
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakKillingGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.utils.writeInt16LE
 import java.io.OutputStream
@@ -14,15 +12,10 @@ class CustomNonstopDebate: ICompilable {
 
     val sections: MutableList<NonstopDebateSection> = ArrayList()
     var bytesPerSection: Int = 0
-
-    var game: HopesPeakDRGame = UnknownHopesPeakGame
+    var game: HopesPeakKillingGame = UnknownHopesPeakGame
         set(value) {
             field = value
-
-            when (field) {
-                DR1 -> bytesPerSection = 60
-                DR2 -> bytesPerSection = 68
-            }
+            bytesPerSection = value.nonstopDebateSectionSize
         }
 
     var timeLimit = 300

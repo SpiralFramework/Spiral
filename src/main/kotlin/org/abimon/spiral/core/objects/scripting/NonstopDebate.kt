@@ -1,15 +1,13 @@
 package org.abimon.spiral.core.objects.scripting
 
-import org.abimon.spiral.core.objects.archives.Pak
-import org.abimon.spiral.core.objects.game.hpa.DR1
-import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakKillingGame
 import org.abimon.spiral.core.utils.assertAsArgument
 import org.abimon.spiral.core.utils.foldToInt16LE
 import org.abimon.spiral.core.utils.readInt16LE
 import java.io.InputStream
 
-class NonstopDebate private constructor(val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
+class NonstopDebate private constructor(val game: HopesPeakKillingGame, val dataSource: () -> InputStream) {
     companion object {
         operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): NonstopDebate? {
             try {
@@ -45,11 +43,7 @@ class NonstopDebate private constructor(val game: HopesPeakDRGame, val dataSourc
             gentleTimeLimit = timeLimit * 2
             meanTimeLimit   = (timeLimit * 0.8).toInt()
 
-            val sectionBuffer = ByteArray(when(game) {
-                DR1 -> 60
-                DR2 -> 68
-                else -> throw IllegalArgumentException("No known section data for $game!")
-            })
+            val sectionBuffer = ByteArray(game.nonstopDebateSectionSize)
 
             sections = Array(numberOfSections) {
                 val read = stream.read(sectionBuffer)
