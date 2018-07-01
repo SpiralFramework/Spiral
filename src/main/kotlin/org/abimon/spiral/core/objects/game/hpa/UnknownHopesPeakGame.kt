@@ -6,7 +6,7 @@ import org.abimon.spiral.core.utils.*
 import java.io.File
 import java.util.*
 
-object UnknownHopesPeakGame: HopesPeakDRGame {
+object UnknownHopesPeakGame: HopesPeakKillingGame {
     override val pakNames: Map<String, Array<String>> = emptyMap()
     override val opCodes: OpCodeMap<IntArray, LinScript> =
                 OpCodeHashMap<IntArray, LinScript>().apply {
@@ -35,4 +35,6 @@ object UnknownHopesPeakGame: HopesPeakDRGame {
             )
     override val steamID: String? = null
     override val itemNames: Array<String> = emptyArray()
+    override val nonstopDebateOpCodeNames: Map<Int, String> = emptyMap()
+    override val nonstopDebateSectionSize: Int = 0
 }

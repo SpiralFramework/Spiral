@@ -332,4 +332,6 @@ object DR2 : HopesPeakKillingGame {
         this[0x19] = "Voice"
         this[0x1B] = "Chapter"
     }
+
+    override val nonstopDebateSectionSize: Int = 68
 }

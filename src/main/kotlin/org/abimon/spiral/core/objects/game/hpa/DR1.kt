@@ -304,6 +304,8 @@ object DR1 : HopesPeakKillingGame {
         this[0x1B] = "Chapter"
     }
 
+    override val nonstopDebateSectionSize: Int = 60
+
     fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
         val args: MutableList<Int> = ArrayList()
 
