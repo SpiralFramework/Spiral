@@ -19,7 +19,7 @@ object NonstopDebateNewObjectDrill: DrillCircuit {
                     ),
 
                     Action<Any> {
-                        push(SpiralDrillBit(StaticDrill(NonstopDebateNewObject((nonstopDebateGame ?: UnknownHopesPeakGame).nonstopDebateSectionSize / 2))))
+                        push(listOf(SpiralDrillBit(StaticDrill(NonstopDebateNewObject((nonstopDebateGame ?: UnknownHopesPeakGame).nonstopDebateSectionSize / 2)))))
                     }
             )
 }
