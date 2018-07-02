@@ -246,6 +246,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     "OSL Script\n",
                     Action<Any> { push(arrayOf(null, match())) },
                     OpenSpiralHeaderLines(),
+                    OptionalWhitespace(),
                     FirstOf(
                             Sequence(
                                     Action<Any> { strictParsing },
@@ -281,6 +282,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     "OSL Script\n",
                     OpenSpiralLines(),
+                    OptionalWhitespace(),
                     FirstOf(
                             Sequence(
                                     Action<Any> { strictParsing },

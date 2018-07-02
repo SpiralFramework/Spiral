@@ -37,7 +37,7 @@ object NonstopDebateNamedDrill : DrillHead<NonstopDebateVariable> {
         val opName = rawParams[0].toString()
         rawParams[0] = (parser.nonstopDebateGame ?: UnknownHopesPeakGame)
                 .nonstopDebateOpCodeNames.entries.first { (_, name) -> name == opName }
-                .key
+                .key.toString(16)
         return NonstopDebateBasicDrill.formScript(rawParams)
     }
 }
