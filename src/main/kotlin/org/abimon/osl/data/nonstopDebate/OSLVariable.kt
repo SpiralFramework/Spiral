@@ -9,5 +9,7 @@ data class OSLVariable<T : Any>(val key: String, val value: T, val klass: KClass
 
     object KEYS {
         val NONSTOP_TIMELIMIT = "Nonstop-TimeLimit"
+
+        val COMPILE_AS = "Compile-As"
     }
 }

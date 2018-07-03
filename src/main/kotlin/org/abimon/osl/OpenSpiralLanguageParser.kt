@@ -363,6 +363,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             SpiralSTXLine(),
             SpiralNonstopDebateLine(),
 
+            CompileAsDrill,
             ChangeGameDrill,
             ChangeContextDrill,
             EchoDrill,
