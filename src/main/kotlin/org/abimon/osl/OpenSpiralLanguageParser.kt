@@ -119,7 +119,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     val states = HashMap<Int, ParserState>()
 
-    var startingGame: GameContext? = null
     val startingFlags = HashMap<String, Boolean>()
     val startingData = HashMap<String, Any>()
 
@@ -130,6 +129,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     var stdout: PrintStream = DEFAULT_STDOUT
     var maxForLoopFange: Int = DEFAULT_MAX_FOR_RANGE
     var allowReadingFromJar: Boolean = true
+
+    var environment: DRGame? = null
 
     fun findLabel(): Int {
         var labelID = (0xFF * 0xFF) - 1
@@ -233,7 +234,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun OpenSpiralHeader(): Rule = Sequence(
             clearState(),
             Action<Any> {
-                startingGame = gameContext
                 startingFlags.clear()
                 startingData.clear()
 
@@ -256,7 +256,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             ),
             Action<Any> {
-                gameContext = startingGame
                 flags.clear()
                 data.clear()
 
@@ -270,7 +269,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun OpenSpiralLanguage(): Rule = Sequence(
             clearState(),
             Action<Any> {
-                startingGame = gameContext
                 startingFlags.clear()
                 startingData.clear()
 
@@ -292,7 +290,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             ),
             Action<Any> {
-                gameContext = startingGame
                 flags.clear()
                 data.clear()
 
@@ -632,7 +629,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
                                                                 (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
-                                                                                ?: emptyMap())[colour]
+                                                                        ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
                                                             }
@@ -647,7 +644,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                        (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame] ?: emptyMap())[colour]
+                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                        ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
                                                             }
@@ -682,7 +680,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                    (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -701,7 +699,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                        (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -790,7 +788,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                         pushTmpAction("WRD-TEXT-$cmd", text).run(context)
                                                         pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
-                                                                (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
+                                                        (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
                                                                 ?: emptyMap())[colour]
                                                                 ?: "cltNORMAL"}>").run(context)
                                                         return@Action true
@@ -825,7 +823,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("WRD-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
-                                                                        (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
+                                                                (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
                                                                         ?: emptyMap())[colour]
                                                                         ?: "cltNORMAL"}>").run(context)
                                                                 return@Action true
@@ -876,23 +874,34 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun RuleWithVariables(matching: Rule): Rule =
             Sequence(
                     FirstOf(
-                            matching,
+                            Sequence(
+                                    matching,
+                                    Action<Any> { push(match()) }
+                            ),
                             Sequence(
                                     '"',
-                                    '%',
-                                    OneOrMore(ParamMatcher),
-                                    Action<Any> { match() in data || match() == "GAME" },
+                                    Sequence(
+                                            '%',
+                                            OneOrMore(ParamMatcher)
+                                    ),
+                                    Action<Any> { match() in data || match() == "GAME" || match() == "ENVIRONMENT" },
+                                    Action<Any> { push(match()) },
                                     '"'
                             ),
                             Sequence(
-                                    '%',
-                                    OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')))),
-                                    Action<Any> { match() in data || match() == "GAME" }
+                                    Sequence(
+                                            '%',
+                                            OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')'))))
+                                    ),
+                                    Action<Any> { match() in data || match() == "GAME" || match() == "ENVIRONMENT" },
+                                    Action<Any> { push(match()) }
                             )
                     ),
-                    Action<Any> {
-                        var str = match()
+                    Action<Any>
+                    {
+                        var str = pop().toString()
                         str = str.replace("%GAME", drGame?.names?.firstOrNull() ?: "None")
+                        str = str.replace("%ENVIRONMENT", environment?.names?.firstOrNull() ?: "None")
 
                         for ((key, value) in data)
                             str = str.replace("%$key", value.toString())
