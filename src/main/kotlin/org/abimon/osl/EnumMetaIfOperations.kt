@@ -8,5 +8,5 @@ enum class EnumMetaIfOperations(private val compare: (OpenSpiralLanguageParser, 
         val NAMES: Array<String> by lazy { values().flatMap{ enum -> enum.names.toList() }.toTypedArray() }
     }
 
-    operator fun invoke(parser: OpenSpiralLanguageParser, variable: String, value: String): Boolean = compare(parser, variable, value)
+    operator fun invoke(parser: OpenSpiralLanguageParser, first: String, second: String): Boolean = compare(parser, first, second)
 }
