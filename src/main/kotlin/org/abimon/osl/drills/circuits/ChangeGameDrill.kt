@@ -1,7 +1,8 @@
 package org.abimon.osl.drills.circuits
 
+import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.spiral.core.objects.game.DRGame
+import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.game.hpa.UDG
@@ -9,19 +10,21 @@ import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.game.v3.V3
 import org.parboiled.Action
 import org.parboiled.Rule
+import kotlin.reflect.KClass
 
-object ChangeGameDrill : DrillCircuit {
+object ChangeGameDrill : DrillHead<GameContext> {
     val cmd = "CHANGE-GAME"
-    val games = HashMap<String, DRGame>().apply {
-        DR1.names.forEach { name -> put(name.toUpperCase(), DR1) }
-        DR2.names.forEach { name -> put(name.toUpperCase(), DR2) }
-        UDG.names.forEach { name -> put(name.toUpperCase(), UDG) }
+    val games = HashMap<String, GameContext>().apply {
+        DR1.names.forEach { name -> put(name.toUpperCase(), GameContext.DR1GameContext) }
+        DR2.names.forEach { name -> put(name.toUpperCase(), GameContext.DR2GameContext) }
+        UDG.names.forEach { name -> put(name.toUpperCase(), GameContext.UDGGameContext) }
 
-        V3.names.forEach { name -> put(name.toUpperCase(), V3) }
+        V3.names.forEach { name -> put(name.toUpperCase(), GameContext.V3GameContextObject) }
 
-        UnknownHopesPeakGame.names.forEach { name -> put(name.toUpperCase(), UnknownHopesPeakGame) }
+        UnknownHopesPeakGame.names.forEach { name -> put(name.toUpperCase(), GameContext.UnknownHopesPeakGameContext) }
     }
 
+    override val klass: KClass<GameContext> = GameContext::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
@@ -37,10 +40,13 @@ object ChangeGameDrill : DrillCircuit {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>) {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): GameContext? {
         if (parser.silence)
-            return
+            return null
 
-        parser.drGame = games[rawParams[0].toString().toUpperCase()] ?: UnknownHopesPeakGame
+        val context = games[rawParams[0].toString().toUpperCase()]
+        parser.gameContext =  context
+
+        return context
     }
 }
