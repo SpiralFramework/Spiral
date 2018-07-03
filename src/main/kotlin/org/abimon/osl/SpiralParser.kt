@@ -9,6 +9,7 @@ import org.parboiled.annotations.BuildParseTree
 import org.parboiled.support.Var
 import java.awt.Color
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @BuildParseTree
 abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
@@ -433,14 +434,66 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
             )
     )
 
-    open fun Decimal(): Rule =
+    open fun Decimal(): Rule = Decimal(OneOrMore(Digit()))
+    open fun Decimal(digitRule: Rule): Rule =
             Sequence(
-                    OneOrMore(Digit()),
+                    digitRule,
                     Optional(
                             Sequence(
                                     '.',
-                                    OneOrMore(Digit())
+                                    digitRule
                             )
                     )
             )
+
+    open fun Separator(): Rule =
+            Sequence(
+                    AnyOf(charArrayOf('|', ':')),
+                    OptionalInlineWhitespace()
+            )
+
+    open fun Duration(baseUnit: TimeUnit): Rule {
+        val duration = Var<Long>(0)
+        val tmpDuration = Var<Long>(0)
+
+        val durationRule = Sequence(
+                OneOrMore(Digit()),
+                Action<Any> { tmpDuration.set(match().toLongOrNull() ?: 0) },
+                OptionalInlineWhitespace(),
+                FirstOf(
+                        Sequence(
+                                FirstOf("ms", "milliseconds", "millisecond"),
+                                Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.MILLISECONDS)) }
+                        ),
+                        Sequence(
+                                FirstOf("s", "seconds", "second"),
+                                Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.SECONDS)) }
+                        ),
+                        Sequence(
+                                FirstOf("m", "minutes", "minute"),
+                                Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.MINUTES)) }
+                        ),
+                        Sequence(
+                                FirstOf("hr", "h",  "hours", "hour"),
+                                Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.HOURS)) }
+                        ),
+                        Sequence(
+                                FirstOf("d", "days", "day"),
+                                Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.DAYS)) }
+                        )
+                )
+        )
+
+        return Sequence(
+                Action<Any> { duration.set(0) },
+                durationRule,
+                ZeroOrMore(
+                        FirstOf(',', InlineWhitespace(), ':'),
+                        OptionalInlineWhitespace(),
+                        durationRule
+                ),
+
+                Action<Any> { push(duration.get()) }
+        )
+    }
 }

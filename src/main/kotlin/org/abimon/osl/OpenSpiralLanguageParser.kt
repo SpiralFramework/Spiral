@@ -7,6 +7,7 @@ import org.abimon.osl.drills.lin.*
 import org.abimon.osl.drills.nonstopDebate.NonstopDebateBasicDrill
 import org.abimon.osl.drills.nonstopDebate.NonstopDebateNamedDrill
 import org.abimon.osl.drills.nonstopDebate.NonstopDebateNewObjectDrill
+import org.abimon.osl.drills.nonstopDebate.NonstopDebateTimeLimitDrill
 import org.abimon.osl.drills.stx.STXSetLanguageDrill
 import org.abimon.osl.drills.wrd.*
 import org.abimon.spiral.core.objects.game.DRGame
@@ -441,6 +442,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Action<Any> { gameContext is GameContext.NonstopDebateContext },
                     FirstOf(
                             NonstopDebateNewObjectDrill,
+                            NonstopDebateTimeLimitDrill,
 
                             NonstopDebateBasicDrill,
                             NonstopDebateNamedDrill
