@@ -1,6 +1,5 @@
 package org.abimon.spiral.core.objects.scripting
 
-import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakKillingGame
 import org.abimon.spiral.core.utils.assertAsArgument
 import org.abimon.spiral.core.utils.foldToInt16LE
@@ -9,7 +8,7 @@ import java.io.InputStream
 
 class NonstopDebate private constructor(val game: HopesPeakKillingGame, val dataSource: () -> InputStream) {
     companion object {
-        operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): NonstopDebate? {
+        operator fun invoke(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate? {
             try {
                 return NonstopDebate(game, dataSource)
             } catch (iae: IllegalArgumentException) {

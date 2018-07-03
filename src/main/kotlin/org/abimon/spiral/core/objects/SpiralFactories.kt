@@ -2,6 +2,7 @@ package org.abimon.spiral.core.objects
 
 import org.abimon.spiral.core.objects.archives.*
 import org.abimon.spiral.core.objects.game.hpa.HopesPeakDRGame
+import org.abimon.spiral.core.objects.game.hpa.HopesPeakKillingGame
 import org.abimon.spiral.core.objects.models.RoomObject
 import org.abimon.spiral.core.objects.scripting.*
 import org.abimon.spiral.core.objects.text.CustomSTXT
@@ -12,7 +13,7 @@ fun UnsafeWAD(dataSource: () -> InputStream): WAD = WAD(dataSource)!!
 
 fun UnsafeLin(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = Lin(game, dataSource)!!
 
-fun UnsafeNonstopDebate(game: HopesPeakDRGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)!!
+fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)!!
 
 fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     val customWAD = CustomWAD()
