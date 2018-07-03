@@ -1,18 +1,19 @@
 package org.abimon.spiral.core.formats.scripting
 
-import org.abimon.osl.OpenSpiralLanguageParser
-import org.abimon.osl.SpiralDrillBit
-import org.abimon.osl.WordScriptCommand
-import org.abimon.osl.WordScriptString
+import org.abimon.osl.*
+import org.abimon.osl.data.nonstopDebate.NonstopDebateNewObject
+import org.abimon.osl.data.nonstopDebate.NonstopDebateVariable
 import org.abimon.spiral.core.data.SpiralData
 import org.abimon.spiral.core.formats.SpiralFormat
 import org.abimon.spiral.core.formats.text.STXFormat
 import org.abimon.spiral.core.objects.customLin
+import org.abimon.spiral.core.objects.customNonstopDebate
 import org.abimon.spiral.core.objects.customSTXT
 import org.abimon.spiral.core.objects.customWordScript
 import org.abimon.spiral.core.objects.game.DRGame
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
 import org.abimon.spiral.core.objects.scripting.EnumWordScriptCommand
+import org.abimon.spiral.core.objects.scripting.NonstopDebateSection
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
 import org.abimon.spiral.core.objects.scripting.wrd.WrdScript
 import org.abimon.spiral.core.objects.text.STXT
@@ -24,14 +25,14 @@ import java.io.OutputStream
 object OpenSpiralLanguageFormat: SpiralFormat {
     override val name: String = "Open Spiral Language"
     override val extension: String = "osl"
-    override val conversions: Array<SpiralFormat> = arrayOf(LINFormat, WRDFormat, STXFormat)
+    override val conversions: Array<SpiralFormat> = arrayOf(LINFormat, WRDFormat, STXFormat, NonstopFormat)
 
     override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean {
         val text = String(dataSource().use { stream -> stream.readBytes() }, Charsets.UTF_8)
 
         val parser = OpenSpiralLanguageParser { fileName -> context(fileName)?.invoke()?.use { stream -> stream.readBytes() }}
 
-        parser.drGame = game ?: UnknownHopesPeakGame
+        parser.environment = game ?: UnknownHopesPeakGame
         parser["FILENAME"] = name
         parser["OS"] = EnumOS.determineOS().name
 
@@ -55,7 +56,7 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                         ?: unlocalised
             }
 
-        parser.drGame = game ?: UnknownHopesPeakGame
+        parser.environment = game ?: UnknownHopesPeakGame
         parser["FILENAME"] = name
         parser["OS"] = EnumOS.determineOS().name
 
@@ -183,6 +184,50 @@ object OpenSpiralLanguageFormat: SpiralFormat {
                 }
 
                 customSTX.compile(output)
+            }
+            NonstopFormat -> {
+                var section: NonstopDebateSection? = null
+                val customDebate = customNonstopDebate {
+                    result.valueStack.reversed().forEach { value ->
+                        if (value is List<*>) {
+                            val drillBit = (value[0] as? SpiralDrillBit) ?: return@forEach
+                            val head = drillBit.head
+                            try {
+                                val oslParams = value.subList(1, value.size).filterNotNull().toTypedArray()
+
+                                val products = head.operate(parser, oslParams) ?: return@forEach
+
+                                when (head.klass) {
+                                    GameContext::class -> {
+                                        val gameContext = products as GameContext
+
+                                        if (gameContext is GameContext.NonstopDebateContext)
+                                            this.game = gameContext.game
+                                    }
+                                    NonstopDebateVariable::class -> {
+                                        val variable = products as NonstopDebateVariable
+
+                                        section?.let { nonstopSection ->
+                                            if (variable.index < nonstopSection.data.size)
+                                                nonstopSection[variable.index] = variable.data
+                                        }
+                                    }
+                                    NonstopDebateNewObject::class -> {
+                                        section?.let(this::section)
+
+                                        section = NonstopDebateSection((products as NonstopDebateNewObject).size)
+                                    }
+                                }
+                            } catch (th: Throwable) {
+                                throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
+                            }
+                        }
+                    }
+
+                    section?.let(this::section)
+                }
+
+                customDebate.compile(output)
             }
         }
 

@@ -372,6 +372,8 @@ object Gurren {
                 ?: return@Command errPrintln("Error: No format known by name or extension ${params[3]}")
         val formatParams: Map<String, String> = if (params.size == 4) emptyMap() else params.copyFrom(4).mapNotNull { param -> param.split('=', limit = 2).takeIf { paramList -> paramList.size == 2 }?.run { this[0] to this[1] } }.toMap()
 
+        val override = formatParams["convert:override"]?.toBoolean() ?: false
+
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
             val fileContext = FileContext(file.absoluteParentFile)
@@ -381,7 +383,8 @@ object Gurren {
             else {
                 if (convertFrom.canConvert(game, convertTo)) {
                     val output = File(file.absolutePath.replace(".${convertFrom.extension
-                            ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+                            ?: file.extension}", "") + ".${convertTo.extension
+                            ?: "unk"}").let { f -> if (override) f else f.ensureUnique() }
 
                     try {
                         val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
@@ -408,7 +411,8 @@ object Gurren {
                 else {
                     if (convertFrom.canConvert(game, convertTo)) {
                         val output = File(subfile.absolutePath.replace(".${convertFrom.extension
-                                ?: subfile.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
+                                ?: subfile.extension}", "") + ".${convertTo.extension
+                                ?: "unk"}").let { f -> if (override) f else f.ensureUnique() }
 
                         try {
                             val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
