@@ -177,8 +177,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             this.gameContext,
             this.strictParsing,
 
-            this.flags.entries.toTypedArray(),
-            this.data.entries.toTypedArray(),
+            this.flags.entries.map { (a, b) -> a to b }.toTypedArray(),
+            this.data.entries.map { (a, b) -> a to b }.toTypedArray(),
 
             this.labels.toTypedArray(),
 
@@ -211,8 +211,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                 this.gameContext,
                 this.strictParsing,
 
-                this.flags.entries.toTypedArray(),
-                this.data.entries.toTypedArray(),
+                this.flags.entries.map { (a, b) -> a to b }.toTypedArray(),
+                this.data.entries.map { (a, b) -> a to b }.toTypedArray(),
 
                 this.labels.toTypedArray(),
 
