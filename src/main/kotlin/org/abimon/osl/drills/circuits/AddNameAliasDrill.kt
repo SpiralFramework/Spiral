@@ -3,6 +3,7 @@ package org.abimon.osl.drills.circuits
 import org.abimon.osl.GameContext
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.spiral.core.objects.game.hpa.UnknownHopesPeakGame
+import org.abimon.spiral.core.objects.game.v3.V3
 import org.parboiled.Rule
 
 object AddNameAliasDrill : DrillCircuit {
@@ -45,6 +46,8 @@ object AddNameAliasDrill : DrillCircuit {
                     id = intID
                 else if (parser.gameContext is GameContext.HopesPeakGameContext)
                     id = (parser.hopesPeakGame ?: UnknownHopesPeakGame).characterIdentifiers[rawParams[1].toString()] ?: 0
+                else if (parser.gameContext is GameContext.V3GameContext)
+                    id = (parser.v3Game ?: V3).characterIdentifiers[rawParams[1].toString()] ?: 0
                 else
                     id = 0
             }
