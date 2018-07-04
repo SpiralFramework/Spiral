@@ -887,7 +887,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             '%',
                                             OneOrMore(ParamMatcher)
                                     ),
-                                    Action<Any> { match() in data || match() == "GAME" || match() == "ENVIRONMENT" },
+                                    Action<Any> { match().substring(1).let { key -> key in data || key == "GAME" || key == "ENVIRONMENT" } },
                                     Action<Any> { push(match()) },
                                     '"'
                             ),
@@ -896,7 +896,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             '%',
                                             OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')'))))
                                     ),
-                                    Action<Any> { match() in data || match() == "GAME" || match() == "ENVIRONMENT" },
+                                    Action<Any> { match().substring(1).let { key -> key in data || key == "GAME" || key == "ENVIRONMENT" } },
                                     Action<Any> { push(match()) }
                             )
                     ),
