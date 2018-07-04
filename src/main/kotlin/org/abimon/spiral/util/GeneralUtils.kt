@@ -248,3 +248,5 @@ fun decompress(dataSource: () -> InputStream): () -> InputStream {
 
     return dataSource
 }
+
+fun decompressData(dataSource: () -> InputStream): () -> InputStream = decompress(dataSource)

@@ -28,6 +28,7 @@ import org.abimon.spiral.mvc.SpiralModel
 import org.abimon.spiral.mvc.SpiralModel.Command
 import org.abimon.spiral.util.MediaWrapper
 import org.abimon.spiral.util.absoluteParentFile
+import org.abimon.spiral.util.decompressData
 import org.abimon.spiral.util.rocketFuel.responseStream
 import org.abimon.visi.collections.copyFrom
 import org.abimon.visi.collections.group
@@ -243,9 +244,10 @@ object Gurren {
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
             val fileContext = FileContext(file.absoluteParentFile)
+            val data = decompressData(file::inputStream)
 
             val format = SpiralFormats.formatForExtension(file.extension)
-                    ?: SpiralFormats.formatForData(game, file::inputStream, file.name, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
+                    ?: SpiralFormats.formatForData(game, data, file.name, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
             if (format == null)
                 rows.add(arrayOf(file.path, "N/a", "No Identifiable Format", "N/a"))
             else {
@@ -258,7 +260,7 @@ object Gurren {
                                 ?: file.extension}", "") + ".${tmpConvertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            val didConvert = FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
+                            val didConvert = FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, file.name, fileContext::provide, data, out, formatParams) }
                             if (didConvert)
                                 rows.add(arrayOf(file.path, output.path, format.name, tmpConvertTo.name))
                             else
@@ -277,7 +279,7 @@ object Gurren {
                                 ?: file.extension}", "") + ".${convertTo.extension ?: "unk"}").ensureUnique()
 
                         try {
-                            val didConvert = FileOutputStream(output).use { out -> format.convert(game, convertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
+                            val didConvert = FileOutputStream(output).use { out -> format.convert(game, convertTo, file.name, fileContext::provide, data, out, formatParams) }
                             if (didConvert)
                                 rows.add(arrayOf(file.path, output.path, format.name, convertTo.name))
                             else
@@ -296,8 +298,9 @@ object Gurren {
             val fileContext = FileContext(file)
 
             file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
+                val data = decompressData(subfile::inputStream)
                 val format = SpiralFormats.formatForExtension(subfile.extension)
-                        ?: SpiralFormats.formatForData(game, subfile::inputStream, subfile relativePathFrom file, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
+                        ?: SpiralFormats.formatForData(game, data, subfile relativePathFrom file, if (game == null) SpiralFormats.gameAmbiguousFormats else SpiralFormats.formats)
                 if (format == null)
                     rows.add(arrayOf(subfile relativePathTo file, "N/a", "No Identifiable Format", "N/a"))
                 else {
@@ -314,7 +317,7 @@ object Gurren {
                                 return@run this
                             }
                             try {
-                                val didConvert = FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
+                                val didConvert = FileOutputStream(output).use { out -> format.convert(game, tmpConvertTo, subfile relativePathFrom file, fileContext::provide, data, out, formatParams) }
                                 if (didConvert)
                                     rows.add(arrayOf(subfile relativePathTo file, output relativePathTo file, format.name, tmpConvertTo.name))
                                 else
@@ -377,8 +380,9 @@ object Gurren {
         val rows = ArrayList<Array<String>>()
         if (file.isFile) {
             val fileContext = FileContext(file.absoluteParentFile)
+            val data = decompressData(file::inputStream)
 
-            if (!convertFrom.isFormat(game, file.name, fileContext::provide, file::inputStream))
+            if (!convertFrom.isFormat(game, file.name, fileContext::provide, data))
                 rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
             else {
                 if (convertFrom.canConvert(game, convertTo)) {
@@ -387,7 +391,7 @@ object Gurren {
                             ?: "unk"}").let { f -> if (override) f else f.ensureUnique() }
 
                     try {
-                        val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, file.name, fileContext::provide, file::inputStream, out, formatParams) }
+                        val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, file.name, fileContext::provide, data, out, formatParams) }
 
                         if(didConvert)
                             rows.add(arrayOf(file.path, output.path, convertFrom.name, convertTo.name))
@@ -406,7 +410,8 @@ object Gurren {
             val fileContext = FileContext(file)
 
             file.iterate(filters = ignoreFilters).forEach dirIteration@{ subfile ->
-                if (!convertFrom.isFormat(game, subfile relativePathFrom file, fileContext::provide, subfile::inputStream))
+                val data = decompressData(subfile::inputStream)
+                if (!convertFrom.isFormat(game, subfile relativePathFrom file, fileContext::provide, data))
                     rows.add(arrayOf(file.path, "N/a", "File is not of type ${convertFrom.name}", "N/a"))
                 else {
                     if (convertFrom.canConvert(game, convertTo)) {
@@ -415,7 +420,7 @@ object Gurren {
                                 ?: "unk"}").let { f -> if (override) f else f.ensureUnique() }
 
                         try {
-                            val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, subfile relativePathFrom file, fileContext::provide, subfile::inputStream, out, formatParams) }
+                            val didConvert = FileOutputStream(output).use { out -> convertFrom.convert(game, convertTo, subfile relativePathFrom file, fileContext::provide, data, out, formatParams) }
                             if (didConvert)
                                 rows.add(arrayOf(subfile relativePathTo file, output relativePathTo file, convertFrom.name, convertTo.name))
                             else
