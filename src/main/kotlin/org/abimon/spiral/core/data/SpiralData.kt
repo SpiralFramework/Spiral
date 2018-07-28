@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory
 
 object SpiralData {
     val billingDead = true
-    val JENKINS_PATH = "http://jenkins.abimon.org"
+    val JENKINS_PATH = "http://jenkins.abimon.org:8666"
     val JENKINS_PROJECT_NAME = "SPIRAL"
     val JENKINS_PROJECT_FILE = "SPIRAL-all.jar"
 
