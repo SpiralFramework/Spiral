@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
 
 object LinCameraFocusDrill : DrillHead<LinScript> {
     val cmd: String = "LIN-CAMERA-FOCUS"
-    val NAME = AllButMatcher(charArrayOf(':', '\n'))
+
     val NUMERAL_REGEX = "\\d+".toRegex()
 
     override val klass: KClass<LinScript> = LinScript::class
@@ -24,28 +24,18 @@ object LinCameraFocusDrill : DrillHead<LinScript> {
                     clearTmpStack(cmd),
 
                     Sequence(
-                            "Focus camera on",
+                            FirstOf("Focus camera on", "Set camera focus to", "Camera Focus:"),
                             pushDrillHead(cmd, this@LinCameraFocusDrill),
                             InlineWhitespace(),
-                            FirstOf(
-                                    Parameter(cmd),
-                                    Sequence(
-                                            OneOrMore(Digit()),
-                                            pushTmpAction(cmd)
-                                    )
-                            ),
-                            pushTmpAction(cmd)
+                            OneOrMore(Digit()),
+                            pushTmpFromStack(cmd)
                     ),
 
                     pushStackWithHead(cmd)
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
-        val uiStateStr = rawParams[0].toString()
-
-        val uiState: Int
-
-        uiState = uiStateStr.toIntOrNull() ?: 0
+        val uiState = rawParams[0].toString().toIntOrNull() ?: 0
 
         return when(parser.hopesPeakGame) {
             DR1 -> ChangeUIEntry(26, uiState)
