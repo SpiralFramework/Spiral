@@ -391,6 +391,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinBustSpriteDrill,
                             LinHideSpriteDrill,
                             LinUIDrill,
+                            LinCameraFocusDrill,
                             LinIfDrill,
                             LinIfGameStateDrill,
                             LinIfRandDrill,
