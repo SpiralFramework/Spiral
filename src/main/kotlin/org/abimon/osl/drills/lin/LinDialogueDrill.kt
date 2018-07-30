@@ -60,8 +60,8 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                                     ?: 0
                     ), //Replace with valid naming or numbers or whatever
                     TextEntry("${rawParams[1]}", -1),
-                    WaitFrameEntry.DR1,
-                    WaitForInputEntry.DR1
+                    WaitFrameEntry.DR2,
+                    WaitForInputEntry.DR2
             )
             else -> TODO("Dialogue is not documented for $game")
         }

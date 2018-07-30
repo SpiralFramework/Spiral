@@ -135,6 +135,7 @@ object OSL {
     /**
      * We use this here as an alternative to a JSON library because we need it for literally two files
      */
+    @Suppress("UNUSED_PARAMETER")
     @BuildParseTree
     private open class JsonParser(parboiledCreated: Boolean) : BaseParser<Any>() {
         companion object {
