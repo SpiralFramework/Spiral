@@ -112,6 +112,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customFlagNames: MutableMap<String, Int> by dataProperty("custom_flag_names", ::HashMap)
     val customLabelNames: MutableMap<String, Int> by dataProperty("custom_label_names", ::HashMap)
     val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", ::HashMap)
+    val customAnimationNames: MutableMap<String, Int> by dataProperty("cusotm_animation_names", ::HashMap)
+
     val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
     val wordScriptLabels: MutableList<String> by dataProperty("word_script_labels", ::ArrayList)
@@ -304,13 +306,13 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun OpenSpiralHeaderLines(): Rule = Sequence(
             OptionalWhitespace(),
             SpiralHeaderLine(),
-            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralHeaderLine()))
+            ZeroOrMore(Sequence(Optional(OptionalInlineWhitespace(), Comment()), Ch('\n'), OptionalWhitespace(), SpiralHeaderLine()))
     )
 
     open fun OpenSpiralLines(): Rule = Sequence(
             OptionalWhitespace(),
             SpiralTextLine(),
-            ZeroOrMore(Sequence(Ch('\n'), OptionalWhitespace(), SpiralTextLine()))
+            ZeroOrMore(Sequence(Optional(OptionalInlineWhitespace(), Comment()), Ch('\n'), OptionalWhitespace(), SpiralTextLine()))
     )
 
     open fun SpiralHeaderLine(): Rule =
@@ -371,6 +373,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             AddFlagAliasDrill,
             AddLabelAliasDrill,
             AddItemNameAliasDrill,
+            AddAnimationAliasDrill,
             StrictParsingDrill,
             MetaIfDrill,
             ErrorDrill,
@@ -388,7 +391,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     FirstOf(
                             BasicLinTextDrill,
                             LinDialogueDrill,
-                            LinBustSpriteDrill,
+                            LinSpriteDrill,
                             LinHideSpriteDrill,
                             LinUIDrill,
                             LinCameraFocusDrill,
@@ -407,6 +410,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                             LinArithmeticGameState,
                             LinRandChoicesDrill,
+
+                            LinAnimationDrill,
 
                             BasicLinSpiralDrill,
                             NamedLinSpiralDrill
@@ -472,6 +477,21 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
         val runner = ReportingParseRunner<Any>(OpenSpiralLanguage())
         return runner.run(script)
+    }
+
+    fun parseWithOutput(lines: String): Pair<ParsingResult<Any>, String> {
+        val headerRunner = ReportingParseRunner<Any>(OpenSpiralHeader())
+
+        var stack: List<Any>
+        var script: String = lines.replace("\r\n", "\n")
+
+        do {
+            stack = headerRunner.run(script).valueStack.reversed()
+            script = stack.joinToString("\n") { str -> (str as Array<*>)[1].toString().trim() }
+        } while (stack.any { value -> (value as Array<*>)[0] != null })
+
+        val runner = ReportingParseRunner<Any>(OpenSpiralLanguage())
+        return runner.run(script) to script
     }
 
     fun load(name: String): ByteArray? = oslContext(name) ?: if (allowReadingFromJar) readFromJar(name) else null
@@ -1067,6 +1087,45 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     return@Action false
 
                                 return@Action push(index)
+                            }
+                    )
+            )
+
+    open fun AnimationID(): Rule =
+            FirstOf(
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val labelName = pop()
+
+                                val id = customAnimationNames[labelName] ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
+                            }
+                    ),
+                    Sequence(
+                            RuleWithVariables(OneOrMore(Digit())),
+
+                            CommaSeparator(),
+
+                            RuleWithVariables(OneOrMore(Digit())),
+                            Action<Any> {
+                                val first = pop()
+                                val second = pop()
+
+                                push(first)
+                                push(second)
+                            }
+                    ),
+                    Sequence(
+                            "fla_",
+                            RuleWithVariables(OneOrMore(Digit())),
+                            Action<Any> {
+                                val id = pop().toString().toIntOrNull() ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
                             }
                     )
             )
