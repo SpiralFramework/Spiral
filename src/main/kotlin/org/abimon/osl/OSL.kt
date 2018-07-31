@@ -20,6 +20,7 @@ import org.parboiled.errors.InvalidInputError
 import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.Var
 import java.io.File
+import java.io.FileOutputStream
 import java.math.BigDecimal
 
 object OSL {
@@ -31,8 +32,8 @@ object OSL {
         DataHandler.stringToMap = { string -> jsonParser.parse(string) }
         DataHandler.streamToMap = { stream -> jsonParser.parse(String(stream.readBytes())) }
 
-        val script = File(args.firstOrNull { str -> str.startsWith("--script=") }?.substringBefore('=') ?: run { print("Script: "); readLine() ?: error("No script provided!") })
-        val parent = File(script.absolutePath.substringBeforeLast(File.separator))
+        val script = File(args.firstOrNull { str -> str.startsWith("--script=") }?.substringAfter('=') ?: run { print("Script: "); readLine() ?: error("No script provided!") })
+        val parent = File(args.firstOrNull { str -> str.startsWith("--parent=") }?.substringAfter('=') ?:script.absolutePath.substringBeforeLast(File.separator))
 
         val parser = OpenSpiralLanguageParser { name ->
             val file = File(parent, name)
@@ -41,9 +42,9 @@ object OSL {
             return@OpenSpiralLanguageParser null
         }
 
-        parser.localisationFile = File(args.firstOrNull { str -> str.startsWith("--lang=") }?.substringBefore('=') ?: "en_US.lang")
+        parser.localisationFile = File(args.firstOrNull { str -> str.startsWith("--lang=") }?.substringAfter('=') ?: "en_US.lang")
 
-        val result = parser.parse(script.readText())
+        val (result, finalScript) = parser.parseWithOutput(script.readText())
 
         var compiling: Any? = null
         var section: NonstopDebateSection? = null
@@ -126,10 +127,50 @@ object OSL {
             if (compiling is CustomNonstopDebate)
                 section?.let(compiling::section)
 
-            compiled[script.name] = compiling
+            compiled[script.name.substringBeforeLast('.')] = compiling
         }
 
+        println()
         println(compiled)
+        println()
+        finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
+        println()
+        println(finalScript)
+        finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
+        println("\n")
+
+        val saveTo = File(args.firstOrNull { str -> str.startsWith("--save_to=") }?.substringAfter('=') ?: run { print("Save To: "); readLine() ?: return })
+        if (!saveTo.exists())
+            saveTo.mkdirs()
+
+        compiled.forEach { name, product ->
+            val output: File?
+
+            when (product) {
+                is CustomLin -> {
+                    output = File(saveTo, "$name.lin")
+                    FileOutputStream(output).use(product::compile)
+                }
+                is CustomWordScript -> {
+                    output = File(saveTo, "$name.wrd")
+                    FileOutputStream(output).use(product::compile)
+                }
+                is CustomNonstopDebate -> {
+                    output = File(saveTo, "$name.dat")
+                    FileOutputStream(output).use(product::compile)
+                }
+                is CustomSTXT -> {
+                    output = File(saveTo, "$name.stx")
+                    FileOutputStream(output).use(product::compile)
+                }
+                else -> {
+                    output = null
+                    return@forEach
+                }
+            }
+
+            println("Compiled $name (type: ${product::class}) to $output")
+        }
     }
 
     /**
