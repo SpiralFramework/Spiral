@@ -105,7 +105,7 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
         if (!tmpStack.containsKey(cmd))
             tmpStack[cmd] = LinkedList()
         if (!context.valueStack.isEmpty)
-            tmpStack[cmd]!!.push(pop());
+            tmpStack[cmd]!!.push(pop())
         return@Action true
     }
 
@@ -452,6 +452,13 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                     OptionalInlineWhitespace()
             )
 
+    open fun CommaSeparator(): Rule =
+            Sequence(
+                    OptionalInlineWhitespace(),
+                    ',',
+                    OptionalInlineWhitespace()
+            )
+
     open fun Duration(baseUnit: TimeUnit): Rule {
         val duration = Var<Long>(0)
         val tmpDuration = Var<Long>(0)
@@ -474,7 +481,7 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                                 Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.MINUTES)) }
                         ),
                         Sequence(
-                                FirstOf("hr", "h",  "hours", "hour"),
+                                FirstOf("hr", "h", "hours", "hour"),
                                 Action<Any> { duration.set(duration.get() + baseUnit.convert(tmpDuration.get(), TimeUnit.HOURS)) }
                         ),
                         Sequence(
@@ -494,6 +501,58 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                 ),
 
                 Action<Any> { push(duration.get()) }
+        )
+    }
+
+    open fun NoopPass(context: Context<Any>): Boolean = false
+    open fun NoopFail(context: Context<Any>): Boolean = false
+
+    open fun FunctionRule(parameters: Array<Pair<Any, Rule>>, whenMissing: Array<(Context<Any>) -> Boolean> = parameters.map { return@map this::NoopFail }.toTypedArray()): Rule {
+        val hasBeenPassed = Var<BooleanArray>()
+
+        val separators = parameters.mapIndexed { index, _ -> if (index == 0) EMPTY else CommaSeparator() }
+        val sequenced = Sequence(parameters.mapIndexed { index, (_, rule) -> FirstOf(Sequence(separators[index], rule), Action(whenMissing[index])) }.toTypedArray())
+        val named = Sequence(
+                ZeroOrMore(
+                        FirstOf(parameters.mapIndexed { index, (name, rule) ->
+                            Sequence(
+                                    Action<Any> { !hasBeenPassed.get()[index] },
+                                    if (name is Array<*>) FirstOf(name) else name.toString(),
+                                    OptionalInlineWhitespace(),
+                                    FirstOf(
+                                            ':',
+                                            '='
+                                    ),
+                                    OptionalInlineWhitespace(),
+                                    rule,
+                                    Action<Any> { hasBeenPassed.get()[index] = true; true },
+                                    separators[index]
+                            )
+                        }.toTypedArray())
+                ),
+
+                Action<Any> { actionContext ->
+                    hasBeenPassed.get().foldIndexed(true) { index, success, passed ->
+                        if (passed || !success)
+                            return@foldIndexed success
+
+                        return@foldIndexed whenMissing[index](actionContext)
+                    }
+                }
+        )
+
+
+        return Sequence(
+                Action<Any> { hasBeenPassed.set(BooleanArray(parameters.size) { false }) },
+                '(',
+                OptionalInlineWhitespace(),
+                FirstOf(
+                        sequenced,
+                        named
+                ),
+                OptionalInlineWhitespace(),
+                ')',
+                Optional(';')
         )
     }
 }
