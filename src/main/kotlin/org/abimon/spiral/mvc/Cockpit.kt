@@ -39,12 +39,14 @@ fun startupSpiral(args: Array<String>) {
     SpiralModel.imperator.hireSoldiers(GurrenUtils)
     SpiralModel.imperator.hireSoldiers(GurrenFileOperation)
 
-    val maxBuild = Gurren.dir.walk().filter { file -> file.name.matches("SPIRAL-\\d+.jar".toRegex()) }.maxBy { file -> Gurren.buildFor(file.inputStream().md5Hash()) }
+    if (args.none { arg -> arg.toLowerCase() == "--disable-update-check" }) {
+        val maxBuild = Gurren.dir.walk().filter { file -> file.name.matches("SPIRAL-\\d+.jar".toRegex()) }.maxBy { file -> Gurren.buildFor(file.inputStream().md5Hash()) }
 
-    if (maxBuild == null || maxBuild.name == Gurren.jarFile.name)
-        Gurren.checkForUpdates.turn(InstanceOrder("CHECK-FOR-UPDATE", scout = null, data = "check_for_update"))
-    else
-        println("SPIRAL version ${Gurren.version}; build ${Gurren.currentBuild} - Downloaded file $maxBuild is on build ${Gurren.buildFor(maxBuild.inputStream().md5Hash())}")
+        if (maxBuild == null || maxBuild.name == Gurren.jarFile.name)
+            Gurren.checkForUpdates.turn(InstanceOrder("CHECK-FOR-UPDATE", scout = null, data = "check_for_update"))
+        else
+            println("SPIRAL version ${Gurren.version}; build ${Gurren.currentBuild} - Downloaded file $maxBuild is on build ${Gurren.buildFor(maxBuild.inputStream().md5Hash())}")
+    }
 
     println("Initialising SPIRAL")
 
