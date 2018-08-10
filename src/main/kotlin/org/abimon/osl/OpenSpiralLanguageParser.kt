@@ -693,20 +693,32 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                     ),
                                                     Sequence(
                                                             '&',
+                                                            FirstOf("{br}", "{break}", "{newline}"),
+                                                            InlineWhitespace(),
+                                                            Action<Any> {
+                                                                val text = pop().toString()
+
+                                                                pushTmp("LIN-TEXT-$cmd", text)
+                                                                pushTmp("LIN-TEXT-$cmd", "\n")
+                                                                return@Action true
+                                                            }
+                                                    ),
+                                                    Sequence(
+                                                            '&',
                                                             '{',
                                                             FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                             Action<Any> { push(match()) },
                                                             '}',
                                                             InlineWhitespace(),
-                                                            Action<Any> { context ->
+                                                            Action<Any> {
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
 
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
+                                                                pushTmp("LIN-TEXT-$cmd", text)
+                                                                pushTmp("LIN-TEXT-$cmd", "<CLT ${
                                                                 (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
-                                                                        ?: 0}>").run(context)
+                                                                        ?: 0}>")
                                                                 return@Action true
                                                             }
                                                     ),
@@ -717,15 +729,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                             Action<Any> { push(match()) },
                                                             '}',
                                                             InlineWhitespace(),
-                                                            Action<Any> { context ->
+                                                            Action<Any> {
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
 
-                                                                pushTmpAction("LIN-TEXT-$cmd", text).run(context)
-                                                                pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
+                                                                pushTmp("LIN-TEXT-$cmd", text)
+                                                                pushTmp("LIN-TEXT-$cmd", "<CLT ${
                                                                 (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
                                                                         ?: emptyMap())[colour]
-                                                                        ?: 0}>").run(context)
+                                                                        ?: 0}>")
                                                                 return@Action true
                                                             }
                                                     )
