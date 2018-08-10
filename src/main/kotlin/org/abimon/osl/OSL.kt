@@ -178,7 +178,7 @@ object OSL {
      */
     @Suppress("UNUSED_PARAMETER")
     @BuildParseTree
-    private open class JsonParser(parboiledCreated: Boolean) : BaseParser<Any>() {
+    open class JsonParser(parboiledCreated: Boolean) : BaseParser<Any>() {
         companion object {
             operator fun invoke(): JsonParser = Parboiled.createParser(JsonParser::class.java, true)
         }
@@ -207,7 +207,6 @@ object OSL {
         open fun Digit(base: Int): Rule = FirstOf(AnyOf(digitsLower.sliceArray(0 until base)), AnyOf(digitsUpper.sliceArray(0 until base)))
         open fun WhitespaceCharacter(): Rule = AnyOf(whitespace)
         open fun OptionalWhitespace(): Rule = ZeroOrMore(WhitespaceCharacter())
-        open fun Whitespace(): Rule = OneOrMore(WhitespaceCharacter())
         open fun InlineWhitespaceCharacter(): Rule = AnyOf(charArrayOf('\t', ' '))
         open fun InlineWhitespace(): Rule = OneOrMore(InlineWhitespaceCharacter())
         open fun OptionalInlineWhitespace(): Rule = ZeroOrMore(InlineWhitespaceCharacter())
@@ -219,8 +218,6 @@ object OSL {
 
             return result.resultValue as? Map<String, Any>
         }
-
-        open fun Push(value: Any? = null): Action<Any> = Action { push(value ?: match()) }
 
         open fun JsonObject(): Rule {
             val mapVar = Var<MutableMap<String, Any>>(HashMap())
