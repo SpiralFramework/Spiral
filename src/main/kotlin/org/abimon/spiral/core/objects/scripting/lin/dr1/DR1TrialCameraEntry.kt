@@ -7,4 +7,6 @@ data class DR1TrialCameraEntry(val characterID: Int, val motionID: Int): LinScri
 
     override val opCode: Int = 0x14
     override val rawArguments: IntArray = intArrayOf(characterID, motionID shr 8, motionID % 256)
+
+    override fun format(): String = "Trial Camera|$characterID, ${motionID shr 8}, ${motionID % 256}"
 }

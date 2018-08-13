@@ -10,4 +10,6 @@ class StopScriptEntry(): LinScript {
 
     override val opCode: Int = 0x1A
     override val rawArguments: IntArray = intArrayOf()
+
+    override fun format(): String = "Stop Script|"
 }

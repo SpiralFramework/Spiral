@@ -5,4 +5,6 @@ data class ChangeUIEntry(val element: Int, val state: Int): LinScript {
 
     override val opCode: Int = 0x25
     override val rawArguments: IntArray = intArrayOf(element, state)
+
+    override fun format(): String = "Change UI|$element, $state"
 }

@@ -7,4 +7,6 @@ data class DR2LoadMapEntry(val room: Int, val state: Int, val padding: Int, val 
 
     override val opCode: Int = 0x15
     override val rawArguments: IntArray = intArrayOf(room, state, padding, unk4)
+
+    override fun format(): String = "Load Map|$room, $state, $padding, $unk4"
 }

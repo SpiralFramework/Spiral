@@ -5,4 +5,6 @@ data class ShowBackgroundEntry(val backgroundID: Int, val state: Int): LinScript
 
     override val opCode: Int = 0x30
     override val rawArguments: IntArray = intArrayOf(backgroundID % 256, backgroundID shr 8, state)
+
+    override fun format(): String = "Show Background|$backgroundID, $state"
 }

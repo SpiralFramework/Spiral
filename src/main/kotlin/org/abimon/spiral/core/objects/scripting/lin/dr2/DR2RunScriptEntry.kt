@@ -7,4 +7,6 @@ class DR2RunScriptEntry(val chapter: Int, val scene: Int, val room: Int): LinScr
 
     override val opCode: Int = 0x1B
     override val rawArguments: IntArray = intArrayOf(chapter, scene shr 8, scene % 256, room shr 8, room % 256)
+
+    override fun format(): String = "Run Script|$chapter, ${scene shr 8}, ${scene % 256}, ${room shr 8}, ${room % 256}"
 }

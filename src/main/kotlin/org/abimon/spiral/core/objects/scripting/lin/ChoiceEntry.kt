@@ -5,4 +5,6 @@ data class ChoiceEntry(val arg1: Int): LinScript {
 
     override val opCode: Int = 0x2B
     override val rawArguments: IntArray = intArrayOf(arg1)
+
+    override fun format(): String = "Choice|$arg1"
 }

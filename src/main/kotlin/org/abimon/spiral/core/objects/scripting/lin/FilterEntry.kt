@@ -6,4 +6,6 @@ data class FilterEntry(val arg1: Int, val filter: Int, val arg3: Int, val arg4: 
 
     override val opCode: Int = 0x04
     override val rawArguments: IntArray = intArrayOf(arg1, filter, arg3, arg4)
+
+    override fun format(): String = "Filter|$arg1, $filter, $arg3, $arg4"
 }

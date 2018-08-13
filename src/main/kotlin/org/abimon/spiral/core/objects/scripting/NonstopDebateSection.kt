@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects.scripting
 
-class NonstopDebateSection(val data: IntArray) {
+open class NonstopDebateSection(val data: IntArray) {
     constructor(size: Int): this(IntArray(size))
 
     operator fun get(index: Int): Int = data[index]

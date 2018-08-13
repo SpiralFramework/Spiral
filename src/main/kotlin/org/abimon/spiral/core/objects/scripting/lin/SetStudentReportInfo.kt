@@ -5,4 +5,6 @@ data class SetStudentReportInfo(val characterID: Int, val arg2: Int, val state: 
 
     override val opCode: Int = 0x10
     override val rawArguments: IntArray = intArrayOf(characterID, arg2, state)
+
+    override fun format(): String = "Set Report Info|$characterID, $arg2, $state"
 }

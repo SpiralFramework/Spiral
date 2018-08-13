@@ -7,4 +7,6 @@ data class DR1LoadScriptEntry(val chapter: Int, val scene: Int, val room: Int): 
 
     override val opCode: Int = 0x19
     override val rawArguments: IntArray = intArrayOf(chapter, scene, room)
+
+    override fun format(): String = "Load Script|$chapter, $scene, $room"
 }

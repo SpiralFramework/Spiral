@@ -5,4 +5,6 @@ data class MovieEntry(val id: Int): LinScript {
 
     override val opCode: Int = 0x05
     override val rawArguments: IntArray = intArrayOf(id shr 8, id % 256)
+
+    override fun format(): String = "Movie|${id shr 8}, ${id % 256}"
 }

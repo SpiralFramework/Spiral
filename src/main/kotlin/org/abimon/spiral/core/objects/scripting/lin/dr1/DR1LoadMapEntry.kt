@@ -7,4 +7,6 @@ data class DR1LoadMapEntry(val room: Int, val state: Int, val padding: Int): Lin
 
     override val opCode: Int = 0x15
     override val rawArguments: IntArray = intArrayOf(room, state, padding)
+
+    override fun format(): String = "Load Map|$room, $state, $padding"
 }

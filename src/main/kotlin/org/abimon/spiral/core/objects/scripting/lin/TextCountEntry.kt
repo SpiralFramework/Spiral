@@ -6,4 +6,6 @@ data class TextCountEntry(val lines: Int): LinScript {
 
     override val opCode: Int = 0x00
     override val rawArguments: IntArray = intArrayOf(lines % 256, lines / 256)
+
+    override fun format(): String = "Text Count|$lines"
 }

@@ -5,4 +5,6 @@ class EndFlagCheckEntry(): LinScript {
 
     override val opCode: Int = 0x3C
     override val rawArguments: IntArray = intArrayOf()
+
+    override fun format(): String = "End Flag Check|"
 }
