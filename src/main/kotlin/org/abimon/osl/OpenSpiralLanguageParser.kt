@@ -640,6 +640,17 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             }
                                     ),
                                     Sequence(
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            FirstOf("&break", "&br", "&newline"),
+                                            Action<Any> { context ->
+                                                val text = pop().toString()
+
+                                                pushTmp("LIN-TEXT-$cmd", text)
+                                                pushTmp("LIN-TEXT-$cmd", "\n")
+                                                return@Action true
+                                            }
+                                    ),
+                                    Sequence(
                                             RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             FirstOf(
                                                     Sequence(
