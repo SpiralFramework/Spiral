@@ -7,4 +7,6 @@ data class DR1RunScript(val chapter: Int, val room: Int, val scene: Int): LinScr
 
     override val opCode: Int = 0x1B
     override val rawArguments: IntArray = intArrayOf(chapter, room, scene)
+
+    override fun format(): String = "Run Script|$chapter, $room, $scene"
 }

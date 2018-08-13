@@ -5,4 +5,6 @@ data class CheckObjectEntry(val objectID: Int): LinScript {
 
     override val opCode: Int = 0x29
     override val rawArguments: IntArray = intArrayOf(objectID)
+
+    override fun format(): String = "Check Object|$objectID"
 }

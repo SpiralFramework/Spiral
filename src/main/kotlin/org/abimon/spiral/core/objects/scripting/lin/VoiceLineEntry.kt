@@ -5,4 +5,6 @@ data class VoiceLineEntry(val characterID: Int, val chapter: Int, val voiceLineI
 
     override val opCode: Int = 0x08
     override val rawArguments: IntArray = intArrayOf(characterID, chapter, voiceLineID shr 8, voiceLineID % 256, volume)
+
+    override fun format(): String = "Voice Line|$characterID, $chapter, ${voiceLineID shr 8}, ${voiceLineID % 256}, $volume"
 }

@@ -46,4 +46,6 @@ class CheckFlagAEntry: LinScript {
 
         rawArguments = rawArgs.toIntArray()
     }
+
+    override fun format(): String = "Check Flag A|${rawArguments.joinToString()}"
 }

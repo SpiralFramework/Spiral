@@ -5,4 +5,6 @@ data class SetLabelEntry(val id: Int): LinScript {
 
     override val opCode: Int = 0x2A
     override val rawArguments: IntArray = intArrayOf(id % 256, id shr 8)
+
+    override fun format(): String = "Set Label|$id"
 }

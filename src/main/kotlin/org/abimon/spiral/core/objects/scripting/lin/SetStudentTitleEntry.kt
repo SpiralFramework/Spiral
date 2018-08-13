@@ -5,4 +5,6 @@ data class SetStudentTitleEntry(val characterID: Int, val arg2: Int, val state: 
 
     override val opCode: Int = 0x0F
     override val rawArguments: IntArray = intArrayOf(characterID, arg2, state)
+
+    override fun format(): String = "Set Title|$characterID, $arg2, $state"
 }

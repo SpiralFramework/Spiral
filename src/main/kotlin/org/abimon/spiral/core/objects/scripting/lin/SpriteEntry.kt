@@ -5,4 +5,6 @@ data class SpriteEntry(val positionID: Int, val characterID: Int, val spriteID: 
 
     override val opCode: Int = 0x1E
     override val rawArguments: IntArray = intArrayOf(positionID, characterID, spriteID, spriteState, spriteEntryTransition)
+
+    override fun format(): String = "Display $characterID, pose $spriteID, position $positionID, state $spriteState, transition $spriteEntryTransition"
 }

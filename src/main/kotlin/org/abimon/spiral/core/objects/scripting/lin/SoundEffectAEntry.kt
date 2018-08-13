@@ -5,4 +5,6 @@ data class SoundEffectAEntry(val id: Int, val volume: Int = 100): LinScript {
 
     override val opCode: Int = 0x0A
     override val rawArguments: IntArray = intArrayOf(id shr 8, id % 256, volume)
+
+    override fun format(): String = "SFX A|${id shr 8}, ${id % 256}, $volume"
 }

@@ -5,4 +5,6 @@ data class AnimationEntry(val id: Int, val arg3: Int, val arg4: Int, val arg5: I
 
     override val opCode: Int = 0x06
     override val rawArguments: IntArray = intArrayOf(id shr 8, id % 256, arg3, arg4, arg5, arg6, arg7, frame)
+
+    override fun format(): String = "Animation|${id shr 8}, ${id % 256}, $arg3, $arg4, $arg5, $arg6, $arg7, $frame"
 }

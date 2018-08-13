@@ -5,6 +5,7 @@ import org.abimon.spiral.core.utils.readString
 import org.abimon.spiral.core.utils.readZeroString
 import org.abimon.spiral.core.utils.trimToBytes
 import java.io.File
+import java.util.*
 
 class MacDR1Executable(file: File): DRExecutable(file) {
     companion object {
@@ -170,6 +171,29 @@ class MacDR1Executable(file: File): DRExecutable(file) {
                 "bg_901" to (0x381EC0L to 56),
                 "bg_902" to (0x382448L to 40)
         )
+
+        val ARCHIVE_LOCATIONS = arrayOf(
+                0x2E2F65L to 16,
+                0x3578B6L to 30,
+                0x3578D5L to 25,
+                0x3578EFL to 25,
+                0x3579B7L to 31,
+                0x3579D7L to 26,
+                0x3579F2L to 26,
+                0x357A0DL to 31,
+                0x357A2DL to 26,
+                0x357A48L to 26,
+                0x359D9EL to 8,
+                0x35C9CFL to 15,
+                0x35C9EFL to 27,
+                0x385C28L to 8,
+                0x385C4BL to 8,
+                0x386C31L to 17,
+                0x386C43L to 12,
+                0x386C50L to 12,
+                0x38F248L to 8,
+                0x38F26BL to 8
+        )
     }
 
     var dataWadName: String
@@ -189,6 +213,8 @@ class MacDR1Executable(file: File): DRExecutable(file) {
 
     val voiceLineOffset: Long
     override val voiceLineArray: IntArray
+
+    val archiveNames: Array<String>
 
     init {
         raf.seek(DATA_OFFSET)
@@ -242,6 +268,11 @@ class MacDR1Executable(file: File): DRExecutable(file) {
             voiceLineOffset = VOICE_LINE_OFFSET
             voiceLineArray = originalOffsetArray
         }
+
+        archiveNames = ARCHIVE_LOCATIONS.map { (offset, size) ->
+            raf.seek(offset)
+            raf.readZeroString(size)
+        }.toTypedArray()
     }
 
     override fun save() {
@@ -268,6 +299,16 @@ class MacDR1Executable(file: File): DRExecutable(file) {
 
         raf.seek(LANGUAGE_ONE_KEYBOARD_OFFSET)
         raf.write(languageOneKeyboardExtension.trimToBytes(LANGUAGE_ONE_KEYBOARD_LENGTH))
+
+        ARCHIVE_LOCATIONS.forEachIndexed { i, (offset, size) ->
+
+            val array = ByteArray(size)
+            val src = archiveNames[i].toByteArray()
+            System.arraycopy(src, 0, array, 0, src.size.coerceAtMost(size))
+
+            raf.seek(offset)
+            raf.write(array)
+        }
     }
 
     override fun reset() {

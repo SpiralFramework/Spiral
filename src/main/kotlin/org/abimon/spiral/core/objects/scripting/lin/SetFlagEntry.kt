@@ -5,4 +5,6 @@ data class SetFlagEntry(val group: Int, val id: Int, val state: Int): LinScript 
 
     override val opCode: Int = 0x26
     override val rawArguments: IntArray = intArrayOf(group, id, state)
+
+    override fun format(): String = "Set Flag|$group, $id, $state"
 }

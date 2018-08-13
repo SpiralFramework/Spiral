@@ -5,4 +5,6 @@ data class ScreenFlashEntry(val red: Int, val green: Int, val blue: Int, val fad
 
     override val opCode: Int = 0x1F
     override val rawArguments: IntArray = intArrayOf(red, green, blue, fadeInDuration, holdDuration, fadeOutDuration, opacity)
+
+    override fun format(): String = "Flash the screen rgb($red, $green, $blue) over $fadeInDuration frames, hold for $holdDuration frames, fade out over $fadeOutDuration, with opacity $opacity"
 }

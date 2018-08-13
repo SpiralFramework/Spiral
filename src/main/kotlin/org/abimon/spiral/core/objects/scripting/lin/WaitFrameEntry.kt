@@ -11,4 +11,6 @@ class WaitFrameEntry(override val opCode: Int): LinScript {
     constructor(opCode: Int, args: IntArray): this(opCode)
 
     override val rawArguments: IntArray = intArrayOf()
+
+    override fun format(): String = "Wait Frame|"
 }

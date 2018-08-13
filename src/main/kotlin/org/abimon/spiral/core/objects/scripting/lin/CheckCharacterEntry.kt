@@ -5,4 +5,6 @@ data class CheckCharacterEntry(val characterID: Int): LinScript {
 
     override val opCode: Int = 0x27
     override val rawArguments: IntArray = intArrayOf(characterID)
+
+    override fun format(): String = "Check Character|$characterID"
 }
