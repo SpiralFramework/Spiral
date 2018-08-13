@@ -1,10 +1,7 @@
 package org.abimon.spiral.core.objects.archives.srd
 
 import org.abimon.spiral.core.objects.archives.SRD
-import org.abimon.spiral.core.utils.Mipmap
-import org.abimon.spiral.core.utils.readInt16LE
-import org.abimon.spiral.core.utils.readInt32LE
-import org.abimon.spiral.core.utils.readNullTerminatedString
+import org.abimon.spiral.core.utils.*
 
 open class RSIEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
     data class ResourceArray(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
@@ -21,7 +18,7 @@ open class RSIEntry(dataType: String, offset: Long, dataLength: Int, subdataLeng
     val name: String
 
     init {
-        val stream = dataStream
+        val stream = CountingInputStream(dataStream)
         try {
             unk1 = stream.readInt16LE()
             unk2 = stream.read() and 0xFF
