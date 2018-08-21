@@ -52,7 +52,14 @@ interface SpiralImageFormat : SpiralFormat {
                     output.writeShort(img.height)
                     output.writeShort(0)
 
-                    palette.forEach { colour -> output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha)) }
+                    for (i in 0 until minOf(palette.size, 256)) {
+                        val colour = palette[i]
+
+                        output.write(byteArrayOfInts(colour.red, colour.green, colour.blue, colour.alpha))
+                    }
+
+                    for (i in 0 until 256 - palette.size)
+                        output.write(byteArrayOf(0, 0, 0, 0))
 
                     img.run {
                         for (y in 0 until height)

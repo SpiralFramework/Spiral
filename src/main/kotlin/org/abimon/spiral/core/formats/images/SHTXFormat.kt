@@ -13,7 +13,7 @@ import java.util.*
 
 object SHTXFormat : SpiralImageFormat {
     override val name = "SHTX"
-    override val extension = null
+    override val extension = "shtx"
     override val conversions: Array<SpiralFormat> = arrayOf(PNGFormat, JPEGFormat, TGAFormat)
 
     override fun isFormat(game: DRGame?, name: String?, context: (String) -> (() -> InputStream)?, dataSource: () -> InputStream): Boolean = dataSource().use { it.readString(4) == "SHTX" }
