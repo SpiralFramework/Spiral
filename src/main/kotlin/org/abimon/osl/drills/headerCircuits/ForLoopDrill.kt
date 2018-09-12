@@ -95,6 +95,7 @@ object ForLoopDrill : DrillCircuit {
                     ')',
                     OptionalWhitespace(),
                     '{',
+                    OptionalInlineWhitespace(),
                     '\n',
                     Action<Any> {
                         this[peek(2).toString()] = 0
@@ -129,7 +130,6 @@ object ForLoopDrill : DrillCircuit {
                                 return@Action true
                             }
                     ),
-                    '\n',
                     OptionalWhitespace(),
                     "}"
             )
