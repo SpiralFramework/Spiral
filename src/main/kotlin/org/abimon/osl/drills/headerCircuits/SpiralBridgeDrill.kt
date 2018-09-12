@@ -9,11 +9,16 @@ import org.parboiled.support.Var
 //While this is an extension
 object SpiralBridgeDrill : DrillCircuit {
     val OP_CODE_NAMES = mapOf(
-            "Synchronisation" to 0,
-            "Synchronization" to 0,
-            "Synchronise" to 0,
-            "Synchronize" to 0,
-            "PrevChoice" to 1,
+            "Noop" to 0,
+            "Nop" to 0,
+            "No-op" to 0,
+            "Pass" to 0,
+            "Reset" to 0,
+            "Synchronisation" to 1,
+            "Synchronization" to 1,
+            "Synchronise" to 1,
+            "Synchronize" to 1,
+            "PrevChoice" to 2,
 
             "ServerAcknowledgement" to 128,
             "ServerAck" to 128,
