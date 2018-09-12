@@ -60,7 +60,7 @@ object SpiralBridgeDrill : DrillCircuit {
                                 Sequence(
                                         OneOrMore(Digit(10)),
                                         Action<Any> {
-                                            opCode.set(match().toIntOrNull(16) ?: 0)
+                                            opCode.set(match().toIntOrNull(10) ?: 0)
                                         }
                                 ),
                                 Sequence(
