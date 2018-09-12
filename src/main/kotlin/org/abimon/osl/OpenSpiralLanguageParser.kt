@@ -323,6 +323,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     HeaderOSLDrill,
                     MacroDrill,
                     ItemSelectionDrill,
+                    SpiralBridgeDrill,
+                    WaitDrill,
 
                     Sequence(
                             Sequence(
@@ -1081,7 +1083,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             FirstOf(
                     Sequence(
                             RuleWithVariables(Decimal()),
-                            FirstOf('s', Sequence(InlineWhitespace(), "seconds")),
+                            FirstOf('s', Sequence(InlineWhitespace(), "second", Optional("s"))),
                             Action<Any> {
                                 val seconds = pop().toString().toFloatOrNull() ?: 1.0f
                                 push((seconds * FRAMES_PER_SECOND).toInt())
@@ -1090,7 +1092,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     Sequence(
                             RuleWithVariables(OneOrMore(Digit())),
                             InlineWhitespace(),
-                            Optional("frames")
+                            Optional("frame", Optional("s"))
                     )
             )
 
