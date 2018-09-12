@@ -105,7 +105,8 @@ object SpiralBridgeDrill : DrillCircuit {
                                 )
                         )
                 ),
-                Action<Any> { push(arrayOf(this, "0x33|${opCode.get() and 0xFF}, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
+                Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
         )
     }
 }
