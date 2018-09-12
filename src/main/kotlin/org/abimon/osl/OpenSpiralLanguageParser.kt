@@ -32,7 +32,7 @@ import kotlin.reflect.full.safeCast
 
 open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
-        val FRAMES_PER_SECOND = 60
+        var FRAMES_PER_SECOND = 60
 
         var DEFAULT_STDOUT: PrintStream = System.out
         var DEFAULT_MAX_FOR_RANGE: Int = 1000
