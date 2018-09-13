@@ -242,9 +242,6 @@ object WaitDrill : DrillCircuit {
                 Action<Any> {
                     val label = findLabel()
 
-                    push(arrayOf(this, "0x33|28, 0, 0, 0"))
-                    push(arrayOf(this, "0x33|29, 0, 0, 0"))
-                    push(arrayOf(this, "0x33|30, 0, 0, 0"))
                     push(arrayOf(this, "Mark Label $label"))
 
                     push(arrayOf(this, "if-g (28 != ${spiralOp.get()}) {"))
