@@ -57,64 +57,66 @@ object SpiralBridgeDrill : DrillCircuit {
                                     push(arrayOf(this, "0x33|30, 0, 0, 0"))
                                 }
                         ),
-                        FirstOf(
-                                Sequence(
-                                        "0x",
-                                        OneOrMore(Digit(16)),
-                                        Action<Any> {
-                                            opCode.set(match().toIntOrNull(16) ?: 0)
-                                        }
+                        Sequence(
+                                FirstOf(
+                                        Sequence(
+                                                "0x",
+                                                OneOrMore(Digit(16)),
+                                                Action<Any> {
+                                                    opCode.set(match().toIntOrNull(16) ?: 0)
+                                                }
+                                        ),
+                                        Sequence(
+                                                OneOrMore(Digit(10)),
+                                                Action<Any> {
+                                                    opCode.set(match().toIntOrNull(10) ?: 0)
+                                                }
+                                        ),
+                                        Sequence(
+                                                FirstOf(OP_CODE_NAMES.keys.toTypedArray()),
+                                                Action<Any> {
+                                                    opCode.set(OP_CODE_NAMES[match()] ?: 0)
+                                                }
+                                        )
                                 ),
-                                Sequence(
-                                        OneOrMore(Digit(10)),
-                                        Action<Any> {
-                                            opCode.set(match().toIntOrNull(10) ?: 0)
-                                        }
-                                ),
-                                Sequence(
-                                        FirstOf(OP_CODE_NAMES.keys.toTypedArray()),
-                                        Action<Any> {
-                                            opCode.set(OP_CODE_NAMES[match()] ?: 0)
-                                        }
-                                )
-                        ),
-                        CommaSeparator(),
-                        FirstOf(
-                                Sequence(
-                                        FirstOf(ALL_OP_CODE_VALUES),
-                                        Action<Any> {
-                                            val num = (OP_CODE_VALUES[opCode.get()]
-                                                    ?: return@Action false)[match()]
-                                                    ?: return@Action false
-                                            valueBig.set(num shr 8)
-                                            valueSmall.set(num and 0xFF)
-                                        }
-                                ),
-                                Sequence(
-                                        RuleWithVariables(OneOrMore(Digit())),
+                                CommaSeparator(),
+                                FirstOf(
+                                        Sequence(
+                                                FirstOf(ALL_OP_CODE_VALUES),
+                                                Action<Any> {
+                                                    val num = (OP_CODE_VALUES[opCode.get()]
+                                                            ?: return@Action false)[match()]
+                                                            ?: return@Action false
+                                                    valueBig.set(num shr 8)
+                                                    valueSmall.set(num and 0xFF)
+                                                }
+                                        ),
+                                        Sequence(
+                                                RuleWithVariables(OneOrMore(Digit())),
 
-                                        OptionalInlineWhitespace(),
-                                        ',',
-                                        OptionalInlineWhitespace(),
+                                                OptionalInlineWhitespace(),
+                                                ',',
+                                                OptionalInlineWhitespace(),
 
-                                        RuleWithVariables(OneOrMore(Digit())),
-                                        Action<Any> {
-                                            valueSmall.set(pop().toString().toIntOrNull() ?: 0)
-                                            valueBig.set(pop().toString().toIntOrNull() ?: 0)
-                                        }
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                Action<Any> {
+                                                    valueSmall.set(pop().toString().toIntOrNull() ?: 0)
+                                                    valueBig.set(pop().toString().toIntOrNull() ?: 0)
+                                                }
+                                        ),
+                                        Sequence(
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                Action<Any> {
+                                                    val id = pop().toString().toIntOrNull() ?: return@Action false
+
+                                                    valueBig.set(id shr 8)
+                                                    valueSmall.set(id and 0xFF)
+                                                }
+                                        )
                                 ),
-                                Sequence(
-                                        RuleWithVariables(OneOrMore(Digit())),
-                                        Action<Any> {
-                                            val id = pop().toString().toIntOrNull() ?: return@Action false
-
-                                            valueBig.set(id shr 8)
-                                            valueSmall.set(id and 0xFF)
-                                        }
-                                )
-                        ),
-                        Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
-                        Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                                Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
+                                Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                        )
                 )
         )
     }
