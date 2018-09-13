@@ -40,15 +40,23 @@ object SpiralBridgeDrill : DrillCircuit {
         val valueSmall = Var<Int>(0)
 
         return Sequence(
-                Sequence(
-                        Action<Any> {
-                            opCode.set(0)
-                            valueBig.set(0)
-                            valueSmall.set(0)
-                        },
+                Action<Any> {
+                    opCode.set(0)
+                    valueBig.set(0)
+                    valueSmall.set(0)
+                },
 
-                        "SpiralBridge:",
-                        OptionalInlineWhitespace(),
+                "SpiralBridge:",
+                OptionalInlineWhitespace(),
+                FirstOf(
+                        Sequence(
+                                "clear",
+                                Action<Any> {
+                                    push(arrayOf(this, "0x33|28, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|29, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|30, 0, 0, 0"))
+                                }
+                        ),
                         FirstOf(
                                 Sequence(
                                         "0x",
@@ -75,7 +83,8 @@ object SpiralBridgeDrill : DrillCircuit {
                                 Sequence(
                                         FirstOf(ALL_OP_CODE_VALUES),
                                         Action<Any> {
-                                            val num = (OP_CODE_VALUES[opCode.get()] ?: return@Action false)[match()]
+                                            val num = (OP_CODE_VALUES[opCode.get()]
+                                                    ?: return@Action false)[match()]
                                                     ?: return@Action false
                                             valueBig.set(num shr 8)
                                             valueSmall.set(num and 0xFF)
@@ -103,10 +112,10 @@ object SpiralBridgeDrill : DrillCircuit {
                                             valueSmall.set(id and 0xFF)
                                         }
                                 )
-                        )
-                ),
-                Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
-                Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                        ),
+                        Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
+                        Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                )
         )
     }
 }
