@@ -341,7 +341,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     ),
                     Sequence(
                             Sequence(
-                                    OneOrMore(AllButMatcher(charArrayOf('\n', '{'))),
+                                    OneOrMore(AllButMatcher(charArrayOf('\n', '{', '}'))),
                                     '{',
                                     '\n'
                             ),
@@ -351,7 +351,23 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     OptionalWhitespace(),
                                     '}'
                             ),
-                            Action<Any> { push(arrayOf(null, match())) }
+                            Action<Any> { push(arrayOf(null, match())) },
+                            Optional(
+                                    Sequence(
+                                            OptionalInlineWhitespace(),
+                                            "else",
+                                            OptionalWhitespace(),
+                                            '{',
+                                            '\n'
+                                    ),
+                                    Action<Any> { push(arrayOf(null, match())) },
+                                    OpenSpiralHeaderLines(),
+                                    Sequence(
+                                            OptionalWhitespace(),
+                                            '}'
+                                    ),
+                                    Action<Any> { push(arrayOf(null, match())) }
+                            )
                     ),
                     Sequence(
                             OneOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
