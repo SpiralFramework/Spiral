@@ -161,7 +161,7 @@ object WaitDrill : DrillCircuit {
                         Sequence(
                                 OneOrMore(Digit(10)),
                                 Action<Any> {
-                                    spiralOp.set(match().toIntOrNull(16) ?: 0)
+                                    spiralOp.set(match().toIntOrNull(10) ?: 0)
                                 }
                         ),
                         Sequence(
