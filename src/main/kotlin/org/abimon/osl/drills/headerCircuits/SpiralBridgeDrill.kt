@@ -14,16 +14,25 @@ object SpiralBridgeDrill : DrillCircuit {
             "No-op" to 0,
             "Pass" to 0,
             "Reset" to 0,
+
             "Synchronisation" to 1,
             "Synchronization" to 1,
             "Synchronise" to 1,
             "Synchronize" to 1,
+
             "PrevChoice" to 2,
+
+            "WaitForChoice" to 3,
+
+            "LoadBridgeFile" to 4,
 
             "ServerAcknowledgement" to 128,
             "ServerAck" to 128,
+
             "ServerKey" to 129,
-            "ServerPress" to 129
+            "ServerPress" to 129,
+
+            "ServerChoice" to 130
     )
 
     val OP_CODE_VALUES = mapOf(
