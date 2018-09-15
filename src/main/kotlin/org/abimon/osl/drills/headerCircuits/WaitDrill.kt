@@ -124,6 +124,9 @@ object WaitDrill : DrillCircuit {
 
                     push(arrayOf(this, "if-g (${gameState.get()} != ${desiredGameState.get()}) {"))
 
+                    if (waitingText.get().isNotBlank())
+                        push(arrayOf(this, waitingText.get()))
+
                     for (i in 0 until waitingSleep.get()) {
                         push(arrayOf(this, "Wait Frame|"))
                     }
@@ -245,6 +248,9 @@ object WaitDrill : DrillCircuit {
                     push(arrayOf(this, "Mark Label $label"))
 
                     push(arrayOf(this, "if-g (28 != ${spiralOp.get()}) {"))
+                    if (waitingText.get().isNotBlank())
+                        push(arrayOf(this, waitingText.get()))
+
                     for (i in 0 until waitingSleep.get()) {
                         push(arrayOf(this, "Wait Frame|"))
                     }
@@ -257,6 +263,10 @@ object WaitDrill : DrillCircuit {
                         val small = desiredGameState.get() and 0xFF
 
                         push(arrayOf(this, "if-g (29 != $big) {"))
+
+                        if (waitingText.get().isNotBlank())
+                            push(arrayOf(this, waitingText.get()))
+
                         for (i in 0 until waitingSleep.get()) {
                             push(arrayOf(this, "Wait Frame|"))
                         }
@@ -264,6 +274,10 @@ object WaitDrill : DrillCircuit {
                         push(arrayOf(this, "}"))
 
                         push(arrayOf(this, "if-g (30 != $small) {"))
+
+                        if (waitingText.get().isNotBlank())
+                            push(arrayOf(this, waitingText.get()))
+
                         for (i in 0 until waitingSleep.get()) {
                             push(arrayOf(this, "Wait Frame|"))
                         }
@@ -281,7 +295,8 @@ object WaitDrill : DrillCircuit {
                     Sequence(
                             FirstOf(SpiralBridgeDrill.ALL_OP_CODE_VALUES),
                             Action<Any> {
-                                val num = (SpiralBridgeDrill.OP_CODE_VALUES[opCode.get()] ?: return@Action false)[match()]
+                                val num = (SpiralBridgeDrill.OP_CODE_VALUES[opCode.get()]
+                                        ?: return@Action false)[match()]
                                         ?: return@Action false
                                 desiredGameState.set(num)
                             }
