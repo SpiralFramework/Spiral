@@ -318,6 +318,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun SpiralHeaderLine(): Rule =
             FirstOf(
                     Action<Any> { false },
+                    Comment(),
                     AddMacroDrill,
                     ForLoopDrill,
                     HeaderOSLDrill,
