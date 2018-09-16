@@ -14,6 +14,10 @@ import kotlin.reflect.KClass
 
 object BasicLinTextDrill : DrillHead<LinScript> {
     val cmd = "BASIC-LIN-TEXT"
+    var BLANK_LINE = buildString {
+        for (i in 0 until 1024)
+            append(' ')
+    }
 
     override val klass: KClass<LinScript> = LinScript::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
@@ -38,7 +42,14 @@ object BasicLinTextDrill : DrillHead<LinScript> {
                             ),
                             '|',
                             pushDrillHead(cmd, this@BasicLinTextDrill),
-                            LinText(cmd),
+                            FirstOf(
+                                    Sequence(
+                                            "[Blank Line]",
+                                            pushTmpAction(cmd, BLANK_LINE)
+                                    ),
+                                    LinText(cmd)
+                            ),
+
                             pushTmpAction(cmd)
                     ),
 
@@ -46,7 +57,7 @@ object BasicLinTextDrill : DrillHead<LinScript> {
             )
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
-        return when(parser.hopesPeakGame) {
+        return when (parser.hopesPeakGame) {
             DR1 -> TextEntry("${rawParams[0]}", -1)
             DR2 -> TextEntry("${rawParams[0]}", -1)
             UDG -> UDGTextEntry("${rawParams[0]}", -1)
