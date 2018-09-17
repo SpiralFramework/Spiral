@@ -47,6 +47,10 @@ object BasicLinTextDrill : DrillHead<LinScript> {
                                             "[Blank Line]",
                                             pushTmpAction(cmd, BLANK_LINE)
                                     ),
+                                    Sequence(
+                                            "[Empty]",
+                                            pushTmpAction(cmd, "")
+                                    ),
                                     LinText(cmd)
                             ),
 
