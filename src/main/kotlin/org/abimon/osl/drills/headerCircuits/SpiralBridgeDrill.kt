@@ -26,6 +26,10 @@ object SpiralBridgeDrill : DrillCircuit {
 
             "LoadBridgeFile" to 4,
 
+            "RequestAction" to 5,
+            "RequestHelp" to 5,
+            "RequestDrill" to 5,
+
             "ServerAcknowledgement" to 128,
             "ServerAck" to 128,
 
@@ -36,6 +40,9 @@ object SpiralBridgeDrill : DrillCircuit {
     )
 
     val OP_CODE_VALUES = mapOf(
+            5 to mapOf(
+                    "TEXT_BUFFER_CLEAR" to 0
+            ),
             129 to mapOf(
                     "INPUT" to 0
             )
