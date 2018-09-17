@@ -49,7 +49,7 @@ object BasicLinTextDrill : DrillHead<LinScript> {
                                     ),
                                     Sequence(
                                             "[Empty]",
-                                            pushTmpAction(cmd, "")
+                                            pushTmpAction(cmd, "\u0000")
                                     ),
                                     LinText(cmd)
                             ),
