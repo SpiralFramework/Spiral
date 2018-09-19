@@ -18,7 +18,7 @@ object EvidenceSelectionDrill : DrillCircuit {
             "missing evidence", "on evidence missing",
             "on evidence absent", "wrong", "incorrect",
             "on wrong", "on incorrect", "on wrong evidence",
-            "on incorrect evidence", "on timeout",
+            "on incorrect evidence",
             "wrong evidence", "incorrect evidence"
     )
 
@@ -33,7 +33,7 @@ object EvidenceSelectionDrill : DrillCircuit {
 
     val TIMEOUT = arrayOf(
             "timeout", "on wait", "waiting",
-            "afk"
+            "afk", "on timeout"
     )
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
