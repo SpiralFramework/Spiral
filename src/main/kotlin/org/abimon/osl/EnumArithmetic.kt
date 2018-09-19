@@ -31,6 +31,16 @@ enum class EnumArithmetic(private val perform: (Int, Int) -> Int, vararg val nam
                 DR2 -> arrayOf(UnknownEntry(0x3A, intArrayOf(variable, 2, (amount shr 8) and 0xFF, amount and 0xFF)) as LinScript)
                 else -> ArithmeticOperations.operate(parser, variable, amount, perform)
             }
+            MULTIPLY -> when (parser.hopesPeakGame) {
+                DR1 -> arrayOf(UnknownEntry(0x33, intArrayOf(variable, 3, (amount shr 8) and 0xFF, amount and 0xFF)) as LinScript)
+                DR2 -> arrayOf(UnknownEntry(0x3A, intArrayOf(variable, 3, (amount shr 8) and 0xFF, amount and 0xFF)) as LinScript)
+                else -> ArithmeticOperations.operate(parser, variable, amount, perform)
+            }
+            DIVIDE -> when (parser.hopesPeakGame) {
+                DR1 -> arrayOf(UnknownEntry(0x33, intArrayOf(variable, 4, (amount shr 8) and 0xFF, amount and 0xFF)) as LinScript)
+                DR2 -> arrayOf(UnknownEntry(0x3A, intArrayOf(variable, 4, (amount shr 8) and 0xFF, amount and 0xFF)) as LinScript)
+                else -> ArithmeticOperations.operate(parser, variable, amount, perform)
+            }
             else -> ArithmeticOperations.operate(parser, variable, amount, perform)
         }
     }
