@@ -16,7 +16,7 @@ object LinArithmeticGameState: DrillHead<Array<LinScript>> {
                     clearTmpStack(cmd),
 
                     Sequence(
-                            '{',
+                            '[',
                             pushDrillHead(cmd, this@LinArithmeticGameState),
                             OptionalInlineWhitespace(),
                             GameState(),
@@ -27,7 +27,7 @@ object LinArithmeticGameState: DrillHead<Array<LinScript>> {
                             OptionalInlineWhitespace(),
                             RuleWithVariables(OneOrMore(Digit())),
                             OptionalInlineWhitespace(),
-                            '}',
+                            ']',
                             pushTmpFromStack(cmd),
                             pushTmpFromStack(cmd)
                     ),
