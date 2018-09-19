@@ -184,18 +184,20 @@ object EvidenceSelectionDrill : DrillCircuit {
                                                     .replace("%END_LABEL", endLabel.get().toString())
                                             val names = itemIDs.get()
 
-                                            names.forEach { name -> choices.append(buildString {
-                                                if (name.matches(DIGITS))
-                                                    append(name)
-                                                else
-                                                    append("\"$name\"")
+                                            names.forEach { name ->
+                                                choices.append(buildString {
+                                                    if (name.matches(DIGITS))
+                                                        append(name)
+                                                    else
+                                                        append("\"$name\"")
 
-                                                appendln(" -> {")
-                                                appendln("Change UI|4, 0")
-                                                appendln(lines)
-                                                appendln("goto ${endLabel.get()}")
-                                                appendln("}")
-                                            }) }
+                                                    appendln(" -> {")
+                                                    appendln("Change UI|4, 0")
+                                                    appendln(lines)
+                                                    appendln("goto ${endLabel.get()}")
+                                                    appendln("}")
+                                                })
+                                            }
 
                                             return@Action true
                                         },
