@@ -112,7 +112,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customFlagNames: MutableMap<String, Int> by dataProperty("custom_flag_names", ::HashMap)
     val customLabelNames: MutableMap<String, Int> by dataProperty("custom_label_names", ::HashMap)
     val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", ::HashMap)
-    val customAnimationNames: MutableMap<String, Int> by dataProperty("cusotm_animation_names", ::HashMap)
+    val customEvidenceNames: MutableMap<String, Int> by dataProperty("custom_evidence_names", ::HashMap)
+    val customAnimationNames: MutableMap<String, Int> by dataProperty("custom_animation_names", ::HashMap)
 
     val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
@@ -389,11 +390,12 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             ChangeGameDrill,
             ChangeContextDrill,
             EchoDrill,
-            AddNameAliasDrill,
-            AddFlagAliasDrill,
-            AddLabelAliasDrill,
-            AddItemNameAliasDrill,
-            AddAnimationAliasDrill,
+//            AddNameAliasDrill,
+//            AddFlagAliasDrill,
+//            AddLabelAliasDrill,
+//            AddItemNameAliasDrill,
+//            AddAnimationAliasDrill,
+            AddAliasDrill(this),
             StrictParsingDrill,
             MetaIfDrill,
             ErrorDrill,
@@ -1135,6 +1137,26 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    open fun EvidenceID(): Rule =
+            FirstOf(
+                    RuleWithVariables(OneOrMore(Digit())),
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val name = pop().toString()
+                                if (name in customEvidenceNames)
+                                    return@Action push(customEvidenceNames[name] ?: 0)
+
+                                //val index = (hopesPeakGame?.evidenceNames ?: emptyArray()).indexOf(name)
+
+//                                if (index == -1)
+                                    return@Action false
+
+//                                return@Action push(index)
+                            }
+                    )
+            )
+
     open fun AnimationID(): Rule =
             FirstOf(
                     Sequence(
@@ -1163,7 +1185,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             }
                     ),
                     Sequence(
-                            "fla_",
+                            Optional("fla_"),
                             RuleWithVariables(OneOrMore(Digit())),
                             Action<Any> {
                                 val id = pop().toString().toIntOrNull() ?: return@Action false
