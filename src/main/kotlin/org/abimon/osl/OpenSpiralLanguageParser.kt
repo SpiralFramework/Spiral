@@ -324,6 +324,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     HeaderOSLDrill,
                     MacroDrill,
                     ItemSelectionDrill,
+                    EvidenceSelectionDrill,
                     SpiralBridgeDrill,
                     WaitDrill,
 
@@ -423,6 +424,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinSetFlagDrill,
                             LinSpeakerDrill,
                             InternalLinItemSelectionDrill,
+                            InternalLinEvidenceSelectionDrill,
 
                             LinScreenFadeDrill,
                             LinScreenFlashDrill,
