@@ -10,35 +10,30 @@ import org.parboiled.support.Var
 import java.util.*
 
 /** Probably one of the more complicated codes */
-object ItemSelectionDrill : DrillCircuit {
+object EvidenceSelectionDrill : DrillCircuit {
     val DIGITS = "\\d+".toRegex()
 
     val MISSING_ITEMS = arrayOf(
-            "missing", "absent", "absent item", "absent items",
-            "missing item", "missing items", "on item missing",
-            "on items missing", "on item absent", "on items absent",
-            "key item", "key items"
+            "missing", "absent", "absent evidence",
+            "missing evidence", "on evidence missing",
+            "on evidence absent", "wrong", "incorrect",
+            "on wrong", "on incorrect", "on wrong evidence",
+            "on incorrect evidence", "on timeout",
+            "wrong evidence", "incorrect evidence"
     )
-
-    val DEFAULT_MISSING = buildString {
-        appendln("Change UI|2, 0")
-        appendln("Change UI|1, 1")
-        appendln("Narrator: &{green} Sorry, but we can't let you give him that. It's what\\nwe in the industry like to call a &{yellow} key item &{blue} .")
-    }
 
     val OPENING_LINES = arrayOf(
             "opening", "selection", "on open", "opening lines"
     )
 
     val DEFAULT_OPENING = buildString {
-        appendln("Change UI|2, 0")
-        appendln("Change UI|1, 1")
-        appendln("Speaker|Narrator")
-        appendln("Text| &{green} What would you like to give them?")
+        appendln("Text|&{blue} The evidence I'm looking for is...")
+        appendln("Wait Frame|")
     }
 
-    val ON_EXIT = arrayOf(
-            "on_exit", "exiting", "exit", "on exit", "close", "closing", "on close", "cancel", "cancelling", "on cancel"
+    val TIMEOUT = arrayOf(
+            "timeout", "on wait", "waiting",
+            "afk"
     )
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
@@ -46,22 +41,22 @@ object ItemSelectionDrill : DrillCircuit {
         val endLabel = Var<Int>()
         val itemIDs = Var<MutableSet<String>>(HashSet())
         val choices = StringVar()
-        val missingItems = StringVar()
-        val onExit = StringVar()
+        val missingEvidence = StringVar()
+        val onTimeout = StringVar()
         val openingLines = StringVar()
 
         return Sequence(
                 "Select ",
-                FirstOf("Present", "Presents", "Item", "Items"),
+                FirstOf("Evidence", "Truth Bullet", "Truth Bullets"),
                 OptionalInlineWhitespace(),
                 '{',
                 '\n',
                 Action<Any> { choices.set("") },
                 Action<Any> { startLabel.set(findLabel()) },
                 Action<Any> { endLabel.set(findLabel()) },
-                Action<Any> { missingItems.set("\"missing\" -> {\n$DEFAULT_MISSING\ngoto ${startLabel.get()}\n}") },
-                Action<Any> { onExit.set("\"cancel\" -> {\ngoto ${endLabel.get()}\n}") },
-                Action<Any> { openingLines.set("\"opening\" -> {\n$DEFAULT_OPENING\n}") },
+                Action<Any> { missingEvidence.set("\"missing\" -> {\nChange UI|4, 0\ngoto ${startLabel.get()}\n}") },
+                Action<Any> { onTimeout.set("\"timeout\" -> {\nChange UI|4, 0\ngoto ${endLabel.get()}\n}") },
+                Action<Any> { openingLines.set("\"opening\" -> {\nChange UI|4, 1\n$DEFAULT_OPENING\n}") },
                 OneOrMore(
                         FirstOf(
                                 Sequence(
@@ -88,7 +83,7 @@ object ItemSelectionDrill : DrillCircuit {
                                                     .replace("\$END_LABEL", endLabel.get().toString())
                                                     .replace("%START_LABEL", startLabel.get().toString())
                                                     .replace("%END_LABEL", endLabel.get().toString())
-                                            return@Action missingItems.set("\"missing\" -> {\n$lines\n}\n")
+                                            return@Action missingEvidence.set("\"missing\" -> {\nChange UI|4, 0\n$lines\n}\n")
                                         },
                                         OptionalWhitespace(),
                                         '}',
@@ -100,7 +95,7 @@ object ItemSelectionDrill : DrillCircuit {
                                         ParameterToStack(),
                                         Action<Any> {
                                             val name = pop().toString().toLowerCase()
-                                            return@Action name in ON_EXIT
+                                            return@Action name in TIMEOUT
                                         },
                                         Optional(
                                                 OptionalInlineWhitespace(),
@@ -119,7 +114,7 @@ object ItemSelectionDrill : DrillCircuit {
                                                     .replace("\$END_LABEL", endLabel.get().toString())
                                                     .replace("%START_LABEL", startLabel.get().toString())
                                                     .replace("%END_LABEL", endLabel.get().toString())
-                                            return@Action onExit.set("\"cancel\" -> {\n$lines\n}\n")
+                                            return@Action onTimeout.set("\"timeout\" -> {\nChange UI|4, 0\n$lines\n}\n")
                                         },
                                         OptionalWhitespace(),
                                         '}',
@@ -150,7 +145,7 @@ object ItemSelectionDrill : DrillCircuit {
                                                     .replace("\$END_LABEL", endLabel.get().toString())
                                                     .replace("%START_LABEL", startLabel.get().toString())
                                                     .replace("%END_LABEL", endLabel.get().toString())
-                                            return@Action openingLines.set("\"opening\" -> {\n$lines\n}\n")
+                                            return@Action openingLines.set("\"opening\" -> {\nChange UI|4, 1\n$lines\n}\n")
                                         },
                                         OptionalWhitespace(),
                                         '}',
@@ -196,6 +191,7 @@ object ItemSelectionDrill : DrillCircuit {
                                                     append("\"$name\"")
 
                                                 appendln(" -> {")
+                                                appendln("Change UI|4, 0")
                                                 appendln(lines)
                                                 appendln("goto ${endLabel.get()}")
                                                 appendln("}")
@@ -214,11 +210,11 @@ object ItemSelectionDrill : DrillCircuit {
                 Action<Any> {
                     push(arrayOf(this, buildString {
                         appendln("Mark Label ${startLabel.get()}")
-                        appendln("[Internal] Select Item {")
+                        appendln("[Internal] Select Evidence {")
                         appendln(choices.get())
-                        appendln(missingItems.get())
+                        appendln(missingEvidence.get())
                         appendln(openingLines.get())
-                        appendln(onExit.get())
+                        appendln(onTimeout.get())
                         appendln("}")
                         appendln("Mark Label ${endLabel.get()}")
                     }))
