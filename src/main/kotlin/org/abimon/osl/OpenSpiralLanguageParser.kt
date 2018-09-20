@@ -21,6 +21,7 @@ import org.parboiled.Rule
 import org.parboiled.parserunners.ReportingParseRunner
 import org.parboiled.support.Chars
 import org.parboiled.support.ParsingResult
+import org.parboiled.support.Var
 import java.io.File
 import java.io.PrintStream
 import java.util.*
@@ -92,6 +93,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             }
         }
 
+    var hopesPeakKillingGame: HopesPeakKillingGame?
+        get() = (gameContext as? GameContext.HopesPeakGameContext)?.game as? HopesPeakKillingGame
+        set(value) {
+            gameContext = when (value) {
+                DR1 -> GameContext.DR1GameContext
+                DR2 -> GameContext.DR2GameContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
+                null -> null
+                else -> GameContext.CatchAllHopesPeakGameContext(value)
+            }
+        }
+
     var strictParsing: Boolean = true
 
     var localiser: (String) -> String = String::toString
@@ -114,6 +127,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customItemNames: MutableMap<String, Int> by dataProperty("custom_item_names", ::HashMap)
     val customEvidenceNames: MutableMap<String, Int> by dataProperty("custom_evidence_names", ::HashMap)
     val customAnimationNames: MutableMap<String, Int> by dataProperty("custom_animation_names", ::HashMap)
+    val customEmotionNames: MutableMap<Int, MutableMap<String, Int>> by dataProperty("custom_emotion_names", ::HashMap)
+    val customTrialCameraNames: MutableMap<String, Int> by dataProperty("custom_trial_camera_names", ::HashMap)
 
     val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
@@ -425,6 +440,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinGoToDrill,
                             LinSetFlagDrill,
                             LinSpeakerDrill,
+                            LinTrialCameraDrill,
                             InternalLinItemSelectionDrill,
                             InternalLinEvidenceSelectionDrill,
 
@@ -925,7 +941,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     RuleWithVariables(OneOrMore(ParamMatcher)),
                     '"'
             ),
-            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')))))
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')))))
     )
 
     override fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
@@ -936,9 +952,18 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     '"'
             ),
             Sequence(
-                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|')).plus(allBut)))),
+                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut)))),
                     pushTmpFromStack(cmd)
             )
+    )
+
+    open fun ParameterButToStack(cmd: String, vararg allBut: Char): Rule = FirstOf(
+            Sequence(
+                    '"',
+                    RuleWithVariables(OneOrMore(ParamMatcher)),
+                    '"'
+            ),
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut))))
     )
 
     open fun RuleWithVariables(matching: Rule): Rule =
@@ -1082,6 +1107,49 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    open fun TrialCameraID(): Rule =
+            FirstOf(
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val labelName = pop()
+
+                                val id = this.hopesPeakKillingGame?.trialCameraNames?.indexOf(labelName)
+                                        ?.let { int -> if (int == -1) null else int }
+                                        ?: customTrialCameraNames[labelName]
+                                        ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
+                            }
+                    ),
+                    Sequence(
+                            RuleWithVariables(OneOrMore(Digit())),
+
+                            OptionalInlineWhitespace(),
+                            ',',
+                            OptionalInlineWhitespace(),
+
+                            RuleWithVariables(OneOrMore(Digit())),
+                            Action<Any> {
+                                val first = pop()
+                                val second = pop()
+
+                                push(first)
+                                push(second)
+                            }
+                    ),
+                    Sequence(
+                            RuleWithVariables(OneOrMore(Digit())),
+                            Action<Any> {
+                                val id = pop().toString().toIntOrNull() ?: return@Action false
+
+                                push(id % 256)
+                                push(id shr 8)
+                            }
+                    )
+            )
+
     open fun SpeakerName(): Rule =
             FirstOf(
                     Sequence(
@@ -1099,6 +1167,23 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     ),
                     RuleWithVariables(OneOrMore(Digit()))
             )
+
+    open fun SpriteEmotion(character: Var<Int>?): Rule =
+            FirstOf(
+                    Sequence(
+                            Action<Any> { character != null },
+                            ParameterToStack(),
+                            Action<Any> {
+                                val sprite = pop()
+
+                                val emotions = customEmotionNames[character?.get() ?: 0] ?: return@Action false
+
+                                push(emotions[sprite.toString()] ?: return@Action false)
+                            }
+                    ),
+                    RuleWithVariables(OneOrMore(Digit()))
+            )
+
 
     open fun FrameCount(): Rule =
             FirstOf(
@@ -1150,7 +1235,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                 //val index = (hopesPeakGame?.evidenceNames ?: emptyArray()).indexOf(name)
 
 //                                if (index == -1)
-                                    return@Action false
+                                return@Action false
 
 //                                return@Action push(index)
                             }

@@ -30,7 +30,7 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    compile "org.abimon:SpiralFormats:5604c1d"
+    compile "org.abimon:SpiralFormats:36a9f96"
     compile "org.parboiled:parboiled-java:1.1.8"
 
     testCompile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
