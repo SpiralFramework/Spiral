@@ -47,44 +47,27 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
         ALIAS_BINDINGS[rawParams[0].toString()]?.second?.invoke(rawParams.drop(1).toTypedArray(), parser)
     }
 
-    fun addAnimationID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
+    fun addByteID(stack: Array<Any>, map: MutableMap<String, Int>) {
+        map[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
+    }
+
+    fun addShortID(stack: Array<Any>, map: MutableMap<String, Int>) {
         val major = stack[1].toString().toIntOrNull() ?: 0
         val minor = stack[2].toString().toIntOrNull() ?: 0
 
         val id = (major shl 8) or minor
 
-        parser.customAnimationNames[stack[0].toString()] = id
+        map[stack[0].toString()] = id
     }
 
-    fun addFlagID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        val group = stack[1].toString().toIntOrNull() ?: 0
-        val flagID = stack[2].toString().toIntOrNull() ?: 0
-
-        val id = (group shl 8) or flagID
-
-        parser.customFlagNames[stack[0].toString()] = id
-    }
-
-    fun addItemID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        parser.customItemNames[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
-    }
-
-    fun addLabelID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        val first = stack[1].toString().toIntOrNull() ?: 0
-        val second = stack[2].toString().toIntOrNull() ?: 0
-
-        val id = (first shl 8) or second
-
-        parser.customLabelNames[stack[0].toString()] = id
-    }
-
-    fun addNameID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        parser.customIdentifiers[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
-    }
-
-    fun addEvidenceID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        parser.customEvidenceNames[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
-    }
+    fun addAnimationID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addShortID(stack, parser.customAnimationNames)
+    fun addFlagID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addShortID(stack, parser.customFlagNames)
+    fun addItemID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customItemNames)
+    fun addLabelID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addShortID(stack, parser.customLabelNames)
+    fun addNameID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customIdentifiers)
+    fun addEvidenceID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customEvidenceNames)
+    fun addTrialCameraID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addShortID(stack, parser.customTrialCameraNames)
+    fun addCutinID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customCutinNames)
 
     fun addEmotionID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
         val charID = stack[1].toString().toIntOrNull() ?: 0
@@ -93,15 +76,6 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
         emotionsMap[stack[0].toString()] = stack[2].toString().toIntOrNull() ?: 0
 
         parser.customEmotionNames[charID] = emotionsMap
-    }
-
-    fun addTrialCameraID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
-        val major = stack[1].toString().toIntOrNull() ?: 0
-        val minor = stack[2].toString().toIntOrNull() ?: 0
-
-        val id = (major shl 8) or minor
-
-        parser.customTrialCameraNames[stack[0].toString()] = id
     }
 
     init {
@@ -173,6 +147,16 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
                     pushTmpFromStack(cmd),
                     pushTmpFromStack(cmd)
             ) to this@AddAliasDrill::addTrialCameraID
+
+            bindings["cutin"] = Sequence(
+                    CutinID(),
+                    pushTmpFromStack(cmd)
+            ) to this@AddAliasDrill::addCutinID
+
+            bindings["cut in"] = Sequence(
+                    CutinID(),
+                    pushTmpFromStack(cmd)
+            ) to this@AddAliasDrill::addCutinID
         }
 
         ALIAS_BINDINGS = bindings
