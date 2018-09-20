@@ -129,6 +129,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customAnimationNames: MutableMap<String, Int> by dataProperty("custom_animation_names", ::HashMap)
     val customEmotionNames: MutableMap<Int, MutableMap<String, Int>> by dataProperty("custom_emotion_names", ::HashMap)
     val customTrialCameraNames: MutableMap<String, Int> by dataProperty("custom_trial_camera_names", ::HashMap)
+    val customCutinNames: MutableMap<String, Int> by dataProperty("custom_cutin_names", ::HashMap)
 
     val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
@@ -441,6 +442,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinSetFlagDrill,
                             LinSpeakerDrill,
                             LinTrialCameraDrill,
+                            LinDisplayCutinDrill,
                             InternalLinItemSelectionDrill,
                             InternalLinEvidenceSelectionDrill,
 
@@ -1218,6 +1220,27 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     return@Action false
 
                                 return@Action push(index)
+                            }
+                    )
+            )
+
+    open fun CutinID(): Rule =
+            FirstOf(
+                    RuleWithVariables(OneOrMore(Digit())),
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                val name = pop().toString()
+                                if (name in customCutinNames)
+                                    return@Action push(customCutinNames[name] ?: 0)
+
+                                return@Action false
+//                                val index = (hopesPeakGame?.itemNames ?: emptyArray()).indexOf(name)
+//
+//                                if (index == -1)
+//                                    return@Action false
+//
+//                                return@Action push(index)
                             }
                     )
             )
