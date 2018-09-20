@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.40'
+    ext.kotlin_version = '1.2.51'
     ext.sfl4j_version = "1.7.25"
 
     repositories {
