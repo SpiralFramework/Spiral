@@ -6,4 +6,6 @@ package org.abimon.spiral.core.objects.game.hpa
 interface HopesPeakKillingGame: HopesPeakDRGame {
     val nonstopDebateOpCodeNames: Map<Int, String>
     val nonstopDebateSectionSize: Int
+
+    val trialCameraNames: Array<String>
 }
