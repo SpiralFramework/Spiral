@@ -1,7 +1,9 @@
 package org.abimon.osl.drills.circuits
 
 import org.abimon.osl.OpenSpiralLanguageParser
+import org.parboiled.Action
 import org.parboiled.Rule
+import org.parboiled.support.Var
 
 class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
     val cmd = "ADD-ALIAS-ENTRIES"
@@ -66,7 +68,7 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
     fun addItemID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
         parser.customItemNames[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
     }
-    
+
     fun addLabelID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
         val first = stack[1].toString().toIntOrNull() ?: 0
         val second = stack[2].toString().toIntOrNull() ?: 0
@@ -82,6 +84,24 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
 
     fun addEvidenceID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
         parser.customEvidenceNames[stack[0].toString()] = stack[1].toString().toIntOrNull() ?: 0
+    }
+
+    fun addEmotionID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
+        val charID = stack[1].toString().toIntOrNull() ?: 0
+        val emotionsMap = parser.customEmotionNames[charID] ?: HashMap()
+
+        emotionsMap[stack[0].toString()] = stack[2].toString().toIntOrNull() ?: 0
+
+        parser.customEmotionNames[charID] = emotionsMap
+    }
+
+    fun addTrialCameraID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
+        val major = stack[1].toString().toIntOrNull() ?: 0
+        val minor = stack[2].toString().toIntOrNull() ?: 0
+
+        val id = (major shl 8) or minor
+
+        parser.customTrialCameraNames[stack[0].toString()] = id
     }
 
     init {
@@ -109,7 +129,7 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
                     ItemID(),
                     pushTmpFromStack(cmd)
             ) to this@AddAliasDrill::addItemID
-            
+
             bindings["label"] = Sequence(
                     Label(),
                     pushTmpFromStack(cmd),
@@ -125,6 +145,34 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
                     EvidenceID(),
                     pushTmpFromStack(cmd)
             ) to this@AddAliasDrill::addEvidenceID
+
+            val speakerNameVar = Var<Int>()
+            val emotionRule = Sequence(
+                    Action<Any> { speakerNameVar.set(0) },
+                    SpeakerName(),
+                    Action<Any> {
+                        val speakerName = pop().toString().toIntOrNull() ?: 0
+
+                        pushTmp(cmd, speakerName)
+
+                        return@Action speakerNameVar.set(speakerName)
+                    },
+                    InlineWhitespace(),
+                    Optional("for", InlineWhitespace()),
+                    Optional("character", InlineWhitespace()),
+
+                    SpriteEmotion(speakerNameVar),
+                    pushTmpAction(cmd)
+            )
+
+            bindings["emotion"] = emotionRule to this@AddAliasDrill::addEmotionID
+            bindings["sprite"] = emotionRule to this@AddAliasDrill::addEmotionID
+
+            bindings["trial camera"] = Sequence(
+                    TrialCameraID(),
+                    pushTmpFromStack(cmd),
+                    pushTmpFromStack(cmd)
+            ) to this@AddAliasDrill::addTrialCameraID
         }
 
         ALIAS_BINDINGS = bindings

@@ -5,24 +5,29 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
 import org.abimon.spiral.core.objects.scripting.lin.LinScript
-import org.abimon.spiral.core.objects.scripting.lin.SpeakerEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr1.DR1TrialCameraEntry
+import org.abimon.spiral.core.objects.scripting.lin.dr2.DR2TrialCameraEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinSpeakerDrill : DrillHead<LinScript> {
+object LinTrialCameraDrill: DrillHead<LinScript> {
     override val klass: KClass<LinScript> = LinScript::class
-    val cmd = "LIN-SPEAKER"
+    val cmd = "LIN-TRIAL-CAMERA"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
 
                     Sequence(
-                            "Speaker",
+                            "Trial Camera",
                             FirstOf('|', ':'),
-                            pushDrillHead(cmd, this@LinSpeakerDrill),
+                            pushDrillHead(cmd, this@LinTrialCameraDrill),
                             OptionalInlineWhitespace(),
                             SpeakerName(),
+                            pushTmpFromStack(cmd),
+                            CommaSeparator(),
+                            TrialCameraID(),
+                            pushTmpFromStack(cmd),
                             pushTmpFromStack(cmd)
                     ),
 
@@ -31,11 +36,15 @@ object LinSpeakerDrill : DrillHead<LinScript> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
+        val second = rawParams[1].toString().toIntOrNull() ?: 0
+        val third = rawParams[2].toString().toIntOrNull() ?: 0
+
+        val motionID = (second shl 8) or third
 
         return when (parser.hopesPeakGame) {
-            DR1 -> SpeakerEntry(first)
-            DR2 -> SpeakerEntry(first)
-            else -> TODO("Label Goto's are not documented in ${parser.hopesPeakGame}")
+            DR1 -> DR1TrialCameraEntry(first, motionID)
+            DR2 -> DR2TrialCameraEntry(first, motionID, 0, 0, 0)
+            else -> TODO("Trial Camera's are not documented in ${parser.hopesPeakGame}")
         }
     }
 }

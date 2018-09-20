@@ -1,6 +1,7 @@
 package org.abimon.osl.drills.circuits
 
 import org.abimon.osl.GameContext
+import org.abimon.osl.LineMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.DrillHead
 import org.abimon.spiral.core.objects.game.hpa.DR1
@@ -28,6 +29,9 @@ object ChangeContextDrill : DrillHead<GameContext> {
 
         DR1.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR1NonstopDebateContext) }
         DR2.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR2NonstopDebateContext) }
+
+        DR1.names.forEach { name -> put("$name Debate".toUpperCase(), GameContext.DR1DebateContext) }
+        DR2.names.forEach { name -> put("$name Debate".toUpperCase(), GameContext.DR2DebateContext) }
     }
 
     override val klass: KClass<GameContext> = GameContext::class
@@ -38,7 +42,8 @@ object ChangeContextDrill : DrillHead<GameContext> {
                             FirstOf("Game Context:", "Context:", "Game Context Is ", "Context Is ", "Set Context To ", "Set Game Context To "),
                             pushDrillHead(cmd, this@ChangeContextDrill),
                             OptionalInlineWhitespace(),
-                            Parameter(cmd),
+                            OneOrMore(LineMatcher),
+                            pushTmpAction(cmd),
                             Action<Any> { tmpStack[cmd]?.peek()?.toString()?.toUpperCase().let { key -> key == "NULL" || key in games } },
                             operateOnTmpActions(cmd) { stack -> operate(this, stack.toTypedArray().let { array -> array.copyOfRange(1, array.size) }) }
                     ),

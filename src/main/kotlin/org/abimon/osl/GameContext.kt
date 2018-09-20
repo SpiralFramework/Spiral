@@ -29,6 +29,24 @@ sealed class GameContext {
     object UnknownHopesPeakGameContext: HopesPeakGameContext(UnknownHopesPeakGame)
     open class CatchAllHopesPeakGameContext(game: HopesPeakDRGame): HopesPeakGameContext(game)
 
+    abstract class HopesPeakDebateContext(override val game: HopesPeakKillingGame): HopesPeakGameContext(game) {
+        companion object {
+            operator fun invoke(game: HopesPeakKillingGame): HopesPeakDebateContext {
+                return when (game) {
+                    DR1 -> DR1DebateContext
+                    DR2 -> DR2DebateContext
+                    UnknownHopesPeakGame -> UnknownHopesPeakDebateContext
+                    else -> CatchAllHopesPeakDebateContext(game)
+                }
+            }
+        }
+    }
+
+    object DR1DebateContext: HopesPeakDebateContext(DR1)
+    object DR2DebateContext: HopesPeakDebateContext(DR2)
+    object UnknownHopesPeakDebateContext: HopesPeakDebateContext(UnknownHopesPeakGame)
+    open class CatchAllHopesPeakDebateContext(game: HopesPeakKillingGame): HopesPeakDebateContext(game)
+
     abstract class V3GameContext(override val game: V3): DRGameContext(game)
     object V3GameContextObject: V3GameContext(V3)
     open class CatchAllV3GameContext(game: V3): V3GameContext(game)

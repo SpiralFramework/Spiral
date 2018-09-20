@@ -39,37 +39,27 @@ object LinSpriteDrill : DrillHead<LinScript> {
                                         Sequence(
                                                 "Display sprite for ",
                                                 pushDrillHead(cmd, this@LinSpriteDrill),
-                                                FirstOf(
-                                                        Parameter(cmd),
-                                                        Sequence(
-                                                                OneOrMore(Digit()),
-                                                                pushTmpAction(cmd)
-                                                        )
-                                                ),
+                                                SpeakerName(),
                                                 Action<Any> {
-                                                    val name = peekTmpAction(cmd)?.toString() ?: ""
-                                                    return@Action name in customIdentifiers || name in (hopesPeakGame
-                                                            ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
+                                                    val speaker = pop().toString().toIntOrNull() ?: 0
+
+                                                    pushTmp(cmd, speaker)
+                                                    character.set(speaker)
                                                 },
                                                 " with ID ",
-                                                OneOrMore(Digit()),
-                                                pushTmpAction(cmd)
+                                                SpriteEmotion(character),
+                                                pushTmpFromStack(cmd)
                                         ),
                                         Sequence(
                                                 "Display",
                                                 pushDrillHead(cmd, this@LinSpriteDrill),
                                                 InlineWhitespace(),
-                                                FirstOf(
-                                                        Parameter(cmd),
-                                                        Sequence(
-                                                                OneOrMore(Digit()),
-                                                                pushTmpAction(cmd)
-                                                        )
-                                                ),
+                                                SpeakerName(),
                                                 Action<Any> {
-                                                    val name = peekTmpAction(cmd)?.toString() ?: ""
-                                                    return@Action name in customIdentifiers || name in (hopesPeakGame
-                                                            ?: UnknownHopesPeakGame).characterIdentifiers || name.matches(NUMERAL_REGEX)
+                                                    val speaker = pop().toString().toIntOrNull() ?: 0
+
+                                                    pushTmp(cmd, speaker)
+                                                    character.set(speaker)
                                                 },
                                                 FirstOf(
                                                         CommaSeparator(),
@@ -77,8 +67,8 @@ object LinSpriteDrill : DrillHead<LinScript> {
                                                 ),
                                                 "pose",
                                                 InlineWhitespace(),
-                                                OneOrMore(Digit()),
-                                                pushTmpAction(cmd)
+                                                SpriteEmotion(character),
+                                                pushTmpFromStack(cmd)
                                         )
                                 ),
 
@@ -178,7 +168,7 @@ object LinSpriteDrill : DrillHead<LinScript> {
                                                         }
                                                 ),
                                                 "sprite" to Sequence(
-                                                        RuleWithVariables(OneOrMore(Digit())),
+                                                        SpriteEmotion(character),
                                                         Action<Any> { sprite.set(pop().toString().toIntOrNull() ?: 0) }
                                                 ),
                                                 arrayOf("position", "pos") to Sequence(
