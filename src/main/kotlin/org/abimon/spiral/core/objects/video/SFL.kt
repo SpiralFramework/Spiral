@@ -10,18 +10,19 @@ class SFL(val dataSource: () -> InputStream) {
 
     data class SFLImage(val width: Int, val height: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int)
     data class SFLDisplayImage(val originalWidth: Int, val displayWidth: Int, val originalHeight: Int, val displayHeight: Int, val unk1: Int, val unk2: Int)
-    
+    data class SFLCommand(val dataLength: Int, val headerLength: Int, val unk1: Int, val header: ByteArray, val data: ByteArray)
+
     val headerUnk1: Int
     val headerUnk2: Int
     val headerUnk3: Int
-    
+
     val unk1: Int
     val unk2: Int
     val unk3: Int
     val unk4: Int
 
     val headerUnk: ByteArray
-    
+
     val unk5: Int
     val unkFrameCount: Int
     val frameCount: Int
@@ -34,9 +35,14 @@ class SFL(val dataSource: () -> InputStream) {
 
     val images: Array<SFLImage>
     val displayImages: Array<SFLDisplayImage>
+    val unkPossibleImageData: Array<ByteArray>
+
+    val extraByteData: ByteArray
+
+    val commands: Array<SFLCommand>
 
     init {
-        val stream = dataSource()
+        val stream = CountingInputStream(dataSource())
 
         try {
             val magic = stream.readInt32LE()
@@ -93,6 +99,8 @@ class SFL(val dataSource: () -> InputStream) {
 
             stream.skip(24)
 
+            println(stream.count)
+
             displayImages = Array(frameCount) {
                 return@Array SFLDisplayImage(
                         stream.readInt32LE(),
@@ -106,7 +114,54 @@ class SFL(val dataSource: () -> InputStream) {
                 )
             }
 
+            println(stream.count)
+
+            //I don't understand how, but I'm pretty sure these are bits of image data, I think
+            unkPossibleImageData = Array(images.last().unk3 and 0xFF) {
+                val byteArray = ByteArray(40)
+                stream.read(byteArray)
+
+                return@Array byteArray
+            }
+
+            when (unk3) {
+                0 -> extraByteData = ByteArray(0)
+                1 -> extraByteData = ByteArray(56)
+                2 -> extraByteData = ByteArray(112)
+                3 -> extraByteData = ByteArray(112)
+                4 -> extraByteData = ByteArray(176)
+                else -> {
+                    DataHandler.LOGGER.debug("unk3 in SFL file {} is {}", dataSource, unk3)
+                    extraByteData = ByteArray(0)
+                }
+            }
+
+            stream.read(extraByteData)
+
+            val commandList = ArrayList<SFLCommand>()
+
             /** SFL COMMAND: <data size, uint32> <some header? 2 uint16s> <command itself, 8 bytes>, <data size bytes> */
+            while (true) {
+                val dataSize = stream.readInt32LE()
+                val headerSize = stream.readInt16LE()
+                val unk1 = stream.readInt16LE()
+
+                if (dataSize < 0 || headerSize < 8 || unk1 == -1)
+                    break
+
+                val header = ByteArray(headerSize - 8)
+                val data = ByteArray(dataSize)
+
+                if (stream.read(header) == -1)
+                    break
+
+                if (stream.read(data) == -1)
+                    break
+
+                commandList.add(SFLCommand(dataSize, headerSize, unk1, header, data))
+            }
+
+            commands = commandList.toTypedArray()
         } finally {
             stream.close()
         }
