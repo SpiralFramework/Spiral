@@ -8,6 +8,10 @@ import org.parboiled.support.Var
 
 //While this is an extension
 object SpiralBridgeDrill : DrillCircuit {
+    var OP_CODE_GAME_STATE: Int = 253
+    var OP_CODE_PARAM_BIG: Int = 254
+    var OP_CODE_PARAM_SMALL: Int = 255
+
     val OP_CODE_NAMES = mapOf(
             "Noop" to 0,
             "Nop" to 0,
@@ -68,9 +72,9 @@ object SpiralBridgeDrill : DrillCircuit {
                         Sequence(
                                 "clear",
                                 Action<Any> {
-                                    push(arrayOf(this, "0x33|253, 0, 0, 0"))
-                                    push(arrayOf(this, "0x33|254, 0, 0, 0"))
-                                    push(arrayOf(this, "0x33|255, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|$OP_CODE_GAME_STATE, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|$OP_CODE_PARAM_BIG, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|$OP_CODE_PARAM_SMALL, 0, 0, 0"))
                                 }
                         ),
                         Sequence(
@@ -130,8 +134,8 @@ object SpiralBridgeDrill : DrillCircuit {
                                                 }
                                         )
                                 ),
-                                Action<Any> { push(arrayOf(this, "0x33|253, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
-                                Action<Any> { push(arrayOf(this, "0x33|255, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                                Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_GAME_STATE, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
+                                Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_SMALL, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
                         )
                 )
         )
