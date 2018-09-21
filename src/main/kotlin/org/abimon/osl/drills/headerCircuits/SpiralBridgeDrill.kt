@@ -68,9 +68,9 @@ object SpiralBridgeDrill : DrillCircuit {
                         Sequence(
                                 "clear",
                                 Action<Any> {
-                                    push(arrayOf(this, "0x33|28, 0, 0, 0"))
-                                    push(arrayOf(this, "0x33|29, 0, 0, 0"))
-                                    push(arrayOf(this, "0x33|30, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|253, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|254, 0, 0, 0"))
+                                    push(arrayOf(this, "0x33|255, 0, 0, 0"))
                                 }
                         ),
                         Sequence(
@@ -130,8 +130,8 @@ object SpiralBridgeDrill : DrillCircuit {
                                                 }
                                         )
                                 ),
-                                Action<Any> { push(arrayOf(this, "0x33|28, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
-                                Action<Any> { push(arrayOf(this, "0x33|30, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                                Action<Any> { push(arrayOf(this, "0x33|253, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
+                                Action<Any> { push(arrayOf(this, "0x33|255, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
                         )
                 )
         )
