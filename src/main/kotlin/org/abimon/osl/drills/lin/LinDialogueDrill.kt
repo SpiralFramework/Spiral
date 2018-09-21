@@ -106,7 +106,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
         val entries: MutableList<LinScript> = ArrayList(6)
 
         if (spriteID != null)
-            entries.add(SpriteEntry(if (parser.gameContext is GameContext.HopesPeakDebateContext) speakerID else 0, speakerID, spriteID, 0, 0))
+            entries.add(SpriteEntry(if (parser.gameContext is GameContext.HopesPeakTrialContext) speakerID else 0, speakerID, spriteID, 0, 0))
 
         if (trialCamera != null) {
             entries.add(when (game) {
