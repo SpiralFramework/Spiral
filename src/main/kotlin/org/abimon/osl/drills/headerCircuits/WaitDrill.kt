@@ -247,7 +247,7 @@ object WaitDrill : DrillCircuit {
 
                     push(arrayOf(this, "Mark Label $label"))
 
-                    push(arrayOf(this, "if-g (28 != ${spiralOp.get()}) {"))
+                    push(arrayOf(this, "if-g (253 != ${spiralOp.get()}) {"))
                     if (waitingText.get().isNotBlank())
                         push(arrayOf(this, waitingText.get()))
 
@@ -262,7 +262,7 @@ object WaitDrill : DrillCircuit {
                         val big = desiredGameState.get() shr 8
                         val small = desiredGameState.get() and 0xFF
 
-                        push(arrayOf(this, "if-g (29 != $big) {"))
+                        push(arrayOf(this, "if-g (254 != $big) {"))
 
                         if (waitingText.get().isNotBlank())
                             push(arrayOf(this, waitingText.get()))
@@ -273,7 +273,7 @@ object WaitDrill : DrillCircuit {
                         push(arrayOf(this, "goto $label"))
                         push(arrayOf(this, "}"))
 
-                        push(arrayOf(this, "if-g (30 != $small) {"))
+                        push(arrayOf(this, "if-g (255 != $small) {"))
 
                         if (waitingText.get().isNotBlank())
                             push(arrayOf(this, waitingText.get()))
