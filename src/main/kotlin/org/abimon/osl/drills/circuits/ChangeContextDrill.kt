@@ -30,8 +30,8 @@ object ChangeContextDrill : DrillHead<GameContext> {
         DR1.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR1NonstopDebateContext) }
         DR2.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR2NonstopDebateContext) }
 
-        DR1.names.forEach { name -> put("$name Debate".toUpperCase(), GameContext.DR1DebateContext) }
-        DR2.names.forEach { name -> put("$name Debate".toUpperCase(), GameContext.DR2DebateContext) }
+        DR1.names.forEach { name -> put("$name Trial".toUpperCase(), GameContext.DR1TrialContext) }
+        DR2.names.forEach { name -> put("$name Trial".toUpperCase(), GameContext.DR2TrialContext) }
     }
 
     override val klass: KClass<GameContext> = GameContext::class
