@@ -293,6 +293,19 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
             )
     )
 
+    open fun ParameterToStack(): Rule = FirstOf(
+            Sequence(
+                    '"',
+                    OneOrMore(ParamMatcher),
+                    pushToStack(),
+                    '"'
+            ),
+            Sequence(
+                    OneOrMore(AllButMatcher(whitespace)),
+                    pushToStack()
+            )
+    )
+
     open fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
             Sequence(
                     '"',
@@ -433,6 +446,71 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
                     }
             )
     )
+
+    open fun MapValue(vararg pairs: kotlin.Pair<String, Any>): Rule = MapValue(pairs.toMap())
+    open fun MapValue(map: Map<String, Any>): Rule = Sequence(
+            ParameterToStack(),
+            Action<Any> {
+                val key = pop().toString()
+
+                val value = map[key] ?: return@Action false
+                push(value)
+            }
+    )
+
+    open fun <T> FirstOfKey(vararg pairs: kotlin.Pair<T, Rule>, obtainKey: (Context<Any>) -> T?): Rule =
+            FirstOf(pairs.map { (key, rule) -> Sequence(Action<Any> { context -> obtainKey(context) == key }, rule) }.toTypedArray())
+
+    @Suppress("UNCHECKED_CAST")
+    open fun <T> MapWithKey(map: Map<T, Any>, obtainKey: (Context<Any>) -> T?): Action<Any> =
+            Action<Any> {
+                val value = map[obtainKey(context)] ?: return@Action false
+                push(value)
+            }
+
+    @Suppress("UNCHECKED_CAST")
+    open fun <T> MapValueWithKey(map: Map<T, Map<String, Any>>, obtainKey: (Context<Any>) -> T?): Rule = Sequence(
+            Action<Any> { context ->
+                val key = obtainKey(context) ?: return@Action false
+                push(key)
+            },
+            ParameterToStack(),
+            Action<Any> {
+                val key = pop().toString()
+                val mapKey = pop() as? T ?: return@Action false
+
+                val value = (map[mapKey] ?: return@Action false)[key] ?: return@Action false
+                push(value)
+            }
+    )
+
+    open fun MapValueInsensitive(vararg pairs: kotlin.Pair<String, Any>): Rule = MapValueInsensitive(pairs.toMap())
+    open fun MapValueInsensitive(map: Map<String, Any>): Rule = Sequence(
+            ParameterToStack(),
+            Action<Any> {
+                val key = pop().toString()
+
+                val value = map[key.toUpperCase()] ?: return@Action false
+                push(value)
+            }
+    )
+
+    @Suppress("UNCHECKED_CAST")
+    open fun <T> MapValueInsensitiveWithKey(map: Map<T, Map<String, Any>>, obtainKey: (Context<Any>) -> T?): Rule = Sequence(
+            Action<Any> { context ->
+                val key = obtainKey(context) ?: return@Action false
+                push(key)
+            },
+            ParameterToStack(),
+            Action<Any> {
+                val key = pop().toString()
+                val mapKey = pop() as? T ?: return@Action false
+
+                val value = (map[mapKey] ?: return@Action false)[key.toUpperCase()] ?: return@Action false
+                push(value)
+            }
+    )
+
 
     open fun Decimal(): Rule = Decimal(OneOrMore(Digit()))
     open fun Decimal(digitRule: Rule): Rule =

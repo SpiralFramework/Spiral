@@ -937,7 +937,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             pushTmpFromStack(cmd)
     )
 
-    open fun ParameterToStack(): Rule = FirstOf(
+    override fun ParameterToStack(): Rule = FirstOf(
             Sequence(
                     '"',
                     RuleWithVariables(OneOrMore(ParamMatcher)),
@@ -1054,7 +1054,86 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
-    open fun GameState(): Rule = RuleWithVariables(OneOrMore(Digit()))
+    val GAME_STATE_NAMES = mapOf<DRGame, Map<String, Int>>(
+            DR1 to mapOf(
+                    "TIME_OF_DAY" to 0,
+                    "TIME OF DAY" to 0,
+                    "TIMEOFDAY" to 0,
+
+                    "LAST_EVIDENCE" to 10,
+                    "LAST EVIDENCE" to 10,
+                    "EVIDENCE" to 10,
+
+                    "GAMEMODE" to 15,
+                    "GAME MODE" to 15,
+                    "GAME_MODE" to 15,
+
+                    "ACTION_DIFFICULTY" to 18,
+                    "ACTION DIFFICULTY" to 18,
+                    "ACTION_DIFF" to 18,
+                    "ACTION DIFF" to 18,
+
+                    "LOGIC_DIFFICULTY" to 19,
+                    "LOGIC DIFFICULTY" to 19,
+                    "LOGIC_DIFF" to 19,
+                    "LOGIC DIFF" to 19,
+                    "INFERENCE_DIFFICULTY" to 19,
+                    "INFERENCE DIFFICULTY" to 19,
+                    "INFERENCE_DIFF" to 19,
+                    "INFERENCE DIFF" to 19
+            )
+    )
+
+    open fun GameState(): Rule = FirstOf(
+            RuleWithVariables(OneOrMore(Digit())),
+            MapValueInsensitiveWithKey(GAME_STATE_NAMES) { drGame }
+    )
+
+    open fun GameStateValueDefault(): Rule = GameStateValue(Var(0))
+    open fun GameStateValue(gameState: Var<Int>): Rule = FirstOf(
+            RuleWithVariables(OneOrMore(Digit())),
+            Sequence(
+                    Action<Any> { drGame == DR1 },
+                    FirstOfKey(
+                            0 to MapValueInsensitive(
+                                    "DAYTIME" to 0,
+                                    "NIGHTTIME" to 1,
+                                    "MORNING" to 2,
+                                    "MIDNIGHT" to 3,
+                                    "TIME UNKNOWN" to 4,
+                                    "TIME_UNKNOWN" to 4,
+                                    "TIME UNK" to 4,
+                                    "TIME_UNK" to 4
+                            ),
+
+                            10 to EvidenceID(),
+
+                            18 to MapValueInsensitive(
+                                    "GENTLE" to 0,
+                                    "EASY" to 0,
+
+                                    "KIND" to 1,
+                                    "NORMAL" to 1,
+                                    "MEDIUM" to 1,
+
+                                    "MEAN" to 2,
+                                    "HARD" to 2
+                            ),
+
+                            19 to MapValueInsensitive(
+                                    "GENTLE" to 0,
+                                    "EASY" to 0,
+
+                                    "KIND" to 1,
+                                    "NORMAL" to 1,
+                                    "MEDIUM" to 1,
+
+                                    "MEAN" to 2,
+                                    "HARD" to 2
+                            )
+                    ) { gameState.get() }
+            )
+    )
 
     open fun FlagValue(): Rule =
             FirstOf(
