@@ -13,4 +13,9 @@ object SharedHPA {
             DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("trial_cameras.json"))
                     ?.mapValues { (_, value) -> value?.castToTypedArray<String>() ?: emptyArray() }
                     ?: emptyMap()
+
+    val evidenceNames: Map<String, Array<String>> =
+            DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("evidence_names.json"))
+                    ?.mapValues { (_, value) -> value?.castToTypedArray<String>() ?: emptyArray() }
+                    ?: emptyMap()
 }

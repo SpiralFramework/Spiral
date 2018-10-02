@@ -335,4 +335,5 @@ object DR2 : HopesPeakKillingGame {
 
     override val nonstopDebateSectionSize: Int = 68
     override val trialCameraNames: Array<String> = SharedHPA.trialCameraNames["dr2"] ?: emptyArray()
+    override val evidenceNames: Array<String> = SharedHPA.evidenceNames["dr2"] ?: emptyArray()
 }

@@ -306,6 +306,7 @@ object DR1 : HopesPeakKillingGame {
 
     override val nonstopDebateSectionSize: Int = 60
     override val trialCameraNames: Array<String> = SharedHPA.trialCameraNames["dr2"] ?: emptyArray()
+    override val evidenceNames: Array<String> = SharedHPA.evidenceNames["dr1"] ?: emptyArray()
 
     fun readCheckFlagA(stream: LinkedList<Int>): IntArray {
         val args: MutableList<Int> = ArrayList()
