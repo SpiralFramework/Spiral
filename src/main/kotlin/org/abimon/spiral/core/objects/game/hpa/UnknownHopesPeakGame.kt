@@ -38,4 +38,5 @@ object UnknownHopesPeakGame: HopesPeakKillingGame {
     override val nonstopDebateOpCodeNames: Map<Int, String> = emptyMap()
     override val nonstopDebateSectionSize: Int = 0
     override val trialCameraNames: Array<String> = emptyArray()
+    override val evidenceNames: Array<String> = emptyArray()
 }
