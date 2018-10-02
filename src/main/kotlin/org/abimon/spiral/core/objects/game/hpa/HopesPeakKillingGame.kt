@@ -8,4 +8,5 @@ interface HopesPeakKillingGame: HopesPeakDRGame {
     val nonstopDebateSectionSize: Int
 
     val trialCameraNames: Array<String>
+    val evidenceNames: Array<String>
 }
