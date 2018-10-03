@@ -1,6 +1,6 @@
 package org.abimon.spiral.core.objects.scripting.lin
 
-data class TextEntry(override var text: String?, override val textID: Int): LinScript, LinTextScript {
+data class TextEntry(override var text: String?, override var textID: Int): LinScript, LinTextScript {
     constructor(op: Int, args: IntArray): this(null, (args[0] shl 8) or args[1])
 
     override val opCode: Int = 0x02

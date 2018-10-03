@@ -18,6 +18,12 @@ class CustomNonstopDebate: ICompilable {
             bytesPerSection = value.nonstopDebateSectionSize
         }
 
+    var currentSection: NonstopDebateSection? = null
+        set(value) {
+            field?.let(this::section)
+            field = value
+        }
+
     var timeLimit = 300
 
     fun section(section: NonstopDebateSection) { sections.add(section) }
