@@ -1,15 +1,7 @@
 package org.abimon.osl
 
-import org.abimon.osl.data.nonstopDebate.NonstopDebateNewObject
-import org.abimon.osl.data.nonstopDebate.NonstopDebateVariable
 import org.abimon.osl.data.nonstopDebate.OSLVariable
-import org.abimon.spiral.core.objects.customNonstopDebate
-import org.abimon.spiral.core.objects.scripting.CustomLin
-import org.abimon.spiral.core.objects.scripting.CustomNonstopDebate
-import org.abimon.spiral.core.objects.scripting.CustomWordScript
-import org.abimon.spiral.core.objects.scripting.NonstopDebateSection
-import org.abimon.spiral.core.objects.scripting.lin.LinScript
-import org.abimon.spiral.core.objects.text.CustomSTXT
+import org.abimon.osl.results.*
 import org.abimon.spiral.core.utils.DataHandler
 import org.parboiled.Action
 import org.parboiled.BaseParser
@@ -22,8 +14,11 @@ import org.parboiled.support.Var
 import java.io.File
 import java.io.FileOutputStream
 import java.math.BigDecimal
+import kotlin.reflect.full.cast
 
 object OSL {
+    val SCRIPT_REGEX = "e\\d{2}_\\d{3}_\\d{3}(\\.lin)?".toRegex()
+
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun main(args: Array<String>) {
@@ -32,8 +27,10 @@ object OSL {
         DataHandler.stringToMap = { string -> jsonParser.parse(string) }
         DataHandler.streamToMap = { stream -> jsonParser.parse(String(stream.readBytes())) }
 
-        val script = File(args.firstOrNull { str -> str.startsWith("--script=") }?.substringAfter('=') ?: run { print("Script: "); readLine() ?: error("No script provided!") })
-        val parent = File(args.firstOrNull { str -> str.startsWith("--parent=") }?.substringAfter('=') ?:script.absolutePath.substringBeforeLast(File.separator))
+        val script = File(args.firstOrNull { str -> str.startsWith("--script=") }?.substringAfter('=')
+                ?: run { print("Script: "); readLine() ?: error("No script provided!") })
+        val parent = File(args.firstOrNull { str -> str.startsWith("--parent=") }?.substringAfter('=')
+                ?: script.absolutePath.substringBeforeLast(File.separator))
 
         val parser = OpenSpiralLanguageParser { name ->
             val file = File(parent, name)
@@ -42,14 +39,14 @@ object OSL {
             return@OpenSpiralLanguageParser null
         }
 
-        parser.localisationFile = File(args.firstOrNull { str -> str.startsWith("--lang=") }?.substringAfter('=') ?: "en_US.lang")
+        parser.localisationFile = File(args.firstOrNull { str -> str.startsWith("--lang=") }?.substringAfter('=')
+                ?: "en_US.lang")
 
         val (result, finalScript) = parser.parseWithOutput(script.readText())
 
-        var compiling: Any? = null
-        var section: NonstopDebateSection? = null
+        var compiling: OSLCompilation<*>? = null
 
-        val compiled: MutableMap<String, Any> = HashMap()
+        val compiled: MutableMap<String, OSLCompilation<*>> = HashMap()
 
         if (result.hasErrors()) {
             val inputError = result.parseErrors.filterIsInstance(InvalidInputError::class.java).firstOrNull()
@@ -69,52 +66,31 @@ object OSL {
 
                         val products = head.operate(parser, params)
 
+                        compiling?.handle(drillBit, head.klass.cast(products), head.klass)
+
                         when (head.klass) {
                             GameContext::class -> {
                                 val context = products as GameContext
                                 when (context) {
-                                    is GameContext.HopesPeakGameContext -> compiling = CustomLin()
-                                    is GameContext.V3GameContext -> compiling = CustomWordScript()
-                                    is GameContext.NonstopDebateContext -> compiling = customNonstopDebate { game = context.game }
-                                    is GameContext.STXGameContext -> compiling = CustomSTXT()
+                                    is GameContext.NonstopDebateDataContext -> compiling = CustomNonstopDataOSL(context.game)
+                                    is GameContext.NonstopDebateMinigameContext -> compiling = CustomNonstopMinigameOSL(context.game)
+                                    is GameContext.HopesPeakGameContext -> compiling = CustomLinOSL()
+                                    is GameContext.V3GameContext -> compiling = CustomWordScriptOSL()
+                                    is GameContext.STXGameContext -> compiling = CustomSTXOSL()
                                 }
                             }
-                            LinScript::class -> (compiling as? CustomLin)?.add(products as LinScript)
-                            Array<LinScript>::class -> (compiling as? CustomLin)?.addAll(products as Array<LinScript>)
-                            NonstopDebateVariable::class -> {
-                                val variable = products as NonstopDebateVariable
-
-                                section?.let { nonstopSection ->
-                                    if (variable.index < nonstopSection.data.size)
-                                        nonstopSection[variable.index] = variable.data
-                                }
-                            }
-                            NonstopDebateNewObject::class -> {
-                                if (compiling is CustomNonstopDebate)
-                                    section?.let(compiling::section)
-
-                                section = NonstopDebateSection((products as NonstopDebateNewObject).size)
-                            }
-
                             OSLVariable::class -> {
                                 val (key, keyVal) = products as OSLVariable<*>
 
                                 when (key) {
-                                    OSLVariable.KEYS.NONSTOP_TIMELIMIT -> (compiling as? CustomNonstopDebate)?.timeLimit = keyVal as? Int ?: 300
                                     OSLVariable.KEYS.COMPILE_AS -> {
-                                        if (compiling != null) {
-                                            if (compiling is CustomNonstopDebate)
-                                                section?.let(compiling::section)
-
+                                        if (compiling != null)
                                             compiled[keyVal.toString()] = compiling
 
-                                            compiling = null
-                                        }
+                                        compiling = null
                                     }
                                 }
                             }
-                            Unit::class -> {}
-                            else -> System.err.println("${head.klass} not a recognised product type!")
                         }
                     } catch (th: Throwable) {
                         throw IllegalArgumentException("Script line [${drillBit.script}] threw an error", th)
@@ -124,9 +100,6 @@ object OSL {
         }
 
         if (compiling != null) {
-            if (compiling is CustomNonstopDebate)
-                section?.let(compiling::section)
-
             compiled[script.name.substringBeforeLast('.')] = compiling
         }
 
@@ -139,37 +112,126 @@ object OSL {
         finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
         println("\n")
 
-        val saveTo = File(args.firstOrNull { str -> str.startsWith("--save_to=") }?.substringAfter('=') ?: run { print("Save To: "); readLine() ?: return })
-        if (!saveTo.exists())
-            saveTo.mkdirs()
+        if (!result.hasErrors()) {
 
-        compiled.forEach { name, product ->
-            val output: File?
+            val saveTo = File(args.firstOrNull { str -> str.startsWith("--save_to=") }?.substringAfter('=')
+                    ?: run { print("Save To: "); readLine() ?: return }).let { file ->
+                if (file.isFile)
+                    return@let File(file.absolutePath.trimEnd(File.separatorChar).substringBeforeLast(File.separator))
+                return@let file
+            }
+            if (!saveTo.exists())
+                saveTo.mkdirs()
 
-            when (product) {
-                is CustomLin -> {
-                    output = File(saveTo, "$name.lin")
-                    FileOutputStream(output).use(product::compile)
-                }
-                is CustomWordScript -> {
-                    output = File(saveTo, "$name.wrd")
-                    FileOutputStream(output).use(product::compile)
-                }
-                is CustomNonstopDebate -> {
-                    output = File(saveTo, "$name.dat")
-                    FileOutputStream(output).use(product::compile)
-                }
-                is CustomSTXT -> {
-                    output = File(saveTo, "$name.stx")
-                    FileOutputStream(output).use(product::compile)
-                }
-                else -> {
-                    output = null
-                    return@forEach
+            compiled.forEach { name, blueprint ->
+                when (blueprint) {
+//                is CustomLin -> {
+//                    output = File(saveTo, "$name.lin")
+//                    FileOutputStream(output).use(product::compile)
+//                }
+//                is CustomWordScript -> {
+//                    output = File(saveTo, "$name.wrd")
+//                    FileOutputStream(output).use(product::compile)
+//                }
+//                is CustomNonstopDebate -> {
+//                    output = File(saveTo, "$name.dat")
+//                    FileOutputStream(output).use(product::compile)
+//                }
+//                is CustomSTXT -> {
+//                    output = File(saveTo, "$name.stx")
+//                    FileOutputStream(output).use(product::compile)
+//                }
+
+                    is CustomLinOSL -> {
+                        val output = File(saveTo, "$name.lin")
+                        FileOutputStream(output).use(blueprint.produce()::compile)
+                    }
+
+                    is CustomNonstopMinigameOSL -> {
+                        val scriptFolder: File
+                        val binFolder: File
+                        val savePath = saveTo.absolutePath.toLowerCase().trimEnd(File.separatorChar)
+
+                        if (savePath.endsWith("${File.separator}script") || savePath == "script") {
+                            scriptFolder = saveTo
+                            binFolder = File("${saveTo.absolutePath.substringBeforeLast(File.separator)}${File.separator}bin")
+                        } else if (savePath.endsWith("${File.separator}bin") || savePath == "bin") {
+                            binFolder = saveTo
+                            scriptFolder = File("${saveTo.absolutePath.substringBeforeLast(File.separator)}${File.separator}script")
+                        } else if (savePath.endsWith("${File.separator}dr1") || savePath.endsWith("${File.separator}dr2") || savePath == "dr1" || savePath == "dr2") {
+                            scriptFolder = File(saveTo, "data${File.separator}us${File.separator}script")
+                            binFolder = File(saveTo, "data${File.separator}us${File.separator}bin")
+                        } else if (saveTo.listFiles().any { file -> (file.name.toLowerCase() == "dr1" || file.name.toLowerCase() == "dr2") && file.isDirectory }) {
+                            val drDir = saveTo.listFiles().first { file -> (file.name.toLowerCase() == "dr1" || file.name.toLowerCase() == "dr2") && file.isDirectory }
+
+                            scriptFolder = File(drDir, "data${File.separator}us${File.separator}script")
+                            binFolder = File(drDir, "data${File.separator}us${File.separator}bin")
+                        } else {
+                            scriptFolder = saveTo
+                            binFolder = saveTo
+                        }
+
+                        if (!scriptFolder.exists())
+                            scriptFolder.mkdirs()
+                        if (!binFolder.exists())
+                            binFolder.mkdirs()
+
+                        val chapter: Int?
+                        val room: Int?
+                        val scene: Int?
+
+                        if (name.matches(SCRIPT_REGEX)) {
+                            chapter = name.substring(1, 3).toInt()
+                            room = name.substring(4, 7).toInt()
+                            scene = name.substring(8, 11).toInt() + 1
+                        } else {
+                            chapter = null
+                            room = null
+                            scene = null
+                        }
+
+                        val mainScriptFile = File(scriptFolder, "$name.lin")
+                        val debateScriptFile = File(scriptFolder, buildString {
+                            if (chapter == null || room == null || scene == null) {
+                                append(name)
+                                append("-debate.lin")
+                            } else {
+                                append('e')
+                                append(chapter.toString().padStart(2, '0'))
+                                append('_')
+                                append(room.toString().padStart(3, '0'))
+                                append('_')
+                                append(scene.toString().padStart(3, '0'))
+                                append(".lin")
+                            }
+                        })
+                        val debateFile = File(binFolder, buildString {
+                            if (chapter == null) {
+                                append(name)
+                                append("-debate.dat")
+                            } else {
+                                append("nonstop_")
+                                append(chapter.toString().padStart(2, '0'))
+                                append('_')
+                                append(blueprint.minigame.debateNumber.toString().padStart(3, '0'))
+                                append(".dat")
+                            }
+                        })
+
+                        val (mainScript, debateScript, debate) = blueprint.produce(chapter, room, scene)
+
+                        FileOutputStream(mainScriptFile).use(mainScript::compile)
+                        FileOutputStream(debateScriptFile).use(debateScript::compile)
+                        FileOutputStream(debateFile).use(debate::compile)
+
+                        println("Compiled $name (type: ${mainScript::class} to $mainScriptFile")
+                        println("Compiled $name (type: ${debateScript::class} to $debateScriptFile")
+                        println("Compiled $name (type: ${debate::class} to $debateFile")
+
+//                    println("Compiled $name (type: ${blueprint::class}) to $output")
+                    }
                 }
             }
-
-            println("Compiled $name (type: ${product::class}) to $output")
         }
     }
 

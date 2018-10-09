@@ -4,10 +4,11 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
-import org.abimon.osl.drills.nonstopDebate.NonstopDebateBasicDrill
-import org.abimon.osl.drills.nonstopDebate.NonstopDebateNamedDrill
-import org.abimon.osl.drills.nonstopDebate.NonstopDebateNewObjectDrill
-import org.abimon.osl.drills.nonstopDebate.NonstopDebateTimeLimitDrill
+import org.abimon.osl.drills.nonstopDebateData.NonstopDebateBasicDrill
+import org.abimon.osl.drills.nonstopDebateData.NonstopDebateNamedDrill
+import org.abimon.osl.drills.nonstopDebateData.NonstopDebateNewObjectDrill
+import org.abimon.osl.drills.nonstopDebateData.NonstopDebateTimeLimitDrill
+import org.abimon.osl.drills.nonstopDebateMinigame.*
 import org.abimon.osl.drills.stx.STXSetLanguageDrill
 import org.abimon.osl.drills.wrd.*
 import org.abimon.spiral.core.objects.game.DRGame
@@ -38,6 +39,84 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         var DEFAULT_STDOUT: PrintStream = System.out
         var DEFAULT_MAX_FOR_RANGE: Int = 1000
 
+        val COLOUR_CODES = mutableMapOf(
+                DR1 to mutableMapOf(
+                        "pink" to 1,
+                        "purple" to 2,
+                        "yellow" to 3,
+                        "blue" to 4,
+                        "grey" to 7,
+                        "gray" to 7,
+                        "orange" to 9,
+                        "turquoise" to 10,
+                        "salmon" to 11,
+                        "green" to 23,
+                        "small_grey" to 24,
+                        "small_gray" to 24,
+
+                        "weak_point" to 9,
+                        "noise" to 20
+                ),
+                DR2 to mutableMapOf(
+                        "white_big" to 9,
+                        "white" to 0,
+                        "pink" to 1,
+                        "purple" to 2,
+                        "yellow" to 3,
+                        "blue_glow" to 23,
+                        "blue" to 4,
+                        "grey" to 5,
+                        "gray" to 5,
+                        "green" to 6,
+                        "red_big" to 11,
+                        "red" to 10,
+                        "cyan" to 24,
+                        "salmon" to 33,
+                        "slightly_darker_blue" to 34,
+
+                        "weak_point" to 17,
+                        "noise" to 20,
+                        "consent" to 69
+                )
+        )
+
+        val WRD_COLOUR_CODES = mutableMapOf(
+                V3 to mutableMapOf(
+                        "yellow" to "cltSTRONG",
+                        "blue" to "cltMIND",
+                        "green" to "cltSYSTEM",
+
+                        "bold" to "cltSTRONG",
+                        "strong" to "cltSTRONG",
+
+                        "mind" to "cltMIND",
+
+                        "narrator" to "cltSYSTEM",
+                        "system" to "cltSYSTEM"
+                )
+        )
+
+        val HEX_CODES = mutableMapOf(
+                DR2 to mutableMapOf(
+                        "FFFFFF" to 0,
+                        "B766F4" to 1,
+                        "5C1598" to 2,
+                        "DEAB00" to 3,
+                        "54E1FF" to 4,
+                        "383838" to 5,
+                        "52FF13" to 6,
+                        "FE0008" to 10,
+                        "1A51E8" to 11,
+                        "FF6A6E" to 33,
+                        "6DCAFF" to 34,
+                        "252525" to 45,
+                        "3F3F3F" to 47,
+                        "585858" to 48,
+                        "FF9900" to 61
+                )
+        )
+
+        fun colourCodeForNameAndGame(game: HopesPeakKillingGame, name: String): Int? = COLOUR_CODES[game]?.get(name)
 
         operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
 
@@ -82,14 +161,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         }
 
     var nonstopDebateGame: HopesPeakKillingGame?
-        get() = (gameContext as? GameContext.NonstopDebateContext)?.game
+        get() = (gameContext as? GameContext.NonstopDebateDataContext)?.game
         set(value) {
             gameContext = when (value) {
-                DR1 -> GameContext.DR1NonstopDebateContext
-                DR2 -> GameContext.DR2NonstopDebateContext
-                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakNonstopDebateContext
+                DR1 -> GameContext.DR1NonstopDebateDataContext
+                DR2 -> GameContext.DR2NonstopDebateDataContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakNonstopDebateDataContext
                 null -> null
-                else -> GameContext.CatchAllNonstopDebateContext(value)
+                else -> GameContext.CatchAllNonstopDebateDataContext(value)
             }
         }
 
@@ -362,6 +441,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             Sequence(
                                     OneOrMore(AllButMatcher(charArrayOf('\n', '{', '}'))),
                                     '{',
+                                    OptionalInlineWhitespace(),
                                     '\n'
                             ),
                             Action<Any> { push(arrayOf(null, match())) },
@@ -377,6 +457,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             "else",
                                             OptionalWhitespace(),
                                             '{',
+                                            OptionalInlineWhitespace(),
                                             '\n'
                                     ),
                                     Action<Any> { push(arrayOf(null, match())) },
@@ -401,6 +482,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             SpiralWrdLine(),
             SpiralSTXLine(),
             SpiralNonstopDebateLine(),
+            SpiralNonstopMinigameLine(),
 
             CompileAsDrill,
             ChangeGameDrill,
@@ -487,13 +569,36 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun SpiralNonstopDebateLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is GameContext.NonstopDebateContext },
-                    FirstOf(
-                            NonstopDebateNewObjectDrill,
-                            NonstopDebateTimeLimitDrill,
+                    Action<Any> { gameContext is GameContext.NonstopDebateDataContext },
+                    SpiralNonstopDebateLineRaw()
+            )
 
-                            NonstopDebateBasicDrill,
-                            NonstopDebateNamedDrill
+    open fun SpiralNonstopDebateLineRaw(): Rule =
+            FirstOf(
+                    NonstopDebateNewObjectDrill,
+                    NonstopDebateTimeLimitDrill,
+
+                    NonstopDebateBasicDrill,
+                    NonstopDebateNamedDrill
+            )
+
+    open fun SpiralNonstopMinigameLine(): Rule =
+            Sequence(
+                    Action<Any> { gameContext is GameContext.NonstopDebateMinigameContext },
+                    FirstOf(
+                            Sequence(
+                                    "[Nonstop]",
+                                    OptionalInlineWhitespace(),
+                                    SpiralNonstopDebateLineRaw()
+                            ),
+                            CorrectEvidenceDrill,
+                            IncorrectEvidenceDrill,
+                            NonstopDebateNumberDeclarationDrill,
+                            NonstopDebateOperatingDrill,
+                            NonstopDebateCoupledScriptDrill,
+                            NonstopEnableTruthBullets,
+                            NonstopDebateTextEntryDrill,
+                            EndDebateDrill
                     )
             )
 
@@ -527,7 +632,11 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
         var script: String = lines.replace("\r\n", "\n")
 
         do {
-            stack = headerRunner.run(script).valueStack.reversed()
+            val result = headerRunner.run(script)
+            if (result.hasErrors())
+                return result to script
+
+            stack = result.valueStack.reversed()
             script = stack.joinToString("\n") { str -> (str as Array<*>)[1].toString().trim() }
         } while (stack.any { value -> (value as Array<*>)[0] != null })
 
@@ -549,80 +658,6 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
         return copy
     }
-
-    val COLOUR_CODES = mapOf(
-            DR1 to mapOf(
-                    "pink" to 1,
-                    "purple" to 2,
-                    "yellow" to 3,
-                    "blue" to 4,
-                    "grey" to 7,
-                    "gray" to 7,
-                    "orange" to 9,
-                    "turquoise" to 10,
-                    "salmon" to 11,
-                    "green" to 23,
-                    "small_grey" to 24,
-                    "small_gray" to 24
-            ),
-            DR2 to mapOf(
-                    "white_big" to 9,
-                    "white" to 0,
-                    "pink" to 1,
-                    "purple" to 2,
-                    "yellow" to 3,
-                    "blue_glow" to 23,
-                    "blue" to 4,
-                    "grey" to 5,
-                    "gray" to 5,
-                    "green" to 6,
-                    "red_big" to 11,
-                    "red" to 10,
-                    "cyan" to 24,
-                    "salmon" to 33,
-                    "slightly_darker_blue" to 34,
-
-                    "break" to 17,
-                    "noise" to 20,
-                    "consent" to 69
-            )
-    )
-
-    val WRD_COLOUR_CODES = mapOf(
-            V3 to mapOf(
-                    "yellow" to "cltSTRONG",
-                    "blue" to "cltMIND",
-                    "green" to "cltSYSTEM",
-
-                    "bold" to "cltSTRONG",
-                    "strong" to "cltSTRONG",
-
-                    "mind" to "cltMIND",
-
-                    "narrator" to "cltSYSTEM",
-                    "system" to "cltSYSTEM"
-            )
-    )
-
-    val HEX_CODES = mapOf(
-            DR2 to mapOf(
-                    "FFFFFF" to 0,
-                    "B766F4" to 1,
-                    "5C1598" to 2,
-                    "DEAB00" to 3,
-                    "54E1FF" to 4,
-                    "383838" to 5,
-                    "52FF13" to 6,
-                    "FE0008" to 10,
-                    "1A51E8" to 11,
-                    "FF6A6E" to 33,
-                    "6DCAFF" to 34,
-                    "252525" to 45,
-                    "3F3F3F" to 47,
-                    "585858" to 48,
-                    "FF9900" to 61
-            )
-    )
 
     open fun LinText(cmd: String, vararg allBut: Char): Rule =
             FirstOf(
@@ -704,7 +739,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -720,7 +755,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -732,9 +767,10 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                             RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             FirstOf(
                                                     Sequence(
+
                                                             '&',
                                                             "{clear}",
-                                                            InlineWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             Action<Any> { context ->
                                                                 val text = pop().toString()
 
@@ -746,7 +782,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                     Sequence(
                                                             '&',
                                                             FirstOf("{br}", "{break}", "{newline}"),
-                                                            InlineWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             Action<Any> {
                                                                 val text = pop().toString()
 
@@ -761,14 +797,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                             FirstOf(COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                             Action<Any> { push(match()) },
                                                             '}',
-                                                            InlineWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             Action<Any> {
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
 
                                                                 pushTmp("LIN-TEXT-$cmd", text)
                                                                 pushTmp("LIN-TEXT-$cmd", "<CLT ${
-                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>")
                                                                 return@Action true
@@ -780,14 +816,14 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                                             FirstOf(HEX_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
                                                             Action<Any> { push(match()) },
                                                             '}',
-                                                            InlineWhitespace(),
+                                                            OptionalInlineWhitespace(),
                                                             Action<Any> {
                                                                 val colour = pop().toString()
                                                                 val text = pop().toString()
 
                                                                 pushTmp("LIN-TEXT-$cmd", text)
                                                                 pushTmp("LIN-TEXT-$cmd", "<CLT ${
-                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame]
+                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>")
                                                                 return@Action true
@@ -876,7 +912,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                         pushTmpAction("WRD-TEXT-$cmd", text).run(context)
                                                         pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
-                                                        (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
+                                                        (v3Game?.let { game -> WRD_COLOUR_CODES[game] as? Map<String, String> }
                                                                 ?: emptyMap())[colour]
                                                                 ?: "cltNORMAL"}>").run(context)
                                                         return@Action true
@@ -911,7 +947,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("WRD-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("WRD-TEXT-$cmd", "<CLT=${
-                                                                (v3Game?.let { game -> WRD_COLOUR_CODES[game] }
+                                                                (v3Game?.let { game -> WRD_COLOUR_CODES[game] as? Map<String, String> }
                                                                         ?: emptyMap())[colour]
                                                                         ?: "cltNORMAL"}>").run(context)
                                                                 return@Action true
@@ -1151,6 +1187,15 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     open fun Label(): Rule =
             FirstOf(
                     Sequence(
+                            FirstOf("find", "new"),
+                            Action<Any> {
+                                val id = findLabel()
+
+                                push(id % 256)
+                                push(id shr 8)
+                            }
+                    ),
+                    Sequence(
                             ParameterToStack(),
                             Action<Any> {
                                 val labelName = pop()
@@ -1334,12 +1379,12 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                 if (name in customEvidenceNames)
                                     return@Action push(customEvidenceNames[name] ?: 0)
 
-                                //val index = (hopesPeakGame?.evidenceNames ?: emptyArray()).indexOf(name)
+                                val index = (hopesPeakKillingGame?.evidenceNames ?: emptyArray()).indexOf(name)
 
-//                                if (index == -1)
-                                return@Action false
+                                if (index == -1)
+                                    return@Action false
 
-//                                return@Action push(index)
+                                return@Action push(index)
                             }
                     )
             )

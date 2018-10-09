@@ -1,4 +1,4 @@
-package org.abimon.osl.drills.nonstopDebate
+package org.abimon.osl.drills.nonstopDebateData
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.data.nonstopDebate.NonstopDebateVariable
