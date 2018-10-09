@@ -1,4 +1,4 @@
-package org.abimon.osl.drills.nonstopDebate
+package org.abimon.osl.drills.nonstopDebateData
 
 import org.abimon.osl.LineCodeMatcher
 import org.abimon.osl.OpenSpiralLanguageParser
@@ -21,7 +21,7 @@ object NonstopDebateNamedDrill : DrillHead<NonstopDebateVariable> {
                             OneOrMore(LineCodeMatcher),
                             Action<Any> {
                                 val name = match()
-                                (nonstopDebateGame ?: UnknownHopesPeakGame).nonstopDebateOpCodeNames.values.any { opCodeName -> opCodeName == name }
+                                (hopesPeakKillingGame ?: UnknownHopesPeakGame).nonstopDebateOpCodeNames.values.any { opCodeName -> opCodeName == name }
                             },
                             pushDrillHead(cmd, this@NonstopDebateNamedDrill),
                             pushTmpAction(cmd),
@@ -35,7 +35,7 @@ object NonstopDebateNamedDrill : DrillHead<NonstopDebateVariable> {
 
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): NonstopDebateVariable {
         val opName = rawParams[0].toString()
-        rawParams[0] = (parser.nonstopDebateGame ?: UnknownHopesPeakGame)
+        rawParams[0] = (parser.hopesPeakKillingGame ?: UnknownHopesPeakGame)
                 .nonstopDebateOpCodeNames.entries.first { (_, name) -> name == opName }
                 .key.toString(16)
         return NonstopDebateBasicDrill.formScript(rawParams)

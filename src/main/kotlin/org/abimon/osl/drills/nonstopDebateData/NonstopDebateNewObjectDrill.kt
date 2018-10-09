@@ -1,4 +1,4 @@
-package org.abimon.osl.drills.nonstopDebate
+package org.abimon.osl.drills.nonstopDebateData
 
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.SpiralDrillBit
@@ -19,7 +19,7 @@ object NonstopDebateNewObjectDrill: DrillCircuit {
                     ),
 
                     Action<Any> {
-                        push(listOf(SpiralDrillBit(StaticDrill(NonstopDebateNewObject((nonstopDebateGame ?: UnknownHopesPeakGame).nonstopDebateSectionSize / 2)))))
+                        push(listOf(SpiralDrillBit(StaticDrill(NonstopDebateNewObject((hopesPeakKillingGame ?: UnknownHopesPeakGame).nonstopDebateSectionSize / 2)))))
                     }
             )
 }

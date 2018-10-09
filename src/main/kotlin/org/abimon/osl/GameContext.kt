@@ -47,6 +47,25 @@ sealed class GameContext {
     object UnknownHopesPeakTrialContext: HopesPeakTrialContext(UnknownHopesPeakGame)
     open class CatchAllHopesPeakTrialContext(game: HopesPeakKillingGame): HopesPeakTrialContext(game)
 
+    abstract class HopesPeakMinigameContext(game: HopesPeakKillingGame): HopesPeakTrialContext(game)
+    abstract class NonstopDebateMinigameContext(game: HopesPeakKillingGame): HopesPeakMinigameContext(game) {
+        companion object {
+            operator fun invoke(game: HopesPeakKillingGame): NonstopDebateMinigameContext {
+                return when (game) {
+                    DR1 -> DR1NonstopDebateMinigameContext
+                    DR2 -> DR2NonstopDebateMinigameContext
+                    UnknownHopesPeakGame -> UnknownHopesPeakNonstopDebateMinigameContext
+                    else -> CatchAllNonstopDebateMinigameContext(game)
+                }
+            }
+        }
+    }
+
+    object DR1NonstopDebateMinigameContext: NonstopDebateMinigameContext(DR1)
+    object DR2NonstopDebateMinigameContext: NonstopDebateMinigameContext(DR2)
+    object UnknownHopesPeakNonstopDebateMinigameContext: NonstopDebateMinigameContext(UnknownHopesPeakGame)
+    open class CatchAllNonstopDebateMinigameContext(game: HopesPeakKillingGame): NonstopDebateMinigameContext(game)
+
     abstract class V3GameContext(override val game: V3): DRGameContext(game)
     object V3GameContextObject: V3GameContext(V3)
     open class CatchAllV3GameContext(game: V3): V3GameContext(game)
@@ -59,19 +78,19 @@ sealed class GameContext {
         }
     }
 
-    abstract class NonstopDebateContext(open val game: HopesPeakKillingGame): GameContext()
+    abstract class NonstopDebateDataContext(open val game: HopesPeakKillingGame): GameContext()
     companion object {
-        operator fun invoke(game: HopesPeakKillingGame): NonstopDebateContext {
+        operator fun invoke(game: HopesPeakKillingGame): NonstopDebateDataContext {
             return when (game) {
-                DR1 -> DR1NonstopDebateContext
-                DR2 -> DR2NonstopDebateContext
-                else -> CatchAllNonstopDebateContext(game)
+                DR1 -> DR1NonstopDebateDataContext
+                DR2 -> DR2NonstopDebateDataContext
+                else -> CatchAllNonstopDebateDataContext(game)
             }
         }
     }
-    object DR1NonstopDebateContext: NonstopDebateContext(DR1)
-    object DR2NonstopDebateContext: NonstopDebateContext(DR2)
-    object UnknownHopesPeakNonstopDebateContext: NonstopDebateContext(UnknownHopesPeakGame)
-    open class CatchAllNonstopDebateContext(game: HopesPeakKillingGame): NonstopDebateContext(game)
+    object DR1NonstopDebateDataContext: NonstopDebateDataContext(DR1)
+    object DR2NonstopDebateDataContext: NonstopDebateDataContext(DR2)
+    object UnknownHopesPeakNonstopDebateDataContext: NonstopDebateDataContext(UnknownHopesPeakGame)
+    open class CatchAllNonstopDebateDataContext(game: HopesPeakKillingGame): NonstopDebateDataContext(game)
 
 }

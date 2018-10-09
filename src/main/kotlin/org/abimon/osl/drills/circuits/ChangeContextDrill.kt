@@ -27,8 +27,11 @@ object ChangeContextDrill : DrillHead<GameContext> {
         this["STX"] = GameContext.STXGameContext.INSTANCE
         this["STXT"] = GameContext.STXGameContext.INSTANCE
 
-        DR1.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR1NonstopDebateContext) }
-        DR2.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR2NonstopDebateContext) }
+        DR1.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR1NonstopDebateMinigameContext) }
+        DR2.names.forEach { name -> put("Nonstop Debate ($name)".toUpperCase(), GameContext.DR2NonstopDebateMinigameContext) }
+
+        DR1.names.forEach { name -> put("Nonstop Debate Data ($name)".toUpperCase(), GameContext.DR1NonstopDebateDataContext) }
+        DR2.names.forEach { name -> put("Nonstop Debate Data ($name)".toUpperCase(), GameContext.DR2NonstopDebateDataContext) }
 
         DR1.names.forEach { name -> put("$name Trial".toUpperCase(), GameContext.DR1TrialContext) }
         DR2.names.forEach { name -> put("$name Trial".toUpperCase(), GameContext.DR2TrialContext) }
