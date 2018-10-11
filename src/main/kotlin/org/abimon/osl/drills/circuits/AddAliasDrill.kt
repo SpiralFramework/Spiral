@@ -68,6 +68,8 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
     fun addEvidenceID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customEvidenceNames)
     fun addTrialCameraID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addShortID(stack, parser.customTrialCameraNames)
     fun addCutinID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customCutinNames)
+    fun addOperatorID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customOperatorNames)
+    fun addJoinerOperatorID(stack: Array<Any>, parser: OpenSpiralLanguageParser) = addByteID(stack, parser.customJoinerOperatorNames)
 
     fun addEmotionID(stack: Array<Any>, parser: OpenSpiralLanguageParser) {
         val charID = stack[1].toString().toIntOrNull() ?: 0
@@ -157,6 +159,16 @@ class AddAliasDrill(parser: OpenSpiralLanguageParser) : DrillCircuit {
                     CutinID(),
                     pushTmpFromStack(cmd)
             ) to this@AddAliasDrill::addCutinID
+
+            bindings["operator"] = Sequence(
+                    LinIfOperator(),
+                    pushTmpFromStack(cmd)
+            ) to this@AddAliasDrill::addOperatorID
+
+            bindings["joiner operator"] = Sequence(
+                    JoinerOperator(),
+                    pushTmpFromStack(cmd)
+            ) to this@AddAliasDrill::addJoinerOperatorID
         }
 
         ALIAS_BINDINGS = bindings

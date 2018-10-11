@@ -4,6 +4,8 @@ import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
 import org.abimon.osl.drills.lin.*
+import org.abimon.osl.drills.lin.headerCircuits.LinWhenDrill
+import org.abimon.osl.drills.lin.headerCircuits.LinWhenGameStateDrill
 import org.abimon.osl.drills.nonstopDebateData.NonstopDebateBasicDrill
 import org.abimon.osl.drills.nonstopDebateData.NonstopDebateNamedDrill
 import org.abimon.osl.drills.nonstopDebateData.NonstopDebateNewObjectDrill
@@ -209,6 +211,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     val customEmotionNames: MutableMap<Int, MutableMap<String, Int>> by dataProperty("custom_emotion_names", ::HashMap)
     val customTrialCameraNames: MutableMap<String, Int> by dataProperty("custom_trial_camera_names", ::HashMap)
     val customCutinNames: MutableMap<String, Int> by dataProperty("custom_cutin_names", ::HashMap)
+    val customOperatorNames: MutableMap<String, Int> by dataProperty("custom_operator_names", ::HashMap)
+    val customJoinerOperatorNames: MutableMap<String, Int> by dataProperty("custom_joiner_operator_names", ::HashMap)
 
     val macros: MutableMap<String, String> by dataProperty("macros", ::HashMap)
 
@@ -423,6 +427,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     EvidenceSelectionDrill,
                     SpiralBridgeDrill,
                     WaitDrill,
+                    LinWhenDrill,
+                    LinWhenGameStateDrill,
 
                     Sequence(
                             Sequence(
@@ -451,10 +457,12 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                                     '}'
                             ),
                             Action<Any> { push(arrayOf(null, match())) },
-                            Optional(
+                            ZeroOrMore(
                                     Sequence(
                                             OptionalInlineWhitespace(),
                                             "else",
+                                            OptionalInlineWhitespace(),
+                                            ZeroOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '{'))),
                                             OptionalWhitespace(),
                                             '{',
                                             OptionalInlineWhitespace(),
@@ -515,8 +523,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                             LinHideSpriteDrill,
                             LinUIDrill,
                             LinCameraFocusDrill,
-                            LinIfDrill,
-                            LinIfGameStateDrill,
+                            LinIfCommand(),
+                            LinCheckGameStateDrill,
                             LinIfRandDrill,
                             LinChoicesDrill,
                             LinMarkLabelDrill,
@@ -602,6 +610,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
                     )
             )
 
+    open fun LinIfCommand(): Rule = LinIfDrill.Syntax(this)
+
     override fun toRule(obj: Any?): Rule {
         when (obj) {
             is DrillHead<*> -> return obj.Syntax(this)
@@ -658,6 +668,87 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
         return copy
     }
+
+
+    open fun LinIfOperator(): Rule =
+            FirstOf(
+                    Sequence(
+                            "raw",
+                            OptionalInlineWhitespace(),
+                            SurroundedRule(
+                                    RuleWithVariables(OneOrMore(Digit())),
+                                    WhitespaceSandwich(Ch('(')) to WhitespaceSandwich(Ch(')')),
+                                    WhitespaceSandwich(Ch('[')) to WhitespaceSandwich(Ch(']')),
+                                    WhitespaceSandwich(Ch('{')) to WhitespaceSandwich(Ch('}'))
+                            )
+                    ),
+                    Sequence(
+                            "==",
+                            OptionalInlineWhitespace(),
+                            SurroundedRule(
+                                    RuleWithVariables(OneOrMore(Digit())),
+                                    WhitespaceSandwich(Ch('(')) to WhitespaceSandwich(Ch(')')),
+                                    WhitespaceSandwich(Ch('[')) to WhitespaceSandwich(Ch(']')),
+                                    WhitespaceSandwich(Ch('{')) to WhitespaceSandwich(Ch('}')),
+                                    OptionalInlineWhitespace() to OptionalInlineWhitespace()
+                            ),
+                            OptionalInlineWhitespace(),
+                            "=="
+                    ),
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                push(customOperatorNames[pop()] ?: return@Action false)
+                            }
+                    ),
+                    Sequence(
+                            FirstOf(EnumLinFlagCheck.NAMES),
+                            Action<Any> { push(EnumLinFlagCheck.values().first { enum -> match() in enum.names }.flag) }
+                    )
+            )
+
+    open fun JoinerOperator(): Rule =
+            FirstOf(
+                    Sequence(
+                            "raw",
+                            OptionalInlineWhitespace(),
+                            SurroundedRule(
+                                    RuleWithVariables(OneOrMore(Digit())),
+                                    WhitespaceSandwich(Ch('(')) to WhitespaceSandwich(Ch(')')),
+                                    WhitespaceSandwich(Ch('[')) to WhitespaceSandwich(Ch(']')),
+                                    WhitespaceSandwich(Ch('{')) to WhitespaceSandwich(Ch('}'))
+                            )
+                    ),
+                    Sequence(
+                            "==",
+                            OptionalInlineWhitespace(),
+                            SurroundedRule(
+                                    RuleWithVariables(OneOrMore(Digit())),
+                                    WhitespaceSandwich(Ch('(')) to WhitespaceSandwich(Ch(')')),
+                                    WhitespaceSandwich(Ch('[')) to WhitespaceSandwich(Ch(']')),
+                                    WhitespaceSandwich(Ch('{')) to WhitespaceSandwich(Ch('}')),
+                                    OptionalInlineWhitespace() to OptionalInlineWhitespace()
+                            ),
+                            OptionalInlineWhitespace(),
+                            "=="
+                    ),
+                    Sequence(
+                            ParameterToStack(),
+                            Action<Any> {
+                                push(customJoinerOperatorNames[pop()] ?: return@Action false)
+                            }
+                    ),
+                    Sequence(
+                            FirstOf(EnumLinJoinerFlagCheck.NAMES),
+                            Action<Any> { push(EnumLinJoinerFlagCheck.values().first { enum -> match() in enum.names }.flag) }
+                    )
+            )
+
+    open fun LinIfOperatorToVar(variable: Var<Int>): Rule =
+            Sequence(
+                    LinIfOperator(),
+                    Action<Any> { variable.set(pop().toString().toIntOrNull() ?: 0) }
+            )
 
     open fun LinText(cmd: String, vararg allBut: Char): Rule =
             FirstOf(
@@ -739,7 +830,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
+                                                                (COLOUR_CODES[hopesPeakGame
+                                                                        ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -755,7 +847,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmpAction("LIN-TEXT-$cmd", text).run(context)
                                                                 pushTmpAction("LIN-TEXT-$cmd", "<CLT ${
-                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
+                                                                (HEX_CODES[hopesPeakGame
+                                                                        ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>").run(context)
                                                                 return@Action true
@@ -804,7 +897,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmp("LIN-TEXT-$cmd", text)
                                                                 pushTmp("LIN-TEXT-$cmd", "<CLT ${
-                                                                (COLOUR_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
+                                                                (COLOUR_CODES[hopesPeakGame
+                                                                        ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>")
                                                                 return@Action true
@@ -823,7 +917,8 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
                                                                 pushTmp("LIN-TEXT-$cmd", text)
                                                                 pushTmp("LIN-TEXT-$cmd", "<CLT ${
-                                                                (HEX_CODES[hopesPeakGame ?: UnknownHopesPeakGame] as? Map<String, Int>
+                                                                (HEX_CODES[hopesPeakGame
+                                                                        ?: UnknownHopesPeakGame] as? Map<String, Int>
                                                                         ?: emptyMap())[colour]
                                                                         ?: 0}>")
                                                                 return@Action true
@@ -995,7 +1090,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             )
     )
 
-    open fun ParameterButToStack(cmd: String, vararg allBut: Char): Rule = FirstOf(
+    open fun ParameterButToStack(vararg allBut: Char): Rule = FirstOf(
             Sequence(
                     '"',
                     RuleWithVariables(OneOrMore(ParamMatcher)),

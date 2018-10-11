@@ -319,6 +319,11 @@ abstract class SpiralParser(parboiledCreated: Boolean) : BaseParser<Any>() {
             )
     )
 
+    open fun WhitespaceSandwich(rule: Rule): Rule = Sequence(OptionalInlineWhitespace(), rule, OptionalInlineWhitespace())
+
+    open fun SurroundedRule(rule: Rule, vararg surrounding: Pair<Rule, Rule>): Rule =
+            FirstOf(surrounding.map { (prefix, suffix) -> Sequence(prefix, rule, suffix) }.toTypedArray())
+
     /** param should push to the stack when matching */
     open fun ParamList(cmd: String, param: Rule, delimiter: Rule): Rule {
         val parameters = Var<MutableList<Any>>(ArrayList())
