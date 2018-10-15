@@ -32,6 +32,8 @@ object OSL {
         val parent = File(args.firstOrNull { str -> str.startsWith("--parent=") }?.substringAfter('=')
                 ?: script.absolutePath.substringBeforeLast(File.separator))
 
+        val silent = args.any { str -> str == "--silent" || str == "--suppress" }
+
         val parser = OpenSpiralLanguageParser { name ->
             val file = File(parent, name)
             if (file.exists())
@@ -103,17 +105,18 @@ object OSL {
             compiled[script.name.substringBeforeLast('.')] = compiling
         }
 
-        println()
-        println(compiled)
-        println()
-        finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
-        println()
-        println(finalScript)
-        finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
-        println("\n")
+        if (silent) {
+            println()
+            println(compiled)
+            println()
+            finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
+            println()
+            println(finalScript)
+            finalScript.split('\n').maxBy(String::length)?.let { str -> (0 until str.length).forEach { print('*') } }
+            println("\n")
+        }
 
         if (!result.hasErrors()) {
-
             val saveTo = File(args.firstOrNull { str -> str.startsWith("--save_to=") }?.substringAfter('=')
                     ?: run { print("Save To: "); readLine() ?: return }).let { file ->
                 if (file.isFile)
@@ -144,7 +147,37 @@ object OSL {
 
                     is CustomLinOSL -> {
                         val output = File(saveTo, "$name.lin")
-                        FileOutputStream(output).use(blueprint.produce()::compile)
+                        val product = blueprint.produce()
+                        FileOutputStream(output).use(product::compile)
+                        println("Compiled $name (type: ${product::class} to $output")
+                    }
+
+                    is CustomWordScriptOSL -> {
+                        val output = File(saveTo, "$name.wrd")
+                        val product = blueprint.produce()
+                        FileOutputStream(output).use(product::compile)
+                        println("Compiled $name (type: ${product::class} to $output")
+                    }
+
+                    is CustomNonstopDataOSL -> {
+                        val output = File(saveTo, "$name.dat")
+                        val product = blueprint.produce()
+                        FileOutputStream(output).use(product::compile)
+                        println("Compiled $name (type: ${product::class} to $output")
+                    }
+
+                    is CustomSTXOSL -> {
+                        val output = File(saveTo, "$name.stx")
+                        val product = blueprint.produce()
+                        FileOutputStream(output).use(product::compile)
+                        println("Compiled $name (type: ${product::class} to $output")
+                    }
+
+                    is CustomLinOSL -> {
+                        val output = File(saveTo, "$name.lin")
+                        val product = blueprint.produce()
+                        FileOutputStream(output).use(product::compile)
+                        println("Compiled $name (type: ${product::class} to $output")
                     }
 
                     is CustomNonstopMinigameOSL -> {
