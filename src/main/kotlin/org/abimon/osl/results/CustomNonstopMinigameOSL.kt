@@ -104,6 +104,7 @@ open class CustomNonstopMinigameOSL(val game: HopesPeakKillingGame) : OSLCompila
         debate.vertical = 170
         debate.scale = 100
         debate.finalScale = 100
+        debate.shouldShootWithEvidence = false
     }
 
     fun nonstopDebateSection(size: Int, init: NonstopDebateSection.() -> Unit): NonstopDebateSection {
