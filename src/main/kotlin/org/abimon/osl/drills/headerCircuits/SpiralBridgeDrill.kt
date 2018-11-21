@@ -8,9 +8,9 @@ import org.parboiled.support.Var
 
 //While this is an extension
 object SpiralBridgeDrill : DrillCircuit {
-    var OP_CODE_GAME_STATE: Int = 253
-    var OP_CODE_PARAM_BIG: Int = 254
-    var OP_CODE_PARAM_SMALL: Int = 255
+    var OP_CODE_GAME_STATE: Int = 126
+    var OP_CODE_PARAM_BIG: Int = 127
+    var OP_CODE_PARAM_SMALL: Int = 128
 
     val OP_CODE_NAMES = mapOf(
             "Noop" to 0,
