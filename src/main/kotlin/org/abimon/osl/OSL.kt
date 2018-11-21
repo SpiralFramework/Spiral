@@ -14,7 +14,9 @@ import org.parboiled.support.Var
 import java.io.File
 import java.io.FileOutputStream
 import java.math.BigDecimal
+import kotlin.reflect.KClass
 import kotlin.reflect.full.cast
+import kotlin.reflect.jvm.jvmName
 
 object OSL {
     val SCRIPT_REGEX = "e\\d{2}_\\d{3}_\\d{3}(\\.lin)?".toRegex()
@@ -54,9 +56,9 @@ object OSL {
             val inputError = result.parseErrors.filterIsInstance(InvalidInputError::class.java).firstOrNull()
 
             if (inputError != null) {
-                println("Error found from ${inputError.startIndex} to ${inputError.endIndex}: [${inputError.inputBuffer.extract(inputError.startIndex, inputError.endIndex)}]")
+                System.err.println("Error found from ${inputError.startIndex} to ${inputError.endIndex}: [${inputError.inputBuffer.extract(inputError.startIndex, inputError.endIndex)}]")
             } else {
-                println("Other errors found: ${result.parseErrors.joinToString("\n")}")
+                System.err.println("Other errors found: ${result.parseErrors.joinToString("\n")}")
             }
         } else {
             for (value in result.valueStack.reversed()) {
@@ -105,7 +107,7 @@ object OSL {
             compiled[script.name.substringBeforeLast('.')] = compiling
         }
 
-        if (silent) {
+        if (!silent) {
             println()
             println(compiled)
             println()
@@ -149,35 +151,28 @@ object OSL {
                         val output = File(saveTo, "$name.lin")
                         val product = blueprint.produce()
                         FileOutputStream(output).use(product::compile)
-                        println("Compiled $name (type: ${product::class} to $output")
+                        println("Compiled $name (type: ${product::class.simpleNameOr} to $output")
                     }
 
                     is CustomWordScriptOSL -> {
                         val output = File(saveTo, "$name.wrd")
                         val product = blueprint.produce()
                         FileOutputStream(output).use(product::compile)
-                        println("Compiled $name (type: ${product::class} to $output")
+                        println("Compiled $name (type: ${product::class.simpleNameOr} to $output")
                     }
 
                     is CustomNonstopDataOSL -> {
                         val output = File(saveTo, "$name.dat")
                         val product = blueprint.produce()
                         FileOutputStream(output).use(product::compile)
-                        println("Compiled $name (type: ${product::class} to $output")
+                        println("Compiled $name (type: ${product::class.simpleNameOr} to $output")
                     }
 
                     is CustomSTXOSL -> {
                         val output = File(saveTo, "$name.stx")
                         val product = blueprint.produce()
                         FileOutputStream(output).use(product::compile)
-                        println("Compiled $name (type: ${product::class} to $output")
-                    }
-
-                    is CustomLinOSL -> {
-                        val output = File(saveTo, "$name.lin")
-                        val product = blueprint.produce()
-                        FileOutputStream(output).use(product::compile)
-                        println("Compiled $name (type: ${product::class} to $output")
+                        println("Compiled $name (type: ${product::class.simpleNameOr} to $output")
                     }
 
                     is CustomNonstopMinigameOSL -> {
@@ -257,16 +252,19 @@ object OSL {
                         FileOutputStream(debateScriptFile).use(debateScript::compile)
                         FileOutputStream(debateFile).use(debate::compile)
 
-                        println("Compiled $name (type: ${mainScript::class} to $mainScriptFile")
-                        println("Compiled $name (type: ${debateScript::class} to $debateScriptFile")
-                        println("Compiled $name (type: ${debate::class} to $debateFile")
+                        println("Compiled $name (type: ${mainScript::class.simpleNameOr} to $mainScriptFile")
+                        println("Compiled $name (type: ${debateScript::class.simpleNameOr} to $debateScriptFile")
+                        println("Compiled $name (type: ${debate::class.simpleNameOr} to $debateFile")
 
-//                    println("Compiled $name (type: ${blueprint::class}) to $output")
+//                    println("Compiled $name (type: ${blueprint::class.simpleNameOr}) to $output")
                     }
                 }
             }
         }
     }
+
+    val KClass<*>.simpleNameOr: String
+        get() = simpleName ?: qualifiedName ?: jvmName
 
     /**
      * We use this here as an alternative to a JSON library because we need it for literally two files
