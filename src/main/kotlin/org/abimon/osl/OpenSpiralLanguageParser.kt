@@ -1,5 +1,6 @@
 package org.abimon.osl
 
+import org.abimon.osl.data.parboiled.ExtraRuleBuilders
 import org.abimon.osl.drills.DrillHead
 import org.abimon.osl.drills.circuits.*
 import org.abimon.osl.drills.headerCircuits.*
@@ -34,7 +35,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.safeCast
 
-open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
+@Suppress("LeakingThis")
+open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilders, private val oslContext: (String) -> ByteArray?, isParboiledCreated: Boolean) : SpiralParser(isParboiledCreated) {
     companion object {
         var FRAMES_PER_SECOND = 60
 
@@ -120,11 +122,13 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
         fun colourCodeForNameAndGame(game: HopesPeakKillingGame, name: String): Int? = COLOUR_CODES[game]?.get(name)
 
-        operator fun invoke(oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, oslContext, true)
+        operator fun invoke(extraRuleBuilders: ExtraRuleBuilders = ExtraRuleBuilders(), oslContext: (String) -> ByteArray?): OpenSpiralLanguageParser = Parboiled.createParser(OpenSpiralLanguageParser::class.java, extraRuleBuilders, oslContext, true)
 
         fun readFromJar(name: String): ByteArray? =
                 this::class.java.classLoader.getResourceAsStream(name)?.readBytes()
     }
+
+    open val extraRules = extraRuleBuilders(this)
 
     var gameContext: GameContext? = null
     var drGame: DRGame?
@@ -417,7 +421,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun SpiralHeaderLine(): Rule =
             FirstOf(
-                    Action<Any> { false },
+                    FirstOf(extraRules.header),
                     Comment(),
                     AddMacroDrill,
                     ForLoopDrill,
@@ -484,6 +488,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             )
 
     open fun SpiralTextLine(): Rule = FirstOf(
+            FirstOf(extraRules.text),
             Comment(),
 
             SpiralLinLine(),
@@ -517,6 +522,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     Action<Any> { gameContext is GameContext.HopesPeakGameContext },
                     FirstOf(
+                            FirstOf(extraRules.lin),
                             BasicLinTextDrill,
                             LinDialogueDrill,
                             LinSpriteDrill,
@@ -553,6 +559,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     Action<Any> { gameContext is GameContext.V3GameContext },
                     FirstOf(
+                            FirstOf(extraRules.wrd),
                             WordCommandDrill,
                             WordStringDrill,
 
@@ -570,6 +577,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     Action<Any> { gameContext is GameContext.STXGameContext },
                     FirstOf(
+                            FirstOf(extraRules.stx),
                             WordStringDrill,
                             STXSetLanguageDrill
                     )
@@ -583,6 +591,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
 
     open fun SpiralNonstopDebateLineRaw(): Rule =
             FirstOf(
+                    FirstOf(extraRules.nonstopRaw),
                     NonstopDebateNewObjectDrill,
                     NonstopDebateTimeLimitDrill,
 
@@ -594,6 +603,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
             Sequence(
                     Action<Any> { gameContext is GameContext.NonstopDebateMinigameContext },
                     FirstOf(
+                            FirstOf(extraRules.nonstopMinigame),
                             Sequence(
                                     "[Nonstop]",
                                     OptionalInlineWhitespace(),
@@ -657,7 +667,7 @@ open class OpenSpiralLanguageParser(private val oslContext: (String) -> ByteArra
     fun load(name: String): ByteArray? = oslContext(name) ?: if (allowReadingFromJar) readFromJar(name) else null
 
     fun copy(): OpenSpiralLanguageParser {
-        val copy = OpenSpiralLanguageParser(oslContext)
+        val copy = OpenSpiralLanguageParser(extraRuleBuilders, oslContext)
         val state = saveParserState()
 
         copy.stdout = stdout
