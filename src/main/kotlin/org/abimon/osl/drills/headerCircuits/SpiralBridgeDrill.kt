@@ -35,6 +35,14 @@ object SpiralBridgeDrill : DrillCircuit {
             "RequestHelp" to 5,
             "RequestDrill" to 5,
 
+            "StoreValue" to 6,
+
+            "StoreGameState" to 7,
+
+            "RestoreGameState" to 8,
+
+            "RunScript" to 9,
+
             "ServerAcknowledgement" to 128,
             "ServerAck" to 128,
 
@@ -47,6 +55,60 @@ object SpiralBridgeDrill : DrillCircuit {
     val OP_CODE_VALUES = mapOf(
             5 to mapOf(
                     "TEXT_BUFFER_CLEAR" to 0
+            ),
+            7 to mapOf(
+                    "TIME_OF_DAY" to 0,
+                    "TIME OF DAY" to 0,
+                    "TIMEOFDAY" to 0,
+
+                    "LAST_EVIDENCE" to 10,
+                    "LAST EVIDENCE" to 10,
+                    "EVIDENCE" to 10,
+
+                    "GAMEMODE" to 15,
+                    "GAME MODE" to 15,
+                    "GAME_MODE" to 15,
+
+                    "ACTION_DIFFICULTY" to 18,
+                    "ACTION DIFFICULTY" to 18,
+                    "ACTION_DIFF" to 18,
+                    "ACTION DIFF" to 18,
+
+                    "LOGIC_DIFFICULTY" to 19,
+                    "LOGIC DIFFICULTY" to 19,
+                    "LOGIC_DIFF" to 19,
+                    "LOGIC DIFF" to 19,
+                    "INFERENCE_DIFFICULTY" to 19,
+                    "INFERENCE DIFFICULTY" to 19,
+                    "INFERENCE_DIFF" to 19,
+                    "INFERENCE DIFF" to 19
+            ),
+            8 to mapOf(
+                    "TIME_OF_DAY" to 0,
+                    "TIME OF DAY" to 0,
+                    "TIMEOFDAY" to 0,
+
+                    "LAST_EVIDENCE" to 10,
+                    "LAST EVIDENCE" to 10,
+                    "EVIDENCE" to 10,
+
+                    "GAMEMODE" to 15,
+                    "GAME MODE" to 15,
+                    "GAME_MODE" to 15,
+
+                    "ACTION_DIFFICULTY" to 18,
+                    "ACTION DIFFICULTY" to 18,
+                    "ACTION_DIFF" to 18,
+                    "ACTION DIFF" to 18,
+
+                    "LOGIC_DIFFICULTY" to 19,
+                    "LOGIC DIFFICULTY" to 19,
+                    "LOGIC_DIFF" to 19,
+                    "LOGIC DIFF" to 19,
+                    "INFERENCE_DIFFICULTY" to 19,
+                    "INFERENCE DIFFICULTY" to 19,
+                    "INFERENCE_DIFF" to 19,
+                    "INFERENCE DIFF" to 19
             ),
             129 to mapOf(
                     "INPUT" to 0
@@ -110,16 +172,54 @@ object SpiralBridgeDrill : DrillCircuit {
                                                 }
                                         ),
                                         Sequence(
-                                                RuleWithVariables(OneOrMore(Digit())),
+                                                FirstOf(
+                                                        RuleWithVariables(OneOrMore(Digit())),
+                                                        Sequence(
+                                                                '(',
+                                                                OptionalInlineWhitespace(),
+                                                                RuleWithVariables(OneOrMore(Digit())),
+                                                                OptionalInlineWhitespace(),
+                                                                ',',
+                                                                OptionalInlineWhitespace(),
+                                                                RuleWithVariables(OneOrMore(Digit())),
+                                                                OptionalInlineWhitespace(),
+                                                                ')',
+                                                                Action<Any> {
+                                                                    val small = pop().toString().toIntOrNull() ?: 0
+                                                                    val big = pop().toString().toIntOrNull() ?: 0
+
+                                                                    push((big shl 8) or small)
+                                                                }
+                                                        )
+                                                ),
 
                                                 OptionalInlineWhitespace(),
                                                 ',',
                                                 OptionalInlineWhitespace(),
 
-                                                RuleWithVariables(OneOrMore(Digit())),
+                                                FirstOf(
+                                                        RuleWithVariables(OneOrMore(Digit())),
+                                                        Sequence(
+                                                                '(',
+                                                                OptionalInlineWhitespace(),
+                                                                RuleWithVariables(OneOrMore(Digit())),
+                                                                OptionalInlineWhitespace(),
+                                                                ',',
+                                                                OptionalInlineWhitespace(),
+                                                                RuleWithVariables(OneOrMore(Digit())),
+                                                                OptionalInlineWhitespace(),
+                                                                ')',
+                                                                Action<Any> {
+                                                                    val small = pop().toString().toIntOrNull() ?: 0
+                                                                    val big = pop().toString().toIntOrNull() ?: 0
+
+                                                                    push((big shl 8) or small)
+                                                                }
+                                                        )
+                                                ),
                                                 Action<Any> {
-                                                    val big = pop().toString().toIntOrNull() ?: 0
                                                     val small = pop().toString().toIntOrNull() ?: 0
+                                                    val big = pop().toString().toIntOrNull() ?: 0
 
                                                     value.set((big shl 16) or small)
                                                 }
