@@ -57,14 +57,12 @@ object SpiralBridgeDrill : DrillCircuit {
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
         val opCode = Var<Int>(0)
-        val valueBig = Var<Int>(0)
-        val valueSmall = Var<Int>(0)
+        val value = Var<Int>(0)
 
         return Sequence(
                 Action<Any> {
                     opCode.set(0)
-                    valueBig.set(0)
-                    valueSmall.set(0)
+                    value.set(0)
                 },
 
                 "SpiralBridge:",
@@ -108,8 +106,7 @@ object SpiralBridgeDrill : DrillCircuit {
                                                     val num = (OP_CODE_VALUES[opCode.get()]
                                                             ?: return@Action false)[match()]
                                                             ?: return@Action false
-                                                    valueBig.set(num shr 8)
-                                                    valueSmall.set(num and 0xFF)
+                                                    value.set(num)
                                                 }
                                         ),
                                         Sequence(
@@ -121,8 +118,10 @@ object SpiralBridgeDrill : DrillCircuit {
 
                                                 RuleWithVariables(OneOrMore(Digit())),
                                                 Action<Any> {
-                                                    valueSmall.set(pop().toString().toIntOrNull() ?: 0)
-                                                    valueBig.set(pop().toString().toIntOrNull() ?: 0)
+                                                    val big = pop().toString().toIntOrNull() ?: 0
+                                                    val small = pop().toString().toIntOrNull() ?: 0
+
+                                                    value.set((big shl 16) or small)
                                                 }
                                         ),
                                         Sequence(
@@ -130,13 +129,13 @@ object SpiralBridgeDrill : DrillCircuit {
                                                 Action<Any> {
                                                     val id = pop().toString().toIntOrNull() ?: return@Action false
 
-                                                    valueBig.set(id shr 8)
-                                                    valueSmall.set(id and 0xFF)
+                                                    value.set(id)
                                                 }
                                         )
                                 ),
                                 Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_GAME_STATE, 0, ${(opCode.get() shr 8) and 0xFF}, ${opCode.get() and 0xFF}")) },
-                                Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_SMALL, 0, ${valueBig.get() and 0xFF}, ${valueSmall.get() and 0xFF}")) }
+                                Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_BIG, 0, ${(value.get() shr 24) and 0xFF}, ${(value.get() shr 16) and 0xFF}")) },
+                                Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_SMALL, 0, ${(value.get() shr 8) and 0xFF}, ${(value.get() shr 0) and 0xFF}")) }
                         )
                 )
         )
