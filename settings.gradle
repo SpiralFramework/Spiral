@@ -1,2 +1,3 @@
-rootProject.name = 'SpiralFormats'
-
+include 'core'
+include 'console'
+include 'gui'
