@@ -15,11 +15,19 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import info.spiralframework.core.serialisation.InstantSerialisation
+import java.io.File
+import java.math.BigInteger
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
+import java.security.MessageDigest
+import java.text.MessageFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * This singleton holds important information for all Spiral modules
  * @author UnderMybrella
- * @since 1.0.0-alpha
  */
 object SpiralCoreData {
     /** Jackson mapper for JSON data */
@@ -63,4 +71,58 @@ object SpiralCoreData {
      * This file should ideally keep track of mods currently installed, and their files + versions
      * */
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
+
+    /**
+     * An MD5 hash of the running JAR file, or null if we're not running from a JAR file (developer directory)
+     */
+    val version: String? by lazy {
+        val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
+        if (!file.isFile)
+            return@lazy null
+
+        val md = MessageDigest.getInstance("MD5")
+
+        val channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)
+        val buffer = ByteBuffer.allocate(8192)
+
+        while (channel.isOpen) {
+            val read = channel.read(buffer)
+            if (read <= 0)
+                break
+
+
+            buffer.flip()
+            md.update(buffer)
+            buffer.rewind()
+        }
+
+        return@lazy String.format("%032x", BigInteger(1, md.digest()))
+    }
+
+    val _localisationBundles: MutableList<ResourceBundle> = ArrayList()
+    val localisationBundles: List<ResourceBundle> = _localisationBundles
+
+    val _englishBundles: MutableList<ResourceBundle> = ArrayList()
+    val englishBundles: List<ResourceBundle> = _englishBundles
+
+    fun localise(base: String, vararg values: Any): String {
+        val msg = localisationBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
+        return MessageFormat.format(msg, *values)
+    }
+
+    fun localiseForEnglish(base: String, vararg values: Any): String {
+        val msg = englishBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
+        return MessageFormat.format(msg, *values)
+    }
+
+    fun changeLanguage(locale: Locale) {
+        val oldArray = localisationBundles.toTypedArray()
+        _localisationBundles.clear()
+        _localisationBundles.addAll(oldArray.map { bundle -> ResourceBundle.getBundle(bundle.baseBundleName, locale) })
+    }
+
+    fun addBundle(bundleName: String) {
+        _localisationBundles.add(ResourceBundle.getBundle(bundleName))
+        _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
+    }
 }
