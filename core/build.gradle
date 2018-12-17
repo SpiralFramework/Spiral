@@ -1,0 +1,11 @@
+dependencies {
+    compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
+    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    compile "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
+}

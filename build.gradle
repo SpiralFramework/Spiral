@@ -5,7 +5,9 @@ plugins {
 
 ext {
     artifact_group = 'org.abimon'
-    project_version = '3.0.0'
+    project_version = '1.0.0-alpha'
+
+    jackson_version = '2.9.4'
 }
 
 allprojects {
@@ -33,6 +35,10 @@ allprojects {
 }
 
 subprojects {
+    jar {
+        archiveName = "spiral-$project.name" + ".jar"
+    }
+
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
