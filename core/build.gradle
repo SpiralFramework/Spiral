@@ -8,4 +8,10 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
+
+    compile('org.abimon:SpiralFormats:12ba626')
+    compile('org.abimon:OpenSpiralLanguage:a0d2d2e') {
+        exclude group: 'org.abimon', module: 'SpiralFormats'
+    }
+    compile('org.abimon:Visi:35')
 }

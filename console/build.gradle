@@ -1,3 +1,6 @@
 dependencies {
     compile project(":core")
+
+    compile('org.abimon:Imperator:8ef2bb7')
+    compile('ch.qos.logback:logback-classic:1.2.3')
 }
