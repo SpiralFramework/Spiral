@@ -1,6 +1,6 @@
 dependencies {
     compile project(":core")
 
-    compile('org.abimon:Imperator:8ef2bb7')
-    compile('ch.qos.logback:logback-classic:1.2.3')
+    compile("org.abimon:Imperator:$imperator_version")
+    compile("ch.qos.logback:logback-classic:$logback_version")
 }

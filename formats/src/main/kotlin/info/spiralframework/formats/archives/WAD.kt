@@ -1,7 +1,6 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.utils.*
-import java.io.InputStream
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding
@@ -9,7 +8,7 @@ import java.io.InputStream
  * When destructing, component 1 is the major version, 2 is the minor version, 3 is a list of files, 4 is a list of directories, and 5 is the data offset
  * Why would you want that? Who knows
  */
-class WAD private constructor(val dataSource: () -> InputStream) {
+class WAD private constructor(val dataSource: DataSource) {
     companion object {
         val MAGIC_NUMBER = 0x52414741
 
@@ -37,7 +36,7 @@ class WAD private constructor(val dataSource: () -> InputStream) {
             }
         var FILENAME_LENGTH_RANGE: IntRange = MIN_FILENAME_LENGTH..MAX_FILENAME_LENGTH
 
-        operator fun invoke(dataSource: () -> InputStream): WAD? {
+        operator fun invoke(dataSource: DataSource): WAD? {
             try {
                 return WAD(dataSource)
             } catch (iae: IllegalArgumentException) {

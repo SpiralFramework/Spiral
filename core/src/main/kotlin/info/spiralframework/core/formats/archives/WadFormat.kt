@@ -1,15 +1,15 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.DataContext
-import info.spiralframework.core.DataSource
 import info.spiralframework.core.FormatChance
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
-import org.abimon.spiral.core.objects.archives.CPK
-import org.abimon.spiral.core.objects.archives.CustomWAD
-import org.abimon.spiral.core.objects.archives.WAD
-import org.abimon.spiral.core.objects.game.DRGame
+import info.spiralframework.formats.archives.CPK
+import info.spiralframework.formats.archives.CustomWAD
+import info.spiralframework.formats.archives.WAD
+import info.spiralframework.formats.game.DRGame
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 
 object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
