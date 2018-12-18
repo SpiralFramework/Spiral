@@ -1,0 +1,10 @@
+package info.spiralframework.formats.scripting.lin
+
+class EndFlagCheckEntry(): LinScript {
+    constructor(opCode: Int, args: IntArray): this()
+
+    override val opCode: Int = 0x3C
+    override val rawArguments: IntArray = intArrayOf()
+
+    override fun format(): String = "End Flag Check|"
+}
