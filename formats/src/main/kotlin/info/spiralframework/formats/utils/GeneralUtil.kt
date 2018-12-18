@@ -19,6 +19,11 @@ typealias VertexBlock = RSIEntry.ResourceArray
 typealias IndexBlock = RSIEntry.ResourceArray
 typealias FaceBlock = RSIEntry.ResourceArray
 
+typealias DataSource = () -> InputStream
+typealias DataContext = (String) -> DataSource?
+
+val BLANK_DATA_CONTEXT: DataContext = { null }
+
 infix fun <A, B, C> Pair<A, B>.and(c: C): Triple<A, B, C> = Triple(first, second, c)
 
 operator fun <A, S> OpCodeMutableMap<A, S>.set(key: Int, value: Triple<String?, Int, (Int, A) -> S>) {

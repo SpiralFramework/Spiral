@@ -1,10 +1,10 @@
 package info.spiralframework.core.formats
 
-import info.spiralframework.core.BLANK_DATA_CONTEXT
-import info.spiralframework.core.DataContext
-import info.spiralframework.core.DataSource
 import info.spiralframework.core.FormatChance
-import org.abimon.spiral.core.objects.game.DRGame
+import info.spiralframework.formats.game.DRGame
+import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 
 interface SpiralFormat

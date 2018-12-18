@@ -1,13 +1,13 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.DataContext
-import info.spiralframework.core.DataSource
 import info.spiralframework.core.FormatChance
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
-import org.abimon.spiral.core.objects.archives.CPK
-import org.abimon.spiral.core.objects.game.DRGame
+import info.spiralframework.formats.archives.CPK
+import info.spiralframework.formats.game.DRGame
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 
 object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
@@ -23,6 +23,10 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
      */
     override fun isFormat(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatChance {
         val cpk = CPK(source) ?: return FormatChance(false, 1.0)
+
+        if (cpk.files.size == 1)
+            return FormatChance(true, 0.75)
+        return FormatChance(cpk.files.isNotEmpty(), 1.0)
     }
 
     /**

@@ -4,7 +4,7 @@ import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import java.time.LocalDateTime
 
-class CPK(val dataSource: () -> InputStream) {
+class CPK private constructor(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x204b5043
         val UTF_MAGIC_NUMBER = 0x46545540
@@ -134,6 +134,14 @@ class CPK(val dataSource: () -> InputStream) {
             val second = time.second.toLong()
 
             return (year shl 48) or (month shl 40) or (day shl 32) or (hour shl 24) or (minute shl 16) or (second shl 8)
+        }
+
+        operator fun invoke(dataSource: DataSource): CPK? {
+            try {
+                return CPK(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                return null
+            }
         }
     }
 
