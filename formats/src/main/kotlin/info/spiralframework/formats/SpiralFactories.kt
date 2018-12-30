@@ -6,14 +6,15 @@ import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.models.RoomObject
 import info.spiralframework.formats.scripting.*
 import info.spiralframework.formats.text.CustomSTXT
-import java.io.InputStream
+import info.spiralframework.formats.utils.DataSource
 
-fun UnsafePak(dataSource: () -> InputStream): Pak = Pak(dataSource)!!
-fun UnsafeWAD(dataSource: () -> InputStream): WAD = WAD(dataSource)!!
+fun UnsafePak(dataSource: DataSource): Pak = Pak(dataSource)!!
+fun UnsafeWAD(dataSource: DataSource): WAD = WAD(dataSource)!!
+fun UnsafeSPC(dataSource: DataSource): SPC = SPC(dataSource)!!
 
-fun UnsafeLin(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = Lin(game, dataSource)!!
+fun UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin(game, dataSource)!!
 
-fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)!!
+fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate = NonstopDebate(game, dataSource)!!
 
 fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     val customWAD = CustomWAD()

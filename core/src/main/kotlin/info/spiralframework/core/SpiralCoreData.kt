@@ -121,8 +121,8 @@ object SpiralCoreData {
         _localisationBundles.addAll(oldArray.map { bundle -> ResourceBundle.getBundle(bundle.baseBundleName, locale) })
     }
 
-    fun addBundle(bundleName: String) {
-        _localisationBundles.add(ResourceBundle.getBundle(bundleName))
+    fun addBundle(bundleName: String, clazz: Class<*> = SpiralCoreData::class.java) {
+        _localisationBundles.add(ResourceBundle.getBundle(bundleName, Locale.getDefault(), clazz.classLoader))
         _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
     }
 }
