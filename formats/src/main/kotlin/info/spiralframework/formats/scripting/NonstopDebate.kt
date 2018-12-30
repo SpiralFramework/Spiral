@@ -1,6 +1,7 @@
 package info.spiralframework.formats.scripting
 
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
+import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.assertAsArgument
 import info.spiralframework.formats.utils.foldToInt16LE
 import info.spiralframework.formats.utils.readInt16LE
@@ -12,9 +13,13 @@ class NonstopDebate private constructor(val game: HopesPeakKillingGame, val data
             try {
                 return NonstopDebate(game, dataSource)
             } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("Failed to compile Nonstop Debate for dataSource {} and game {}", dataSource, game, iae)
+
                 return null
             }
         }
+
+        fun unsafe(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)
     }
 
     /** Time limit in seconds */
