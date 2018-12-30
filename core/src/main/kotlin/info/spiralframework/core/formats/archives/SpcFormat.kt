@@ -11,7 +11,7 @@ import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 import java.util.zip.ZipFile
 
-object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
+object SpcFormat: ReadableSpiralFormat<SPC>, WritableSpiralFormat {
     /**
      * Attempts to read the data source as [T]
      *
@@ -22,14 +22,13 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<CPK> {
-        val cpk = CPK(source) ?: return FormatResult.Fail(1.0)
+    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SPC> {
+        val spc = SPC(source) ?: return FormatResult.Fail(1.0)
 
-        if (cpk.files.size == 1)
-            return FormatResult.Success(cpk, 0.75)
-        if (cpk.files.isNotEmpty())
-            return FormatResult.Success(cpk, 1.0)
-        return FormatResult.Fail(1.0) //Not positive on this one chief but we're going with it
+        if (spc.files.size == 1)
+            return FormatResult.Success(spc,0.75)
+
+        return FormatResult(spc, spc.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
     }
 
     /**
@@ -55,19 +54,19 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
      * @return An enum for the success of the operation
      */
     override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
-        val customCpk = CustomCPK()
+        val customSpc = CustomSPC()
         when (data) {
-            is WAD -> data.files.forEach { entry -> customCpk.add(entry.name, entry.size, entry::inputStream) }
-            is CPK -> data.files.forEach { entry -> customCpk.add(entry.name, entry.extractSize, entry::inputStream) }
-            is SPC -> data.files.forEach { entry -> customCpk.add(entry.name, entry.decompressedSize, entry::inputStream) }
-            is Pak -> data.files.forEach { entry -> customCpk.add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
+            is WAD -> data.files.forEach { entry -> customSpc.add(entry.name, entry.size, entry::inputStream) }
+            is CPK -> data.files.forEach { entry -> customSpc.add(entry.name, entry.extractSize, entry::inputStream) }
+            is SPC -> customSpc.add(data)
+            is Pak -> data.files.forEach { entry -> customSpc.add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
             is ZipFile -> data.entries().iterator().forEach { entry ->
-                customCpk.add(entry.name, entry.size) { data.getInputStream(entry) }
+                customSpc.add(entry.name, entry.size) { data.getInputStream(entry) }
             }
             else -> return EnumFormatWriteResponse.WRONG_FORMAT
         }
 
-        customCpk.compile(stream)
+        customSpc.compile(stream)
         return EnumFormatWriteResponse.SUCCESS
     }
 }

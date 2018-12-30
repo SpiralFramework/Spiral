@@ -1,14 +1,21 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.utils.*
-import java.io.InputStream
 
-class SPC(val dataSource: () -> InputStream) {
+class SPC private constructor(val dataSource: DataSource) {
     companion object {
         val MAGIC_NUMBER = 0x2e535043
         val TABLE_MAGIC_NUMBER = 0x746f6f52
 
         val COMPRESSION_FLAG_ARRAYS = arrayOf(0x01, 0x02, 0x03)
+
+        operator fun invoke(dataSource: DataSource): SPC? {
+            try {
+                return SPC(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                return null
+            }
+        }
     }
 
     val files: Array<SPCEntry>

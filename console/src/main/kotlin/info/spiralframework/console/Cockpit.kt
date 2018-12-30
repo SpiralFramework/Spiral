@@ -31,7 +31,7 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
         }
 
         init {
-            SpiralCoreData.addBundle("SpiralCommands")
+            SpiralCoreData.addBundle("SpiralCommands", Cockpit::class.java)
         }
     }
 

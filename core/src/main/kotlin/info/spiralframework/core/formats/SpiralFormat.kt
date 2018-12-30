@@ -1,6 +1,5 @@
 package info.spiralframework.core.formats
 
-import info.spiralframework.core.FormatChance
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.DataContext
@@ -13,29 +12,18 @@ interface SpiralFormat
  * A Spiral format that supports reading from a source
  */
 interface ReadableSpiralFormat<T>: SpiralFormat {
-    /**
-     * Check if [source] matches this format.
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     * @param source A function that returns an input stream
-     *
-     * @return a pair for if
-     */
-    fun isFormat(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatChance
 
     /**
-     * Reads the data source as an object of type [T]
+     * Attempts to read the data source as [T]
      *
      * @param name Name of the data, if any
      * @param game Game relevant to this data
      * @param context Context that we retrieved this file in
      * @param source A function that returns an input stream
      *
-     * @return an object of type [T], or null if the stream isn't a valid instance of this format
+     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    fun read(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): T?
+    fun read(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<T>
 }
 
 /**
