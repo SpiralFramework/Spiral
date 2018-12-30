@@ -8,13 +8,13 @@ import info.spiralframework.formats.scripting.*
 import info.spiralframework.formats.text.CustomSTXT
 import info.spiralframework.formats.utils.DataSource
 
-fun UnsafePak(dataSource: DataSource): Pak = Pak(dataSource)!!
-fun UnsafeWAD(dataSource: DataSource): WAD = WAD(dataSource)!!
-fun UnsafeSPC(dataSource: DataSource): SPC = SPC(dataSource)!!
+fun UnsafePak(dataSource: DataSource): Pak = Pak.unsafe(dataSource)
+fun UnsafeWAD(dataSource: DataSource): WAD = WAD.unsafe(dataSource)
+fun UnsafeSPC(dataSource: DataSource): SPC = SPC.unsafe(dataSource)
 
-fun UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin(game, dataSource)!!
+fun UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin.unsafe(game, dataSource)
 
-fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate = NonstopDebate(game, dataSource)!!
+fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate = NonstopDebate.unsafe(game, dataSource)
 
 fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     val customWAD = CustomWAD()

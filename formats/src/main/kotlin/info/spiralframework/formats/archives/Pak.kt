@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.assertAsArgument
 import info.spiralframework.formats.utils.readInt32LE
 import java.io.InputStream
@@ -25,9 +26,13 @@ class Pak private constructor(val dataSource: () -> InputStream, overrideSanityC
             try {
                 return Pak(dataSource)
             } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("Failed to compile Pak for dataSource {}", dataSource, iae)
+
                 return null
             }
         }
+
+        fun unsafe(dataSource: () -> InputStream): Pak = Pak(dataSource)
     }
 
     val files: Array<PakEntry>

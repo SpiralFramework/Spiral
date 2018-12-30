@@ -13,9 +13,13 @@ class SPC private constructor(val dataSource: DataSource) {
             try {
                 return SPC(dataSource)
             } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("Failed to compile SPC for dataSource {}", dataSource, iae)
+
                 return null
             }
         }
+
+        fun unsafe(dataSource: DataSource): SPC = SPC(dataSource)
     }
 
     val files: Array<SPCEntry>

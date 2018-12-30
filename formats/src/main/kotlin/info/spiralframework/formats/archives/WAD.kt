@@ -40,9 +40,13 @@ class WAD private constructor(val dataSource: DataSource) {
             try {
                 return WAD(dataSource)
             } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("Failed to compile WAD for dataSource {}", dataSource, iae)
+
                 return null
             }
         }
+
+        fun unsafe(dataSource: DataSource): WAD = WAD(dataSource)
     }
 
     val major: Int

@@ -21,11 +21,13 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
             try {
                 return Lin(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile Lin for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("Failed to compile Lin for dataSource {} and game {}", dataSource, game, iae)
 
                 return null
             }
         }
+
+        fun unsafe(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = Lin(game, dataSource)
     }
 
     val linType: Int
