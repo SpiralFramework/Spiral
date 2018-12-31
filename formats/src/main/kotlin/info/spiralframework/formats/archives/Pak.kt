@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.assertAsArgument
 import info.spiralframework.formats.utils.readInt32LE
 import java.io.InputStream
 
@@ -22,17 +22,17 @@ class Pak private constructor(val dataSource: () -> InputStream, overrideSanityC
         var SANITY_MIN_FILE_SIZE = 0
         var SANITY_MAX_FILE_SIZE = 64 * 1024 * 1024
 
-        operator fun invoke(dataSource: () -> InputStream): Pak? {
+        operator fun invoke(overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak? {
             try {
-                return Pak(dataSource)
+                return Pak(dataSource, overrideSanityChecks)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile Pak for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("formats.pak.invalid", dataSource, iae)
 
                 return null
             }
         }
 
-        fun unsafe(dataSource: () -> InputStream): Pak = Pak(dataSource)
+        fun unsafe(overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak = Pak(dataSource, overrideSanityChecks)
     }
 
     val files: Array<PakEntry>
@@ -42,12 +42,12 @@ class Pak private constructor(val dataSource: () -> InputStream, overrideSanityC
 
         try {
             val fileCount = stream.readInt32LE()
-            assertAsArgument(fileCount > 1, "Illegal number of files in Pak File (Was $fileCount, expected > 1)")
-            assertAsArgument(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT, "Illegal number of files in Pak File (was $fileCount, expected < $SANITY_MAX_FILE_COUNT); If you are converting a valid file then you'll need to bump up the maximum file count or override the sanity checks!")
+            assertAsLocaleArgument(fileCount > 1, "formats.pak.not_enough_files", fileCount)
+            assertAsLocaleArgument(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT, "formats.pak.too_many_files", fileCount, SANITY_MAX_FILE_COUNT)
 
             val offsets = IntArray(fileCount) { index ->
                 val offset = stream.readInt32LE()
-                assertAsArgument(offset >= 0, "Illegal offset for file $index in Pak File (Was $offset, expected >= 0)") //That *one* file in DR2...
+                assertAsLocaleArgument(offset >= 0, "formats.pak.offset_too_low", index, offset) //That *one* file in DR2...
 
                 return@IntArray offset
             }
@@ -59,8 +59,8 @@ class Pak private constructor(val dataSource: () -> InputStream, overrideSanityC
                     size = -1
                 } else {
                     size = offsets[index + 1] - offset
-                    assertAsArgument(overrideSanityChecks || size > SANITY_MIN_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected > $SANITY_MIN_FILE_SIZE")
-                    assertAsArgument(overrideSanityChecks || size < SANITY_MAX_FILE_SIZE, "Illegal size for file $index in Pak File (Was $size, expected < $SANITY_MAX_FILE_SIZE")
+                    assertAsLocaleArgument(overrideSanityChecks || size > SANITY_MIN_FILE_SIZE, "formats.pak.entry_too_small", index, size, SANITY_MIN_FILE_SIZE)
+                    assertAsLocaleArgument(overrideSanityChecks || size < SANITY_MAX_FILE_SIZE, "formats.pak.entry_too_large", index, size, SANITY_MAX_FILE_SIZE)
                 }
                 return@Array PakEntry(index, size, offset, this)
             }

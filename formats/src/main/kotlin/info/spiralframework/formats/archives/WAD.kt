@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 
 /**
@@ -40,7 +41,7 @@ class WAD private constructor(val dataSource: DataSource) {
             try {
                 return WAD(dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile WAD for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("formats.wad.invalid", dataSource, iae)
 
                 return null
             }
@@ -63,7 +64,7 @@ class WAD private constructor(val dataSource: DataSource) {
 
         try {
             val localMagic = stream.readInt32LE()
-            assertAsArgument(localMagic == MAGIC_NUMBER, "Illegal magic number for WAD File (Was $localMagic, expected $MAGIC_NUMBER)")
+            assertAsLocaleArgument(localMagic == MAGIC_NUMBER, "formats.wad.invalid_magic", localMagic, MAGIC_NUMBER)
 
             major = stream.readInt32LE()
             minor = stream.readInt32LE()
@@ -73,12 +74,12 @@ class WAD private constructor(val dataSource: DataSource) {
 
             stream.read(header)
 
-            val filecount = stream.readInt32LE()
-            assertAsArgument(filecount in FILE_COUNT_RANGE, "Illegal file count for WAD File (Was $filecount, expected $MIN_FILE_COUNT ≤ $filecount ≤ $MAX_FILE_COUNT)")
+            val fileCount = stream.readInt32LE()
+            assertAsLocaleArgument(fileCount in FILE_COUNT_RANGE, "formats.wad.invalid_file_count", fileCount, MIN_FILE_COUNT, MAX_FILE_COUNT)
 
-            files = Array(filecount) { index ->
+            files = Array(fileCount) { index ->
                 val nameLen = stream.readInt32LE()
-                assertAsArgument(nameLen in FILENAME_LENGTH_RANGE, "Illegal filename length for WAD File (Was $nameLen, expected $MIN_FILENAME_LENGTH ≤ $nameLen ≤ $MAX_FILENAME_LENGTH)")
+                assertAsLocaleArgument(nameLen in FILENAME_LENGTH_RANGE, "formats.wad.invalid_file_name_length", nameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH)
                 val name = stream.readString(nameLen)
                 val size = stream.readInt64LE()
                 val offset = stream.readInt64LE()
@@ -94,7 +95,7 @@ class WAD private constructor(val dataSource: DataSource) {
 
                 val subEntries = Array(subEntryCount) sub@{ subIndex ->
                     val subNameLen = stream.readInt32LE()
-                    assertAsArgument(subNameLen in FILENAME_LENGTH_RANGE, "Illegal subfile name length for WAD File (Was $subNameLen, expected $MIN_FILENAME_LENGTH ≤ $subNameLen ≤ $MAX_FILENAME_LENGTH)")
+                    assertAsLocaleArgument(subNameLen in FILENAME_LENGTH_RANGE, "formats.wad.invalid_subfile_name_length", subNameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH)
                     val subName = stream.readString(subNameLen)
 
                     val isDirectory = stream.read() == 1

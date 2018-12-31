@@ -1,11 +1,24 @@
 package info.spiralframework.formats.video
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 
-class SFL(val dataSource: () -> InputStream) {
+class SFL private constructor(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x53464C4C
+        
+        operator fun invoke(dataSource: DataSource): SFL? {
+            try {
+                 return SFL(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.sfl.invalid", dataSource, iae)
+                
+                return null
+            }
+        }
+
+        fun unsafe(dataSource: DataSource): SFL = SFL(dataSource)
     }
 
     data class SFLImage(val width: Int, val height: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int)
@@ -46,7 +59,7 @@ class SFL(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number for SFL file $dataSource (Expected ${MAGIC_NUMBER.toHex()}, got ${magic.toHex()})")
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.sfl.invalid_magic", magic.toHex(), MAGIC_NUMBER.toHex())
 
             headerUnk1 = stream.readInt32LE()
             headerUnk2 = stream.readInt32LE()
@@ -58,13 +71,13 @@ class SFL(val dataSource: () -> InputStream) {
             unk4 = stream.readInt32LE()
 
             if (unk1 != 1)
-                DataHandler.LOGGER.debug("unk1 in SFL file {} is not 1, is {}", dataSource, unk1)
+                DataHandler.LOGGER.debug("formats.sfl.unk1", unk1)
             if (unk2 != 0)
-                DataHandler.LOGGER.debug("unk2 in SFL file {} is not 0, is {}", dataSource, unk2)
+                DataHandler.LOGGER.debug("formats.sfl.unk2", unk1)
             if (unk3 != 0)
-                DataHandler.LOGGER.debug("unk3 in SFL file {} is not 0, is {}", dataSource, unk3)
+                DataHandler.LOGGER.debug("formats.sfl.unk3", unk1)
             if (unk4 != 0)
-                DataHandler.LOGGER.debug("unk4 in SFL file {} is not 0, is {}", dataSource, unk4)
+                DataHandler.LOGGER.debug("formats.sfl.unk4", unk1)
 
             /** Unk2 seems to be some kind of header size, so we read that many bytes? */
             headerUnk = ByteArray(unk2)
@@ -72,13 +85,13 @@ class SFL(val dataSource: () -> InputStream) {
 
             unk5 = stream.readInt32LE()
             if (unk5 != 2)
-                DataHandler.LOGGER.debug("unk5 in SFL file {} is not 2, is {}", dataSource, unk5)
+                DataHandler.LOGGER.debug("formats.sfl.unk5", unk1)
 
             unkFrameCount = stream.readInt32LE()
             frameCount = stream.readInt32LE()
             unk6 = stream.readInt32LE()
             if (unk6 != 0)
-                DataHandler.LOGGER.debug("unk6 in SFL file {} is not 0, is {}", dataSource, unk6)
+                DataHandler.LOGGER.debug("formats.sfl.unk6", unk1)
 
             unk8 = stream.readInt32LE()
             unk9 = stream.readInt32LE()
@@ -131,7 +144,7 @@ class SFL(val dataSource: () -> InputStream) {
                 3 -> extraByteData = ByteArray(112)
                 4 -> extraByteData = ByteArray(176)
                 else -> {
-                    DataHandler.LOGGER.debug("unk3 in SFL file {} is {}", dataSource, unk3)
+//                    DataHandler.LOGGER.debug("unk3 in SFL file {} is {}", dataSource, unk3)
                     extraByteData = ByteArray(0)
                 }
             }

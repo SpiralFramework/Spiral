@@ -35,7 +35,7 @@ data class UTFTableInfo(
             dataSource().use { stream ->
                 var constant = false
 
-                when (schema[j].type and CPK.COLUMN_STORAGE_MASK) {
+                when (val storageClass = schema[j].type and CPK.COLUMN_STORAGE_MASK) {
                     CPK.COLUMN_STORAGE_PERROW -> {
                     }
                     CPK.COLUMN_STORAGE_CONSTANT -> constant = true
@@ -44,7 +44,7 @@ data class UTFTableInfo(
                             return CPKColumnType.getForMask(schema[j].type) to 0
                         return@use
                     }
-                    else -> println("Unknown storage class")
+                    else -> DataHandler.LOGGER.debug("formats.cpk.unknown_storage_class", storageClass)
                 }
 
                 val dataOffset = if (constant) schema[j].constantOffset else rowOffset
@@ -98,7 +98,7 @@ data class UTFTableInfo(
                         bytesRead = 1
                     }
                     else -> {
-                        println("Unknown normal type")
+                        DataHandler.LOGGER.debug("formats.cpk.unknown_column_constant", columnType)
                         dataObj = 0
                         bytesRead = 0
                     }

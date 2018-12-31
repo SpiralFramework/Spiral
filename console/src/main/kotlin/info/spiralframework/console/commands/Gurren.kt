@@ -1,8 +1,8 @@
 package info.spiralframework.console.commands
 
+import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.imperator.CommandClass
-import info.spiralframework.core.SpiralCoreData
 import org.abimon.visi.io.errPrintln
 import java.io.File
 
@@ -31,7 +31,7 @@ class Gurren(override val cockpit: Cockpit) : CommandClass {
 
         // First thing's first - does the file even exist?
         if (!file.exists())
-            return@ParboiledSoldier errPrintln(SpiralCoreData.localise("errors.file.doesnt_exist", file))
+            return@ParboiledSoldier errPrintln(SpiralLocale.localise("errors.file.doesnt_exist", file))
 
 //        //Next up, are we dealing with a singular file?
 //        if (file.isFile) {

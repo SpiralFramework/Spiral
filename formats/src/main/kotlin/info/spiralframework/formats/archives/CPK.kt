@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import java.time.LocalDateTime
@@ -76,29 +77,29 @@ class CPK private constructor(val dataSource: () -> InputStream) {
                         return@str stringStream.readString((info.dataOffset - info.stringTableOffset).toInt() + 1)
                     }
 
-                    info.tableName = info.stringTable.substring(tableNameString).substringBefore(CPK.Companion.NULL_TERMINATOR)
+                    info.tableName = info.stringTable.substring(tableNameString).substringBefore(CPK.NULL_TERMINATOR)
 
-                    info.schema = Array<UTFColumnInfo>(info.columns) { index ->
+                    info.schema = Array(info.columns) { index ->
                         val column = UTFColumnInfo()
 
                         column.type = stream.read()
-                        column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(CPK.Companion.NULL_TERMINATOR)
+                        column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(CPK.NULL_TERMINATOR)
 
-                        if (column.type and CPK.Companion.COLUMN_STORAGE_MASK == CPK.Companion.COLUMN_STORAGE_CONSTANT) {
+                        if (column.type and CPK.COLUMN_STORAGE_MASK == CPK.COLUMN_STORAGE_CONSTANT) {
                             column.constantOffset = stream.count
 
-                            when (column.type and CPK.Companion.COLUMN_TYPE_MASK) {
-                                CPK.Companion.COLUMN_TYPE_STRING -> stream.skip(4)
-                                CPK.Companion.COLUMN_TYPE_8BYTE -> stream.skip(8)
-                                CPK.Companion.COLUMN_TYPE_DATA -> stream.skip(8)
-                                CPK.Companion.COLUMN_TYPE_FLOAT -> stream.skip(4)
-                                CPK.Companion.COLUMN_TYPE_4BYTE -> stream.skip(4)
-                                CPK.Companion.COLUMN_TYPE_4BYTE2 -> stream.skip(4)
-                                CPK.Companion.COLUMN_TYPE_2BYTE -> stream.skip(2)
-                                CPK.Companion.COLUMN_TYPE_2BYTE2 -> stream.skip(2)
-                                CPK.Companion.COLUMN_TYPE_1BYTE -> stream.read()
-                                CPK.Companion.COLUMN_TYPE_1BYTE2 -> stream.read()
-                                else -> println("[CPK] Unknown type for constant: ${column.type}")
+                            when (column.type and CPK.COLUMN_TYPE_MASK) {
+                                CPK.COLUMN_TYPE_STRING -> stream.skip(4)
+                                CPK.COLUMN_TYPE_8BYTE -> stream.skip(8)
+                                CPK.COLUMN_TYPE_DATA -> stream.skip(8)
+                                CPK.COLUMN_TYPE_FLOAT -> stream.skip(4)
+                                CPK.COLUMN_TYPE_4BYTE -> stream.skip(4)
+                                CPK.COLUMN_TYPE_4BYTE2 -> stream.skip(4)
+                                CPK.COLUMN_TYPE_2BYTE -> stream.skip(2)
+                                CPK.COLUMN_TYPE_2BYTE2 -> stream.skip(2)
+                                CPK.COLUMN_TYPE_1BYTE -> stream.read()
+                                CPK.COLUMN_TYPE_1BYTE2 -> stream.read()
+                                else -> DataHandler.LOGGER.debug("formats.cpk.unknown_column_constant", column.type)
                             }
                         }
 
@@ -140,9 +141,13 @@ class CPK private constructor(val dataSource: () -> InputStream) {
             try {
                 return CPK(dataSource)
             } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.cpk.invalid", dataSource, iae)
+
                 return null
             }
         }
+
+        fun unsafe(dataSource: DataSource): CPK = CPK(dataSource)
     }
 
     val headerInfo: UTFTableInfo
@@ -156,10 +161,10 @@ class CPK private constructor(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number for CPK File (Was $magic, expected $MAGIC_NUMBER)")
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.cpk.invalid_magic", magic, MAGIC_NUMBER)
 
             headerInfo = readTable(dataSource, 0x10)
-            assertAsArgument(headerInfo.rows == 1L, "Illegal number of header rows (Was ${headerInfo.rows}, expected 1)")
+            assertAsLocaleArgument(headerInfo.rows == 1L, "formats.cpk.invalid_header_row_count", headerInfo.rows)
 
             val tocOffset = (headerInfo.getRow(dataSource, 0, TOC_OFFSET_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
             val etocOffset = (headerInfo.getRow(dataSource, 0, ETOC_OFFSET_COLUMN)?.second as? Number)?.toLong()
@@ -167,7 +172,7 @@ class CPK private constructor(val dataSource: () -> InputStream) {
             val fileCount = (headerInfo.getRow(dataSource, 0, FILES_COLUMN)?.second as? Number)?.toLong() ?: throw IllegalStateException()
 
             tocHeader = readTable(dataSource, tocOffset + 0x10)
-            assertAsArgument(tocHeader.rows == fileCount, "Illegal number of header rows in TOC (Was ${tocHeader.rows}, expected $fileCount)")
+            assertAsLocaleArgument(tocHeader.rows == fileCount, "formats.cpk.invalid_toc_header_row_count", tocHeader.rows, fileCount)
 
             etocHeader = etocOffset?.let { offset -> readTable(dataSource, offset + 0x10) }
 

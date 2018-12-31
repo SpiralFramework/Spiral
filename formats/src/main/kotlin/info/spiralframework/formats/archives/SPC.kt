@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 
 class SPC private constructor(val dataSource: DataSource) {
@@ -13,7 +14,7 @@ class SPC private constructor(val dataSource: DataSource) {
             try {
                 return SPC(dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile SPC for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("formats.spc.invalid", dataSource, iae)
 
                 return null
             }
@@ -29,7 +30,7 @@ class SPC private constructor(val dataSource: DataSource) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number in SPC File (Was $magic, expected $MAGIC_NUMBER)")
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.spc.invalid_magic", magic, MAGIC_NUMBER)
             stream.skip(0x24)
 
             val fileCount = stream.readInt32LE()
@@ -37,7 +38,7 @@ class SPC private constructor(val dataSource: DataSource) {
             stream.skip(0x10)
 
             val tableMagic = stream.readInt32LE()
-            assertAsArgument(tableMagic == TABLE_MAGIC_NUMBER, "Illegal magic number in SPC Table (Was $tableMagic, expected $TABLE_MAGIC_NUMBER)")
+            assertAsLocaleArgument(tableMagic == TABLE_MAGIC_NUMBER, "formats.spc.invalid_table_magic", tableMagic, TABLE_MAGIC_NUMBER)
             stream.skip(0x0C)
 
             files = Array<SPCEntry>(fileCount) { index ->

@@ -1,5 +1,6 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.core.SpiralCoreData
@@ -15,7 +16,7 @@ class CockpitPilot internal constructor(args: GurrenArgs): Cockpit(args) {
                 val matchingSoldiers = imperator.dispatch(InstanceOrder("STDIN", scout = null, data = readLine() ?: break))
 
                 if (matchingSoldiers.isEmpty())
-                    println(SpiralCoreData.localise("commands.unknown"))
+                    println(SpiralLocale.localise("commands.unknown"))
             }
         }
 
@@ -23,7 +24,7 @@ class CockpitPilot internal constructor(args: GurrenArgs): Cockpit(args) {
     }
 
     init {
-        println(SpiralCoreData.localise("gurren.pilot.init", SpiralCoreData.version ?: "Developer"))
+        println(SpiralLocale.localise("gurren.pilot.init", SpiralCoreData.version ?: "Developer"))
 
         imperator.hireSoldiers(Gurren(this))
     }

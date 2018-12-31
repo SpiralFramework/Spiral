@@ -1,10 +1,7 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.compression.CRILAYLACompression
-import info.spiralframework.formats.utils.WindowedInputStream
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readInt64LE
-import info.spiralframework.formats.utils.readXBytes
+import info.spiralframework.formats.utils.*
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 
@@ -16,7 +13,7 @@ data class CPKFileEntry(val fileName: String, val directoryName: String, val fil
 
                 val magic = baseStream.readInt64LE()
                 if (magic != CRILAYLACompression.MAGIC_NUMBER) {
-                    System.err.println("CRILAYLA compression was indicated for $directoryName/$fileName, but magic number was 0x${magic.toString(16)}, not 0x${CRILAYLACompression.MAGIC_NUMBER.toString(16)}")
+                    DataHandler.LOGGER.warn("formats.cpk.wrong_compression", "$directoryName/$fileName", "0x${magic.toString(16)}", "0x${CRILAYLACompression.MAGIC_NUMBER.toString(16)}")
                 } else {
                     val uncompressedSize = baseStream.readInt32LE()
                     val dataSize = baseStream.readInt32LE()

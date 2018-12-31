@@ -1,7 +1,7 @@
 package info.spiralframework.console.imperator
 
+import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.Cockpit
-import info.spiralframework.core.SpiralCoreData
 import org.abimon.imperator.handle.Order
 import org.abimon.imperator.handle.Soldier
 import org.abimon.imperator.handle.Watchtower
@@ -14,7 +14,7 @@ import org.parboiled.parserunners.ReportingParseRunner
 open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private val watchtowers: Collection<Watchtower>, val failedCommand: (List<ParseError>) -> Unit, val command: (List<Any>) -> Unit) : Soldier {
     companion object {
         fun invalidCommand(failed: List<ParseError>) {
-            errPrintln(SpiralCoreData.localise("commands.invalid"))
+            errPrintln(SpiralLocale.localise("commands.invalid"))
         }
     }
 
