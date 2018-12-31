@@ -1,9 +1,6 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readUInt32LE
-import info.spiralframework.formats.utils.readXBytes
-import info.spiralframework.formats.utils.use
+import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -90,7 +87,7 @@ object DRVitaCompression : ICompression {
 
                         i += count
                     } else
-                        println("???")
+                        DataHandler.LOGGER.error("formats.dr_vita.compression.invalid_bit_combination", bit1, bit2, bit3)
                 }
 
                 return@use result.toByteArray()

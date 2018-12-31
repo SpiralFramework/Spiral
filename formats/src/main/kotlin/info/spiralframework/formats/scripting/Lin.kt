@@ -1,5 +1,7 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.base.locale
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.LinTextScript
@@ -21,7 +23,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
             try {
                 return Lin(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile Lin for dataSource {} and game {}", dataSource, game, iae)
+                DataHandler.LOGGER.debug("formats.lin.invalid", dataSource, game, iae)
 
                 return null
             }
@@ -49,6 +51,8 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
             headerSpace = stream.readInt32LE()
             var headerSize = headerSpace - 8
 
+            assertAsLocaleArgument(linType == 1 || linType == 2, "formats.lin.invalid_type", linType)
+
             when (linType) {
                 1 -> {
                     textBlock = stream.readInt32LE()
@@ -62,17 +66,17 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
                     headerSize -= 8
                 }
-                else -> throw IllegalArgumentException("Unknown Lin type $linType")
+                else -> throw locale<IllegalArgumentException>("formats.lin.invalid_type", linType)
             }
 
             header = ByteArray(headerSize)
             val entries: MutableList<LinScript> = ArrayList()
 
-            assertAsArgument(textBlock > headerSpace, "Invalid Lin File (expected textBlock to be greater than headerSpace, got $textBlock ≤ $headerSpace)")
+            assertAsLocaleArgument(textBlock > headerSpace, "formats.lin.invalid_text_block", textBlock, headerSpace)
 
             val maximumRead = textBlock - headerSpace
 
-            assertAsArgument(maximumRead < MAXIMUM_LIN_READ, "Invalid Lin File (expected maximumRead to be less than $MAXIMUM_LIN_READ B, got $maximumRead > $MAXIMUM_LIN_READ)")
+            assertAsLocaleArgument(maximumRead < MAXIMUM_LIN_READ, "formats.lin.invalid_maximum_read", maximumRead, MAXIMUM_LIN_READ)
 
             val linData = LinkedList<Int>(ByteArray(maximumRead).apply { stream.read(this) }.map { byte -> byte.toInt() and 0xFF })
 
@@ -109,20 +113,20 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 if (arguments.size == argumentCount || argumentCount == -1) {
                     entries.add(getEntry(opCode, arguments))
                 } else {
-                    DataHandler.LOGGER.warn("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                    DataHandler.LOGGER.warn("formats.lin.wrong_arg_count", "0x${opCode.toString(16)}", argumentCount, arguments.size)
                 }
             }
 
             if (stream.streamOffset < textBlock) {
                 val skipping = textBlock - stream.streamOffset
-                DataHandler.LOGGER.debug("${stream.streamOffset} is where we are, and we need to be at $textBlock; skipping $skipping bytes")
+                DataHandler.LOGGER.debug("formats.lin.undershot_block", stream.streamOffset, textBlock, skipping)
 
                 stream.skip(skipping)
             } else if (stream.streamOffset > textBlock) {
-                throw IllegalStateException("${stream.streamOffset} is where we are, and we were meant to stop at $textBlock; what happened???")
+                throw locale<IllegalArgumentException>("formats.lin.overshot_text_block", stream.streamOffset, textBlock)
             }
 
-            assertAsArgument(stream.streamOffset == textBlock.toLong(), "Illegal stream offset in Lin File (Was ${stream.streamOffset}, expected to be at $textBlock)")
+            assertAsLocaleArgument(stream.streamOffset == textBlock.toLong(), "formats.lin.not_at_text_block", stream.streamOffset, textBlock)
 
             val textLineCount = stream.readInt32LE()
             if (textBlock == size || textLineCount == -1) {
@@ -138,11 +142,11 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 for (textID in 0 until textLines) {
                     val size = textPositions[textID + 1] - textPositions[textID] - 2
                     if (size <= 0) {
-                        DataHandler.LOGGER.debug("ERR: Lin file has text ID $textID as size $size; bad Lin file?")
+                        DataHandler.LOGGER.debug("formats.lin.text_size_zero", textID, size)
                         continue
                     }
 
-                    assertAsArgument(size < MAXIMUM_LIN_STRING, "Invalid string in Lin File (Expected string size to be less than $MAXIMUM_LIN_STRING, got $size ≥ $MAXIMUM_LIN_STRING)")
+                    assertAsLocaleArgument(size < MAXIMUM_LIN_STRING, "formats.lin.text_size_too_large", size, MAXIMUM_LIN_STRING)
 
                     val line = ByteArray(size)
                     stream.read(line)
@@ -158,7 +162,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 }
             }
 
-            assertAsArgument(entries.isNotEmpty(), "Illegal entry array in Lin File (entries is empty, must have at least one entry)")
+            assertAsLocaleArgument(entries.isNotEmpty(), "formats.lin.empty")
             this.entries = entries.toTypedArray()
         } finally {
             stream.close()

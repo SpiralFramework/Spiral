@@ -1,5 +1,6 @@
 package info.spiralframework.formats.compression
 
+import info.spiralframework.base.locale
 import info.spiralframework.formats.utils.readInt32BE
 import info.spiralframework.formats.utils.readInt32LE
 import java.io.InputStream
@@ -72,7 +73,7 @@ object V3Compression: ICompression {
             CLN -> shift = 8
             CL1 -> shift = 7
             CL2 -> shift = 6
-            else -> error("Unknown mode $mode")
+            else -> throw locale<IllegalArgumentException>("formats.v3_compression.invalid_mode")
         }
 
         val mask = (1 shl shift) - 1

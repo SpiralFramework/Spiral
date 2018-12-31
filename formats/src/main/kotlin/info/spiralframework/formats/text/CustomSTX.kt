@@ -6,17 +6,17 @@ import info.spiralframework.formats.utils.writeInt32LE
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
-class CustomSTXT: ICompilable {
+class CustomSTX: ICompilable {
     val strings: MutableMap<Int, String> = HashMap()
 
     private var _dataSize: Long = 32
     override val dataSize: Long
         get() = _dataSize
 
-    var languageID: Int = STXT.Language.JPLL.langID
-    var language: STXT.Language
-        get() = STXT.Language.languageFor(languageID)
-                ?: STXT.Language.UNK
+    var languageID: Int = STX.Language.JPLL.langID
+    var language: STX.Language
+        get() = STX.Language.languageFor(languageID)
+                ?: STX.Language.UNK
         set(value) {
             languageID = value.langID
         }
@@ -32,7 +32,7 @@ class CustomSTXT: ICompilable {
         val sorted = strings.toSortedMap()
         val links = strings.entries.groupBy { (_, str) -> str }.mapValues { (_, list) -> list.minBy { (index) -> index }!!.key }
 
-        output.writeInt32LE(STXT.MAGIC_NUMBER)
+        output.writeInt32LE(STX.MAGIC_NUMBER)
         output.writeInt32LE(languageID)
 
         output.writeInt32LE(1) //unk

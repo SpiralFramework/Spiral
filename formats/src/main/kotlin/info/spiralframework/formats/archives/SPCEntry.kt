@@ -11,7 +11,6 @@ import java.io.InputStream
 
 data class SPCEntry(val compressionFlag: Int, val unknownFlag: Int, val compressedSize: Long, val decompressedSize: Long, val name: String, val offset: Long, val spc: SPC) {
     private val decompressedData: File by lazy {
-        println("Decompressing $this")
         val hash = ".sha512-${rawInputStream.use(InputStream::sha512Hash)}"
 
         return@lazy DataHandler.cacheFileWithNameAndData(hash) { file ->

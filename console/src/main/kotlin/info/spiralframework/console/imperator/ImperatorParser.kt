@@ -1,5 +1,6 @@
 package info.spiralframework.console.imperator
 
+import info.spiralframework.base.SpiralLocale
 import info.spiralframework.core.SpiralCoreData
 import org.abimon.osl.AllButMatcher
 import org.abimon.osl.SpiralParser
@@ -17,8 +18,8 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
     }
 
     open fun Localised(str: String): Rule = FirstOf(
-            IgnoreCase(SpiralCoreData.localise(str)),
-            IgnoreCase(SpiralCoreData.localiseForEnglish(str))
+            IgnoreCase(SpiralLocale.localise(str)),
+            IgnoreCase(SpiralLocale.localiseForEnglish(str))
     )
 
     open fun Parameter(): Rule {

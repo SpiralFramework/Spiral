@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.locale
 import info.spiralframework.formats.utfTable
 import info.spiralframework.formats.utils.*
 import java.io.File
@@ -50,7 +51,7 @@ class CustomCPK() {
     }
 
     fun compile(output: OutputStream) {
-        System.err.println("WARNING: If compilation doesn't work with a game, see if adding the Info and UserString headers to TOC works")
+        DataHandler.LOGGER.warn("formats.custom_cpk.header_warning")
         val filenames = files.keys.sorted()
         println(filenames.size)
 
@@ -327,7 +328,7 @@ class CustomCPK() {
                     CPKColumnType.TYPE_FLOAT -> output.writeFloatBE((data as? Number ?: 0).toFloat())
                     CPKColumnType.TYPE_1BYTE2 -> output.write((data as? Number ?: 0).toInt() and 0xFF)
                     CPKColumnType.TYPE_1BYTE -> output.write((data as? Number ?: 0).toInt() and 0xFF)
-                    else -> throw IllegalArgumentException("Unknown column type provided for compilation!")
+                    else -> throw locale<IllegalArgumentException>("formats.custom_cpk.unknown_column_constant", type)
                 }
             }
         }

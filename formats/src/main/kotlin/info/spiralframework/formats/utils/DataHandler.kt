@@ -1,5 +1,8 @@
 package info.spiralframework.formats.utils
 
+import info.spiralframework.base.LocaleLogger
+import info.spiralframework.base.SpiralLocale
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -20,7 +23,7 @@ object DataHandler {
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
-    var LOGGER = LoggerFactory.getLogger("SpiralFormats")
+    var LOGGER: Logger
 
     var cacheFileInitialiser: (String?) -> File = func@{ name ->
         var cacheFile: File
@@ -45,4 +48,9 @@ object DataHandler {
 
     fun newCacheFile(name: String? = null): File = cacheFileInitialiser(name)
     fun cacheFileWithNameAndData(name: String, dataFunc: (File) -> Unit): File = cacheFileWithNameAndDataInitialiser(name, dataFunc)
+
+    init {
+        SpiralLocale.addBundle("SpiralFormats")
+        LOGGER = LocaleLogger(LoggerFactory.getLogger("logger.formats.name"))
+    }
 }

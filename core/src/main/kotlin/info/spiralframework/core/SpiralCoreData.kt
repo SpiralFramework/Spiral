@@ -21,9 +21,6 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
-import java.text.MessageFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * This singleton holds important information for all Spiral modules
@@ -97,32 +94,5 @@ object SpiralCoreData {
         }
 
         return@lazy String.format("%032x", BigInteger(1, md.digest()))
-    }
-
-    val _localisationBundles: MutableList<ResourceBundle> = ArrayList()
-    val localisationBundles: List<ResourceBundle> = _localisationBundles
-
-    val _englishBundles: MutableList<ResourceBundle> = ArrayList()
-    val englishBundles: List<ResourceBundle> = _englishBundles
-
-    fun localise(base: String, vararg values: Any): String {
-        val msg = localisationBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
-        return MessageFormat.format(msg, *values)
-    }
-
-    fun localiseForEnglish(base: String, vararg values: Any): String {
-        val msg = englishBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
-        return MessageFormat.format(msg, *values)
-    }
-
-    fun changeLanguage(locale: Locale) {
-        val oldArray = localisationBundles.toTypedArray()
-        _localisationBundles.clear()
-        _localisationBundles.addAll(oldArray.map { bundle -> ResourceBundle.getBundle(bundle.baseBundleName, locale) })
-    }
-
-    fun addBundle(bundleName: String, clazz: Class<*> = SpiralCoreData::class.java) {
-        _localisationBundles.add(ResourceBundle.getBundle(bundleName, Locale.getDefault(), clazz.classLoader))
-        _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
     }
 }

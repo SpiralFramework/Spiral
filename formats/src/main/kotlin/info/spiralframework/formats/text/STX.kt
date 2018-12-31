@@ -1,12 +1,25 @@
 package info.spiralframework.formats.text
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import kotlin.collections.set
 
-class STXT(val dataSource: () -> InputStream) {
+class STX private constructor(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x54585453
+        
+        operator fun invoke(dataSource: DataSource): STX? {
+            try {
+                return STX(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.stx.invalid", dataSource, iae)
+
+                return null
+            }
+        }
+
+        fun unsafe(dataSource: DataSource): STX = STX(dataSource)
     }
 
     enum class Language(val langID: Int) {
@@ -26,19 +39,19 @@ class STXT(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number in STXT File (Was $magic, expected $MAGIC_NUMBER)")
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.stx.invalid_magic", magic, MAGIC_NUMBER)
 
             lang = Language.languageFor(stream.readInt32LE()) ?: Language.UNK
 
             val unk = stream.readInt32LE()
             if (unk != 1)
-                DataHandler.LOGGER.debug("STXT file $dataSource, for unk: expected 1, got $unk")
+                DataHandler.LOGGER.debug("formats.stx.unknown_unk", unk)
 
             val tableOffset = stream.readInt32LE()
 
             val unk2 = stream.readInt32LE()
             if (unk2 != 8)
-                DataHandler.LOGGER.debug("STXT file $dataSource, for unk2: expected 8, got $unk")
+                DataHandler.LOGGER.debug("formats.stx.unknown_unk2", unk2)
 
             val count = stream.readInt32LE()
 
@@ -49,7 +62,7 @@ class STXT(val dataSource: () -> InputStream) {
                         val stringOffset = stringStream.readInt32LE()
 
                         if (i != stringID)
-                            DataHandler.LOGGER.debug("STXT file $dataSource has a differing string ID (Index $i, string ID $stringID)")
+                            DataHandler.LOGGER.debug("formats.stx.differing_id", stringID, i)
 
                         this[stringID] = dataSource.useAt(stringOffset) { localStream -> localStream.readNullTerminatedString(encoding = Charsets.UTF_16LE, bytesPer = 2) }
                     }

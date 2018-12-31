@@ -1,8 +1,8 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.assertAsArgument
 import info.spiralframework.formats.utils.foldToInt16LE
 import info.spiralframework.formats.utils.readInt16LE
 import java.io.InputStream
@@ -13,7 +13,7 @@ class NonstopDebate private constructor(val game: HopesPeakKillingGame, val data
             try {
                 return NonstopDebate(game, dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile Nonstop Debate for dataSource {} and game {}", dataSource, game, iae)
+                DataHandler.LOGGER.debug("formats.nonstop.invalid", dataSource, game, iae)
 
                 return null
             }
@@ -51,12 +51,12 @@ class NonstopDebate private constructor(val game: HopesPeakKillingGame, val data
 
             sections = Array(numberOfSections) {
                 val read = stream.read(sectionBuffer)
-                assertAsArgument(read == sectionBuffer.size, "Illegal stream size for Nonstop Debate (Expected to read ${sectionBuffer.size}, instead we read $read bytes)")
+                assertAsLocaleArgument(read == sectionBuffer.size, "formats.nonstop.invalid_stream_size", read, sectionBuffer.size)
 
                 return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
             }
 
-            assertAsArgument(stream.read() == -1, "Illegal stream size for Nonstop Debate (More data present after sections!)")
+            assertAsLocaleArgument(stream.read() == -1, "formats.nonstop.invalid_stream_data")
         } finally {
             stream.close()
         }

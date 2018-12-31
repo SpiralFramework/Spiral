@@ -1,13 +1,16 @@
 package info.spiralframework.formats.models
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.full.cast
 import kotlin.reflect.full.safeCast
 
-class GMOModel(val dataSource: () -> InputStream) {
+class GMOModel private constructor(val dataSource: () -> InputStream) {
     companion object {
+        val MAGIC_NUMBER_LOWER  = 0x312E30302E474D4FL
+        val MAGIC_NUMBER_HIGHER = 0x0000000000505350L
         val NORMAL_MASK = makeMask(5, 6)
         val NORMAL_SHIFT = 5
 
@@ -22,20 +25,28 @@ class GMOModel(val dataSource: () -> InputStream) {
 
         val NUMBER_VERTICES_MASK = makeMask(18, 19, 20)
         val NUMBER_VERTICES_SHIFT = 18
-    }
 
+        operator fun invoke(dataSource: DataSource): GMOModel? {
+            try {
+                return GMOModel(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.gmo.invalid", dataSource, iae)
+
+                return null
+            }
+        }
+
+        fun unsafe(dataSource: DataSource): GMOModel = GMOModel(dataSource)
+    }
 
     val chunks: Array<GMOModelChunk>
 
     init {
         chunks = dataSource().use { rawStream ->
             val stream = CountingInputStream(rawStream)
-            val magic = stream.readString(12)
-            if(magic != "OMG.00.1PSP\u0000")
-                throw IllegalArgumentException("$dataSource is not a valid GMO model ($magic ≠ \"OMG.00.1PSP\u0000\")")
-            val padding = stream.readInt32LE()
-
-            println(stream.available())
+            val magicLower = stream.readInt64LE()
+            val magicHigher = stream.readInt64LE()
+            assertAsLocaleArgument(magicLower == MAGIC_NUMBER_LOWER && magicHigher == MAGIC_NUMBER_HIGHER, "formats.gmo.invalid_magic", magicLower.toString(16), magicHigher.toString(16), MAGIC_NUMBER_LOWER.toString(16), MAGIC_NUMBER_HIGHER.toString(16))
             val chunks = stream.readChunks(dataSource, null).toTypedArray()
             return@use chunks
         }
@@ -193,7 +204,7 @@ class GMOModel(val dataSource: () -> InputStream) {
                                         faces.add(verts[i + 2] to verts[i + 3] and verts[i])
                                     }
                                 }
-                                else -> println("Missing faces primType $primType")
+                                else -> DataHandler.LOGGER.debug("formats.gmo.missing_face_type", primType)
                             }
 
                             list.add(GMOMeshFacesChunk(chunkID, headerSize, dataSize, header, arIndex, unk, primType, faces))
@@ -201,18 +212,18 @@ class GMOModel(val dataSource: () -> InputStream) {
 
                         else -> {
                             //list.add(UnknownGMOModelChunk(chunkID, headerSize, dataSize, header, substream.readXBytes(substream.windowSize.toInt())))
-                            println("Missing chunk ID 0x${chunkID.toString(16)} with parent $parentChunk")
+                            DataHandler.LOGGER.debug("formats.gmo.missing_chunk_id", "0x${chunkID.toString(16)}", "$parentChunk")
                         }
                     }
                 } finally {
                     if(parentChunk == null)
-                        println("Parent Chunk is null")
+                        DataHandler.LOGGER.debug("formats.gmo.parent_chunk_null")
 
                     if (substream.count != (dataSize - headerSize.coerceAtLeast(8)))
-                        println("Mismatching reads")
+                        DataHandler.LOGGER.debug("formats.gmo.mismatching_reads")
 
                     if (dataSize > 0)
-                        println("Skipped " + skip(substream.windowSize))
+                        DataHandler.LOGGER.debug("formats.gmo.skipped_data", skip(substream.windowSize))
 
                     substream.close()
                 }

@@ -1,14 +1,27 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.formats.utils.assertAsArgument
+import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.readInt16LE
 import info.spiralframework.formats.utils.readInt32LE
 import info.spiralframework.formats.utils.readUInt32LE
 import java.io.InputStream
 
-class AWB(val dataSource: () -> InputStream) {
+class AWB private constructor(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x32534641
+
+        operator fun invoke(dataSource: () -> InputStream): AWB? {
+            try {
+                return AWB(dataSource)
+            } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.awb.invalid", dataSource, iae)
+
+                return null
+            }
+        }
+
+        fun unsafe(dataSource: () -> InputStream): AWB = AWB(dataSource)
     }
 
     val entries: Array<AWBEntry>
@@ -18,7 +31,7 @@ class AWB(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsArgument(magic == MAGIC_NUMBER, "Illegal magic number for AWB File (Was $magic, expected $MAGIC_NUMBER)")
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.awb.invalid_magic", magic, MAGIC_NUMBER)
 
             val unk1 = stream.readInt32LE()
 

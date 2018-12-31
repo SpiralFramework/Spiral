@@ -7,7 +7,21 @@ import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import java.util.*
 
-class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
+class WordScriptFile private constructor(val game: V3, val dataSource: () -> InputStream) {
+    companion object {
+        operator fun invoke(game: V3, dataSource: () -> InputStream): WordScriptFile? {
+            try {
+                return WordScriptFile(game, dataSource)
+            } catch (iae: IllegalArgumentException) {
+                DataHandler.LOGGER.debug("formats.wrd.invalid", dataSource, game, iae)
+
+                return null
+            }
+        }
+
+        fun unsafe(game: V3, dataSource: DataSource): WordScriptFile = WordScriptFile(game, dataSource)
+    }
+
     val entries: Array<Array<WrdScript>>
     val labels: Array<String>
     val parameters: Array<String>
@@ -123,7 +137,7 @@ class WordScriptFile(val game: V3, val dataSource: () -> InputStream) {
                         if (arguments.size == argumentCount / 2 || argumentCount == -1) {
                             wrdEntries.add(getEntry(opCode, arguments))
                         } else {
-                            println("Wrong number of arguments for OP Code 0x${opCode.toString(16)}; expected $argumentCount and got ${arguments.size}")
+                            DataHandler.LOGGER.warn("formats.wrd.wrong_arg_count", "0x${opCode.toString(16)}", argumentCount, arguments.size)
                         }
                     }
 

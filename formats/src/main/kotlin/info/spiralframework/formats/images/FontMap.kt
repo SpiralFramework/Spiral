@@ -1,5 +1,6 @@
 package info.spiralframework.formats.images
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 
@@ -10,15 +11,17 @@ class FontMap private constructor(val dataSource: () -> InputStream) {
     companion object {
         val MAGIC_NUMBER = 0x453704674
 
-        operator fun invoke(dataSource: () -> InputStream): FontMap? {
+        operator fun invoke(dataSource: DataSource): FontMap? {
             try {
                 return FontMap(dataSource)
             } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("Failed to compile FontMap for dataSource {}", dataSource, iae)
+                DataHandler.LOGGER.debug("formats.font_map.invalid", dataSource, iae)
 
                 return null
             }
         }
+
+        fun unsafe(dataSource: DataSource): FontMap = FontMap(dataSource)
     }
 
     val entryCount: Int
@@ -37,7 +40,7 @@ class FontMap private constructor(val dataSource: () -> InputStream) {
         try {
             val magicNum = stream.readInt64LE()
 
-            assertAsArgument(magicNum == MAGIC_NUMBER, "Illegal magic number for FontMap (Was 0x${magicNum.toString(16)}, expected 0x${MAGIC_NUMBER.toString(16)})")
+            assertAsLocaleArgument(magicNum == MAGIC_NUMBER, "formats.font_map.invalid_magic", "0x${magicNum.toString(16)}", "0x${MAGIC_NUMBER.toString(16)}")
 
             entryCount = stream.readInt32LE()
             start = stream.readInt32LE()
