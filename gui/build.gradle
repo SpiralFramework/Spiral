@@ -1,3 +1,18 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'application'
+}
+
+mainClassName = ""
+
 dependencies {
     compile project(":core")
+}
+
+shadowJar {
+    baseName = jar.baseName
+    appendix = jar.appendix
+    version = jar.version
+
+    classifier = "shadow"
 }
