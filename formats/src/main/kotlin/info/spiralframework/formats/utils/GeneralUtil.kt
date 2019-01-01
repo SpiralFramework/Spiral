@@ -62,8 +62,8 @@ fun DecimalFormat.formatTriple(triple: Triple<Float, Float, Float>): Triple<Stri
 fun Int.align(size: Int = 0x10): Int = (size - this % size) % size
 fun Long.align(size: Int = 0x10): Int = ((size - this % size) % size).toInt()
 
-fun <T> (() -> InputStream).use(op: (InputStream) -> T): T = this().use(op)
-fun <T> (() -> InputStream).useAt(offset: Number, op: (InputStream) -> T): T = this().use { stream ->
+inline fun <T> (() -> InputStream).use(op: (InputStream) -> T): T = this().use(op)
+inline fun <T> (() -> InputStream).useAt(offset: Number, op: (InputStream) -> T): T = this().use { stream ->
     stream.skip(offset.toLong())
     return@use op(stream)
 }
@@ -111,4 +111,32 @@ fun <T> Array<T>.mapInPlace(transform: (T) -> T): Array<T> {
         this[i] = transform(this[i])
 
     return this
+}
+
+fun RGBA(r: Byte, g: Byte, b: Byte, a: Byte): Int {
+    return (a.toInt() and 0xFF shl 24) or
+            (r.toInt() and 0xFF shl 16) or
+            (g.toInt() and 0xFF shl 8) or
+            (b.toInt() and 0xFF shl 0)
+}
+
+fun RGBA(r: Int, g: Int, b: Int, a: Int): Int {
+    return (a and 0xFF shl 24) or
+            (r and 0xFF shl 16) or
+            (g and 0xFF shl 8) or
+            (b and 0xFF shl 0)
+}
+
+fun BGRA(r: Byte, g: Byte, b: Byte, a: Byte): Int {
+    return (a.toInt() and 0xFF shl 24) or
+            (b.toInt() and 0xFF shl 16) or
+            (g.toInt() and 0xFF shl 8) or
+            (r.toInt() and 0xFF shl 0)
+}
+
+fun BGRA(r: Int, g: Int, b: Int, a: Int): Int {
+    return (a and 0xFF shl 24) or
+            (b and 0xFF shl 16) or
+            (g and 0xFF shl 8) or
+            (r and 0xFF shl 0)
 }

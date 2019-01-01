@@ -14,6 +14,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import info.spiralframework.base.SpiralLocale
 import info.spiralframework.core.serialisation.InstantSerialisation
 import java.io.File
 import java.math.BigInteger
@@ -94,5 +95,9 @@ object SpiralCoreData {
         }
 
         return@lazy String.format("%032x", BigInteger(1, md.digest()))
+    }
+
+    init {
+        SpiralLocale.addBundle("SpiralCore")
     }
 }

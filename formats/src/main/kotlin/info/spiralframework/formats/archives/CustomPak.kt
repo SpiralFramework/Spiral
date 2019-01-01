@@ -20,9 +20,20 @@ class CustomPak: ICustomArchive {
     override val dataSize: Long
         get() = 4L + (4 * files.size) + (files.entries.sumBy { (_, value) -> value.first.toInt() })
 
-    fun add(pak: Pak) {
-        for (entry in pak.files)
-            add(entry.index, entry.size.toLong(), entry::inputStream)
+
+    override fun add(archive: IArchive) {
+        when (archive) {
+            is Pak -> {
+                for (entry in archive.files)
+                    add(entry.index, entry.size.toLong(), entry::inputStream)
+            }
+
+            is AWB -> archive.entries.forEach { entry -> add(entry.id, entry.size, entry::inputStream) }
+            is CPK -> archive.files.forEach { entry -> add(entry.name, entry.extractSize, entry::inputStream) }
+            is SPC -> archive.files.forEach { entry -> add(entry.name, entry.decompressedSize, entry::inputStream) }
+            is SRD -> archive.entries.forEach { entry -> add(entry.dataLength.toLong(), entry::dataStream) }
+            is WAD -> archive.files.forEach { entry -> add(entry.name, entry.size, entry::inputStream) }
+        }
     }
 
     override fun add(dir: File) {

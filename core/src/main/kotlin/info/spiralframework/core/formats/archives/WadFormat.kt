@@ -4,7 +4,9 @@ import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.archives.*
+import info.spiralframework.formats.archives.CustomWAD
+import info.spiralframework.formats.archives.IArchive
+import info.spiralframework.formats.archives.WAD
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
@@ -40,7 +42,7 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is WAD || data is CPK || data is SPC || data is Pak || data is ZipFile
+    override fun supportsWriting(data: Any): Boolean = data is IArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -57,10 +59,7 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
         val customWad = CustomWAD()
 
         when (data) {
-            is WAD -> customWad.add(data)
-            is CPK -> data.files.forEach { entry -> customWad.add(entry.name, entry.extractSize, entry::inputStream) }
-            is SPC -> data.files.forEach { entry -> customWad.add(entry.name, entry.decompressedSize, entry::inputStream) }
-            is Pak -> data.files.forEach { entry -> customWad.add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
+            is IArchive -> customWad.add(data)
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 customWad.add(entry.name, entry.size) { data.getInputStream(entry) }
             }

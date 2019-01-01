@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 
 object DataHandler {
     var byteArrayToMap: (ByteArray) -> Map<String, Any?>? = { streamToMap(ByteArrayInputStream(it)) }
@@ -21,33 +21,19 @@ object DataHandler {
     fun readMapFromFile(file: File): Map<String, Any?>? = fileToMap(file)
     fun readMapFromStream(stream: InputStream): Map<String, Any?>? = streamToMap(stream)
 
+    val tmpFiles: MutableSet<File> = CopyOnWriteArraySet()
+
+    fun createTmpFile(hash: String): File {
+        val tmp = File.createTempFile(hash, ".dat")
+        tmp.deleteOnExit()
+        tmpFiles.add(tmp)
+
+        return tmp
+    }
+
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
     var LOGGER: Logger
-
-    var cacheFileInitialiser: (String?) -> File = func@{ name ->
-        var cacheFile: File
-        do {
-            cacheFile = File("." + UUID.randomUUID().toString())
-        } while (cacheFile.exists())
-
-        cacheFile.createNewFile()
-        cacheFile.deleteOnExit()
-
-        return@func cacheFile
-    }
-
-    var cacheFileWithNameAndDataInitialiser: (String, (File) -> Unit) -> File = func@{ name, dataFunc ->
-        val file = cacheFileInitialiser(name)
-
-        if (!file.exists() || file.length() == 0L)
-            dataFunc(file)
-
-        return@func file
-    }
-
-    fun newCacheFile(name: String? = null): File = cacheFileInitialiser(name)
-    fun cacheFileWithNameAndData(name: String, dataFunc: (File) -> Unit): File = cacheFileWithNameAndDataInitialiser(name, dataFunc)
 
     init {
         SpiralLocale.addBundle("SpiralFormats")

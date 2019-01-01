@@ -5,7 +5,7 @@ import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import java.time.LocalDateTime
 
-class CPK private constructor(val dataSource: () -> InputStream) {
+class CPK private constructor(val dataSource: () -> InputStream): IArchive {
     companion object {
         val MAGIC_NUMBER = 0x204b5043
         val UTF_MAGIC_NUMBER = 0x46545540

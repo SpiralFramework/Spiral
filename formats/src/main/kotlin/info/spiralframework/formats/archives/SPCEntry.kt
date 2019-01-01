@@ -12,14 +12,15 @@ import java.io.InputStream
 data class SPCEntry(val compressionFlag: Int, val unknownFlag: Int, val compressedSize: Long, val decompressedSize: Long, val name: String, val offset: Long, val spc: SPC) {
     private val decompressedData: File by lazy {
         val hash = ".sha512-${rawInputStream.use(InputStream::sha512Hash)}"
+        val tmp = DataHandler.createTmpFile(hash)
 
-        return@lazy DataHandler.cacheFileWithNameAndData(hash) { file ->
-            rawInputStream.use { baseStream ->
-                FileOutputStream(file).use { outStream ->
-                    SPCCompression.decompressToPipe(compressionFlag, baseStream, outStream)
-                }
+        rawInputStream.use { baseStream ->
+            FileOutputStream(tmp).use { outStream ->
+                SPCCompression.decompressToPipe(compressionFlag, baseStream, outStream)
             }
         }
+
+        return@lazy tmp
     }
 
     val rawInputStream: InputStream

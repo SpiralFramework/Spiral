@@ -41,7 +41,7 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is WAD || data is CPK || data is SPC || data is Pak || data is ZipFile
+    override fun supportsWriting(data: Any): Boolean = data is AWB || data is WAD || data is CPK || data is SPC || data is Pak || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -57,10 +57,12 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
     override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
         val customCpk = CustomCPK()
         when (data) {
-            is WAD -> data.files.forEach { entry -> customCpk.add(entry.name, entry.size, entry::inputStream) }
             is CPK -> data.files.forEach { entry -> customCpk.add(entry.name, entry.extractSize, entry::inputStream) }
-            is SPC -> data.files.forEach { entry -> customCpk.add(entry.name, entry.decompressedSize, entry::inputStream) }
+
+            is AWB -> data.entries.forEach { entry -> customCpk.add(entry.id.toString(), entry.size, entry::inputStream) }
             is Pak -> data.files.forEach { entry -> customCpk.add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
+            is SPC -> data.files.forEach { entry -> customCpk.add(entry.name, entry.decompressedSize, entry::inputStream) }
+            is WAD -> data.files.forEach { entry -> customCpk.add(entry.name, entry.size, entry::inputStream) }
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 customCpk.add(entry.name, entry.size) { data.getInputStream(entry) }
             }

@@ -24,7 +24,7 @@ class CockpitPilot internal constructor(args: GurrenArgs): Cockpit(args) {
     }
 
     init {
-        println(SpiralLocale.localise("gurren.pilot.init", SpiralCoreData.version ?: "Developer"))
+        println(SpiralLocale.localise("gurren.pilot.init", SpiralCoreData.version ?: SpiralLocale.localise("gurren.default_version")))
 
         imperator.hireSoldiers(Gurren(this))
     }

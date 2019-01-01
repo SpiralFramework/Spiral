@@ -9,7 +9,7 @@ import info.spiralframework.formats.utils.*
  * When destructing, component 1 is the major version, 2 is the minor version, 3 is a list of files, 4 is a list of directories, and 5 is the data offset
  * Why would you want that? Who knows
  */
-class WAD private constructor(val dataSource: DataSource) {
+class WAD private constructor(val dataSource: DataSource): IArchive {
     companion object {
         val MAGIC_NUMBER = 0x52414741
 

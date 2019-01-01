@@ -1,6 +1,21 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'application'
+}
+
+mainClassName = ""
+
 dependencies {
     compile project(":core")
 
     compile("org.abimon:Imperator:$imperator_version")
     compile("ch.qos.logback:logback-classic:$logback_version")
+}
+
+shadowJar {
+    baseName = jar.baseName
+    appendix = jar.appendix
+    version = jar.version
+    
+    classifier = "shadow"
 }

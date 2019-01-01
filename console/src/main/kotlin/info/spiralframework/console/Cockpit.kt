@@ -5,7 +5,8 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.formats.models.GMOModel
+import info.spiralframework.core.formats.images.PNGFormat
+import info.spiralframework.core.formats.images.SHTXFormat
 import info.spiralframework.formats.utils.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -14,8 +15,9 @@ import kotlinx.coroutines.runBlocking
 import org.abimon.imperator.handle.Imperator
 import org.abimon.imperator.impl.BasicImperator
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
-import java.util.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit internal constructor(val args: GurrenArgs) {
@@ -32,9 +34,13 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
                 instance = CockpitPilot(gurrenArgs)
             }
 
-            SpiralLocale.changeLanguage(Locale("en", "DBG"))
+            val img = { FileInputStream("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/a2/data/_cg/bustup_00_00.btx") }
+            val result = SHTXFormat.read(source = img)
+            if (result.didSucceed) {
+                println("Success!")
 
-            GMOModel { ByteArrayInputStream(ByteArray(0)) }
+                println("Writing: " + FileOutputStream(File("tmp.png")).use { out -> PNGFormat.write(data = result.obj, stream = out) })
+            }
 
             instance.start()
         }
@@ -50,7 +56,7 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
     }
 
     /** The logger for Spiral */
-    val LOGGER = LoggerFactory.getLogger(SpiralLocale.localise("logger.commands.name", SpiralCoreData.version ?: "Devloper"))
+    val LOGGER = LoggerFactory.getLogger(SpiralLocale.localise("logger.commands.name", SpiralCoreData.version ?: SpiralLocale.localise("gurren.default_version")))
 
     /**
      * The scope of operation that Spiral is currently operating in

@@ -1,0 +1,5 @@
+dependencies {
+    compile project(":core")
+
+    compile "io.humble:humble-video-all:0.3.0"
+}

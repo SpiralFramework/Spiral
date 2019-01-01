@@ -4,7 +4,7 @@ import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.utils.CountingInputStream
 import java.io.InputStream
 
-class SRD(val dataSource: () -> InputStream) {
+class SRD(val dataSource: () -> InputStream): IArchive {
     val entries: Array<SRDEntry>
 
     init {

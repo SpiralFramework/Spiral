@@ -16,7 +16,7 @@ import java.io.InputStream
  *
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
-class Pak private constructor(val dataSource: () -> InputStream, overrideSanityChecks: Boolean = false) {
+class Pak private constructor(val dataSource: () -> InputStream, overrideSanityChecks: Boolean = false): IArchive {
     companion object {
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0

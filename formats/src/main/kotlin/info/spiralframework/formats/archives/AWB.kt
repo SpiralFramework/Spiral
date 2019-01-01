@@ -7,7 +7,7 @@ import info.spiralframework.formats.utils.readInt32LE
 import info.spiralframework.formats.utils.readUInt32LE
 import java.io.InputStream
 
-class AWB private constructor(val dataSource: () -> InputStream) {
+class AWB private constructor(val dataSource: () -> InputStream): IArchive {
     companion object {
         val MAGIC_NUMBER = 0x32534641
 
@@ -53,7 +53,7 @@ class AWB private constructor(val dataSource: () -> InputStream) {
                     start += (alignment - (end % alignment))
                 end = awbFileEnds[index]
 
-                return@Array AWBEntry(awbFileIDs[index], end - start, start)
+                return@Array AWBEntry(awbFileIDs[index], end - start, start, this)
             }
         } finally {
             stream.close()

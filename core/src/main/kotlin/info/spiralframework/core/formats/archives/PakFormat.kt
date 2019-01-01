@@ -4,7 +4,9 @@ import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.archives.*
+import info.spiralframework.formats.archives.CustomPak
+import info.spiralframework.formats.archives.IArchive
+import info.spiralframework.formats.archives.Pak
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
@@ -40,7 +42,7 @@ object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is WAD || data is CPK || data is SPC || data is Pak || data is ZipFile
+    override fun supportsWriting(data: Any): Boolean = data is IArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -57,10 +59,7 @@ object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
         val customPak = CustomPak()
 
         when (data) {
-            is WAD -> data.files.forEach { entry -> customPak.add(entry.name, entry.size, entry::inputStream) }
-            is CPK -> data.files.forEach { entry -> customPak.add(entry.name, entry.extractSize, entry::inputStream) }
-            is SPC -> data.files.forEach { entry -> customPak.add(entry.name, entry.decompressedSize, entry::inputStream) }
-            is Pak -> customPak.add(data)
+            is IArchive -> customPak.add(data)
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 customPak.add(entry.name, entry.size) { data.getInputStream(entry) }
             }
