@@ -59,7 +59,7 @@ class SFL private constructor(val dataSource: () -> InputStream) {
 
         try {
             val magic = stream.readInt32LE()
-            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.sfl.invalid_magic", magic.toHex(), MAGIC_NUMBER.toHex())
+            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.sfl.invalid_magic", "0x${magic.toString(16)}", "0x${MAGIC_NUMBER.toString(16)}")
 
             headerUnk1 = stream.readInt32LE()
             headerUnk2 = stream.readInt32LE()
