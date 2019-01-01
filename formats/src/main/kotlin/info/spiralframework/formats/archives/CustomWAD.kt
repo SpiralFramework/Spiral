@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.utils.writeInt32LE
 import info.spiralframework.formats.utils.writeInt64LE
 import java.io.File
@@ -11,9 +12,21 @@ class CustomWAD: ICustomArchive {
     var major: Int = 1
     var minor: Int = 1
 
-    fun add(wad: WAD) {
-        for (entry in wad.files)
-            add(entry.name, entry.size, entry::inputStream)
+    override fun add(archive: IArchive) {
+        when (archive) {
+            is AWB -> archive.entries.forEach { entry -> add(entry.id.toString(), entry.size, entry::inputStream) }
+            is CPK -> archive.files.forEach { entry -> add(entry.name, entry.extractSize, entry::inputStream) }
+            is Pak -> archive.files.forEach { entry -> add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
+            is SPC -> archive.files.forEach { entry -> add(entry.name, entry.decompressedSize, entry::inputStream) }
+            is SRD -> archive.entries.groupBy(SRDEntry::dataType).forEach { (_, list) ->
+                list.forEachIndexed { index, entry ->
+                    add("${entry.dataType}-$index-data", entry.dataLength.toLong(), entry::dataStream)
+                    add("${entry.dataType}-$index-subdata", entry.subdataLength.toLong(), entry::subdataStream)
+
+                }
+            }
+            is WAD -> archive.files.forEach { entry -> add(entry.name, entry.size, entry::inputStream) }
+        }
     }
 
     override val dataSize: Long

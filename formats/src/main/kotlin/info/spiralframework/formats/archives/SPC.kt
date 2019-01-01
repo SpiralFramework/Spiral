@@ -3,7 +3,7 @@ package info.spiralframework.formats.archives
 import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 
-class SPC private constructor(val dataSource: DataSource) {
+class SPC private constructor(val dataSource: DataSource): IArchive {
     companion object {
         val MAGIC_NUMBER = 0x2e535043
         val TABLE_MAGIC_NUMBER = 0x746f6f52

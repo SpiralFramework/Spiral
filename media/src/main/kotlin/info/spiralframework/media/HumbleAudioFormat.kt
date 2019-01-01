@@ -1,0 +1,79 @@
+package info.spiralframework.media
+
+import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.audio.SpiralAudioFormat
+import info.spiralframework.formats.game.DRGame
+import info.spiralframework.formats.utils.*
+import io.humble.video.Demuxer
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.util.*
+
+open class HumbleAudioFormat(val format: String): SpiralAudioFormat() {
+    override val needsMediaPlugin: Boolean = false
+
+    /**
+     * Attempts to read the data source as [T]
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param context Context that we retrieved this file in
+     * @param source A function that returns an input stream
+     *
+     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
+     */
+    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<File> {
+        val tmp = DataHandler.createTmpFile(UUID.randomUUID().toString())
+        source.use { stream -> FileOutputStream(tmp).use(stream::copyToStream) }
+
+        val demuxer = Demuxer.make()
+
+        try {
+            try {
+                demuxer.open(tmp.absolutePath, null, false, true, null, null)
+            } catch (runtime: RuntimeException) {
+                tmp.delete()
+
+                return FormatResult.Fail(1.0)
+            }
+            if (demuxer.format.name.equals(format, true) || demuxer.format.longName.equals(format, true))
+                return FormatResult.Success(tmp, 1.0)
+
+            tmp.delete()
+
+            return FormatResult.Fail(1.0)
+        } finally {
+            demuxer.close()
+        }
+    }
+
+    /**
+     * Does this format support writing [data]?
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param context Context that we retrieved this file in
+     *
+     * @return If we are able to write [data] as this format
+     */
+    override fun supportsWriting(data: Any): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    /**
+     * Writes [data] to [stream] in this format
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param context Context that we retrieved this file in
+     * @param data The data to wrote
+     * @param stream The stream to write to
+     *
+     * @return An enum for the success of the operation
+     */
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+}

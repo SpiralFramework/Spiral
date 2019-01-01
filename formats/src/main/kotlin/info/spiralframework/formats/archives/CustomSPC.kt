@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.utils.*
 import java.io.File
 import java.io.FileInputStream
@@ -39,9 +40,26 @@ class CustomSPC : ICustomArchive {
             return@sumBy (16 + SPC_ENTRY_PADDING.size + entryNameBytes.size + 1 + ((0x10 - (entryNameBytes.size + 1) % 0x10) % 0x10) + compressedSize + (0x10 - compressedSize % 0x10) % 0x10).toInt()
         }).toLong()
 
-    fun add(spc: SPC) {
-        for (entry in spc.files)
-            addCompressed(entry.name, entry.compressionFlag, entry.compressedSize, entry.decompressedSize) { WindowedInputStream(spc.dataSource(), entry.offset, entry.compressedSize) }
+
+
+    override fun add(archive: IArchive) {
+        when (archive) {
+            is SPC -> {
+                for (entry in archive.files)
+                    addCompressed(entry.name, entry.compressionFlag, entry.compressedSize, entry.decompressedSize) { WindowedInputStream(archive.dataSource(), entry.offset, entry.compressedSize) }
+            }
+            is AWB -> archive.entries.forEach { entry -> add(entry.id.toString(), entry.size, entry::inputStream) }
+            is CPK -> archive.files.forEach { entry -> add(entry.name, entry.extractSize, entry::inputStream) }
+            is Pak -> archive.files.forEach { entry -> add(entry.index.toString(), entry.size.toLong(), entry::inputStream) }
+            is SRD -> archive.entries.groupBy(SRDEntry::dataType).forEach { (_, list) ->
+                list.forEachIndexed { index, entry ->
+                    add("${entry.dataType}-$index-data", entry.dataLength.toLong(), entry::dataStream)
+                    add("${entry.dataType}-$index-subdata", entry.subdataLength.toLong(), entry::subdataStream)
+
+                }
+            }
+            is WAD -> archive.files.forEach { entry -> add(entry.name, entry.size, entry::inputStream) }
+        }
     }
 
     override fun add(dir: File) = add(dir.absolutePath.length + 1, dir)

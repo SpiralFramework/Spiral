@@ -11,8 +11,13 @@ dependencies {
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
 
+    compile 'com.twelvemonkeys.imageio:imageio-bmp:3.4.1'
+    compile 'com.twelvemonkeys.imageio:imageio-jpeg:3.4.1'
+    compile 'com.twelvemonkeys.imageio:imageio-tga:3.4.1'
+
     compile('org.abimon:OpenSpiralLanguage:a0d2d2e') {
         exclude group: 'org.abimon', module: 'SpiralFormats'
     }
+    compile('org.abimon:Karnage:bedc853')
     compile('org.abimon:Visi:35')
 }

@@ -21,6 +21,12 @@ allprojects {
     version = project_version
     sourceCompatibility = 1.8
 
+    jar {
+        baseName = "spiral"
+        appendix = "$project.name"
+        version = ""
+    }
+
     repositories {
         mavenCentral()
         jcenter()
@@ -38,9 +44,6 @@ allprojects {
 }
 
 subprojects {
-    jar {
-        archiveName = "spiral-$project.name" + ".jar"
-    }
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"

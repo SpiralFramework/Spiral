@@ -6,7 +6,10 @@ import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 
-interface SpiralFormat
+interface SpiralFormat {
+    //val name: String
+    //val extension: String?
+}
 
 /**
  * A Spiral format that supports reading from a source

@@ -4,10 +4,8 @@ import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.archives.CPK
-import info.spiralframework.formats.archives.Pak
-import info.spiralframework.formats.archives.SPC
-import info.spiralframework.formats.archives.WAD
+import info.spiralframework.formats.archives.*
+import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.*
 import java.io.File
@@ -32,7 +30,7 @@ object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<ZipFile> {
         val zip: ZipFile
-        val tmpFile= File.createTempFile(UUID.randomUUID().toString(), ".dat")
+        val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
         tmpFile.deleteOnExit()
 
         try {
@@ -56,7 +54,7 @@ object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is WAD || data is CPK || data is SPC || data is Pak || data is ZipFile
+    override fun supportsWriting(data: Any): Boolean = data is IArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -74,15 +72,16 @@ object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
 
         try {
             when (data) {
-                is WAD -> data.files.forEach { entry ->
-                    zipOut.putNextEntry(ZipEntry(entry.name))
+                is ZipFile -> data.entries().iterator().forEach { entry ->
+                    zipOut.putNextEntry(entry)
+                    data.getInputStream(entry).use(zipOut::copyFromStream)
+                }
+
+                is AWB -> data.entries.forEach { entry ->
+                    zipOut.putNextEntry(ZipEntry(entry.id.toString()))
                     entry.inputStream.use(zipOut::copyFromStream)
                 }
                 is CPK -> data.files.forEach { entry ->
-                    zipOut.putNextEntry(ZipEntry(entry.name))
-                    entry.inputStream.use(zipOut::copyFromStream)
-                }
-                is SPC -> data.files.forEach { entry ->
                     zipOut.putNextEntry(ZipEntry(entry.name))
                     entry.inputStream.use(zipOut::copyFromStream)
                 }
@@ -90,9 +89,21 @@ object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
                     zipOut.putNextEntry(ZipEntry(entry.index.toString()))
                     entry.inputStream.use(zipOut::copyFromStream)
                 }
-                is ZipFile -> data.entries().iterator().forEach { entry ->
-                    zipOut.putNextEntry(entry)
-                    data.getInputStream(entry).use(zipOut::copyFromStream)
+                is SPC -> data.files.forEach { entry ->
+                    zipOut.putNextEntry(ZipEntry(entry.name))
+                    entry.inputStream.use(zipOut::copyFromStream)
+                }
+                is SRD -> data.entries.groupBy(SRDEntry::dataType).forEach { (_, list) ->
+                    list.forEachIndexed { index, entry ->
+                        zipOut.putNextEntry(ZipEntry("${entry.dataType}-$index-data"))
+                        entry.dataStream.use(zipOut::copyFromStream)
+                        zipOut.putNextEntry(ZipEntry("${entry.dataType}-$index-subdata"))
+                        entry.subdataStream.use(zipOut::copyFromStream)
+                    }
+                }
+                is WAD -> data.files.forEach { entry ->
+                    zipOut.putNextEntry(ZipEntry(entry.name))
+                    entry.inputStream.use(zipOut::copyFromStream)
                 }
                 else -> return EnumFormatWriteResponse.WRONG_FORMAT
             }
