@@ -1,6 +1,5 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.measureResultNanoTime
 import info.spiralframework.base.printlnLocale
 import info.spiralframework.console.commands.GurrenMechanic
@@ -10,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.abimon.imperator.impl.InstanceOrder
+import org.abimon.visi.lang.times
 
 class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMechanic>(args) {
     companion object {
@@ -29,7 +29,7 @@ class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMec
             }
 
             if (matchingSoldiers.isEmpty()) {
-                println(SpiralLocale.localise("commands.unknown"))
+                printlnLocale("commands.mechanic.usage", relativeRunningJar, " " * (18 + relativeRunningJar.length))
                 this@CockpitMechanic { currentExitCode = UNKNOWN_COMMAND }
             } else if (matchingSoldiers.any { soldier -> (soldier as? ParboiledSoldier)?.failed == true }) {
                 this@CockpitMechanic { currentExitCode = BAD_COMMAND }

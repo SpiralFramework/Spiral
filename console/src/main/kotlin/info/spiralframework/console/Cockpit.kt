@@ -16,8 +16,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.abimon.imperator.handle.Imperator
 import org.abimon.imperator.impl.BasicImperator
+import org.abimon.visi.io.relativePathFrom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
@@ -46,6 +48,10 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             DataHandler.streamToMap = { stream -> SpiralCoreData.JSON_MAPPER.readValue(stream, Map::class.java).mapKeys { (key) -> key.toString() } }
         }
     }
+
+    val runningJar = File(Cockpit::class.java.protectionDomain.codeSource.location.toURI())
+    val runningDirectory = File(System.getProperty("user.dir")).absoluteFile!!
+    val relativeRunningJar = runningJar relativePathFrom runningDirectory
 
     /** The mutex to use to access this classes properties */
     val mutex = Mutex()
