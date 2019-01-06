@@ -14,8 +14,13 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale
 import info.spiralframework.core.serialisation.InstantSerialisation
+import info.spiralframework.formats.utils.DataHandler
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.math.BigInteger
 import java.nio.ByteBuffer
@@ -97,7 +102,18 @@ object SpiralCoreData {
         return@lazy String.format("%032x", BigInteger(1, md.digest()))
     }
 
+    var LOGGER: Logger
+    var NORMAL_LOGGER: Logger
+        get() = DataHandler.LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
+        set(value) {
+            if (DataHandler.LOGGER is LocaleLogger)
+                (DataHandler.LOGGER as LocaleLogger).logger = value
+            else
+                DataHandler.LOGGER = NORMAL_LOGGER
+        }
+
     init {
         SpiralLocale.addBundle("SpiralCore")
+        LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.core.name")))
     }
 }

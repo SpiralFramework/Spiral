@@ -2,6 +2,7 @@ package info.spiralframework.formats.utils
 
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
@@ -34,9 +35,17 @@ object DataHandler {
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
     var LOGGER: Logger
+    var NORMAL_LOGGER: Logger
+        get() = LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
+        set(value) {
+            if (LOGGER is LocaleLogger)
+                (LOGGER as LocaleLogger).logger = value
+            else
+                LOGGER = NORMAL_LOGGER
+        }
 
     init {
         SpiralLocale.addBundle("SpiralFormats")
-        LOGGER = LocaleLogger(LoggerFactory.getLogger("logger.formats.name"))
+        LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.formats.name")))
     }
 }
