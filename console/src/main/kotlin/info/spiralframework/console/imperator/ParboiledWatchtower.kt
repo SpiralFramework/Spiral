@@ -9,11 +9,11 @@ import org.parboiled.Rule
 import org.parboiled.errors.InvalidInputError
 import org.parboiled.parserunners.ReportingParseRunner
 
-open class ParboiledWatchtower(val rule: Rule, val scope: String? = null, val cockpit: Cockpit) : Watchtower {
+open class ParboiledWatchtower(val rule: Rule, val scope: String? = null, val cockpit: Cockpit<*>) : Watchtower {
     val runner = ReportingParseRunner<Any>(rule)
 
     override fun allow(order: Order): Boolean {
-        if (scope != null && cockpit.operationScope.scopeName != scope)
+        if (scope != null && cockpit.with { operationScope }.scopeName != scope)
             return false
 
         when (order) {

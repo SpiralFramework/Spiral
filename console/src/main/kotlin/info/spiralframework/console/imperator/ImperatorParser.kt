@@ -1,7 +1,7 @@
 package info.spiralframework.console.imperator
 
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.core.SpiralCoreData
+import info.spiralframework.console.data.errors.LocaleError
 import org.abimon.osl.AllButMatcher
 import org.abimon.osl.SpiralParser
 import org.parboiled.Action
@@ -184,14 +184,74 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                     Action<Any> { push(File(pop().toString())) }
             )
 
-    open fun ExistingFilePath(): Rule =
-            Sequence(
-                    FilePath(),
-                    Action<Any> {
-                        val file = pop() as? File ?: return@Action false
-                        if (!file.exists())
-                            return@Action false
-                        push(file)
-                    }
-            )
+    open fun ExistingFilePath(): Rule {
+        val str = Var<String>()
+
+        return FirstOf(
+                Sequence(
+                        "\"",
+                        Action<Any> { str.set("") },
+                        Optional(
+                                OneOrMore(
+                                        FirstOf(
+                                                Sequence(
+                                                        "\\",
+                                                        "\"",
+                                                        Action<Any> { str.set(str.get() + "\"") }
+                                                ),
+                                                Sequence(
+                                                        AllButMatcher(charArrayOf('"')),
+                                                        Action<Any> { str.set(str.get() + match()) }
+                                                )
+                                        )
+                                )
+                        ),
+                        Action<Any> { context ->
+                            File(str.get()).let { file ->
+                                if (file.exists()) {
+                                    push(file)
+                                } else {
+                                    context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str.get()))
+                                    false
+                                }
+                            }
+                        },
+                        "\""
+                ),
+                Sequence(
+                        Action<Any> { str.set("") },
+                        Optional(
+                                OneOrMore(
+                                        FirstOf(
+                                                Sequence(
+                                                        "\\",
+                                                        "\"",
+                                                        Action<Any> { str.set(str.get() + "\"") }
+                                                ),
+                                                Sequence(
+                                                        AllButMatcher(whitespace),
+                                                        Action<Any> { str.set(str.get() + match()) }
+                                                ),
+                                                Sequence(
+                                                        Action<Any> { !File(str.get()).let { file -> file.exists() || file.isFile } },
+                                                        Action<Any> { File(str.get().substringBeforeLast('/')).let { file -> file.exists() && file.listFiles()?.any { subfile -> subfile.absolutePath.contains(str.get()) } ?: false } },
+                                                        OneOrMore(AnyOf(whitespace)),
+                                                        Action<Any> { str.set(str.get() + match()) }
+                                                )
+                                        )
+                                )
+                        ),
+                        Action<Any> { context ->
+                            File(str.get()).let { file ->
+                                if (file.exists()) {
+                                    push(file)
+                                } else {
+                                    context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str.get()))
+                                    false
+                                }
+                            }
+                        }
+                )
+        )
+    }
 }

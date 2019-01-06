@@ -3,11 +3,13 @@ package info.spiralframework.console.commands
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.imperator.CommandClass
+import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
+import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import org.abimon.visi.io.errPrintln
 import java.io.File
 
 @Suppress("unused")
-class Gurren(override val cockpit: Cockpit) : CommandClass {
+class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
     /** Helper Variables */
     var keepLooping = true
 
@@ -24,14 +26,19 @@ class Gurren(override val cockpit: Cockpit) : CommandClass {
 
     /** Commands */
 
-    val help = ParboiledSoldier(helpRule) { }
+    val help = ParboiledSoldier(helpRule) { SUCCESS }
 
     val identify = ParboiledSoldier(identifyRule) { stack ->
         val file = stack[0] as File
 
         // First thing's first - does the file even exist?
-        if (!file.exists())
-            return@ParboiledSoldier errPrintln(SpiralLocale.localise("errors.file.doesnt_exist", file))
+        if (!file.exists()) {
+            errPrintln(SpiralLocale.localise("errors.file.doesnt_exist", file))
+
+            return@ParboiledSoldier FAILURE
+        }
+
+        return@ParboiledSoldier SUCCESS
 
 //        //Next up, are we dealing with a singular file?
 //        if (file.isFile) {

@@ -4,12 +4,15 @@ import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.core.SpiralCoreData
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.abimon.imperator.impl.InstanceOrder
 
-class CockpitPilot internal constructor(args: GurrenArgs): Cockpit(args) {
+class CockpitPilot internal constructor(args: GurrenArgs): Cockpit<CockpitPilot>(args) {
     override fun startAsync(scope: CoroutineScope): Job {
-        runBlocking {
+        return scope.launch {
             while (true) {
                 delay(50)
                 print(operationScope.scopePrint)
@@ -19,8 +22,6 @@ class CockpitPilot internal constructor(args: GurrenArgs): Cockpit(args) {
                     println(SpiralLocale.localise("commands.unknown"))
             }
         }
-
-        return scope.launch { }
     }
 
     init {
