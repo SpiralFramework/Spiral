@@ -1,48 +1,40 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.core.formats.images.PNGFormat
-import info.spiralframework.core.formats.images.SHTXFormat
 import info.spiralframework.formats.utils.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.abimon.imperator.handle.Imperator
 import org.abimon.imperator.impl.BasicImperator
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 
 /** The driving force behind the console interface for Spiral */
-abstract class Cockpit internal constructor(val args: GurrenArgs) {
+abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
             val gurrenArgs = GurrenArgs(args)
-            val instance: Cockpit
+            val instance: Cockpit<*>
 
             if (gurrenArgs.isTool) {
-                println("UHO")
-                instance = CockpitPilot(gurrenArgs)
+                instance = CockpitMechanic(gurrenArgs)
             } else {
                 instance = CockpitPilot(gurrenArgs)
             }
 
-            val img = { FileInputStream("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/a2/data/_cg/bustup_00_00.btx") }
-            val result = SHTXFormat.read(source = img)
-            if (result.didSucceed) {
-                println("Success!")
-
-                println("Writing: " + FileOutputStream(File("tmp.png")).use { out -> PNGFormat.write(data = result.obj, stream = out) })
-            }
-
             instance.start()
+            System.exit(instance with { currentExitCode })
         }
 
         init {
@@ -55,8 +47,19 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
         }
     }
 
+    /** The mutex to use to access this classes properties */
+    val mutex = Mutex()
+
     /** The logger for Spiral */
-    val LOGGER = LoggerFactory.getLogger(SpiralLocale.localise("logger.commands.name", SpiralCoreData.version ?: SpiralLocale.localise("gurren.default_version")))
+    var LOGGER: Logger = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name")))
+    var NORMAL_LOGGER: Logger
+        get() = DataHandler.LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
+        set(value) {
+            if (DataHandler.LOGGER is LocaleLogger)
+                (DataHandler.LOGGER as LocaleLogger).logger = value
+            else
+                DataHandler.LOGGER = NORMAL_LOGGER
+        }
 
     /**
      * The scope of operation that Spiral is currently operating in
@@ -66,6 +69,8 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
     val imperatorParser: ImperatorParser = ImperatorParser()
     val imperator: Imperator = BasicImperator()
 
+    var currentExitCode: Int = 0
+
     /**
      * Signal to the cockpit that Spiral has finished initialising and to start up
      * This method will block the current thread. Use [startAsync] if you want finer control over the job that's launched
@@ -73,4 +78,11 @@ abstract class Cockpit internal constructor(val args: GurrenArgs) {
     fun start() = runBlocking { startAsync().join() }
 
     abstract fun startAsync(scope: CoroutineScope = GlobalScope): Job
+
+    @Suppress("UNCHECKED_CAST")
+    suspend operator fun <T> invoke(op: suspend SELF.() -> T): T = mutex.withLock { (this@Cockpit as SELF).op() }
+    @Suppress("UNCHECKED_CAST")
+    infix fun <T> with(op: suspend SELF.() -> T): T = runBlocking { mutex.withLock { (this@Cockpit as SELF).op() } }
+    @Suppress("UNCHECKED_CAST")
+    suspend infix fun <T> withAsync(op: suspend SELF.() -> T): T = mutex.withLock { (this@Cockpit as SELF).op() }
 }
