@@ -1,4 +1,6 @@
-package net.npe.tga;
+package tga;
+
+import info.spiralframework.base.LocaleUtilsKt;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -19,6 +21,8 @@ import java.io.IOException;
  */
 @SuppressWarnings("WeakerAccess")
 public final class TGAReader {
+	public static int MAX_WIDTH = 16384;
+	public static int MAX_HEIGHT = 16384;
 	
 	public static final Order ARGB = new Order(16, 8, 0, 24);
 	public static final Order ABGR = new Order(0, 8, 16, 24);
@@ -31,12 +35,12 @@ public final class TGAReader {
 		return (buffer[14] & 0xFF) | (buffer[15] & 0xFF) << 8;
 	}
 	
-	public static BufferedImage readImage(byte[] data) throws IOException{
+	public static BufferedImage readImage(byte[] data) throws IOException {
 		int width = TGAReader.getWidth(data);
 		int height = TGAReader.getHeight(data);
 
-		if(width > 2048 || height > 1024)
-			throw new IllegalArgumentException("Width > 2048 or height > 1024");
+		LocaleUtilsKt.assertAsLocaleArgument(width < MAX_WIDTH && width > 0, "core.formats.tga.invalid_width", width, MAX_WIDTH);
+		LocaleUtilsKt.assertAsLocaleArgument(height < MAX_HEIGHT && height > 0, "core.formats.tga.invalid_height", height, MAX_HEIGHT);
 
 		int[] pixels = TGAReader.read(data, ARGB);
 
