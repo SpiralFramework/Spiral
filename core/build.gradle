@@ -18,6 +18,6 @@ dependencies {
     compile('org.abimon:OpenSpiralLanguage:a0d2d2e') {
         exclude group: 'org.abimon', module: 'SpiralFormats'
     }
-    compile('org.abimon:Karnage:bedc853')
+    compile('org.abimon:Karnage:db4b1a0')
     compile('org.abimon:Visi:35')
 }
