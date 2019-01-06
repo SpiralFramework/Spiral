@@ -10,15 +10,15 @@ object SpiralLocale {
     val _englishBundles: MutableList<ResourceBundle> = ArrayList()
     val englishBundles: List<ResourceBundle> = _englishBundles
 
-    fun localise(base: String, vararg values: Any): String {
-        val msg = localisationBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
+    fun localise(base: String, vararg values: Any?): String {
+        val msg = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
         return MessageFormat.format(msg, *values)
     }
 
-    fun localiseString(base: String): String = localisationBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
+    fun localiseString(base: String): String = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
 
-    fun localiseForEnglish(base: String, vararg values: Any): String {
-        val msg = englishBundles.first { bundle -> bundle.containsKey(base) }.getString(base)
+    fun localiseForEnglish(base: String, vararg values: Any?): String {
+        val msg = englishBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
         return MessageFormat.format(msg, *values)
     }
 
