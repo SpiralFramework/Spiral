@@ -1,5 +1,6 @@
 package info.spiralframework.core.formats.archives
 
+import info.spiralframework.base.path
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
@@ -7,7 +8,10 @@ import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataSource
+import info.spiralframework.formats.utils.copyFromStream
+import info.spiralframework.formats.utils.copyToStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -17,7 +21,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
+object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
     /**
      * Attempts to read the data source as [T]
      *
@@ -29,20 +33,31 @@ object ZipFormat: ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<ZipFile> {
-        val zip: ZipFile
-        val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
-        tmpFile.deleteOnExit()
+        source().use { stream ->
+            val possibleFile = stream.path?.let(::File)
+            if (possibleFile?.exists() == true) {
+                try {
+                    return FormatResult.Success(ZipFile(possibleFile), 1.0)
+                } catch (io: IOException) {
+                    return FormatResult.Fail(1.0)
+                }
+            } else {
+                val zip: ZipFile
+                val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
+                tmpFile.deleteOnExit()
 
-        try {
-            source.use { stream -> FileOutputStream(tmpFile).use(stream::copyToStream) }
-            zip = ZipFile(tmpFile)
-        } catch (io: IOException) {
-            tmpFile.delete()
+                try {
+                    FileOutputStream(tmpFile).use(stream::copyToStream)
+                    zip = ZipFile(tmpFile)
+                } catch (io: IOException) {
+                    tmpFile.delete()
 
-            return FormatResult.Fail(1.0)
+                    return FormatResult.Fail(1.0)
+                }
+
+                return FormatResult.Success(zip, 1.0)
+            }
         }
-
-        return FormatResult.Success(zip, 1.0)
     }
 
     /**

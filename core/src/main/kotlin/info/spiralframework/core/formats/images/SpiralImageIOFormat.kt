@@ -25,7 +25,6 @@ open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, Rea
             val imageStream = ImageIO.createImageInputStream(stream)
             val reader = ImageIO.getImageReaders(imageStream)
                     .asSequence()
-                    .map { reader -> println(reader.formatName); reader }
                     .firstOrNull { reader -> names.any { name -> name.equals(reader.formatName, true) } }
 
             try {

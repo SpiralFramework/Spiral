@@ -1,4 +1,4 @@
-package tga;
+package net.npe.tga;
 
 import info.spiralframework.base.LocaleUtilsKt;
 
