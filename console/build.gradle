@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-mainClassName = ""
+mainClassName = "info.spiralframework.console.Cockpit"
 
 dependencies {
     compile project(":core")
