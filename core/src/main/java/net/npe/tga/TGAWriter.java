@@ -13,7 +13,7 @@
 
  */
 
-package tga;
+package net.npe.tga;
 
 import java.awt.image.BufferedImage;
 

@@ -1,6 +1,5 @@
 package info.spiralframework.core.formats
 
-import info.spiralframework.core.FormatChance
 import java.io.Closeable
 import java.util.*
 import kotlin.collections.ArrayList
@@ -9,7 +8,7 @@ sealed class FormatResult<T>: Closeable {
     companion object {
         operator fun <T> invoke(obj: T?, isFormat: Boolean, chance: Double): FormatResult<T> {
             if (obj == null)
-                return Fail(isFormat, chance)
+                return Fail(chance)
             if (!isFormat)
                 return Fail(chance)
             return Success(obj, chance)
@@ -18,27 +17,35 @@ sealed class FormatResult<T>: Closeable {
         operator fun <T> invoke(obj: T?, chance: Double): FormatResult<T> {
             if (obj == null)
                 return Fail(chance)
-            return Success(obj, true, chance)
+            return Success(obj, chance)
         }
     }
 
-    class Success<T>(override val obj: T, override val chance: FormatChance): FormatResult<T>() {
-        constructor(obj: T, isFormat: Boolean, chance: Double): this(obj, FormatChance(isFormat, chance))
-        constructor(obj: T, chance: Double): this(obj, true, chance)
+    class Success<T>(override val obj: T, override val chance: Double): FormatResult<T>() {
 
         override val didSucceed: Boolean = true
-    }
-    class Fail<T>(override val chance: FormatChance): FormatResult<T>() {
-        constructor(isFormat: Boolean, chance: Double): this(FormatChance(isFormat, chance))
-        constructor(chance: Double): this(FormatChance(false, chance))
 
+        override fun <R> map(transform: (T) -> R): FormatResult<R> = Success(transform(obj), chance)
+        override fun filter(predicate: (T) -> Boolean): FormatResult<T> {
+            if (predicate(obj))
+                return this
+            else
+                return Fail(1.0)
+        }
+        override fun weight(predicate: (T) -> Double): FormatResult<T> = Success(obj, predicate(obj))
+    }
+    class Fail<T>(override val chance: Double): FormatResult<T>() {
         override val obj: T
             get() = throw NoSuchElementException("No value present")
         override val didSucceed: Boolean = false
+
+        override fun <R> map(transform: (T) -> R): FormatResult<R> = Fail(chance)
+        override fun filter(predicate: (T) -> Boolean): FormatResult<T> = this
+        override fun weight(predicate: (T) -> Double): FormatResult<T> = this
     }
 
     abstract val obj: T
-    abstract val chance: FormatChance
+    abstract val chance: Double
 
     abstract val didSucceed: Boolean
 
@@ -48,4 +55,8 @@ sealed class FormatResult<T>: Closeable {
     val release: MutableCollection<Closeable> = ArrayList()
 
     override fun close() { release.forEach(Closeable::close) }
+
+    abstract fun <R> map(transform: (T) -> R): FormatResult<R>
+    abstract fun filter(predicate: (T) -> Boolean): FormatResult<T>
+    abstract fun weight(predicate: (T) -> Double): FormatResult<T>
 }
