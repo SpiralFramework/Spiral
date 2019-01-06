@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives.srd
 
+import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
@@ -14,7 +15,9 @@ open class SRDEntry(val dataType: String, val offset: Long, val dataLength: Int,
             val padding = stream.readInt32BE()
 
             val offset = stream.streamOffset
-            stream.skip((dataLength + subdataLength + dataLength.align() + subdataLength.align()).toLong())
+            val skip = (dataLength + subdataLength + dataLength.align() + subdataLength.align()).toLong()
+            assertAsLocaleArgument(skip >= 0, "formats.srd.invalid_skip", skip, dataLength, subdataLength)
+            stream.skip(skip)
 
             when(dataType) {
                 "\$TXI" -> return TXIEntry(dataType, offset, dataLength, subdataLength, srd)
