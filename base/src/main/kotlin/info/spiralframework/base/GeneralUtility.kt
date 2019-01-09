@@ -107,6 +107,8 @@ public inline fun printAndBack(message: String) {
 }
 
 public fun <T, V> Array<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
+public fun <T, V> List<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
+public fun <T, V> java.util.Enumeration<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
 
 /**
  * Performs the given [operation] on each element of this [Iterator].
@@ -115,6 +117,14 @@ public fun <T, V> Array<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterato
 public inline fun <T> Iterator<T>.forEachIndexed(operation: (index: Int, T) -> Unit): Unit {
     var index = 0
     for (element in this) operation(index++, element)
+}
+
+/**
+ * Performs the given [operation] on each element of this [Iterator].
+ * @sample samples.collections.Iterators.forEachIterator
+ */
+public inline fun <T> Iterator<T>.forEachFiltered(filter: (T) -> Boolean, operation: (T) -> Unit): Unit {
+    for (element in this) if (filter(element)) operation(element)
 }
 
 /**

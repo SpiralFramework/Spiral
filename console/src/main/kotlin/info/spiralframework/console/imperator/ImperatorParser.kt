@@ -8,15 +8,18 @@ import org.parboiled.Action
 import org.parboiled.Parboiled
 import org.parboiled.Rule
 import org.parboiled.annotations.BuildParseTree
+import org.parboiled.annotations.Cached
 import org.parboiled.support.Var
 import java.io.File
 
 @BuildParseTree
 open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
     companion object {
+        const val MECHANIC_SEPARATOR = '\u001D'
         operator fun invoke(): ImperatorParser = Parboiled.createParser(ImperatorParser::class.java, true)
     }
 
+    @Cached
     open fun Localised(str: String): Rule = FirstOf(
             IgnoreCase(SpiralLocale.localise(str)),
             IgnoreCase(SpiralLocale.localiseForEnglish(str))
@@ -178,10 +181,110 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
         )
     }
 
+    open fun MechanicParameter(): Rule {
+        val str = Var<String>()
+
+        return Sequence(
+                Action<Any> { str.set("") },
+                Optional(
+                        OneOrMore(
+                                FirstOf(
+                                        Sequence(
+                                                "\\",
+                                                FirstOf(
+                                                        Sequence(
+                                                                FirstOf(
+                                                                        "\"",
+                                                                        "\\",
+                                                                        "/",
+                                                                        "b",
+                                                                        "f",
+                                                                        "n",
+                                                                        "r",
+                                                                        "t"
+                                                                ),
+                                                                Action<Any> {
+                                                                    when (match()) {
+                                                                        "\"" -> str.set(str.get() + "\"")
+                                                                        "\\" -> str.set(str.get() + "\\")
+                                                                        "/" -> str.set(str.get() + "/")
+                                                                        "b" -> str.set(str.get() + "\b")
+                                                                        "f" -> str.set(str.get() + 0xC.toChar())
+                                                                        "n" -> str.set(str.get() + "\n")
+                                                                        "r" -> str.set(str.get() + "\r")
+                                                                        "t" -> str.set(str.get() + "\t")
+                                                                    }
+
+                                                                    return@Action true
+                                                                }
+                                                        ),
+                                                        Sequence(
+                                                                "u",
+                                                                NTimes(4, Digit(16)),
+                                                                Action<Any> { str.set(str.get() + match().toInt(16).toChar()) }
+                                                        )
+                                                )
+                                        ),
+                                        Sequence(
+                                                AllButMatcher(charArrayOf('\\', MECHANIC_SEPARATOR)),
+                                                Action<Any> { str.set(str.get() + match()) }
+                                        )
+                                )
+                        )
+                ),
+                Action<Any> { push(str.get()) }
+        )
+    }
+
+    open fun MechanicParameterNoEscapes(): Rule {
+        val str = Var<String>()
+
+        return Sequence(
+                Action<Any> { str.set("") },
+                Optional(
+                        OneOrMore(
+                                FirstOf(
+                                        Sequence(
+                                                "\\",
+                                                "\"",
+                                                Action<Any> { str.set(str.get() + "\"") }
+                                        ),
+                                        Sequence(
+                                                AllButMatcher(charArrayOf('"', MECHANIC_SEPARATOR)),
+                                                Action<Any> { str.set(str.get() + match()) }
+                                        )
+                                )
+                        )
+                ),
+                Action<Any> { push(str.get()) }
+        )
+    }
+
     open fun FilePath(): Rule =
             Sequence(
                     ParameterNoEscapes(),
                     Action<Any> { push(File(pop().toString())) }
+            )
+
+    open fun MechanicFilePath(): Rule =
+            Sequence(
+                    MechanicParameterNoEscapes(),
+                    Action<Any> { push(File(pop().toString())) }
+            )
+
+    open fun ExistingMechanicFilePath(): Rule =
+            Sequence(
+                    MechanicParameterNoEscapes(),
+                    Action<Any> {
+                        val str = pop().toString()
+                        val file = File(str)
+                        if (file.exists()) {
+                            return@Action push(file)
+                        } else {
+                            context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str))
+                            return@Action false
+                        }
+                    }
             )
 
     open fun ExistingFilePath(): Rule {
@@ -254,4 +357,6 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                 )
         )
     }
+
+    open fun ParamSeparator(): Rule = IgnoreCase(MECHANIC_SEPARATOR)
 }

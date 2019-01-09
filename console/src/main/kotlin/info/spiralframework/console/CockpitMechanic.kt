@@ -4,6 +4,7 @@ import info.spiralframework.base.measureResultNanoTime
 import info.spiralframework.base.printlnLocale
 import info.spiralframework.console.commands.GurrenMechanic
 import info.spiralframework.console.data.GurrenArgs
+import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.console.imperator.ParboiledSoldier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,7 +21,7 @@ class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMec
 
     override fun startAsync(scope: CoroutineScope): Job {
         return scope.launch {
-            val (matchingSoldiers, ns) = measureResultNanoTime { imperator.dispatch(InstanceOrder("STDIN", scout = null, data = args.filteredArgs.joinToString(" ") { str -> str.trimStart('-') })) }
+            val (matchingSoldiers, ns) = measureResultNanoTime { imperator.dispatch(InstanceOrder("STDIN", scout = null, data = args.filteredArgs.joinToString(ImperatorParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') })) }
 
             if (args.timeCommands) {
                 printlnLocale("gurren.timing.command_runtime", matchingSoldiers.size, ns)
