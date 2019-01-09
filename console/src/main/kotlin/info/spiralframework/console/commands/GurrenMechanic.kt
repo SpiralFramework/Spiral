@@ -1,5 +1,6 @@
 package info.spiralframework.console.commands
 
+import info.spiralframework.base.forEachFiltered
 import info.spiralframework.base.iterator
 import info.spiralframework.base.printlnErrLocale
 import info.spiralframework.base.printlnLocale
@@ -10,7 +11,7 @@ import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.archives.*
-import info.spiralframework.formats.archives.WAD
+import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
 import org.parboiled.Action
 import org.parboiled.support.Var
@@ -18,11 +19,16 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
+import java.util.zip.ZipFile
 
 @Suppress("unused")
 class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
-        val EXTRACTABLE_ARCHIVES = arrayOf(AWBFormat, CpkFormat, PakFormat, SpcFormat, SRDFormat, WadFormat, ZipFormat)
+        val EXTRACTABLE_ARCHIVES = arrayOf(
+                AWBFormat, CpkFormat, PakFormat,
+                SpcFormat, SRDFormat, WadFormat,
+                ZipFormat
+        )
 
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
@@ -33,36 +39,28 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         val argsVar = Var<ExtractArgs>()
         Sequence(
                 Action<Any> { argsVar.set(ExtractArgs()) },
-                Optional("\""),
                 Localised("commands.mechanic.extract.extract"),
-                separatorRule,
-                Optional("\""),
-                ExistingFilePath(),
+                ParamSeparator(),
+                ExistingMechanicFilePath(),
                 Action<Any> { argsVar.get().extractPath = pop() as? File; true },
-                Optional("\""),
-                Optional("\""),
                 ZeroOrMore(
-                        InlineWhitespace(),
+                        ParamSeparator(),
                         FirstOf(
                                 Sequence(
-                                        Optional("\""),
                                         Localised("commands.mechanic.extract.filter"),
-                                        separatorRule,
-                                        Optional("\""),
-                                        Parameter(),
-                                        Action<Any> { argsVar.get().filter = pop() as? String; true },
-                                        Optional("\""),
-                                        Optional("\"")
+                                        ParamSeparator(),
+                                        MechanicParameterNoEscapes(),
+                                        Action<Any> { argsVar.get().filter = pop() as? String; true }
                                 ),
                                 Sequence(
-                                        Optional("\""),
                                         Localised("commands.mechanic.extract.dest_dir"),
-                                        separatorRule,
-                                        Optional("\""),
-                                        FilePath(),
-                                        Action<Any> { argsVar.get().destDir = pop() as? File; true },
-                                        Optional("\""),
-                                        Optional("\"")
+                                        ParamSeparator(),
+                                        MechanicFilePath(),
+                                        Action<Any> { argsVar.get().destDir = pop() as? File; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.mechanic.extract.leave_compressed"),
+                                        Action<Any> { argsVar.get().leaveCompressed = true; true }
                                 )
                         )
                 ),
@@ -73,7 +71,8 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     /** Commands */
 
     val extract = ParboiledSoldier(extractRule) { stack ->
-        val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = ".*")
+        val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
+        val regex = args.filter!!.toRegex()
 
         if (args.extractPath == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_extract")
@@ -105,7 +104,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 .firstOrNull()
                 ?.obj
 
-        val files: Iterator<Pair<File, InputStream>>
+        val files: Iterator<Pair<String, InputStream>>
         val totalCount: Int
 
         when (result) {
@@ -115,10 +114,46 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 return@ParboiledSoldier FAILURE
             }
 
-            is WAD -> {
-                files = result.files.iterator { entry -> File(args.destDir, entry.name) to entry.inputStream }
-                totalCount = result.files.size
+            is AWB -> {
+                files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
+                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }
             }
+
+            is CPK -> {
+                files = if (args.leaveCompressed!!) {
+                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
+                } else {
+                    result.files.iterator { entry -> entry.name to entry.inputStream }
+                }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+            }
+
+            is Pak -> {
+                files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
+                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }
+            }
+
+            is SPC -> {
+                files = if (args.leaveCompressed!!) {
+                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
+                } else {
+                    result.files.iterator { entry -> entry.name to entry.inputStream }
+                }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+            }
+
+            //is SRD -> {}
+
+            is WAD -> {
+                files = result.files.iterator { entry -> entry.name to entry.inputStream }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+            }
+
+            is ZipFile -> {
+                files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
+                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }
+            }
+
             else -> {
                 printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
 
@@ -137,7 +172,8 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
             print("\r${PERCENT_FORMAT.format(percent)}%")
         }
 
-        files.forEach { (file, raw) ->
+        files.forEachFiltered({ pair -> pair.first.matches(regex) }) { (fileName, raw) ->
+            val file = File(args.destDir, fileName)
             file.parentFile.mkdirs()
 
             raw.use { stream -> FileOutputStream(file).use(stream::copyToStream) }
