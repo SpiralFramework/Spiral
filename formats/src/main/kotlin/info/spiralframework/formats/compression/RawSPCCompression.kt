@@ -5,7 +5,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
-object SPCCompression {
+object RawSPCCompression {
     fun decompress(compressionFlag: Int, data: ByteArray): ByteArray {
         when (compressionFlag) {
             0x01 -> return data

@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives.srd
 
+import info.spiralframework.base.CountingInputStream
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.utils.*
 

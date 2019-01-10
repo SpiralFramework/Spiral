@@ -1,5 +1,6 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.HeaderInputStream
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.locale
@@ -19,6 +20,7 @@ import org.abimon.imperator.impl.BasicImperator
 import org.abimon.visi.io.relativePathFrom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.File
 
 /** The driving force behind the console interface for Spiral */
@@ -34,7 +36,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             } else {
                 instance = CockpitPilot(gurrenArgs)
             }
-
+            
             instance.start()
             System.exit(instance with { currentExitCode })
         }

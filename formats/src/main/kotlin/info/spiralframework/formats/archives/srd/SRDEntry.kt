@@ -1,5 +1,7 @@
 package info.spiralframework.formats.archives.srd
 
+import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.utils.*

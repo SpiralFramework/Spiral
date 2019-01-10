@@ -1,4 +1,4 @@
-package info.spiralframework.formats.utils
+package info.spiralframework.base
 
 import java.io.OutputStream
 

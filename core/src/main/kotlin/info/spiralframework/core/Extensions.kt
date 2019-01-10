@@ -1,5 +1,8 @@
 package info.spiralframework.core
 
+import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.compression.*
+import info.spiralframework.formats.utils.DataSource
 import java.io.Closeable
 
 /**
@@ -29,4 +32,17 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
                 }
         }
     }
+}
+
+val COMPRESSION_FORMATS = arrayOf(CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat)
+
+fun decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<*>>> {
+    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.read(source = dataSource) }
+            .filter { pair -> pair.second.didSucceed }
+            .sortedBy { pair -> pair.second.chance }
+            .firstOrNull() ?: return dataSource to emptyList()
+
+    val (decompressed, list) = decompress(result.obj)
+
+    return decompressed to mutableListOf(format).apply { addAll(list) }
 }
