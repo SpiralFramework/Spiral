@@ -1,5 +1,6 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.CountingInputStream
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.wrd.UnknownEntry
 import info.spiralframework.formats.scripting.wrd.WrdScript

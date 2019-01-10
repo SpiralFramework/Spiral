@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.archives.srd.SRDEntry
-import info.spiralframework.formats.utils.CountingInputStream
+import info.spiralframework.base.CountingInputStream
 import info.spiralframework.formats.utils.DataHandler
 import java.io.InputStream
 

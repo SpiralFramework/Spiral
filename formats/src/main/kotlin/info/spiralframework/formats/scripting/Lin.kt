@@ -1,5 +1,6 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.assertAsLocaleArgument
 import info.spiralframework.base.locale
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame

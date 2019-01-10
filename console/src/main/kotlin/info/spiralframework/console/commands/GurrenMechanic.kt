@@ -9,6 +9,7 @@ import info.spiralframework.console.data.mechanic.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
+import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.formats.archives.*
@@ -20,6 +21,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.util.zip.ZipFile
+import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
 class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
@@ -98,7 +100,9 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
             return@ParboiledSoldier FAILURE
         }
 
-        val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = args.extractPath::inputStream) }
+        val (dataSource, compression) = decompress(args.extractPath::inputStream)
+
+        val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
                 .firstOrNull()
@@ -142,7 +146,19 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 totalCount = result.files.count { entry -> entry.name.matches(regex) }
             }
 
-            //is SRD -> {}
+            is SRD -> {
+                val entries = result.entries.groupBy { entry -> entry.dataType }
+                        .values.map { entries ->
+                    entries.mapIndexed { index, entry ->
+                        listOf(
+                                "$index-${entry.dataType}-data.dat" to entry::dataStream,
+                                "$index-${entry.dataType}-subdata.dat" to entry::subdataStream
+                        )
+                    }.flatten()
+                }.flatten()
+                files = entries.iterator { pair -> pair.first to pair.second() }
+                totalCount = entries.count { pair -> pair.first.matches(regex) }
+            }
 
             is WAD -> {
                 files = result.files.iterator { entry -> entry.name to entry.inputStream }
@@ -164,6 +180,10 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         val per = (100.0 / totalCount.toDouble())
         var last: Double = 0.0
 
+        if (compression.isEmpty())
+            printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName)
+        else
+            printlnLocale("commands.mechanic.extract.compressed_archive_type", compression.joinToString(" > ") { format -> format::class.simpleName ?: format::class.jvmName }, result::class.simpleName)
         printlnLocale("commands.mechanic.extract.extracting_files", totalCount, args.destDir)
 
         val printOut: (Double) -> Unit = if (cockpit.args.ansiEnabled) { percent ->

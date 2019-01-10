@@ -1,5 +1,6 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.formats.compression.CRILAYLACompression
 import info.spiralframework.formats.utils.*
 import java.io.ByteArrayInputStream
