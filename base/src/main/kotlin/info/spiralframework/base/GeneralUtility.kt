@@ -1,5 +1,8 @@
 package info.spiralframework.base
 
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+
 /** Prints the given [error] to the standard error stream. */
 public inline fun printErr(error: Any?) {
     System.err.print(error)
@@ -142,4 +145,41 @@ public inline fun <T> measureResultNanoTime(block: () -> T): Pair<T, Long> {
     val start = System.nanoTime()
     val result = block()
     return result to (System.nanoTime() - start)
+}
+
+object Mode {
+    val NULL_TERMINATED = 1
+    val TWO_BYTES_PER_CHARACTER = 2
+
+    val NULL_TERMINATED_UTF_16 = 13
+}
+
+val String.Companion.Mode: Mode
+    get() = info.spiralframework.base.Mode
+
+const val BYTE_NULL_TERMINATOR: Byte = 0
+
+operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: Int): String = buildString {
+    val capacity = if (mode and Mode.TWO_BYTES_PER_CHARACTER == Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
+    val isNullTermed = mode and Mode.NULL_TERMINATED == Mode.NULL_TERMINATED
+    val byteBuffer = ByteBuffer.allocate(capacity)
+    var countedNullTerms = 0
+    var byte: Byte = 0
+
+    for (i in 0 until bytes.size step capacity) {
+        for (j in 0 until capacity) {
+            byte = bytes[i + j]
+            byteBuffer.put(bytes[i + j])
+
+            if (isNullTermed && byte == BYTE_NULL_TERMINATOR)
+                countedNullTerms++
+        }
+
+        if (isNullTermed && countedNullTerms == capacity)
+            break
+
+        byteBuffer.flip()
+        append(encoding.decode(byteBuffer).get())
+        byteBuffer.rewind()
+    }
 }
