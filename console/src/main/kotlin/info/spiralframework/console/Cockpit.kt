@@ -8,6 +8,7 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
+import info.spiralframework.formats.scripting.DR1SaveFile
 import info.spiralframework.formats.utils.DataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -36,7 +37,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             } else {
                 instance = CockpitPilot(gurrenArgs)
             }
-            
+
             instance.start()
             System.exit(instance with { currentExitCode })
         }
