@@ -2,8 +2,8 @@ package info.spiralframework.console.imperator
 
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.data.errors.LocaleError
-import org.abimon.osl.AllButMatcher
-import org.abimon.osl.SpiralParser
+import info.spiralframework.osl.AllButMatcher
+import info.spiralframework.osl.SpiralParser
 import org.parboiled.Action
 import org.parboiled.Parboiled
 import org.parboiled.Rule
@@ -72,7 +72,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         )
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(charArrayOf('\\', '"')),
+                                                        info.spiralframework.osl.AllButMatcher(charArrayOf('\\', '"')),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 )
                                         )
@@ -123,7 +123,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         )
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(whitespace.plus('\\')),
+                                                        info.spiralframework.osl.AllButMatcher(whitespace.plus('\\')),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 )
                                         )
@@ -150,7 +150,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         Action<Any> { str.set(str.get() + "\"") }
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(charArrayOf('"')),
+                                                        info.spiralframework.osl.AllButMatcher(charArrayOf('"')),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 )
                                         )
@@ -170,7 +170,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         Action<Any> { str.set(str.get() + "\"") }
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(whitespace),
+                                                        info.spiralframework.osl.AllButMatcher(whitespace),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 )
                                         )
@@ -226,7 +226,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                 )
                                         ),
                                         Sequence(
-                                                AllButMatcher(charArrayOf('\\', MECHANIC_SEPARATOR)),
+                                                info.spiralframework.osl.AllButMatcher(charArrayOf('\\', MECHANIC_SEPARATOR)),
                                                 Action<Any> { str.set(str.get() + match()) }
                                         )
                                 )
@@ -250,7 +250,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                 Action<Any> { str.set(str.get() + "\"") }
                                         ),
                                         Sequence(
-                                                AllButMatcher(charArrayOf('"', MECHANIC_SEPARATOR)),
+                                                info.spiralframework.osl.AllButMatcher(charArrayOf('"', MECHANIC_SEPARATOR)),
                                                 Action<Any> { str.set(str.get() + match()) }
                                         )
                                 )
@@ -303,7 +303,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         Action<Any> { str.set(str.get() + "\"") }
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(charArrayOf('"')),
+                                                        info.spiralframework.osl.AllButMatcher(charArrayOf('"')),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 )
                                         )
@@ -332,7 +332,7 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                                         Action<Any> { str.set(str.get() + "\"") }
                                                 ),
                                                 Sequence(
-                                                        AllButMatcher(whitespace),
+                                                        info.spiralframework.osl.AllButMatcher(whitespace),
                                                         Action<Any> { str.set(str.get() + match()) }
                                                 ),
                                                 Sequence(

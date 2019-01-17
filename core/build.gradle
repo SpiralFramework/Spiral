@@ -1,5 +1,7 @@
 dependencies {
+    compile project(":base")
     compile project(":formats")
+    compile project(":osl")
 
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
@@ -15,9 +17,5 @@ dependencies {
     compile 'com.twelvemonkeys.imageio:imageio-jpeg:3.4.1'
     compile 'com.twelvemonkeys.imageio:imageio-tga:3.4.1'
 
-    compile('org.abimon:OpenSpiralLanguage:a0d2d2e') {
-        exclude group: 'org.abimon', module: 'SpiralFormats'
-    }
     compile('org.abimon:Karnage:db4b1a0')
-    compile('org.abimon:Visi:35')
 }

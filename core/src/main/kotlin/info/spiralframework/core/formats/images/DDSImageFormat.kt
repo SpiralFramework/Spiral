@@ -8,7 +8,6 @@ import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.readInt32LE
 import info.spiralframework.formats.utils.readInt64LE
 import org.abimon.karnage.raw.DXT1PixelData
-import org.abimon.visi.io.skipBytes
 import java.awt.image.BufferedImage
 
 object DDSImageFormat: ReadableSpiralFormat<BufferedImage> {
@@ -40,7 +39,7 @@ object DDSImageFormat: ReadableSpiralFormat<BufferedImage> {
             val height = stream.readInt32LE()
             val width = stream.readInt32LE()
 
-            stream.skipBytes(64)
+            stream.skip(64)
 
             val ddsType = stream.readInt32LE()
             stream.skip(36)
