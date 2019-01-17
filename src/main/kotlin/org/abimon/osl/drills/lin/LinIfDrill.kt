@@ -1,7 +1,9 @@
 package org.abimon.osl.drills.lin
 
+import org.abimon.osl.EnumLinFlagCheck
 import org.abimon.osl.OpenSpiralLanguageParser
 import org.abimon.osl.drills.circuits.DrillCircuit
+import org.abimon.osl.drills.headerCircuits.SpiralBridgeDrill
 import org.abimon.osl.pushStaticDrillDirect
 import org.abimon.spiral.core.objects.game.hpa.DR1
 import org.abimon.spiral.core.objects.game.hpa.DR2
@@ -12,7 +14,8 @@ import org.parboiled.support.Var
 
 object LinIfDrill : DrillCircuit {
     val explicitFlag = arrayOf("iff", "if-f")
-    val explicitGameState = arrayOf("g-if", "gameContext-if", "ifg", "if-g", "if-s", "ifs", "sif", "state-if", "if-state")
+    val explicitGameState = arrayOf("g-if", "gameContext-if", "ifg", "if-g")
+    val explicitSpiralBridge = arrayOf("if-bridge", "if-spiral", "if-s")
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
         val ifTrueVar = Var(0)
@@ -64,6 +67,24 @@ object LinIfDrill : DrillCircuit {
                 Action<Any> { valueToCheckVar.get().add(pop().toString().toIntOrNull() ?: 0) }
         )
 
+        val spiralBridgeRule = Sequence(
+                SpiralBridgeName(),
+                Action<Any> {
+                    val state = pop().toString().toIntOrNull() ?: 0
+                    flagToCheckVar.get().add(state)
+                    mostRecentFlagVar.set(flagToCheckVar.get().last())
+                    return@Action true
+                },
+                OptionalInlineWhitespace(),
+                LinIfOperator(),
+                Action<Any> { operationVar.get().add(pop().toString().toIntOrNull() ?: 0) },
+
+                OptionalInlineWhitespace(),
+                Action<Any> { push(mostRecentFlagVar.get()) },
+                SpiralBridgeValue(),
+                Action<Any> { valueToCheckVar.get().add(pop().toString().toIntOrNull() ?: 0) }
+        )
+
         return Sequence(
                 Action<Any> {
                     flagToCheckVar.get().clear()
@@ -81,6 +102,10 @@ object LinIfDrill : DrillCircuit {
                         Sequence(
                                 FirstOf(explicitGameState),
                                 Action<Any> { modeVar.set(1) }
+                        ),
+                        Sequence(
+                                FirstOf(explicitSpiralBridge),
+                                Action<Any> { modeVar.set(2) }
                         ),
                         Sequence(
                                 "if",
@@ -119,6 +144,21 @@ object LinIfDrill : DrillCircuit {
                                         gameStateRule
                                 ),
                                 Action<Any> { modeVar.set(1) }
+                        ),
+                        Sequence(
+                                Action<Any> { modeVar.get() == 2 || modeVar.get() == -1 },
+                                spiralBridgeRule,
+                                ZeroOrMore(
+                                        OptionalInlineWhitespace(),
+                                        JoinerOperator(),
+                                        Action<Any> {
+                                            joiningOperationVar.get().add(pop().toString().toIntOrNull() ?: 0)
+                                        },
+                                        OptionalInlineWhitespace(),
+                                        spiralBridgeRule
+                                ),
+                                Action<Any> { flagToCheckVar.get().distinct().size == 1 },
+                                Action<Any> { modeVar.set(2) }
                         )
                 ),
 
@@ -196,6 +236,43 @@ object LinIfDrill : DrillCircuit {
                             )
                             else -> TODO("Flag Checks are not documented for ${hopesPeakGame}")
                         })
+
+                        2 -> {
+                            val ifPartiallyTrue = findLabel()
+                            pushStaticDrillDirect(when (hopesPeakGame) {
+                                DR1 -> arrayOf(
+                                        UnknownEntry(0x36, intArrayOf(0, SpiralBridgeDrill.OP_CODE_GAME_STATE, EnumLinFlagCheck.NOT_EQUALS.flag, (flagToCheck[0] shr 8), (flagToCheck[0] and 0xFF))),
+                                        EndFlagCheckEntry(),
+                                        GoToLabelEntry(elseVar.get()),
+                                        UnknownEntry(0x36, (0 until flagToCheck.size).flatMap { i ->
+                                            if (i < flagToCheck.size - 1)
+                                                listOf(0, SpiralBridgeDrill.OP_CODE_PARAM_BIG, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF, joiners[i])
+                                            else
+                                                listOf(0, SpiralBridgeDrill.OP_CODE_PARAM_BIG, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
+                                        }.toIntArray()),
+                                        EndFlagCheckEntry(),
+                                        GoToLabelEntry(ifTrueVar.get()),
+                                        GoToLabelEntry(elseVar.get()),
+
+                                        SetLabelEntry(ifTrueVar.get())
+                                )
+                                DR2
+                                -> arrayOf(
+                                        UnknownEntry(0x36, (0 until flagToCheck.size).flatMap { i ->
+                                            if (i < flagToCheck.size - 1)
+                                                listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF, joiners[i])
+                                            else
+                                                listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
+                                        }.toIntArray()),
+                                        EndFlagCheckEntry(),
+                                        GoToLabelEntry(ifTrueVar.get()),
+                                        GoToLabelEntry(elseVar.get()),
+
+                                        SetLabelEntry(ifTrueVar.get())
+                                )
+                                else -> TODO("Flag Checks are not documented for ${hopesPeakGame}")
+                            })
+                        }
                     }
 
                     return@Action true

@@ -1276,6 +1276,113 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
             )
     )
 
+    open fun SpiralBridgeName(): Rule = FirstOf(
+            Sequence(
+                    "0x",
+                    OneOrMore(Digit(16)),
+                    Action<Any> {
+                        push(match().toIntOrNull(16) ?: 0)
+                    }
+            ),
+            Sequence(
+                    OneOrMore(Digit(10)),
+                    Action<Any> {
+                        push(match().toIntOrNull(10) ?: 0)
+                    }
+            ),
+            Sequence(
+                    FirstOf(SpiralBridgeDrill.OP_CODE_NAMES.keys.toTypedArray()),
+                    Action<Any> {
+                        push(SpiralBridgeDrill.OP_CODE_NAMES[match()] ?: 0)
+                    }
+            )
+    )
+
+    open fun SpiralBridgeValue(): Rule {
+        val opCode = Var<Int>()
+        val value = Var<Int>()
+
+        return Sequence(
+                Action<Any> {
+                    opCode.set(pop() as Int)
+                    value.set(0)
+                },
+                FirstOf(
+                        Sequence(
+                                FirstOf(SpiralBridgeDrill.ALL_OP_CODE_VALUES),
+                                Action<Any> {
+                                    val num = (SpiralBridgeDrill.OP_CODE_VALUES[opCode.get()]
+                                            ?: return@Action false)[match()]
+                                            ?: return@Action false
+                                    value.set(num)
+                                }
+                        ),
+                        Sequence(
+                                FirstOf(
+                                        RuleWithVariables(OneOrMore(Digit())),
+                                        Sequence(
+                                                '(',
+                                                OptionalInlineWhitespace(),
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                OptionalInlineWhitespace(),
+                                                ',',
+                                                OptionalInlineWhitespace(),
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                OptionalInlineWhitespace(),
+                                                ')',
+                                                Action<Any> {
+                                                    val small = pop().toString().toIntOrNull() ?: 0
+                                                    val big = pop().toString().toIntOrNull() ?: 0
+
+                                                    push((big shl 8) or small)
+                                                }
+                                        )
+                                ),
+
+                                OptionalInlineWhitespace(),
+                                ',',
+                                OptionalInlineWhitespace(),
+
+                                FirstOf(
+                                        RuleWithVariables(OneOrMore(Digit())),
+                                        Sequence(
+                                                '(',
+                                                OptionalInlineWhitespace(),
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                OptionalInlineWhitespace(),
+                                                ',',
+                                                OptionalInlineWhitespace(),
+                                                RuleWithVariables(OneOrMore(Digit())),
+                                                OptionalInlineWhitespace(),
+                                                ')',
+                                                Action<Any> {
+                                                    val small = pop().toString().toIntOrNull() ?: 0
+                                                    val big = pop().toString().toIntOrNull() ?: 0
+
+                                                    push((big shl 8) or small)
+                                                }
+                                        )
+                                ),
+                                Action<Any> {
+                                    val small = pop().toString().toIntOrNull() ?: 0
+                                    val big = pop().toString().toIntOrNull() ?: 0
+
+                                    value.set((big shl 16) or small)
+                                }
+                        ),
+                        Sequence(
+                                RuleWithVariables(OneOrMore(Digit())),
+                                Action<Any> {
+                                    val id = pop().toString().toIntOrNull() ?: return@Action false
+
+                                    value.set(id)
+                                }
+                        )
+                ),
+                Action<Any> { push(value.get()) }
+        )
+    }
+
     open fun FlagValue(): Rule =
             FirstOf(
                     RuleWithVariables(OneOrMore(Digit())),
