@@ -258,8 +258,12 @@ object WaitDrill : DrillCircuit {
                     push(arrayOf(this, "}"))
 
                     //Check specific
+                    /**
+                     * Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_BIG, 0, ${(value.get() shr 24) and 0xFF}, ${(value.get() shr 16) and 0xFF}")) },
+                    Action<Any> { push(arrayOf(this, "0x33|$OP_CODE_PARAM_SMALL, 0, ${(value.get() shr 8) and 0xFF}, ${(value.get() shr 0) and 0xFF}")) }
+                     */
                     if (desiredGameState.get() != -1) {
-                        val big = desiredGameState.get() shr 8
+                        val big = ((desiredGameState.get() shr 24) and 0xFF) or ((desiredGameState.get() shr 16) and 0xFF)
                         val small = desiredGameState.get() and 0xFF
 
                         push(arrayOf(this, "if-g (${SpiralBridgeDrill.OP_CODE_PARAM_BIG} != $big) {"))
