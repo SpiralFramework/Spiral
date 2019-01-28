@@ -4,7 +4,7 @@ plugins {
 }
 
 ext {
-    artifact_group = 'org.abimon'
+    artifact_group = 'info.spiralframework'
     project_version = "${System.getenv('GIT_COMMIT') ?: "unknown"}".substring(0, 7) //'1.0.0-alpha'
 
     jackson_version = '2.9.4'
@@ -16,7 +16,7 @@ ext {
 allprojects {
     apply plugin: 'java'
     apply plugin: 'kotlin'
-    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
 
     group = artifact_group
     version = project_version
@@ -26,14 +26,6 @@ allprojects {
         baseName = "spiral"
         appendix = "$project.name"
         version = ""
-    }
-
-    task pom {
-        doLast {
-            pom {
-
-            }.writeTo("$buildDir/pom.xml")
-        }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -55,6 +47,24 @@ allprojects {
     artifacts {
         archives sourcesJar
         archives javadocJar
+    }
+
+    publishing {
+        repositories {
+            maven {
+                // change to point to your repo, e.g. http://my.org/repo
+                url = "$buildDir/repo"
+            }
+        }
+
+        publications {
+            maven(MavenPublication) {
+                artifactId = "spiral-$project.name"
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+            }
+        }
     }
 
     repositories {
