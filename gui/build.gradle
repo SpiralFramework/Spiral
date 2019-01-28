@@ -16,3 +16,11 @@ shadowJar {
 
     classifier = "shadow"
 }
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact shadowJar
+        }
+    }
+}
