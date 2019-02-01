@@ -1,6 +1,8 @@
 package info.spiralframework.formats.scripting
 
-import info.spiralframework.base.*
+import info.spiralframework.base.util.Mode
+import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.invoke
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 

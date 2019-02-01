@@ -1,6 +1,6 @@
 package info.spiralframework.formats.scripting
 
-import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.foldToInt16LE

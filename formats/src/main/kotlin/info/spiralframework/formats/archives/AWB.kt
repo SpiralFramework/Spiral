@@ -1,6 +1,6 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.readInt16LE
 import info.spiralframework.formats.utils.readInt32LE

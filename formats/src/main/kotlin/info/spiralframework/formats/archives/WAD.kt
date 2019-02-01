@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
-import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 
 /**

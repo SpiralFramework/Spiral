@@ -1,10 +1,10 @@
 package info.spiralframework.console.imperator
 
 import info.spiralframework.console.Cockpit
+import info.spiralframework.osl.firstOfInstanceOrNull
 import org.abimon.imperator.handle.Order
 import org.abimon.imperator.handle.Watchtower
 import org.abimon.imperator.impl.InstanceOrder
-import org.abimon.osl.firstOfInstanceOrNull
 import org.parboiled.Rule
 import org.parboiled.errors.InvalidInputError
 import org.parboiled.parserunners.ReportingParseRunner

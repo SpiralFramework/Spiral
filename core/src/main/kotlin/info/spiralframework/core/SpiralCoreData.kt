@@ -14,9 +14,10 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
+import com.github.kittinunf.fuel.Fuel
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
 import info.spiralframework.core.serialisation.InstantSerialisation
 import info.spiralframework.formats.utils.DataHandler
 import org.slf4j.Logger
@@ -75,6 +76,19 @@ object SpiralCoreData {
      * */
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
 
+    val API_BASE = "https://api.abimon.org/api"
+    val API_LATEST_BUILD = "$API_BASE/jenkins/projects/Spiral-%s/needs_update/%s"
+
+    val JENKINS_BASE = "https://jenkins.abimon.org"
+    val LATEST_BUILD = "$JENKINS_BASE/job/Spiral-%s/lastSuccessfulBuild/artifact/%s/build/libs/%s"
+
+    val fileName: String? by lazy {
+        val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
+        if (!file.isFile)
+            return@lazy null
+        return@lazy file.name
+    }
+
     /**
      * An MD5 hash of the running JAR file, or null if we're not running from a JAR file (developer directory)
      */
@@ -111,6 +125,15 @@ object SpiralCoreData {
             else
                 DataHandler.LOGGER = NORMAL_LOGGER
         }
+
+    fun checkForUpdate(project: String): String? {
+        val (_, response) = Fuel.get(String.format(API_LATEST_BUILD, project, version)).userAgent().response()
+//        if (response.isSuccessful && String(response.data) == "true") {
+            return String.format(LATEST_BUILD, project, project.toLowerCase(), fileName)
+//        }
+
+        return null
+    }
 
     init {
         SpiralLocale.addBundle("SpiralCore")

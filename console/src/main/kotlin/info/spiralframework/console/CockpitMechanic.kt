@@ -1,7 +1,8 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.measureResultNanoTime
-import info.spiralframework.base.printlnLocale
+import info.spiralframework.base.util.measureResultNanoTime
+import info.spiralframework.base.util.printlnLocale
+import info.spiralframework.base.util.times
 import info.spiralframework.console.commands.GurrenMechanic
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.imperator.ImperatorParser
@@ -10,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.abimon.imperator.impl.InstanceOrder
-import org.abimon.visi.lang.times
 
 class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMechanic>(args) {
     companion object {

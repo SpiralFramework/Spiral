@@ -1,15 +1,19 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.HeaderInputStream
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
+import info.spiralframework.base.util.relativePathFrom
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.formats.scripting.DR1SaveFile
+import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.spiral.updater.DeleteUpdate
+import info.spiralframework.spiral.updater.installUpdate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -18,18 +22,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.abimon.imperator.handle.Imperator
 import org.abimon.imperator.impl.BasicImperator
-import org.abimon.visi.io.relativePathFrom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
 import java.io.File
+import java.util.*
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+            DeleteUpdate.mainMethod = Cockpit.Companion::main
             val gurrenArgs = GurrenArgs(args)
+
             val instance: Cockpit<*>
 
             if (gurrenArgs.isTool) {

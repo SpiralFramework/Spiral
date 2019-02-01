@@ -1,5 +1,7 @@
-package info.spiralframework.base
+package info.spiralframework.base.util
 
+import info.spiralframework.base.ANSI
+import info.spiralframework.base.MappingIterator
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
@@ -155,13 +157,13 @@ object Mode {
 }
 
 val String.Companion.Mode: Mode
-    get() = info.spiralframework.base.Mode
+    get() = info.spiralframework.base.util.Mode
 
 const val BYTE_NULL_TERMINATOR: Byte = 0
 
 operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: Int): String = buildString {
-    val capacity = if (mode and Mode.TWO_BYTES_PER_CHARACTER == Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
-    val isNullTermed = mode and Mode.NULL_TERMINATED == Mode.NULL_TERMINATED
+    val capacity = if (mode and info.spiralframework.base.util.Mode.TWO_BYTES_PER_CHARACTER == info.spiralframework.base.util.Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
+    val isNullTermed = mode and info.spiralframework.base.util.Mode.NULL_TERMINATED == info.spiralframework.base.util.Mode.NULL_TERMINATED
     val byteBuffer = ByteBuffer.allocate(capacity)
     var countedNullTerms = 0
     var byte: Byte = 0
@@ -182,4 +184,9 @@ operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: 
         append(encoding.decode(byteBuffer).get())
         byteBuffer.rewind()
     }
+}
+
+operator fun String.times(num: Int): String = buildString {
+    for(i in 0 until num)
+        append(this@times)
 }

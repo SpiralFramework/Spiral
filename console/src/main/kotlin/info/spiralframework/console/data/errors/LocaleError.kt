@@ -1,6 +1,6 @@
 package info.spiralframework.console.data.errors
 
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
 import org.parboiled.Context
 import org.parboiled.buffers.InputBuffer
 import org.parboiled.errors.ParseError

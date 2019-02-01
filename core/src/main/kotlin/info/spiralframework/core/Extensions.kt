@@ -1,6 +1,6 @@
 package info.spiralframework.core
 
-import info.spiralframework.core.formats.FormatResult
+import com.github.kittinunf.fuel.core.Request
 import info.spiralframework.core.formats.compression.*
 import info.spiralframework.formats.utils.DataSource
 import java.io.Closeable
@@ -22,7 +22,8 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
         throw e
     } finally {
         when {
-            stream == null -> {}
+            stream == null -> {
+            }
             exception == null -> stream.close()
             else ->
                 try {
@@ -46,3 +47,6 @@ fun decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<
 
     return decompressed to mutableListOf(format).apply { addAll(list) }
 }
+
+fun Request.userAgent(ua: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"): Request
+        = this.header("User-Agent", ua)

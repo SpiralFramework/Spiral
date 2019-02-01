@@ -2,7 +2,7 @@ package info.spiralframework.formats.models
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.WindowedInputStream
-import info.spiralframework.base.assertAsLocaleArgument
+import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import kotlin.reflect.KClass
