@@ -15,6 +15,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.locale
@@ -128,9 +129,9 @@ object SpiralCoreData {
 
     fun checkForUpdate(project: String): String? {
         val (_, response) = Fuel.get(String.format(API_LATEST_BUILD, project, version)).userAgent().response()
-//        if (response.isSuccessful && String(response.data) == "true") {
+        if (response.isSuccessful && String(response.data) == "true") {
             return String.format(LATEST_BUILD, project, project.toLowerCase(), fileName)
-//        }
+        }
 
         return null
     }
