@@ -24,7 +24,7 @@ object Updater {
                 .inheritIO()
                 .start()
 
-        ProcessBuilder(javaBin, "-jar", originalFile, *args.drop(1).toTypedArray())
+        ProcessBuilder(javaBin, "-jar", Paths.get(URI(originalFile)).toFile().absolutePath, *args.drop(1).toTypedArray())
                 .inheritIO()
                 .start()
     }
