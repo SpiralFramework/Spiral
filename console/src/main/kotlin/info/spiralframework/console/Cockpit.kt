@@ -42,8 +42,9 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                     val jarFile = File.createTempFile(UUID.randomUUID().toString(), ".jar")
                     println("Downloading update to ${jarFile.absolutePath}...")
                     val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
-                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}") }
+                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
                             .userAgent().response()
+                    println()
                     if (response.isSuccessful) {
                         println("Installing update, restarting client...")
 
@@ -52,6 +53,9 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                     } else {
                         println(":c")
                     }
+//                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), jarFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+//                    installUpdate(jarFile.absolutePath, *args)
+//                    return
                 }
             }
 

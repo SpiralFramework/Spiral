@@ -11,7 +11,7 @@ object Stub {
         Thread.sleep(500)
 
         if (args[0] == DELETE_ARG) {
-            Files.delete(Paths.get(URI(args[0])))
+            Files.delete(Paths.get(URI(args[1])))
 
             return
         } else {
