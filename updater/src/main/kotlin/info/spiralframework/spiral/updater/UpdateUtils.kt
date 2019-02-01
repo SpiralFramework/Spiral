@@ -20,4 +20,4 @@ fun installUpdate(updatePath: String, vararg otherArgs: String) {
 }
 
 val Class<*>.jarLocation: String
-    get() = protectionDomain.codeSource.location.toExternalForm()
+    get() = File(protectionDomain.codeSource.location.toExternalForm()).absolutePath
