@@ -2,7 +2,7 @@ package info.spiralframework.formats.utils
 
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream

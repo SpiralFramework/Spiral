@@ -1,6 +1,6 @@
 package net.npe.tga;
 
-import info.spiralframework.base.LocaleUtilsKt;
+import info.spiralframework.base.util.LocaleUtilsKt;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

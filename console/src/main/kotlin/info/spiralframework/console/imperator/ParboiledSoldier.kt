@@ -1,14 +1,13 @@
 package info.spiralframework.console.imperator
 
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.printlnErr
-import info.spiralframework.base.printlnErrLocale
+import info.spiralframework.base.util.printlnErr
+import info.spiralframework.base.util.printlnErrLocale
 import info.spiralframework.console.Cockpit
 import org.abimon.imperator.handle.Order
 import org.abimon.imperator.handle.Soldier
 import org.abimon.imperator.handle.Watchtower
 import org.abimon.imperator.impl.InstanceOrder
-import org.abimon.visi.io.errPrintln
 import org.parboiled.Rule
 import org.parboiled.errors.ParseError
 import org.parboiled.parserunners.ReportingParseRunner
@@ -20,8 +19,8 @@ open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private v
 
         val invalidCommand: ParboiledSoldier.(List<ParseError>) -> Unit = { failed ->
             if (failed.isNotEmpty()) {
-                errPrintln(SpiralLocale.localise("commands.invalid"))
-                failed.mapNotNull(ParseError::getErrorMessage).distinct().forEach { error -> printlnErr("\t$error")}
+                printlnErr(SpiralLocale.localise("commands.invalid"))
+                failed.mapNotNull(ParseError::getErrorMessage).distinct().forEach { error -> printlnErr("\t$error") }
             } else {
                 printlnErrLocale("commands.unk_error")
             }
@@ -29,7 +28,7 @@ open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private v
     }
 
     constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), invalidCommand, command)
-    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), { errPrintln(help) }, command)
+    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), { printlnErr(help) }, command)
     val runner = ReportingParseRunner<Any>(rule)
     var failed: Boolean = false
 

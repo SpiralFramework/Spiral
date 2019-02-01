@@ -1,9 +1,9 @@
 package info.spiralframework.console.commands
 
-import info.spiralframework.base.forEachFiltered
-import info.spiralframework.base.iterator
-import info.spiralframework.base.printlnErrLocale
-import info.spiralframework.base.printlnLocale
+import info.spiralframework.base.util.forEachFiltered
+import info.spiralframework.base.util.iterator
+import info.spiralframework.base.util.printlnErrLocale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.data.mechanic.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
@@ -183,7 +183,9 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         if (compression.isEmpty())
             printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName)
         else
-            printlnLocale("commands.mechanic.extract.compressed_archive_type", compression.joinToString(" > ") { format -> format::class.simpleName ?: format::class.jvmName }, result::class.simpleName)
+            printlnLocale("commands.mechanic.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
+                format::class.simpleName ?: format::class.jvmName
+            }, result::class.simpleName)
         printlnLocale("commands.mechanic.extract.extracting_files", totalCount, args.destDir)
 
         val printOut: (Double) -> Unit = if (cockpit.args.ansiEnabled) { percent ->

@@ -1,4 +1,6 @@
-package info.spiralframework.base
+package info.spiralframework.base.util
+
+import info.spiralframework.base.SpiralLocale
 
 fun assertAsLocaleArgument(statement: Boolean, illegalArgument: String, vararg illegalParams: Any) {
     if (!statement)

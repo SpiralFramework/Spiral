@@ -1,6 +1,6 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
 import info.spiralframework.formats.utils.readInt32BE
 import info.spiralframework.formats.utils.readInt32LE
 import java.io.InputStream

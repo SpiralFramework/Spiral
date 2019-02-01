@@ -1,6 +1,9 @@
 package info.spiralframework.console.commands
 
-import info.spiralframework.base.*
+import info.spiralframework.base.util.forEachFiltered
+import info.spiralframework.base.util.iterator
+import info.spiralframework.base.util.printlnErrLocale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.data.mechanic.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
@@ -11,7 +14,6 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
-import org.abimon.visi.io.errPrintln
 import org.parboiled.Action
 import org.parboiled.support.Var
 import java.io.File
@@ -89,7 +91,7 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
 
         // First thing's first - does the file even exist?
         if (!file.exists()) {
-            errPrintln(SpiralLocale.localise("errors.file.doesnt_exist", file))
+            printlnErrLocale("errors.file.doesnt_exist", file)
 
             return@ParboiledSoldier FAILURE
         }
@@ -237,7 +239,9 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
         if (compression.isEmpty())
             printlnLocale("commands.extract.archive_type", result::class.simpleName)
         else
-            printlnLocale("commands.extract.compressed_archive_type", compression.joinToString(" > ") { format -> format::class.simpleName ?: format::class.jvmName }, result::class.simpleName)
+            printlnLocale("commands.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
+                format::class.simpleName ?: format::class.jvmName
+            }, result::class.simpleName)
         printlnLocale("commands.extract.extracting_files", totalCount, args.destDir)
 
         val printOut: (Double) -> Unit = if (cockpit.args.ansiEnabled) { percent ->

@@ -1,6 +1,6 @@
 package info.spiralframework.core.formats.audio
 
-import info.spiralframework.base.locale
+import info.spiralframework.base.util.locale
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat

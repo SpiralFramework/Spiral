@@ -13,6 +13,9 @@ dependencies {
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
 
+    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
+    compile "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
+
     compile 'com.twelvemonkeys.imageio:imageio-bmp:3.4.1'
     compile 'com.twelvemonkeys.imageio:imageio-jpeg:3.4.1'
     compile 'com.twelvemonkeys.imageio:imageio-tga:3.4.1'
