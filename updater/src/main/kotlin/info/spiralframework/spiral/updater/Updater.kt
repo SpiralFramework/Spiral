@@ -2,6 +2,7 @@ package info.spiralframework.spiral.updater
 
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 object Updater {
@@ -15,9 +16,9 @@ object Updater {
         val originalFile = args[0]
         val codeSource = Updater::class.java.jarLocation
 
-        Files.copy(File(codeSource).toPath(), File(originalFile).toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(Paths.get(codeSource.toURI()), File(originalFile).toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
 
-        ProcessBuilder(javaBin, "-cp", originalFile, STUB_CLASS_PATH, DELETE_CLASS_PATH, codeSource, *args.drop(1).toTypedArray())
+        ProcessBuilder(javaBin, "-cp", originalFile, STUB_CLASS_PATH, DELETE_CLASS_PATH, codeSource.toURI().toString(), *args.drop(1).toTypedArray())
                 .inheritIO()
                 .start()
     }

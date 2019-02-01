@@ -1,6 +1,7 @@
 package info.spiralframework.spiral.updater
 
 import java.io.File
+import java.net.URL
 
 const val STUB_CLASS_PATH = "info.spiralframework.spiral.updater.Stub"
 const val UPDATE_CLASS_PATH = "info.spiralframework.spiral.updater.Updater"
@@ -14,10 +15,10 @@ fun installUpdate(updatePath: String, vararg otherArgs: String) {
 
     println(Thread.currentThread().stackTrace[2].className)
     val codeSource = Class.forName(Thread.currentThread().stackTrace[2].className).jarLocation
-    ProcessBuilder(javaBin, "-cp", updatePath, STUB_CLASS_PATH, UPDATE_CLASS_PATH, codeSource, *otherArgs)
+    ProcessBuilder(javaBin, "-cp", updatePath, STUB_CLASS_PATH, UPDATE_CLASS_PATH, codeSource.toURI().toString(), *otherArgs)
             .inheritIO()
             .start()
 }
 
-val Class<*>.jarLocation: String
-    get() = File(protectionDomain.codeSource.location.toExternalForm()).absolutePath
+val Class<*>.jarLocation: URL
+    get() = protectionDomain.codeSource.location
