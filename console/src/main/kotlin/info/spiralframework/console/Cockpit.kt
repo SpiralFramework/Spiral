@@ -6,13 +6,13 @@ import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.relativePathFrom
+import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.spiral.updater.DeleteUpdate
 import info.spiralframework.spiral.updater.installUpdate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -32,8 +32,28 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            DeleteUpdate.mainMethod = Cockpit.Companion::main
             val gurrenArgs = GurrenArgs(args)
+
+            if (!gurrenArgs.disableUpdateCheck) {
+                val updateUrl = SpiralCoreData.checkForUpdate("Console")
+                println("Update Url: $updateUrl")
+
+                if (updateUrl != null) {
+                    val jarFile = File.createTempFile(UUID.randomUUID().toString(), ".jar")
+                    println("Downloading update to ${jarFile.absolutePath}...")
+                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
+                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}") }
+                            .userAgent().response()
+                    if (response.isSuccessful) {
+                        println("Installing update, restarting client...")
+
+                        installUpdate(jarFile.absolutePath, *args)
+                        return
+                    } else {
+                        println(":c")
+                    }
+                }
+            }
 
             val instance: Cockpit<*>
 

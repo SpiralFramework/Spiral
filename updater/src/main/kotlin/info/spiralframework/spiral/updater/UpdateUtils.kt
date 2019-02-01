@@ -5,7 +5,8 @@ import java.net.URL
 
 const val STUB_CLASS_PATH = "info.spiralframework.spiral.updater.Stub"
 const val UPDATE_CLASS_PATH = "info.spiralframework.spiral.updater.Updater"
-const val DELETE_CLASS_PATH = "info.spiralframework.spiral.updater.DeleteUpdate"
+
+const val DELETE_ARG = "DELETE_ARG"
 
 fun installUpdate(updatePath: String, vararg otherArgs: String) {
     val javaHome = System.getProperty("java.home")
