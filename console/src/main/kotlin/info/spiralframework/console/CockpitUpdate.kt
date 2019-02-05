@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
 
 class CockpitUpdate internal constructor(val updateFile: File, args: GurrenArgs, vararg rawArgs: String): Cockpit<CockpitUpdate>(args) {
     companion object {
-        val needsMove = AtomicBoolean(false)
+        val needsMove = AtomicBoolean(true)
     }
     val process: Process = ProcessBuilder("java", "-jar", updateFile.absolutePath, "--${GurrenArgs.DISABLE_UPDATE_CHECK}", *rawArgs)
             .inheritIO()
