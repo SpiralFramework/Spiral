@@ -39,15 +39,15 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                 val updateUrl = SpiralCoreData.checkForUpdate("Console")
 
                 if (updateUrl != null) {
-                    printlnLocale("cockpit.update.downloading")
+                    printlnLocale("gurren.update.downloading")
                     val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
                             .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
                             .userAgent().response()
                     println()
                     if (response.isSuccessful) {
-                        printlnLocale("cockpit.update.downloaded")
+                        printlnLocale("gurren.update.downloaded")
                     } else {
-                        printlnLocale("cockpit.update.download_failed", response.statusCode, response.responseMessage)
+                        printlnLocale("gurren.update.download_failed", response.statusCode, response.responseMessage)
                         updateFile.delete()
                     }
 

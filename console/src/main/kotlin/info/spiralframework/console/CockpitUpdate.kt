@@ -23,7 +23,7 @@ class CockpitUpdate internal constructor(val updateFile: File, args: GurrenArgs,
                 this@CockpitUpdate { currentExitCode = process.destroyForcibly().waitFor() }
             } finally {
                 //Move the update over
-                printlnLocale("cockpit.update.moving")
+                printlnLocale("gurren.update.moving")
                 moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI())
             }
         }
