@@ -5,6 +5,7 @@ import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.locale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.base.util.relativePathFrom
 import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
@@ -13,7 +14,7 @@ import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.spiral.updater.installUpdate
+import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -25,7 +26,6 @@ import org.abimon.imperator.impl.BasicImperator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
@@ -33,35 +33,35 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
         @JvmStatic
         fun main(args: Array<String>) {
             val gurrenArgs = GurrenArgs(args)
+            val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
 
-            if (!gurrenArgs.disableUpdateCheck) {
+            if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
                 val updateUrl = SpiralCoreData.checkForUpdate("Console")
-                println("Update Url: $updateUrl")
 
                 if (updateUrl != null) {
-                    val jarFile = File.createTempFile(UUID.randomUUID().toString(), ".jar")
-                    println("Downloading update to ${jarFile.absolutePath}...")
-                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
+                    printlnLocale("gurren.update.downloading")
+                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
                             .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
                             .userAgent().response()
                     println()
                     if (response.isSuccessful) {
-                        println("Installing update, restarting client...")
-
-                        installUpdate(jarFile.absolutePath, *args)
-                        return
+                        printlnLocale("gurren.update.downloaded")
                     } else {
-                        println(":c")
+                        printlnLocale("gurren.update.download_failed", response.statusCode, response.responseMessage)
+                        updateFile.delete()
                     }
-//                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), jarFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-//                    installUpdate(jarFile.absolutePath, *args)
+
+//                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), updateFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+//                    installUpdate(updateFile.absolutePath, "-u", *args)
 //                    return
                 }
             }
 
             val instance: Cockpit<*>
 
-            if (gurrenArgs.isTool) {
+            if (updateFile.exists() && updateFile.isFile) {
+                instance = CockpitUpdate(updateFile, gurrenArgs, *args)
+            } else if (gurrenArgs.isTool) {
                 instance = CockpitMechanic(gurrenArgs)
             } else {
                 instance = CockpitPilot(gurrenArgs)

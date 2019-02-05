@@ -1,6 +1,5 @@
 package info.spiralframework.console.imperator
 
-import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.printlnErr
 import info.spiralframework.base.util.printlnErrLocale
 import info.spiralframework.console.Cockpit
@@ -19,7 +18,7 @@ open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private v
 
         val invalidCommand: ParboiledSoldier.(List<ParseError>) -> Unit = { failed ->
             if (failed.isNotEmpty()) {
-                printlnErr(SpiralLocale.localise("commands.invalid"))
+                printlnErrLocale("commands.invalid")
                 failed.mapNotNull(ParseError::getErrorMessage).distinct().forEach { error -> printlnErr("\t$error") }
             } else {
                 printlnErrLocale("commands.unk_error")
