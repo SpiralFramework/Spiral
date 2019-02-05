@@ -13,6 +13,9 @@ object Stub {
         if (args[0] == DELETE_ARG) {
             Files.delete(Paths.get(URI(args[1])))
 
+            if (args.size > 2)
+                println(args[2])
+
             return
         } else {
             val javaHome = System.getProperty("java.home")

@@ -9,6 +9,7 @@ import info.spiralframework.console.data.mechanic.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
+import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.archives.*
@@ -211,6 +212,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     }
 
     val environment = ParboiledSoldier(environmentRule) {
+        println(SpiralCoreData.ENVIRONMENT)
         return@ParboiledSoldier SUCCESS
     }
 }

@@ -80,8 +80,6 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             DataHandler.streamToMap = { stream -> SpiralCoreData.JSON_MAPPER.readValue(stream, Map::class.java).mapKeys { (key) -> key.toString() } }
 
             SpiralCoreData.ADDITIONAL_ENVIRONMENT["spiral.module"] = "spiral-console"
-
-            println(SpiralCoreData.ENVIRONMENT)
         }
     }
 
