@@ -1,15 +1,19 @@
 package info.spiralframework.console
 
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.locale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.base.util.relativePathFrom
+import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
+import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.spiral.updater.jarLocation
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -23,10 +27,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.net.URI
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
@@ -45,24 +45,21 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
             if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
                 val updateUrl = SpiralCoreData.checkForUpdate("Console")
-                println("Update Url: $updateUrl")
 
-                if (updateUrl !== "") {
-                    println("Downloading update to ${updateFile.absolutePath}...")
-//                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
-//                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
-//                            .userAgent().response()
-//                    println()
-//                    if (response.isSuccessful) {
-//                        println("Installing update, restarting client...")
-//
-//                        installUpdate(jarFile.absolutePath, "-u", *args)
-//                        return
-//                    } else {
-//                        println(":c")
-//                    }
+                if (updateUrl != null) {
+                    printlnLocale("cockpit.update.downloading")
+                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
+                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
+                            .userAgent().response()
+                    println()
+                    if (response.isSuccessful) {
+                        printlnLocale("cockpit.update.downloaded")
+                    } else {
+                        printlnLocale("cockpit.update.download_failed", response.statusCode, response.responseMessage)
+                        updateFile.delete()
+                    }
 
-                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), updateFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+//                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), updateFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
 //                    installUpdate(updateFile.absolutePath, "-u", *args)
 //                    return
                 }

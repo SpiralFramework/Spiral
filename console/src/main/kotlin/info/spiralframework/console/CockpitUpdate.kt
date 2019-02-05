@@ -1,5 +1,6 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.spiral.updater.jarLocation
 import info.spiralframework.spiral.updater.moveUpdate
@@ -22,12 +23,13 @@ class CockpitUpdate internal constructor(val updateFile: File, args: GurrenArgs,
                 this@CockpitUpdate { currentExitCode = process.destroyForcibly().waitFor() }
             } finally {
                 //Move the update over
+                printlnLocale("cockpit.update.moving")
                 moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI())
             }
         }
     }
 
     init {
-        println("Running update jar")
+        printlnLocale("gurren.update.init")
     }
 }
