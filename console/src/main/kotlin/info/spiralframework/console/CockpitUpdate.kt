@@ -1,5 +1,6 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.spiral.updater.jarLocation
@@ -24,7 +25,7 @@ class CockpitUpdate internal constructor(val updateFile: File, args: GurrenArgs,
             } finally {
                 //Move the update over
                 printlnLocale("gurren.update.moving")
-                moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI())
+                moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI(), locale("gurren.update.finished_moving"))
             }
         }
     }
