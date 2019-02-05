@@ -1,19 +1,16 @@
 package info.spiralframework.console
 
-import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.relativePathFrom
-import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.spiral.updater.installUpdate
+import info.spiralframework.spiral.updater.jarLocation
+import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -25,43 +22,57 @@ import org.abimon.imperator.impl.BasicImperator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
+import java.io.IOException
+import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val gurrenArgs = GurrenArgs(args)
+            //Check if we're a child process
+            val isChild = try { System.`in`.available(); false } catch (io: IOException) { true }
+            if (isChild) {
+                //We need to reobtain system input somehow. The file descriptor is dead
 
-            if (!gurrenArgs.disableUpdateCheck) {
+            }
+
+            val gurrenArgs = GurrenArgs(args)
+            val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
+
+            if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
                 val updateUrl = SpiralCoreData.checkForUpdate("Console")
                 println("Update Url: $updateUrl")
 
-                if (updateUrl != null) {
-                    val jarFile = File.createTempFile(UUID.randomUUID().toString(), ".jar")
-                    println("Downloading update to ${jarFile.absolutePath}...")
-                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
-                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
-                            .userAgent().response()
-                    println()
-                    if (response.isSuccessful) {
-                        println("Installing update, restarting client...")
+                if (updateUrl !== "") {
+                    println("Downloading update to ${updateFile.absolutePath}...")
+//                    val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> jarFile }
+//                            .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
+//                            .userAgent().response()
+//                    println()
+//                    if (response.isSuccessful) {
+//                        println("Installing update, restarting client...")
+//
+//                        installUpdate(jarFile.absolutePath, "-u", *args)
+//                        return
+//                    } else {
+//                        println(":c")
+//                    }
 
-                        installUpdate(jarFile.absolutePath, *args)
-                        return
-                    } else {
-                        println(":c")
-                    }
-//                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), jarFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-//                    installUpdate(jarFile.absolutePath, *args)
+                    Files.copy(Paths.get(URI(this::class.java.jarLocation.toURI().toString())), updateFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+//                    installUpdate(updateFile.absolutePath, "-u", *args)
 //                    return
                 }
             }
 
             val instance: Cockpit<*>
 
-            if (gurrenArgs.isTool) {
+            if (updateFile.exists() && updateFile.isFile) {
+                instance = CockpitUpdate(updateFile, gurrenArgs, *args)
+            } else if (gurrenArgs.isTool) {
                 instance = CockpitMechanic(gurrenArgs)
             } else {
                 instance = CockpitPilot(gurrenArgs)

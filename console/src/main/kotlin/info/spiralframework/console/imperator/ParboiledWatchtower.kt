@@ -1,12 +1,10 @@
 package info.spiralframework.console.imperator
 
 import info.spiralframework.console.Cockpit
-import info.spiralframework.osl.firstOfInstanceOrNull
 import org.abimon.imperator.handle.Order
 import org.abimon.imperator.handle.Watchtower
 import org.abimon.imperator.impl.InstanceOrder
 import org.parboiled.Rule
-import org.parboiled.errors.InvalidInputError
 import org.parboiled.parserunners.ReportingParseRunner
 
 open class ParboiledWatchtower(val rule: Rule, val scope: String? = null, val cockpit: Cockpit<*>) : Watchtower {
@@ -22,14 +20,14 @@ open class ParboiledWatchtower(val rule: Rule, val scope: String? = null, val co
                 runner.parseErrors.clear()
 
                 val result = runner.run(command)
-                if (result.parseErrors.isNotEmpty()) {
-                    val inputError = result.parseErrors.firstOfInstanceOrNull(InvalidInputError::class)
+//                if (result.parseErrors.isNotEmpty() && rule is SequenceMatcher) {
+//                    val inputError = result.parseErrors.firstOfInstanceOrNull(InvalidInputError::class) ?: return false
+//                    val firstNode = rule.children.firstOrNull() ?: return false
+//
+//                    return (inputError.failedMatchers.none { path -> path.element.matcher === firstNode }) //Let the command handle bad input
+//                }
 
-                    if (inputError?.startIndex ?: 0 > 0)
-                        return true //Let the command handle bad input
-                }
-
-                return !result.hasErrors()
+                return result.matched
             }
             else -> return false
         }
