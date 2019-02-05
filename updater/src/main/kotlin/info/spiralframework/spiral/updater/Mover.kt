@@ -21,7 +21,7 @@ object Mover {
                 File.separator + "bin" +
                 File.separator + "java"
 
-        ProcessBuilder(javaBin, "-cp", destination.toFile().absolutePath, STUB_CLASS_PATH, DELETE_ARG, source.toUri().toString())
+        ProcessBuilder(javaBin, "-cp", destination.toFile().absolutePath, STUB_CLASS_PATH, DELETE_ARG, source.toUri().toString(), *args.drop(2).toTypedArray())
                 .inheritIO()
                 .start()
     }

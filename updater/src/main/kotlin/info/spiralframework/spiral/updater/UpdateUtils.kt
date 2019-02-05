@@ -23,13 +23,13 @@ fun installUpdate(updatePath: String, vararg otherArgs: String) {
             .start()
 }
 
-fun moveUpdate(from: URI, to: URI) {
+fun moveUpdate(from: URI, to: URI, vararg otherArgs: String) {
     val javaHome = System.getProperty("java.home")
     val javaBin = javaHome +
             File.separator + "bin" +
             File.separator + "java"
 
-    ProcessBuilder(javaBin, "-cp", Paths.get(from).toFile().absolutePath, STUB_CLASS_PATH, MOVER_CLASS_PATH, from.toString(), to.toString())
+    ProcessBuilder(javaBin, "-cp", Paths.get(from).toFile().absolutePath, STUB_CLASS_PATH, MOVER_CLASS_PATH, from.toString(), to.toString(), *otherArgs)
             .inheritIO()
             .start()
 }
