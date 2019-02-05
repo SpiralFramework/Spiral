@@ -20,12 +20,16 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipFile
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
 class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
+        /** Helper Variables */
+        var keepLooping = AtomicBoolean(true)
+
         val EXTRACTABLE_ARCHIVES = arrayOf(
                 AWBFormat, CpkFormat, PakFormat,
                 SpcFormat, SRDFormat, WadFormat,
@@ -34,9 +38,6 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
 
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
-
-    /** Helper Variables */
-    var keepLooping = true
 
     /** Rules */
     val extractRule = makeRule {
@@ -71,9 +72,7 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
                 Action<Any> { push(argsVar.get()) }
         )
     }
-
     val helpRule = makeRule { Localised("commands.help") }
-
     val identifyRule = makeRule {
         Sequence(
                 Localised("commands.identify"),
@@ -81,6 +80,8 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
                 FilePath()
         )
     }
+
+    val exitRule = makeRule { Localised("commands.exit") }
 
     /** Commands */
 
@@ -261,6 +262,13 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
 
         println()
         printlnLocale("commands.extract.finished")
+
+        return@ParboiledSoldier SUCCESS
+    }
+
+    val exit = ParboiledSoldier(exitRule, "default") {
+        printlnLocale("commands.exit.leave")
+        keepLooping.set(false)
 
         return@ParboiledSoldier SUCCESS
     }

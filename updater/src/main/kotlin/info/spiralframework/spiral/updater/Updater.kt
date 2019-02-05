@@ -15,16 +15,16 @@ object Updater {
                 File.separator + "bin" +
                 File.separator + "java"
 
-        val originalFile = args[0]
-        val codeSource = Updater::class.java.jarLocation
+        val originalFile = Paths.get(URI(args[0]))
+        val codeSource = Paths.get(Updater::class.java.jarLocation.toURI())
 
-        Files.copy(Paths.get(codeSource.toURI()), Paths.get(URI(originalFile)), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(codeSource, originalFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
 
-        ProcessBuilder(javaBin, "-cp", originalFile, STUB_CLASS_PATH, DELETE_ARG, codeSource.toURI().toString())
+        ProcessBuilder(javaBin, "-cp", originalFile.toFile().absolutePath, STUB_CLASS_PATH, DELETE_ARG, codeSource.toUri().toString())
                 .inheritIO()
                 .start()
 
-        ProcessBuilder(javaBin, "-jar", Paths.get(URI(originalFile)).toFile().absolutePath, *args.drop(1).toTypedArray())
+        ProcessBuilder(javaBin, "-jar", originalFile.toFile().absolutePath, *args.drop(1).toTypedArray())
                 .inheritIO()
                 .start()
     }

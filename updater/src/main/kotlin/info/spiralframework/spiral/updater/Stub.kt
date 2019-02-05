@@ -21,7 +21,7 @@ object Stub {
                     File.separator + "java"
 
             val codeSource = Stub::class.java.jarLocation
-            ProcessBuilder(javaBin, "-cp", codeSource.toURI().toString(), *args)
+            ProcessBuilder(javaBin, "-cp", Paths.get(codeSource.toURI()).toFile().absolutePath, *args)
                     .inheritIO()
                     .start()
         }
