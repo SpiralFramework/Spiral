@@ -26,20 +26,12 @@ import org.abimon.imperator.impl.BasicImperator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            //Check if we're a child process
-            val isChild = try { System.`in`.available(); false } catch (io: IOException) { true }
-            if (isChild) {
-                //We need to reobtain system input somehow. The file descriptor is dead
-
-            }
-
             val gurrenArgs = GurrenArgs(args)
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
 
