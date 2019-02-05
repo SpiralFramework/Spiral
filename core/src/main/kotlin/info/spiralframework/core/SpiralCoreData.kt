@@ -29,6 +29,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
+import java.util.jar.JarFile
 
 /**
  * This singleton holds important information for all Spiral modules
@@ -83,11 +84,31 @@ object SpiralCoreData {
     val JENKINS_BASE = "https://jenkins.abimon.org"
     val LATEST_BUILD = "$JENKINS_BASE/job/Spiral-%s/lastSuccessfulBuild/artifact/%s/build/libs/%s"
 
+    val ENVIRONMENT_PROPERTIES: MutableList<String> = mutableListOf(
+            "os.name", "os.version", "os.arch",
+            "java.vendor", "java.version", "java.vendor.url",
+            "file.separator", "path.separator", "line.separator",
+            "spiral.module", "spiral.version", "spiral.name",
+            "manifest.main-class"
+    )
+    val ADDITIONAL_ENVIRONMENT: MutableMap<String, String?> = HashMap()
+    val ENVIRONMENT: String
+        get() = buildString {
+            this@SpiralCoreData::fileName.get() //If we're getting the environment we should proc these
+            this@SpiralCoreData::version.get()
+            for (env in ENVIRONMENT_PROPERTIES) {
+                append(env)
+                append(": ")
+                appendln((System.getProperty(env) ?: ADDITIONAL_ENVIRONMENT[env])?.replace("\n", "\\n"))
+            }
+        }
+
+
     val fileName: String? by lazy {
         val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
-        if (!file.isFile)
-            return@lazy null
-        return@lazy file.name
+        val name = file.takeIf(File::isFile)?.let(File::getName)
+        ADDITIONAL_ENVIRONMENT["spiral.name"] = name
+        return@lazy name
     }
 
     /**
@@ -114,7 +135,9 @@ object SpiralCoreData {
             buffer.rewind()
         }
 
-        return@lazy String.format("%032x", BigInteger(1, md.digest()))
+        val hash = String.format("%032x", BigInteger(1, md.digest()))
+        ADDITIONAL_ENVIRONMENT["spiral.version"] = hash
+        return@lazy hash
     }
 
     var LOGGER: Logger
@@ -139,5 +162,21 @@ object SpiralCoreData {
     init {
         SpiralLocale.addBundle("SpiralCore")
         LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.core.name")))
+
+        //Add manifest data to environment
+        val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
+        if (file.isFile) {
+            JarFile(file).use { jar ->
+//                jar.manifest.entries.forEach { headerKey, attributes ->
+//                    attributes.forEach { key, value ->
+//                        ADDITIONAL_ENVIRONMENT["manifest.${headerKey.toLowerCase()}.${key.toString().toLowerCase()}"] = value.toString().toLowerCase()
+//                    }
+//                }
+                jar.manifest.mainAttributes.forEach { key, value ->
+                    ADDITIONAL_ENVIRONMENT["manifest.${key.toString().toLowerCase()}"] = value.toString().toLowerCase()
+
+                }
+            }
+        }
     }
 }
