@@ -69,6 +69,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 Action<Any> { push(argsVar.get()) }
         )
     }
+    val environmentRule = makeRule { IgnoreCase("environment") }
 
     /** Commands */
 
@@ -206,6 +207,10 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         println()
         printlnLocale("commands.mechanic.extract.finished")
 
+        return@ParboiledSoldier SUCCESS
+    }
+
+    val environment = ParboiledSoldier(environmentRule) {
         return@ParboiledSoldier SUCCESS
     }
 }
