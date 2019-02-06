@@ -10,6 +10,11 @@ object SpiralLocale {
     val _englishBundles: MutableList<ResourceBundle> = ArrayList()
     val englishBundles: List<ResourceBundle> = _englishBundles
 
+    val PROMPT_AFFIRMATIVE: String
+        get() = localiseString("base.prompt.affirmative")
+    val PROMPT_NEGATIVE: String
+        get() = localiseString("base.prompt.negative")
+
     fun localise(base: String, vararg values: Any?): String {
         val msg = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
         return MessageFormat.format(msg, *values)
