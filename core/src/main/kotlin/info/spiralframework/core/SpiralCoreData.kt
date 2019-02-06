@@ -18,6 +18,7 @@ import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.locale
 import info.spiralframework.core.serialisation.InstantSerialisation
 import info.spiralframework.formats.utils.DataHandler
@@ -79,10 +80,11 @@ object SpiralCoreData {
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
 
     val API_BASE = "https://api.abimon.org/api"
-    val API_LATEST_BUILD = "$API_BASE/jenkins/projects/Spiral-%s/needs_update/%s"
+    val API_CHECK_FOR_UPDATE = "$API_BASE/jenkins/projects/Spiral-%s/needs_update/%s"
+    val API_LATEST_BUILD = "$API_BASE/jenkins/projects/Spiral-%s/latest_build"
 
     val JENKINS_BASE = "https://jenkins.abimon.org"
-    val LATEST_BUILD = "$JENKINS_BASE/job/Spiral-%s/lastSuccessfulBuild/artifact/%s/build/libs/%s"
+    val JENKINS_BUILD = "$JENKINS_BASE/job/Spiral-%s/%s/artifact/%s/build/libs/%s"
 
     val ENVIRONMENT_PROPERTIES: MutableList<String> = mutableListOf(
             "os.name", "os.version", "os.arch",
@@ -150,10 +152,25 @@ object SpiralCoreData {
                 DataHandler.LOGGER = NORMAL_LOGGER
         }
 
-    fun checkForUpdate(project: String): String? {
-        val (_, response) = Fuel.get(String.format(API_LATEST_BUILD, project, version)).userAgent().response()
-        if (response.isSuccessful && String(response.data) == "true") {
-            return String.format(LATEST_BUILD, project, project.toLowerCase(), fileName)
+    val CONFIG: SpiralCoreConfig? by cacheNullableYaml(SpiralConfig.getConfigFile("core"))
+
+    fun checkForUpdate(project: String): Pair<String, String>? {
+        val (_, checkForUpdateResponse) = Fuel.get(String.format(API_CHECK_FOR_UPDATE, project, version))
+                .userAgent()
+                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
+                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+                .response()
+        if (checkForUpdateResponse.isSuccessful && String(checkForUpdateResponse.data) == "true") {
+            val (_, latestBuildResponse) = Fuel.get(String.format(API_LATEST_BUILD, project))
+                    .userAgent()
+                    .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
+                    .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+                    .response()
+
+            if (latestBuildResponse.isSuccessful) {
+                val latestBuild = String(latestBuildResponse.data)
+                return String.format(JENKINS_BUILD, project, latestBuild, project.toLowerCase(), fileName) to latestBuild
+            }
         }
 
         return null
@@ -167,13 +184,13 @@ object SpiralCoreData {
         val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
         if (file.isFile) {
             JarFile(file).use { jar ->
-//                jar.manifest.entries.forEach { headerKey, attributes ->
+                //                jar.manifest.entries.forEach { headerKey, attributes ->
 //                    attributes.forEach { key, value ->
 //                        ADDITIONAL_ENVIRONMENT["manifest.${headerKey.toLowerCase()}.${key.toString().toLowerCase()}"] = value.toString().toLowerCase()
 //                    }
 //                }
                 jar.manifest.mainAttributes.forEach { key, value ->
-                    ADDITIONAL_ENVIRONMENT["manifest.${key.toString().toLowerCase()}"] = value.toString().toLowerCase()
+                    ADDITIONAL_ENVIRONMENT["manifest.${key.toString().toLowerCase()}"] = value.toString()
 
                 }
             }

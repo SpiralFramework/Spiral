@@ -30,7 +30,7 @@ object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
         if (pak.files.size == 1)
             return FormatResult.Success(pak,0.75)
 
-        return FormatResult(pak, pak.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
+        return FormatResult(pak, pak.files.isNotEmpty(), 0.8) //Not positive on this one chief but we're going with it
     }
 
     /**

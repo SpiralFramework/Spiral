@@ -1,13 +1,14 @@
 package info.spiralframework.console.data
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import info.spiralframework.base.ANSI
 
 data class GurrenArgs(
-        val disableUpdateCheck: Boolean = false,
-        val isTool: Boolean = false,
-        val timeCommands: Boolean = false,
-        val silenceOutput: Boolean = false,
-        val ansiEnabled: Boolean = false,
+        val disableUpdateCheck: Boolean = DEFAULTS.DISABLE_UPDATE_CHECK,
+        val isTool: Boolean = DEFAULTS.IS_TOOL,
+        val timeCommands: Boolean = DEFAULTS.TIME_COMMANDS,
+        val silenceOutput: Boolean = DEFAULTS.SILENCE_OUTPUT,
+        val ansiEnabled: Boolean = DEFAULTS.ANSI_ENABLED,
         val rawArgs: Array<String>
 ) {
     companion object Keys {
@@ -48,6 +49,21 @@ data class GurrenArgs(
         val String.isShortArg: Boolean
             get() = startsWith("-") && !startsWith("--") && (DISABLE_UPDATE_CHECK_SHORT in this || USE_AS_TOOL_SHORT in this || SILENCE_OUTPUT_SHORT in this)
     }
+    object DEFAULTS {
+        const val DISABLE_UPDATE_CHECK = false
+        const val IS_TOOL = false
+        const val TIME_COMMANDS = false
+        const val SILENCE_OUTPUT = false
+        const val ANSI_ENABLED = false
+    }
+
+    class Pojo(
+            @JsonProperty("disable_update_check")   val disableUpdateCheck: Boolean?,
+            @JsonProperty("is_tool")                val isTool: Boolean?,
+            @JsonProperty("time_commands")          val timeCommands: Boolean?,
+            @JsonProperty("silence_output")         val silenceOutput: Boolean?,
+            @JsonProperty("ansi_enabled")           val ansiEnabled: Boolean?
+    )
 
     constructor(args: Array<String>): this(
             args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT,
@@ -55,6 +71,15 @@ data class GurrenArgs(
             args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT,
             args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT,
             (ANSI.supported || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
+            args
+    )
+
+    constructor(args: Array<String>, pojo: GurrenArgs.Pojo): this(
+            args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT || (pojo.disableUpdateCheck ?: DEFAULTS.DISABLE_UPDATE_CHECK),
+            args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT || (pojo.isTool ?: DEFAULTS.IS_TOOL),
+            args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT || (pojo.timeCommands ?: DEFAULTS.TIME_COMMANDS),
+            args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT || (pojo.silenceOutput ?: DEFAULTS.SILENCE_OUTPUT),
+            (ANSI.supported || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT || pojo.ansiEnabled == true) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
             args
     )
 

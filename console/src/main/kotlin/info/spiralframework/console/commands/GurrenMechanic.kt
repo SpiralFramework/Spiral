@@ -107,6 +107,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
+                .asReversed()
                 .firstOrNull()
                 ?.obj
 

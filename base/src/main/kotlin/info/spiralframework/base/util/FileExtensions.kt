@@ -14,3 +14,16 @@ infix fun File.relativePathTo(to: File): String = to.name + absolutePath.replace
  * @see [relativePathTo]
  */
 infix fun File.relativePathFrom(to: File): String = absolutePath.replace(to.absolutePath + File.separator, "")
+
+fun File.existingDirectory(): Boolean = isDirectory && exists()
+
+fun File.ensureExists(): File {
+    if (!exists()) {
+        if (isDirectory) mkdirs()
+        if (isFile) createNewFile()
+    }
+
+    println(this.exists())
+
+    return this
+}
