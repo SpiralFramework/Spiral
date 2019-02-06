@@ -23,7 +23,5 @@ fun File.ensureExists(): File {
         if (isFile) createNewFile()
     }
 
-    println(this.exists())
-
     return this
 }
