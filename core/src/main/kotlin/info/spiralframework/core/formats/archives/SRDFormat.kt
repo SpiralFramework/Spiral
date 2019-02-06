@@ -22,7 +22,7 @@ object SRDFormat: ReadableSpiralFormat<SRD> {
         val srd = SRD(source) ?: return FormatResult.Fail(1.0)
 
         if (srd.entries.size == 1)
-            return FormatResult.Success(srd, 1.0)
-        return FormatResult(srd, srd.entries.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
+            return FormatResult.Success(srd, 0.9)
+        return FormatResult(srd, srd.entries.isNotEmpty(), 0.9) //Not positive on this one chief but we're going with it
     }
 }

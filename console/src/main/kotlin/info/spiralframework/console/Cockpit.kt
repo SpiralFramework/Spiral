@@ -4,6 +4,8 @@ import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.util.ensureExists
 import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.base.util.relativePathFrom
@@ -12,6 +14,8 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.SpiralCoreData
+import info.spiralframework.core.SpiralSignatures
+import info.spiralframework.core.tryReadValue
 import info.spiralframework.core.userAgent
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
@@ -32,13 +36,17 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val gurrenArgs = GurrenArgs(args)
+            val pojo = SpiralCoreData.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(SpiralConfig.getConfigFile("cockpit").ensureExists())
+            val gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
 
-            if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
-                val updateUrl = SpiralCoreData.checkForUpdate("Console")
+            println(SpiralSignatures.PUBLIC_KEY)
 
-                if (updateUrl != null) {
+            if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
+                val updateData = SpiralCoreData.checkForUpdate("Console")
+
+                if (updateData != null) {
+                    val (updateUrl, updateVersion) = updateData
                     printlnLocale("gurren.update.downloading")
                     val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
                             .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }

@@ -1,9 +1,19 @@
 package info.spiralframework.core
 
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.kittinunf.fuel.core.Request
+import info.spiralframework.base.properties.CachedFileReadOnlyProperty
 import info.spiralframework.core.formats.compression.*
 import info.spiralframework.formats.utils.DataSource
+import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.InputStream
 
 /**
  * Executes the given [block] function on this resource and then closes it down correctly whether an exception
@@ -50,3 +60,45 @@ fun decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<
 
 fun Request.userAgent(ua: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"): Request
         = this.header("User-Agent", ua)
+
+inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
+    try {
+        return this.readValue(src)
+    } catch (jsonProcessing: JsonProcessingException) {
+    } catch (jsonMapping: JsonMappingException) {
+    } catch (jsonParsing: JsonParseException) {
+    } catch (yamlParsing: YAMLException) {
+    }
+
+    return null
+}
+
+inline fun <reified T : Any> ObjectMapper.tryReadValue(src: InputStream): T? {
+    try {
+        return this.readValue(src)
+    } catch (jsonProcessing: JsonProcessingException) {
+    } catch (jsonMapping: JsonMappingException) {
+    } catch (jsonParsing: JsonParseException) {
+    } catch (yamlParsing: YAMLException) {
+    }
+
+    return null
+}
+
+inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
+    try {
+        return this.readValue(src)
+    } catch (jsonProcessing: JsonProcessingException) {
+    } catch (jsonMapping: JsonMappingException) {
+    } catch (jsonParsing: JsonParseException) {
+    } catch (io: FileNotFoundException) {
+    } catch (yamlParsing: YAMLException) {
+    }
+
+    return null
+}
+
+inline fun <reified T: Any> cacheJson(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralCoreData.JSON_MAPPER::readValue)
+inline fun <reified T: Any> cacheNullableJson(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralCoreData.JSON_MAPPER::tryReadValue)
+inline fun <reified T: Any> cacheYaml(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralCoreData.YAML_MAPPER::readValue)
+inline fun <reified T: Any> cacheNullableYaml(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralCoreData.YAML_MAPPER::tryReadValue)

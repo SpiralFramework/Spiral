@@ -59,4 +59,6 @@ sealed class FormatResult<T>: Closeable {
     abstract fun <R> map(transform: (T) -> R): FormatResult<R>
     abstract fun filter(predicate: (T) -> Boolean): FormatResult<T>
     abstract fun weight(predicate: (T) -> Double): FormatResult<T>
+
+    override fun toString(): String = "FormatResult(didSucceed=$didSucceed, obj=$safeObj, chance=$chance)"
 }
