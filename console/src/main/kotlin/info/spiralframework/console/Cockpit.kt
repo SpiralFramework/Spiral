@@ -5,10 +5,7 @@ import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
-import info.spiralframework.base.util.ensureExists
-import info.spiralframework.base.util.locale
-import info.spiralframework.base.util.printlnLocale
-import info.spiralframework.base.util.relativePathFrom
+import info.spiralframework.base.util.*
 import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
@@ -40,13 +37,25 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             val gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
 
-            println(SpiralSignatures.PUBLIC_KEY)
-
             if (!updateFile.exists() && !gurrenArgs.disableUpdateCheck) {
                 val updateData = SpiralCoreData.checkForUpdate("Console")
 
-                if (updateData != null) {
-                    val (updateUrl, updateVersion) = updateData
+                if (updateData !== ("" to "")) {
+                    val (updateUrl, updateVersion) = updateData ?: ("" to "123")
+                    val signatureData = SpiralSignatures.signatureForModule("Console", updateVersion, SpiralCoreData.fileName!!)
+
+                    var shouldDownloadUnsigned = false
+                    if (signatureData == null) {
+                        printlnLocale("signature.spiral.unsigned.warning")
+                        printLocale("signature.spiral.unsigned.warning_confirmation")
+
+                        shouldDownloadUnsigned = (readLine()?.takeIf(String::isNotBlank) ?: SpiralLocale.PROMPT_NEGATIVE).toLowerCase()[0] == SpiralLocale.PROMPT_AFFIRMATIVE[0]
+
+                        if (shouldDownloadUnsigned) {
+
+                        }
+                    }
+
                     printlnLocale("gurren.update.downloading")
                     val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
                             .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
