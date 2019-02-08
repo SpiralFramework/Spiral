@@ -1,71 +1,25 @@
 package info.spiralframework.core
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonSetter
-import com.fasterxml.jackson.annotation.Nulls
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.util.UTF8String
 import info.spiralframework.base.util.locale
-import info.spiralframework.core.serialisation.InstantSerialisation
+import info.spiralframework.base.util.md5Hash
 import info.spiralframework.formats.utils.DataHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.math.BigInteger
-import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.channels.ReadableByteChannel
 import java.nio.file.StandardOpenOption
-import java.security.MessageDigest
 import java.util.jar.JarFile
 
 /**
  * This singleton holds important information for all Spiral modules
  * @author UnderMybrella
  */
-object SpiralCoreData {
-    /** Jackson mapper for JSON data */
-    val JSON_MAPPER: ObjectMapper = ObjectMapper()
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
-            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
-
-    /** Jackson mapper for YAML data */
-    val YAML_MAPPER: ObjectMapper = ObjectMapper(YAMLFactory())
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
-            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
-
-    /** Jackson mapper for XML data */
-    val XML_MAPPER: ObjectMapper = XmlMapper(JacksonXmlModule().apply { setDefaultUseWrapper(false) })
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), InstantSerialisation.MODULE())
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
-            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
-            .setDefaultSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
-
+object SpiralCoreData: SpiralCoreConfigAccessor {
     /** Steam ID for Danganronpa: Trigger Happy Havoc */
     val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"
     /** Steam ID for Danganronpa 2: Goodbye Despair */
@@ -78,13 +32,6 @@ object SpiralCoreData {
      * This file should ideally keep track of mods currently installed, and their files + versions
      * */
     val SPIRAL_MOD_LIST = "Spiral-Mod-List"
-
-    val API_BASE = "https://api.abimon.org/api"
-    val API_CHECK_FOR_UPDATE = "$API_BASE/jenkins/projects/Spiral-%s/needs_update/%s"
-    val API_LATEST_BUILD = "$API_BASE/jenkins/projects/Spiral-%s/latest_build"
-
-    val JENKINS_BASE = "https://jenkins.abimon.org"
-    val JENKINS_BUILD = "$JENKINS_BASE/job/Spiral-%s/%s/artifact/%s/build/libs/%s"
 
     val ENVIRONMENT_PROPERTIES: MutableList<String> = mutableListOf(
             "os.name", "os.version", "os.arch",
@@ -105,6 +52,15 @@ object SpiralCoreData {
             }
         }
 
+    val apiCheckForUpdate: String
+        get() = "$apiBase/jenkins/projects/Spiral-%s/needs_update/%s"
+    val apiLatestBuild: String
+        get() = "$apiBase/jenkins/projects/Spiral-%s/latest_build"
+    val apiBuildForFingerprint: String
+        get() = "$apiBase/jenkins/fingerprint/%s/build"
+
+    val jenkinsArtifactForBuild: String
+        get() = "$jenkinsBase/job/Spiral-%s/%s/artifact/%s/build/libs/%s"
 
     val fileName: String? by lazy {
         val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
@@ -121,26 +77,13 @@ object SpiralCoreData {
         if (!file.isFile)
             return@lazy null
 
-        val md = MessageDigest.getInstance("MD5")
-
-        val channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)
-        val buffer = ByteBuffer.allocate(8192)
-
-        while (channel.isOpen) {
-            val read = channel.read(buffer)
-            if (read <= 0)
-                break
-
-
-            buffer.flip()
-            md.update(buffer)
-            buffer.rewind()
-        }
-
-        val hash = String.format("%032x", BigInteger(1, md.digest()))
+        val hash = FileChannel.open(file.toPath(), StandardOpenOption.READ).use(ReadableByteChannel::md5Hash)
         ADDITIONAL_ENVIRONMENT["spiral.version"] = hash
         return@lazy hash
     }
+
+    /** The build for this jar file, or null if we're either not running a JAR file (developer directory), or if we're using a custom compiled version */
+    val jenkinsBuild: Int? by lazy { version?.let(this::buildForVersion) }
 
     var LOGGER: Logger
     var NORMAL_LOGGER: Logger
@@ -152,29 +95,45 @@ object SpiralCoreData {
                 DataHandler.LOGGER = NORMAL_LOGGER
         }
 
-    val CONFIG: SpiralCoreConfig? by cacheNullableYaml(SpiralConfig.getConfigFile("core"))
+    fun checkForUpdate(project: String): Pair<String, Int>? {
+//        val (_, checkForUpdateResponse) = Fuel.get(String.format(API_CHECK_FOR_UPDATE, project, version))
+//                .userAgent()
+//                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
+//                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+//                .response()
+//        if (checkForUpdateResponse.isSuccessful && String(checkForUpdateResponse.data) == "true") {
+//            val (_, latestBuildResponse) = Fuel.get(String.format(API_LATEST_BUILD, project))
+//                    .userAgent()
+//                    .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
+//                    .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+//                    .response()
+//
+//            if (latestBuildResponse.isSuccessful) {
+//                val latestBuild = String(latestBuildResponse.data)
+//                return String.format(JENKINS_BUILD, project, latestBuild, project.toLowerCase(), fileName) to latestBuild
+//            }
+//        }
 
-    fun checkForUpdate(project: String): Pair<String, String>? {
-        val (_, checkForUpdateResponse) = Fuel.get(String.format(API_CHECK_FOR_UPDATE, project, version))
-                .userAgent()
-                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
-                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
-                .response()
-        if (checkForUpdateResponse.isSuccessful && String(checkForUpdateResponse.data) == "true") {
-            val (_, latestBuildResponse) = Fuel.get(String.format(API_LATEST_BUILD, project))
+        if (jenkinsBuild == null)
+            return null
+        val latestBuild = Fuel.get(String.format(apiLatestBuild, project))
                     .userAgent()
-                    .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
-                    .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
-                    .response()
+                    .timeout(updateConnectTimeout) //Time out if it takes longer than 2s to connect to our API
+                    .timeoutRead(updateReadTimeout) //Time out if it takes longer than 2s to read a response
+                    .response().takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull() ?: return null
 
-            if (latestBuildResponse.isSuccessful) {
-                val latestBuild = String(latestBuildResponse.data)
-                return String.format(JENKINS_BUILD, project, latestBuild, project.toLowerCase(), fileName) to latestBuild
-            }
-        }
+        if (latestBuild > jenkinsBuild!!)
+            return String.format(jenkinsArtifactForBuild, project, latestBuild.toString(), project.toLowerCase(), fileName) to latestBuild
 
         return null
     }
+
+    fun buildForVersion(version: String): Int? =
+            Fuel.get(String.format(apiBuildForFingerprint, version))
+                .userAgent()
+                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
+                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+                .response().takeIfSuccessful()?.let { data -> String(data) }?.toIntOrNull()
 
     init {
         SpiralLocale.addBundle("SpiralCore")

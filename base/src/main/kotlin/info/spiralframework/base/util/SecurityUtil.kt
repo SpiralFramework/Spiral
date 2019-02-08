@@ -3,7 +3,9 @@ package info.spiralframework.base.util
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger
+import java.nio.ByteBuffer
 import java.nio.CharBuffer
+import java.nio.channels.ReadableByteChannel
 import java.nio.charset.Charset
 import java.security.*
 import java.security.spec.KeySpec
@@ -72,6 +74,40 @@ fun InputStream.sha384Hash(): String = hash("SHA-384")
 /** ***Do not use for things like passwords*** */
 fun InputStream.sha512Hash(): String = hash("SHA-512")
 
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.hash(algorithm: String): String {
+    val md = MessageDigest.getInstance(algorithm)
+    val buffer = ByteBuffer.allocate(8192)
+
+    while (isOpen) {
+        val read = read(buffer)
+        if (read <= 0)
+            break
+
+
+        buffer.flip()
+        md.update(buffer)
+        buffer.rewind()
+    }
+
+    val hashBytes = md.digest()
+    return String.format("%032x", BigInteger(1, hashBytes))
+}
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.md2Hash(): String = hash("MD2")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.md5Hash(): String = hash("MD5")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.sha1Hash(): String = hash("SHA-1")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.sha224Hash(): String = hash("SHA-224")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.sha256Hash(): String = hash("SHA-256")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.sha384Hash(): String = hash("SHA-384")
+/** ***Do not use for things like passwords*** */
+fun ReadableByteChannel.sha512Hash(): String = hash("SHA-512")
+
 fun CharArray.toByteArray(): ByteArray {
     val byteBuffer = Charset.forName("UTF-8").encode(CharBuffer.wrap(this))
     val byteArray = ByteArray(byteBuffer.remaining())
@@ -92,7 +128,7 @@ fun ByteArray.decryptAES(iv: ByteArray, secret: ByteArray): ByteArray {
 }
 
 fun ByteArray.sign(privateKey: PrivateKey): ByteArray {
-    val signature = Signature.getInstance("SHA1withRSA")
+    val signature = Signature.getInstance("SHA512withRSA")
     signature.initSign(privateKey)
     signature.update(this)
 
@@ -112,7 +148,7 @@ fun ByteArray.sign(privateKey: String): ByteArray {
 }
 
 fun InputStream.sign(privateKey: PrivateKey): ByteArray {
-    val signature = Signature.getInstance("SHA1withRSA")
+    val signature = Signature.getInstance("SHA512withRSA")
     signature.initSign(privateKey)
     this.readChunked { signature.update(it) }
 
@@ -132,7 +168,7 @@ fun InputStream.sign(privateKey: String): ByteArray {
 }
 
 fun ByteArray.verify(signatureData: ByteArray, publicKey: PublicKey): Boolean {
-    val signature = Signature.getInstance("SHA1withRSA")
+    val signature = Signature.getInstance("SHA512withRSA")
     signature.initVerify(publicKey)
     signature.update(this)
 
@@ -152,7 +188,7 @@ fun ByteArray.verify(signatureData: ByteArray, publicKey: String): Boolean {
 }
 
 fun InputStream.verify(signatureData: ByteArray, publicKey: PublicKey): Boolean {
-    val signature = Signature.getInstance("SHA1withRSA")
+    val signature = Signature.getInstance("SHA512withRSA")
     signature.initVerify(publicKey)
     this.readChunked { signature.update(it) }
 
@@ -169,6 +205,25 @@ fun InputStream.verify(signatureData: ByteArray, publicKey: String): Boolean {
     val keyFactory = KeyFactory.getInstance("RSA")
     val public = keyFactory.generatePublic(RSAPublicKeySpec(publicKey))
     return verify(signatureData, public)
+}
+
+fun ReadableByteChannel.verify(signatureData: ByteArray, publicKey: PublicKey): Boolean {
+    val signature = Signature.getInstance("SHA512withRSA")
+    signature.initVerify(publicKey)
+    val buffer = ByteBuffer.allocate(8192)
+
+    while (isOpen) {
+        val read = read(buffer)
+        if (read <= 0)
+            break
+
+
+        buffer.flip()
+        signature.update(buffer)
+        buffer.rewind()
+    }
+
+    return signature.verify(signatureData)
 }
 
 fun ByteArray.encryptRSA(publicKey: PublicKey): ByteArray {

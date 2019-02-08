@@ -1,5 +1,6 @@
 package info.spiralframework.base.properties
 
+import info.spiralframework.base.util.ensureFileExists
 import info.spiralframework.base.util.sha512Hash
 import java.io.File
 import java.io.FileInputStream
@@ -29,8 +30,7 @@ class CachedFileReadOnlyProperty<in R, out T>(val file: File, val op: (File) -> 
     fun File.sha512Hash(): String = FileInputStream(this).use(InputStream::sha512Hash)
 
     init {
-        if (!file.exists())
-            file.createNewFile()
+        file.ensureFileExists()
 
         hash = file.sha512Hash()
         value = op(file)
