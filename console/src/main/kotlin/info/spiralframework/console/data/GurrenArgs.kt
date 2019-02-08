@@ -25,6 +25,9 @@ data class GurrenArgs(
         const val DISABLE_ANSI = "disable ansi"
         const val DISABLE_ANSI_SHORT = 'p'
 
+        const val DISABLE_CONFIG_LOAD = "disable config load"
+        const val DISABLE_CONFIG_LOAD_SHORT = 'c'
+
         val SPACE_REGEX = "\\s".toRegex()
         infix fun Array<String>.hasArg(arg: String): Boolean {
             val hyphens = "--${arg.replace(SPACE_REGEX, "-")}"
@@ -48,6 +51,8 @@ data class GurrenArgs(
 
         val String.isShortArg: Boolean
             get() = startsWith("-") && !startsWith("--") && (DISABLE_UPDATE_CHECK_SHORT in this || USE_AS_TOOL_SHORT in this || SILENCE_OUTPUT_SHORT in this)
+
+        fun disableConfigLoad(args: Array<String>): Boolean = args hasArg DISABLE_CONFIG_LOAD || args hasShortArg DISABLE_CONFIG_LOAD_SHORT
     }
     object DEFAULTS {
         const val DISABLE_UPDATE_CHECK = false

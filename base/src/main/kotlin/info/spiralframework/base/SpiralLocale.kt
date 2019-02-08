@@ -20,7 +20,8 @@ object SpiralLocale {
         return MessageFormat.format(msg, *values)
     }
 
-    fun localiseString(base: String): String = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
+    fun localiseString(base: String): String = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base)
+            ?: base
 
     fun localiseForEnglish(base: String, vararg values: Any?): String {
         val msg = englishBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base
@@ -36,5 +37,13 @@ object SpiralLocale {
     fun addBundle(bundleName: String) {
         _localisationBundles.add(ResourceBundle.getBundle(bundleName))
         _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
+    }
+
+    fun readConfirmation(defaultToAffirmative: Boolean = true): Boolean =
+            (readLine()?.trim()?.takeIf(String::isNotBlank)
+                    ?: (if (defaultToAffirmative) PROMPT_AFFIRMATIVE else PROMPT_NEGATIVE)).toLowerCase()[0] == PROMPT_AFFIRMATIVE[0]
+
+    init {
+        addBundle("SpiralBase")
     }
 }

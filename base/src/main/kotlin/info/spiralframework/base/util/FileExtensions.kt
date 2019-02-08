@@ -17,11 +17,12 @@ infix fun File.relativePathFrom(to: File): String = absolutePath.replace(to.abso
 
 fun File.existingDirectory(): Boolean = isDirectory && exists()
 
-fun File.ensureExists(): File {
-    if (!exists()) {
-        if (isDirectory) mkdirs()
-        if (isFile) createNewFile()
-    }
+fun File.ensureFileExists(): File {
+    if (!exists()) createNewFile()
+    return this
+}
 
+fun File.ensureDirectoryExists(): File {
+    if (!exists()) mkdirs()
     return this
 }

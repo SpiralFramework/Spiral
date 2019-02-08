@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.core.ResponseResultOf
+import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.properties.CachedFileReadOnlyProperty
 import info.spiralframework.core.formats.compression.*
 import info.spiralframework.formats.utils.DataSource
@@ -98,7 +101,23 @@ inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
     return null
 }
 
-inline fun <reified T: Any> cacheJson(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralCoreData.JSON_MAPPER::readValue)
-inline fun <reified T: Any> cacheNullableJson(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralCoreData.JSON_MAPPER::tryReadValue)
-inline fun <reified T: Any> cacheYaml(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralCoreData.YAML_MAPPER::readValue)
-inline fun <reified T: Any> cacheNullableYaml(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralCoreData.YAML_MAPPER::tryReadValue)
+inline fun <reified T: Any> cacheJson(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralSerialisation.JSON_MAPPER::readValue)
+inline fun <reified T: Any> cacheNullableJson(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralSerialisation.JSON_MAPPER::tryReadValue)
+inline fun <reified T: Any> cacheYaml(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralSerialisation.YAML_MAPPER::readValue)
+inline fun <reified T: Any> cacheNullableYaml(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralSerialisation.YAML_MAPPER::tryReadValue)
+
+fun <T: Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
+    val (_, response, result) = this
+
+    if (response.isSuccessful)
+        return response
+    return null
+}
+
+fun <T: Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
+    val (_, response, result) = this
+
+    if (response.isSuccessful)
+        return result.get()
+    return null
+}
