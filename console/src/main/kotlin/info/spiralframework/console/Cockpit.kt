@@ -6,7 +6,6 @@ import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.*
-import info.spiralframework.console.commands.Gurren
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.imperator.ImperatorParser
@@ -49,7 +48,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                 if (updateData != null) {
                     val (updateUrl, updateVersion) = updateData// ?: ("http://jenkins.abimon.org/view/Spiral/job/Spiral-Console/37/artifact/console/build/libs/spiral-console-shadow.jar" to 37)
 
-                    val headResponse = Fuel.head(updateUrl).userAgent().response().takeResponseIfSuccessful()
+                    val headResponse = Fuel.head(updateUrl).userAgent().response().also(SpiralCoreData::printResponse).takeResponseIfSuccessful()
 
                     if (headResponse != null) {
                         printlnLocale("gurren.update.detected", "Spiral-Console", updateVersion, SpiralCoreData.jenkinsBuild, headResponse.contentLength.toFileSize())
@@ -73,11 +72,12 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                             }
 
                             if (signatureData != null || shouldDownloadUnsigned) {
-                                printlnLocale("gurren.update.downloading")
-                                val (_, response) = Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
-                                        .progress { readBytes, totalBytes -> print("\r${Gurren.PERCENT_FORMAT.format(readBytes.toDouble() / totalBytes.toDouble() * 100.0)}%") }
-                                        .userAgent().response()
-                                println("\rDownload complete!")
+                                val (_, response) = ProgressTracker(downloadingText = "gurren.update.downloading", downloadedText = "") {
+                                    Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
+                                            .progress(this::trackDownload)
+                                            .userAgent().response()
+                                }
+
                                 if (response.isSuccessful) {
                                     printlnLocale("gurren.update.downloaded")
                                 } else {
