@@ -9,6 +9,9 @@ interface SpiralCoreConfigAccessor {
         const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 2000
         const val DEFAULT_UPDATE_READ_TIMEOUT = 2000
 
+        const val DEFAULT_NETWORK_CONNECT_TIMEOUT = 5000
+        const val DEFAULT_NETWORK_READ_TIMEOUT = 5000
+
         const val DEFAULT_API_BASE = "https://api.abimon.org/api"
         const val DEFAULT_JENKINS_BASE = "https://jenkins.abimon.org"
     }
@@ -22,6 +25,11 @@ interface SpiralCoreConfigAccessor {
     val updateReadTimeout: Int
         get() = config?.updateReadTimeout ?: DEFAULT_UPDATE_READ_TIMEOUT
 
+    val networkConnectTimeout: Int
+        get() = config?.networkConnectTimeout ?: DEFAULT_NETWORK_CONNECT_TIMEOUT
+
+    val networkReadTimeout: Int
+        get() = config?.networkReadTimeout ?: DEFAULT_NETWORK_READ_TIMEOUT
 
     val apiBase: String
         get() = config?.apiBase ?: DEFAULT_API_BASE
