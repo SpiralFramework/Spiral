@@ -7,8 +7,8 @@ import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
+import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
-import info.spiralframework.console.imperator.ImperatorParser
 import info.spiralframework.core.*
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
@@ -205,7 +205,9 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
         }
 
         init {
-            SpiralLocale.addBundle("SpiralCommands")
+            SpiralLocale.addBundle("SpiralConsole")
+            SpiralLocale.addBundle("SpiralConsole-Mechanic")
+            SpiralLocale.addBundle("SpiralConsole-Pilot")
 
             DataHandler.byteArrayToMap = { byteArray -> SpiralSerialisation.JSON_MAPPER.readValue(byteArray, Map::class.java).mapKeys { (key) -> key.toString() } }
             DataHandler.stringToMap = { string -> SpiralSerialisation.JSON_MAPPER.readValue(string, Map::class.java).mapKeys { (key) -> key.toString() } }
@@ -239,7 +241,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
      */
     var operationScope: SpiralScope = SpiralScope("default", "> ")
 
-    val imperatorParser: ImperatorParser = ImperatorParser()
+    val parameterParser: ParameterParser = ParameterParser()
     val imperator: Imperator = BasicImperator()
 
     var currentExitCode: Int = 0

@@ -1,11 +1,9 @@
-package info.spiralframework.console.commands
+package info.spiralframework.console.commands.pilot
 
-import info.spiralframework.base.util.forEachFiltered
-import info.spiralframework.base.util.iterator
-import info.spiralframework.base.util.printlnErrLocale
-import info.spiralframework.base.util.printlnLocale
+import info.spiralframework.base.util.*
 import info.spiralframework.console.Cockpit
-import info.spiralframework.console.data.mechanic.ExtractArgs
+import info.spiralframework.console.CommandBuilders
+import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
@@ -15,7 +13,6 @@ import info.spiralframework.core.formats.archives.*
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
 import org.parboiled.Action
-import org.parboiled.support.Var
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -25,7 +22,7 @@ import java.util.zip.ZipFile
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
-class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
+class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
         /** Helper Variables */
         var keepLooping = AtomicBoolean(true)
@@ -39,49 +36,60 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
 
+    val builders = CommandBuilders(cockpit)
+
     /** Rules */
-    val extractRule = makeRule {
-        val argsVar = Var<ExtractArgs>()
+    val extractRule = makeRuleWith(::ExtractArgs) { argsVar ->
         Sequence(
-                Action<Any> { argsVar.set(ExtractArgs()) },
-                Localised("commands.extract.extract"),
+                Localised("commands.pilot.extract.extract"),
                 InlineWhitespace(),
-                ExistingFilePath(),
-                Action<Any> { argsVar.get().extractPath = pop() as? File; true },
+                FirstOf(
+                        Sequence(
+                                Localised("commands.pilot.extract.builder"),
+                                Action<Any> { argsVar.get().builder = true; true }
+                        ),
+                        Sequence(
+                                ExistingFilePath(),
+                                Action<Any> { argsVar.get().extractPath = pop() as? File; true }
+                        )
+                ),
                 ZeroOrMore(
                         InlineWhitespace(),
                         FirstOf(
                                 Sequence(
-                                        Localised("commands.extract.filter"),
+                                        Localised("commands.pilot.extract.filter"),
                                         InlineWhitespace(),
-                                        ParameterNoEscapes(),
-                                        Action<Any> { argsVar.get().filter = pop() as? String; true }
+                                        Filter(),
+                                        Action<Any> { argsVar.get().filter = pop() as Regex; true }
                                 ),
                                 Sequence(
-                                        Localised("commands.extract.dest_dir"),
+                                        Localised("commands.pilot.extract.dest_dir"),
                                         InlineWhitespace(),
                                         FilePath(),
-                                        Action<Any> { argsVar.get().destDir = pop() as? File; true }
+                                        Action<Any> { argsVar.get().destDir = pop() as File; true }
                                 ),
                                 Sequence(
-                                        Localised("commands.extract.leave_compressed"),
+                                        Localised("commands.pilot.extract.leave_compressed"),
                                         Action<Any> { argsVar.get().leaveCompressed = true; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.pilot.extract.builder"),
+                                        Action<Any> { argsVar.get().builder = true; true }
                                 )
                         )
-                ),
-                Action<Any> { push(argsVar.get()) }
+                )
         )
     }
-    val helpRule = makeRule { Localised("commands.help") }
+    val helpRule = makeRule { Localised("commands.pilot.help") }
     val identifyRule = makeRule {
         Sequence(
-                Localised("commands.identify"),
+                Localised("commands.pilot.identify"),
                 InlineWhitespace(),
                 FilePath()
         )
     }
 
-    val exitRule = makeRule { Localised("commands.exit") }
+    val exitRule = makeRule { Localised("commands.pilot.exit") }
 
     /** Commands */
 
@@ -130,11 +138,34 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
     }
 
     val extract = ParboiledSoldier(extractRule) { stack ->
-        val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
-        val regex = args.filter!!.toRegex()
+        val builderArgs = (stack[0] as ExtractArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
+        if (builderArgs.builder || builderArgs.extractPath == null || builderArgs.destDir == null) {
+            //Builder
+            if (builderArgs.extractPath == null) {
+                printLocale("commands.pilot.extract.builder.extract")
+                builderArgs.extractPath = builders.filePath()
+            }
+
+            if (builderArgs.destDir == null) {
+                printLocale("commands.pilot.extract.builder.dest_dir")
+                builderArgs.destDir = builders.filePath()
+            }
+
+            if (builderArgs.filter == null) {
+                printLocale("commands.pilot.extract.builder.filter")
+                builderArgs.filter = builders.filter() ?: Regex(".*")
+            }
+
+            if (builderArgs.leaveCompressed == null) {
+                printLocale("commands.pilot.extract.builder.compressed")
+                builderArgs.leaveCompressed = builders.boolean() ?: false
+            }
+        }
+
+        val args = builderArgs.makeImmutable(defaultFilter = Regex(".*"), defaultLeaveCompressed = false)
 
         if (args.extractPath == null) {
-            printlnErrLocale("commands.extract.err_no_extract")
+            printlnErrLocale("commands.pilot.extract.err_no_extract")
 
             return@ParboiledSoldier FAILURE
         }
@@ -146,7 +177,7 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
         }
 
         if (args.destDir == null) {
-            printlnErrLocale("commands.extract.err_no_dest_dir")
+            printlnErrLocale("commands.pilot.extract.err_no_dest_dir")
 
             return@ParboiledSoldier FAILURE
         }
@@ -159,25 +190,26 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
 
-        val result = GurrenMechanic.EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
+        val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
+                .asReversed()
                 .firstOrNull()
                 ?.obj
 
         val files: Iterator<Pair<String, InputStream>>
-        val totalCount: Int
+        val totalCount: Long
 
         when (result) {
             null -> {
-                printlnErrLocale("commands.extract.err_no_format_for", args.extractPath)
+                printlnErrLocale("commands.pilot.extract.err_no_format_for", args.extractPath)
 
                 return@ParboiledSoldier FAILURE
             }
 
             is AWB -> {
                 files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
-                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }
+                totalCount = result.entries.count { entry -> entry.id.toString().matches(args.filter!!) }.toLong()
             }
 
             is CPK -> {
@@ -186,12 +218,12 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
                 } else {
                     result.files.iterator { entry -> entry.name to entry.inputStream }
                 }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
             }
 
             is Pak -> {
                 files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }
+                totalCount = result.files.count { entry -> entry.index.toString().matches(args.filter!!) }.toLong()
             }
 
             is SPC -> {
@@ -200,7 +232,7 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
                 } else {
                     result.files.iterator { entry -> entry.name to entry.inputStream }
                 }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
             }
 
             is SRD -> {
@@ -214,54 +246,45 @@ class Gurren(override val cockpit: Cockpit<*>) : CommandClass {
                     }.flatten()
                 }.flatten()
                 files = entries.iterator { pair -> pair.first to pair.second() }
-                totalCount = entries.count { pair -> pair.first.matches(regex) }
+                totalCount = entries.count { pair -> pair.first.matches(args.filter!!) }.toLong()
             }
 
             is WAD -> {
                 files = result.files.iterator { entry -> entry.name to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
             }
 
             is ZipFile -> {
                 files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
-                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }
+                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(args.filter!!) }.toLong()
             }
 
             else -> {
-                printlnErrLocale("commands.extract.err_unk_format", result)
+                printlnErrLocale("commands.pilot.extract.err_unk_format", result)
 
                 return@ParboiledSoldier FAILURE
             }
         }
 
-        val per = (100.0 / totalCount.toDouble())
-        var last: Double = 0.0
-
         if (compression.isEmpty())
-            printlnLocale("commands.extract.archive_type", result::class.simpleName)
+            printlnLocale("commands.pilot.extract.archive_type", result::class.simpleName)
         else
-            printlnLocale("commands.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
+            printlnLocale("commands.pilot.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
                 format::class.simpleName ?: format::class.jvmName
             }, result::class.simpleName)
-        printlnLocale("commands.extract.extracting_files", totalCount, args.destDir)
+        printlnLocale("commands.pilot.extract.extracting_files", totalCount, args.destDir)
 
-        val printOut: (Double) -> Unit = if (cockpit.args.ansiEnabled) { percent ->
-            print("\r${GurrenMechanic.PERCENT_FORMAT.format(percent)}%")
-        } else { percent ->
-            print("\r${GurrenMechanic.PERCENT_FORMAT.format(percent)}%")
+        var extracted: Long = 0
+        ProgressTracker(downloadingText = "commands.pilot.extract.extracting_progress", downloadedText = "commands.pilot.extract.finished") {
+            trackDownload(0, totalCount)
+            files.forEachFiltered({ pair -> pair.first.matches(args.filter!!) }) { (fileName, raw) ->
+                val file = File(args.destDir, fileName)
+                file.parentFile.mkdirs()
+
+                raw.use { stream -> FileOutputStream(file).use(stream::copyToStream) }
+                trackDownload(++extracted, totalCount)
+            }
         }
-
-        files.forEachFiltered({ pair -> pair.first.matches(regex) }) { (fileName, raw) ->
-            val file = File(args.destDir, fileName)
-            file.parentFile.mkdirs()
-
-            raw.use { stream -> FileOutputStream(file).use(stream::copyToStream) }
-            last += per
-            printOut(last)
-        }
-
-        println()
-        printlnLocale("commands.extract.finished")
 
         return@ParboiledSoldier SUCCESS
     }

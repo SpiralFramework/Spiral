@@ -14,6 +14,8 @@ import java.io.OutputStream
 import java.util.zip.ZipFile
 
 object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
+    override val name: String = "Wad"
+
     /**
      * Attempts to read the data source as [T]
      *

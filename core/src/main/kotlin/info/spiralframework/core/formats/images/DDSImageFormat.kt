@@ -9,11 +9,18 @@ import info.spiralframework.formats.utils.readInt32LE
 import info.spiralframework.formats.utils.readInt64LE
 import org.abimon.karnage.raw.DXT1PixelData
 import java.awt.image.BufferedImage
+import java.io.InputStream
 
-object DDSImageFormat: ReadableSpiralFormat<BufferedImage> {
-    val MAGIC_NUMBER = 0x2053444431534444
+abstract class DDSImageFormat(override val name: String, val typeMagic: Int): ReadableSpiralFormat<BufferedImage> {
+    companion object {
+        val MAGIC_NUMBER = 0x2053444431534444
+        val DXT1_MAGIC = 0x31545844
 
-    val DXT1_MAGIC = 0x31545844
+        val DXT1 = object: DDSImageFormat("DDS DXT1", DXT1_MAGIC) {
+            override fun readImage(width: Int, height: Int, stream: InputStream, ddsType: Int): FormatResult<BufferedImage> =
+                    FormatResult.Success(DXT1PixelData.read(width, height, stream), 1.0)
+        }
+    }
 
     /**
      * Attempts to read the data source as [T]
@@ -45,12 +52,14 @@ object DDSImageFormat: ReadableSpiralFormat<BufferedImage> {
             stream.skip(36)
             stream.readInt32LE() //caps2
 
-            return when (ddsType) {
-                DXT1_MAGIC -> FormatResult.Success(DXT1PixelData.read(width, height, stream), 1.0)
-                else -> FormatResult.Fail(1.0)
-            }
+            if (ddsType != typeMagic)
+                return FormatResult.Fail(1.0)
+
+            return readImage(width, height, stream, ddsType)
         } finally {
             stream.close()
         }
     }
+
+    abstract fun readImage(width: Int, height: Int, stream: InputStream, ddsType: Int): FormatResult<BufferedImage>
 }

@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats.audio
 
 object AudioFormats {
-    var wav = object: SpiralAudioFormat() {}
-    var ogg = object: SpiralAudioFormat() {}
-    var mp3 = object: SpiralAudioFormat() {}
+    var wav = object: SpiralAudioFormat("wav") {}
+    var ogg = object: SpiralAudioFormat("ogg") {}
+    var mp3 = object: SpiralAudioFormat("mp3") {}
 }

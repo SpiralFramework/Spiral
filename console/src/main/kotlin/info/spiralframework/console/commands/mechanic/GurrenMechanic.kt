@@ -1,22 +1,22 @@
-package info.spiralframework.console.commands
+package info.spiralframework.console.commands.mechanic
 
-import info.spiralframework.base.util.forEachFiltered
-import info.spiralframework.base.util.iterator
-import info.spiralframework.base.util.printlnErrLocale
-import info.spiralframework.base.util.printlnLocale
+import info.spiralframework.base.util.*
 import info.spiralframework.console.Cockpit
-import info.spiralframework.console.data.mechanic.ExtractArgs
+import info.spiralframework.console.commands.data.CompileArgs
+import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.formats.SpiralFormat
+import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
 import org.parboiled.Action
-import org.parboiled.support.Var
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -27,21 +27,24 @@ import kotlin.reflect.jvm.jvmName
 @Suppress("unused")
 class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
-        val EXTRACTABLE_ARCHIVES = arrayOf(
+        val EXTRACTABLE_ARCHIVES = arrayOf<ReadableSpiralFormat<out Any>>(
                 AWBFormat, CpkFormat, PakFormat,
                 SpcFormat, SRDFormat, WadFormat,
                 ZipFormat
+        )
+
+        val COMPILABLE_ARCHIVES = arrayOf<WritableSpiralFormat>(
+                CpkFormat, PakFormat, SpcFormat,
+                WadFormat, ZipFormat
         )
 
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
 
     /** Rules */
-    open val separatorRule = makeRule { FirstOf(InlineWhitespace(), '=') }
-    val extractRule = makeRule {
-        val argsVar = Var<ExtractArgs>()
+    val separatorRule = makeRule { FirstOf(InlineWhitespace(), '=') }
+    val extractRule = makeRuleWith(::ExtractArgs) { argsVar ->
         Sequence(
-                Action<Any> { argsVar.set(ExtractArgs()) },
                 Localised("commands.mechanic.extract.extract"),
                 ParamSeparator(),
                 ExistingMechanicFilePath(),
@@ -52,8 +55,8 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                                 Sequence(
                                         Localised("commands.mechanic.extract.filter"),
                                         ParamSeparator(),
-                                        MechanicParameterNoEscapes(),
-                                        Action<Any> { argsVar.get().filter = pop() as? String; true }
+                                        MechanicFilter(),
+                                        Action<Any> { argsVar.get().filter = pop() as? Regex; true }
                                 ),
                                 Sequence(
                                         Localised("commands.mechanic.extract.dest_dir"),
@@ -66,17 +69,55 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                                         Action<Any> { argsVar.get().leaveCompressed = true; true }
                                 )
                         )
-                ),
-                Action<Any> { push(argsVar.get()) }
+                )
         )
     }
-    val environmentRule = makeRule { IgnoreCase("environment") }
+    val compileRule = makeRuleWith(::CompileArgs) { argsVar ->
+        Sequence(
+                Localised("commands.mechanic.compile.compile"),
+                ParamSeparator(),
+                MechanicFilePath(),
+                Action<Any> { argsVar.get().compilingDir = pop() as? File; true },
+                ZeroOrMore(
+                        ParamSeparator(),
+                        FirstOf(
+                                Sequence(
+                                        Localised("commands.mechanic.compile.destination"),
+                                        FirstOf(
+                                                Sequence(
+                                                        Localised("commands.mechanic.compile.destination_empty"),
+                                                        ParamSeparator(),
+                                                        Action<Any> { argsVar.get().compileDestination = CompileArgs.EMPTY; true }
+                                                ),
+                                                Sequence(
+                                                        MechanicFilePath(),
+                                                        ParamSeparator(),
+                                                        Action<Any> { argsVar.get().compileDestination = pop() as File; true }
+                                                )
+                                        )
+                                ),
+                                Sequence(
+                                        Localised("commands.mechanic.compile.format"),
+                                        FirstOf(COMPILABLE_ARCHIVES.map(SpiralFormat::name).toTypedArray()),
+                                        ParamSeparator(),
+                                        Action<Any> { argsVar.get().formatOverride = COMPILABLE_ARCHIVES.first { format -> format.name.equals(pop() as String, true) }; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.mechanic.compile.filter"),
+                                        ""
+                                )
+                        )
+                )
+        )
+    }
+
+    val environmentRule = makeRule { Localised("commands.mechanic.environment") }
 
     /** Commands */
 
     val extract = ParboiledSoldier(extractRule) { stack ->
-        val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
-        val regex = args.filter!!.toRegex()
+        val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = Regex(".*"), defaultLeaveCompressed = false)
+        val regex = args.filter!!
 
         if (args.extractPath == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_extract")
@@ -112,7 +153,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 ?.obj
 
         val files: Iterator<Pair<String, InputStream>>
-        val totalCount: Int
+        val totalCount: Long
 
         when (result) {
             null -> {
@@ -123,7 +164,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
 
             is AWB -> {
                 files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
-                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }
+                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }.toLong()
             }
 
             is CPK -> {
@@ -132,12 +173,12 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 } else {
                     result.files.iterator { entry -> entry.name to entry.inputStream }
                 }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
             }
 
             is Pak -> {
                 files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }
+                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }.toLong()
             }
 
             is SPC -> {
@@ -146,7 +187,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                 } else {
                     result.files.iterator { entry -> entry.name to entry.inputStream }
                 }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
             }
 
             is SRD -> {
@@ -160,17 +201,17 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                     }.flatten()
                 }.flatten()
                 files = entries.iterator { pair -> pair.first to pair.second() }
-                totalCount = entries.count { pair -> pair.first.matches(regex) }
+                totalCount = entries.count { pair -> pair.first.matches(regex) }.toLong()
             }
 
             is WAD -> {
                 files = result.files.iterator { entry -> entry.name to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }
+                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
             }
 
             is ZipFile -> {
                 files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
-                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }
+                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }.toLong()
             }
 
             else -> {
@@ -180,9 +221,6 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
             }
         }
 
-        val per = (100.0 / totalCount.toDouble())
-        var last: Double = 0.0
-
         if (compression.isEmpty())
             printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName)
         else
@@ -191,19 +229,16 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
             }, result::class.simpleName)
         printlnLocale("commands.mechanic.extract.extracting_files", totalCount, args.destDir)
 
-        val printOut: (Double) -> Unit = if (cockpit.args.ansiEnabled) { percent ->
-            print("\r${PERCENT_FORMAT.format(percent)}%")
-        } else { percent ->
-            print("\r${PERCENT_FORMAT.format(percent)}%")
-        }
+        var extracted: Long = 0
+        ProgressTracker(downloadingText = "commands.extract.extracting_progress", downloadedText = "commands.extract.finished") {
+            trackDownload(0, totalCount)
+            files.forEachFiltered({ pair -> pair.first.matches(regex) }) { (fileName, raw) ->
+                val file = File(args.destDir, fileName)
+                file.parentFile.mkdirs()
 
-        files.forEachFiltered({ pair -> pair.first.matches(regex) }) { (fileName, raw) ->
-            val file = File(args.destDir, fileName)
-            file.parentFile.mkdirs()
-
-            raw.use { stream -> FileOutputStream(file).use(stream::copyToStream) }
-            last += per
-            printOut(last)
+                raw.use { stream -> FileOutputStream(file).use(stream::copyToStream) }
+                trackDownload(++extracted, totalCount)
+            }
         }
 
         println()
@@ -211,7 +246,10 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
 
         return@ParboiledSoldier SUCCESS
     }
-
+    val compile = ParboiledSoldier(compileRule) { stack ->
+        println("We're in boyo")
+        return@ParboiledSoldier SUCCESS
+    }
     val environment = ParboiledSoldier(environmentRule) {
         println(SpiralCoreData.ENVIRONMENT)
         return@ParboiledSoldier SUCCESS
