@@ -1,8 +1,7 @@
-package info.spiralframework.console.imperator
+package info.spiralframework.console.data
 
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.console.data.errors.LocaleError
-import info.spiralframework.osl.AllButMatcher
 import info.spiralframework.osl.SpiralParser
 import org.parboiled.Action
 import org.parboiled.Parboiled
@@ -13,10 +12,10 @@ import org.parboiled.support.Var
 import java.io.File
 
 @BuildParseTree
-open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
+open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
     companion object {
         const val MECHANIC_SEPARATOR = '\u001D'
-        operator fun invoke(): ImperatorParser = Parboiled.createParser(ImperatorParser::class.java, true)
+        operator fun invoke(): ParameterParser = Parboiled.createParser(ParameterParser::class.java, true)
     }
 
     @Cached
@@ -359,4 +358,35 @@ open class ImperatorParser(parboiled: Boolean) : SpiralParser(parboiled) {
     }
 
     open fun ParamSeparator(): Rule = IgnoreCase(MECHANIC_SEPARATOR)
+
+    val TRUE_NAMES = arrayOf("yes", "true", "affirmative")
+    val FALSE_NAMES = arrayOf("no", "false", "negative")
+    open fun Boolean(): Rule = FirstOf(
+            Sequence(FirstOf(TRUE_NAMES), Action<Any> { push(true) }),
+            Sequence(FirstOf(FALSE_NAMES), Action<Any> { push(false) })
+    )
+
+    open fun Filter(): Rule =
+            FirstOf(
+                    Sequence("*", Action<Any> { push(".*".toRegex()) }),
+                    Sequence(
+                            ParameterNoEscapes(),
+                            Action<Any> {
+                                val regex = pop() as String
+                                return@Action kotlin.runCatching { regex.toRegex() }.getOrNull()?.let(this::push) ?: false
+                            }
+                    )
+            )
+
+    open fun MechanicFilter(): Rule =
+            FirstOf(
+                    Sequence("*", Action<Any> { push(".*".toRegex()) }),
+                    Sequence(
+                            MechanicParameterNoEscapes(),
+                            Action<Any> {
+                                val regex = pop() as String
+                                return@Action kotlin.runCatching { regex.toRegex() }.getOrNull()?.let(this::push) ?: false
+                            }
+                    )
+            )
 }

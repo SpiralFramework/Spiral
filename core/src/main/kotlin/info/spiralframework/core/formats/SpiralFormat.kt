@@ -7,7 +7,8 @@ import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 
 interface SpiralFormat {
-    //val name: String
+    /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
+    val name: String
     //val extension: String?
 }
 

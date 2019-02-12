@@ -11,7 +11,7 @@ import info.spiralframework.formats.utils.DataSource
 import java.io.File
 import java.io.OutputStream
 
-open class SpiralAudioFormat: ReadableSpiralFormat<File>, WritableSpiralFormat {
+open class SpiralAudioFormat(override val name: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
 
     /**

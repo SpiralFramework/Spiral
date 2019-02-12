@@ -10,6 +10,9 @@ import java.awt.image.BufferedImage
 import java.io.OutputStream
 
 object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
+    //TODO: Separate the different "sub formats" into their own objects
+    override val name: String = "shtx"
+
     val SHTX_MAGIC_NUMBER = 0x58544853
     /** SHTXFs */
     val RGBA_PALETTE_MAGIC_NUMBER = 0x7346

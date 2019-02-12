@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import java.text.DecimalFormat
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 fun <T> arbitraryProgressBar(
@@ -79,7 +80,7 @@ fun arbitraryProgressBar(
 
 val PERCENT_FORMAT = DecimalFormat("00.00")
 
-class ProgressTracker(
+open class ProgressTracker protected constructor(
         val trackLength: Int = 10,
         val start: Char = '[', val end: Char = ']',
         val trackSpace: Char = ' ', val trackFilled: Char = '#',
@@ -87,6 +88,22 @@ class ProgressTracker(
         downloadedText: String = "ascii.progress.loaded",
         val showPercentage: Boolean = true
 ) {
+    companion object {
+        val SILENT_TRACKER: ProgressTracker = object: ProgressTracker() {
+            override fun finishedDownload() {}
+            override fun trackDownload(downloaded: Long, total: Long) {}
+        }
+
+        operator fun invoke(trackLength: Int = 10,
+                            start: Char = '[', end: Char = ']',
+                            trackSpace: Char = ' ', trackFilled: Char = '#',
+                            downloadingText: String = "ascii.progress.loading",
+                            downloadedText: String = "ascii.progress.loaded",
+                            showPercentage: Boolean = true): ProgressTracker {
+            return ProgressTracker(trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+        }
+    }
+
     val downloadingText: String? = downloadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
     val downloadedText: String? = downloadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
     val percentPerTrackSpace = ceil(100.0 / trackLength.toDouble())
@@ -106,13 +123,13 @@ class ProgressTracker(
     }.toTypedArray()
     val blankTrack = buildString {
         append('\r')
-        for (i in 0 until (trackLength + 10 + downloadingText.length))
+        for (i in 0 until (trackLength + 12 + downloadingText.length))
             append(' ')
     }
 
-    fun trackDownload(downloaded: Long, total: Long) {
+    open fun trackDownload(downloaded: Long, total: Long) {
         val percent = (downloaded * 100.0) / total.toDouble()
-        val filled = floor(percent / percentPerTrackSpace).roundToInt()
+        val filled = min(tracks.size - 1, floor(percent / percentPerTrackSpace).roundToInt())
         print(buildString {
             append('\r')
             if (showPercentage) {
@@ -121,6 +138,15 @@ class ProgressTracker(
             }
             append(tracks[filled])
         })
+    }
+
+    open fun finishedDownload() {
+        print(buildString {
+            append('\r')
+            append(blankTrack)
+            append('\r')
+        })
+        downloadedText?.let(::println)
     }
 }
 
@@ -137,11 +163,6 @@ fun <T> ProgressTracker(
     try {
         return tracker.op()
     } finally {
-        print(buildString {
-            append('\r')
-            append(tracker.blankTrack)
-            append('\r')
-        })
-        tracker.downloadedText?.let(::println)
+        tracker.finishedDownload()
     }
 }
