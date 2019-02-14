@@ -1,11 +1,11 @@
 package info.spiralframework.osl.drills.lin
 
-import info.spiralframework.osl.OpenSpiralLanguageParser
-import info.spiralframework.osl.SpiralDrillBit
-import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.*
+import info.spiralframework.osl.OpenSpiralLanguageParser
+import info.spiralframework.osl.SpiralDrillBit
+import info.spiralframework.osl.drills.DrillHead
 import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
@@ -125,7 +125,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                 for (i in (if (start < limit) start until limit else start downTo limit)) {
                                     val parser = this.copy()
                                     parser[variableName] = groups.size
-                                    val result = parser.parse("OSLProxy Script\n${context.match}")
+                                    val result = parser.parse("OSL Script\n${context.match}")
                                     if (!result.hasErrors()) {
                                         groups.add(result.valueStack.reversed().toTypedArray())
 
