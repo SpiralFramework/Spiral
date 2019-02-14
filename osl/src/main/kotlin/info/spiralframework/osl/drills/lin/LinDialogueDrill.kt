@@ -1,15 +1,15 @@
 package info.spiralframework.osl.drills.lin
 
-import info.spiralframework.osl.AllButMatcher
-import info.spiralframework.osl.GameContext
-import info.spiralframework.osl.OpenSpiralLanguageParser
-import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
+import info.spiralframework.formats.game.hpa.UDG
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr1.DR1TrialCameraEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2TrialCameraEntry
+import info.spiralframework.formats.scripting.lin.udg.UDGTextEntry
+import info.spiralframework.osl.OpenSpiralLanguageParser
+import info.spiralframework.osl.drills.DrillHead
 import org.parboiled.Action
 import org.parboiled.Rule
 import org.parboiled.support.Var
@@ -128,6 +128,11 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
                     TextEntry(text, -1),
                     WaitFrameEntry.DR2,
                     WaitForInputEntry.DR2
+            )
+            UDG -> arrayOf(
+                    UnknownEntry(0x15, intArrayOf(speakerID)),
+                    UDGTextEntry(text, -1),
+                    WaitForInputEntry.UDG
             )
             else -> TODO("Dialogue is not documented for $game")
         })

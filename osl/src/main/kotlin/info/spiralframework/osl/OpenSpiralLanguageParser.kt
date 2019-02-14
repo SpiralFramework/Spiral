@@ -523,6 +523,10 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     Action<Any> { gameContext is info.spiralframework.osl.GameContext.HopesPeakGameContext },
                     FirstOf(
                             FirstOf(extraRules.lin),
+                            Sequence(
+                                    "[Override] ",
+                                    NamedLinSpiralDrill
+                            ),
                             BasicLinTextDrill,
                             LinDialogueDrill,
                             LinSpriteDrill,
