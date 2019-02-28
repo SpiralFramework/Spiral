@@ -29,6 +29,7 @@ object SpiralLocale {
     }
 
     fun changeLanguage(locale: Locale) {
+        Locale.setDefault(locale)
         val oldArray = localisationBundles.toTypedArray()
         _localisationBundles.clear()
         _localisationBundles.addAll(oldArray.map { bundle -> ResourceBundle.getBundle(bundle.baseBundleName, locale) })

@@ -10,6 +10,8 @@ import java.io.IOException
 import javax.imageio.ImageIO
 
 open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, ReadableSpiralFormat<BufferedImage> {
+    override val name: String = names.firstOrNull() ?: this::class.java.name
+
     /**
      * Attempts to read the data source as [T]
      *

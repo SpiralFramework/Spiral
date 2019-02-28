@@ -1,11 +1,11 @@
 package info.spiralframework.core
 
 import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
-import info.spiralframework.base.util.UTF8String
-import info.spiralframework.base.util.locale
-import info.spiralframework.base.util.md5Hash
+import info.spiralframework.base.util.*
 import info.spiralframework.formats.utils.DataHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -96,36 +96,27 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
         }
 
     fun checkForUpdate(project: String): Pair<String, Int>? {
-//        val (_, checkForUpdateResponse) = Fuel.get(String.format(API_CHECK_FOR_UPDATE, project, version))
-//                .userAgent()
-//                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
-//                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
-//                .response()
-//        if (checkForUpdateResponse.isSuccessful && String(checkForUpdateResponse.data) == "true") {
-//            val (_, latestBuildResponse) = Fuel.get(String.format(API_LATEST_BUILD, project))
-//                    .userAgent()
-//                    .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
-//                    .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
-//                    .response()
-//
-//            if (latestBuildResponse.isSuccessful) {
-//                val latestBuild = String(latestBuildResponse.data)
-//                return String.format(JENKINS_BUILD, project, latestBuild, project.toLowerCase(), fileName) to latestBuild
-//            }
-//        }
-
-        if (jenkinsBuild == null)
-            return null
-        val latestBuild = Fuel.get(String.format(apiLatestBuild, project))
+        val updateResult = arbitraryProgressBar(loadingText = "gurren.update.checking", loadedText = "") {
+            if (jenkinsBuild == null)
+                return@arbitraryProgressBar null
+            val latestBuild = Fuel.get(String.format(apiLatestBuild, project))
                     .userAgent()
                     .timeout(updateConnectTimeout) //Time out if it takes longer than 2s to connect to our API
                     .timeoutRead(updateReadTimeout) //Time out if it takes longer than 2s to read a response
-                    .response().takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull() ?: return null
+                    .response().also(this::printResponse).takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull() ?: return@arbitraryProgressBar null
 
-        if (latestBuild > jenkinsBuild!!)
-            return String.format(jenkinsArtifactForBuild, project, latestBuild.toString(), project.toLowerCase(), fileName) to latestBuild
+            if (latestBuild > jenkinsBuild!!)
+                return@arbitraryProgressBar String.format(jenkinsArtifactForBuild, project, latestBuild.toString(), project.toLowerCase(), fileName) to latestBuild
 
-        return null
+            return@arbitraryProgressBar null
+        }
+
+        if (updateResult == null)
+            printlnLocale("gurren.update.none")
+        else
+            printlnLocale("gurren.update.available")
+
+        return updateResult
     }
 
     fun buildForVersion(version: String): Int? =
@@ -133,7 +124,11 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
                 .userAgent()
                 .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
                 .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
-                .response().takeIfSuccessful()?.let { data -> String(data) }?.toIntOrNull()
+                .response().also(this::printResponse).takeIfSuccessful()?.let { data -> String(data) }?.toIntOrNull()
+
+    fun printResponse(response: Triple<Request, Response, *>) {
+        LOGGER.trace(response.first.method.value + " " + response.second.url.toExternalForm() + ": " + response.second.statusCode + " / " + String(response.second.data))
+    }
 
     init {
         SpiralLocale.addBundle("SpiralCore")

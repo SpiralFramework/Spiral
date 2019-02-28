@@ -431,7 +431,7 @@ object OSLProxy {
                                                     )
                                             ),
                                             Sequence(
-                                                    info.spiralframework.osl.AllButMatcher(charArrayOf('\\', '"')),
+                                                    AllButMatcher(charArrayOf('\\', '"')),
                                                     Action<Any> { str.set(str.get() + match()) }
                                             )
                                     )

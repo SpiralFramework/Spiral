@@ -14,6 +14,8 @@ import java.io.OutputStream
 import java.util.zip.ZipFile
 
 object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
+    override val name: String = "Pak"
+
     /**
      * Attempts to read the data source as [T]
      *
