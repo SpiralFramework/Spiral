@@ -4,21 +4,24 @@ import info.spiralframework.base.util.*
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ExtractArgs
+import info.spiralframework.console.commands.shared.GurrenShared
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.archives.*
-import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
+import info.spiralframework.formats.utils.readInt16LE
+import info.spiralframework.formats.utils.readInt32LE
+import info.spiralframework.formats.utils.readXBytes
+import info.spiralframework.formats.video.SFL
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.zip.ZipFile
+import kotlin.math.max
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
@@ -26,12 +29,6 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
         /** Helper Variables */
         var keepLooping = AtomicBoolean(true)
-
-        val EXTRACTABLE_ARCHIVES = arrayOf(
-                AWBFormat, CpkFormat, PakFormat,
-                SpcFormat, SRDFormat, WadFormat,
-                ZipFormat
-        )
 
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
@@ -190,81 +187,32 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
 
-        val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
+        val result = GurrenShared.EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
                 .asReversed()
                 .firstOrNull()
                 ?.obj
 
+        if (result == null) {
+            printlnErrLocale("commands.mechanic.extract.err_no_format_for", args.extractPath)
+
+            return@ParboiledSoldier info.spiralframework.console.imperator.ParboiledSoldier.FAILURE
+        }
+
         val files: Iterator<Pair<String, InputStream>>
         val totalCount: Long
 
-        when (result) {
-            null -> {
-                printlnErrLocale("commands.pilot.extract.err_no_format_for", args.extractPath)
+        val fileResult = GurrenShared.extractGetFilesForResult(args, result, args.filter!!)
 
-                return@ParboiledSoldier FAILURE
-            }
+        if (fileResult == null) {
+            printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
 
-            is AWB -> {
-                files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
-                totalCount = result.entries.count { entry -> entry.id.toString().matches(args.filter!!) }.toLong()
-            }
-
-            is CPK -> {
-                files = if (args.leaveCompressed!!) {
-                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-                } else {
-                    result.files.iterator { entry -> entry.name to entry.inputStream }
-                }
-                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
-            }
-
-            is Pak -> {
-                files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.index.toString().matches(args.filter!!) }.toLong()
-            }
-
-            is SPC -> {
-                files = if (args.leaveCompressed!!) {
-                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-                } else {
-                    result.files.iterator { entry -> entry.name to entry.inputStream }
-                }
-                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
-            }
-
-            is SRD -> {
-                val entries = result.entries.groupBy { entry -> entry.dataType }
-                        .values.map { entries ->
-                    entries.mapIndexed { index, entry ->
-                        listOf(
-                                "$index-${entry.dataType}-data.dat" to entry::dataStream,
-                                "$index-${entry.dataType}-subdata.dat" to entry::subdataStream
-                        )
-                    }.flatten()
-                }.flatten()
-                files = entries.iterator { pair -> pair.first to pair.second() }
-                totalCount = entries.count { pair -> pair.first.matches(args.filter!!) }.toLong()
-            }
-
-            is WAD -> {
-                files = result.files.iterator { entry -> entry.name to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.name.matches(args.filter!!) }.toLong()
-            }
-
-            is ZipFile -> {
-                files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
-                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(args.filter!!) }.toLong()
-            }
-
-            else -> {
-                printlnErrLocale("commands.pilot.extract.err_unk_format", result)
-
-                return@ParboiledSoldier FAILURE
-            }
+            return@ParboiledSoldier FAILURE
         }
+
+        files = fileResult.first
+        totalCount = fileResult.second
 
         if (compression.isEmpty())
             printlnLocale("commands.pilot.extract.archive_type", result::class.simpleName)
@@ -288,6 +236,37 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
         return@ParboiledSoldier SUCCESS
     }
+
+    val debug = ParboiledSoldier(makeRule { IgnoreCase("debug") }) { stack ->
+        val sfl = SFL(File("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/dr1_data/Dr1/data/all/flash/fla_735/0")::inputStream)!!
+        val commandTable = sfl.tables.last()
+
+        commandTable.inputStream.use { stream ->
+            stream.skip(0x10)
+            while (stream.available() > 0) {
+                val dataSize = stream.readInt32LE()
+                val headerSize = stream.readInt16LE()
+                val commandCount = stream.readInt16LE()
+                val header = stream.readXBytes(max(0, headerSize - 8))
+                val data = stream.readXBytes(dataSize).inputStream()
+
+                println("Section (${header.joinToString { it.toHex() }}) | ${String(header)}")
+
+                var currentCommand = 1
+                while (data.available() > 0) {
+                    val op = data.readInt16LE()
+                    val paramCount = data.readInt16LE()
+                    val params = IntArray(paramCount) { data.read() }
+
+                    println("\tCommand ${currentCommand++}/$commandCount: ${op.toHex()} (${params.joinToString { it.toHex() }})")
+                }
+            }
+        }
+
+        return@ParboiledSoldier SUCCESS
+    }
+
+    fun Number.toHex(): String = "0x${(this.toInt() and 0xFF).toString(16).toUpperCase().padStart(2, '0')}"
 
     val exit = ParboiledSoldier(exitRule, "default") {
         printlnLocale("commands.exit.leave")

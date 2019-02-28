@@ -1,38 +1,33 @@
 package info.spiralframework.console.commands.mechanic
 
-import info.spiralframework.base.util.*
+import info.spiralframework.base.util.ProgressTracker
+import info.spiralframework.base.util.forEachFiltered
+import info.spiralframework.base.util.printlnErrLocale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs
+import info.spiralframework.console.commands.shared.GurrenShared
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
-import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.utils.copyToStream
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
-import java.util.zip.ZipFile
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
 class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     companion object {
-        val EXTRACTABLE_ARCHIVES = arrayOf<ReadableSpiralFormat<out Any>>(
-                AWBFormat, CpkFormat, PakFormat,
-                SpcFormat, SRDFormat, WadFormat,
-                ZipFormat
-        )
-
         val COMPILABLE_ARCHIVES = arrayOf<WritableSpiralFormat>(
                 CpkFormat, PakFormat, SpcFormat,
                 WadFormat, ZipFormat
@@ -145,81 +140,32 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
 
-        val result = EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
+        val result = GurrenShared.EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
                 .asReversed()
                 .firstOrNull()
                 ?.obj
 
+        if (result == null) {
+            printlnErrLocale("commands.mechanic.extract.err_no_format_for", args.extractPath)
+
+            return@ParboiledSoldier info.spiralframework.console.imperator.ParboiledSoldier.FAILURE
+        }
+
         val files: Iterator<Pair<String, InputStream>>
         val totalCount: Long
 
-        when (result) {
-            null -> {
-                printlnErrLocale("commands.mechanic.extract.err_no_format_for", args.extractPath)
+        val fileResult = GurrenShared.extractGetFilesForResult(args, result, regex)
 
-                return@ParboiledSoldier FAILURE
-            }
+        if (fileResult == null) {
+            printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
 
-            is AWB -> {
-                files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
-                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }.toLong()
-            }
-
-            is CPK -> {
-                files = if (args.leaveCompressed!!) {
-                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-                } else {
-                    result.files.iterator { entry -> entry.name to entry.inputStream }
-                }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-            }
-
-            is Pak -> {
-                files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }.toLong()
-            }
-
-            is SPC -> {
-                files = if (args.leaveCompressed!!) {
-                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-                } else {
-                    result.files.iterator { entry -> entry.name to entry.inputStream }
-                }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-            }
-
-            is SRD -> {
-                val entries = result.entries.groupBy { entry -> entry.dataType }
-                        .values.map { entries ->
-                    entries.mapIndexed { index, entry ->
-                        listOf(
-                                "$index-${entry.dataType}-data.dat" to entry::dataStream,
-                                "$index-${entry.dataType}-subdata.dat" to entry::subdataStream
-                        )
-                    }.flatten()
-                }.flatten()
-                files = entries.iterator { pair -> pair.first to pair.second() }
-                totalCount = entries.count { pair -> pair.first.matches(regex) }.toLong()
-            }
-
-            is WAD -> {
-                files = result.files.iterator { entry -> entry.name to entry.inputStream }
-                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-            }
-
-            is ZipFile -> {
-                files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
-                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }.toLong()
-            }
-
-            else -> {
-                printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
-
-                return@ParboiledSoldier FAILURE
-            }
+            return@ParboiledSoldier FAILURE
         }
+
+        files = fileResult.first
+        totalCount = fileResult.second
 
         if (compression.isEmpty())
             printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName)
