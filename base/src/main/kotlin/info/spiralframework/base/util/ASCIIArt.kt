@@ -1,20 +1,26 @@
 package info.spiralframework.base.util
 
+import info.spiralframework.base.SpiralLocale
 import kotlinx.coroutines.*
+import java.text.DecimalFormat
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 fun <T> arbitraryProgressBar(
         delay: Long = 100, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
-        loadingText: String = "LOADING",
-        loadedText: String = "Loaded!",
+        loadingText: String = "ascii.arbitrary.loading",
+        loadedText: String = "ascii.arbitrary.loaded!",
         operation: () -> T
 ): T {
     val arbitrary = arbitraryProgressBar(delay, limit, start, end, space, indicator, loadingText, loadedText)
     try {
         return operation()
     } finally {
-        arbitrary.cancel()
+        runBlocking { arbitrary.cancelAndJoin() } //This feels messy; is there a better way?
     }
 }
 
@@ -22,9 +28,12 @@ fun arbitraryProgressBar(
         delay: Long = 100, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
-        loadingText: String = "LOADING",
-        loadedText: String = "Loaded!"
+        loadingText: String = "ascii.arbitrary.loading",
+        loadedText: String = "ascii.arbitrary.loaded"
 ): Job = GlobalScope.launch {
+    val localisedLoading = loadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+    val localisedLoaded = loadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+
     try {
         while (isActive) {
             var progress: Int = 0
@@ -40,7 +49,7 @@ fun arbitraryProgressBar(
                         append(space)
                     append(end)
                     append(' ')
-                    append(loadingText)
+                    localisedLoading?.let(this::append)
                 })
 
                 if (goingRight)
@@ -54,16 +63,106 @@ fun arbitraryProgressBar(
                 delay(delay)
             }
         }
-    } catch (e: CancellationException) {
+    } finally {
         print(buildString {
             append('\r')
             for (i in 0 until limit)
                 append(' ')
             append("    ")
-            for (i in 0 until loadingText.length)
+            for (i in 0 until (localisedLoading?.length ?: 0))
                 append(' ')
             append('\r')
         })
-        println(loadedText)
+
+        localisedLoaded?.let(::println)
+    }
+}
+
+val PERCENT_FORMAT = DecimalFormat("00.00")
+
+open class ProgressTracker protected constructor(
+        val trackLength: Int = 10,
+        val start: Char = '[', val end: Char = ']',
+        val trackSpace: Char = ' ', val trackFilled: Char = '#',
+        downloadingText: String = "ascii.progress.loading",
+        downloadedText: String = "ascii.progress.loaded",
+        val showPercentage: Boolean = true
+) {
+    companion object {
+        val SILENT_TRACKER: ProgressTracker = object: ProgressTracker() {
+            override fun finishedDownload() {}
+            override fun trackDownload(downloaded: Long, total: Long) {}
+        }
+
+        operator fun invoke(trackLength: Int = 10,
+                            start: Char = '[', end: Char = ']',
+                            trackSpace: Char = ' ', trackFilled: Char = '#',
+                            downloadingText: String = "ascii.progress.loading",
+                            downloadedText: String = "ascii.progress.loaded",
+                            showPercentage: Boolean = true): ProgressTracker {
+            return ProgressTracker(trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+        }
+    }
+
+    val downloadingText: String? = downloadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+    val downloadedText: String? = downloadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+    val percentPerTrackSpace = ceil(100.0 / trackLength.toDouble())
+    val tracks = (0 until trackLength).map { filled ->
+        buildString {
+            append(start)
+
+            for (i in 0 until filled)
+                append(trackFilled)
+            for (i in 0 until (trackLength - filled))
+                append(trackSpace)
+
+            append(end)
+            append(' ')
+            append(this@ProgressTracker.downloadingText)
+        }
+    }.toTypedArray()
+    val blankTrack = buildString {
+        append('\r')
+        for (i in 0 until (trackLength + 12 + downloadingText.length))
+            append(' ')
+    }
+
+    open fun trackDownload(downloaded: Long, total: Long) {
+        val percent = (downloaded * 100.0) / total.toDouble()
+        val filled = min(tracks.size - 1, floor(percent / percentPerTrackSpace).roundToInt())
+        print(buildString {
+            append('\r')
+            if (showPercentage) {
+                append(PERCENT_FORMAT.format(percent))
+                append("% ")
+            }
+            append(tracks[filled])
+        })
+    }
+
+    open fun finishedDownload() {
+        print(buildString {
+            append('\r')
+            append(blankTrack)
+            append('\r')
+        })
+        downloadedText?.let(::println)
+    }
+}
+
+fun <T> ProgressTracker(
+        trackLength: Int = 20,
+        start: Char = '[', end: Char = ']',
+        trackSpace: Char = ' ', trackFilled: Char = '#',
+        downloadingText: String = "ascii.progress.loading",
+        downloadedText: String = "ascii.progress.loaded",
+        showPercentage: Boolean = true,
+        op: ProgressTracker.() -> T
+): T {
+    val tracker = ProgressTracker(trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+    try {
+        return tracker.op()
+    } finally {
+        tracker.finishedDownload()
     }
 }

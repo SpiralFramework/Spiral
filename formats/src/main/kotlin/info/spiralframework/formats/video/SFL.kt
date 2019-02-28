@@ -2,7 +2,10 @@ package info.spiralframework.formats.video
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.util.assertAsLocaleArgument
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.DataSource
+import info.spiralframework.formats.utils.readInt16LE
+import info.spiralframework.formats.utils.readInt32LE
 import java.io.InputStream
 
 class SFL private constructor(val dataSource: () -> InputStream) {
@@ -66,10 +69,14 @@ class SFL private constructor(val dataSource: () -> InputStream) {
             headerUnk2 = stream.readInt32LE()
             headerUnk3 = stream.readInt32LE()
 
+            //0x10
+
             unk1 = stream.readInt32LE()
             unk2 = stream.readInt32LE()
             unk3 = stream.readInt32LE()
             unk4 = stream.readInt32LE()
+
+            //0x20
 
             if (unk1 != 1)
                 DataHandler.LOGGER.debug("formats.sfl.unk1", unk1)
@@ -94,10 +101,13 @@ class SFL private constructor(val dataSource: () -> InputStream) {
             if (unk6 != 0)
                 DataHandler.LOGGER.debug("formats.sfl.unk6", unk1)
 
+            //0x30
             unk8 = stream.readInt32LE()
             unk9 = stream.readInt32LE()
             unk10 = stream.readInt32LE()
             unk11 = stream.readInt32LE()
+
+            //0x40
 
             images = Array(frameCount) {
                 return@Array SFLImage(

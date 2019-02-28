@@ -8,6 +8,8 @@ import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 
 object SRDFormat: ReadableSpiralFormat<SRD> {
+    override val name: String = "SRD"
+
     /**
      * Attempts to read the data source as [T]
      *

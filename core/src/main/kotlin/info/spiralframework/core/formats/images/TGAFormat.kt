@@ -17,6 +17,8 @@ import java.io.OutputStream
 import javax.imageio.ImageIO
 
 object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
+    override val name: String = "tga"
+
     /**
      * Attempts to read the data source as [T]
      *

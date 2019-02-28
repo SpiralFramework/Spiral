@@ -22,6 +22,8 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
+    override val name: String = "Zip"
+
     /**
      * Attempts to read the data source as [T]
      *

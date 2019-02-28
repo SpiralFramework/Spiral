@@ -12,6 +12,8 @@ import java.io.OutputStream
 import java.util.zip.ZipFile
 
 object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
+    override val name: String = "Cpk"
+
     /**
      * Attempts to read the data source as [T]
      *

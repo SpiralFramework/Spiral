@@ -350,7 +350,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                 return@Action true
             },
             Sequence(
-                    "OSLProxy Script\n",
+                    "OSL Script\n",
                     Action<Any> { push(arrayOf(null, match())) },
                     OpenSpiralHeaderLines(),
                     OptionalWhitespace(),
@@ -385,7 +385,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                 return@Action true
             },
             Sequence(
-                    "OSLProxy Script\n",
+                    "OSL Script\n",
                     OpenSpiralLines(),
                     OptionalWhitespace(),
                     FirstOf(
@@ -523,6 +523,10 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     Action<Any> { gameContext is info.spiralframework.osl.GameContext.HopesPeakGameContext },
                     FirstOf(
                             FirstOf(extraRules.lin),
+                            Sequence(
+                                    "[Override] ",
+                                    NamedLinSpiralDrill
+                            ),
                             BasicLinTextDrill,
                             LinDialogueDrill,
                             LinSpriteDrill,
@@ -769,7 +773,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             Action<Any> { context ->
                                 val localString = localiser(pop().toString())
                                 val parserCopy = copy()
-                                val stack = parserCopy.parse("OSLProxy Script\nText|$localString").valueStack
+                                val stack = parserCopy.parse("OSL Script\nText|$localString").valueStack
 
                                 if (stack.isEmpty) {
                                     pushTmp("LIN-TEXT-$cmd", localString)
@@ -958,7 +962,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             Action<Any> { context ->
                                 val localString = localiser(pop().toString())
                                 val parserCopy = copy()
-                                val stack = parserCopy.parse("OSLProxy Script\nText|$localString").valueStack
+                                val stack = parserCopy.parse("OSL Script\nText|$localString").valueStack
 
                                 if (stack.isEmpty) {
                                     pushTmp("WRD-TEXT-$cmd", localString)
