@@ -11,7 +11,7 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.*
 
-open class HumbleAudioFormat(val format: String): SpiralAudioFormat() {
+open class HumbleAudioFormat(val format: String): SpiralAudioFormat(format) {
     override val needsMediaPlugin: Boolean = false
 
     /**
