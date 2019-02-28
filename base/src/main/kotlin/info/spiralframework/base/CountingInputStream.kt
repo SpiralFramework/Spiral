@@ -1,14 +1,20 @@
 package info.spiralframework.base
 
+import info.spiralframework.base.properties.getValue
 import java.io.InputStream
 
 /**
  * Simple little wrapper that just does a count every time a byte is read
  */
 open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
-    var count = 0L
-    open val streamOffset: Long
-        get() = count
+    var count = if (countedInputStream is CountingInputStream) countedInputStream.streamOffset else 0L
+    open val streamOffset: Long by run {
+        if (countedInputStream is CountingInputStream) {
+            return@run countedInputStream::streamOffset
+        }
+
+        return@run this::count
+    }
 
     override fun read(): Int {
         count++
