@@ -269,29 +269,3 @@ fun RSAPrivateKeySpec(data: ByteArray): KeySpec
 
 fun RSAPublicKeySpec(data: ByteArray): KeySpec
         = X509EncodedKeySpec(data)
-
-fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, processChunk: (ByteArray) -> Unit): Int {
-    val buffer = ByteArray(bufferSize)
-    var read = 0
-    var total = 0
-    var count = 0.toByte()
-
-    while (read > -1) {
-        read = read(buffer)
-        if(read < 0)
-            break
-        if(read == 0) {
-            count++
-            if(count > 3)
-                break
-        }
-
-        processChunk(buffer.copyOfRange(0, read))
-        total += read
-    }
-
-    if(closeAfter)
-        close()
-
-    return total
-}

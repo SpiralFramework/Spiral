@@ -2,7 +2,7 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.readInt32LE
+import info.spiralframework.base.util.readInt32LE
 import java.io.InputStream
 
 /**

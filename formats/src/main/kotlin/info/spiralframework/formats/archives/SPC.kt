@@ -1,8 +1,9 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
-import info.spiralframework.base.util.assertAsLocaleArgument
-import info.spiralframework.formats.utils.*
+import info.spiralframework.base.util.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.DataSource
 
 class SPC private constructor(val dataSource: DataSource): IArchive {
     companion object {
@@ -46,8 +47,8 @@ class SPC private constructor(val dataSource: DataSource): IArchive {
                 val compressionFlag = stream.readInt16LE()
                 val unknownFlag = stream.readInt16LE()
 
-                val compressedSize = stream.readUInt32LE()
-                val decompressedSize = stream.readUInt32LE()
+                val compressedSize = stream.readUInt32LE().toLong()
+                val decompressedSize = stream.readUInt32LE().toLong()
                 val nameLength = stream.readInt32LE() + 1
 
                 assert(compressionFlag in COMPRESSION_FLAG_ARRAYS)

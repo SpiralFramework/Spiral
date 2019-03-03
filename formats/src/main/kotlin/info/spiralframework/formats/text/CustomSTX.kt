@@ -1,8 +1,8 @@
 package info.spiralframework.formats.text
 
 import info.spiralframework.formats.ICompilable
-import info.spiralframework.formats.utils.writeInt16LE
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.writeInt16LE
+import info.spiralframework.base.util.writeInt32LE
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 

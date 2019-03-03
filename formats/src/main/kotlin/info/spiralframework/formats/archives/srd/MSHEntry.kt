@@ -1,9 +1,9 @@
 package info.spiralframework.formats.archives.srd
 
 import info.spiralframework.formats.archives.SRD
-import info.spiralframework.formats.utils.readInt16LE
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readNullTerminatedString
+import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readNullTerminatedString
 
 open class MSHEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
     override val rsiEntry: RSIEntry = super.rsiEntry!!

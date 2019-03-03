@@ -1,8 +1,8 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.archives.srd.SRDEntry
-import info.spiralframework.formats.utils.writeInt32LE
-import info.spiralframework.formats.utils.writeInt64LE
+import info.spiralframework.base.util.writeInt32LE
+import info.spiralframework.base.util.writeInt64LE
 import java.io.File
 import java.io.OutputStream
 import java.util.*

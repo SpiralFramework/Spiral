@@ -4,7 +4,7 @@ import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.DataSource
-import info.spiralframework.formats.utils.readInt32LE
+import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.formats.video.sfl.SFLTable
 import java.io.InputStream
 

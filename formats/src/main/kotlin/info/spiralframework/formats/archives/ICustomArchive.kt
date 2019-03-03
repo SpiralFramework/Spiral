@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.formats.ICompilable
-import info.spiralframework.formats.utils.copyFromStream
+import info.spiralframework.base.util.copyFromStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream

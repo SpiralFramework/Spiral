@@ -5,7 +5,7 @@ import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.scripting.lin.TextCountEntry
 import info.spiralframework.formats.scripting.lin.TextEntry
 import info.spiralframework.formats.utils.removeEscapes
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.writeInt32LE
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 

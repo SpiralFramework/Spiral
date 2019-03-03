@@ -4,7 +4,7 @@ import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.foldToInt16LE
-import info.spiralframework.formats.utils.readInt16LE
+import info.spiralframework.base.util.readInt16LE
 import java.io.InputStream
 
 class NonstopDebateV3 private constructor(val game: V3, val dataSource: () -> InputStream) {

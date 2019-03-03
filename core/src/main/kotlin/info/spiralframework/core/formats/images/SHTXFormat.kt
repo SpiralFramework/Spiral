@@ -1,5 +1,7 @@
 package info.spiralframework.core.formats.images
 
+import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat

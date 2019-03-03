@@ -2,9 +2,9 @@ package info.spiralframework.formats.scripting
 
 import info.spiralframework.formats.scripting.wrd.WrdScript
 import info.spiralframework.formats.utils.removeEscapes
-import info.spiralframework.formats.utils.writeInt16BE
-import info.spiralframework.formats.utils.writeInt16LE
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.writeInt16BE
+import info.spiralframework.base.util.writeInt16LE
+import info.spiralframework.base.util.writeInt32LE
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 

@@ -1,5 +1,7 @@
 package info.spiralframework.formats.models
 
+import info.spiralframework.base.util.readFloatLE
+import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.archives.srd.*
 import info.spiralframework.formats.utils.*

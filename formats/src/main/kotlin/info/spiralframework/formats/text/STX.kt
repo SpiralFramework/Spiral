@@ -1,6 +1,8 @@
 package info.spiralframework.formats.text
 
 import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readNullTerminatedString
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 import kotlin.collections.set

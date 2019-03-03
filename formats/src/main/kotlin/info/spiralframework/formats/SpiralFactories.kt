@@ -5,7 +5,6 @@ import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.images.FontMap
-import info.spiralframework.formats.models.GMOModel
 import info.spiralframework.formats.models.RoomObject
 import info.spiralframework.formats.scripting.*
 import info.spiralframework.formats.text.CustomSTX
@@ -20,8 +19,6 @@ fun UnsafeSPC(dataSource: DataSource): SPC = SPC.unsafe(dataSource)
 fun UnsafeWAD(dataSource: DataSource): WAD = WAD.unsafe(dataSource)
 
 fun UnsafeFontMap(dataSource: DataSource): FontMap = FontMap.unsafe(dataSource)
-
-fun UnsafeGMOModel(dataSource: DataSource): GMOModel = GMOModel.unsafe(dataSource)
 
 fun UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin.unsafe(game, dataSource)
 fun UnsafeWordScript(game: V3, dataSource: DataSource): WordScriptFile = WordScriptFile.unsafe(game, dataSource)

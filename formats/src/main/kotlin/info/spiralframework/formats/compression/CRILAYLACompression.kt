@@ -1,9 +1,9 @@
 package info.spiralframework.formats.compression
 
 import info.spiralframework.formats.utils.CriBitPool
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readInt64LE
-import info.spiralframework.formats.utils.readXBytes
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
+import info.spiralframework.base.util.readXBytes
 import java.io.InputStream
 import java.io.OutputStream
 

@@ -3,7 +3,7 @@ package info.spiralframework.formats.scripting
 import info.spiralframework.formats.ICompilable
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
-import info.spiralframework.formats.utils.writeInt16LE
+import info.spiralframework.base.util.writeInt16LE
 import java.io.OutputStream
 
 class CustomNonstopDebate: ICompilable {

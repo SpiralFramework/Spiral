@@ -1,5 +1,9 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.util.readFloatBE
+import info.spiralframework.base.util.readInt16BE
+import info.spiralframework.base.util.readInt32BE
+import info.spiralframework.base.util.readInt64BE
 import info.spiralframework.formats.utils.*
 import java.io.IOException
 import java.io.InputStream

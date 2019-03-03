@@ -10,8 +10,8 @@ import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
-import info.spiralframework.formats.utils.copyFromStream
-import info.spiralframework.formats.utils.copyToStream
+import info.spiralframework.base.util.copyFromStream
+import info.spiralframework.base.util.copyToStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

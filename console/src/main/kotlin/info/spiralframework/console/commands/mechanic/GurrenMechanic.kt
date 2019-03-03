@@ -17,7 +17,7 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
-import info.spiralframework.formats.utils.copyToStream
+import info.spiralframework.base.util.copyToStream
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream

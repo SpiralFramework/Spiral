@@ -1,5 +1,6 @@
 package info.spiralframework.media
 
+import info.spiralframework.base.util.copyToStream
 import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.audio.SpiralAudioFormat

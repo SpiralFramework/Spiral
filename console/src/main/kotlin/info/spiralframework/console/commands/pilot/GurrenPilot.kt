@@ -1,6 +1,7 @@
 package info.spiralframework.console.commands.pilot
 
 import info.spiralframework.base.util.*
+import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ExtractArgs
@@ -10,10 +11,6 @@ import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.formats.utils.copyToStream
-import info.spiralframework.formats.utils.readInt16LE
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readXBytes
 import info.spiralframework.formats.video.SFL
 import org.parboiled.Action
 import java.io.File
@@ -225,7 +222,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         var extracted: Long = 0
         ProgressTracker(downloadingText = "commands.pilot.extract.extracting_progress", downloadedText = "commands.pilot.extract.finished") {
             trackDownload(0, totalCount)
-            files.forEachFiltered({ pair -> pair.first.matches(args.filter!!) }) { (fileName, raw) ->
+            files.forEachFiltered({ pair -> pair.first.matches(args.filter) }) { (fileName, raw) ->
                 val file = File(args.destDir, fileName)
                 file.parentFile.mkdirs()
 

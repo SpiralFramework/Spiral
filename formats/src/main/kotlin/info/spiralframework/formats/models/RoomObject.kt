@@ -1,10 +1,10 @@
 package info.spiralframework.formats.models
 
 import info.spiralframework.formats.ICompilable
-import info.spiralframework.formats.utils.readFloatLE
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.writeFloatLE
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.readFloatLE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.writeFloatLE
+import info.spiralframework.base.util.writeInt32LE
 import java.io.InputStream
 import java.io.OutputStream
 

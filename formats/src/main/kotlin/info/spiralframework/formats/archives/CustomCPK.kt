@@ -1,6 +1,6 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.util.locale
+import info.spiralframework.base.util.*
 import info.spiralframework.formats.utfTable
 import info.spiralframework.formats.utils.*
 import java.io.File

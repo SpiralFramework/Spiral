@@ -1,12 +1,11 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.HeaderInputStream
-import info.spiralframework.formats.compression.RawSPCCompression
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.formats.compression.HeaderSPCCompression
-import info.spiralframework.formats.utils.sha512Hash
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.sha512Hash
+import info.spiralframework.base.util.writeInt32LE
 import java.io.*
 
 data class SPCEntry(val compressionFlag: Int, val unknownFlag: Int, val compressedSize: Long, val decompressedSize: Long, val name: String, val offset: Long, val spc: SPC) {
