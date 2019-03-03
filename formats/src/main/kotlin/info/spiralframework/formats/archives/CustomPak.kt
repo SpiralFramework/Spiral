@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.formats.utils.copyFromStream
-import info.spiralframework.formats.utils.writeInt32LE
+import info.spiralframework.base.util.copyFromStream
+import info.spiralframework.base.util.writeInt32LE
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream

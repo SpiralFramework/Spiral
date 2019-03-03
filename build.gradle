@@ -82,6 +82,10 @@ allprojects {
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+
+    kotlin.sourceSets.all {
+        languageSettings.useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
+    }
 }
 
 subprojects {

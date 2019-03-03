@@ -5,8 +5,8 @@ import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readInt64LE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
 import org.abimon.karnage.raw.DXT1PixelData
 import java.awt.image.BufferedImage
 import java.io.InputStream

@@ -1,10 +1,10 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readUInt32LE
 import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.readInt16LE
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readUInt32LE
 import java.io.InputStream
 
 class AWB private constructor(val dataSource: () -> InputStream): IArchive {
@@ -39,9 +39,9 @@ class AWB private constructor(val dataSource: () -> InputStream): IArchive {
             val alignment = stream.readInt32LE()
 
             val awbFileIDs = IntArray(numEntries) { stream.readInt16LE() }
-            val headerEnd = stream.readUInt32LE()
+            val headerEnd = stream.readUInt32LE().toLong()
 
-            val awbFileEnds = LongArray(numEntries) { stream.readUInt32LE() }
+            val awbFileEnds = LongArray(numEntries) { stream.readUInt32LE().toLong() }
 
             var start: Long
             var end: Long = headerEnd

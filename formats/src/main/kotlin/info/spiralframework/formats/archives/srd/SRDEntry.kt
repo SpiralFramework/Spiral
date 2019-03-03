@@ -3,6 +3,8 @@ package info.spiralframework.formats.archives.srd
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.readInt32BE
+import info.spiralframework.base.util.readString
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.utils.*
 import java.io.InputStream

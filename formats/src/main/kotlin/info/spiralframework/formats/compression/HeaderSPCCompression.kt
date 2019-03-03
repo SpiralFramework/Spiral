@@ -1,11 +1,9 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readOrNull
+import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.formats.utils.use
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.*
 
 object HeaderSPCCompression: ICompression {
     val MAGIC_NUMBER = 0x43505324

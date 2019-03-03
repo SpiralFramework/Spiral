@@ -2,6 +2,9 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
+import info.spiralframework.base.util.readString
 import info.spiralframework.formats.utils.*
 
 /**

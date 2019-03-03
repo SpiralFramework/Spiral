@@ -1,6 +1,9 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.WindowedInputStream
+import info.spiralframework.base.util.copyFromStream
+import info.spiralframework.base.util.writeInt16LE
+import info.spiralframework.base.util.writeInt32LE
 import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.utils.*
 import java.io.File

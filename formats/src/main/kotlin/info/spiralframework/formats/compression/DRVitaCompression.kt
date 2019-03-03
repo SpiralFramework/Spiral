@@ -1,6 +1,10 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.formats.utils.*
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readUInt32LE
+import info.spiralframework.base.util.readXBytes
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.use
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -33,7 +37,7 @@ object DRVitaCompression : ICompression {
                     stream.skip(4)
 
                 val rawSize = stream.readUInt32LE()
-                val compressedSize = stream.readUInt32LE()
+                val compressedSize = stream.readUInt32LE().toLong()
 
                 var i = 12
                 var previousOffset = 1

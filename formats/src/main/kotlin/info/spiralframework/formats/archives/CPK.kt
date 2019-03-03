@@ -1,8 +1,9 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
-import info.spiralframework.base.util.assertAsLocaleArgument
-import info.spiralframework.formats.utils.*
+import info.spiralframework.base.util.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
 import java.time.LocalDateTime
 
@@ -61,17 +62,17 @@ class CPK private constructor(val dataSource: () -> InputStream): IArchive {
                     val info = UTFTableInfo()
 
                     info.tableOffset = offset
-                    info.tableSize = stream.readUInt32BE()
+                    info.tableSize = stream.readUInt32BE().toLong()
                     info.schemaOffset = 0x20
-                    info.rowsOffset = stream.readUInt32BE()
-                    info.stringTableOffset = stream.readUInt32BE()
-                    info.dataOffset = stream.readUInt32BE()
+                    info.rowsOffset = stream.readUInt32BE().toLong()
+                    info.stringTableOffset = stream.readUInt32BE().toLong()
+                    info.dataOffset = stream.readUInt32BE().toLong()
 
                     val tableNameString = stream.readInt32BE()
 
                     info.columns = stream.readInt16BE()
                     info.rowWidth = stream.readInt16BE()
-                    info.rows = stream.readUInt32BE()
+                    info.rows = stream.readUInt32BE().toLong()
 
                     info.stringTable = dataSource().use str@ { stringStream ->
                         stringStream.skip(8 + info.stringTableOffset + offset)

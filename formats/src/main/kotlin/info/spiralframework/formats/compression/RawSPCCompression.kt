@@ -1,6 +1,6 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.formats.utils.readOrNull
+import info.spiralframework.base.util.readOrNull
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*

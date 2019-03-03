@@ -1,8 +1,8 @@
 package info.spiralframework.formats.archives.srd
 
 import info.spiralframework.formats.archives.SRD
-import info.spiralframework.formats.utils.readInt32LE
-import info.spiralframework.formats.utils.readNullTerminatedUTF8String
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readNullTerminatedUTF8String
 import info.spiralframework.formats.utils.useAt
 import java.io.InputStream
 

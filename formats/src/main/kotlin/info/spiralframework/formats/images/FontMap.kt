@@ -1,6 +1,9 @@
 package info.spiralframework.formats.images
 
 import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.formats.utils.*
 import java.io.InputStream
 

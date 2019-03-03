@@ -1,5 +1,6 @@
-package info.spiralframework.formats.utils
+package info.spiralframework.base.util
 
+import info.spiralframework.base.CountingInputStream
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -31,6 +32,34 @@ fun InputStream.readInt64BE(): Long {
             (e shl 24) or (f shl 16) or (g shl 8) or h
 }
 
+fun InputStream.readUInt64LE(): ULong {
+    val a = read().toLong()
+    val b = read().toLong()
+    val c = read().toLong()
+    val d = read().toLong()
+    val e = read().toLong()
+    val f = read().toLong()
+    val g = read().toLong()
+    val h = read().toLong()
+
+    return ((h shl 56) or (g shl 48) or (f shl 40) or (e shl 32) or
+            (d shl 24) or (c shl 16) or (b shl 8) or a).toULong()
+}
+
+fun InputStream.readUInt64BE(): ULong {
+    val a = read().toLong()
+    val b = read().toLong()
+    val c = read().toLong()
+    val d = read().toLong()
+    val e = read().toLong()
+    val f = read().toLong()
+    val g = read().toLong()
+    val h = read().toLong()
+
+    return ((a shl 56) or (b shl 48) or (c shl 40) or (d shl 32) or
+            (e shl 24) or (f shl 16) or (g shl 8) or h).toULong()
+}
+
 fun InputStream.readInt32LE(): Int {
     val a = read()
     val b = read()
@@ -49,22 +78,22 @@ fun InputStream.readInt32BE(): Int {
     return (a shl 24) or (b shl 16) or (c shl 8) or d
 }
 
-fun InputStream.readUInt32LE(): Long {
-    val a = read().toLong()
-    val b = read().toLong()
-    val c = read().toLong()
-    val d = read().toLong()
+fun InputStream.readUInt32LE(): UInt {
+    val a = read()
+    val b = read()
+    val c = read()
+    val d = read()
 
-    return (d shl 24) or (c shl 16) or (b shl 8) or a
+    return ((d shl 24) or (c shl 16) or (b shl 8) or a).toUInt()
 }
 
-fun InputStream.readUInt32BE(): Long {
-    val a = read().toLong()
-    val b = read().toLong()
-    val c = read().toLong()
-    val d = read().toLong()
+fun InputStream.readUInt32BE(): UInt {
+    val a = read()
+    val b = read()
+    val c = read()
+    val d = read()
 
-    return (a shl 24) or (b shl 16) or (c shl 8) or d
+    return ((a shl 24) or (b shl 16) or (c shl 8) or d).toUInt()
 }
 
 fun InputStream.readInt16LE(): Int {
@@ -83,6 +112,9 @@ fun InputStream.readInt16BE(): Int {
 
 fun InputStream.readFloatBE(): Float = java.lang.Float.intBitsToFloat(this.readInt32BE())
 fun InputStream.readFloatLE(): Float = java.lang.Float.intBitsToFloat(this.readInt32LE())
+
+fun <T> InputStream.read(serialise: (InputStream) -> T?): T? = serialise(this)
+fun <T> CountingInputStream.readSource(source: () -> InputStream, serialise: (() -> InputStream) -> T?): T? = serialise(source.from(streamOffset))
 
 fun OutputStream.writeFloatBE(float: Float) = writeInt32BE(java.lang.Float.floatToIntBits(float))
 fun OutputStream.writeFloatLE(float: Float) = writeInt32LE(java.lang.Float.floatToIntBits(float))

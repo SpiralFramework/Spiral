@@ -1,11 +1,9 @@
-package info.spiralframework.formats.utils
+package info.spiralframework.base.util
 
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
-import java.math.BigInteger
 import java.nio.charset.Charset
-import java.security.MessageDigest
 
 fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen: Boolean = false): String {
     val data = ByteArray(len.coerceAtLeast(0).run { if (!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
@@ -86,31 +84,8 @@ fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, 
     return total
 }
 
-/** ***Do not use for things like passwords*** */
-fun InputStream.hash(algorithm: String): String {
-    val md = MessageDigest.getInstance(algorithm)
-    readChunked { md.update(it) }
-    val hashBytes = md.digest()
-    return String.format("%032x", BigInteger(1, hashBytes))
+fun (() -> InputStream).from(offset: Long): () -> InputStream = {
+    val stream = this()
+    stream.skip(offset)
+    stream
 }
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.md2Hash(): String = hash("MD2")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.md5Hash(): String = hash("MD5")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.sha1Hash(): String = hash("SHA-1")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.sha224Hash(): String = hash("SHA-224")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.sha256Hash(): String = hash("SHA-256")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.sha384Hash(): String = hash("SHA-384")
-
-/** ***Do not use for things like passwords*** */
-fun InputStream.sha512Hash(): String = hash("SHA-512")
