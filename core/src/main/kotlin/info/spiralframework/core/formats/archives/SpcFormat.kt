@@ -1,6 +1,6 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -57,17 +57,17 @@ object SpcFormat: ReadableSpiralFormat<SPC>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         val customSpc = CustomSPC()
         when (data) {
             is IArchive -> customSpc.add(data)
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 customSpc.add(entry.name, entry.size) { data.getInputStream(entry) }
             }
-            else -> return EnumFormatWriteResponse.WRONG_FORMAT
+            else -> return FormatWriteResponse.WRONG_FORMAT
         }
 
         customSpc.compile(stream)
-        return EnumFormatWriteResponse.SUCCESS
+        return FormatWriteResponse.SUCCESS
     }
 }

@@ -1,6 +1,6 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
@@ -13,7 +13,7 @@ object FolderFormat: WritableSpiralFormat {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

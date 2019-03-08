@@ -56,11 +56,11 @@ interface WritableSpiralFormat: SpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    fun write(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, data: Any, stream: OutputStream): EnumFormatWriteResponse
+    fun write(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, data: Any, stream: OutputStream): FormatWriteResponse
 }
 
-enum class EnumFormatWriteResponse {
-    SUCCESS,
-    WRONG_FORMAT,
-    FAIL
+sealed class FormatWriteResponse {
+    object SUCCESS: FormatWriteResponse()
+    object WRONG_FORMAT: FormatWriteResponse()
+    class FAIL(val reason: Throwable? = null): FormatWriteResponse()
 }

@@ -1,8 +1,9 @@
 package info.spiralframework.core.formats.images
 
+import info.spiralframework.base.util.locale
 import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.use
@@ -65,15 +66,15 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         if (data !is Image)
-            return EnumFormatWriteResponse.WRONG_FORMAT
+            return FormatWriteResponse.WRONG_FORMAT
 
         val width = data.getWidth(null)
         val height = data.getHeight(null)
 
-        if (width == -1 || height == -1)
-            return EnumFormatWriteResponse.FAIL
+        if (width < 0 || height < 0)
+            return FormatWriteResponse.FAIL(locale<IllegalArgumentException>("core.formats.img.invalid_dimensions", width, height))
 
         val tga = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         val g = tga.graphics
@@ -86,9 +87,9 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
         try {
             ImageIO.write(tga, "TGA", stream)
 
-            return EnumFormatWriteResponse.SUCCESS
+            return FormatWriteResponse.SUCCESS
         } catch (io: IOException) {
-            return EnumFormatWriteResponse.FAIL
+            return FormatWriteResponse.FAIL(io)
         }
     }
 }

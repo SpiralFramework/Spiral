@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats.archives
 
 import info.spiralframework.base.path
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -84,7 +84,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         val zipOut = ZipOutputStream(stream)
 
         try {
@@ -122,12 +122,12 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
                     zipOut.putNextEntry(ZipEntry(entry.name))
                     entry.inputStream.use(zipOut::copyFromStream)
                 }
-                else -> return EnumFormatWriteResponse.WRONG_FORMAT
+                else -> return FormatWriteResponse.WRONG_FORMAT
             }
         } finally {
             zipOut.finish()
         }
 
-        return EnumFormatWriteResponse.SUCCESS
+        return FormatWriteResponse.SUCCESS
     }
 }
