@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.DecimalFormat
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 import kotlin.reflect.jvm.jvmName
@@ -109,30 +110,78 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
             //We should now have a proper data source
             //We can now work on format identification
-            val format = GurrenShared.READABLE_FORMATS
-                    .map { format -> format.identify(file.name, null, file.absoluteParentFile?.dataContext ?: BLANK_DATA_CONTEXT, dataSource) }
+            val formatResult = GurrenShared.READABLE_FORMATS
+                    .map { format ->
+                        format.identify(file.name, null, file.absoluteParentFile?.dataContext
+                                ?: BLANK_DATA_CONTEXT, dataSource)
+                    }
                     .filter(FormatResult<*>::didSucceed)
                     .sortedBy(FormatResult<*>::chance)
                     .asReversed()
                     .firstOrNull()
 
-            if (format != null) {
+            if (formatResult != null) {
                 //The file has an identifiable format.
 
                 //Should result in something like DRVita > V3 > SPC >
                 val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ")
 
                 //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
-                val formatString = "${compressionString}${format.name}"
+                val formatString = "${compressionString}${formatResult.format?.name
+                        ?: formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
+                        ?: "Unknown (No format name or object)"}"
 
                 //Print it all out
-                if (SpiralModel.tableOutput) {
-                    println(FlipTable.of(arrayOf("File", "Format"), arrayOf(arrayOf(file.absolutePath, formatString))))
-                } else {
-                    println("Identified ${file.absolutePath}")
-                    println("Format: $formatString")
+//                if (SpiralModel.tableOutput) {
+//                    println(FlipTable.of(arrayOf("File", "Format"), arrayOf(arrayOf(file.absolutePath, formatString))))
+//                } else {
+                println("Identified ${file.absolutePath}")
+                println("Format: $formatString")
+//                }
+
+                return@ParboiledSoldier SUCCESS
+            }
+        } else if (file.isDirectory) {
+            val subfiles = file.walk().filter { subfile -> !subfile.name.startsWith(".") && subfile.isFile }.toList()
+            val dataContext = file.dataContext
+            val resultList = ProgressTracker(downloadingText = "commands.pilot.identify.folder_progress", downloadedText = "commands.pilot.identify.folder_finished") {
+                subfiles.mapIndexed { index, subfile ->
+                    try {
+                        //We decompress it in place, just in case it's compressed
+                        val (dataSource, compressionMethods) = decompress(subfile::inputStream)
+
+                        //We should now have a proper data source
+                        //We can now work on format identification
+                        val formatResult = GurrenShared.READABLE_FORMATS
+                                .map { format -> format.identify(subfile.name, null, dataContext, dataSource) }
+                                .filter(FormatResult<*>::didSucceed)
+                                .sortedBy(FormatResult<*>::chance)
+                                .asReversed()
+                                .firstOrNull()
+
+                        if (formatResult != null) {
+                            //The file has an identifiable format.
+
+                            //Should result in something like DRVita > V3 > SPC >
+                            val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ")
+
+                            //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
+                            return@mapIndexed subfile to "${compressionString}${formatResult.format?.name
+                                    ?: formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
+                                    ?: locale<String>("Unknown (No format name or object)")}"
+                        } else {
+                            return@mapIndexed subfile to locale<String>("No known format")
+                        }
+                    } finally {
+                        trackDownload(index.toLong(), subfiles.size.toLong())
+                    }
                 }
             }
+
+            println("File, Format")
+            println(resultList.joinToString("\n") { (subfile, format) -> "${subfile relativePathTo file}, type $format" })
+
+            return@ParboiledSoldier SUCCESS
         }
 
         TODO("nyi")
