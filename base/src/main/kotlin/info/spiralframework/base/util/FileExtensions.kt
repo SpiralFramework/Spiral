@@ -26,3 +26,6 @@ fun File.ensureDirectoryExists(): File {
     if (!exists()) mkdirs()
     return this
 }
+
+val File.absoluteParentFile
+    get(): File? = absoluteFile.parentFile
