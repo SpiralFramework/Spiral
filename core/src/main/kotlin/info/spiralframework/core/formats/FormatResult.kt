@@ -22,7 +22,6 @@ sealed class FormatResult<T>: Closeable {
     }
 
     class Success<T>(override val obj: T, override val chance: Double): FormatResult<T>() {
-
         override val didSucceed: Boolean = true
 
         override fun <R> map(transform: (T) -> R): FormatResult<R> = Success(transform(obj), chance)
@@ -34,7 +33,7 @@ sealed class FormatResult<T>: Closeable {
         }
         override fun weight(predicate: (T) -> Double): FormatResult<T> = Success(obj, predicate(obj))
     }
-    class Fail<T>(override val chance: Double): FormatResult<T>() {
+    class Fail<T>(override val chance: Double, val reason: Throwable? = null): FormatResult<T>() {
         override val obj: T
             get() = throw NoSuchElementException("No value present")
         override val didSucceed: Boolean = false
