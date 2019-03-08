@@ -21,10 +21,10 @@ object SRDFormat: ReadableSpiralFormat<SRD> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SRD> {
-        val srd = SRD(source) ?: return FormatResult.Fail(1.0)
+        val srd = SRD(source) ?: return FormatResult.Fail(this, 1.0)
 
         if (srd.entries.size == 1)
-            return FormatResult.Success(srd, 0.9)
-        return FormatResult(srd, srd.entries.isNotEmpty(), 0.9) //Not positive on this one chief but we're going with it
+            return FormatResult.Success(this, srd, 0.9)
+        return FormatResult(this, srd, srd.entries.isNotEmpty(), 0.9) //Not positive on this one chief but we're going with it
     }
 }

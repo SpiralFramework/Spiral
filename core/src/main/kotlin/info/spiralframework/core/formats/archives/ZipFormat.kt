@@ -1,8 +1,10 @@
 package info.spiralframework.core.formats.archives
 
 import info.spiralframework.base.path
-import info.spiralframework.core.formats.FormatWriteResponse
+import info.spiralframework.base.util.copyFromStream
+import info.spiralframework.base.util.copyToStream
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.archives.*
@@ -10,8 +12,6 @@ import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
-import info.spiralframework.base.util.copyFromStream
-import info.spiralframework.base.util.copyToStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -39,9 +39,9 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
             val possibleFile = stream.path?.let(::File)
             if (possibleFile?.exists() == true) {
                 try {
-                    return FormatResult.Success(ZipFile(possibleFile), 1.0)
+                    return FormatResult.Success(this, ZipFile(possibleFile), 1.0)
                 } catch (io: IOException) {
-                    return FormatResult.Fail(1.0)
+                    return FormatResult.Fail(this, 1.0, io)
                 }
             } else {
                 val zip: ZipFile
@@ -54,10 +54,10 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
                 } catch (io: IOException) {
                     tmpFile.delete()
 
-                    return FormatResult.Fail(1.0)
+                    return FormatResult.Fail(this, 1.0, io)
                 }
 
-                return FormatResult.Success(zip, 1.0)
+                return FormatResult.Success(this, zip, 1.0)
             }
         }
     }

@@ -27,12 +27,12 @@ object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Pak> {
-        val pak = Pak(dataSource = source) ?: return FormatResult.Fail(1.0)
+        val pak = Pak(dataSource = source) ?: return FormatResult.Fail(this, 1.0)
 
         if (pak.files.size == 1)
-            return FormatResult.Success(pak,0.75)
+            return FormatResult.Success(this, pak,0.75)
 
-        return FormatResult(pak, pak.files.isNotEmpty(), 0.8) //Not positive on this one chief but we're going with it
+        return FormatResult(this, pak, pak.files.isNotEmpty(), 0.8) //Not positive on this one chief but we're going with it
     }
 
     /**
