@@ -1,7 +1,7 @@
 package info.spiralframework.media
 
 import info.spiralframework.base.util.copyToStream
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.audio.SpiralAudioFormat
 import info.spiralframework.formats.game.DRGame
@@ -74,7 +74,7 @@ open class HumbleAudioFormat(val format: String): SpiralAudioFormat(format) {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
