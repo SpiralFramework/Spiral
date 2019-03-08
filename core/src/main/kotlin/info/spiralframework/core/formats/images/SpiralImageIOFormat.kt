@@ -33,9 +33,9 @@ open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, Rea
                 reader?.input = imageStream
                 val img = reader?.read(0)
 
-                return FormatResult(img, img != null, 1.0)
+                return FormatResult(this, img, img != null, 1.0)
             } catch (io: IOException) {
-                return FormatResult.Fail(1.0)
+                return FormatResult.Fail(this, 1.0, io)
             } finally {
                 reader?.dispose()
             }

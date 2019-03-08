@@ -1,12 +1,12 @@
 package info.spiralframework.core.formats.images
 
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
-import info.spiralframework.base.util.readInt32LE
-import info.spiralframework.base.util.readInt64LE
 import org.abimon.karnage.raw.DXT1PixelData
 import java.awt.image.BufferedImage
 import java.io.InputStream
@@ -18,7 +18,7 @@ abstract class DDSImageFormat(override val name: String, val typeMagic: Int): Re
 
         val DXT1 = object: DDSImageFormat("DDS DXT1", DXT1_MAGIC) {
             override fun readImage(width: Int, height: Int, stream: InputStream, ddsType: Int): FormatResult<BufferedImage> =
-                    FormatResult.Success(DXT1PixelData.read(width, height, stream), 1.0)
+                    FormatResult.Success(this, DXT1PixelData.read(width, height, stream), 1.0)
         }
     }
 
@@ -39,7 +39,7 @@ abstract class DDSImageFormat(override val name: String, val typeMagic: Int): Re
             val magic = stream.readInt64LE()
 
             if (magic != MAGIC_NUMBER)
-                return FormatResult.Fail(1.0)
+                return FormatResult.Fail(this, 1.0)
 
             stream.readInt32LE() //Size
             stream.readInt32LE() //Flags
@@ -53,7 +53,7 @@ abstract class DDSImageFormat(override val name: String, val typeMagic: Int): Re
             stream.readInt32LE() //caps2
 
             if (ddsType != typeMagic)
-                return FormatResult.Fail(1.0)
+                return FormatResult.Fail(this, 1.0)
 
             return readImage(width, height, stream, ddsType)
         } finally {

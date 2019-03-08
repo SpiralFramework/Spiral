@@ -30,11 +30,11 @@ interface CompressionFormat<T: ICompression>: ReadableSpiralFormat<DataSource> {
 
             tmpFile.outputStream().use { out -> compressionFormat.decompressToPipe(source, out) }
 
-            val result = FormatResult.Success<DataSource>(tmpFile::inputStream, 1.0)
+            val result = FormatResult.Success<DataSource>(this, tmpFile::inputStream, 1.0)
             result.release.add(Closeable { tmpFile.delete() })
             return result
         }
 
-        return FormatResult.Fail(1.0)
+        return FormatResult.Fail(this, 1.0)
     }
 }

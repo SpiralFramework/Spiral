@@ -21,10 +21,10 @@ object AWBFormat: ReadableSpiralFormat<AWB> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<AWB> {
-        val awb = AWB(source) ?: return FormatResult.Fail(1.0)
+        val awb = AWB(source) ?: return FormatResult.Fail(this, 1.0)
 
         if (awb.entries.size == 1)
-            return FormatResult.Success(awb, 0.75)
-        return FormatResult(awb, awb.entries.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
+            return FormatResult.Success(this, awb, 0.75)
+        return FormatResult(this, awb, awb.entries.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
     }
 }

@@ -25,13 +25,13 @@ object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<CPK> {
-        val cpk = CPK(source) ?: return FormatResult.Fail(1.0)
+        val cpk = CPK(source) ?: return FormatResult.Fail(this, 1.0)
 
         if (cpk.files.size == 1)
-            return FormatResult.Success(cpk, 0.75)
+            return FormatResult.Success(this, cpk, 0.75)
         if (cpk.files.isNotEmpty())
-            return FormatResult.Success(cpk, 1.0)
-        return FormatResult.Fail(1.0) //Not positive on this one chief but we're going with it
+            return FormatResult.Success(this, cpk, 1.0)
+        return FormatResult.Fail(this, 1.0) //Not positive on this one chief but we're going with it
     }
 
     /**
