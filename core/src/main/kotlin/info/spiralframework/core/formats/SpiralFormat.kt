@@ -17,6 +17,12 @@ interface SpiralFormat {
  * A Spiral format that supports reading from a source
  */
 interface ReadableSpiralFormat<T>: SpiralFormat {
+    /**
+     * Specifies a preferred conversion format for files that match this format.
+     * This is used primarily for Danganronpa formats to specify we should convert to a nicer, more usable format.
+     * It should **not** be used in contexts where there is ambiguity about what format may be desired; thus, it should not be defined for regular formats to Danganronpa formats in mots cases.
+     */
+    fun preferredConversionFormat(): WritableSpiralFormat? = null
 
     /**
      * Attempts to identify the data source as an instance of [T]

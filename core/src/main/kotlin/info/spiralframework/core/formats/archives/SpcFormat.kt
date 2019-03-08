@@ -16,6 +16,8 @@ import java.util.zip.ZipFile
 object SpcFormat: ReadableSpiralFormat<SPC>, WritableSpiralFormat {
     override val name: String = "Spc"
 
+    override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
+
     /**
      * Attempts to read the data source as [T]
      *
