@@ -5,6 +5,7 @@ import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
+import java.util.*
 
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -16,6 +17,21 @@ interface SpiralFormat {
  * A Spiral format that supports reading from a source
  */
 interface ReadableSpiralFormat<T>: SpiralFormat {
+
+    /**
+     * Attempts to identify the data source as an instance of [T]
+     *
+     * Formats are recommended to override this where possible.
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param context Context that we retrieved this file in
+     * @param source A function that returns an input stream
+     *
+     * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
+     */
+    fun identify(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<Optional<T>>
+        = read(name, game, context, source).map { Optional.of(it) }
 
     /**
      * Attempts to read the data source as [T]

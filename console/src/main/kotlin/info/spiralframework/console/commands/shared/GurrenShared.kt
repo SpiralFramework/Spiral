@@ -3,7 +3,16 @@ package info.spiralframework.console.commands.shared
 import info.spiralframework.base.util.iterator
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
+import info.spiralframework.core.formats.audio.AudioFormats
+import info.spiralframework.core.formats.compression.CRILAYLAFormat
+import info.spiralframework.core.formats.compression.DRVitaFormat
+import info.spiralframework.core.formats.compression.SPCCompressionFormat
+import info.spiralframework.core.formats.compression.V3CompressionFormat
+import info.spiralframework.core.formats.images.*
+import info.spiralframework.core.formats.scripting.LinFormat
+import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
 import info.spiralframework.core.formats.video.SFLFormat
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.video.SFL
@@ -11,12 +20,36 @@ import java.io.InputStream
 import java.util.zip.ZipFile
 
 object GurrenShared {
-    val EXTRACTABLE_ARCHIVES = arrayOf<ReadableSpiralFormat<out Any>>(
-            AWBFormat, CpkFormat, PakFormat,
-            SFLFormat,
-            SpcFormat, SRDFormat, WadFormat,
-            ZipFormat
-    )
+    val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<out Any>> by lazy {
+        mutableListOf(
+                AWBFormat, CpkFormat, PakFormat,
+                SFLFormat,
+                SpcFormat, SRDFormat, WadFormat,
+                ZipFormat
+        )
+    }
+
+    val READABLE_FORMATS: MutableList<ReadableSpiralFormat<out Any>> by lazy {
+        mutableListOf(
+                //FolderFormat
+                AWBFormat, CpkFormat, PakFormat, SpcFormat, SRDFormat, WadFormat, ZipFormat,
+                AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
+                CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat,
+                DDSImageFormat.DXT1,
+                JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
+                LinFormat, OpenSpiralLanguageFormat,
+                SFLFormat
+        )
+    }
+
+    val WRITABLE_FORMATS: MutableList<WritableSpiralFormat> by lazy {
+        mutableListOf<WritableSpiralFormat>(
+                CpkFormat, FolderFormat, PakFormat, SpcFormat, WadFormat, ZipFormat,
+                AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
+                JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
+                LinFormat, OpenSpiralLanguageFormat
+        )
+    }
 
     fun extractGetFilesForResult(args: ExtractArgs.Immutable, result: Any, regex: Regex): Pair<Iterator<Pair<String, InputStream>>, Long>? {
         val files: Iterator<Pair<String, InputStream>>
