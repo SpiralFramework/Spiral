@@ -4,6 +4,7 @@ import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
@@ -21,6 +22,8 @@ abstract class DDSImageFormat(override val name: String, val typeMagic: Int): Re
                     FormatResult.Success(this, DXT1PixelData.read(width, height, stream), 1.0)
         }
     }
+
+    override fun preferredConversionFormat(): WritableSpiralFormat? = PNGFormat
 
     /**
      * Attempts to read the data source as [T]

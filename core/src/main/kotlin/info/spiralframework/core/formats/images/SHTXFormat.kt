@@ -29,6 +29,8 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
     /** SHTXFF */
     val BGRA_MAGIC_NUMBER = 0x4646
 
+    override fun preferredConversionFormat(): WritableSpiralFormat? = PNGFormat
+
     /**
      * Attempts to read the data source as [T]
      *
