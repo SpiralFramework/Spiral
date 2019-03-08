@@ -11,6 +11,8 @@ import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
+import info.spiralframework.formats.utils.dataContext
 import info.spiralframework.formats.video.SFL
 import org.parboiled.Action
 import java.io.File
@@ -99,36 +101,41 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             return@ParboiledSoldier FAILURE
         }
 
-        TODO("nyi")
-
         //Next up, are we dealing with a singular file?
-//        if (file.isFile) {
-//            //If so, we can define a data source for it here
-//            //We decompress it in place, just in case it's compressed
-//            val (dataSource, compressionMethods) = decompress(file::inputStream)
-//
-//            //We should now have a proper data source
-//            //We can now work on format identification
-//            val format = GurrenShared.READABLE_FORMATS.
-//
-//            if (format != null) {
-//                //The file has an identifiable format.
-//
-//                //Should result in something like DRVita > V3 > SPC >
-//                val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ")
-//
-//                //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
-//                val formatString = "${compressionString}${format.name}"
-//
-//                //Print it all out
-//                if (SpiralModel.tableOutput) {
-//                    println(FlipTable.of(arrayOf("File", "Format"), arrayOf(arrayOf(file.absolutePath, formatString))))
-//                } else {
-//                    println("Identified ${file.absolutePath}")
-//                    println("Format: $formatString")
-//                }
-//            }
-//        }
+        if (file.isFile) {
+            //If so, we can define a data source for it here
+            //We decompress it in place, just in case it's compressed
+            val (dataSource, compressionMethods) = decompress(file::inputStream)
+
+            //We should now have a proper data source
+            //We can now work on format identification
+            val format = GurrenShared.READABLE_FORMATS
+                    .map { format -> format.identify(file.name, null, file.absoluteParentFile?.dataContext ?: BLANK_DATA_CONTEXT, dataSource) }
+                    .filter(FormatResult<*>::didSucceed)
+                    .sortedBy(FormatResult<*>::chance)
+                    .asReversed()
+                    .firstOrNull()
+
+            if (format != null) {
+                //The file has an identifiable format.
+
+                //Should result in something like DRVita > V3 > SPC >
+                val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ")
+
+                //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
+                val formatString = "${compressionString}${format.name}"
+
+                //Print it all out
+                if (SpiralModel.tableOutput) {
+                    println(FlipTable.of(arrayOf("File", "Format"), arrayOf(arrayOf(file.absolutePath, formatString))))
+                } else {
+                    println("Identified ${file.absolutePath}")
+                    println("Format: $formatString")
+                }
+            }
+        }
+
+        TODO("nyi")
     }
 
     val extract = ParboiledSoldier(extractRule) { stack ->

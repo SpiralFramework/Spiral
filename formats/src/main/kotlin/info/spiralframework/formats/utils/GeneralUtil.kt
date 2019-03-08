@@ -1,6 +1,7 @@
 package info.spiralframework.formats.utils
 
 import info.spiralframework.formats.archives.srd.RSIEntry
+import java.io.File
 import java.io.InputStream
 import java.math.BigDecimal
 import java.text.DecimalFormat
@@ -23,6 +24,10 @@ typealias DataSource = () -> InputStream
 typealias DataContext = (String) -> DataSource?
 
 val BLANK_DATA_CONTEXT: DataContext = { null }
+
+@Suppress("MoveSuspiciousCallableReferenceIntoParentheses")
+val File.dataContext: DataContext
+    get() = { name -> File(this, name).takeIf(File::exists)?.let { file -> file::inputStream } }
 
 infix fun <A, B, C> Pair<A, B>.and(c: C): Triple<A, B, C> = Triple(first, second, c)
 
