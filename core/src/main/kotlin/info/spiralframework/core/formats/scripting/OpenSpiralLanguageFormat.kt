@@ -29,8 +29,8 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
         val result = runner.run(String(source.use(InputStream::readBytes)))
 
         if (!result.matched)
-            return FormatResult.Fail(1.0)
-        return FormatResult.Success(OSLDrone(parser, result.valueStack, name), 1.0)
+            return FormatResult.Fail(this, 1.0)
+        return FormatResult.Success(this, OSLDrone(parser, result.valueStack, name), 1.0)
     }
 
     override fun supportsWriting(data: Any): Boolean = data is Lin
