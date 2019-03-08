@@ -2,7 +2,7 @@ package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -183,7 +183,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

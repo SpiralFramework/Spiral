@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.util.locale
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -52,7 +52,7 @@ open class SpiralAudioFormat(override val name: String): ReadableSpiralFormat<Fi
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         throw locale<IllegalStateException>("core.formats.no_audio_impl.write", this)
     }
 }
