@@ -185,6 +185,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
 
         return Sequence(
                 Action<Any> { str.set("") },
+                Optional('"'),
                 Optional(
                         OneOrMore(
                                 FirstOf(
@@ -231,6 +232,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                 )
                         )
                 ),
+                Optional('"'),
                 Action<Any> { push(str.get()) }
         )
     }
@@ -240,6 +242,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
 
         return Sequence(
                 Action<Any> { str.set("") },
+                Optional('"'),
                 Optional(
                         OneOrMore(
                                 FirstOf(
@@ -255,6 +258,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                 )
                         )
                 ),
+                Optional('"'),
                 Action<Any> { push(str.get()) }
         )
     }

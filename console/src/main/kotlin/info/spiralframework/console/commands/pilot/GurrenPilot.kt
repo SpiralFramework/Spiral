@@ -4,6 +4,7 @@ import info.spiralframework.base.util.*
 import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
+import info.spiralframework.console.commands.data.ConvertArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
 import info.spiralframework.console.imperator.CommandClass
@@ -85,6 +86,49 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 FilePath()
         )
     }
+    val convertRule = makeRuleWith(::ConvertArgs) { argsVar ->
+        Sequence(
+                Localised("commands.pilot.convert.convert"),
+                InlineWhitespace(),
+                FirstOf(
+                        Sequence(
+                                Localised("commands.pilot.convert.builder"),
+                                Action<Any> { argsVar.get().builder = true; true }
+                        ),
+                        Sequence(
+                                ExistingFilePath(),
+                                Action<Any> { argsVar.get().converting = pop() as? File; true }
+                        )
+                ),
+                ZeroOrMore(
+                        InlineWhitespace(),
+                        FirstOf(
+                                Sequence(
+                                        Localised("commands.pilot.convert.filter"),
+                                        InlineWhitespace(),
+                                        Filter(),
+                                        Action<Any> { argsVar.get().filter = pop() as Regex; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.pilot.convert.from"),
+                                        InlineWhitespace(),
+                                        Parameter(),
+                                        Action<Any> { argsVar.get().from = pop() as String; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.pilot.convert.to"),
+                                        InlineWhitespace(),
+                                        Parameter(),
+                                        Action<Any> { argsVar.get().to = pop() as String; true }
+                                ),
+                                Sequence(
+                                        Localised("commands.pilot.convert.builder"),
+                                        Action<Any> { argsVar.get().builder = true; true }
+                                )
+                        )
+                )
+        )
+    }
 
     val exitRule = makeRule { Localised("commands.pilot.exit") }
 
@@ -97,7 +141,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
         // First thing's first - does the file even exist?
         if (!file.exists()) {
-            printlnErrLocale("errors.file.doesnt_exist", file)
+            printlnErrLocale("errors.files.doesnt_exist", file)
 
             return@ParboiledSoldier FAILURE
         }
@@ -184,7 +228,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             return@ParboiledSoldier SUCCESS
         }
 
-        TODO("nyi")
+        return@ParboiledSoldier FAILURE
     }
 
     val extract = ParboiledSoldier(extractRule) { stack ->
@@ -288,6 +332,54 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         }
 
         return@ParboiledSoldier SUCCESS
+    }
+
+    val convert = ParboiledSoldier(convertRule) { stack ->
+        val builderArgs = (stack[0] as ConvertArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
+        if (builderArgs.builder || builderArgs.converting == null) {
+            //Builder
+            if (builderArgs.converting == null) {
+                printLocale("commands.pilot.convert.builder.converting")
+                builderArgs.converting = builders.filePath()
+            }
+
+            if (builderArgs.from == null) {
+                printLocale("commands.pilot.convert.builder.to")
+                builderArgs.from = builders.parameter()
+            }
+
+            if (builderArgs.from == null) {
+                printLocale("commands.pilot.convert.builder.from")
+                builderArgs.from = builders.parameter()
+            }
+
+            if (builderArgs.filter == null) {
+                printLocale("commands.pilot.convert.builder.filter")
+                builderArgs.filter = builders.filter() ?: Regex(".*")
+            }
+        }
+
+        val args = builderArgs.makeImmutable(defaultFilter = Regex(".*"))
+
+        if (args.converting == null) {
+            printlnErrLocale("commands.pilot.convert.err_no_converting")
+
+            return@ParboiledSoldier FAILURE
+        }
+
+        if (!args.converting.exists()) {
+            printlnErrLocale("errors.files.doesnt_exist", args.converting)
+
+            return@ParboiledSoldier FAILURE
+        }
+
+        if (args.converting.isFile) {
+
+        } else if (args.converting.isDirectory) {
+
+        }
+
+        return@ParboiledSoldier FAILURE
     }
 
     val debug = ParboiledSoldier(makeRule { IgnoreCase("debug") }) { stack ->
