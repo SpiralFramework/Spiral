@@ -32,15 +32,15 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<BufferedImage> {
         try {
-            source.use { stream -> return FormatResult.Success(TGAReader.readImage(stream.readBytes()), 1.0) }
+            source.use { stream -> return FormatResult.Success(this, TGAReader.readImage(stream.readBytes()), 1.0) }
         } catch (io: IOException) {
             SpiralCoreData.LOGGER.debug("core.formats.tga.invalid", source, io)
 
-            return FormatResult.Fail(1.0)
+            return FormatResult.Fail(this, 1.0, io)
         } catch (iae: IllegalArgumentException) {
             SpiralCoreData.LOGGER.debug("core.formats.tga.invalid", source, iae)
 
-            return FormatResult.Fail(1.0)
+            return FormatResult.Fail(this, 1.0, iae)
         }
     }
 

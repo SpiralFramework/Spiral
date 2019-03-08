@@ -22,7 +22,7 @@ object SFLFormat: ReadableSpiralFormat<SFL> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SFL> {
-        val sfl = SFL(source) ?: return FormatResult.Fail(1.0)
-        return FormatResult.Success(sfl, 1.0)
+        val sfl = SFL(source) ?: return FormatResult.Fail(this, 1.0)
+        return FormatResult.Success(this, sfl, 1.0)
     }
 }

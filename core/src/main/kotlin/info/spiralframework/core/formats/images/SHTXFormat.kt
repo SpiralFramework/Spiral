@@ -1,13 +1,17 @@
 package info.spiralframework.core.formats.images
 
+import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
-import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.BGRA
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataSource
+import info.spiralframework.formats.utils.RGBA
 import java.awt.image.BufferedImage
 import java.io.OutputStream
 
@@ -40,7 +44,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
             val magic = stream.readInt32LE()
 
             if (magic != SHTX_MAGIC_NUMBER)
-                return FormatResult.Fail(1.0)
+                return FormatResult.Fail(this, 1.0)
 
             val formatMagic = stream.readInt16LE()
             val width = stream.readInt16LE()
@@ -82,7 +86,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                         img.setRGB(0, 0, width, height, rgb, 0, width)
                     }
 
-                    return FormatResult.Success(img, 1.0)
+                    return FormatResult.Success(this, img, 1.0)
                 }
                 BGRA_PALETTE_MAGIC_NUMBER -> {
                     val palette = IntArray(256) { BGRA(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF) }
@@ -118,7 +122,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                         img.setRGB(0, 0, width, height, rgb, 0, width)
                     }
 
-                    return FormatResult.Success(img, 1.0)
+                    return FormatResult.Success(this, img, 1.0)
                 }
                 RGBA_MAGIC_NUMBER -> {
                     val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
@@ -135,7 +139,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                     }
                     img.setRGB(0, 0, width, height, rgb, 0, width)
 
-                    return FormatResult.Success(img, 1.0)
+                    return FormatResult.Success(this, img, 1.0)
                 }
                 BGRA_MAGIC_NUMBER -> {
                     val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
@@ -152,9 +156,9 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                     }
                     img.setRGB(0, 0, width, height, rgb, 0, width)
 
-                    return FormatResult.Success(img, 1.0)
+                    return FormatResult.Success(this, img, 1.0)
                 }
-                else -> return FormatResult.Fail(1.0)
+                else -> return FormatResult.Fail(this, 1.0, locale<IllegalArgumentException>("core.formats.shtx.unknown_format", "0x${formatMagic.toString(16)}"))
             }
         }
     }

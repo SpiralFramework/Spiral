@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.archives.CustomWAD
@@ -27,12 +27,12 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<WAD> {
-        val wad = WAD(source) ?: return FormatResult.Fail(1.0)
+        val wad = WAD(source) ?: return FormatResult.Fail(this, 1.0)
 
         if (wad.files.size == 1)
-            return FormatResult.Success(wad,0.75)
+            return FormatResult.Success(this, wad,0.75)
 
-        return FormatResult(wad, wad.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
+        return FormatResult(this, wad, wad.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
     }
 
     /**
