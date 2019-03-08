@@ -99,17 +99,17 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             return@ParboiledSoldier FAILURE
         }
 
-        return@ParboiledSoldier SUCCESS
+        TODO("nyi")
 
-//        //Next up, are we dealing with a singular file?
+        //Next up, are we dealing with a singular file?
 //        if (file.isFile) {
 //            //If so, we can define a data source for it here
 //            //We decompress it in place, just in case it's compressed
-//            val (dataSource, compressionMethods) = decompressWithFormats(file::inputStream)
+//            val (dataSource, compressionMethods) = decompress(file::inputStream)
 //
 //            //We should now have a proper data source
 //            //We can now work on format identification
-//            val format = SpiralFormats.formatForData(null, dataSource, file.name)
+//            val format = GurrenShared.READABLE_FORMATS.
 //
 //            if (format != null) {
 //                //The file has an identifiable format.
