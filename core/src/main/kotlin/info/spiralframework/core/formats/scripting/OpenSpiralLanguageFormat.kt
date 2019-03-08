@@ -1,9 +1,10 @@
 package info.spiralframework.core.formats.scripting
 
-import info.spiralframework.core.formats.EnumFormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.formats.errors.HopesPeakMissingGameException
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.Lin
@@ -34,11 +35,11 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
 
     override fun supportsWriting(data: Any): Boolean = data is Lin
 
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         when (data) {
             is Lin -> {
                 if (game !is HopesPeakDRGame)
-                    return EnumFormatWriteResponse.FAIL
+                    return FormatWriteResponse.FAIL(HopesPeakMissingGameException(game))
 
                 val out = PrintStream(stream)
                 out.println("OSL Script")
@@ -52,9 +53,9 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
                     }
                 }
 
-                return EnumFormatWriteResponse.SUCCESS
+                return FormatWriteResponse.SUCCESS
             }
-            else -> return EnumFormatWriteResponse.WRONG_FORMAT
+            else -> return FormatWriteResponse.WRONG_FORMAT
         }
     }
 }

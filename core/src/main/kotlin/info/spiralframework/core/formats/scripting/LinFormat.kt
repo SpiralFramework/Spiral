@@ -1,9 +1,11 @@
 package info.spiralframework.core.formats.scripting
 
-import info.spiralframework.core.formats.EnumFormatWriteResponse
+import info.spiralframework.base.util.locale
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.formats.errors.HopesPeakMissingGameException
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.Lin
@@ -19,7 +21,7 @@ object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
 
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Lin> {
         if (game !is HopesPeakDRGame)
-            return FormatResult.Fail(1.0)
+            return FormatResult.Fail(1.0, HopesPeakMissingGameException(game))
 
         val lin = Lin(game, source) ?: return FormatResult.Fail(0.9)
         if (lin.entries.isEmpty())
@@ -29,15 +31,16 @@ object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
 
     override fun supportsWriting(data: Any): Boolean = data is OSLDrone
 
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): EnumFormatWriteResponse {
+    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         when (data) {
             is OSLDrone -> {
-                val blueprint = data.compiled.entries.firstOrNull { (_, blueprint) -> blueprint is CustomLinOSL }?.value as? CustomLinOSL ?: return EnumFormatWriteResponse.FAIL
+                val blueprint = data.compiled.entries.firstOrNull { (_, blueprint) -> blueprint is CustomLinOSL }?.value as? CustomLinOSL
+                        ?: return FormatWriteResponse.FAIL(locale<IllegalStateException>("core.formats.lin.osl_drone_has_no_lin"))
                 val customLin = blueprint.produce()
                 customLin.compile(stream)
-                return EnumFormatWriteResponse.SUCCESS
+                return FormatWriteResponse.SUCCESS
             }
-            else -> return EnumFormatWriteResponse.WRONG_FORMAT
+            else -> return FormatWriteResponse.WRONG_FORMAT
         }
     }
 }
