@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.archives.CustomSPC
@@ -27,12 +27,12 @@ object SpcFormat: ReadableSpiralFormat<SPC>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SPC> {
-        val spc = SPC(source) ?: return FormatResult.Fail(1.0)
+        val spc = SPC(source) ?: return FormatResult.Fail(this, 1.0)
 
         if (spc.files.size == 1)
-            return FormatResult.Success(spc,0.75)
+            return FormatResult.Success(this, spc,0.75)
 
-        return FormatResult(spc, spc.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
+        return FormatResult(this, spc, spc.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
     }
 
     /**

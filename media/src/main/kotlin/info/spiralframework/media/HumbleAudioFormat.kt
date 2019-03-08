@@ -1,11 +1,14 @@
 package info.spiralframework.media
 
 import info.spiralframework.base.util.copyToStream
-import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.audio.SpiralAudioFormat
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.DataSource
+import info.spiralframework.formats.utils.use
 import io.humble.video.Demuxer
 import java.io.File
 import java.io.FileOutputStream
@@ -37,14 +40,14 @@ open class HumbleAudioFormat(val format: String): SpiralAudioFormat(format) {
             } catch (runtime: RuntimeException) {
                 tmp.delete()
 
-                return FormatResult.Fail(1.0)
+                return FormatResult.Fail(this, 1.0)
             }
             if (demuxer.format.name.equals(format, true) || demuxer.format.longName.equals(format, true))
-                return FormatResult.Success(tmp, 1.0)
+                return FormatResult.Success(this, tmp, 1.0)
 
             tmp.delete()
 
-            return FormatResult.Fail(1.0)
+            return FormatResult.Fail(this, 1.0)
         } finally {
             demuxer.close()
         }
