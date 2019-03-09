@@ -18,8 +18,9 @@ import java.io.OutputStream
 import java.util.*
 
 object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
-    override val name: String
-        get() = "Lin"
+    override val name: String = "Lin"
+
+    override fun preferredConversionFormat(): WritableSpiralFormat? = OpenSpiralLanguageFormat
 
     override fun identify(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Optional<Lin>> {
         //Check here if we have an explicit game override that says this *isn't* a game from HPA.
