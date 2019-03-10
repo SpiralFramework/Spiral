@@ -24,6 +24,6 @@ interface CommandClass {
         }
     }
 
-    fun ParboiledSoldier(rule: Rule, scope: String? = null, command: ParboiledSoldier.(List<Any>) -> Boolean): ParboiledSoldier = ParboiledSoldier(rule, scope, cockpit, command)
-    fun ParboiledSoldier(rule: Rule, scope: String? = null, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean): ParboiledSoldier = ParboiledSoldier(rule, scope, cockpit, help, command)
+    fun ParboiledSoldier(name: String, rule: Rule, scope: String? = null, command: ParboiledSoldier.(List<Any>) -> Boolean): ParboiledSoldier = ParboiledSoldier(name, rule, scope, cockpit, command)
+    fun ParboiledSoldier(name: String, rule: Rule, scope: String? = null, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean): ParboiledSoldier = ParboiledSoldier(name, rule, scope, cockpit, help, command)
 }

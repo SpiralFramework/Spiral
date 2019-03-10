@@ -11,7 +11,7 @@ import org.parboiled.Rule
 import org.parboiled.errors.ParseError
 import org.parboiled.parserunners.ReportingParseRunner
 
-open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private val watchtowers: Collection<Watchtower>, val failedCommand: ParboiledSoldier.(List<ParseError>) -> Unit, val command: ParboiledSoldier.(List<Any>) -> Boolean) : Soldier {
+open class ParboiledSoldier(val commandName: String, val rule: Rule, val scope: String? = null, private val watchtowers: Collection<Watchtower>, val failedCommand: ParboiledSoldier.(List<ParseError>) -> Unit, val command: ParboiledSoldier.(List<Any>) -> Boolean) : Soldier {
     companion object {
         val FAILURE = true
         val SUCCESS = false
@@ -26,8 +26,8 @@ open class ParboiledSoldier(val rule: Rule, val scope: String? = null, private v
         }
     }
 
-    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), invalidCommand, command)
-    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), { printlnErr(help) }, command)
+    constructor(name: String, rule: Rule, scope: String? = null, cockpit: Cockpit<*>, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(name, rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), invalidCommand, command)
+    constructor(name: String, rule: Rule, scope: String? = null, cockpit: Cockpit<*>, help: String, command: ParboiledSoldier.(List<Any>) -> Boolean) : this(name, rule, scope, java.util.Collections.singletonList(ParboiledWatchtower(rule, scope, cockpit)), { printlnErr(help) }, command)
     val runner = ReportingParseRunner<Any>(rule)
     var failed: Boolean = false
 
