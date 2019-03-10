@@ -1,9 +1,6 @@
 package info.spiralframework.console.commands.mechanic
 
-import info.spiralframework.base.util.ProgressTracker
-import info.spiralframework.base.util.forEachFiltered
-import info.spiralframework.base.util.printlnErrLocale
-import info.spiralframework.base.util.printlnLocale
+import info.spiralframework.base.util.*
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs
@@ -17,7 +14,6 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
-import info.spiralframework.base.util.copyToStream
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream
@@ -110,7 +106,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
 
     /** Commands */
 
-    val extract = ParboiledSoldier(extractRule) { stack ->
+    val extract = ParboiledSoldier("extract", extractRule) { stack ->
         val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = Regex(".*"), defaultLeaveCompressed = false)
         val regex = args.filter!!
 
@@ -192,11 +188,11 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
 
         return@ParboiledSoldier SUCCESS
     }
-    val compile = ParboiledSoldier(compileRule) { stack ->
+    val compile = ParboiledSoldier("compile", compileRule) { stack ->
         println("We're in boyo")
         return@ParboiledSoldier SUCCESS
     }
-    val environment = ParboiledSoldier(environmentRule) {
+    val environment = ParboiledSoldier("environment", environmentRule) {
         println(SpiralCoreData.ENVIRONMENT)
         return@ParboiledSoldier SUCCESS
     }

@@ -134,9 +134,9 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
     /** Commands */
 
-    val help = ParboiledSoldier(helpRule) { SUCCESS }
+    val help = ParboiledSoldier("help", helpRule) { SUCCESS }
 
-    val identify = ParboiledSoldier(identifyRule) { stack ->
+    val identify = ParboiledSoldier("identify", identifyRule) { stack ->
         val file = stack[0] as File
 
         // First thing's first - does the file even exist?
@@ -231,7 +231,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         return@ParboiledSoldier FAILURE
     }
 
-    val extract = ParboiledSoldier(extractRule) { stack ->
+    val extract = ParboiledSoldier("extract", extractRule) { stack ->
         val builderArgs = (stack[0] as ExtractArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
         if (builderArgs.builder || builderArgs.extractPath == null || builderArgs.destDir == null) {
             //Builder
@@ -334,7 +334,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         return@ParboiledSoldier SUCCESS
     }
 
-    val convert = ParboiledSoldier(convertRule) { stack ->
+    val convert = ParboiledSoldier("convert", convertRule) { stack ->
         val builderArgs = (stack[0] as ConvertArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
         if (builderArgs.builder || builderArgs.converting == null) {
             //Builder
@@ -374,15 +374,15 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         }
 
         if (args.converting.isFile) {
-
+            println("Converting File")
         } else if (args.converting.isDirectory) {
-
+            println("Converting directory")
         }
 
         return@ParboiledSoldier FAILURE
     }
 
-    val debug = ParboiledSoldier(makeRule { IgnoreCase("debug") }) { stack ->
+    val debug = ParboiledSoldier("debug", makeRule { IgnoreCase("debug") }) { stack ->
         val sfl = SFL(File("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/dr1_data/Dr1/data/all/flash/fla_735/0")::inputStream)!!
         val commandTable = sfl.tables.last()
 
@@ -413,7 +413,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
     fun Number.toHex(): String = "0x${(this.toInt() and 0xFF).toString(16).toUpperCase().padStart(2, '0')}"
 
-    val exit = ParboiledSoldier(exitRule, "default") {
+    val exit = ParboiledSoldier("exit", exitRule, "default") {
         printlnLocale("commands.exit.leave")
         keepLooping.set(false)
 
