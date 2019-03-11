@@ -37,24 +37,7 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
      */
     fun identify(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<Optional<T>>
-            = identifyInternal(name, game, context, source)
-
-    /**
-     * Attempts to identify the data source as an instance of [T]
-     *
-     * Formats are recommended to override this where possible.
-     *
-     * NOTE: Callers should call [identify] rather than this. [identify] wraps the result with this format
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     * @param source A function that returns an input stream
-     *
-     * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
-     */
-    fun identifyInternal(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<Optional<T>>
-        = readInternal(name, game, context, source).map { Optional.of(it) }
+        = read(name, game, context, source).map { Optional.of(it) }
 
     /**
      * Attempts to read the data source as [T]
@@ -66,7 +49,7 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    fun readInternal(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<T>
+    fun read(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<T>
 }
 
 /**
@@ -105,5 +88,6 @@ sealed class FormatWriteResponse {
 }
 
 fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {
+    this.nullableFormat = format
     return this
 }
