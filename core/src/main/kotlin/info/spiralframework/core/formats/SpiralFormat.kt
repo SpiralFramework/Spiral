@@ -86,3 +86,8 @@ sealed class FormatWriteResponse {
     object WRONG_FORMAT: FormatWriteResponse()
     class FAIL(val reason: Throwable? = null): FormatWriteResponse()
 }
+
+fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {
+    this.nullableFormat = format
+    return this
+}
