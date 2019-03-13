@@ -43,4 +43,7 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
         super.reset()
         count = 0L
     }
+
+    fun seekForward(n: Long): Long =
+            super.skip(n)
 }
