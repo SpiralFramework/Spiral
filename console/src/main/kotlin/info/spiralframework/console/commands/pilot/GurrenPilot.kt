@@ -7,11 +7,14 @@ import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ConvertArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
+import info.spiralframework.console.data.errors.ConvertResponse
 import info.spiralframework.console.imperator.CommandClass
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
 import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatResult.Companion.NO_FORMAT_DEFINED
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.dataContext
@@ -172,7 +175,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ") { format -> format.name }
 
                 //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
-                val formatString = "${compressionString}${formatResult.format?.name
+                val formatString = "${compressionString}${formatResult.nullableFormat?.name
                         ?: formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
                         ?: locale("commands.pilot.identify.unknown_format_name")}"
 
@@ -211,7 +214,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                             val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ")
 
                             //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
-                            return@mapIndexed subfile to "${compressionString}${formatResult.format?.name
+                            return@mapIndexed subfile to "${compressionString}${formatResult.nullableFormat?.name
                                     ?: formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
                                     ?: locale("commands.pilot.identify.unknown_format_name")}"
                         } else {
@@ -395,10 +398,10 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                         .firstOrNull()
             } else {
                 val formatForName = GurrenShared.READABLE_FORMATS
-                        .firstOrNull { format -> format.name == args.from }
+                        .firstOrNull { format -> format.name.equals(args.from, true) }
 
                 if (formatForName == null) {
-                    printlnLocale("commands.pilot.convert.err_no_known_format_name", args.from)
+                    printlnLocale("commands.pilot.convert.err_no_known_format_name", "reading", args.from)
                     return@ParboiledSoldier FAILURE
                 }
 
@@ -410,67 +413,224 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             if (formatResult != null) {
                 //The file has an identifiable format.
                 //Let's read the data
-                if (formatResult.format == null) {
+                if (formatResult.format === NO_FORMAT_DEFINED) {
+                    //No format included, we can't work with this
                     printlnErrLocale("commands.pilot.convert.err_no_format_in_result", formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
                             ?: locale("commands.pilot.convert.unknown_format_name"))
                     return@ParboiledSoldier FAILURE
                 }
-                val result = formatResult.format
 
                 //Should result in something like DRVita > V3 > SPC >
                 val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ") { format -> format.name }
-                val resultString = formatResult.format?.name
-                        ?: formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
-                        ?: locale("commands.pilot.convert.unknown_format_name")
+                val resultString = formatResult.format.name
 
                 //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
                 val formatString = "${compressionString}${resultString}"
 
-                val formatConvertTo = if (args.to == null) {
-                    val ourFormat = formatResult.format as? ReadableSpiralFormat<*>
-                    if (ourFormat == null) {
-                        printlnLocale("commands.pilot.convert.err_unknown_read_format", resultString)
-                        return@ParboiledSoldier FAILURE
-                    }
+                val ourFormat = formatResult.format as? ReadableSpiralFormat<*>
+                if (ourFormat == null) {
+                    //Our format isn't a readable format, wtf?
+                    printlnErrLocale("commands.pilot.convert.err_unknown_read_format", resultString)
+                    return@ParboiledSoldier FAILURE
+                }
 
+                val formatConvertTo = if (args.to == null) {
                     val preferred = ourFormat.preferredConversionFormat()
                     if (preferred == null) {
-                        printlnLocale("commands.pilot.convert.err_no_preferred_write_format", ourFormat.name)
+                        //No preferred format
+                        printlnErrLocale("commands.pilot.convert.err_no_preferred_write_format", ourFormat.name)
                         return@ParboiledSoldier FAILURE
                     }
 
                     preferred
                 } else {
                     val formatForName = GurrenShared.WRITABLE_FORMATS
-                            .firstOrNull { format -> format.name == args.to }
+                            .firstOrNull { format -> format.name.equals(args.to, true) }
 
                     if (formatForName == null) {
-                        printlnLocale("commands.pilot.convert.err_no_known_format_name", args.from)
+                        printlnErrLocale("commands.pilot.convert.err_no_known_format_name", "writing", args.to)
                         return@ParboiledSoldier FAILURE
                     }
 
                     formatForName
                 }
 
-                val output = File(file.absolutePath.replaceAfterLast('.', "tmp"))
-                FileOutputStream(output).use { outStream ->
-                    formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
-                            ?: BLANK_DATA_CONTEXT, "", outStream)
+                val data = formatResult.obj.takeIf(Optional<*>::isPresent)?.get()
+                        ?: ourFormat.read(file.name, null, file.absoluteParentFile?.dataContext
+                                ?: BLANK_DATA_CONTEXT, dataSource).safeObj
+
+                if (data == null) {
+                    printlnErrLocale("commands.pilot.convert.err_no_readable_data", ourFormat.name)
+                    return@ParboiledSoldier FAILURE
                 }
 
-                //Print it all out
-//                if (SpiralModel.tableOutput) {
-//                    println(FlipTable.of(arrayOf("File", "Format"), arrayOf(arrayOf(file.absolutePath, formatString))))
-//                } else {
-//                printlnLocale("commands.pilot.identify.identified", file.absolutePath)
-//                printlnLocale("commands.pilot.identify.identified_format", formatString)
-//                }
+                if (!formatConvertTo.supportsWriting(data)) {
+                    printlnErrLocale("commands.pilot.convert.err_write_not_supported", formatConvertTo.name, data::class.java.name)
+                    return@ParboiledSoldier FAILURE
+                }
 
-                return@ParboiledSoldier SUCCESS
+                val output = File(file.absolutePath.replaceAfterLast('.', "tmp"))
+                val response = FileOutputStream(output).use { outStream ->
+                    formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                            ?: BLANK_DATA_CONTEXT, data, outStream)
+                }
+
+                when (response) {
+                    FormatWriteResponse.SUCCESS -> {
+                        printlnLocale("commands.pilot.convert.response", file, formatString, formatConvertTo.name)
+                        return@ParboiledSoldier SUCCESS
+                    }
+                    FormatWriteResponse.WRONG_FORMAT -> {
+                        printlnErrLocale("commands.pilot.convert.err_write_not_supported_result", formatConvertTo.name, data::class.java.name)
+                        return@ParboiledSoldier FAILURE
+                    }
+                    is FormatWriteResponse.FAIL -> {
+                        printlnErrLocale("commands.pilot.convert.err_conversion_error", formatConvertTo.name, data::class.java.name)
+                        response.reason.printStackTrace()
+                        return@ParboiledSoldier FAILURE
+                    }
+                }
+            } else {
+                if (args.from == null) {
+                    printlnErrLocale("commands.pilot.convert.err_unknown_file", file)
+                } else {
+                    printlnErrLocale("commands.pilot.convert.err_not_of_format", file, args.from)
+                }
+
+                return@ParboiledSoldier FAILURE
             }
 
         } else if (args.converting.isDirectory) {
-            println("Converting directory")
+            val dir = args.converting
+            val subfiles = dir.walk().filter { subfile -> !subfile.name.startsWith(".") && subfile.isFile }.toList()
+            val dataContext = args.converting.dataContext
+            val (resultList, numberOfNulls) = ProgressTracker(downloadingText = "commands.pilot.convert.folder_progress", downloadedText = "commands.pilot.convert.folder_finished") {
+                subfiles.mapIndexed { index, file ->
+                    try {
+                        //If so, we can define a data source for it here
+                        //We decompress it in place, just in case it's compressed
+                        val (dataSource, compressionMethods) = decompress(file::inputStream)
+
+                        //We should now have a proper data source
+                        //We can now work on format identification
+                        val formatResult = if (args.from == null) {
+                            GurrenShared.READABLE_FORMATS
+                                    .map { format ->
+                                        format.identify(file.name, null, file.absoluteParentFile?.dataContext
+                                                ?: BLANK_DATA_CONTEXT, dataSource)
+                                    }
+                                    .filter(FormatResult<*>::didSucceed)
+                                    .sortedBy(FormatResult<*>::chance)
+                                    .asReversed()
+                                    .firstOrNull()
+                        } else {
+                            val formatForName = GurrenShared.READABLE_FORMATS
+                                    .firstOrNull { format -> format.name.equals(args.from, true) }
+                                    ?: return@mapIndexed ConvertResponse(file, null, null, locale("commands.pilot.convert.err_no_known_format_name", "reading", args.from))
+
+                            formatForName.identify(file.name, null, file.absoluteParentFile?.dataContext
+                                    ?: BLANK_DATA_CONTEXT, dataSource)
+                                    .takeIf(FormatResult<*>::didSucceed)
+                        }
+
+                        if (formatResult != null) {
+                            //The file has an identifiable format.
+                            //Let's read the data
+                            if (formatResult.format === NO_FORMAT_DEFINED) {
+                                //No format included, we can't work with this
+                                return@mapIndexed ConvertResponse(
+                                        file, null, null, locale("commands.pilot.convert.err_no_format_in_result", formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
+                                        ?: locale("commands.pilot.convert.unknown_format_name")))
+                            }
+
+                            //Should result in something like DRVita > V3 > SPC >
+                            val compressionString = if (compressionMethods.isEmpty()) "" else compressionMethods.joinToString(" > ", postfix = " > ") { format -> format.name }
+                            val resultString = formatResult.format.name
+
+                            //This concatenates them together, which will be something like DRVita > V3 > SPC > SRD, or just SRD if it's uncompressed
+                            val formatString = "${compressionString}${resultString}"
+
+                            val ourFormat = formatResult.format as? ReadableSpiralFormat<*>
+                                    ?: //Our format isn't a readable format, wtf?
+                                    return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_unknown_read_format", resultString))
+
+                            val formatConvertTo = if (args.to == null) {
+                                val preferred = ourFormat.preferredConversionFormat()
+                                        ?: //No preferred format
+                                        return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_preferred_write_format", ourFormat.name))
+
+                                preferred
+                            } else {
+                                val formatForName = GurrenShared.WRITABLE_FORMATS
+                                        .firstOrNull { format -> format.name.equals(args.to, true) }
+                                        ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_known_format_name", "writing", args.to))
+
+                                formatForName
+                            }
+
+                            val data = formatResult.obj.takeIf(Optional<*>::isPresent)?.get()
+                                    ?: ourFormat.read(file.name, null, file.absoluteParentFile?.dataContext
+                                            ?: BLANK_DATA_CONTEXT, dataSource).safeObj ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_readable_data", ourFormat.name))
+
+                            if (!formatConvertTo.supportsWriting(data)) {
+                                return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_write_not_supported", formatConvertTo.name, data::class.java.name))
+                            }
+
+                            val output = File(file.absolutePath.replaceAfterLast('.', "tmp"))
+                            val response = FileOutputStream(output).use { outStream ->
+                                formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                                        ?: BLANK_DATA_CONTEXT, data, outStream)
+                            }
+
+                            when (response) {
+                                FormatWriteResponse.SUCCESS -> {
+                                    ConvertResponse(file, formatString, formatConvertTo.name, null)
+                                }
+                                FormatWriteResponse.WRONG_FORMAT -> {
+                                    ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_write_not_supported_result", formatConvertTo.name, data::class.java.name))
+                                }
+                                is FormatWriteResponse.FAIL -> {
+                                    ConvertResponse(file, formatString, null, buildString {
+                                        appendln(locale<String>("commands.pilot.convert.err_conversion_error", formatConvertTo.name, data::class.java.name))
+                                        appendln(response.reason.retrieveStackTrace())
+                                    })
+                                }
+                            }
+                        } else {
+                            return@mapIndexed if (args.from == null) {
+                                ConvertResponse(file, null, null, locale("commands.pilot.convert.err_unknown_file", file))
+                            } else {
+                                null //ConvertResponse(file, null, null, locale("commands.pilot.convert.err_not_of_format", file, args.from))
+                            }
+                        }
+                    } finally {
+                        trackDownload(index.toLong(), subfiles.size.toLong())
+                    }
+                }
+            }.let { list -> list.filterNotNull() to list.count { it == null } }
+
+            if (numberOfNulls > 0)
+                printlnLocale("commands.pilot.convert.skipped", numberOfNulls)
+
+            val results = resultList.groupBy { response -> response.error == null }
+            results[false]?.let { errorResults ->
+                printlnLocale("commands.pilot.convert.converted_header_errors")
+                println(errorResults.joinToString("\n") { (file, source, _, error) ->
+                    locale<String>("commands.pilot.convert.converted_errors_many", file relativePathTo dir, source
+                            ?: locale<String>("gurren.pilot.not_applicable"), error)
+                })
+            }
+
+            results[true]?.let { validResults ->
+                printlnLocale("commands.pilot.convert.converted_header")
+                println(validResults.joinToString ("\n") { (file, source, result) ->
+                    locale<String>("commands.pilot.convert.converted_many", file relativePathTo file, source
+                            ?: locale<String>("gurren.pilot.not_applicable"), result
+                            ?: locale<String>("gurren.pilot.not_applicable"))
+                })
+            }
+
+            return@ParboiledSoldier SUCCESS
         }
 
         return@ParboiledSoldier FAILURE
