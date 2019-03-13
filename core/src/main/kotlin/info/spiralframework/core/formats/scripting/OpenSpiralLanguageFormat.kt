@@ -20,8 +20,8 @@ import java.io.OutputStream
 import java.io.PrintStream
 
 object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiralFormat {
-    override val name: String
-        get() = "OpenSpiralLangauge"
+    override val name: String = "OpenSpiralLangauge"
+    override val extension: String = "osl"
 
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<OSLDrone> {
         val parser = OpenSpiralLanguageParser { resourceName -> context(resourceName)?.invoke()?.use(InputStream::readBytes) }

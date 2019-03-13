@@ -12,7 +12,7 @@ import java.io.File
 import java.io.OutputStream
 import java.util.*
 
-open class SpiralAudioFormat(override val name: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
+open class SpiralAudioFormat(override val name: String, override val extension: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
 
     override fun identify(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Optional<File>> {

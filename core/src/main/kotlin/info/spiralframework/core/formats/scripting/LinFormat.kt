@@ -19,6 +19,7 @@ import java.util.*
 
 object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
     override val name: String = "Lin"
+    override val extension: String = "lin"
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = OpenSpiralLanguageFormat
 

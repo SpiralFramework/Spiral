@@ -15,6 +15,7 @@ import java.util.zip.ZipFile
 
 object PakFormat: ReadableSpiralFormat<Pak>, WritableSpiralFormat {
     override val name: String = "Pak"
+    override val extension: String = "pak"
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
 

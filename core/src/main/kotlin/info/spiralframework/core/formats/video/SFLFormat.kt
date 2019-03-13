@@ -10,6 +10,7 @@ import info.spiralframework.formats.video.SFL
 object SFLFormat: ReadableSpiralFormat<SFL> {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
     override val name: String = "SFL"
+    override val extension: String = "sfl"
 
     /**
      * Attempts to read the data source as [T]

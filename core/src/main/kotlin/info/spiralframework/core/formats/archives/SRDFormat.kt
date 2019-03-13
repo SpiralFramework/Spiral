@@ -9,6 +9,7 @@ import info.spiralframework.formats.utils.DataSource
 
 object SRDFormat: ReadableSpiralFormat<SRD> {
     override val name: String = "SRD"
+    override val extension: String = "srd"
 
     /**
      * Attempts to read the data source as [T]

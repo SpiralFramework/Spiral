@@ -16,6 +16,7 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.FormatResult.Companion.NO_FORMAT_DEFINED
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.dataContext
 import info.spiralframework.formats.video.SFL
@@ -469,7 +470,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     return@ParboiledSoldier FAILURE
                 }
 
-                val output = File(file.absolutePath.replaceAfterLast('.', "tmp"))
+                val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension ?: SpiralFormat.DEFAULT_EXTENSION}")
                 val response = FileOutputStream(output).use { outStream ->
                     formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
                             ?: BLANK_DATA_CONTEXT, data, outStream)
@@ -576,7 +577,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                                 return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_write_not_supported", formatConvertTo.name, data::class.java.name))
                             }
 
-                            val output = File(file.absolutePath.replaceAfterLast('.', "tmp"))
+                            val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension ?: SpiralFormat.DEFAULT_EXTENSION}")
                             val response = FileOutputStream(output).use { outStream ->
                                 formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
                                         ?: BLANK_DATA_CONTEXT, data, outStream)

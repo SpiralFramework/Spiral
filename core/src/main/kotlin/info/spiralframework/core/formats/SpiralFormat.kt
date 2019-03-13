@@ -11,7 +11,15 @@ import java.util.*
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
     val name: String
-    //val extension: String?
+
+    /**
+     * The usual extension for this format. Some formats don't have a proper extension, so this can be nullable
+     */
+    val extension: String?
+
+    companion object {
+        val DEFAULT_EXTENSION = "dat"
+    }
 }
 
 /**

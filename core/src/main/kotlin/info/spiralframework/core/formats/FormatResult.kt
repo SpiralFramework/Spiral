@@ -36,6 +36,7 @@ sealed class FormatResult<T>: Closeable {
 
         val NO_FORMAT_DEFINED = object: SpiralFormat {
             override val name: String = "[NO FORMAT DEFINED]"
+            override val extension: String? = null
         }
     }
 
