@@ -3,6 +3,11 @@ package info.spiralframework.formats.game.v3
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.scripting.EnumWordScriptCommand
 import info.spiralframework.formats.scripting.wrd.UnknownEntry
+import info.spiralframework.formats.scripting.wrd.LabelEntry
+import info.spiralframework.formats.scripting.wrd.ScriptEntry
+import info.spiralframework.formats.scripting.wrd.SpeakerEntry
+import info.spiralframework.formats.scripting.wrd.TextEntry
+import info.spiralframework.formats.scripting.wrd.VoiceLineEntry
 import info.spiralframework.formats.scripting.wrd.WrdScript
 import info.spiralframework.formats.utils.*
 import java.io.File
@@ -26,20 +31,20 @@ object V3 : DRGame {
                 this[0x0D] = null to -1 and ::UnknownEntry //RET
                 this[0x0E] = "Camera Look" to 10 and ::UnknownEntry //KNM
                 this[0x0F] = null to -1 and ::UnknownEntry //CAP
-                this[0x10] = arrayOf("Script", "Load Script") to 4 and ::UnknownEntry //FIL
+                this[0x10] = arrayOf("Script", "Load Script") to 4 and ::ScriptEntry //FIL
                 this[0x11] = arrayOf("Stop Script", "End Script") to 0 and ::UnknownEntry //END
                 this[0x12] = "Run Subroutine Script" to 4 and ::UnknownEntry //SUB
                 this[0x13] = "Return" to 0 and ::UnknownEntry //RTN
-                this[0x14] = "Label" to 2 and ::UnknownEntry //LAB
+                this[0x14] = "Label" to 2 and ::LabelEntry //LAB
                 this[0x15] = arrayOf("Jump To Label", "Goto") to 2 and ::UnknownEntry //JMP
                 this[0x16] = "Movie" to -1 and ::UnknownEntry //MOV
                 this[0x17] = "Animation" to 8 and ::UnknownEntry //FLS
                 this[0x18] = "Animation Effect" to 12 and ::UnknownEntry //FLM
-                this[0x19] = "Voice" to 4 and ::UnknownEntry //VOI
+                this[0x19] = "Voice" to 4 and ::VoiceLineEntry //VOI
                 this[0x1A] = "Music" to 6 and ::UnknownEntry //BGM
                 this[0x1B] = "Sound Effect" to 4 and ::UnknownEntry //SE_
                 this[0x1C] = "Jingle" to -1 and ::UnknownEntry //JIN
-                this[0x1D] = "Speaker" to 2 and ::UnknownEntry//CHN
+                this[0x1D] = "Speaker" to 2 and ::SpeakerEntry//CHN
                 this[0x1E] = "Camera Vibration" to 6 and ::UnknownEntry //VIB
                 this[0x1F] = "Fade Screen"  to 6 and ::UnknownEntry //FDS
                 this[0x20] = null to -1 and ::UnknownEntry //FLA
