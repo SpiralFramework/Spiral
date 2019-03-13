@@ -13,6 +13,7 @@ import info.spiralframework.core.formats.compression.V3CompressionFormat
 import info.spiralframework.core.formats.images.*
 import info.spiralframework.core.formats.scripting.LinFormat
 import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
+import info.spiralframework.core.formats.scripting.WordScriptFormat
 import info.spiralframework.core.formats.video.SFLFormat
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.video.SFL
@@ -37,7 +38,7 @@ object GurrenShared {
                 CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat,
                 DDSImageFormat.DXT1,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
-                LinFormat, OpenSpiralLanguageFormat,
+                LinFormat, WordScriptFormat, OpenSpiralLanguageFormat,
                 SFLFormat
         )
     }
