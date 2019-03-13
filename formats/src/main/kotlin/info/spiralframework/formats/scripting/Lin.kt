@@ -9,7 +9,8 @@ import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.scripting.lin.UnknownEntry
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.and
 import java.io.InputStream
 import java.util.*
 
@@ -120,16 +121,16 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                 }
             }
 
-            if (stream.streamOffset < textBlock) {
-                val skipping = textBlock - stream.streamOffset
-                DataHandler.LOGGER.debug("formats.lin.undershot_block", stream.streamOffset, textBlock, skipping)
+            if (stream.count < textBlock) {
+                val skipping = textBlock - stream.count
+                DataHandler.LOGGER.debug("formats.lin.undershot_block", stream.count, textBlock, skipping)
 
                 stream.skip(skipping)
-            } else if (stream.streamOffset > textBlock) {
-                throw locale<IllegalArgumentException>("formats.lin.overshot_text_block", stream.streamOffset, textBlock)
+            } else if (stream.count > textBlock) {
+                throw locale<IllegalArgumentException>("formats.lin.overshot_text_block", stream.count, textBlock)
             }
 
-            assertAsLocaleArgument(stream.streamOffset == textBlock.toLong(), "formats.lin.not_at_text_block", stream.streamOffset, textBlock)
+            assertAsLocaleArgument(stream.count == textBlock.toLong(), "formats.lin.not_at_text_block", stream.count, textBlock)
 
             val textLineCount = stream.readInt32LE()
             if (textBlock == size || textLineCount == -1) {

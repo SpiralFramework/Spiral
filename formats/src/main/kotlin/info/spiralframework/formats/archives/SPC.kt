@@ -61,7 +61,7 @@ class SPC private constructor(val dataSource: DataSource): IArchive {
                 val name = stream.readString(nameLength - 1)
                 stream.skip(namePadding + 1L)
 
-                val position = stream.count
+                val position = stream.streamOffset
 
                 stream.skip(compressedSize + dataPadding)
 
