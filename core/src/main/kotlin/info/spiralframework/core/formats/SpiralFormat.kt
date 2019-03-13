@@ -1,5 +1,6 @@
 package info.spiralframework.core.formats
 
+import info.spiralframework.base.util.locale
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.DataContext
@@ -84,7 +85,7 @@ interface WritableSpiralFormat: SpiralFormat {
 sealed class FormatWriteResponse {
     object SUCCESS: FormatWriteResponse()
     object WRONG_FORMAT: FormatWriteResponse()
-    class FAIL(val reason: Throwable? = null): FormatWriteResponse()
+    class FAIL(val reason: Throwable = Throwable(locale<String>("gurren.errors.no_reason"))): FormatWriteResponse()
 }
 
 fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {
