@@ -13,6 +13,7 @@ import java.util.zip.ZipFile
 
 object CpkFormat: ReadableSpiralFormat<CPK>, WritableSpiralFormat {
     override val name: String = "Cpk"
+    override val extension: String = "cpk"
 
     /**
      * Attempts to read the data source as [T]

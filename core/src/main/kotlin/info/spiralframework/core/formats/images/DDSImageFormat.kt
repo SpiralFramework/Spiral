@@ -23,6 +23,8 @@ abstract class DDSImageFormat(override val name: String, val typeMagic: Int): Re
         }
     }
 
+    override val extension: String = "dds"
+
     override fun preferredConversionFormat(): WritableSpiralFormat? = PNGFormat
 
     /**
