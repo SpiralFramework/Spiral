@@ -72,7 +72,7 @@ object DR1 : HopesPeakKillingGame {
                 this[0x30] = "Show Background" to 3 and ::ShowBackgroundEntry
                 this[0x31] = null to -1 and ::UnknownEntry
                 this[0x32] = null to 1 and ::UnknownEntry
-                this[0x33] = null to 4 and ::UnknownEntry
+                this[0x33] = "Set Game Parameter" to 4 and ::UnknownEntry
                 this[0x34] = arrayOf("Go To Label", "Goto Label", "Goto") to 2 and ::GoToLabelEntry
                 this[0x35] = "Check Flag A" to -1 and ::CheckFlagAEntry
                 this[0x36] = "Check Flag B" to -1 and ::UnknownEntry
