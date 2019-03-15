@@ -83,6 +83,9 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 )
         )
     }
+
+    val gameComponentRule = makeRule { Localised("rules.pilot.game") }
+
     val helpRule = makeRule { Localised("commands.pilot.help") }
     val identifyRule = makeRule {
         Sequence(
@@ -399,7 +402,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                         .firstOrNull()
             } else {
                 val formatForName = GurrenShared.READABLE_FORMATS
-                        .firstOrNull { format -> format.name.equals(args.from, true) }
+                        .firstOrNull { format -> format.name.equals(args.from, true) || (format.extension?.equals(args.from, true) ?: false) }
 
                 if (formatForName == null) {
                     printlnLocale("commands.pilot.convert.err_no_known_format_name", "reading", args.from)
@@ -446,7 +449,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     preferred
                 } else {
                     val formatForName = GurrenShared.WRITABLE_FORMATS
-                            .firstOrNull { format -> format.name.equals(args.to, true) }
+                            .firstOrNull { format -> format.name.equals(args.to, true) || (format.extension?.equals(args.to, true) ?: false) }
 
                     if (formatForName == null) {
                         printlnErrLocale("commands.pilot.convert.err_no_known_format_name", "writing", args.to)
@@ -526,7 +529,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                                     .firstOrNull()
                         } else {
                             val formatForName = GurrenShared.READABLE_FORMATS
-                                    .firstOrNull { format -> format.name.equals(args.from, true) }
+                                    .firstOrNull { format -> format.name.equals(args.from, true) || (format.extension?.equals(args.from, true) ?: false) }
                                     ?: return@mapIndexed ConvertResponse(file, null, null, locale("commands.pilot.convert.err_no_known_format_name", "reading", args.from))
 
                             formatForName.identify(file.name, null, file.absoluteParentFile?.dataContext
@@ -563,7 +566,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                                 preferred
                             } else {
                                 val formatForName = GurrenShared.WRITABLE_FORMATS
-                                        .firstOrNull { format -> format.name.equals(args.to, true) }
+                                        .firstOrNull { format -> format.name.equals(args.to, true) || (format.extension?.equals(args.to, true) ?: false) }
                                         ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_known_format_name", "writing", args.to))
 
                                 formatForName

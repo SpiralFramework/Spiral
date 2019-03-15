@@ -48,7 +48,7 @@ object GurrenShared {
                 CpkFormat, FolderFormat, PakFormat, SpcFormat, WadFormat, ZipFormat,
                 AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
-                LinFormat, OpenSpiralLanguageFormat
+                LinFormat, WordScriptFormat, OpenSpiralLanguageFormat
         )
     }
 

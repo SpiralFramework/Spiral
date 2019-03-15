@@ -10,6 +10,7 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.core.*
+import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
@@ -240,6 +241,11 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
      * The scope of operation that Spiral is currently operating in
      */
     var operationScope: SpiralScope = SpiralScope("default", "> ")
+
+    /**
+     * The default game to use for operations
+     */
+    var defaultGame: DRGame? = null
 
     val parameterParser: ParameterParser = ParameterParser()
     val imperator: Imperator = BasicImperator()
