@@ -10,6 +10,9 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.core.*
+import info.spiralframework.core.plugins.EventBus
+import info.spiralframework.core.plugins.EventPriority
+import info.spiralframework.core.plugins.events.SpiralEvent
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
