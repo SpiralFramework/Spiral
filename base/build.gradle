@@ -2,3 +2,8 @@ dependencies {
     compile("org.slf4j:slf4j-api:$sfl4j_version")
     compile("io.github.soc:directories:11")
 }
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
+    }
+}

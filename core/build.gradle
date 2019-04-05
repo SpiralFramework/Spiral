@@ -21,4 +21,6 @@ dependencies {
     compile 'com.twelvemonkeys.imageio:imageio-tga:3.4.1'
 
     compile('org.abimon:Karnage:db4b1a0')
+
+    compile("org.abimon:Imperator:$imperator_version")
 }

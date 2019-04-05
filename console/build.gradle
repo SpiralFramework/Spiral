@@ -9,7 +9,6 @@ dependencies {
     compile project(":core")
     compile project(":updater")
 
-    compile("org.abimon:Imperator:$imperator_version")
     compile("ch.qos.logback:logback-classic:$logback_version")
 }
 
