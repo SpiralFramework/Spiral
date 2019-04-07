@@ -5,15 +5,16 @@ import info.spiralframework.console.Cockpit
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
-import info.spiralframework.console.imperator.CommandClass
-import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
-import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
+import info.spiralframework.console.eventbus.CommandClass
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
+import info.spiralframework.osl.parserAction
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream
@@ -37,6 +38,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
     val extractRule = makeRuleWith(::ExtractArgs) { argsVar ->
         Sequence(
                 Localised("commands.mechanic.extract.extract"),
+                Action<Any> { pushMarkerSuccessBase() },
                 ParamSeparator(),
                 ExistingMechanicFilePath(),
                 Action<Any> { argsVar.get().extractPath = pop() as? File; true },
@@ -60,12 +62,14 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                                         Action<Any> { argsVar.get().leaveCompressed = true; true }
                                 )
                         )
-                )
+                ),
+                Action<Any> { pushMarkerSuccessCommand() }
         )
     }
     val compileRule = makeRuleWith(::CompileArgs) { argsVar ->
         Sequence(
                 Localised("commands.mechanic.compile.compile"),
+                Action<Any> { pushMarkerSuccessBase() },
                 ParamSeparator(),
                 MechanicFilePath(),
                 Action<Any> { argsVar.get().compilingDir = pop() as? File; true },
@@ -98,40 +102,49 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
                                         ""
                                 )
                         )
-                )
+                ),
+                parserAction { pushMarkerSuccessCommand() }
         )
     }
 
-    val environmentRule = makeRule { Localised("commands.mechanic.environment") }
+    val environmentRule = makeRule {
+        Sequence(
+                Localised("commands.mechanic.environment"),
+                Action<Any> {
+                    pushMarkerSuccessBase()
+                    pushMarkerSuccessCommand()
+                }
+        )
+    }
 
     /** Commands */
 
-    val extract = ParboiledSoldier("extract", extractRule) { stack ->
+    val extract = ParboiledCommand(extractRule) { stack ->
         val args = (stack[0] as ExtractArgs).makeImmutable(defaultFilter = Regex(".*"), defaultLeaveCompressed = false)
         val regex = args.filter!!
 
         if (args.extractPath == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_extract")
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (!args.extractPath.exists()) {
             printlnErrLocale("errors.files.doesnt_exist", args.extractPath)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (args.destDir == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_dest_dir")
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (!args.destDir.exists() && !args.destDir.mkdirs()) {
             printlnErrLocale("errors.files.cant_create_dir", args.destDir)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
@@ -146,7 +159,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         if (result == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_format_for", args.extractPath)
 
-            return@ParboiledSoldier info.spiralframework.console.imperator.ParboiledSoldier.FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         val files: Iterator<Pair<String, InputStream>>
@@ -157,7 +170,7 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         if (fileResult == null) {
             printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         files = fileResult.first
@@ -186,14 +199,14 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         println()
         printlnLocale("commands.mechanic.extract.finished")
 
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
-    val compile = ParboiledSoldier("compile", compileRule) { stack ->
+    val compile = ParboiledCommand(compileRule) { stack ->
         println("We're in boyo")
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
-    val environment = ParboiledSoldier("environment", environmentRule) {
+    val environment = ParboiledCommand(environmentRule) {
         println(SpiralCoreData.ENVIRONMENT)
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
 }

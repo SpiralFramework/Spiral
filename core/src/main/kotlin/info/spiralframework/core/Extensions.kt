@@ -12,6 +12,7 @@ import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.properties.CachedFileReadOnlyProperty
 import info.spiralframework.core.formats.compression.*
 import info.spiralframework.formats.utils.DataSource
+import org.greenrobot.eventbus.EventBus
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -120,4 +121,11 @@ fun <T: Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
     if (response.isSuccessful)
         return result.get()
     return null
+}
+
+fun <T> T.identifySelf(): T = this
+
+fun <T> EventBus.postback(t: T): T {
+    post(t)
+    return t
 }
