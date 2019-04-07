@@ -13,6 +13,7 @@ dependencies {
 }
 
 shadowJar {
+    mergeServiceFiles()
     baseName = jar.baseName
     appendix = jar.appendix
     version = jar.version

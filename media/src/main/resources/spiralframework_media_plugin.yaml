@@ -1,0 +1,8 @@
+name: Spiral Framework - Media
+uid: SPIRAL_FRAMEWORK_MEDIA
+semanticVersion:
+  major: 0
+  minor: 1
+  patch: 0
+
+pluginClass: info.spiralframework.media.HumbleMediaPlugin

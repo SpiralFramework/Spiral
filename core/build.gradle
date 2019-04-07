@@ -22,5 +22,5 @@ dependencies {
 
     compile('org.abimon:Karnage:db4b1a0')
 
-    compile("org.abimon:Imperator:$imperator_version")
+    compile 'org.greenrobot:eventbus:3.1.1'
 }
