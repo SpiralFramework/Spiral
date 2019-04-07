@@ -6,9 +6,9 @@ import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
-import info.spiralframework.console.imperator.CommandClass
-import info.spiralframework.console.imperator.ParboiledSoldier.Companion.FAILURE
-import info.spiralframework.console.imperator.ParboiledSoldier.Companion.SUCCESS
+import info.spiralframework.console.eventbus.CommandClass
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.formats.video.SFL
@@ -36,6 +36,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
     val extractRule = makeRuleWith(::ExtractArgs) { argsVar ->
         Sequence(
                 Localised("commands.pilot.extract.extract"),
+                Action<Any> { pushMarkerSuccessBase() },
                 InlineWhitespace(),
                 FirstOf(
                         Sequence(
@@ -43,7 +44,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                                 Action<Any> { argsVar.get().builder = true; true }
                         ),
                         Sequence(
-                                ExistingFilePath(),
+                                FilePath(),
                                 Action<Any> { argsVar.get().extractPath = pop() as? File; true }
                         )
                 ),
@@ -71,35 +72,55 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                                         Action<Any> { argsVar.get().builder = true; true }
                                 )
                         )
-                )
+                ),
+                Action<Any> { pushMarkerSuccessCommand() }
         )
     }
-    val helpRule = makeRule { Localised("commands.pilot.help") }
+    val helpRule = makeRule {
+        Sequence(
+                Localised("commands.pilot.help"),
+                Action<Any> {
+                    pushMarkerSuccessBase()
+                    pushMarkerSuccessCommand()
+                }
+        )
+    }
+
     val identifyRule = makeRule {
         Sequence(
                 Localised("commands.pilot.identify"),
+                Action<Any> { pushMarkerSuccessBase() },
                 InlineWhitespace(),
-                FilePath()
+                FilePath(),
+                Action<Any> { pushMarkerSuccessCommand() }
         )
     }
 
-    val exitRule = makeRule { Localised("commands.pilot.exit") }
+    val exitRule = makeRule {
+        Sequence(
+                Localised("commands.pilot.exit"),
+                Action<Any> {
+                    pushMarkerSuccessBase()
+                    pushMarkerSuccessCommand()
+                }
+        )
+    }
 
     /** Commands */
 
-    val help = ParboiledSoldier(helpRule) { SUCCESS }
+    val help = ParboiledCommand(helpRule) { SUCCESS }
 
-    val identify = ParboiledSoldier(identifyRule) { stack ->
+    val identify = ParboiledCommand(identifyRule) { stack ->
         val file = stack[0] as File
 
         // First thing's first - does the file even exist?
         if (!file.exists()) {
             printlnErrLocale("errors.file.doesnt_exist", file)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
 
 //        //Next up, are we dealing with a singular file?
 //        if (file.isFile) {
@@ -131,7 +152,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 //        }
     }
 
-    val extract = ParboiledSoldier(extractRule) { stack ->
+    val extract = ParboiledCommand(extractRule) { stack ->
         val builderArgs = (stack[0] as ExtractArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
         if (builderArgs.builder || builderArgs.extractPath == null || builderArgs.destDir == null) {
             //Builder
@@ -161,25 +182,25 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         if (args.extractPath == null) {
             printlnErrLocale("commands.pilot.extract.err_no_extract")
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (!args.extractPath.exists()) {
             printlnErrLocale("errors.files.doesnt_exist", args.extractPath)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (args.destDir == null) {
             printlnErrLocale("commands.pilot.extract.err_no_dest_dir")
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (!args.destDir.exists() && !args.destDir.mkdirs()) {
             printlnErrLocale("errors.files.cant_create_dir", args.destDir)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
@@ -194,7 +215,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         if (result == null) {
             printlnErrLocale("commands.mechanic.extract.err_no_format_for", args.extractPath)
 
-            return@ParboiledSoldier info.spiralframework.console.imperator.ParboiledSoldier.FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         val files: Iterator<Pair<String, InputStream>>
@@ -205,7 +226,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         if (fileResult == null) {
             printlnErrLocale("commands.mechanic.extract.err_unk_format", result)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         files = fileResult.first
@@ -231,10 +252,10 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             }
         }
 
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
 
-    val debug = ParboiledSoldier(makeRule { IgnoreCase("debug") }) { stack ->
+    val debug = ParboiledCommand(makeRule { IgnoreCase("debug") }) { stack ->
         val sfl = SFL(File("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/dr1_data/Dr1/data/all/flash/fla_735/0")::inputStream)!!
         val commandTable = sfl.tables.last()
 
@@ -260,15 +281,15 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
             }
         }
 
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
 
     fun Number.toHex(): String = "0x${(this.toInt() and 0xFF).toString(16).toUpperCase().padStart(2, '0')}"
 
-    val exit = ParboiledSoldier(exitRule, "default") {
+    val exit = ParboiledCommand(exitRule, "default") {
         printlnLocale("commands.exit.leave")
         keepLooping.set(false)
 
-        return@ParboiledSoldier SUCCESS
+        return@ParboiledCommand SUCCESS
     }
 }

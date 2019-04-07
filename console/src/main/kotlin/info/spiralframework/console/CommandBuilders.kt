@@ -1,6 +1,6 @@
 package info.spiralframework.console
 
-import info.spiralframework.console.imperator.CommandClass
+import info.spiralframework.console.eventbus.CommandClass
 import org.parboiled.parserunners.BasicParseRunner
 import org.parboiled.support.ParsingResult
 import java.io.File

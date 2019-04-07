@@ -8,6 +8,8 @@ import org.parboiled.Rule
 import org.parboiled.support.Var
 
 typealias RuleBuilder=OpenSpiralLanguageParser.() -> Array<Rule>
+typealias AnyAction=Action<Any>
+typealias parserAction=Action<Any>
 
 fun <T, V> Var<T>.runWith(op: (T) -> V): Action<Any> =
         Action {
