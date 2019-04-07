@@ -15,12 +15,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import info.spiralframework.core.serialisation.InstantSerialisation
+import info.spiralframework.core.serialisation.SemVerSerialisation
 
 object SpiralSerialisation {
     /** Jackson mapper for JSON data */
     val JSON_MAPPER: ObjectMapper = ObjectMapper()
             .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -29,7 +30,7 @@ object SpiralSerialisation {
     /** Jackson mapper for YAML data */
     val YAML_MAPPER: ObjectMapper = ObjectMapper(YAMLFactory())
             .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule())
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)

@@ -12,7 +12,6 @@ import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.core.*
 import info.spiralframework.core.eventbus.EventBusBridgeLogger
-import info.spiralframework.core.plugins.PluginRegistry
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
@@ -42,8 +41,6 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
         @JvmStatic
         fun main(args: Array<String>) {
-            PluginRegistry.discover()
-
             val gurrenArgs: GurrenArgs
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)

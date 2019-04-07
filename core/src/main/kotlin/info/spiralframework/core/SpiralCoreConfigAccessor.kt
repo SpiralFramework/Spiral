@@ -1,6 +1,7 @@
 package info.spiralframework.core
 
 import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.util.SemVer
 
 interface SpiralCoreConfigAccessor {
     companion object {
@@ -14,6 +15,8 @@ interface SpiralCoreConfigAccessor {
 
         const val DEFAULT_API_BASE = "https://api.abimon.org/api"
         const val DEFAULT_JENKINS_BASE = "https://jenkins.abimon.org"
+
+        val DEFAULT_ENABLED_PLUGINS = emptyMap<String, SemVer>()
     }
 
     val config: SpiralCoreConfig?
@@ -36,4 +39,7 @@ interface SpiralCoreConfigAccessor {
 
     val jenkinsBase: String
         get() = config?.jenkinsBase ?: DEFAULT_JENKINS_BASE
+
+    val enabledPlugins: Map<String, SemVer>
+        get() = config?.enabledPlugins ?: DEFAULT_ENABLED_PLUGINS
 }
