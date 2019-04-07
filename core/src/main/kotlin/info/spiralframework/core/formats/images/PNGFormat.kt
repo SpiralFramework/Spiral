@@ -13,6 +13,7 @@ import javax.imageio.ImageIO
 
 object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
     override val name: String = "png"
+    override val extension: String = "png"
 
     /**
      * Does this format support writing [data]?

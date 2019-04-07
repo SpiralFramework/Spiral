@@ -1,6 +1,6 @@
 package info.spiralframework.console
 
-import info.spiralframework.console.imperator.CommandClass
+import info.spiralframework.console.eventbus.CommandClass
 import org.parboiled.parserunners.BasicParseRunner
 import org.parboiled.support.ParsingResult
 import java.io.File
@@ -18,9 +18,13 @@ class CommandBuilders(override val cockpit: Cockpit<*>): CommandClass {
     val filePathRule = makeRule { MechanicFilePath() }
     val filePathRunner = Runner<File>(filePathRule)
 
+    val parameterRule = makeRule { MechanicParameter() }
+    val parameterRunner = Runner<String>(parameterRule)
+
     fun boolean(input: String? = readLine()): Boolean? = booleanRunner[input]
     fun filter(input: String? = readLine()): Regex? = filterRunner[input]
     fun filePath(input: String? = readLine()): File? = filePathRunner[input]
+    fun parameter(input: String? = readLine()): String? = parameterRunner[input]
 
     operator fun <T> Runner<T>.get(input: String?): T? = input?.takeIf(String::isNotBlank)?.let(this::run)?.takeIf(Result::matched)?.resultValue
 }

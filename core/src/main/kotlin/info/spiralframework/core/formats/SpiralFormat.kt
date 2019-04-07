@@ -1,15 +1,25 @@
 package info.spiralframework.core.formats
 
+import info.spiralframework.base.util.locale
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
+import java.util.*
 
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
     val name: String
-    //val extension: String?
+
+    /**
+     * The usual extension for this format. Some formats don't have a proper extension, so this can be nullable
+     */
+    val extension: String?
+
+    companion object {
+        val DEFAULT_EXTENSION = "dat"
+    }
 }
 
 /**
@@ -22,6 +32,21 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      * It should **not** be used in contexts where there is ambiguity about what format may be desired; thus, it should not be defined for regular formats to Danganronpa formats in mots cases.
      */
     fun preferredConversionFormat(): WritableSpiralFormat? = null
+
+    /**
+     * Attempts to identify the data source as an instance of [T]
+     *
+     * Formats are recommended to override this where possible.
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param context Context that we retrieved this file in
+     * @param source A function that returns an input stream
+     *
+     * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
+     */
+    fun identify(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<Optional<T>>
+        = read(name, game, context, source).map { Optional.of(it) }
 
     /**
      * Attempts to read the data source as [T]
@@ -68,5 +93,10 @@ interface WritableSpiralFormat: SpiralFormat {
 sealed class FormatWriteResponse {
     object SUCCESS: FormatWriteResponse()
     object WRONG_FORMAT: FormatWriteResponse()
-    class FAIL(val reason: Throwable? = null): FormatWriteResponse()
+    class FAIL(val reason: Throwable = Throwable(locale<String>("gurren.errors.no_reason"))): FormatWriteResponse()
+}
+
+fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {
+    this.nullableFormat = format
+    return this
 }

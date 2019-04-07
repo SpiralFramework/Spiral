@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream
 
 object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
     override val name: String = "Zip"
+    override val extension: String = "zip"
 
     /**
      * Attempts to read the data source as [T]

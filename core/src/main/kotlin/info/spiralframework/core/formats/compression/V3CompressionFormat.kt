@@ -4,6 +4,7 @@ import info.spiralframework.formats.compression.V3Compression
 
 object V3CompressionFormat: CompressionFormat<V3Compression> {
     override val name: String = "V3 Compression"
+    override val extension: String = "cmp"
 
     override val compressionFormat = V3Compression
 }

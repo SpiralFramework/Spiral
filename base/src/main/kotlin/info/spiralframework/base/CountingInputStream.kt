@@ -7,7 +7,7 @@ import java.io.InputStream
  * Simple little wrapper that just does a count every time a byte is read
  */
 open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
-    var count = if (countedInputStream is CountingInputStream) countedInputStream.streamOffset else 0L
+    var count = 0L
     open val streamOffset: Long by run {
         if (countedInputStream is CountingInputStream) {
             return@run countedInputStream::streamOffset
@@ -42,5 +42,12 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
     override fun reset() {
         super.reset()
         count = 0L
+    }
+
+    fun seekForward(n: Long): Long {
+        return if (super.delegatedInputStream is CountingInputStream)
+            (super.delegatedInputStream as CountingInputStream).seekForward(n)
+        else
+            super.delegatedInputStream.skip(n)
     }
 }

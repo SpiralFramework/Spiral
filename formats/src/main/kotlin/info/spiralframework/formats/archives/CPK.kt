@@ -88,7 +88,7 @@ class CPK private constructor(val dataSource: () -> InputStream): IArchive {
                         column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(CPK.NULL_TERMINATOR)
 
                         if (column.type and CPK.COLUMN_STORAGE_MASK == CPK.COLUMN_STORAGE_CONSTANT) {
-                            column.constantOffset = stream.count
+                            column.constantOffset = stream.streamOffset
 
                             when (column.type and CPK.COLUMN_TYPE_MASK) {
                                 CPK.COLUMN_TYPE_STRING -> stream.skip(4)

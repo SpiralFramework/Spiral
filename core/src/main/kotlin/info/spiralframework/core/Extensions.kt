@@ -147,3 +147,10 @@ fun <T: Any> EventBus.registerFunction(func: (T) -> Unit): Any {
     register(obj)
     return obj
 }
+
+fun <T> T.identifySelf(): T = this
+
+fun <T> EventBus.postback(t: T): T {
+    post(t)
+    return t
+}

@@ -17,16 +17,9 @@ class WindowedInputStream(windowedInputStream: InputStream, val offset: Long, va
         return super.read(b, off, len.coerceAtMost((windowSize - count).toInt()))
     }
 
-    override fun reset() {
-        super.reset()
-        skip(offset)
-        count = 0
-    }
-
     override fun available(): Int = (windowSize - count).toInt()
 
     init {
-        skip(offset)
-        count = count.minus(offset).coerceAtLeast(0)
+        seekForward(offset)
     }
 }
