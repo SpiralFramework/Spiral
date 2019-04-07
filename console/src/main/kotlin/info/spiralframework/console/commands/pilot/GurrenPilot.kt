@@ -46,43 +46,45 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         Sequence(
                 Localised("commands.pilot.extract.extract"),
                 Action<Any> { pushMarkerSuccessBase() },
-                InlineWhitespace(),
-                FirstOf(
-                        Sequence(
-                                Localised("commands.pilot.extract.builder"),
-                                Action<Any> { argsVar.get().builder = true; true }
-                        ),
-                        Sequence(
-                                FilePath(),
-                                Action<Any> { argsVar.get().extractPath = pop() as? File; true }
-                        )
-                ),
-                ZeroOrMore(
+                Optional(
                         InlineWhitespace(),
                         FirstOf(
                                 Sequence(
-                                        Localised("commands.pilot.extract.filter"),
-                                        InlineWhitespace(),
-                                        Filter(),
-                                        Action<Any> { argsVar.get().filter = pop() as Regex; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.pilot.extract.dest_dir"),
-                                        InlineWhitespace(),
-                                        FilePath(),
-                                        Action<Any> { argsVar.get().destDir = pop() as File; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.pilot.extract.leave_compressed"),
-                                        Action<Any> { argsVar.get().leaveCompressed = true; true }
-                                ),
-                                Sequence(
                                         Localised("commands.pilot.extract.builder"),
                                         Action<Any> { argsVar.get().builder = true; true }
+                                ),
+                                Sequence(
+                                        FilePath(),
+                                        Action<Any> { argsVar.get().extractPath = pop() as? File; true }
                                 )
-                        )
-                ),
-                Action<Any> { pushMarkerSuccessCommand() }
+                        ),
+                        ZeroOrMore(
+                                InlineWhitespace(),
+                                FirstOf(
+                                        Sequence(
+                                                Localised("commands.pilot.extract.filter"),
+                                                InlineWhitespace(),
+                                                Filter(),
+                                                Action<Any> { argsVar.get().filter = pop() as Regex; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.extract.dest_dir"),
+                                                InlineWhitespace(),
+                                                FilePath(),
+                                                Action<Any> { argsVar.get().destDir = pop() as File; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.extract.leave_compressed"),
+                                                Action<Any> { argsVar.get().leaveCompressed = true; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.extract.builder"),
+                                                Action<Any> { argsVar.get().builder = true; true }
+                                        )
+                                )
+                        ),
+                        Action<Any> { pushMarkerSuccessCommand() }
+                )
         )
     }
     val helpRule = makeRule {
@@ -99,51 +101,57 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         Sequence(
                 Localised("commands.pilot.identify"),
                 Action<Any> { pushMarkerSuccessBase() },
-                InlineWhitespace(),
-                FilePath(),
-                Action<Any> { pushMarkerSuccessCommand() }
+                Optional(
+                        InlineWhitespace(),
+                        FilePath(),
+                        Action<Any> { pushMarkerSuccessCommand() }
+                )
         )
     }
     val convertRule = makeRuleWith(::ConvertArgs) { argsVar ->
         Sequence(
                 Localised("commands.pilot.convert.convert"),
-                InlineWhitespace(),
-                FirstOf(
-                        Sequence(
-                                Localised("commands.pilot.convert.builder"),
-                                Action<Any> { argsVar.get().builder = true; true }
-                        ),
-                        Sequence(
-                                ExistingFilePath(),
-                                Action<Any> { argsVar.get().converting = pop() as? File; true }
-                        )
-                ),
-                ZeroOrMore(
+                Action<Any> { pushMarkerSuccessBase() },
+                Optional(
                         InlineWhitespace(),
                         FirstOf(
                                 Sequence(
-                                        Localised("commands.pilot.convert.filter"),
-                                        InlineWhitespace(),
-                                        Filter(),
-                                        Action<Any> { argsVar.get().filter = pop() as Regex; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.pilot.convert.from"),
-                                        InlineWhitespace(),
-                                        Parameter(),
-                                        Action<Any> { argsVar.get().from = pop() as String; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.pilot.convert.to"),
-                                        InlineWhitespace(),
-                                        Parameter(),
-                                        Action<Any> { argsVar.get().to = pop() as String; true }
-                                ),
-                                Sequence(
                                         Localised("commands.pilot.convert.builder"),
                                         Action<Any> { argsVar.get().builder = true; true }
+                                ),
+                                Sequence(
+                                        ExistingFilePath(),
+                                        Action<Any> { argsVar.get().converting = pop() as? File; true }
                                 )
-                        )
+                        ),
+                        ZeroOrMore(
+                                InlineWhitespace(),
+                                FirstOf(
+                                        Sequence(
+                                                Localised("commands.pilot.convert.filter"),
+                                                InlineWhitespace(),
+                                                Filter(),
+                                                Action<Any> { argsVar.get().filter = pop() as Regex; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.convert.from"),
+                                                InlineWhitespace(),
+                                                Parameter(),
+                                                Action<Any> { argsVar.get().from = pop() as String; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.convert.to"),
+                                                InlineWhitespace(),
+                                                Parameter(),
+                                                Action<Any> { argsVar.get().to = pop() as String; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.convert.builder"),
+                                                Action<Any> { argsVar.get().builder = true; true }
+                                        )
+                                )
+                        ),
+                        Action<Any> { pushMarkerSuccessCommand() }
                 )
         )
     }
@@ -491,7 +499,8 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     return@ParboiledCommand FAILURE
                 }
 
-                val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension ?: SpiralFormat.DEFAULT_EXTENSION}")
+                val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
+                        ?: SpiralFormat.DEFAULT_EXTENSION}")
                 val response = FileOutputStream(output).use { outStream ->
                     formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
                             ?: BLANK_DATA_CONTEXT, data, outStream)
@@ -592,13 +601,15 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
                             val data = formatResult.obj.takeIf(Optional<*>::isPresent)?.get()
                                     ?: ourFormat.read(file.name, null, file.absoluteParentFile?.dataContext
-                                            ?: BLANK_DATA_CONTEXT, dataSource).safeObj ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_readable_data", ourFormat.name))
+                                            ?: BLANK_DATA_CONTEXT, dataSource).safeObj
+                                    ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_readable_data", ourFormat.name))
 
                             if (!formatConvertTo.supportsWriting(data)) {
                                 return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_write_not_supported", formatConvertTo.name, data::class.java.name))
                             }
 
-                            val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension ?: SpiralFormat.DEFAULT_EXTENSION}")
+                            val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
+                                    ?: SpiralFormat.DEFAULT_EXTENSION}")
                             val response = FileOutputStream(output).use { outStream ->
                                 formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
                                         ?: BLANK_DATA_CONTEXT, data, outStream)
@@ -645,7 +656,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
             results[true]?.let { validResults ->
                 printlnLocale("commands.pilot.convert.converted_header")
-                println(validResults.joinToString ("\n") { (file, source, result) ->
+                println(validResults.joinToString("\n") { (file, source, result) ->
                     locale<String>("commands.pilot.convert.converted_many", file relativePathTo file, source
                             ?: locale<String>("gurren.pilot.not_applicable"), result
                             ?: locale<String>("gurren.pilot.not_applicable"))

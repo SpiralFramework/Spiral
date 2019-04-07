@@ -56,6 +56,10 @@ open class ParboiledCommand(val cockpit: Cockpit<*>, val rule: Rule, val scope: 
                         is ParboiledMarker.FAILED_LOCALE -> printlnLocale(marker.localeMsg)
                     }
                 }
+
+                if (ParboiledMarker.SUCCESS_BASE in markers && markers.size == 1) {
+                    printlnErrLocale("commands.invalid_syntax")
+                }
             }
         } else {
             failed = true
