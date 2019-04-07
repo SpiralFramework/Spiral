@@ -6,13 +6,14 @@ import info.spiralframework.base.util.times
 import info.spiralframework.console.commands.mechanic.GurrenMechanic
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
-import info.spiralframework.console.imperator.ParboiledSoldier
+import info.spiralframework.console.eventbus.CommandRequest
+import info.spiralframework.console.eventbus.ParboiledCommand
+import info.spiralframework.core.postback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.abimon.imperator.impl.InstanceOrder
 
-class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMechanic>(args) {
+class CockpitMechanic internal constructor(args: GurrenArgs) : Cockpit<CockpitMechanic>(args) {
     companion object {
         const val SUCCESS = 0
         const val UNKNOWN_COMMAND = 3
@@ -21,18 +22,18 @@ class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMec
 
     override fun startAsync(scope: CoroutineScope): Job {
         return scope.launch {
-            val (matchingSoldiers, ns) = measureResultNanoTime { imperator.dispatch(InstanceOrder("STDIN", scout = null, data = args.filteredArgs.joinToString(ParameterParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') })) }
+            val (foundCommands, ns) = measureResultNanoTime { bus.postback(CommandRequest(args.filteredArgs.joinToString(ParameterParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') })).foundCommands }
 
             if (args.timeCommands) {
-                printlnLocale("gurren.timing.command_runtime", matchingSoldiers.size, ns)
+                printlnLocale("gurren.timing.command_runtime", foundCommands.size, ns)
             } else {
-                LOGGER.trace("gurren.timing.command_runtime", matchingSoldiers.size, ns)
+                LOGGER.trace("gurren.timing.command_runtime", foundCommands.size, ns)
             }
 
-            if (matchingSoldiers.isEmpty()) {
+            if (foundCommands.isEmpty()) {
                 printlnLocale("commands.mechanic.usage", relativeRunningJar, " " * (17 + relativeRunningJar.length))
                 this@CockpitMechanic { currentExitCode = UNKNOWN_COMMAND }
-            } else if (matchingSoldiers.any { soldier -> (soldier as? ParboiledSoldier)?.failed == true }) {
+            } else if (foundCommands.any(ParboiledCommand::failed)) {
                 this@CockpitMechanic { currentExitCode = BAD_COMMAND }
             } else {
                 this@CockpitMechanic { currentExitCode = SUCCESS }
@@ -41,6 +42,6 @@ class CockpitMechanic internal constructor(args: GurrenArgs): Cockpit<CockpitMec
     }
 
     init {
-        imperator.hireSoldiers(GurrenMechanic(this))
+        registerCommandClass(GurrenMechanic(this))
     }
 }
