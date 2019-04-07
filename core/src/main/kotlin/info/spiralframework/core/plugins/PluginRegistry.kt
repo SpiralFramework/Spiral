@@ -66,7 +66,7 @@ object PluginRegistry {
         }.sortedBy { entry -> entry.pojo.semanticVersion }
                 .asReversed()
                 .distinctBy { entry -> entry.pojo.uid }
-                .filter { entry -> EventBus.getDefault().postCancellable(DiscoveredPluginEvent(entry)) }
+                .filter { entry -> !EventBus.getDefault().postCancellable(DiscoveredPluginEvent(entry)) }
 
         EventBus.getDefault().post(EndPluginDiscoveryEvent())
 
@@ -151,6 +151,6 @@ object PluginRegistry {
     }
 
     init {
-        mutableLoadedPlugins.add(SpiralCorePlugin)
+        loadPlugin(PluginEntry(SpiralCorePlugin.pojo, null))
     }
 }
