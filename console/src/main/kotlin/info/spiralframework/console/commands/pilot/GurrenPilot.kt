@@ -360,7 +360,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         return@ParboiledCommand SUCCESS
     }
 
-    val convert = ParboiledSoldier("convert", convertRule) { stack ->
+    val convert = ParboiledCommand(convertRule) { stack ->
         val builderArgs = (stack[0] as ConvertArgs)//.makeImmutable(defaultFilter = ".*", defaultLeaveCompressed = false)
         if (builderArgs.builder || builderArgs.converting == null) {
             //Builder
@@ -390,13 +390,13 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         if (args.converting == null) {
             printlnErrLocale("commands.pilot.convert.err_no_converting")
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (!args.converting.exists()) {
             printlnErrLocale("errors.files.doesnt_exist", args.converting)
 
-            return@ParboiledSoldier FAILURE
+            return@ParboiledCommand FAILURE
         }
 
         if (args.converting.isFile) {
@@ -424,7 +424,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
                 if (formatForName == null) {
                     printlnLocale("commands.pilot.convert.err_no_known_format_name", "reading", args.from)
-                    return@ParboiledSoldier FAILURE
+                    return@ParboiledCommand FAILURE
                 }
 
                 formatForName.identify(file.name, null, file.absoluteParentFile?.dataContext
@@ -439,7 +439,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     //No format included, we can't work with this
                     printlnErrLocale("commands.pilot.convert.err_no_format_in_result", formatResult.obj.takeIf(Optional<*>::isPresent)?.get()?.javaClass?.name
                             ?: locale("commands.pilot.convert.unknown_format_name"))
-                    return@ParboiledSoldier FAILURE
+                    return@ParboiledCommand FAILURE
                 }
 
                 //Should result in something like DRVita > V3 > SPC >
@@ -453,7 +453,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 if (ourFormat == null) {
                     //Our format isn't a readable format, wtf?
                     printlnErrLocale("commands.pilot.convert.err_unknown_read_format", resultString)
-                    return@ParboiledSoldier FAILURE
+                    return@ParboiledCommand FAILURE
                 }
 
                 val formatConvertTo = if (args.to == null) {
@@ -461,7 +461,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     if (preferred == null) {
                         //No preferred format
                         printlnErrLocale("commands.pilot.convert.err_no_preferred_write_format", ourFormat.name)
-                        return@ParboiledSoldier FAILURE
+                        return@ParboiledCommand FAILURE
                     }
 
                     preferred
@@ -471,7 +471,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
                     if (formatForName == null) {
                         printlnErrLocale("commands.pilot.convert.err_no_known_format_name", "writing", args.to)
-                        return@ParboiledSoldier FAILURE
+                        return@ParboiledCommand FAILURE
                     }
 
                     formatForName
@@ -483,12 +483,12 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
 
                 if (data == null) {
                     printlnErrLocale("commands.pilot.convert.err_no_readable_data", ourFormat.name)
-                    return@ParboiledSoldier FAILURE
+                    return@ParboiledCommand FAILURE
                 }
 
                 if (!formatConvertTo.supportsWriting(data)) {
                     printlnErrLocale("commands.pilot.convert.err_write_not_supported", formatConvertTo.name, data::class.java.name)
-                    return@ParboiledSoldier FAILURE
+                    return@ParboiledCommand FAILURE
                 }
 
                 val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension ?: SpiralFormat.DEFAULT_EXTENSION}")
@@ -500,16 +500,16 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 when (response) {
                     FormatWriteResponse.SUCCESS -> {
                         printlnLocale("commands.pilot.convert.response", file, formatString, formatConvertTo.name)
-                        return@ParboiledSoldier SUCCESS
+                        return@ParboiledCommand SUCCESS
                     }
                     FormatWriteResponse.WRONG_FORMAT -> {
                         printlnErrLocale("commands.pilot.convert.err_write_not_supported_result", formatConvertTo.name, data::class.java.name)
-                        return@ParboiledSoldier FAILURE
+                        return@ParboiledCommand FAILURE
                     }
                     is FormatWriteResponse.FAIL -> {
                         printlnErrLocale("commands.pilot.convert.err_conversion_error", formatConvertTo.name, data::class.java.name)
                         response.reason.printStackTrace()
-                        return@ParboiledSoldier FAILURE
+                        return@ParboiledCommand FAILURE
                     }
                 }
             } else {
@@ -519,7 +519,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                     printlnErrLocale("commands.pilot.convert.err_not_of_format", file, args.from)
                 }
 
-                return@ParboiledSoldier FAILURE
+                return@ParboiledCommand FAILURE
             }
 
         } else if (args.converting.isDirectory) {
@@ -652,13 +652,12 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 })
             }
 
-            return@ParboiledSoldier SUCCESS
+            return@ParboiledCommand SUCCESS
         }
 
-        return@ParboiledSoldier FAILURE
+        return@ParboiledCommand FAILURE
     }
 
-    val debug = ParboiledSoldier("debug", makeRule { IgnoreCase("debug") }) { stack ->
     val debug = ParboiledCommand(makeRule { IgnoreCase("debug") }) { stack ->
         val sfl = SFL(File("/Users/undermybrella/Workspace/KSPIRAL/shinkiro/dr1_data/Dr1/data/all/flash/fla_735/0")::inputStream)!!
         val commandTable = sfl.tables.last()
