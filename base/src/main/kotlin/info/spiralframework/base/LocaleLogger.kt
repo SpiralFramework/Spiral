@@ -3,7 +3,7 @@ package info.spiralframework.base
 import org.slf4j.Logger
 import org.slf4j.Marker
 
-open class LocaleLogger(var logger: Logger) : Logger by logger {
+open class LocaleLogger(val logger: Logger) : Logger by logger {
     /** ERROR */
 
     override fun error(format: String, arg: Any) {

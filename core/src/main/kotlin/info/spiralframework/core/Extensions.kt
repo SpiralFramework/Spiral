@@ -10,11 +10,13 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.properties.CachedFileReadOnlyProperty
+import info.spiralframework.core.eventbus.FunctionSubscriber
+import info.spiralframework.core.eventbus.LoggingSubscriber
 import info.spiralframework.core.formats.compression.*
 import info.spiralframework.core.plugins.events.CancellableSpiralEvent
 import info.spiralframework.formats.utils.DataSource
 import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
+import org.slf4j.Logger
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -136,13 +138,8 @@ fun <T: CancellableSpiralEvent> EventBus.postCancellable(t: T): Boolean {
     return t.isCanceled
 }
 
-fun <T: Any> EventBus.registerFunction(func: (T) -> Unit): Any {
-    val obj = object {
-        @Subscribe
-        fun onEvent(t: T) {
-            func(t)
-        }
-    }
+inline fun <reified T: Any> EventBus.registerFunction(noinline func: (T) -> Unit): Any {
+    val obj = FunctionSubscriber(func)
 
     register(obj)
     return obj
@@ -153,4 +150,9 @@ fun <T> T.identifySelf(): T = this
 fun <T> EventBus.postback(t: T): T {
     post(t)
     return t
+}
+
+fun EventBus.installLoggingSubscriber(logger: Logger): EventBus {
+    LoggingSubscriber(this, logger)
+    return this
 }

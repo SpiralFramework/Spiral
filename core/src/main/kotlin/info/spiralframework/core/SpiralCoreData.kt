@@ -6,7 +6,6 @@ import com.github.kittinunf.fuel.core.Response
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.*
-import info.spiralframework.formats.utils.DataHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -85,15 +84,7 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
     /** The build for this jar file, or null if we're either not running a JAR file (developer directory), or if we're using a custom compiled version */
     val jenkinsBuild: Int? by lazy { version?.let(this::buildForVersion) }
 
-    var LOGGER: Logger
-    var NORMAL_LOGGER: Logger
-        get() = DataHandler.LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
-        set(value) {
-            if (DataHandler.LOGGER is LocaleLogger)
-                (DataHandler.LOGGER as LocaleLogger).logger = value
-            else
-                DataHandler.LOGGER = NORMAL_LOGGER
-        }
+    val LOGGER: Logger
 
     fun checkForUpdate(project: String): Pair<String, Int>? {
         val updateResult = arbitraryProgressBar(loadingText = "gurren.update.checking", loadedText = "") {
