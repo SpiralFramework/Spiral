@@ -19,6 +19,7 @@ import javax.imageio.ImageIO
 
 object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
     override val name: String = "tga"
+    override val extension: String = "tga"
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = PNGFormat
 

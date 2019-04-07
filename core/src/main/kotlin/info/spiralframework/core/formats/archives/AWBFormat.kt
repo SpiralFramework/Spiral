@@ -9,6 +9,7 @@ import info.spiralframework.formats.utils.DataSource
 
 object AWBFormat: ReadableSpiralFormat<AWB> {
     override val name: String = "AWB"
+    override val extension: String = "awb"
 
     /**
      * Attempts to read the data source as [T]

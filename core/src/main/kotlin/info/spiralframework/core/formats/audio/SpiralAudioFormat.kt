@@ -1,8 +1,8 @@
 package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.util.locale
-import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.game.DRGame
@@ -10,9 +10,18 @@ import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.File
 import java.io.OutputStream
+import java.util.*
 
-open class SpiralAudioFormat(override val name: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
+open class SpiralAudioFormat(override val name: String, override val extension: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
+
+    override fun identify(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Optional<File>> {
+        try {
+            return super.identify(name, game, context, source)
+        } catch (ise: IllegalStateException) {
+            return FormatResult.Fail(this, 1.0, ise)
+        }
+    }
 
     /**
      * Attempts to read the data source as [T]

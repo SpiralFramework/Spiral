@@ -2,6 +2,8 @@ package info.spiralframework.base.util
 
 import info.spiralframework.base.ANSI
 import info.spiralframework.base.MappingIterator
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.text.DecimalFormat
@@ -242,4 +244,12 @@ fun Long.toFileSize(binary: Boolean = false): String {
     if (sizeArray.size == 1)
         return sizeArray[0].let { (bytes, prefix) -> "$bytes $prefix" }
     return sizeArray[0].let { (mainBytes, mainPrefix) -> "${FORMAT.format(mainBytes.toDouble() + (sizeArray[1].first.toDouble() / 1000))} $mainPrefix" }
+}
+
+fun Throwable.retrieveStackTrace(): String {
+    val baos = ByteArrayOutputStream()
+    val out = PrintStream(baos)
+    printStackTrace(out)
+
+    return String(baos.toByteArray(), Charsets.UTF_8)
 }
