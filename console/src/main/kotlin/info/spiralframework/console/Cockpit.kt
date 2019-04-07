@@ -9,6 +9,7 @@ import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
+import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.core.*
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
@@ -18,14 +19,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.abimon.imperator.handle.Imperator
-import org.abimon.imperator.impl.BasicImperator
+import org.greenrobot.eventbus.EventBus
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
 import java.nio.file.StandardOpenOption
+import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.memberProperties
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
@@ -226,15 +229,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     val mutex = Mutex()
 
     /** The logger for Spiral */
-    var LOGGER: Logger = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name")))
-    var NORMAL_LOGGER: Logger
-        get() = DataHandler.LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
-        set(value) {
-            if (DataHandler.LOGGER is LocaleLogger)
-                (DataHandler.LOGGER as LocaleLogger).logger = value
-            else
-                DataHandler.LOGGER = NORMAL_LOGGER
-        }
+    val LOGGER: Logger = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name")))
 
     /**
      * The scope of operation that Spiral is currently operating in
@@ -242,7 +237,10 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     var operationScope: SpiralScope = SpiralScope("default", "> ")
 
     val parameterParser: ParameterParser = ParameterParser()
-    val imperator: Imperator = BasicImperator()
+    val bus: EventBus = EventBus.builder()
+            .eventInheritance(false)
+            .logger(EventBusBridgeLogger(LOGGER))
+            .build()
 
     var currentExitCode: Int = 0
 
@@ -260,4 +258,11 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     infix fun <T> with(op: suspend SELF.() -> T): T = runBlocking { mutex.withLock { (this@Cockpit as SELF).op() } }
     @Suppress("UNCHECKED_CAST")
     suspend infix fun <T> withAsync(op: suspend SELF.() -> T): T = mutex.withLock { (this@Cockpit as SELF).op() }
+
+    fun registerCommandClass(commandRegistry: Any, registerSubclass: KClass<*> = ParboiledCommand::class) {
+        commandRegistry.javaClass.kotlin.memberProperties.forEach { recruit ->
+            if((recruit.returnType.classifier as? KClass<*>)?.isSubclassOf(registerSubclass) == true || recruit.returnType.classifier == registerSubclass)
+                bus.register(recruit.get(commandRegistry))
+        }
+    }
 }
