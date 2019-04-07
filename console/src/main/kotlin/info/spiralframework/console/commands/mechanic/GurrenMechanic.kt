@@ -39,71 +39,75 @@ class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
         Sequence(
                 Localised("commands.mechanic.extract.extract"),
                 Action<Any> { pushMarkerSuccessBase() },
-                ParamSeparator(),
-                ExistingMechanicFilePath(),
-                Action<Any> { argsVar.get().extractPath = pop() as? File; true },
-                ZeroOrMore(
+                Optional(
                         ParamSeparator(),
-                        FirstOf(
-                                Sequence(
-                                        Localised("commands.mechanic.extract.filter"),
-                                        ParamSeparator(),
-                                        MechanicFilter(),
-                                        Action<Any> { argsVar.get().filter = pop() as? Regex; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.mechanic.extract.dest_dir"),
-                                        ParamSeparator(),
-                                        MechanicFilePath(),
-                                        Action<Any> { argsVar.get().destDir = pop() as? File; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.mechanic.extract.leave_compressed"),
-                                        Action<Any> { argsVar.get().leaveCompressed = true; true }
+                        ExistingMechanicFilePath(),
+                        Action<Any> { argsVar.get().extractPath = pop() as? File; true },
+                        ZeroOrMore(
+                                ParamSeparator(),
+                                FirstOf(
+                                        Sequence(
+                                                Localised("commands.mechanic.extract.filter"),
+                                                ParamSeparator(),
+                                                MechanicFilter(),
+                                                Action<Any> { argsVar.get().filter = pop() as? Regex; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.mechanic.extract.dest_dir"),
+                                                ParamSeparator(),
+                                                MechanicFilePath(),
+                                                Action<Any> { argsVar.get().destDir = pop() as? File; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.mechanic.extract.leave_compressed"),
+                                                Action<Any> { argsVar.get().leaveCompressed = true; true }
+                                        )
                                 )
-                        )
-                ),
-                Action<Any> { pushMarkerSuccessCommand() }
+                        ),
+                        Action<Any> { pushMarkerSuccessCommand() }
+                )
         )
     }
     val compileRule = makeRuleWith(::CompileArgs) { argsVar ->
         Sequence(
                 Localised("commands.mechanic.compile.compile"),
                 Action<Any> { pushMarkerSuccessBase() },
-                ParamSeparator(),
-                MechanicFilePath(),
-                Action<Any> { argsVar.get().compilingDir = pop() as? File; true },
-                ZeroOrMore(
+                Optional(
                         ParamSeparator(),
-                        FirstOf(
-                                Sequence(
-                                        Localised("commands.mechanic.compile.destination"),
-                                        FirstOf(
-                                                Sequence(
-                                                        Localised("commands.mechanic.compile.destination_empty"),
-                                                        ParamSeparator(),
-                                                        Action<Any> { argsVar.get().compileDestination = CompileArgs.EMPTY; true }
-                                                ),
-                                                Sequence(
-                                                        MechanicFilePath(),
-                                                        ParamSeparator(),
-                                                        Action<Any> { argsVar.get().compileDestination = pop() as File; true }
+                        MechanicFilePath(),
+                        Action<Any> { argsVar.get().compilingDir = pop() as? File; true },
+                        ZeroOrMore(
+                                ParamSeparator(),
+                                FirstOf(
+                                        Sequence(
+                                                Localised("commands.mechanic.compile.destination"),
+                                                FirstOf(
+                                                        Sequence(
+                                                                Localised("commands.mechanic.compile.destination_empty"),
+                                                                ParamSeparator(),
+                                                                Action<Any> { argsVar.get().compileDestination = CompileArgs.EMPTY; true }
+                                                        ),
+                                                        Sequence(
+                                                                MechanicFilePath(),
+                                                                ParamSeparator(),
+                                                                Action<Any> { argsVar.get().compileDestination = pop() as File; true }
+                                                        )
                                                 )
+                                        ),
+                                        Sequence(
+                                                Localised("commands.mechanic.compile.format"),
+                                                FirstOf(COMPILABLE_ARCHIVES.map(SpiralFormat::name).toTypedArray()),
+                                                ParamSeparator(),
+                                                Action<Any> { argsVar.get().formatOverride = COMPILABLE_ARCHIVES.first { format -> format.name.equals(pop() as String, true) }; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.mechanic.compile.filter"),
+                                                ""
                                         )
-                                ),
-                                Sequence(
-                                        Localised("commands.mechanic.compile.format"),
-                                        FirstOf(COMPILABLE_ARCHIVES.map(SpiralFormat::name).toTypedArray()),
-                                        ParamSeparator(),
-                                        Action<Any> { argsVar.get().formatOverride = COMPILABLE_ARCHIVES.first { format -> format.name.equals(pop() as String, true) }; true }
-                                ),
-                                Sequence(
-                                        Localised("commands.mechanic.compile.filter"),
-                                        ""
                                 )
-                        )
-                ),
-                parserAction { pushMarkerSuccessCommand() }
+                        ),
+                        parserAction { pushMarkerSuccessCommand() }
+                )
         )
     }
 
