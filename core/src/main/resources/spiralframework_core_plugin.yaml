@@ -1,0 +1,8 @@
+name: Spiral Framework - Core
+uid: SPIRAL_FRAMEWORK_CORE
+semanticVersion:
+  major: 0
+  minor: 1
+  patch: 0
+
+pluginClass: info.spiralframework.core.plugins.SpiralCorePlugin

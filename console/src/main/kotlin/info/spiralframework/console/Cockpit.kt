@@ -10,9 +10,6 @@ import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.core.*
-import info.spiralframework.core.plugins.EventBus
-import info.spiralframework.core.plugins.EventPriority
-import info.spiralframework.core.plugins.events.SpiralEvent
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
@@ -21,8 +18,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.abimon.imperator.handle.Imperator
-import org.abimon.imperator.impl.BasicImperator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -245,7 +240,6 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
     var operationScope: SpiralScope = SpiralScope("default", "> ")
 
     val parameterParser: ParameterParser = ParameterParser()
-    val imperator: Imperator = BasicImperator()
 
     var currentExitCode: Int = 0
 

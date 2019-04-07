@@ -11,7 +11,10 @@ import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.properties.CachedFileReadOnlyProperty
 import info.spiralframework.core.formats.compression.*
+import info.spiralframework.core.plugins.events.CancellableSpiralEvent
 import info.spiralframework.formats.utils.DataSource
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -120,4 +123,27 @@ fun <T: Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
     if (response.isSuccessful)
         return result.get()
     return null
+}
+
+fun <T: CancellableSpiralEvent> EventBus.cancel(t: T) {
+    t.isCanceled = true
+    cancelEventDelivery(t)
+}
+
+fun <T: CancellableSpiralEvent> EventBus.postCancellable(t: T): Boolean {
+    post(t)
+
+    return t.isCanceled
+}
+
+fun <T: Any> EventBus.registerFunction(func: (T) -> Unit): Any {
+    val obj = object {
+        @Subscribe
+        fun onEvent(t: T) {
+            func(t)
+        }
+    }
+
+    register(obj)
+    return obj
 }
