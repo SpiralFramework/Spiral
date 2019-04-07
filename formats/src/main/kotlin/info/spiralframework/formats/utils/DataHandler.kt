@@ -34,15 +34,7 @@ object DataHandler {
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
 
-    var LOGGER: Logger
-    var NORMAL_LOGGER: Logger
-        get() = LOGGER.let { logger -> if (logger is LocaleLogger) logger.logger else logger }
-        set(value) {
-            if (LOGGER is LocaleLogger)
-                (LOGGER as LocaleLogger).logger = value
-            else
-                LOGGER = NORMAL_LOGGER
-        }
+    val LOGGER: Logger
 
     init {
         SpiralLocale.addBundle("SpiralFormats")

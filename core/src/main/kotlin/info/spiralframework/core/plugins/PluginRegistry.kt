@@ -30,7 +30,7 @@ object PluginRegistry {
     private val pluginLoaders: MutableMap<String, URLClassLoader> = HashMap()
 
     fun discover(): List<PluginEntry> {
-        if (BeginPluginDiscoveryEvent().also(EventBus.getDefault()::post).isCanceled)
+        if (EventBus.getDefault().postCancellable(BeginPluginDiscoveryEvent()))
             return emptyList()
 
         //We scan five locations

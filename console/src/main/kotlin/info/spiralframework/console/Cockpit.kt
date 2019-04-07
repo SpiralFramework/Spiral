@@ -11,6 +11,8 @@ import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.core.*
+import info.spiralframework.core.eventbus.EventBusBridgeLogger
+import info.spiralframework.core.plugins.PluginRegistry
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
@@ -33,9 +35,15 @@ import kotlin.reflect.full.memberProperties
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
+        /** The logger for Spiral */
+        val LOGGER: Logger
+
         val stopwatch = Stopwatch()
+
         @JvmStatic
         fun main(args: Array<String>) {
+            PluginRegistry.discover()
+
             val gurrenArgs: GurrenArgs
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)
@@ -218,6 +226,10 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             DataHandler.streamToMap = { stream -> SpiralSerialisation.JSON_MAPPER.readValue(stream, Map::class.java).mapKeys { (key) -> key.toString() } }
 
             SpiralCoreData.ADDITIONAL_ENVIRONMENT["spiral.module"] = "spiral-console"
+
+            LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version ?: "Developer")))
+            EventBus.getDefault()
+                    .installLoggingSubscriber(LOGGER)
         }
     }
 
@@ -227,9 +239,6 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
     /** The mutex to use to access this classes properties */
     val mutex = Mutex()
-
-    /** The logger for Spiral */
-    val LOGGER: Logger = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name")))
 
     /**
      * The scope of operation that Spiral is currently operating in
@@ -241,6 +250,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             .eventInheritance(false)
             .logger(EventBusBridgeLogger(LOGGER))
             .build()
+            .installLoggingSubscriber(LOGGER)
 
     var currentExitCode: Int = 0
 

@@ -1,4 +1,4 @@
-package info.spiralframework.core
+package info.spiralframework.core.eventbus
 
 import java.util.logging.Level
 
