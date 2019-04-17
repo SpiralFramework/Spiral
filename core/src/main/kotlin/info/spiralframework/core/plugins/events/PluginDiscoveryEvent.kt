@@ -8,9 +8,7 @@ class BeginPluginDiscoveryEvent : CancellableSpiralEvent {
     override fun toString(): String = "BeginPluginDiscoveryEvent()"
 }
 
-data class DiscoveredPluginEvent(val plugin: PluginEntry) : CancellableSpiralEvent {
-    override var isCanceled: Boolean = false
-}
+data class DiscoveredPluginEvent(val plugin: PluginEntry, override var isCanceled: Boolean = false): CancellableSpiralEvent
 
 class EndPluginDiscoveryEvent : SpiralEvent {
     override fun toString(): String = "EndPluginDiscoveryEvent()"

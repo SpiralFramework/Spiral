@@ -11,5 +11,7 @@ data class SpiralPluginDefinitionPojo(
         val version: String?,
         val semanticVersion: SemVer,
 
-        val pluginClass: String
+        val pluginClass: String,
+
+        val pluginFileName: String?
 )
