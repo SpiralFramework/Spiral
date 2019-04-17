@@ -23,10 +23,17 @@ allprojects {
     version = project_version
     sourceCompatibility = 1.8
 
+    configurations {
+        compileInclude
+
+        compile.extendsFrom(compileInclude)
+    }
+
     jar {
         baseName = "spiral"
         appendix = "$project.name"
         version = ""
+        from configurations.compileInclude
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
