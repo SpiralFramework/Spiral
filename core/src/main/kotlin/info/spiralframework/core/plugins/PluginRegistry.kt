@@ -3,9 +3,7 @@ package info.spiralframework.core.plugins
 import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.ensureDirectoryExists
 import info.spiralframework.core.SpiralSerialisation
-import info.spiralframework.core.plugins.events.BeginPluginDiscoveryEvent
-import info.spiralframework.core.plugins.events.DiscoveredPluginEvent
-import info.spiralframework.core.plugins.events.EndPluginDiscoveryEvent
+import info.spiralframework.core.plugins.events.*
 import info.spiralframework.core.postCancellable
 import info.spiralframework.core.tryReadValue
 import org.greenrobot.eventbus.EventBus
@@ -110,11 +108,17 @@ object PluginRegistry {
             return -2
         }
 
-        //TODO: Permission checks
+        if (EventBus.getDefault().postCancellable(BeginLoadingPluginEvent(pluginEntry))) {
+            return -9
+        }
+
         val result = loadPluginInternal(pluginEntry)
 
         if (result < 0) {
+            EventBus.getDefault().post(FailedPluginLoadEvent(pluginEntry, result))
             unloadPluginInternal(pluginEntry.pojo.uid)
+        } else {
+            EventBus.getDefault().post(SuccessfulPluginLoadEvent(pluginEntry, result))
         }
 
         return result

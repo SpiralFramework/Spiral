@@ -7,7 +7,8 @@ import info.spiralframework.base.util.RSAPublicKey
 import java.security.PublicKey
 
 object SpiralSignatures {
-    const val SIGNATURE_PATH = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Spiral-%s/%s/%s.sig"
+    const val MODULE_SIGNATURE_PATH = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Spiral-%s/%s/%s.sig"
+    const val PLUGIN_SIGNATURE_PATH = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Plugins/%s/%s/%s.sig"
     val PUBLIC_KEY: PublicKey? by lazy { SPIRALFRAMEWORK_PUBLIC_KEY ?: GITHUB_PUBLIC_KEY }
 
     val SPIRALFRAMEWORK_PUBLIC_KEY: PublicKey? by lazy {
@@ -44,7 +45,13 @@ object SpiralSignatures {
     val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
 
     fun signatureForModule(module: String, version: String, file: String): ByteArray? =
-            Fuel.get(String.format(SIGNATURE_PATH, module, version, file))
+            Fuel.get(String.format(MODULE_SIGNATURE_PATH, module, version, file))
+                    .userAgent()
+                    .timeout(2 * 1000)
+                    .response().second.takeIf(Response::isSuccessful)?.data
+
+    fun signatureForPlugin(plugin: String, version: String, file: String): ByteArray? =
+            Fuel.get(String.format(PLUGIN_SIGNATURE_PATH, plugin, version, file))
                     .userAgent()
                     .timeout(2 * 1000)
                     .response().second.takeIf(Response::isSuccessful)?.data
