@@ -7,7 +7,7 @@ import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.align
 import java.io.InputStream
 
-class DataTableV3(val dataSource: DataSource) {
+class DataTableV3 private constructor(val dataSource: DataSource) {
     companion object {
         operator fun invoke(dataSource: () -> InputStream): DataTableV3? {
             try {
@@ -37,10 +37,14 @@ class DataTableV3(val dataSource: DataSource) {
         data class Float32(val variableName: String, val data: Float): DataVariable<Float>(variableName, data)
         data class Float64(val variableName: String, val data: Double): DataVariable<Double>(variableName, data)
 
-        data class Label(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
-        data class Refer(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
-        data class Ascii(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
+        abstract class UTF8(variableName: String, open val data: Int): DataVariable<Int>(variableName, data)
+        data class Label(val variableName: String, override val data: Int): UTF8(variableName, data)
+        data class Refer(val variableName: String, override val data: Int): UTF8(variableName, data)
+        data class Ascii(val variableName: String, override val data: Int): UTF8(variableName, data)
         data class UTF16(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
+
+        val dataVariableName: String = variableName
+        val dataAsT = data
     }
 
     val structureCount: Int
