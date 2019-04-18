@@ -37,9 +37,6 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
         val stopwatch = Stopwatch()
         @JvmStatic
         fun main(args: Array<String>) {
-            val dat = DataTableV3(File("/Users/undermybrella/Workspace/KSPIRAL/shinkiro_raw/partition_data_win/model/bg/ID100_residence/place.dat")::inputStream)
-            println(dat.variableDetails.joinToString("\n"))
-
             val gurrenArgs: GurrenArgs
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)
