@@ -10,7 +10,7 @@ object HumbleMediaPlugin: BaseSpiralPlugin(HumbleMediaPlugin::class, "spiralfram
     }
 
     override fun load() {
-        println("Loading!")
+        println("Loading; Humble version: ${io.humble.video_native.Version.getVersionInfo()}")
         AudioFormats.wav = HumbleAudioFormat("wav")
         AudioFormats.ogg = HumbleAudioFormat("ogg")
         AudioFormats.mp3 = HumbleAudioFormat("mp3")

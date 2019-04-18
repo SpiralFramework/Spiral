@@ -12,9 +12,41 @@ import org.parboiled.parserunners.ReportingParseRunner
 
 open class ParboiledCommand(val cockpit: Cockpit<*>, val rule: Rule, val scope: String? = null, val failedCommand: ParboiledCommand.(List<ParseError>) -> Unit, val command: ParboiledCommand.(List<Any>) -> Boolean) {
     companion object {
-        val FAILURE = true
-        val SUCCESS = false
+        val FAILURE: Boolean = true
+        val SUCCESS: Boolean = false
 
+        fun succeed(text: String, vararg params: Any): Boolean {
+            printlnLocale(text, *params)
+            return SUCCESS
+        }
+        
+        fun succeed(action: () -> Unit): Boolean {
+            action()
+            return SUCCESS
+        }
+        
+        fun succeedIf(action: () -> Boolean): Boolean {
+            if (action())
+                return SUCCESS
+            return FAILURE
+        }
+
+        fun fail(text: String, vararg params: Any): Boolean {
+            printlnLocale(text, *params)
+            return FAILURE
+        }
+
+        fun fail(action: () -> Unit): Boolean {
+            action()
+            return FAILURE
+        }
+
+        fun failIf(action: () -> Boolean): Boolean {
+            if (action())
+                return FAILURE
+            return SUCCESS
+        }
+        
         val invalidCommand: ParboiledCommand.(List<ParseError>) -> Unit = { failed ->
             if (failed.isNotEmpty()) {
                 printlnErrLocale("commands.invalid")

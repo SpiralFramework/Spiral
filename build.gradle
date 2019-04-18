@@ -33,7 +33,6 @@ allprojects {
         baseName = "spiral"
         appendix = "$project.name"
         version = ""
-        from configurations.compileInclude
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
