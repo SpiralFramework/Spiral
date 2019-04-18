@@ -9,7 +9,7 @@ import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.CustomNonstopDebate
-import info.spiralframework.formats.scripting.NonstopDebateSection
+import info.spiralframework.formats.data.NonstopDebateSection
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr1.DR1LoadScriptEntry
 import info.spiralframework.formats.scripting.lin.dr1.DR1RunScript

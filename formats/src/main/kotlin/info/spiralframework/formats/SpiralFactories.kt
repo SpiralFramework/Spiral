@@ -1,6 +1,8 @@
 package info.spiralframework.formats
 
 import info.spiralframework.formats.archives.*
+import info.spiralframework.formats.data.NonstopDebate
+import info.spiralframework.formats.data.NonstopDebateV3
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.game.v3.V3

@@ -3,7 +3,7 @@ package info.spiralframework.osl.results
 import info.spiralframework.formats.customNonstopDebate
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.scripting.CustomNonstopDebate
-import info.spiralframework.formats.scripting.NonstopDebateSection
+import info.spiralframework.formats.data.NonstopDebateSection
 import info.spiralframework.osl.SpiralDrillBit
 import info.spiralframework.osl.data.nonstopDebate.NonstopDebateNewObject
 import info.spiralframework.osl.data.nonstopDebate.NonstopDebateVariable
