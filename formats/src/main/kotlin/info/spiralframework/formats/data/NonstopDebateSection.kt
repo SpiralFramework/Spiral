@@ -1,4 +1,4 @@
-package info.spiralframework.formats.scripting
+package info.spiralframework.formats.data
 
 open class NonstopDebateSection(val data: IntArray) {
     constructor(size: Int): this(IntArray(size))
