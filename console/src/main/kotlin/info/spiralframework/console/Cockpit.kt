@@ -11,7 +11,6 @@ import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
 import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.core.*
-import info.spiralframework.formats.data.DataTableV3
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.CoroutineScope
