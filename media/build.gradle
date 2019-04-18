@@ -1,5 +1,20 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+}
+
 dependencies {
     compile project(":core")
 
     compileInclude "io.humble:humble-video-all:0.3.0"
+}
+
+shadowJar {
+    mergeServiceFiles()
+    baseName = jar.baseName
+    appendix = jar.appendix
+    version = jar.version
+
+    classifier = jar.classifier
+
+    configurations = [project.configurations.compileInclude]
 }

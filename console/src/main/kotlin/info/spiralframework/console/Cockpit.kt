@@ -67,7 +67,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                             var shouldDownloadUnsigned = false
                             if (signatureData == null) {
-                                printlnLocale("gurren.update.unsigned.warning")
+                                printlnLocale("gurren.update.unsigned.warning", SpiralCoreData.version)
                                 printLocale("gurren.update.unsigned.warning_confirmation")
 
                                 shouldDownloadUnsigned = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -113,7 +113,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                 if (build == null) {
                     //Unknown Build
-                    printlnLocale("gurren.patch.unsigned.warning")
+                    printlnLocale("gurren.patch.unsigned.warning", SpiralCoreData.version)
                     printLocale("gurren.patch.unsigned.warning_confirmation")
 
                     runUpdate = SpiralLocale.readConfirmation(defaultToAffirmative = false)
