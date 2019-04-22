@@ -1,4 +1,4 @@
-package info.spiralframework.formats.scripting
+package info.spiralframework.formats.data
 
 import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.game.v3.V3

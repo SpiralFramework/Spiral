@@ -112,6 +112,14 @@ fun InputStream.readInt16BE(): Int {
 
 fun InputStream.readFloatBE(): Float = java.lang.Float.intBitsToFloat(this.readInt32BE())
 fun InputStream.readFloatLE(): Float = java.lang.Float.intBitsToFloat(this.readInt32LE())
+fun InputStream.readFloat32BE(): Float = java.lang.Float.intBitsToFloat(this.readInt32BE())
+fun InputStream.readFloat32LE(): Float = java.lang.Float.intBitsToFloat(this.readInt32LE())
+
+fun InputStream.readDoubleBE(): Double = java.lang.Double.longBitsToDouble(this.readInt64BE())
+fun InputStream.readDoubleLE(): Double = java.lang.Double.longBitsToDouble(this.readInt64LE())
+fun InputStream.readFloat64BE(): Double = java.lang.Double.longBitsToDouble(this.readInt64BE())
+fun InputStream.readFloat64LE(): Double = java.lang.Double.longBitsToDouble(this.readInt64LE())
+
 
 fun <T> InputStream.read(serialise: (InputStream) -> T?): T? = serialise(this)
 fun <T> CountingInputStream.readSource(source: () -> InputStream, serialise: (() -> InputStream) -> T?): T? = serialise(source.from(streamOffset))

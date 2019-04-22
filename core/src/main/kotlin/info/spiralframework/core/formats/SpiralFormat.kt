@@ -34,6 +34,12 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
     fun preferredConversionFormat(): WritableSpiralFormat? = null
 
     /**
+     * Should we attempt to automatically identify this file?
+     * Return false for text based formats in particular
+     */
+    fun shouldAutoIdentify(): Boolean = true
+
+    /**
      * Attempts to identify the data source as an instance of [T]
      *
      * Formats are recommended to override this where possible.
