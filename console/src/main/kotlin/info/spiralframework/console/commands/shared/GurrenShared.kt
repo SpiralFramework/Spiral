@@ -10,9 +10,11 @@ import info.spiralframework.core.formats.compression.CRILAYLAFormat
 import info.spiralframework.core.formats.compression.DRVitaFormat
 import info.spiralframework.core.formats.compression.SPCCompressionFormat
 import info.spiralframework.core.formats.compression.V3CompressionFormat
+import info.spiralframework.core.formats.data.DataTableV3Format
 import info.spiralframework.core.formats.images.*
 import info.spiralframework.core.formats.scripting.LinFormat
 import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
+import info.spiralframework.core.formats.text.CSVFormat
 import info.spiralframework.core.formats.video.SFLFormat
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.video.SFL
@@ -38,7 +40,8 @@ object GurrenShared {
                 DDSImageFormat.DXT1,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
                 LinFormat, OpenSpiralLanguageFormat,
-                SFLFormat
+                SFLFormat,
+                DataTableV3Format
         )
     }
 
@@ -47,7 +50,8 @@ object GurrenShared {
                 CpkFormat, FolderFormat, PakFormat, SpcFormat, WadFormat, ZipFormat,
                 AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
-                LinFormat, OpenSpiralLanguageFormat
+                LinFormat, OpenSpiralLanguageFormat,
+                CSVFormat
         )
     }
 

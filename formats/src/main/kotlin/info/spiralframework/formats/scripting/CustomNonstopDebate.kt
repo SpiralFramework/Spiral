@@ -4,6 +4,7 @@ import info.spiralframework.formats.ICompilable
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
 import info.spiralframework.base.util.writeInt16LE
+import info.spiralframework.formats.data.NonstopDebateSection
 import java.io.OutputStream
 
 class CustomNonstopDebate: ICompilable {
