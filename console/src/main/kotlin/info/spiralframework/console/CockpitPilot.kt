@@ -3,6 +3,7 @@ package info.spiralframework.console
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.verify
 import info.spiralframework.console.commands.pilot.GurrenPilot
+import info.spiralframework.console.commands.pilot.GurrenPluginPilot
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.eventbus.CommandRequest
 import info.spiralframework.core.SpiralCoreData
@@ -30,6 +31,7 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                 ?: SpiralLocale.localise("gurren.default_version")))
 
         registerCommandClass(GurrenPilot(this))
+        registerCommandClass(GurrenPluginPilot(this))
 
         if (SpiralSignatures.PUBLIC_KEY == null && SpiralSignatures.GITHUB_PUBLIC_KEY == null) {
             LOGGER.warn("No public key could be found; plugins were not automatically loaded")

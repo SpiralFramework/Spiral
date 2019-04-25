@@ -11,19 +11,15 @@ import info.spiralframework.console.data.errors.ConvertResponse
 import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
-import info.spiralframework.console.eventbus.ParboiledCommand.Companion.fail
-import info.spiralframework.core.SpiralSignatures
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.FormatResult.Companion.NO_FORMAT_DEFINED
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.SpiralFormat
-import info.spiralframework.core.plugins.PluginRegistry
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.dataContext
 import info.spiralframework.formats.video.SFL
-import info.spiralframework.osl.parserAction
 import org.parboiled.Action
 import java.io.File
 import java.io.FileOutputStream
@@ -157,15 +153,6 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
                         ),
                         Action<Any> { pushMarkerSuccessCommand() }
                 )
-        )
-    }
-
-    val enablePluginRule = makeRule {
-        Sequence(
-                Localised("commands.pilot.enable_plugin.enable_plugin"),
-                parserAction { pushMarkerSuccessBase() },
-                MechanicParameter(),
-                parserAction { pushMarkerSuccessCommand() }
         )
     }
 
@@ -680,53 +667,6 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         }
 
         return@ParboiledCommand FAILURE
-    }
-
-    val enablePlugin = ParboiledCommand(enablePluginRule) { stack ->
-        val pluginName = stack[0] as String
-
-        val plugins = PluginRegistry.discover()
-        val plugin = plugins
-                .firstOrNull { entry -> entry.pojo.name.equals(pluginName, true) || entry.pojo.uid.equals(pluginName, true) }
-                ?: return@ParboiledCommand fail("commands.pilot.enable_plugin.err_no_plugin_by_name", pluginName)
-
-        if (plugin.source == null) {
-            //Plugin is already in the classpath; no need to verify
-        } else {
-            var loadPlugin = false
-
-            val publicKey = SpiralSignatures.SPIRALFRAMEWORK_PUBLIC_KEY ?: SpiralSignatures.GITHUB_PUBLIC_KEY
-            if (publicKey == null) {
-                //Ask user if they want to proceed, considering we can't verify plugin validity
-
-            } else {
-                val signature = SpiralSignatures.signatureForPlugin(plugin.pojo.uid, plugin.pojo.semanticVersion.toString(), plugin.pojo.pluginFileName
-                        ?: plugin.source!!.path.substringAfterLast('/'))
-
-                if (signature == null) {
-                    //Ask user if they want to load an unsigned plugin
-
-                } else {
-                    if (plugin.source?.openStream()?.verify(signature, publicKey) == true) {
-                        //Signature verified
-                        printlnLocale("commands.pilot.enable_plugin.signature_verified", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
-                        loadPlugin = true
-                    } else {
-                        //Signature cannot be verified
-
-                        loadPlugin = false
-                    }
-                }
-            }
-
-            if (loadPlugin) {
-                PluginRegistry.loadPlugin(plugin)
-            } else {
-
-            }
-        }
-
-        return@ParboiledCommand SUCCESS
     }
 
     val debug = ParboiledCommand(makeRule { IgnoreCase("debug") }) { stack ->

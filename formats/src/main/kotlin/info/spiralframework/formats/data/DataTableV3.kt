@@ -62,13 +62,13 @@ class DataTableV3 private constructor(val dataSource: DataSource) {
 
         try {
             structureCount = stream.readInt32LE()
-            assertAsLocaleArgument(structureCount > 0, "formats.data_table_v3.negative_structure_count")
+            assertAsLocaleArgument(structureCount in 1..1023, "formats.data_table_v3.negative_structure_count")
 
             structureSize = stream.readInt32LE()
-            assertAsLocaleArgument(structureSize > 0, "formats.data_table_v3.negative_structure_size")
+            assertAsLocaleArgument(structureSize in 1..1023, "formats.data_table_v3.negative_structure_size")
 
             variableCount = stream.readInt32LE()
-            assertAsLocaleArgument(variableCount > 0, "formats.data_table_v3.negative_variable_count")
+            assertAsLocaleArgument(variableCount in 1..1023, "formats.data_table_v3.negative_variable_count")
 
             variableDetails = Array(variableCount) {
                 val variableName = stream.readNullTerminatedUTF8String()

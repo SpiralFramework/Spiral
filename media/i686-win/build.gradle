@@ -1,0 +1,12 @@
+ext.arch = "i686-w64-mingw32"
+
+dependencies {
+    compile project(":media")
+    compileInclude "io.humble:humble-video-arch-$arch:0.3.0"
+}
+
+shadowJar {
+    manifest {
+        attributes "Humble-Native-Bundles" : "$arch"
+    }
+}
