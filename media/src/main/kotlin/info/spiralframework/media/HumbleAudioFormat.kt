@@ -12,6 +12,7 @@ import info.spiralframework.formats.utils.use
 import io.humble.video.Demuxer
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 
@@ -62,9 +63,7 @@ open class HumbleAudioFormat(val format: String): SpiralAudioFormat(format, form
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun supportsWriting(data: Any): Boolean = data is File || data is ByteArray || data is InputStream
 
     /**
      * Writes [data] to [stream] in this format
@@ -78,6 +77,21 @@ open class HumbleAudioFormat(val format: String): SpiralAudioFormat(format, form
      * @return An enum for the success of the operation
      */
     override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        when (data) {
+            is File -> {
+                val demuxer = Demuxer.make()
+
+                try {
+                    demuxer.open(data.absolutePath, null, false, true, null, null)
+                } finally {
+                    demuxer.close()
+                }
+            }
+            is ByteArray -> {}
+            is InputStream -> {}
+            else -> return FormatWriteResponse.WRONG_FORMAT
+        }
+
+        return FormatWriteResponse.SUCCESS
     }
 }
