@@ -1,7 +1,5 @@
-plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
-    id 'application'
-}
+apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: "application"
 
 mainClassName = "info.spiralframework.osl.OSLProxy"
 
