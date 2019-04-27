@@ -24,6 +24,15 @@ object PluginRegistry {
         val pojo: SpiralPluginDefinitionPojo
     }
 
+    enum class LoadPluginResult(val success: Boolean) {
+        SUCCESS(true),
+        ALREADY_LOADED(false),
+        LOADED_ON_CLASSPATH(false),
+        PLUGIN_LOAD_CANCELLED(false),
+        NO_PLUGIN_CLASS_CONSTRUCTOR(false),
+        PLUGIN_CLASS_NOT_SPIRAL_PLUGIN(false);
+    }
+
     val pojoServiceLoader = ServiceLoader.load(PojoProvider::class.java)
 
     private val mutableLoadedPlugins: MutableList<ISpiralPlugin> = ArrayList()
@@ -92,8 +101,8 @@ object PluginRegistry {
         }
     }.toList()
 
-    //TODO: Don't use an int return value
-    fun loadPlugin(pluginEntry: PluginEntry): Int {
+
+    fun loadPlugin(pluginEntry: PluginEntry): LoadPluginResult {
         //First thing's first, check to make sure the plugin hasn't already been loaded
 
         if (loadedPlugins.any { plugin -> plugin.uid == pluginEntry.pojo.uid }) {
@@ -102,7 +111,7 @@ object PluginRegistry {
             //Check if we're trying to load a different version
 
             if (sameUID.version == pluginEntry.pojo.semanticVersion) {
-                return -1
+                return LoadPluginResult.ALREADY_LOADED
             } else {
                 //Unload existing plugin
                 unloadPlugin(sameUID)
@@ -110,16 +119,16 @@ object PluginRegistry {
         }
 
         if (pluginEntry.pojo.uid in pluginLoaders) {
-            return -2
+            return LoadPluginResult.LOADED_ON_CLASSPATH
         }
 
         if (EventBus.getDefault().postCancellable(BeginLoadingPluginEvent(pluginEntry))) {
-            return -9
+            return LoadPluginResult.PLUGIN_LOAD_CANCELLED
         }
 
         val result = loadPluginInternal(pluginEntry)
 
-        if (result < 0) {
+        if (result.success) {
             EventBus.getDefault().post(FailedPluginLoadEvent(pluginEntry, result))
             unloadPluginInternal(pluginEntry.pojo.uid)
         } else {
@@ -129,7 +138,7 @@ object PluginRegistry {
         return result
     }
 
-    private fun loadPluginInternal(pluginEntry: PluginEntry): Int {
+    private fun loadPluginInternal(pluginEntry: PluginEntry): LoadPluginResult {
         val classLoader: ClassLoader
         if (pluginEntry.source != null && pluginLoaders.values.none { loader -> loader.urLs.any { url -> url == pluginEntry.source } }) {
             classLoader = URLClassLoader.newInstance(arrayOf(pluginEntry.source))
@@ -141,12 +150,12 @@ object PluginRegistry {
         val pluginKlass = classLoader.loadClass(pluginEntry.pojo.pluginClass).kotlin
         val plugin = (pluginKlass.objectInstance
                 ?: runCatching { pluginKlass.createInstance() }.getOrDefault(null)
-                ?: return -3) as? ISpiralPlugin ?: return -4
+                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
 
         mutableLoadedPlugins.add(plugin)
         plugin.load()
 
-        return 0
+        return LoadPluginResult.SUCCESS
     }
 
     fun unloadPlugin(plugin: ISpiralPlugin) {
