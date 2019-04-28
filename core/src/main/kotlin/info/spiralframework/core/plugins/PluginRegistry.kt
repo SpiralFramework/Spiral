@@ -244,7 +244,7 @@ object PluginRegistry {
                     loadPlugin = true
                 } else {
                     //Signature cannot be verified
-
+                    printlnLocale("core.plugins.enable.invalid_signature.error")
                     loadPlugin = false
                 }
             }

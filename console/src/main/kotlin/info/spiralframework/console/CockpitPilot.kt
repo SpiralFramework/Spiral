@@ -34,7 +34,7 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
         registerCommandClass(GurrenPluginPilot(this))
 
         if (SpiralSignatures.PUBLIC_KEY == null && SpiralSignatures.GITHUB_PUBLIC_KEY == null) {
-            LOGGER.warn("No public key could be found; plugins were not automatically loaded")
+            LOGGER.warn("gurren.pilot.plugin_load.missing_public")
         } else {
 
             val enabledPlugins = SpiralCoreData.enabledPlugins
@@ -47,7 +47,7 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                         val signature = SpiralSignatures.signatureForPlugin(entry.pojo.uid, entry.pojo.semanticVersion.toString(), entry.pojo.pluginFileName
                                 ?: entry.source!!.path.substringAfterLast('/'))
                         if (signature == null) {
-                            LOGGER.debug("No signature data could be found for {0} {1}, aborting auto-load", entry.pojo.name, entry.pojo.semanticVersion)
+                            LOGGER.debug("gurren.pilot.plugin_load.missing_signature", entry.pojo.name, entry.pojo.version ?: entry.pojo.semanticVersion)
                             return@filter false
                         }
 
@@ -55,7 +55,9 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                                 ?: SpiralSignatures.GITHUB_PUBLIC_KEY ?: return@filter false) == true
                     }
 
-            plugins.map(PluginRegistry::loadPlugin)
+            plugins.forEach { plugin ->
+                LOGGER.info("gurren.pilot.plugin_load.loading", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
+            }
         }
     }
 }
