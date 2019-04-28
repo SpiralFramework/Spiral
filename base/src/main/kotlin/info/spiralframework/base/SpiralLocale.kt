@@ -39,6 +39,10 @@ object SpiralLocale {
         _localisationBundles.add(ResourceBundle.getBundle(bundleName))
         _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
     }
+    fun removeBundle(bundleName: String) {
+        _localisationBundles.removeIf { bundle -> bundle.baseBundleName == bundleName }
+        _englishBundles.removeIf { bundle -> bundle.baseBundleName == bundleName }
+    }
 
     fun readConfirmation(defaultToAffirmative: Boolean = true): Boolean =
             (readLine()?.trim()?.takeIf(String::isNotBlank)
