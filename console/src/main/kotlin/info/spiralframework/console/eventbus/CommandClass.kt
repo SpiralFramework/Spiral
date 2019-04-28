@@ -26,5 +26,5 @@ interface CommandClass {
 
     fun ParameterParser.pushMarkerSuccessBase() = push(ParboiledMarker.SUCCESS_BASE)
     fun ParameterParser.pushMarkerSuccessCommand() = push(ParboiledMarker.SUCCESS_COMMAND)
-    fun ParameterParser.pushMarkerFailedLocale(locale: String) = push(ParboiledMarker.FAILED_LOCALE(locale))
+    fun ParameterParser.pushMarkerFailedLocale(locale: String, vararg params: Any) = push(ParboiledMarker.FAILED_LOCALE(locale, params))
 }
