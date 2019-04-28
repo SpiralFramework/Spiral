@@ -1,8 +1,13 @@
 package info.spiralframework.console.commands.pilot
 
+import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.util.printLocale
+import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.eventbus.CommandClass
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
+import info.spiralframework.console.eventbus.ParboiledCommand.Companion.fail
 import info.spiralframework.core.plugins.PluginRegistry
 import info.spiralframework.osl.parserAction
 
@@ -21,19 +26,59 @@ class GurrenPluginPilot(override val cockpit: Cockpit<*>) : CommandClass {
         )
     }
 
+    val disablePluginRule = makeRule {
+        Sequence(
+                Localised("commands.pilot.disable_plugin.disable_plugin"),
+                parserAction { pushMarkerSuccessBase() },
+                Optional(
+                        InlineWhitespace(),
+                        MechanicParameter(),
+                        parserAction { pushMarkerSuccessCommand() }
+                )
+        )
+    }
+
     val enablePlugin = ParboiledCommand(enablePluginRule) { stack ->
         val pluginName = stack[0] as String
 
         val plugins = PluginRegistry.discover()
         val plugin = plugins
                 .firstOrNull { entry -> entry.pojo.name.equals(pluginName, true) || entry.pojo.uid.equals(pluginName, true) }
-                ?: return@ParboiledCommand info.spiralframework.console.eventbus.ParboiledCommand.fail("commands.pilot.enable_plugin.err_no_plugin_by_name", pluginName)
+                ?: return@ParboiledCommand fail("commands.pilot.enable_plugin.err_no_plugin_by_name", pluginName)
 
-        if (PluginRegistry.queryEnablePlugin(plugin)) {
-            val loadResponse = PluginRegistry.loadPlugin(plugin)
-            println("Response: $loadResponse")
+        val pojo = plugin.pojo
+
+        printlnLocale("commands.pilot.enable_plugin.details", pojo.name, pojo.uid, pojo.version ?: pojo.semanticVersion, pojo.description ?: "(empty)", pojo.authors?.joinToString() ?: "It came from Space!", pojo.supportedModules?.joinToString() ?: "N/a", pojo.requiredModules?.joinToString() ?: "N/a", pojo.contentWarnings ?: "N/a")
+        printLocale("commands.pilot.enable_plugin.prompt", pojo.name)
+
+        if (SpiralLocale.readConfirmation()) {
+            if (PluginRegistry.queryEnablePlugin(plugin)) {
+                val loadResponse = PluginRegistry.loadPlugin(plugin)
+                if (loadResponse.success) {
+                    printlnLocale("commands.pilot.enable_plugin.successful", pluginName)
+                } else {
+                    printlnLocale("commands.pilot.enable_plugin.unsuccessful", pluginName, loadResponse)
+                }
+            }
         }
 
-        return@ParboiledCommand info.spiralframework.console.eventbus.ParboiledCommand.SUCCESS
+        return@ParboiledCommand SUCCESS
+    }
+
+    val disablePlugin = ParboiledCommand(disablePluginRule) { stack ->
+        val pluginName = stack[0] as String
+
+        val plugin = PluginRegistry.loadedPlugins.firstOrNull { plugin -> plugin.name.equals(pluginName, true) || plugin.uid.equals(pluginName, true) }
+                ?: return@ParboiledCommand fail("commands.pilot.disable_plugin.err_no_plugin_by_name", pluginName)
+
+        printlnLocale("commands.pilot.disable_plugin.details", plugin.name, plugin.uid, plugin.version)
+        printLocale("commands.pilot.disable_plugin.prompt", plugin.name)
+
+        if (SpiralLocale.readConfirmation()) {
+            PluginRegistry.unloadPlugin(plugin)
+            printlnLocale("commands.pilot.disable_plugin.successful", pluginName)
+        }
+
+        return@ParboiledCommand SUCCESS
     }
 }

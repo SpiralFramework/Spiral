@@ -2,15 +2,9 @@ package info.spiralframework.core.plugins
 
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
-import info.spiralframework.base.util.ensureDirectoryExists
-import info.spiralframework.base.util.printLocale
-import info.spiralframework.base.util.printlnLocale
-import info.spiralframework.base.util.verify
-import info.spiralframework.core.SpiralSerialisation
-import info.spiralframework.core.SpiralSignatures
+import info.spiralframework.base.util.*
+import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*
-import info.spiralframework.core.postCancellable
-import info.spiralframework.core.tryReadValue
 import org.greenrobot.eventbus.EventBus
 import java.io.File
 import java.io.IOException
@@ -30,7 +24,9 @@ object PluginRegistry {
         LOADED_ON_CLASSPATH(false),
         PLUGIN_LOAD_CANCELLED(false),
         NO_PLUGIN_CLASS_CONSTRUCTOR(false),
-        PLUGIN_CLASS_NOT_SPIRAL_PLUGIN(false);
+        PLUGIN_CLASS_NOT_SPIRAL_PLUGIN(false),
+        MODULE_NOT_SUPPORTED(false),
+        REQUIRED_MODULE_NOT_LOADED(false);
     }
 
     val pojoServiceLoader = ServiceLoader.load(PojoProvider::class.java)
@@ -122,6 +118,14 @@ object PluginRegistry {
             return LoadPluginResult.LOADED_ON_CLASSPATH
         }
 
+        if (pluginEntry.pojo.requiredModules?.any { str -> str !in SpiralCoreData.loadedModules } == true) {
+            return LoadPluginResult.REQUIRED_MODULE_NOT_LOADED
+        }
+
+        if (pluginEntry.pojo.supportedModules?.none { str -> str == SpiralCoreData.mainModule } == true) {
+            return LoadPluginResult.MODULE_NOT_SUPPORTED
+        }
+
         if (EventBus.getDefault().postCancellable(BeginLoadingPluginEvent(pluginEntry))) {
             return LoadPluginResult.PLUGIN_LOAD_CANCELLED
         }
@@ -129,10 +133,10 @@ object PluginRegistry {
         val result = loadPluginInternal(pluginEntry)
 
         if (result.success) {
+            EventBus.getDefault().post(SuccessfulPluginLoadEvent(pluginEntry, result))
+        } else {
             EventBus.getDefault().post(FailedPluginLoadEvent(pluginEntry, result))
             unloadPluginInternal(pluginEntry.pojo.uid)
-        } else {
-            EventBus.getDefault().post(SuccessfulPluginLoadEvent(pluginEntry, result))
         }
 
         return result
@@ -223,7 +227,7 @@ object PluginRegistry {
 
             if (signature == null) {
                 //Ask user if they want to load an unsigned plugin
-                printlnLocale("core.plugins.enable.unsigned_warning")
+                printlnLocale("core.plugins.enable.unsigned_warning", plugin.source?.openStream()?.sha256Hash())
                 printLocale("core.plugins.enable.unsigned_warning_prompt")
 
                 loadPlugin = SpiralLocale.readConfirmation(defaultToAffirmative = false)

@@ -5,6 +5,7 @@ import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import info.spiralframework.base.LocaleLogger
 import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -12,6 +13,7 @@ import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
 import java.nio.file.StandardOpenOption
+import java.util.*
 import java.util.jar.JarFile
 
 /**
@@ -39,7 +41,7 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
             "spiral.module", "spiral.version", "spiral.name",
             "manifest.main-class"
     )
-    val ADDITIONAL_ENVIRONMENT: MutableMap<String, String?> = HashMap()
+    val ADDITIONAL_ENVIRONMENT: MutableMap<String, String?> = hashMapOf("spiral.module" to "spiral-core")
     val ENVIRONMENT: String
         get() = buildString {
             this@SpiralCoreData::fileName.get() //If we're getting the environment we should proc these
@@ -80,11 +82,32 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
         ADDITIONAL_ENVIRONMENT["spiral.version"] = hash
         return@lazy hash
     }
+    val sha256Hash: String? by lazy {
+        val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)
+        if (!file.isFile)
+            return@lazy null
+
+        val hash = FileChannel.open(file.toPath(), StandardOpenOption.READ).use(ReadableByteChannel::sha256Hash)
+        ADDITIONAL_ENVIRONMENT["spiral.sha256"] = hash
+        return@lazy hash
+    }
 
     /** The build for this jar file, or null if we're either not running a JAR file (developer directory), or if we're using a custom compiled version */
     val jenkinsBuild: Int? by lazy { version?.let(this::buildForVersion) }
 
     val LOGGER: Logger
+
+    var mainModule: String = "spiral-core"
+        set(value) {
+            field = value
+            ADDITIONAL_ENVIRONMENT["spiral.module"] = mainModule
+        }
+    val moduleLoader = ServiceLoader.load(SpiralModuleProvider::class.java)
+    val loadedModules: Array<String> = moduleLoader.iterator()
+            .asSequence()
+            .map(SpiralModuleProvider::moduleName)
+            .toList()
+            .toTypedArray()
 
     fun checkForUpdate(project: String): Pair<String, Int>? {
         val updateResult = arbitraryProgressBar(loadingText = "gurren.update.checking", loadedText = "") {
@@ -136,9 +159,10 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
 //                }
                 jar.manifest.mainAttributes.forEach { key, value ->
                     ADDITIONAL_ENVIRONMENT["manifest.${key.toString().toLowerCase()}"] = value.toString()
-
                 }
             }
         }
+
+        ADDITIONAL_ENVIRONMENT["spiral.modules"] = loadedModules.joinToString()
     }
 }
