@@ -9,7 +9,9 @@ import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
+import info.spiralframework.console.eventbus.CockpitInitialisedEvent
 import info.spiralframework.console.eventbus.ParboiledCommand
+import info.spiralframework.console.eventbus.RegisterCommandRequest
 import info.spiralframework.core.*
 import info.spiralframework.core.eventbus.EventBusBridgeLogger
 import info.spiralframework.formats.utils.DataHandler
@@ -21,6 +23,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -289,5 +292,18 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             if((recruit.returnType.classifier as? KClass<*>)?.isSubclassOf(registerSubclass) == true || recruit.returnType.classifier == registerSubclass)
                 bus.register(recruit.get(commandRegistry))
         }
+    }
+
+    init {
+        @Suppress("UNCHECKED_CAST", "LeakingThis")
+        EventBus.getDefault().post(CockpitInitialisedEvent(this as SELF))
+        EventBus.getDefault().register(object {
+            @Subscribe(priority = Int.MIN_VALUE)
+            fun onEvent(event: Any) {
+                if (event is RegisterCommandRequest && !event.isCanceled) {
+                    bus.register(event.command)
+                }
+            }
+        })
     }
 }
