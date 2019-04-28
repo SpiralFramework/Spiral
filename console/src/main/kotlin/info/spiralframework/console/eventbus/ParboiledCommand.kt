@@ -3,14 +3,13 @@ package info.spiralframework.console.eventbus
 import info.spiralframework.base.util.printlnErr
 import info.spiralframework.base.util.printlnErrLocale
 import info.spiralframework.base.util.printlnLocale
-import info.spiralframework.console.Cockpit
 import info.spiralframework.console.data.ParboiledMarker
 import org.greenrobot.eventbus.Subscribe
 import org.parboiled.Rule
 import org.parboiled.errors.ParseError
 import org.parboiled.parserunners.ReportingParseRunner
 
-open class ParboiledCommand(val cockpit: Cockpit<*>, val rule: Rule, val scope: String? = null, val failedCommand: ParboiledCommand.(List<ParseError>) -> Unit, val command: ParboiledCommand.(List<Any>) -> Boolean) {
+open class ParboiledCommand(val rule: Rule, val scope: String? = null, val failedCommand: ParboiledCommand.(List<ParseError>) -> Unit, val command: ParboiledCommand.(List<Any>) -> Boolean) {
     companion object {
         val FAILURE: Boolean = true
         val SUCCESS: Boolean = false
@@ -57,15 +56,15 @@ open class ParboiledCommand(val cockpit: Cockpit<*>, val rule: Rule, val scope: 
         }
     }
 
-    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, command: ParboiledCommand.(List<Any>) -> Boolean) : this(cockpit, rule, scope, invalidCommand, command)
-    constructor(rule: Rule, scope: String? = null, cockpit: Cockpit<*>, help: String, command: ParboiledCommand.(List<Any>) -> Boolean) : this(cockpit, rule, scope, { printlnErr(help) }, command)
+    constructor(rule: Rule, scope: String? = null, command: ParboiledCommand.(List<Any>) -> Boolean) : this(rule, scope, invalidCommand, command)
+    constructor(rule: Rule, scope: String? = null, help: String, command: ParboiledCommand.(List<Any>) -> Boolean) : this(rule, scope, { printlnErr(help) }, command)
 
     val runner = ReportingParseRunner<Any>(rule)
     var failed: Boolean = false
 
     @Subscribe
     fun handle(request: CommandRequest) {
-        if (scope != null && cockpit.with { operationScope }.scopeName != scope)
+        if (scope != null && request.scope.scopeName != scope)
             return
 
         val command = request.command

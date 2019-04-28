@@ -1,10 +1,10 @@
 package info.spiralframework.console.commands.mechanic
 
 import info.spiralframework.base.util.*
-import info.spiralframework.console.Cockpit
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
+import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
@@ -23,7 +23,7 @@ import java.text.DecimalFormat
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
-class GurrenMechanic(override val cockpit: Cockpit<*>) : CommandClass {
+class GurrenMechanic(override val parameterParser: ParameterParser) : CommandClass {
     companion object {
         val COMPILABLE_ARCHIVES = arrayOf<WritableSpiralFormat>(
                 CpkFormat, PakFormat, SpcFormat,

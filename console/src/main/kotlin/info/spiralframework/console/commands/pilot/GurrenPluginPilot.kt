@@ -3,16 +3,16 @@ package info.spiralframework.console.commands.pilot
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.printLocale
 import info.spiralframework.base.util.printlnLocale
-import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
+import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.fail
 import info.spiralframework.core.plugins.PluginRegistry
 import info.spiralframework.osl.parserAction
 
-class GurrenPluginPilot(override val cockpit: Cockpit<*>) : CommandClass {
-    val builders = CommandBuilders(cockpit)
+class GurrenPluginPilot(override val parameterParser: ParameterParser) : CommandClass {
+    val builders = CommandBuilders(parameterParser)
 
     val enablePluginRule = makeRule {
         Sequence(

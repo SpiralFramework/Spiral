@@ -9,10 +9,7 @@ import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralScope
-import info.spiralframework.console.eventbus.CockpitInitialisedEvent
-import info.spiralframework.console.eventbus.ParboiledCommand
-import info.spiralframework.console.eventbus.RegisterCommandRequest
-import info.spiralframework.console.eventbus.UnregisterCommandRequest
+import info.spiralframework.console.eventbus.*
 import info.spiralframework.core.*
 import info.spiralframework.core.eventbus.EventBusBridgeLogger
 import info.spiralframework.formats.utils.DataHandler
@@ -307,6 +304,10 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                 if (event is UnregisterCommandRequest && !event.isCanceled) {
                     bus.unregister(event.command)
+                }
+
+                if (event is ScopeRequest && !event.isCanceled) {
+                    EventBus.getDefault().post(ScopeResponse(with { operationScope }))
                 }
             }
         })

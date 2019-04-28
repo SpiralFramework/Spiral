@@ -2,11 +2,11 @@ package info.spiralframework.console.commands.pilot
 
 import info.spiralframework.base.util.*
 import info.spiralframework.base.util.copyToStream
-import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ConvertArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
+import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.errors.ConvertResponse
 import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
@@ -31,7 +31,7 @@ import kotlin.math.max
 import kotlin.reflect.jvm.jvmName
 
 @Suppress("unused")
-class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
+class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass {
     companion object {
         /** Helper Variables */
         var keepLooping = AtomicBoolean(true)
@@ -39,7 +39,7 @@ class GurrenPilot(override val cockpit: Cockpit<*>) : CommandClass {
         val PERCENT_FORMAT = DecimalFormat("00.00")
     }
 
-    val builders = CommandBuilders(cockpit)
+    val builders = CommandBuilders(parameterParser)
 
     /** Rules */
     val extractRule = makeRuleWith(::ExtractArgs) { argsVar ->

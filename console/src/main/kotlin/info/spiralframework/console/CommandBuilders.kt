@@ -1,5 +1,6 @@
 package info.spiralframework.console
 
+import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
 import org.parboiled.parserunners.BasicParseRunner
 import org.parboiled.support.ParsingResult
@@ -8,7 +9,7 @@ import java.io.File
 typealias Runner<T> = BasicParseRunner<T>
 typealias Result = ParsingResult<*>
 
-class CommandBuilders(override val cockpit: Cockpit<*>): CommandClass {
+class CommandBuilders(override val parameterParser: ParameterParser): CommandClass {
     val booleanRule = makeRule { Boolean() }
     val booleanRunner = Runner<Boolean>(booleanRule)
 
