@@ -24,9 +24,6 @@ interface CommandClass {
         }
     }
 
-    fun ParboiledCommand(rule: Rule, scope: String? = null, command: ParboiledCommand.(List<Any>) -> Boolean): ParboiledCommand = ParboiledCommand(rule, scope, command)
-    fun ParboiledCommand(rule: Rule, scope: String? = null, help: String, command: ParboiledCommand.(List<Any>) -> Boolean): ParboiledCommand = ParboiledCommand(rule, scope, help, command)
-
     fun ParameterParser.pushMarkerSuccessBase() = push(ParboiledMarker.SUCCESS_BASE)
     fun ParameterParser.pushMarkerSuccessCommand() = push(ParboiledMarker.SUCCESS_COMMAND)
     fun ParameterParser.pushMarkerFailedLocale(locale: String) = push(ParboiledMarker.FAILED_LOCALE(locale))
