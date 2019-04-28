@@ -84,7 +84,7 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, val faile
                     when (marker) {
                         is ParboiledMarker.SUCCESS_COMMAND -> failed = command(params) == FAILURE
                         is ParboiledMarker.SUCCESS_BASE -> request.register(this)
-                        is ParboiledMarker.FAILED_LOCALE -> printlnLocale(marker.localeMsg)
+                        is ParboiledMarker.FAILED_LOCALE -> printlnLocale(marker.localeMsg, *marker.params)
                     }
                 }
 
