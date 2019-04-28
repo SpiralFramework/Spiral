@@ -59,6 +59,8 @@ class GurrenPluginPilot(override val cockpit: Cockpit<*>) : CommandClass {
                 } else {
                     printlnLocale("commands.pilot.enable_plugin.unsuccessful", pluginName, loadResponse)
                 }
+            } else {
+                printlnLocale("commands.pilot.enable_plugin.query_failed", pluginName)
             }
         }
 
