@@ -1,6 +1,8 @@
 package info.spiralframework.console.eventbus
 
-data class CommandRequest(val command: String) {
+import info.spiralframework.console.data.SpiralScope
+
+data class CommandRequest(val command: String, val scope: SpiralScope) {
     private val mutableFoundCommands: MutableList<ParboiledCommand> = ArrayList()
     val foundCommands: List<ParboiledCommand>
         get() = mutableFoundCommands

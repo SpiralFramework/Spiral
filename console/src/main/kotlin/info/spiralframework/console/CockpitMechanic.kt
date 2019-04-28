@@ -22,7 +22,7 @@ class CockpitMechanic internal constructor(args: GurrenArgs) : Cockpit<CockpitMe
 
     override fun startAsync(scope: CoroutineScope): Job {
         return scope.launch {
-            val (foundCommands, ns) = measureResultNanoTime { bus.postback(CommandRequest(args.filteredArgs.joinToString(ParameterParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') })).foundCommands }
+            val (foundCommands, ns) = measureResultNanoTime { bus.postback(CommandRequest(args.filteredArgs.joinToString(ParameterParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') }, with { operationScope })).foundCommands }
 
             if (args.timeCommands) {
                 printlnLocale("gurren.timing.command_runtime", foundCommands.size, ns)
@@ -42,6 +42,6 @@ class CockpitMechanic internal constructor(args: GurrenArgs) : Cockpit<CockpitMe
     }
 
     init {
-        registerCommandClass(GurrenMechanic(this))
+        registerCommandClass(GurrenMechanic(parameterParser))
     }
 }

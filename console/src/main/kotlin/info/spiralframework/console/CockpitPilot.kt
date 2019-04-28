@@ -17,8 +17,9 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
         return scope.launch {
             while (isActive && GurrenPilot.keepLooping.get()) {
                 delay(50)
-                print(operationScope.scopePrint)
-                val matchingCommands = bus.postback(CommandRequest(readLine() ?: break)).foundCommands
+                val localScope = with { operationScope }
+                print(localScope.scopePrint)
+                val matchingCommands = bus.postback(CommandRequest(readLine() ?: break, localScope)).foundCommands
 
                 if (matchingCommands.isEmpty())
                     println(SpiralLocale.localise("commands.unknown"))
@@ -30,8 +31,8 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
         println(SpiralLocale.localise("gurren.pilot.init", SpiralCoreData.version
                 ?: SpiralLocale.localise("gurren.default_version")))
 
-        registerCommandClass(GurrenPilot(this))
-        registerCommandClass(GurrenPluginPilot(this))
+        registerCommandClass(GurrenPilot(parameterParser))
+        registerCommandClass(GurrenPluginPilot(parameterParser))
 
         if (SpiralSignatures.PUBLIC_KEY == null && SpiralSignatures.GITHUB_PUBLIC_KEY == null) {
             LOGGER.warn("gurren.pilot.plugin_load.missing_public")
