@@ -6,6 +6,7 @@ import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
+import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.fail
 import info.spiralframework.core.plugins.PluginRegistry
