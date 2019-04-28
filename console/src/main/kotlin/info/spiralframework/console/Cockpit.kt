@@ -67,7 +67,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                             var shouldDownloadUnsigned = false
                             if (signatureData == null) {
-                                printlnLocale("gurren.update.unsigned.warning", SpiralCoreData.version)
+                                printlnLocale("gurren.update.unsigned.warning", SpiralCoreData.sha256Hash)
                                 printLocale("gurren.update.unsigned.warning_confirmation")
 
                                 shouldDownloadUnsigned = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -113,7 +113,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                 if (build == null) {
                     //Unknown Build
-                    printlnLocale("gurren.patch.unsigned.warning", SpiralCoreData.version)
+                    printlnLocale("gurren.patch.unsigned.warning", SpiralCoreData.sha256Hash)
                     printLocale("gurren.patch.unsigned.warning_confirmation")
 
                     runUpdate = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -202,14 +202,32 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
             if (runUpdate) {
                 instance = CockpitUpdate(updateFile, gurrenArgs, *args)
-            } else if (gurrenArgs.isTool) {
-                instance = CockpitMechanic(gurrenArgs)
             } else {
-                instance = CockpitPilot(gurrenArgs)
+                instance = invoke(gurrenArgs)
             }
 
             instance.start()
             System.exit(instance with { currentExitCode })
+        }
+
+        operator fun invoke(args: Array<String>): Cockpit<*> {
+            val gurrenArgs: GurrenArgs
+            if (GurrenArgs.disableConfigLoad(args)) {
+                gurrenArgs = GurrenArgs(args)
+            } else {
+                val pojo = SpiralSerialisation.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(SpiralConfig.getConfigFile("cockpit"))
+                gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
+            }
+
+            return invoke(gurrenArgs)
+        }
+
+        operator fun invoke(args: GurrenArgs): Cockpit<*> {
+            return if (args.isTool) {
+                CockpitMechanic(args)
+            } else {
+                CockpitPilot(args)
+            }
         }
 
         init {
@@ -222,7 +240,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             DataHandler.fileToMap = { file -> SpiralSerialisation.JSON_MAPPER.readValue(file, Map::class.java).mapKeys { (key) -> key.toString() } }
             DataHandler.streamToMap = { stream -> SpiralSerialisation.JSON_MAPPER.readValue(stream, Map::class.java).mapKeys { (key) -> key.toString() } }
 
-            SpiralCoreData.ADDITIONAL_ENVIRONMENT["spiral.module"] = "spiral-console"
+            SpiralCoreData.mainModule = "spiral-console"
 
             LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version ?: "Developer")))
             EventBus.getDefault()
