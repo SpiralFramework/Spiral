@@ -6,6 +6,7 @@ import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
+import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.core.SpiralCoreData
