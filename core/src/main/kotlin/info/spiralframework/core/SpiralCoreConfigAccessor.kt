@@ -7,8 +7,8 @@ interface SpiralCoreConfigAccessor {
     companion object {
         val DEFAULT_CONFIG: SpiralCoreConfig? by cacheNullableYaml(SpiralConfig.getConfigFile("core"))
 
-        const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 2000
-        const val DEFAULT_UPDATE_READ_TIMEOUT = 2000
+        const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 5000
+        const val DEFAULT_UPDATE_READ_TIMEOUT = 5000
 
         const val DEFAULT_NETWORK_CONNECT_TIMEOUT = 5000
         const val DEFAULT_NETWORK_READ_TIMEOUT = 5000

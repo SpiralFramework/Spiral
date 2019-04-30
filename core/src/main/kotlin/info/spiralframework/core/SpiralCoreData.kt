@@ -136,8 +136,8 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
     fun buildForVersion(version: String): Int? =
             Fuel.get(String.format(apiBuildForFingerprint, version))
                 .userAgent()
-                .timeout(2 * 1000) //Time out if it takes longer than 2s to connect to our API
-                .timeoutRead(2 * 1000) //Time out if it takes longer than 2s to read a response
+                .timeout(5 * 1000) //Time out if it takes longer than 5s to connect to our API
+                .timeoutRead(5 * 1000) //Time out if it takes longer than 5s to read a response
                 .response().also(this::printResponse).takeIfSuccessful()?.let { data -> String(data) }?.toIntOrNull()
 
     fun printResponse(response: Triple<Request, Response, *>) {
