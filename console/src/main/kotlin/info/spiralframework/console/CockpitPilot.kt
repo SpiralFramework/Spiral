@@ -58,6 +58,7 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
 
             plugins.forEach { plugin ->
                 LOGGER.info("gurren.pilot.plugin_load.loading", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
+                PluginRegistry.loadPlugin(plugin)
             }
         }
     }
