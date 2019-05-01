@@ -14,6 +14,9 @@ import java.io.InputStream
 
 data class CPKFileEntry(val fileName: String, val directoryName: String, val fileSize: Long, val extractSize: Long, val offset: Long, val isCompressed: Boolean, val cpk: CPK) {
     private val compressedFile: File? by lazy {
+        if (!isCompressed)
+            return@lazy null
+
         val hash = ".sha512-${rawInputStream.use(InputStream::sha512Hash)}"
         val file = DataHandler.createTmpFile(hash)
 
