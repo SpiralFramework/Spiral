@@ -2,7 +2,9 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.util.*
 import info.spiralframework.formats.utfTable
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.align
+import info.spiralframework.formats.utils.use
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -53,7 +55,6 @@ class CustomCPK() {
     fun compile(output: OutputStream) {
         DataHandler.LOGGER.warn("formats.custom_cpk.header_warning")
         val filenames = files.keys.sorted()
-        println(filenames.size)
 
         val header = utfTable {
             schema = arrayOf(
