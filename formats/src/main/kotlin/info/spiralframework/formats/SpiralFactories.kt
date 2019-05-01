@@ -38,6 +38,12 @@ fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     return customWAD
 }
 
+fun customCPK(init: CustomCPK.() -> Unit): CustomCPK {
+    val customCPK = CustomCPK()
+    customCPK.init()
+    return customCPK
+}
+
 fun customPak(init: CustomPak.() -> Unit): CustomPak {
     val customPak = CustomPak()
     customPak.init()
