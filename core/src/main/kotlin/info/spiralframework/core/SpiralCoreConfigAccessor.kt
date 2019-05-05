@@ -15,6 +15,7 @@ interface SpiralCoreConfigAccessor {
 
         const val DEFAULT_API_BASE = "https://api.abimon.org/api"
         const val DEFAULT_JENKINS_BASE = "https://jenkins.abimon.org"
+        const val DEFAULT_SPIRAL_API_BASE = "https://api.spiralframework.info"
 
         val DEFAULT_ENABLED_PLUGINS = emptyMap<String, SemVer>()
     }
@@ -39,6 +40,9 @@ interface SpiralCoreConfigAccessor {
 
     val jenkinsBase: String
         get() = config?.jenkinsBase ?: DEFAULT_JENKINS_BASE
+
+    val spiralApiBase: String
+        get() = config?.spiralApiBase ?: DEFAULT_SPIRAL_API_BASE
 
     val enabledPlugins: Map<String, SemVer>
         get() = config?.enabledPlugins ?: DEFAULT_ENABLED_PLUGINS

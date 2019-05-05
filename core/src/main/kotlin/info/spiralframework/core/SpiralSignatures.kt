@@ -48,13 +48,13 @@ object SpiralSignatures {
             Fuel.get(String.format(MODULE_SIGNATURE_PATH, module, version, file))
                     .userAgent()
                     .timeout(2 * 1000)
-                    .response().second.takeIf(Response::isSuccessful)?.data
+                    .response().also(SpiralCoreData::printResponse).second.takeIf(Response::isSuccessful)?.data
 
     fun signatureForPlugin(plugin: String, version: String, file: String): ByteArray? =
             Fuel.get(String.format(PLUGIN_SIGNATURE_PATH, plugin, version, file))
                     .userAgent()
                     .timeout(2 * 1000)
-                    .response().second.takeIf(Response::isSuccessful)?.data
+                    .response().also(SpiralCoreData::printResponse).second.takeIf(Response::isSuccessful)?.data
 
     init {}
 }
