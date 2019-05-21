@@ -17,6 +17,11 @@ import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
 import info.spiralframework.core.formats.text.CSVFormat
 import info.spiralframework.core.formats.video.SFLFormat
 import info.spiralframework.formats.archives.*
+import info.spiralframework.formats.game.hpa.DR1
+import info.spiralframework.formats.game.hpa.DR2
+import info.spiralframework.formats.game.hpa.UDG
+import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
+import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.video.SFL
 import java.io.InputStream
 import java.util.zip.ZipFile
@@ -54,6 +59,8 @@ object GurrenShared {
                 CSVFormat
         )
     }
+
+    val DR_GAMES = arrayOf(DR1, DR2, UDG, V3, UnknownHopesPeakGame)
 
     fun extractGetFilesForResult(args: ExtractArgs.Immutable, result: Any, regex: Regex): Pair<Iterator<Pair<String, InputStream>>, Long>? {
         val files: Iterator<Pair<String, InputStream>>
