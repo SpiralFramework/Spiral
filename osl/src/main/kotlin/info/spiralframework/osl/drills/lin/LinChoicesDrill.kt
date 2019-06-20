@@ -68,7 +68,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                             '\n',
                                             OpenSpiralLines(),
                                             Action<Any> {
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry((data["$cmd-LABEL"] as Int))), "")))
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry.forGame(drGame ?: return@Action false, (data["$cmd-LABEL"] as Int))), "")))
                                             },
                                             OptionalWhitespace(),
                                             '}',
@@ -99,7 +99,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
-            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry(label))
+            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry.forGame(parser.drGame, label))
         return when (parser.hopesPeakGame) {
             DR1 -> arrayOf(
                     ChoiceEntry(18),
@@ -107,15 +107,15 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                     TextEntry(rawParams[0].toString(), -1),
                     WaitFrameEntry.DR1,
                     ChoiceEntry(255),
-                    SetLabelEntry(label)
+                    SetLabelEntry.DR1(label)
             )
             DR2 -> arrayOf(
                     ChoiceEntry(18),
                     ChoiceEntry(19),
                     TextEntry(rawParams[0].toString(), -1),
-                    WaitFrameEntry.DR1,
+                    WaitFrameEntry.DR2,
                     ChoiceEntry(255),
-                    SetLabelEntry(label)
+                    SetLabelEntry.DR2(label)
             )
             else -> TODO("Choices are not documented for ${parser.hopesPeakGame}")
         }
