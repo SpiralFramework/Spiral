@@ -1,9 +1,9 @@
 package info.spiralframework.osl.drills.nonstopDebateMinigame
 
+import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.SpiralDrillBit
 import info.spiralframework.osl.drills.DrillHead
-import info.spiralframework.formats.scripting.lin.*
 import org.parboiled.Action
 import org.parboiled.Rule
 import org.parboiled.support.Var
@@ -58,9 +58,9 @@ object NonstopEnableTruthBullets : DrillHead<Array<LinScript>> {
         return Array(evidence.size + 5) { i ->
             return@Array when (i) {
                 0 -> ChangeUIEntry(20, 1)
-                1 -> GoToLabelEntry(label)
+                1 -> GoToLabelEntry.forGame(parser.drGame, label)
                 evidence.size + 2 -> ChoiceEntry(255)
-                evidence.size + 3 -> SetLabelEntry(label)
+                evidence.size + 3 -> SetLabelEntry.forGame(parser.drGame, label)
                 evidence.size + 4 -> ChangeUIEntry(20, 0)
                 else -> ChoiceEntry(evidence[i - 2])
             }

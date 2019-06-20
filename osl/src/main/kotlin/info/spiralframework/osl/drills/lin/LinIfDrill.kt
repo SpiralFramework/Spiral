@@ -1,13 +1,13 @@
 package info.spiralframework.osl.drills.lin
 
+import info.spiralframework.formats.game.hpa.DR1
+import info.spiralframework.formats.game.hpa.DR2
+import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.osl.EnumLinFlagCheck
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.circuits.DrillCircuit
 import info.spiralframework.osl.drills.headerCircuits.SpiralBridgeDrill
 import info.spiralframework.osl.pushStaticDrillDirect
-import info.spiralframework.formats.game.hpa.DR1
-import info.spiralframework.formats.game.hpa.DR2
-import info.spiralframework.formats.scripting.lin.*
 import org.parboiled.Action
 import org.parboiled.Rule
 import org.parboiled.support.Var
@@ -186,10 +186,10 @@ object LinIfDrill : DrillCircuit {
                                             listOf(flagToCheck[i] shr 8, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i])
                                     }.toIntArray()),
                                     EndFlagCheckEntry(),
-                                    GoToLabelEntry(ifTrueVar.get()),
-                                    GoToLabelEntry(elseVar.get()),
+                                    GoToLabelEntry.DR1(ifTrueVar.get()),
+                                    GoToLabelEntry.DR1(elseVar.get()),
 
-                                    SetLabelEntry(ifTrueVar.get())
+                                    SetLabelEntry.DR1(ifTrueVar.get())
                             )
                             DR2 -> arrayOf(
                                     CheckFlagAEntry(0x35, (0 until flagToCheck.size).flatMap { i ->
@@ -199,10 +199,10 @@ object LinIfDrill : DrillCircuit {
                                             listOf(flagToCheck[i] shr 8, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i])
                                     }.toIntArray()),
                                     EndFlagCheckEntry(),
-                                    GoToLabelEntry(ifTrueVar.get()),
-                                    GoToLabelEntry(elseVar.get()),
+                                    GoToLabelEntry.DR2(ifTrueVar.get()),
+                                    GoToLabelEntry.DR2(elseVar.get()),
 
-                                    SetLabelEntry(ifTrueVar.get())
+                                    SetLabelEntry.DR2(ifTrueVar.get())
                             )
                             else -> TODO("Flag Checks are not documented for ${hopesPeakGame}")
                         })
@@ -216,10 +216,10 @@ object LinIfDrill : DrillCircuit {
                                             listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
                                     }.toIntArray()),
                                     EndFlagCheckEntry(),
-                                    GoToLabelEntry(ifTrueVar.get()),
-                                    GoToLabelEntry(elseVar.get()),
+                                    GoToLabelEntry.DR1(ifTrueVar.get()),
+                                    GoToLabelEntry.DR1(elseVar.get()),
 
-                                    SetLabelEntry(ifTrueVar.get())
+                                    SetLabelEntry.DR1(ifTrueVar.get())
                             )
                             DR2 -> arrayOf(
                                     UnknownEntry(0x36, (0 until flagToCheck.size).flatMap { i ->
@@ -229,10 +229,10 @@ object LinIfDrill : DrillCircuit {
                                             listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
                                     }.toIntArray()),
                                     EndFlagCheckEntry(),
-                                    GoToLabelEntry(ifTrueVar.get()),
-                                    GoToLabelEntry(elseVar.get()),
+                                    GoToLabelEntry.DR2(ifTrueVar.get()),
+                                    GoToLabelEntry.DR2(elseVar.get()),
 
-                                    SetLabelEntry(ifTrueVar.get())
+                                    SetLabelEntry.DR2(ifTrueVar.get())
                             )
                             else -> TODO("Flag Checks are not documented for ${hopesPeakGame}")
                         })
@@ -243,7 +243,7 @@ object LinIfDrill : DrillCircuit {
                                 DR1 -> arrayOf(
                                         UnknownEntry(0x36, intArrayOf(0, SpiralBridgeDrill.OP_CODE_GAME_STATE, info.spiralframework.osl.EnumLinFlagCheck.NOT_EQUALS.flag, (flagToCheck[0] shr 8), (flagToCheck[0] and 0xFF))),
                                         EndFlagCheckEntry(),
-                                        GoToLabelEntry(elseVar.get()),
+                                        GoToLabelEntry.DR1(elseVar.get()),
                                         UnknownEntry(0x36, (0 until flagToCheck.size).flatMap { i ->
                                             if (i < flagToCheck.size - 1)
                                                 listOf(0, SpiralBridgeDrill.OP_CODE_PARAM_BIG, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF, joiners[i])
@@ -251,13 +251,12 @@ object LinIfDrill : DrillCircuit {
                                                 listOf(0, SpiralBridgeDrill.OP_CODE_PARAM_BIG, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
                                         }.toIntArray()),
                                         EndFlagCheckEntry(),
-                                        GoToLabelEntry(ifTrueVar.get()),
-                                        GoToLabelEntry(elseVar.get()),
+                                        GoToLabelEntry.DR1(ifTrueVar.get()),
+                                        GoToLabelEntry.DR1(elseVar.get()),
 
-                                        SetLabelEntry(ifTrueVar.get())
+                                        SetLabelEntry.DR1(ifTrueVar.get())
                                 )
-                                DR2
-                                -> arrayOf(
+                                DR2 -> arrayOf(
                                         UnknownEntry(0x36, (0 until flagToCheck.size).flatMap { i ->
                                             if (i < flagToCheck.size - 1)
                                                 listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF, joiners[i])
@@ -265,10 +264,10 @@ object LinIfDrill : DrillCircuit {
                                                 listOf(0, flagToCheck[i] and 0xFF, operations[i], valueToCheck[i] shr 8, valueToCheck[i] and 0xFF)
                                         }.toIntArray()),
                                         EndFlagCheckEntry(),
-                                        GoToLabelEntry(ifTrueVar.get()),
-                                        GoToLabelEntry(elseVar.get()),
+                                        GoToLabelEntry.DR2(ifTrueVar.get()),
+                                        GoToLabelEntry.DR2(elseVar.get()),
 
-                                        SetLabelEntry(ifTrueVar.get())
+                                        SetLabelEntry.DR2(ifTrueVar.get())
                                 )
                                 else -> TODO("Flag Checks are not documented for ${hopesPeakGame}")
                             })
@@ -291,8 +290,8 @@ object LinIfDrill : DrillCircuit {
                                     returnBranchVar.set(findLabel())
 
                                     pushStaticDrillDirect(when (hopesPeakGame) {
-                                        DR1 -> arrayOf(GoToLabelEntry(returnBranchVar.get()), SetLabelEntry(elseVar.get()))
-                                        DR2 -> arrayOf(GoToLabelEntry(returnBranchVar.get()), SetLabelEntry(elseVar.get()))
+                                        DR1 -> arrayOf(GoToLabelEntry.DR1(returnBranchVar.get()), SetLabelEntry.DR1(elseVar.get()))
+                                        DR2 -> arrayOf(GoToLabelEntry.DR2(returnBranchVar.get()), SetLabelEntry.DR2(elseVar.get()))
                                         else -> TODO("No label support for $hopesPeakGame")
                                     })
                                     return@Action true
@@ -308,8 +307,8 @@ object LinIfDrill : DrillCircuit {
                                     returnBranchVar.set(findLabel())
 
                                     pushStaticDrillDirect(when (hopesPeakGame) {
-                                        DR1 -> arrayOf(GoToLabelEntry(returnBranchVar.get()), SetLabelEntry(elseVar.get()))
-                                        DR2 -> arrayOf(GoToLabelEntry(returnBranchVar.get()), SetLabelEntry(elseVar.get()))
+                                        DR1 -> arrayOf(GoToLabelEntry.DR1(returnBranchVar.get()), SetLabelEntry.DR1(elseVar.get()))
+                                        DR2 -> arrayOf(GoToLabelEntry.DR2(returnBranchVar.get()), SetLabelEntry.DR2(elseVar.get()))
                                         else -> TODO("No label support for $hopesPeakGame")
                                     })
                                     return@Action true
@@ -319,8 +318,8 @@ object LinIfDrill : DrillCircuit {
 
                         Action<Any> {
                             pushStaticDrillDirect(when (hopesPeakGame) {
-                                DR1 -> SetLabelEntry(elseVar.get())
-                                DR2 -> SetLabelEntry(elseVar.get())
+                                DR1 -> SetLabelEntry.DR1(elseVar.get())
+                                DR2 -> SetLabelEntry.DR2(elseVar.get())
                                 else -> TODO("No label support for $hopesPeakGame")
                             })
                         }

@@ -1,21 +1,21 @@
 package info.spiralframework.osl.data.nonstopDebate
 
-import info.spiralframework.osl.OpenSpiralLanguageParser
-import info.spiralframework.osl.firstOfInstanceOrNull
 import info.spiralframework.formats.customLin
 import info.spiralframework.formats.customNonstopDebate
+import info.spiralframework.formats.data.NonstopDebateSection
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.CustomNonstopDebate
-import info.spiralframework.formats.data.NonstopDebateSection
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr1.DR1LoadScriptEntry
 import info.spiralframework.formats.scripting.lin.dr1.DR1RunScript
 import info.spiralframework.formats.scripting.lin.dr1.DR1TrialCameraEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2RunScriptEntry
 import info.spiralframework.formats.utils.and
+import info.spiralframework.osl.OpenSpiralLanguageParser
+import info.spiralframework.osl.firstOfInstanceOrNull
 import java.util.concurrent.ThreadLocalRandom
 
 class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
@@ -27,8 +27,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
     }
 
     var debateNumber: Int = 0
-    var coupledScript: Triple<Int, Int, Int>?
-            = ThreadLocalRandom.current().nextInt(255) to ThreadLocalRandom.current().nextInt(255) and ThreadLocalRandom.current().nextInt(255)
+    var coupledScript: Triple<Int, Int, Int>? = ThreadLocalRandom.current().nextInt(255) to ThreadLocalRandom.current().nextInt(255) and ThreadLocalRandom.current().nextInt(255)
 
     val customNonstopDebate = customNonstopDebate { this.game = this@NonstopDebateMinigame.game }
 
@@ -190,8 +189,8 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             if (!characterDefined) {
                 oldSection.character = workingTextStack.firstOfInstanceOrNull(SpeakerEntry::class)?.characterID
                         ?: workingTextStack.firstOfInstanceOrNull(SpriteEntry::class)?.characterID
-                        ?: workingTextStack.firstOfInstanceOrNull(VoiceLineEntry::class)?.characterID
-                        ?: 0
+                                ?: workingTextStack.firstOfInstanceOrNull(VoiceLineEntry::class)?.characterID
+                                ?: 0
             }
 
             if (!spriteDefined) {
@@ -199,7 +198,8 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             }
 
             if (!voiceDefined) {
-                oldSection.voice = workingTextStack.firstOfInstanceOrNull(VoiceLineEntry::class)?.voiceLineID ?: MAX_VALUE
+                oldSection.voice = workingTextStack.firstOfInstanceOrNull(VoiceLineEntry::class)?.voiceLineID
+                        ?: MAX_VALUE
             }
 
             if (!chapterDefined) {
@@ -207,7 +207,9 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             }
 
             if (!hasWeakPointDefined) {
-                oldSection.hasWeakPoint = workingTextStack.filterIsInstance(TextEntry::class.java).any { entry -> entry.text?.hasWeakPoint() ?: false }
+                oldSection.hasWeakPoint = workingTextStack.filterIsInstance(TextEntry::class.java).any { entry ->
+                    entry.text?.hasWeakPoint() ?: false
+                }
             }
 
             val textEntries: Array<LinScript> = if (textStack.isEmpty()) {
@@ -266,7 +268,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             val endOfScript = getLabel()
 
             add(ChangeUIEntry(31, 1))
-            add(GoToLabelEntry(endOfScript))
+            add(GoToLabelEntry.forGame(game, endOfScript))
 
             this@NonstopDebateMinigame.textSections.forEachIndexed { index, (_, _, correct, incorrect) ->
                 this.add(UnknownEntry(0x2E, intArrayOf((0 + index) shr 8, (0 + index) and 0xFF)))
@@ -298,7 +300,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             this@NonstopDebateMinigame.postTextEntries.forEach(this::add)
 
             add(UnknownEntry(0x2E, intArrayOf(255, 255)))
-            add(SetLabelEntry(endOfScript))
+            add(SetLabelEntry.forGame(game, endOfScript))
 
             this@NonstopDebateMinigame.postScriptEntries.forEach(this::add)
 
@@ -308,7 +310,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
         val customScriptDebate = customLin {
             add(ChangeUIEntry(21, debateNumber))
             add(ChangeUIEntry(22, 1))
-            add(GoToLabelEntry(0))
+            add(GoToLabelEntry.forGame(game, 0))
             this@NonstopDebateMinigame.textSections.forEachIndexed { index, (_, text) ->
                 add(UnknownEntry(0x2E, intArrayOf((0 + index) shr 8, (0 + index) and 0xFF)))
 
@@ -322,7 +324,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
             }
 
             add(UnknownEntry(0x2E, intArrayOf(255, 255)))
-            add(SetLabelEntry(0))
+            add(SetLabelEntry.forGame(game, 0))
             add(UnknownEntry(0x1C, intArrayOf()))
             add(StopScriptEntry())
         }

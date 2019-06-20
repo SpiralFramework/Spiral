@@ -29,11 +29,11 @@ object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
         if (game != null && game !is HopesPeakDRGame)
             return FormatResult.Fail(this, 1.0, HopesPeakMissingGameException(game))
 
-        //We use an UnknownHopesPeakGame here because I'm pretty sure the lin format is... 'universal'
+        //We're able to use an UnknownHopesPeakGame here because I'm pretty sure the lin format is... 'universal'
         //The format itself doesn't change from game to game - only the op codes.
         //However, we *can* say that all games will follow the format of 0x70 [op code] {parameters}
         //For the purposes of this, we can ignore flag check fuckery
-        val lin = Lin(UnknownHopesPeakGame, source) ?: return FormatResult.Fail(this, 0.9)
+        val lin = Lin((game as? HopesPeakDRGame) ?: UnknownHopesPeakGame, source) ?: return FormatResult.Fail(this, 0.9)
         if (lin.entries.isEmpty())
             return FormatResult.Success(this, Optional.of(lin), 0.55)
         return FormatResult.Success(this, Optional.of(lin), 0.85)

@@ -144,15 +144,15 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                         push(listOf(SpiralDrillBit(arrayOf(
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(ifTrue),
-                                                GoToLabelEntry(join),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifTrue),
+                                                GoToLabelEntry.forGame(hopesPeakGame, join),
 
-                                                SetLabelEntry(ifTrue)
+                                                SetLabelEntry.forGame(drGame, ifTrue)
                                         ))))
 
                                         groups[0].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry(join))))
+                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     2 -> {
                                         val ifTrue = findLabel()
@@ -162,22 +162,22 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                         push(listOf(SpiralDrillBit(arrayOf(
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(ifTrue),
-                                                GoToLabelEntry(ifFalse),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifTrue),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifFalse),
 
-                                                SetLabelEntry(ifTrue)
+                                                SetLabelEntry.forGame(drGame, ifTrue)
                                         ))))
 
                                         groups[0].forEach(this::pushValue)
 
                                         push(listOf(SpiralDrillBit(arrayOf(
-                                                GoToLabelEntry(join),
-                                                SetLabelEntry(ifFalse)
+                                                GoToLabelEntry.forGame(hopesPeakGame, join),
+                                                SetLabelEntry.forGame(drGame, ifFalse)
                                         ))))
 
                                         groups[1].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry(join))))
+                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     3 -> {
                                         val loop = findLabel()
@@ -189,38 +189,38 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                         val join = findLabel()
 
                                         push(listOf(SpiralDrillBit(arrayOf(
-                                                SetLabelEntry(loop),
+                                                SetLabelEntry.forGame(drGame, loop),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(firstIf),
-                                                GoToLabelEntry(secondIf),
+                                                GoToLabelEntry.forGame(hopesPeakGame, firstIf),
+                                                GoToLabelEntry.forGame(hopesPeakGame, secondIf),
 
-                                                SetLabelEntry(firstIf),
+                                                SetLabelEntry.forGame(drGame, firstIf),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[0]),
-                                                GoToLabelEntry(labels[1]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[0]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[1]),
 
-                                                SetLabelEntry(secondIf),
+                                                SetLabelEntry.forGame(drGame, secondIf),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[2]),
-                                                GoToLabelEntry(loop),
-                                                SetLabelEntry(labels[0])
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[2]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, loop),
+                                                SetLabelEntry.forGame(drGame, labels[0])
                                         ))))
 
                                         for (i in 0 until labels.size - 1) {
                                             groups[i].forEach(this::pushValue)
 
                                             push(listOf(SpiralDrillBit(arrayOf(
-                                                    GoToLabelEntry(join),
-                                                    SetLabelEntry(labels[i + 1])
+                                                    GoToLabelEntry.forGame(hopesPeakGame, join),
+                                                    SetLabelEntry.forGame(drGame, labels[i + 1])
                                             ))))
                                         }
 
                                         groups[2].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry(join))))
+                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     4 -> {
                                         val firstIf = findLabel()
@@ -233,35 +233,35 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                         push(listOf(SpiralDrillBit(arrayOf(
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(firstIf),
-                                                GoToLabelEntry(secondIf),
+                                                GoToLabelEntry.forGame(hopesPeakGame, firstIf),
+                                                GoToLabelEntry.forGame(hopesPeakGame, secondIf),
 
-                                                SetLabelEntry(firstIf),
+                                                SetLabelEntry.forGame(drGame, firstIf),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[0]),
-                                                GoToLabelEntry(labels[1]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[0]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[1]),
 
-                                                SetLabelEntry(secondIf),
+                                                SetLabelEntry.forGame(drGame, secondIf),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[2]),
-                                                GoToLabelEntry(labels[3]),
-                                                SetLabelEntry(labels[0])
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[2]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[3]),
+                                                SetLabelEntry.forGame(drGame, labels[0])
                                         ))))
 
                                         for (i in 0 until labels.size - 1) {
                                             groups[i].forEach(this::pushValue)
 
                                             push(listOf(SpiralDrillBit(arrayOf(
-                                                    GoToLabelEntry(join),
-                                                    SetLabelEntry(labels[i + 1])
+                                                    GoToLabelEntry.forGame(hopesPeakGame, join),
+                                                    SetLabelEntry.forGame(drGame, labels[i + 1])
                                             ))))
                                         }
 
                                         groups[3].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry(join))))
+                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     5 -> {
                                         val loop = findLabel()
@@ -270,57 +270,57 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                                         val join = findLabel()
 
                                         push(listOf(SpiralDrillBit(arrayOf(
-                                                SetLabelEntry(loop),
+                                                SetLabelEntry.forGame(drGame, loop),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(ifChecks[0]),
-                                                GoToLabelEntry(ifChecks[1]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifChecks[0]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifChecks[1]),
 
-                                                SetLabelEntry(ifChecks[0]),
+                                                SetLabelEntry.forGame(drGame, ifChecks[0]),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(ifChecks[2]),
-                                                GoToLabelEntry(ifChecks[3]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifChecks[2]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifChecks[3]),
                                                 
-                                                SetLabelEntry(ifChecks[2]),
+                                                SetLabelEntry.forGame(drGame, ifChecks[2]),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[0]),
-                                                GoToLabelEntry(labels[1]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[0]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[1]),
 
-                                                SetLabelEntry(ifChecks[3]),
+                                                SetLabelEntry.forGame(drGame, ifChecks[3]),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[2]),
-                                                GoToLabelEntry(labels[3]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[2]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[3]),
 
-                                                SetLabelEntry(ifChecks[1]),
+                                                SetLabelEntry.forGame(drGame, ifChecks[1]),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(ifChecks[4]),
-                                                GoToLabelEntry(loop),
+                                                GoToLabelEntry.forGame(hopesPeakGame, ifChecks[4]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, loop),
 
-                                                SetLabelEntry(ifChecks[4]),
+                                                SetLabelEntry.forGame(drGame, ifChecks[4]),
                                                 RandomFlag(),
                                                 EndFlagCheckEntry(),
-                                                GoToLabelEntry(labels[4]),
-                                                GoToLabelEntry(loop),
+                                                GoToLabelEntry.forGame(hopesPeakGame, labels[4]),
+                                                GoToLabelEntry.forGame(hopesPeakGame, loop),
 
-                                                SetLabelEntry(labels[0])
+                                                SetLabelEntry.forGame(drGame, labels[0])
                                         ))))
 
                                         for (i in 0 until labels.size - 1) {
                                             groups[i].forEach(this::pushValue)
 
                                             push(listOf(SpiralDrillBit(arrayOf(
-                                                    GoToLabelEntry(join),
-                                                    SetLabelEntry(labels[i + 1])
+                                                    GoToLabelEntry.forGame(hopesPeakGame, join),
+                                                    SetLabelEntry.forGame(drGame, labels[i + 1])
                                             ))))
                                         }
 
                                         groups[4].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry(join))))
+                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                 }
 
@@ -333,7 +333,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
     override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
-            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry(label))
+            return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry.forGame(parser.drGame, label))
         return when (parser.hopesPeakGame) {
             DR1 -> arrayOf(
                     ChoiceEntry(18),
@@ -341,7 +341,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                     TextEntry(rawParams[0].toString(), -1),
                     WaitFrameEntry.DR1,
                     ChoiceEntry(255),
-                    SetLabelEntry(label)
+                    SetLabelEntry.DR1(label)
             )
             DR2 -> arrayOf(
                     ChoiceEntry(18),
@@ -349,7 +349,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                     TextEntry(rawParams[0].toString(), -1),
                     WaitFrameEntry.DR1,
                     ChoiceEntry(255),
-                    SetLabelEntry(label)
+                    SetLabelEntry.DR2(label)
             )
             else -> TODO("Choices are not documented for ${parser.hopesPeakGame}")
         }

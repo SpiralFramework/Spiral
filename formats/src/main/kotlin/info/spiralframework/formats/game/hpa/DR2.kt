@@ -49,7 +49,6 @@ object DR2 : HopesPeakKillingGame {
                 this[0x18] = null to -1 and ::UnknownEntry
                 this[0x19] = arrayOf("Script", "Load Script") to 5 and ::DR2LoadScriptEntry
                 this[0x1A] = arrayOf("Stop Script", "End Script") to 0 and DR2::StopScriptEntry
-
                 this[0x1B] = "Run Script" to 5 and ::DR2RunScriptEntry
                 this[0x1C] = null to 0 and ::UnknownEntry
                 this[0x1D] = null to -1 and ::UnknownEntry
@@ -62,12 +61,12 @@ object DR2 : HopesPeakKillingGame {
                 this[0x24] = null to -1 and ::UnknownEntry
                 this[0x25] = "Change UI" to 2 and ::ChangeUIEntry
                 this[0x26] = "Set Flag" to 3 and ::SetFlagEntry
-                this[0x27] = "Check Character" to 1 and ::CheckCharacterEntry
+                this[0x27] = null to -1 and ::CheckCharacterEntry //Was: Check Character
                 this[0x28] = null to -1 and ::UnknownEntry
-                this[0x29] = "Check Object" to 1 and ::CheckObjectEntry
-                this[0x2A] = "Set Label" to 2 and ::SetLabelEntry
+                this[0x29] = null to -1 and ::CheckObjectEntry //Was: Check Object
+                this[0x2A] = null to -1 and ::UnknownEntry //Was: Set Label; I was LIED to; something with Twilight Syndrome?
                 this[0x2B] = "Choice" to 1 and ::ChoiceEntry
-                this[0x2C] = null to 2 and ::UnknownEntry
+                this[0x2C] = "Set Label" to 2 and ::SetLabelEntry
                 this[0x2D] = null to -1 and ::UnknownEntry
                 this[0x2E] = null to 5 and ::UnknownEntry
                 this[0x2F] = null to 10 and ::UnknownEntry
@@ -75,14 +74,14 @@ object DR2 : HopesPeakKillingGame {
                 this[0x31] = null to -1 and ::UnknownEntry
                 this[0x32] = null to 1 and ::UnknownEntry
                 this[0x33] = null to 4 and ::UnknownEntry
-                this[0x34] = arrayOf("Go To Label", "Goto Label", "Goto") to 2 and ::GoToLabelEntry
+                this[0x34] = null to -1 and ::UnknownEntry //Was: Go To Label
                 this[0x35] = "Check Flag A" to -1 and ::CheckFlagAEntry
                 this[0x36] = "Check Flag B" to -1 and ::UnknownEntry
                 this[0x37] = null to -1 and ::UnknownEntry
                 this[0x38] = null to -1 and ::UnknownEntry
                 this[0x39] = null to 5 and ::UnknownEntry
                 this[0x3A] = "Set Game Parameter" to 4 and ::UnknownEntry
-                this[0x3B] = null to 2 and ::UnknownEntry //Wait Frame DR1
+                this[0x3B] = arrayOf("Go To Label", "Goto Label", "Goto") to 2 and ::GoToLabelEntry
                 this[0x3C] = "End Flag Check" to 0 and DR2::EndFlagCheckEntry
                 this[0x4B] = "Wait For Input" to 0 and ::WaitForInputEntry
                 this[0x4C] = "Wait Frame" to 0 and ::WaitFrameEntry

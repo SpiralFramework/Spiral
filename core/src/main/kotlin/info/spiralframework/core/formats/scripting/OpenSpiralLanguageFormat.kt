@@ -45,9 +45,10 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
                 out.println("OSL Script")
                 out.println("Set Game Context to ${game.names.firstOrNull() ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
                 out.println()
+                //TODO: Use LinScript#format eventually
                 data.entries.forEach { script ->
                     if (script is LinTextScript) {
-                        out.println("Text|${script.text ?: ""}")
+                        out.println("Text|${script.text?.replace("\n", "\\n") ?: ""}")
                     } else {
                         out.println("${game.opCodes[script.opCode]?.first?.firstOrNull() ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
                     }

@@ -1,11 +1,11 @@
 package info.spiralframework.osl.drills.lin
 
-import info.spiralframework.osl.OpenSpiralLanguageParser
-import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.SetLabelEntry
+import info.spiralframework.osl.OpenSpiralLanguageParser
+import info.spiralframework.osl.drills.DrillHead
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
@@ -35,8 +35,8 @@ object LinMarkLabelDrill : DrillHead<LinScript> {
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 
         return when(parser.hopesPeakGame) {
-            DR1 -> SetLabelEntry((first shl 8) or second)
-            DR2 -> SetLabelEntry((first shl 8) or second)
+            DR1 -> SetLabelEntry.DR1((first shl 8) or second)
+            DR2 -> SetLabelEntry.DR2((first shl 8) or second)
 
             else -> TODO("Label Marking is not documented for ${parser.hopesPeakGame}")
         }
