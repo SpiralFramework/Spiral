@@ -102,7 +102,7 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
 
                 if (argumentRetrieval != null)
                     arguments = argumentRetrieval(linData)
-                else if (argumentCount == -1) {
+                else { //if (argumentCount == -1)
                     val args: MutableList<Int> = ArrayList()
 
                     while (linData.peek() != 0x70 && linData.isNotEmpty()) {
@@ -110,15 +110,16 @@ class Lin private constructor(val game: HopesPeakDRGame, val dataSource: () -> I
                     }
 
                     arguments = args.toIntArray()
-                } else {
-                    arguments = IntArray(argumentCount) { linData.poll() }
                 }
+//                else {
+//                    arguments = IntArray(argumentCount) { linData.poll() }
+//                }
 
-                if (arguments.size == argumentCount || argumentCount == -1) {
-                    entries.add(getEntry(opCode, arguments))
-                } else {
+                if (arguments.size != argumentCount && argumentCount != -1) {
                     DataHandler.LOGGER.warn("formats.lin.wrong_arg_count", "0x${opCode.toString(16)}", argumentCount, arguments.size)
                 }
+
+                entries.add(getEntry(opCode, arguments))
             }
 
             if (stream.count < textBlock) {
