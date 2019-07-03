@@ -52,7 +52,7 @@ object OSLProxy {
     fun osl() {
         DataHandler.streamToMap = { stream -> (parseJsonFromAntlr(stream) as? JsonType.JsonObject)?.toMap() }
 
-        val input = CharStreams.fromFileName("osl-2/grammar/osl/tests/HelloWorld.osl")
+        val input = CharStreams.fromFileName("osl-2/src/main/antlr/tests/HelloWorld.osl")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = OpenSpiralParser(tokens)

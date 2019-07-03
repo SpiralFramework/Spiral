@@ -138,9 +138,12 @@ object V3 : DRGame {
 
     override val colourCodes: Map<String, String> =
             mapOf(
+                    "white" to "cltNORMAL",
                     "yellow" to "cltSTRONG",
                     "blue" to "cltMIND",
                     "green" to "cltSYSTEM",
+
+                    "normal" to "cltNORMAL",
 
                     "bold" to "cltSTRONG",
                     "strong" to "cltSTRONG",
