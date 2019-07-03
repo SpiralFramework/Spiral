@@ -1,0 +1,819 @@
+OSL Script
+Text Count|95, 0
+Screen Fade|1, 0, 1
+Change UI|11, 1
+Change UI|7, 0
+Change UI|16, 0
+0x33|2, 0, 0, 100
+0x33|3, 0, 0, 100
+0x33|15, 0, 0, 17
+Change UI|3, 0
+Change UI|2, 1
+Change UI|0, 0
+Load Map|14, 1, 255
+Change UI|6, 1
+Change UI|9, 1
+Show Background|0, 0, 1
+Music|10, 100, 180
+Screen Fade|0, 1, 24
+Change UI|0, 1
+Change UI|51, 1
+Speaker|30
+Change UI|1, 1
+Format|4
+Text|"<CLT 4>The massive high school towers over all the other\nbuildings in this bustling urban area.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It's like the school stands at the center of the\nentire world.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Screen Fade|1, 1, 24
+Show Background|0, 0, 3
+Change UI|6, 1
+Animation|2, 220, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+Animation|2, 220, 0, 0, 0, 0, 0, 1
+Change UI|51, 1
+Change UI|1, 1
+Speaker|30
+Format|4
+Text|"<CLT 4>Hope's Peak Academy...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It brings in top students from every field imaginable.\nA government-funded school of privilege...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>They say that if you come here and manage to graduate,\nyou'll be set for life.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>With hundreds of years of tradition, it sends the\ncream of the crop into the work force every year.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It was built to raise <CLT><CLT 3>hope<CLT><CLT 4> in the nation's future.\nWhich makes <CLT><CLT 3>Hope's Peak<CLT><CLT 4> a pretty fitting name.\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 220, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 221, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+Change UI|1, 1
+Speaker|30
+Format|4
+Text|"<CLT 4>There are two things you need to attend this school...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>One, you have to already be attending high school.\nTwo, you have to be the very best at what you do.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>No ordinary student could enroll here. The only way in\nis if you're scouted by the school itself.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>And standing there at the gate of the ultimate school\nfilled with the ultimate students...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Animation|2, 221, 0, 0, 0, 0, 0, 1
+0x33|6, 0, 0, 150
+Change UI|1, 1
+Speaker|30
+Format|4
+Text|"<CLT 4>...was me.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 221, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Show Background|0, 0, 1
+Screen Fade|0, 1, 24
+Change UI|51, 1
+Change UI|1, 1
+Speaker|0
+Voice Line|0, 99, 0, 1, 100
+Text|"Before we go any farther, I guess I should introduce\nmyself. My name's <CLT 3>Makoto Naegi<CLT>.\n"
+Wait Frame|
+Format|3
+Format|0
+Wait Frame|
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 10
+Sprite|0, 0, 1, 2, 2
+0x33|6, 0, 0, 60
+Change UI|0, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>As you can see, I'm nothing but a hopelessly average\nhigh school student.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Average on the outside, average on the inside.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I really don't have much going for me when it comes to\ngrades, special abilities, even personality.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I mean yeah, I have hobbies and stuff I like to do,\nbut it's not like I'm a psychic or mutant or whatever.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Like, if you asked me what my favorite song was,\nor my favorite movie or TV show...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>They'd all just be whatever's most popular at that\nparticular moment.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Even among the average, I'm completely average. So I\ncan't even say I'm your \"everyday hero\" type.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>That's just who I am.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Anyway, I figure it's always good to introduce\nyourself right off the bat.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But you know, if I have any kind of \"strong point,\" so\nto speak...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I'd say I'm a little more gung-ho than other people.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Show Background|0, 0, 3
+Sprite|0, 0, 0, 3, 2
+Change UI|6, 1
+Animation|2, 221, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+Animation|2, 221, 0, 0, 0, 0, 0, 1
+Change UI|51, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>I mean look at me. I'm completely ordinary, but\nstill...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Here I am, standing in front of the anything but\nordinary Hope's Peak Academy.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"I still can't believe I'm standing here. I wonder if\nsomeone like me can survive in a place like this...\n"
+Wait Frame|
+Wait Frame|
+Wait For Input|
+Speaker|0
+Format|4
+Text|"<CLT 4>It's got this overwhelming presence...like it's trying\nto swallow me whole.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But it's no wonder I would feel that way. What you\nhave to understand is...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Well, let me just tell you about the \"<CLT><CLT 3>preparation<CLT><CLT 4>\" I\ndid last night to get ready for today.\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 221, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 222, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 30
+Animation|2, 222, 0, 0, 0, 0, 0, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>Hope's Peak only invites those students who are the\ntruly elite in their field.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It's such a popular topic, there are threads online\ndedicated to talking about the school's attendees.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>So to prepare, I looked up some of those threads.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>And all I saw was talk about \"<CLT><CLT 3>ultimate<CLT><CLT 4>\" students,\nwho were way beyond your average high schooler.\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 30
+Screen Fade|1, 1, 24
+Animation|2, 222, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 223, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 30
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>For example, one incoming student is the \"<CLT><CLT 3>Ultimate\nPop Sensation<CLT><CLT 4>.\"\n<CLT>"
+Format|0
+Format|3
+Wait Frame|
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I guess she's a high school girl who's also the lead\nsinger for a pop group famous all over the country.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 223, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 224, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 30
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>There's also the \"<CLT><CLT 3>Ultimate Baseball Star<CLT><CLT 4>.\"\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>He was the cleanup hitter for the national high school\nchamps. Pro teams already have their eyes on him.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 30
+Animation|2, 224, 0, 0, 0, 0, 0, 1
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 224, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 225, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 30
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>Then there's the \"<CLT><CLT 3>Ultimate Fashionista<CLT><CLT 4>.\"\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Animation|2, 225, 0, 0, 0, 0, 0, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>She's been on the cover of tons of fashion magazines.\nShe's what every high school girl wants to be.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 225, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 226, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 60
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>Oh, and they mentioned the \"<CLT><CLT 3>Ultimate Biker Gang\nLeader<CLT><CLT 4>\" too.\n<CLT>"
+Format|0
+Format|3
+Wait Frame|
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>The scary thing is, he's the de facto leader of every\nbiker gang in Japan. Gangs everywhere love the guy...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 226, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 222, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 30
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>On top of that, there's the Ultimate Martial Artist,\nthe Ultimate Fanfic Creator, the Ultimate Gambler...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>The Ultimate Swimming Pro, the Ultimate Programmer,\nthe Ultimate Clairvoyant, and then some...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Reading that made me realize how totally powerless I\nwas. It was the country's finest, top to bottom.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I felt like a tame little house cat who'd wandered\ninto a pride of lions.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But still, there was something I couldn't stop\nthinking about.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>You see, there were a few students who I couldn't find\nany info on, no matter how much I looked.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>With all those \"ultimate\" students, I'm the only one\nwithout any kind of worthwhile talent.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But then, what about those other new students who\ndidn't seem to pop up anywhere?\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"Could they be just average students like me, without\nany talent or anything?\n"
+Wait Frame|
+Wait Frame|
+Wait For Input|
+Speaker|0
+Format|4
+Text|"<CLT 4>That thought was kind of encouraging. I mean, I know I\ndon't have much in the way of personality.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But beyond that, there's an even bigger issue...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>How did such an unbelievably average student like me\nget picked to come to this \"ultimate\" high school?\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I mean, I guess there *is* a reason...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>You just have to take one glance at the acceptance\nletter they sent me to see why.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 30
+Screen Fade|1, 1, 24
+Animation|2, 222, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 227, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+0x33|6, 0, 0, 60
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>\"We recently held a lottery to select one ordinary\nstudent to attend our school.\"\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>\"As a result, you have been selected, and we invite\nyou to join us as the <CLT><CLT 3>Ultimate Lucky Student<CLT><CLT 4>.\"\n<CLT>"
+Wait Frame|
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>They spelled it out plain as day—I got invited by\n<CLT><CLT 3>pure luck<CLT><CLT 4>.\n<CLT>"
+Wait Frame|
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Honestly, I probably would have been better off just\ndeclining their offer.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>But after hearing how graduating was a \"<CLT><CLT 3>guarantee for\nsuccess<CLT><CLT 4>\" later in life, I just couldn't say no.\n<CLT>"
+Format|0
+Format|3
+Wait Frame|
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+0x33|6, 0, 0, 60
+Screen Fade|1, 1, 24
+Animation|2, 227, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 221, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 24
+Animation|2, 221, 0, 0, 0, 0, 0, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>But then, actually standing there in front of the\nschool...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I started to feel lost, like I didn't belong there. I\ncould feel myself losing my nerve.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"But still...I can't just stand here in front of the\ngate forever...\n"
+Wait Frame|
+Wait Frame|
+Wait For Input|
+Speaker|0
+Format|4
+Text|"<CLT 4>Frozen in place, murmuring to myself, I looked down at\nthe acceptance letter clutched in my hand.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It said there'd be a meeting for all incoming students\nin the <CLT><CLT 3>main hall at 8 a.m.<CLT><CLT 4>\n<CLT>"
+Wait Frame|
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>The meeting still isn't for a little while, but...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"I should probably just head in.\n"
+Wait Frame|
+Wait For Input|
+Text|"Yeah... Yeah, let's do this!\n"
+Wait Frame|
+Wait For Input|
+Speaker|0
+Format|4
+Text|"<CLT 4>I gathered up all my determination and tried to act\nlike I'd done this a million times before.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>And I took my first step toward the main hall...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Change UI|51, 0
+0x33|6, 0, 0, 40
+SFX A|0, 141, 100
+Screen Fade|1, 1, 128
+Animation|2, 221, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Animation|2, 228, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 64
+0x33|6, 0, 0, 90
+Change UI|0, 0
+Change UI|51, 1
+Change UI|1, 1
+Speaker|0
+Text|"This is where we're supposed to meet, right? I guess\nI'm the first one here.\n"
+Wait Frame|
+Wait Frame|
+Wait For Input|
+Change UI|0, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>There's a really elegant clock over in the corner. It\nsays it's 7:10 a.m.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>The meeting doesn't start until 8 o'clock. So there's\nstill a full 50 minutes left.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It makes sense nobody else would be here yet...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"I was so wound up, I got here way too early.\n"
+Wait Frame|
+Wait For Input|
+Change UI|0, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>I have plenty of time before the meeting. Just\nstanding around waiting isn't exactly...\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>I should take a look around the school. Maybe that'll\nhelp me calm down a little.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|0, 0
+Speaker|0
+Text|"I *am* a student here now, so there shouldn't be any\nproblem with me having a look around, right?\n"
+Wait Frame|
+Wait Frame|
+Wait For Input|
+Change UI|0, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>It'll help me kill some time, if nothing else.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Trying to play it cool, I took my first step into\nHope's Peak Academy.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It was also my first step toward starting a new life\nat a new school.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>...At least, that's what I was hoping for.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Music|255, 120, 0
+0x33|6, 0, 0, 90
+SFX A|0, 200, 100
+Animation|2, 228, 0, 0, 0, 0, 0, 1
+Change UI|0, 0
+Change UI|51, 1
+Change UI|1, 1
+Speaker|0
+SFX A|0, 26, 100
+Screen Flash|255, 255, 255, 4, 0, 30, 255
+Text|"What the—!?\n"
+Wait Frame|
+Wait For Input|
+SFX A|0, 200, 100
+Change UI|0, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>But the instant I took that first step forward...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>My view became warped, twisted.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It was like some kind of delusion, melting away and\nmixing together into something else.\n<CLT>"
+Wait Frame|
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>Spinning, mixing, melting away, then spinning again...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>And the next moment...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Screen Fade|1, 1, 8
+Animation|2, 228, 0, 0, 0, 0, 0, 255
+Change UI|6, 1
+Show Background|0, 0, 1
+Screen Fade|0, 1, 8
+Change UI|51, 1
+Change UI|1, 1
+Speaker|0
+Format|4
+Text|"<CLT 4>Everything went black.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>That was how it all began...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>And how life as I knew it came to an end.\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>At that point, I should have realized...\n<CLT>"
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>The reason I was brought to Hope's Peak Academy wasn't\nbecause I had <CLT><CLT 3>ultimate good luck<CLT><CLT 4>.\n<CLT>"
+Wait Frame|
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Format|4
+Text|"<CLT 4>It was so I could experience <CLT><CLT 3>ultimate despair<CLT><CLT 4>...\n<CLT>"
+Format|0
+Format|3
+Format|0
+Format|4
+Wait Frame|
+Format|0
+Wait For Input|
+Change UI|1, 0
+Screen Fade|1, 1, 24
+Show Background|0, 0, 3
+Change UI|6, 1
+Animation|3, 113, 0, 0, 0, 0, 0, 3
+Screen Fade|0, 1, 64
+SFX B|0, 100
+Animation|3, 113, 0, 0, 0, 0, 0, 1
+0x33|6, 0, 0, 240
+Screen Fade|1, 1, 64
+Animation|3, 113, 0, 0, 0, 0, 0, 255
+Music|255, 0, 0
+0x33|15, 0, 0, 23
+Change UI|11, 1
+Change UI|12, 1
+Script|0, 2, 0
+Stop Script|
+Stop Script|

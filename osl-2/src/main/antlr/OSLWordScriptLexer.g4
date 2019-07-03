@@ -1,0 +1,11 @@
+lexer grammar OSLWordScriptLexer;
+import OSLCommonLexer;
+
+WRD_SHORT_LABEL_REFERENCE: '@' SHORT_LABEL_IDENTIFIER;
+WRD_SHORT_PARAMETER_REFERENCE: '%' SHORT_PARAMETER_IDENTIFIER;
+
+WRD_START_LONG_LABEL_REFERENCE: '@{' -> pushMode(LongReferenceMode);
+WRD_START_LONG_PARAMETER_REFERENCE: '%{' -> pushMode(LongReferenceMode);
+
+fragment SHORT_LABEL_IDENTIFIER: [a-zA-Z0-9_]+;
+fragment SHORT_PARAMETER_IDENTIFIER: [a-zA-Z0-9_]+;
