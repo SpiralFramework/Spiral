@@ -1,0 +1,26 @@
+apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: "application"
+apply plugin: 'antlr'
+
+mainClassName = "info.spiralframework.osl.OSLProxy"
+
+dependencies {
+    compile project(":base")
+    compile project(":formats")
+    compile project(":osl-json")
+
+    antlr "org.antlr:antlr4:4.7.2"
+}
+
+shadowJar {
+    baseName = jar.baseName
+    appendix = jar.appendix
+    version = jar.version
+
+    classifier = "shadow"
+}
+
+generateGrammarSource {
+    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.osl']
+    outputDirectory = file("$buildDir/generated-src/antlr/main/info/spiralframework/antlr/osl")
+}

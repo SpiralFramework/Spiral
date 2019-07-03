@@ -1,0 +1,12 @@
+apply plugin: 'antlr'
+
+dependencies {
+    compile project(":base")
+
+    antlr "org.antlr:antlr4:4.7.2"
+}
+
+generateGrammarSource {
+    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.json']
+    outputDirectory = file("$buildDir/generated-src/antlr/main/info/spiralframework/antlr/json")
+}
