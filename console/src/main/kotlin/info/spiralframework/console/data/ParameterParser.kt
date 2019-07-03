@@ -1,6 +1,6 @@
 package info.spiralframework.console.data
 
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.console.data.errors.LocaleError
 import info.spiralframework.osl.SpiralParser
 import org.parboiled.Action

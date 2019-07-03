@@ -2,9 +2,9 @@ package info.spiralframework.console
 
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
-import info.spiralframework.base.LocaleLogger
-import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.locale.LocaleLogger
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
@@ -31,6 +31,7 @@ import java.nio.file.StandardOpenOption
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
+import kotlin.system.exitProcess
 
 /** The driving force behind the console interface for Spiral */
 abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
@@ -208,7 +209,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             }
 
             instance.start()
-            System.exit(instance with { currentExitCode })
+            exitProcess(instance with { currentExitCode })
         }
 
         operator fun invoke(args: Array<String>): Cockpit<*> {
@@ -243,7 +244,8 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
             SpiralCoreData.mainModule = "spiral-console"
 
-            LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version ?: "Developer")))
+            LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version
+                    ?: "Developer")))
             EventBus.getDefault()
                     .installLoggingSubscriber(LOGGER)
         }
