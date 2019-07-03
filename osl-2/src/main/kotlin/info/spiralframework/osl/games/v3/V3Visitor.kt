@@ -51,16 +51,15 @@ open class V3Visitor(val game: V3): DRGameVisitor {
     }
 
     override fun clearCltCode(builder: StringBuilder): Boolean {
-        builder.append("<CLT>")
+        builder.append("<CLT=cltNORMAL>")
         return true
     }
     override fun handleCltCode(builder: StringBuilder, code: String): Boolean {
         builder.append("<CLT=$code>")
         return true
     }
-    override fun closeCltCode(builder: StringBuilder) {
-        builder.append("<CLT>")
-    }
+    //CaptainSwag101#0482: V3 does not terminate CLT commands
+    override fun closeCltCode(builder: StringBuilder) {}
 
     override fun scriptResult(): OSLUnion = OSLUnion.CustomWrdType(customWrd)
 }
