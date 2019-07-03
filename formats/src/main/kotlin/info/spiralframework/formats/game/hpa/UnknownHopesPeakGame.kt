@@ -29,10 +29,9 @@ object UnknownHopesPeakGame: HopesPeakKillingGame {
     override val characterIDs: Map<Int, String> = emptyMap()
     override val characterIdentifiers: MutableMap<String, Int> = HashMap<String, Int>()
 
-    override val names: Array<String> =
-            arrayOf(
-                    "Unknown"
-            )
+    override val names: Array<String> = arrayOf("Unknown")
+    override val identifier: String = "unk"
+    override val colourCodes: Map<String, String> = emptyMap()
     override val steamID: String? = null
     override val itemNames: Array<String> = emptyArray()
     override val nonstopDebateOpCodeNames: Map<Int, String> = emptyMap()

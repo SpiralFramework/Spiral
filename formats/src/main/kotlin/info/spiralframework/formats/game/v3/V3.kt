@@ -2,13 +2,7 @@ package info.spiralframework.formats.game.v3
 
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.scripting.EnumWordScriptCommand
-import info.spiralframework.formats.scripting.wrd.UnknownEntry
-import info.spiralframework.formats.scripting.wrd.LabelEntry
-import info.spiralframework.formats.scripting.wrd.ScriptEntry
-import info.spiralframework.formats.scripting.wrd.SpeakerEntry
-import info.spiralframework.formats.scripting.wrd.TextEntry
-import info.spiralframework.formats.scripting.wrd.VoiceLineEntry
-import info.spiralframework.formats.scripting.wrd.WrdScript
+import info.spiralframework.formats.scripting.wrd.*
 import info.spiralframework.formats.utils.*
 import java.io.File
 
@@ -140,7 +134,22 @@ object V3 : DRGame {
                     "Danganronpa V3: Killing Harmony",
                     "New Danganronpa V3: Killing Harmony"
             )
+    override val identifier: String = "drv3"
 
+    override val colourCodes: Map<String, String> =
+            mapOf(
+                    "yellow" to "cltSTRONG",
+                    "blue" to "cltMIND",
+                    "green" to "cltSYSTEM",
+
+                    "bold" to "cltSTRONG",
+                    "strong" to "cltSTRONG",
+
+                    "mind" to "cltMIND",
+
+                    "narrator" to "cltSYSTEM",
+                    "system" to "cltSYSTEM"
+            )
     override val steamID: String = "567640"
 
     val characterIDs: Map<Int, String> =

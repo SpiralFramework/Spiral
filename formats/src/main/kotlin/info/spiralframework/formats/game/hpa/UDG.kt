@@ -59,7 +59,11 @@ object UDG: HopesPeakDRGame {
                     "Danganronpa: Ultra Despair Girls",
                     "Ultra Despair Girls"
             )
+    override val identifier: String = "udg"
 
+    //TODO: Find clt codes
+    override val colourCodes: Map<String, String> =
+            mapOf()
     override val steamID: String = "555950"
 
     override val itemNames: Array<String> = SharedHPA.itemNames["udg"] ?: emptyArray()

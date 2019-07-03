@@ -276,6 +276,26 @@ object DR1 : HopesPeakKillingGame {
                     "Danganronpa 1",
                     "Danganronpa: Trigger Happy Havoc"
             )
+    override val identifier: String = "dr1"
+
+    override val colourCodes: Map<String, String> =
+            mapOf(
+                    "pink" to 1,
+                    "purple" to 2,
+                    "yellow" to 3,
+                    "blue" to 4,
+                    "grey" to 7,
+                    "gray" to 7,
+                    "orange" to 9,
+                    "turquoise" to 10,
+                    "salmon" to 11,
+                    "green" to 23,
+                    "small_grey" to 24,
+                    "small_gray" to 24,
+
+                    "weak_point" to 9,
+                    "noise" to 20
+            ).mapValues { (_, cltCode) -> cltCode.toString().take(2) }
 
     override val steamID: String = "413410"
 

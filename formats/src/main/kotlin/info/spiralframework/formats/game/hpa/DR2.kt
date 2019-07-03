@@ -304,6 +304,29 @@ object DR2 : HopesPeakKillingGame {
                     "Danganronpa 2",
                     "Danganronpa 2: Goodbye Despair"
             )
+    override val identifier: String = "dr2"
+
+    override val colourCodes: Map<String, String> =
+            mapOf("white_big" to 9,
+                    "white" to 0,
+                    "pink" to 1,
+                    "purple" to 2,
+                    "yellow" to 3,
+                    "blue_glow" to 23,
+                    "blue" to 4,
+                    "grey" to 5,
+                    "gray" to 5,
+                    "green" to 6,
+                    "red_big" to 11,
+                    "red" to 10,
+                    "cyan" to 24,
+                    "salmon" to 33,
+                    "slightly_darker_blue" to 34,
+
+                    "weak_point" to 17,
+                    "noise" to 20,
+                    "consent" to 69
+            ).mapValues { (_, cltCode) -> cltCode.toString().take(2) }
 
     override val steamID: String = "413420"
 
