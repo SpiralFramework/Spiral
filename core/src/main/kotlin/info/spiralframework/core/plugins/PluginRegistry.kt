@@ -1,6 +1,6 @@
 package info.spiralframework.core.plugins
 
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*

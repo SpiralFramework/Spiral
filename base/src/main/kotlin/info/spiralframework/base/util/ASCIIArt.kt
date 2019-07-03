@@ -1,6 +1,6 @@
 package info.spiralframework.base.util
 
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.SpiralLocale
 import kotlinx.coroutines.*
 import java.text.DecimalFormat
 import kotlin.math.ceil

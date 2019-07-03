@@ -1,7 +1,8 @@
-package info.spiralframework.base
+package info.spiralframework.base.locale
 
 import java.text.MessageFormat
 import java.util.*
+import kotlin.properties.Delegates
 
 object SpiralLocale {
     val _localisationBundles: MutableList<ResourceBundle> = ArrayList()
@@ -9,6 +10,8 @@ object SpiralLocale {
 
     val _englishBundles: MutableList<ResourceBundle> = ArrayList()
     val englishBundles: List<ResourceBundle> = _englishBundles
+
+    var currentLocale: Locale by Delegates.observable(Locale.getDefault()) { _, _, new -> changeLocale(new) }
 
     val PROMPT_AFFIRMATIVE: String
         get() = localiseString("base.prompt.affirmative")
@@ -28,17 +31,27 @@ object SpiralLocale {
         return MessageFormat.format(msg, *values)
     }
 
-    fun changeLanguage(locale: Locale) {
-        Locale.setDefault(locale)
+    fun changeLocale(locale: Locale) {
         val oldArray = localisationBundles.toTypedArray()
         _localisationBundles.clear()
-        _localisationBundles.addAll(oldArray.map { bundle -> ResourceBundle.getBundle(bundle.baseBundleName, locale) })
+        _localisationBundles.addAll(oldArray.mapNotNull { bundle ->
+            (bundle as? CustomLocaleBundle)?.loadWithLocale(locale)
+                    ?: ResourceBundle.getBundle(bundle.baseBundleName, locale)
+        })
     }
 
     fun addBundle(bundleName: String) {
-        _localisationBundles.add(ResourceBundle.getBundle(bundleName))
+        _localisationBundles.add(ResourceBundle.getBundle(bundleName, currentLocale))
         _englishBundles.add(ResourceBundle.getBundle(bundleName, Locale.ENGLISH))
     }
+
+    fun addBundle(loader: (Locale) -> Pair<ResourceBundle, ResourceBundle>?) {
+        loader(currentLocale)?.let { (current, english) ->
+            _localisationBundles.add(current)
+            _englishBundles.add(english)
+        }
+    }
+
     fun removeBundle(bundleName: String) {
         _localisationBundles.removeIf { bundle -> bundle.baseBundleName == bundleName }
         _englishBundles.removeIf { bundle -> bundle.baseBundleName == bundleName }

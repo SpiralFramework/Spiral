@@ -1,4 +1,4 @@
-package info.spiralframework.base
+package info.spiralframework.base.locale
 
 import org.slf4j.Logger
 import org.slf4j.Marker

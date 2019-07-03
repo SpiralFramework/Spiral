@@ -3,8 +3,8 @@ package info.spiralframework.core
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
-import info.spiralframework.base.LocaleLogger
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.LocaleLogger
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.util.*
 import org.slf4j.Logger

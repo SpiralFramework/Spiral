@@ -1,6 +1,6 @@
 package info.spiralframework.console.commands.pilot
 
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.util.printLocale
 import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.CommandBuilders

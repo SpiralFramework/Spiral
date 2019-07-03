@@ -1,6 +1,6 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.SpiralLocale
+import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.util.verify
 import info.spiralframework.console.commands.pilot.GurrenPilot
 import info.spiralframework.console.commands.pilot.GurrenPluginPilot
