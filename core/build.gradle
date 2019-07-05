@@ -1,7 +1,7 @@
 dependencies {
     compile project(":base")
     compile project(":formats")
-    compile project(":osl")
+    compile project(":osl-2")
 
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
