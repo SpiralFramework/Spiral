@@ -1,8 +1,8 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.util.assertAsLocaleArgument
-import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.utils.DataHandler
 import java.io.InputStream
 
 /**
@@ -18,6 +18,7 @@ import java.io.InputStream
  */
 class Pak private constructor(val dataSource: () -> InputStream, overrideSanityChecks: Boolean = false): IArchive {
     companion object {
+        var SANITY_MIN_FILE_COUNT = 0
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0
         var SANITY_MAX_FILE_SIZE = 64 * 1024 * 1024
@@ -42,7 +43,7 @@ class Pak private constructor(val dataSource: () -> InputStream, overrideSanityC
 
         try {
             val fileCount = stream.readInt32LE()
-            assertAsLocaleArgument(fileCount > 1, "formats.pak.not_enough_files", fileCount)
+            assertAsLocaleArgument(overrideSanityChecks || fileCount > 0, "formats.pak.not_enough_files", fileCount, SANITY_MIN_FILE_COUNT)
             assertAsLocaleArgument(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT, "formats.pak.too_many_files", fileCount, SANITY_MAX_FILE_COUNT)
 
             val offsets = IntArray(fileCount) { index ->
