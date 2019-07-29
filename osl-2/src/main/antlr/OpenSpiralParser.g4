@@ -2,7 +2,9 @@ parser grammar OpenSpiralParser;
 import OSLWordScriptParser, LibParser;
 options { tokenVocab=OpenSpiralLexer; }
 
-script: HEADER_DECLARATION ((lineSeparator scriptLine)+ | lineSeparator)?;
+headerDeclaration: HEADER_DECLARATION SEMANTIC_VERSION?;
+
+script: headerDeclaration ((lineSeparator scriptLine)+ | lineSeparator)?;
 lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR;
 
 scriptLine: (basicDrill | basicDrillNamed | metaVariableAssignment);

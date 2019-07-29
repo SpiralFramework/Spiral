@@ -222,3 +222,8 @@ fun makeMask(vararg bits: Int): Int {
 
     return mask
 }
+
+fun Number.toInt16LE(): IntArray {
+    val num = toInt() and 0xFFFF
+    return intArrayOf(num shr 8, num and 0xFF)
+}

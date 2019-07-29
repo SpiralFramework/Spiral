@@ -4,6 +4,7 @@ import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.base.locale.CustomLocaleBundle
 import info.spiralframework.formats.customLin
+import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.WordScriptFile
 import info.spiralframework.formats.scripting.lin.*
@@ -52,13 +53,13 @@ object OSLProxy {
     fun osl() {
         DataHandler.streamToMap = { stream -> (parseJsonFromAntlr(stream) as? JsonType.JsonObject)?.toMap() }
 
-        val input = CharStreams.fromFileName("osl-2/src/main/antlr/tests/HelloWorld.osl")
+        val input = CharStreams.fromFileName("osl-2/src/main/antlr/tests/NonstopDebate.osl")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = OpenSpiralParser(tokens)
         val tree = parser.script()
         val visitor = OSLVisitor()
-        visitor.game = V3
+        visitor.game = DR1
         val result = visitor.visitScript(tree)
         println(result.represent())
 
