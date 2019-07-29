@@ -141,7 +141,8 @@ public inline fun <T> Iterator<T>.forEachFiltered(filter: (T) -> Boolean, operat
 public inline fun <T> measureResultTimeMillis(block: () -> T): Pair<T, Long> {
     val start = System.currentTimeMillis()
     val result = block()
-    return result to (System.currentTimeMillis() - start)}
+    return result to (System.currentTimeMillis() - start)
+}
 
 /**
  * Executes the given [block] and returns elapsed time in nanoseconds.
@@ -190,7 +191,7 @@ operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: 
 }
 
 operator fun String.times(num: Int): String = buildString {
-    for(i in 0 until num)
+    for (i in 0 until num)
         append(this@times)
 }
 
@@ -253,3 +254,5 @@ fun Throwable.retrieveStackTrace(): String {
 
     return String(baos.toByteArray(), Charsets.UTF_8)
 }
+
+fun MutableCollection<Int>.addAll(ints: IntArray): Boolean = addAll(ints.toTypedArray())

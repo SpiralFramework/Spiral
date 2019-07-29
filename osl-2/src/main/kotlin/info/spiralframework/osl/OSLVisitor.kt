@@ -2,8 +2,8 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
+import info.spiralframework.base.util.SemVer
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.osl.games.*
 import org.antlr.v4.runtime.tree.TerminalNode
 import kotlin.properties.Delegates
@@ -11,24 +11,46 @@ import kotlin.properties.Delegates
 class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
     //var environment: String
     var game: DRGame? by Delegates.observable(null) { _, _: DRGame?, new: DRGame? ->
-        gameVisitor = new?.let(DRGameVisitor.Companion::visitorFor)
+        _gameVisitor = new?.let(DRGameVisitor.Companion::visitorFor)
     }
-    var gameVisitor: DRGameVisitor? = null
+    private var _gameVisitor: DRGameVisitor? = null
+    val gameVisitor: DRGameVisitor?
+        get() = _gameVisitor
 
-    val lin: CustomLin = CustomLin()
     val variableData: MutableMap<String, OSLUnion> = HashMap()
+
+    var oslVersion: SemVer? = null
 
     fun getData(name: String): OSLUnion {
         if (name.equals("game", true))
             return OSLUnion.RawStringType(game?.identifier ?: "none")
-        else {
+        else if (name.equals("version", true))
+            return OSLUnion.RawStringType(oslVersion.toString())
+        else
             return variableData[name] ?: OSLUnion.UndefinedType
-        }
     }
 
     override fun visitScript(ctx: OpenSpiralParser.ScriptContext): OSLUnion {
+        visitHeaderDeclaration(ctx.headerDeclaration())
         ctx.scriptLine().forEach { lineCtx -> gameVisitor?.handleScriptLine(visitScriptLine(lineCtx)) }
         return gameVisitor?.scriptResult() ?: OSLUnion.UndefinedType
+    }
+
+    override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
+        val rawSemVer = ctx.SEMANTIC_VERSION()?.text
+                ?.substring(1)
+                ?.split('.')
+                ?.map(String::trim)
+                ?.mapNotNull(String::toIntOrNull)
+                ?: return OSLUnion.NoOpType
+
+        this.oslVersion = SemVer(
+                rawSemVer.getOrNull(0) ?: 0,
+                rawSemVer.getOrNull(1) ?: 0,
+                rawSemVer.getOrNull(2) ?: 0
+        )
+
+        return OSLUnion.NoOpType
     }
 
 //    override fun visitScriptLine(ctx: OpenSpiralParser.ScriptLineContext): OSLUnion {

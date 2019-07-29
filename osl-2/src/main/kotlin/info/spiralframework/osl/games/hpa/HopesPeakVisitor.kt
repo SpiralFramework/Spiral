@@ -1,5 +1,7 @@
 package info.spiralframework.osl.games.hpa
 
+import info.spiralframework.base.util.addAll
+import info.spiralframework.base.util.toInt16LE
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.lin.UnknownEntry
@@ -37,7 +39,7 @@ open class HopesPeakVisitor(val game: HopesPeakDRGame) : DRGameVisitor {
     override fun handleArgumentForEntry(arguments: MutableList<Int>, argument: OSLUnion) {
         when (argument) {
             is OSLUnion.NumberType -> arguments.add(argument(Number::toInt))
-            is OSLUnion.StringType -> arguments.add(argument { customLin.addText(this) })
+            is OSLUnion.StringType -> arguments.addAll(argument { customLin.addText(this) }.toInt16LE())
             is OSLUnion.BooleanType -> arguments.add(argument { if (this) 1 else 0 })
             is OSLUnion.LinEntryType -> arguments.addAll(argument { rawArguments.toList() })
             is OSLUnion.CustomLinType -> {}
