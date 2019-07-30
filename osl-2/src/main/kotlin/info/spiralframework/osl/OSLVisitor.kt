@@ -201,6 +201,34 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         return OSLUnion.UndefinedType
     }
 
+    override fun visitActionDeclaration(ctx: OpenSpiralParser.ActionDeclarationContext): OSLUnion {
+        val actionName = buildString {
+            ctx.children.forEach { node ->
+                if (node !is TerminalNode)
+                    return@forEach
+
+                when (node.symbol.type) {
+                    OpenSpiralParser.ACTION_ESCAPES -> {
+                        when (node.text[1]) {
+                            'b' -> append('\b')
+                            'f' -> append(0x0C.toChar())
+                            'n' -> append('\n')
+                            'r' -> append('\r')
+                            't' -> append('\t')
+                            'u' -> append(node.text.substring(2).toInt(16).toChar())
+                        }
+                    }
+                    OpenSpiralParser.ACTION_CHARACTERS -> append(node.text)
+                    OpenSpiralParser.ACTION_VARIABLE_REFERENCE -> append(getData(node.text.substring(1)).represent())
+                }
+            }
+        }
+
+        println(actionName)
+
+        return OSLUnion.RawStringType(actionName)
+    }
+
     fun String.toIntVariable(): Int = when {
         startsWith("0b") -> substring(2).toInt(2)
         startsWith("0o") -> substring(2).toInt(8)

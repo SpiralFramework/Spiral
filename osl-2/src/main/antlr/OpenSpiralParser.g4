@@ -4,15 +4,15 @@ options { tokenVocab=OpenSpiralLexer; }
 
 headerDeclaration: HEADER_DECLARATION SEMANTIC_VERSION?;
 
-script: headerDeclaration ((lineSeparator scriptLine)+ | lineSeparator)?;
+script: headerDeclaration ((lineSeparator scriptLine)+ | lineSeparator)? lineSeparator?;
 lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR;
 
-scriptLine: (basicDrill | basicDrillNamed | metaVariableAssignment);
+scriptLine: (basicDrill | basicDrillNamed | complexDrills | metaVariableAssignment | actionDeclaration);
 
 metaVariableAssignment: ASSIGN_VARIABLE_NAME VARIABLE_ASSIGNMENT variableValue;
 
-basicDrill: BASIC_DRILL_CODE (basicDrillValue (VALUE_SEPARATOR basicDrillValue)*?)?;
-basicDrillNamed: BASIC_DRILL_NAME (basicDrillValue (VALUE_SEPARATOR basicDrillValue)*?)?;
+basicDrill: INTEGER BASIC_DRILL_SEPARATOR (basicDrillValue (VALUE_SEPARATOR basicDrillValue)*?)?;
+basicDrillNamed: NAME_IDENTIFIER BASIC_DRILL_SEPARATOR (basicDrillValue (VALUE_SEPARATOR basicDrillValue)*?)?;
 
 quotedString
     : BEGIN_QUOTED_STRING
@@ -40,9 +40,25 @@ basicDrillValue
 variableValue
     : localisedString
     | quotedString
+    | booleanRule
     | INTEGER
     | DECIMAL_NUMBER
     | VARIABLE_REFERENCE
-    | BOOLEAN
     | NULL
+    ;
+
+actionDeclaration
+    : BEGIN_ACTION
+        (ACTION_ESCAPES | ACTION_CHARACTERS | ACTION_VARIABLE_REFERENCE)*
+      END_ACTION
+    ;
+
+// This is for complex drills
+
+complexDrills
+    : dialogueDrill
+    ;
+
+dialogueDrill
+    : (VARIABLE_REFERENCE | NAME_IDENTIFIER) DIALOGUE_SEPARATOR variableValue
     ;
