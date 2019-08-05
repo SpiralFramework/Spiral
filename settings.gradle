@@ -7,3 +7,5 @@ include 'osl'
 include 'osl-2'
 include 'osl-json'
 include 'updater'
+
+enableFeaturePreview('GRADLE_METADATA')
