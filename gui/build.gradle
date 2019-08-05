@@ -1,10 +1,33 @@
 apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "application"
 
 mainClassName = ""
 
-dependencies {
-    compile project(":core")
+kotlin {
+    jvm()
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation project(":core")
+                implementation kotlin('stdlib-common')
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC"
+            }
+        }
+        commonTest {
+
+        }
+
+        jvmMain {
+            dependencies {
+                implementation kotlin("stdlib-jdk8")
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC"
+            }
+        }
+        jvmTest {
+
+        }
+    }
 }
 
 shadowJar {

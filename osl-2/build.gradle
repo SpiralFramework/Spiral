@@ -1,14 +1,40 @@
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
 apply plugin: 'antlr'
 
 mainClassName = "info.spiralframework.osl.OSLProxy"
 
-dependencies {
-    compile project(":base")
-    compile project(":formats")
-    compile project(":osl-json")
+kotlin {
+    jvm()
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation project(":base")
+                implementation project(":formats")
+                implementation project(":osl-json")
 
+                implementation kotlin('stdlib-common')
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC"
+            }
+        }
+        commonTest {
+
+        }
+
+        jvmMain {
+            dependencies {
+                implementation kotlin("stdlib-jdk8")
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC"
+            }
+        }
+        jvmTest {
+
+        }
+    }
+}
+
+dependencies {
     antlr "org.antlr:antlr4:4.7.2"
 }
 
