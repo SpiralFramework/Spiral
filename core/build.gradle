@@ -1,28 +1,90 @@
-dependencies {
-    compile project(":base")
-    compile project(":formats")
-    compile project(":osl-2")
+apply plugin: 'org.jetbrains.kotlin.multiplatform'
 
-    compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-    compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
-    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
-    compile "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
+kotlin {
+    jvm {
+        compilations.main.kotlinOptions {
+            jvmTarget = "1.8"
+        }
+//        withJava()
+    }
+//    js {
+//        browser {
+//        }
+//        nodejs {
+//        }
+//    }
+//    // For ARM, should be changed to iosArm32 or iosArm64
+//    // For Linux, should be changed to e.g. linuxX64
+//    // For MacOS, should be changed to e.g. macosX64
+//    // For Windows, should be changed to e.g. mingwX64
+//    mingwX64("mingw") {
+//    }
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib-common')
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC'
 
-    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
-    compile "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
+                api project(":base")
+                api project(":formats")
+                api project(":osl")
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+        jvmMain {
+            dependencies {
+                implementation kotlin('stdlib-jdk8')
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC'
 
-    compile 'com.twelvemonkeys.imageio:imageio-bmp:3.4.1'
-    compile 'com.twelvemonkeys.imageio:imageio-jpeg:3.4.1'
-    compile 'com.twelvemonkeys.imageio:imageio-tga:3.4.1'
+                api "com.fasterxml.jackson.core:jackson-core:$jackson_version"
+                api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+                api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+                api "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
+                api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
+                api "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+                api "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
+                api "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+                api "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
 
-    compile 'org.greenrobot:eventbus:3.1.1'
-    
-    compile('org.abimon:Karnage:db4b1a0')
+                api "com.github.kittinunf.fuel:fuel:$fuel_version"
+                api "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
 
-    compile 'org.greenrobot:eventbus:3.1.1'
+                api "com.twelvemonkeys.imageio:imageio-bmp:3.4.1"
+                api "com.twelvemonkeys.imageio:imageio-jpeg:3.4.1"
+                api "com.twelvemonkeys.imageio:imageio-tga:3.4.1"
+
+                api "org.greenrobot:eventbus:3.1.1"
+
+                api "org.abimon:Karnage:db4b1a0"
+
+                api "org.greenrobot:eventbus:3.1.1"
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation kotlin('test')
+                implementation kotlin('test-junit')
+            }
+        }
+//        jsMain {
+//            dependencies {
+//                implementation kotlin('stdlib-js')
+//                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.0-RC'
+//            }
+//        }
+//        jsTest {
+//            dependencies {
+//                implementation kotlin('test-js')
+//            }
+//        }
+//        mingwMain {
+//        }
+//        mingwTest {
+//        }
+    }
 }

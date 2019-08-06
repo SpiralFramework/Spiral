@@ -166,8 +166,8 @@ val String.Companion.Mode: Mode
 const val BYTE_NULL_TERMINATOR: Byte = 0
 
 operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: Int): String = buildString {
-    val capacity = if (mode and info.spiralframework.base.util.Mode.TWO_BYTES_PER_CHARACTER == info.spiralframework.base.util.Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
-    val isNullTermed = mode and info.spiralframework.base.util.Mode.NULL_TERMINATED == info.spiralframework.base.util.Mode.NULL_TERMINATED
+    val capacity = if (mode and Mode.TWO_BYTES_PER_CHARACTER == Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
+    val isNullTermed = mode and Mode.NULL_TERMINATED == Mode.NULL_TERMINATED
     val byteBuffer = ByteBuffer.allocate(capacity)
     var countedNullTerms = 0
     var byte: Byte = 0
@@ -184,9 +184,9 @@ operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: 
         if (isNullTermed && countedNullTerms == capacity)
             break
 
-        byteBuffer.flip()
+        byteBuffer.flipSafe()
         append(encoding.decode(byteBuffer).get())
-        byteBuffer.rewind()
+        byteBuffer.rewindSafe()
     }
 }
 
