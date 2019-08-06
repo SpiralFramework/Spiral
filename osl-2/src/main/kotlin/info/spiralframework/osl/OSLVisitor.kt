@@ -9,6 +9,10 @@ import org.antlr.v4.runtime.tree.TerminalNode
 import kotlin.properties.Delegates
 
 class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
+    companion object {
+        const val OSL_HEADER_LENGTH = "OSL Script".length
+    }
+
     //var environment: String
     var game: DRGame? by Delegates.observable(null) { _, _: DRGame?, new: DRGame? ->
         _gameVisitor = new?.let(DRGameVisitor.Companion::visitorFor)
@@ -37,7 +41,10 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
     }
 
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
-        val rawSemVer = ctx.SEMANTIC_VERSION()?.text
+        val rawSemVer = ctx.HEADER_DECLARATION()
+                .text
+                .substring(OSL_HEADER_LENGTH)
+                .takeIf(String::isNotBlank)
                 ?.substring(1)
                 ?.split('.')
                 ?.map(String::trim)
@@ -61,14 +68,14 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
 //    }
 
     override fun visitBasicDrill(ctx: OpenSpiralParser.BasicDrillContext): OSLUnion {
-        val opCode = ctx.BASIC_DRILL_CODE().text.trimEnd('|').toIntVariable()
+        val opCode = ctx.INTEGER().text.toIntVariable()
         val arguments: MutableList<Int> = ArrayList()
         ctx.basicDrillValue().forEach { valueCtx -> gameVisitor?.handleArgumentForEntry(arguments, visitBasicDrillValue(valueCtx)) }
         return gameVisitor.entryForOpCode(opCode, arguments.toIntArray())
     }
 
     override fun visitBasicDrillNamed(ctx: OpenSpiralParser.BasicDrillNamedContext): OSLUnion {
-        val opCodeName = ctx.BASIC_DRILL_NAME().text.trim('|')
+        val opCodeName = ctx.NAME_IDENTIFIER().text.trim('|')
         val arguments: MutableList<Int> = ArrayList()
         ctx.basicDrillValue().forEach { valueCtx -> gameVisitor?.handleArgumentForEntry(arguments, visitBasicDrillValue(valueCtx)) }
         return gameVisitor.entryForName(opCodeName, arguments.toIntArray())
@@ -193,11 +200,17 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         ctx.INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
         ctx.VARIABLE_REFERENCE()?.let { varRef -> return getData(varRef.text.substring(1)) }
 //        ctx.LOCALISED_STRING()
-        ctx.BOOLEAN()?.let { boolean -> return OSLUnion.BooleanType(boolean.text.toBoolean()) }
+        ctx.booleanRule()?.let(this::visitBooleanRule)?.let { return it }
         ctx.NULL()?.let { return OSLUnion.NullType }
 
         ctx.quotedString()?.let(this::visitQuotedString)?.let { return it }
 
+        return OSLUnion.UndefinedType
+    }
+
+    override fun visitBooleanRule(ctx: OpenSpiralParser.BooleanRuleContext): OSLUnion {
+        if (ctx.TRUE() != null) return OSLUnion.BooleanType(true)
+        if (ctx.FALSE() != null) return OSLUnion.BooleanType(false)
         return OSLUnion.UndefinedType
     }
 
