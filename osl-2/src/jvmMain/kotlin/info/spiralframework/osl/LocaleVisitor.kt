@@ -2,12 +2,11 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OSLLocaleParser
 import info.spiralframework.antlr.osl.OSLLocaleParserBaseVisitor
+import info.spiralframework.base.common.locale.CommonLocale
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.io.StringReader
-import java.io.StringWriter
 
 class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
-    private val lines = StringWriter()
+    private val localeMap: MutableMap<String, String> = HashMap()
 
     override fun visitLocaleLine(ctx: OSLLocaleParser.LocaleLineContext) {
         val key = ctx.LOCALE_PROPERTY_NAME().text
@@ -38,8 +37,8 @@ class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
                 .map { c -> "\\u${c.toInt().toString(16).padStart(4, '0')}" }
                 .joinToString("")
 
-        lines.write("$key=$processed\n")
+        localeMap[key] = processed
     }
 
-    fun createResourceBundle() = OSLLocaleBundle(StringReader(lines.toString()))
+    fun createLocaleBundle(bundleName: String, locale: CommonLocale) = OSLLocaleBundle(bundleName, locale, localeMap)
 }

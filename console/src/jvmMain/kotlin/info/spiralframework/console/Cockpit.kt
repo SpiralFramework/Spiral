@@ -2,10 +2,10 @@ package info.spiralframework.console
 
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
+import info.spiralframework.base.binding.SpiralConfig
 import info.spiralframework.base.binding.SpiralLocale
 import info.spiralframework.base.binding.SpiralLogger
 import info.spiralframework.base.common.locale.constNull
-import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.locale.readConfirmation
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
@@ -49,7 +49,7 @@ abstract class Cockpit<SELF : Cockpit<SELF>> internal constructor(val args: Gurr
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)
             } else {
-                val pojo = SpiralSerialisation.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(SpiralConfig.getConfigFile("cockpit"))
+                val pojo = SpiralSerialisation.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(File(SpiralConfig.getConfigFile("console")))
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             }
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
@@ -220,7 +220,7 @@ abstract class Cockpit<SELF : Cockpit<SELF>> internal constructor(val args: Gurr
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)
             } else {
-                val pojo = SpiralSerialisation.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(SpiralConfig.getConfigFile("cockpit"))
+                val pojo = SpiralSerialisation.YAML_MAPPER.tryReadValue<GurrenArgs.Pojo>(File(SpiralConfig.getConfigFile("console")))
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             }
 

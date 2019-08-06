@@ -1,11 +1,12 @@
 package info.spiralframework.core
 
-import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.binding.SpiralConfig
 import info.spiralframework.base.util.SemVer
+import java.io.File
 
 interface SpiralCoreConfigAccessor {
     companion object {
-        val DEFAULT_CONFIG: SpiralCoreConfig? by cacheNullableYaml(SpiralConfig.getConfigFile("core"))
+        val DEFAULT_CONFIG: SpiralCoreConfig? by cacheNullableYaml(File(SpiralConfig.getConfigFile("core")))
 
         const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 5000
         const val DEFAULT_UPDATE_READ_TIMEOUT = 5000

@@ -1,8 +1,8 @@
 package info.spiralframework.core.plugins
 
+import info.spiralframework.base.binding.SpiralConfig
 import info.spiralframework.base.binding.SpiralLocale
 import info.spiralframework.base.common.locale.constNull
-import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.locale.readConfirmation
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*
@@ -60,7 +60,7 @@ object PluginRegistry {
                 .ensureDirectoryExists()
                 .walk()
                 .discoverPlugins()
-        val storagePlugins = File(SpiralConfig.projectDirectories.dataLocalDir, "plugins")
+        val storagePlugins = File(SpiralConfig.getLocalDataDir("plugins"))
                 .ensureDirectoryExists()
                 .walk()
                 .discoverPlugins()
