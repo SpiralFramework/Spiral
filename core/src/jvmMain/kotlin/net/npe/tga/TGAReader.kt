@@ -2,7 +2,7 @@
 
 package net.npe.tga
 
-import info.spiralframework.base.locale.SpiralLocale.localise
+import info.spiralframework.base.binding.localise
 import java.awt.image.BufferedImage
 import java.io.IOException
 import kotlin.properties.Delegates

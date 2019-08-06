@@ -5,8 +5,8 @@ import org.parboiled.Context
 import org.parboiled.buffers.InputBuffer
 import org.parboiled.errors.ParseError
 
-open class LocaleError(private val _startIndex: Int, private val _endIndex: Int, private val _inputBuffer: InputBuffer, private val _errorMessage: String, vararg val params: Any?): ParseError {
-    constructor(context: Context<*>, errorMessage: String, vararg params: Any?): this(context.startIndex, context.currentIndex, context.inputBuffer, errorMessage, *params)
+open class LocaleError(private val _startIndex: Int, private val _endIndex: Int, private val _inputBuffer: InputBuffer, private val _errorMessage: String, vararg val params: Any): ParseError {
+    constructor(context: Context<*>, errorMessage: String, vararg params: Any): this(context.startIndex, context.currentIndex, context.inputBuffer, errorMessage, *params)
 
     /**
      * Gets the start index of the parse error in the underlying input buffer.

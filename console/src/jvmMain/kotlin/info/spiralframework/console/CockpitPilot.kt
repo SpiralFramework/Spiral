@@ -1,6 +1,6 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.binding.localise
 import info.spiralframework.base.util.verify
 import info.spiralframework.console.commands.pilot.GurrenPilot
 import info.spiralframework.console.commands.pilot.GurrenPluginPilot
@@ -22,14 +22,13 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                 val matchingCommands = bus.postback(CommandRequest(readLine() ?: break, localScope)).foundCommands
 
                 if (matchingCommands.isEmpty())
-                    println(SpiralLocale.localise("commands.unknown"))
+                    println(localise("commands.unknown"))
             }
         }
     }
 
     init {
-        println(SpiralLocale.localise("gurren.pilot.init", SpiralCoreData.version
-                ?: SpiralLocale.localise("gurren.default_version")))
+        println(localise("gurren.pilot.init", SpiralCoreData.version ?: localise("gurren.default_version")))
 
         registerCommandClass(GurrenPilot(parameterParser))
         registerCommandClass(GurrenPluginPilot(parameterParser))
@@ -48,7 +47,8 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                         val signature = SpiralSignatures.signatureForPlugin(entry.pojo.uid, entry.pojo.semanticVersion.toString(), entry.pojo.pluginFileName
                                 ?: entry.source!!.path.substringAfterLast('/'))
                         if (signature == null) {
-                            LOGGER.debug("gurren.pilot.plugin_load.missing_signature", entry.pojo.name, entry.pojo.version ?: entry.pojo.semanticVersion)
+                            LOGGER.debug("gurren.pilot.plugin_load.missing_signature", entry.pojo.name, entry.pojo.version
+                                    ?: entry.pojo.semanticVersion)
                             return@filter false
                         }
 
@@ -57,7 +57,8 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
                     }
 
             plugins.forEach { plugin ->
-                LOGGER.info("gurren.pilot.plugin_load.loading", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
+                LOGGER.info("gurren.pilot.plugin_load.loading", plugin.pojo.name, plugin.pojo.version
+                        ?: plugin.pojo.semanticVersion)
                 PluginRegistry.loadPlugin(plugin)
             }
         }

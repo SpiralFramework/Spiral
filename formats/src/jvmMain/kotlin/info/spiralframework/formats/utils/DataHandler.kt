@@ -1,7 +1,7 @@
 package info.spiralframework.formats.utils
 
-import info.spiralframework.base.locale.LocaleLogger
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.binding.SpiralLogger
 import info.spiralframework.base.util.locale
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -39,6 +39,6 @@ object DataHandler {
 
     init {
         SpiralLocale.addBundle("SpiralFormats")
-        LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.formats.name")))
+        LOGGER = SpiralLogger(LoggerFactory.getLogger(locale<String>("logger.formats.name")))
     }
 }
