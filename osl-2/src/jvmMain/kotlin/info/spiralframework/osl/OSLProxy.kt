@@ -2,7 +2,7 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
-import info.spiralframework.base.locale.CustomLocaleBundle
+import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.formats.customLin
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.WordScriptFile
@@ -13,7 +13,6 @@ import info.spiralframework.json.parseJsonFromAntlr
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
-import java.util.*
 
 object OSLProxy {
     @JvmStatic
@@ -41,7 +40,7 @@ object OSLProxy {
 //        println()
 
         val bundle = OSLLocaleBundle.loadBundle("SpiralBase")
-        println((bundle as? CustomLocaleBundle)?.loadWithLocale(Locale.CHINESE)?.locale)
+        println(bundle?.loadWithLocale(CommonLocale.CHINESE)?.locale)
 
 
 //        println(visitor.visit(tree))

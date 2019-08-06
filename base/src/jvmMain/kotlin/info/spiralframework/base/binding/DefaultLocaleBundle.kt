@@ -19,6 +19,8 @@ actual class DefaultLocaleBundle(val bundle: ResourceBundle, override val locale
     override val size: Int get() = keys.size
     override val values: Collection<String> get() = bundle.keySet().map(bundle::getString)
 
+    override var parent: LocaleBundle? = null
+
     override fun containsKey(key: String): Boolean = bundle.containsKey(key)
     override fun containsValue(value: String): Boolean = bundle.keys.asSequence().any { key -> bundle.getString(key) == value }
     override fun get(key: String): String? = if (bundle.containsKey(key)) bundle.getString(key) else null
