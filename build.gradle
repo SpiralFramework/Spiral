@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.3.10'
     id 'com.github.johnrengelman.shadow' version '4.0.3' apply false
+    id 'org.jetbrains.kotlin.multiplatform' version '1.3.41' apply false
 }
 
 ext {
@@ -17,7 +18,7 @@ ext {
 
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'kotlin'
+//    apply plugin: 'kotlin'
     apply plugin: 'maven-publish'
 
     group = artifact_group
@@ -30,32 +31,32 @@ allprojects {
         compile.extendsFrom(compileInclude)
     }
 
-    jar {
-        baseName = "spiral"
-        appendix = "$project.name"
-        version = ""
-    }
-
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        baseName = jar.baseName
-        appendix = jar.appendix
-        version = jar.version
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        baseName = jar.baseName
-        appendix = jar.appendix
-        version = jar.version
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
+//    jar {
+//        baseName = "spiral"
+//        appendix = "$project.name"
+//        version = ""
+//    }
+//
+//    task sourcesJar(type: Jar, dependsOn: classes) {
+//        classifier = 'sources'
+//        baseName = jar.baseName
+//        appendix = jar.appendix
+//        version = jar.version
+//        from sourceSets.main.allSource
+//    }
+//
+//    task javadocJar(type: Jar, dependsOn: javadoc) {
+//        classifier = 'javadoc'
+//        baseName = jar.baseName
+//        appendix = jar.appendix
+//        version = jar.version
+//        from javadoc.destinationDir
+//    }
+//
+//    artifacts {
+//        archives sourcesJar
+//        archives javadocJar
+//    }
 
     publishing {
         repositories {
@@ -66,12 +67,12 @@ allprojects {
         }
 
         publications {
-            maven(MavenPublication) {
-                artifactId = "spiral-$project.name"
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
-            }
+//            maven(MavenPublication) {
+//                artifactId = "spiral-$project.name"
+//                from components.java
+////                artifact sourcesJar
+////                artifact javadocJar
+//            }
         }
     }
 

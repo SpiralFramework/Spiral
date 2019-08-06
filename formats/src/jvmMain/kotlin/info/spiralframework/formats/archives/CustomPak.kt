@@ -53,7 +53,7 @@ class CustomPak: ICustomArchive {
 
     override fun addSink(name: String, size: Long, sink: (OutputStream) -> Unit) = add(name.substringBeforeLast('.').toIntOrNull() ?: getFirstFreeIndex(), size, sink)
 
-    fun add(index: Int, data: File) = add(index, data.length(), data::inputStream)
+    fun add(index: Int, data: File) = add(index, data.length(), data::inputStream as info.spiralframework.formats.utils.DataSource)
     fun add(size: Long, supplier: () -> InputStream) = add(getFirstFreeIndex(), size, supplier)
 
     fun add(index: Int, size: Long, supplier: () -> InputStream) = add(index, size) { out -> supplier().use(out::copyFromStream) }

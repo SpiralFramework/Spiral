@@ -1,7 +1,8 @@
 package info.spiralframework.formats.scripting
 
 import info.spiralframework.base.util.*
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
 
 class DR1SaveFile private constructor(val dataSource: DataSource) {

@@ -85,9 +85,9 @@ fun ReadableByteChannel.hash(algorithm: String): String {
             break
 
 
-        buffer.flip()
+        buffer.flipSafe()
         md.update(buffer)
-        buffer.rewind()
+        buffer.rewindSafe()
     }
 
     val hashBytes = md.digest()
@@ -218,9 +218,9 @@ fun ReadableByteChannel.verify(signatureData: ByteArray, publicKey: PublicKey): 
             break
 
 
-        buffer.flip()
+        buffer.flipSafe()
         signature.update(buffer)
-        buffer.rewind()
+        buffer.rewindSafe()
     }
 
     return signature.verify(signatureData)
