@@ -1,7 +1,9 @@
 package info.spiralframework.core.plugins
 
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.config.SpiralConfig
+import info.spiralframework.base.locale.readConfirmation
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*
@@ -154,7 +156,8 @@ object PluginRegistry {
         val pluginKlass = classLoader.loadClass(pluginEntry.pojo.pluginClass).kotlin
         val plugin = (pluginKlass.objectInstance
                 ?: runCatching { pluginKlass.createInstance() }.getOrDefault(null)
-                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
+                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin
+                ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
 
         mutableLoadedPlugins.add(plugin)
         plugin.load()
@@ -171,7 +174,7 @@ object PluginRegistry {
     private fun unloadPluginInternal(uid: String) {
         pluginLoaders.remove(uid)?.close()
     }
-    
+
     //Checks
     fun queryEnablePlugin(plugin: PluginEntry): Boolean {
         var loadPlugin = false
@@ -227,7 +230,8 @@ object PluginRegistry {
 
             if (signature == null) {
                 //Ask user if they want to load an unsigned plugin
-                printlnLocale("core.plugins.enable.unsigned_warning", plugin.source?.openStream()?.sha256Hash())
+                printlnLocale("core.plugins.enable.unsigned_warning", plugin.source?.openStream()?.sha256Hash()
+                        ?: SpiralLocale.constNull())
                 printLocale("core.plugins.enable.unsigned_warning_prompt")
 
                 loadPlugin = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -240,7 +244,8 @@ object PluginRegistry {
             } else {
                 if (plugin.source?.openStream()?.verify(signature, publicKey) == true) {
                     //Signature verified
-                    printlnLocale("core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
+                    printlnLocale("core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version
+                            ?: plugin.pojo.semanticVersion)
                     loadPlugin = true
                 } else {
                     //Signature cannot be verified

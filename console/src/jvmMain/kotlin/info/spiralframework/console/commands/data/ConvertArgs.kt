@@ -4,7 +4,7 @@ import info.spiralframework.formats.game.DRGame
 import java.io.File
 
 class ConvertArgs {
-    data class Immutable(val converting: File?, var from: String?, var to: String?, var filter: Regex?, var game: DRGame?)
+    data class Immutable(val converting: File?, val from: String?, val to: String?, val filter: Regex?, val game: DRGame?)
 
     var converting: File? = null
     var from: String? = null

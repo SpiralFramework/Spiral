@@ -1,6 +1,6 @@
 package info.spiralframework.base.util
 
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.binding.SpiralLocale
 import kotlinx.coroutines.*
 import java.text.DecimalFormat
 import kotlin.math.ceil
@@ -31,8 +31,8 @@ fun arbitraryProgressBar(
         loadingText: String = "ascii.arbitrary.loading",
         loadedText: String = "ascii.arbitrary.loaded"
 ): Job = GlobalScope.launch {
-    val localisedLoading = loadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
-    val localisedLoaded = loadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+    val localisedLoading = loadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
+    val localisedLoaded = loadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
 
     try {
         while (isActive) {
@@ -104,8 +104,8 @@ open class ProgressTracker protected constructor(
         }
     }
 
-    val downloadingText: String? = downloadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
-    val downloadedText: String? = downloadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localiseString)
+    val downloadingText: String? = downloadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
+    val downloadedText: String? = downloadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
     val percentPerTrackSpace = ceil(100.0 / trackLength.toDouble())
     val tracks = (0 until trackLength).map { filled ->
         buildString {

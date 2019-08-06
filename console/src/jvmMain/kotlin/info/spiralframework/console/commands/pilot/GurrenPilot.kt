@@ -1,7 +1,8 @@
 package info.spiralframework.console.commands.pilot
 
+import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.util.*
-import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ConvertArgs
 import info.spiralframework.console.commands.data.ExtractArgs
@@ -358,11 +359,11 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
         totalCount = fileResult.second
 
         if (compression.isEmpty())
-            printlnLocale("commands.pilot.extract.archive_type", result::class.simpleName)
+            printlnLocale("commands.pilot.extract.archive_type", result::class.simpleName ?: result::class.jvmName)
         else
             printlnLocale("commands.pilot.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
                 format::class.simpleName ?: format::class.jvmName
-            }, result::class.simpleName)
+            }, result::class.simpleName ?: result::class.jvmName)
         printlnLocale("commands.pilot.extract.extracting_files", totalCount, args.destDir)
 
         var extracted: Long = 0
@@ -662,7 +663,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                 printlnLocale("commands.pilot.convert.converted_header_errors")
                 println(errorResults.joinToString("\n") { (file, source, _, error) ->
                     locale<String>("commands.pilot.convert.converted_errors_many", file relativePathTo dir, source
-                            ?: locale<String>("gurren.pilot.not_applicable"), error)
+                            ?: locale("gurren.pilot.not_applicable"), error ?: SpiralLocale.constNull())
                 })
             }
 
@@ -670,8 +671,8 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                 printlnLocale("commands.pilot.convert.converted_header")
                 println(validResults.joinToString("\n") { (file, source, result) ->
                     locale<String>("commands.pilot.convert.converted_many", file relativePathTo file, source
-                            ?: locale<String>("gurren.pilot.not_applicable"), result
-                            ?: locale<String>("gurren.pilot.not_applicable"))
+                            ?: locale("gurren.pilot.not_applicable"), result
+                            ?: locale("gurren.pilot.not_applicable"))
                 })
             }
 

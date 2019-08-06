@@ -3,9 +3,9 @@ package info.spiralframework.core
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
-import info.spiralframework.base.locale.LocaleLogger
-import info.spiralframework.base.locale.SpiralLocale
 import info.spiralframework.base.SpiralModuleProvider
+import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.binding.SpiralLogger
 import info.spiralframework.base.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -146,7 +146,7 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
 
     init {
         SpiralLocale.addBundle("SpiralCore")
-        LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.core.name")))
+        LOGGER = SpiralLogger(LoggerFactory.getLogger(locale<String>("logger.core.name")))
 
         //Add manifest data to environment
         val file = File(SpiralCoreData::class.java.protectionDomain.codeSource.location.path)

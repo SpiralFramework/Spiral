@@ -1,6 +1,7 @@
 package info.spiralframework.console.data
 
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.binding.SpiralLocale.localiseEnglish
+import info.spiralframework.base.binding.localise
 import info.spiralframework.console.data.errors.LocaleError
 import info.spiralframework.osl.SpiralParser
 import org.parboiled.Action
@@ -20,8 +21,8 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
 
     @Cached
     open fun Localised(str: String): Rule = FirstOf(
-            IgnoreCase(SpiralLocale.localise(str)),
-            IgnoreCase(SpiralLocale.localiseForEnglish(str))
+            IgnoreCase(localise(str)),
+            IgnoreCase(localiseEnglish(str))
     )
 
     open fun Parameter(): Rule {

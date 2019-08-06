@@ -182,11 +182,11 @@ class GurrenMechanic(override val parameterParser: ParameterParser) : CommandCla
         totalCount = fileResult.second
 
         if (compression.isEmpty())
-            printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName)
+            printlnLocale("commands.mechanic.extract.archive_type", result::class.simpleName ?: result::class.jvmName)
         else
             printlnLocale("commands.mechanic.extract.compressed_archive_type", compression.joinToString(" > ") { format ->
                 format::class.simpleName ?: format::class.jvmName
-            }, result::class.simpleName)
+            }, result::class.simpleName ?: result::class.jvmName)
         printlnLocale("commands.mechanic.extract.extracting_files", totalCount, args.destDir)
 
         var extracted: Long = 0

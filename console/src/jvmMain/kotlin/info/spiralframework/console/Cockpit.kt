@@ -2,9 +2,11 @@ package info.spiralframework.console
 
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
+import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.binding.SpiralLogger
+import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.config.SpiralConfig
-import info.spiralframework.base.locale.LocaleLogger
-import info.spiralframework.base.locale.SpiralLocale
+import info.spiralframework.base.locale.readConfirmation
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.ParameterParser
@@ -34,7 +36,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.system.exitProcess
 
 /** The driving force behind the console interface for Spiral */
-abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
+abstract class Cockpit<SELF : Cockpit<SELF>> internal constructor(val args: GurrenArgs) {
     companion object {
         /** The logger for Spiral */
         val LOGGER: Logger
@@ -61,7 +63,8 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
                     val headResponse = Fuel.head(updateUrl).userAgent().response().also(SpiralCoreData::printResponse).takeResponseIfSuccessful()
 
                     if (headResponse != null) {
-                        printlnLocale("gurren.update.detected", "Spiral-Console", updateVersion, SpiralCoreData.jenkinsBuild, headResponse.contentLength.toFileSize())
+                        printlnLocale("gurren.update.detected", "Spiral-Console", updateVersion, SpiralCoreData.jenkinsBuild
+                                ?: SpiralLocale.constNull(), headResponse.contentLength.toFileSize())
                         printLocale("gurren.update.confirmation")
 
                         if (SpiralLocale.readConfirmation()) {
@@ -69,7 +72,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                             var shouldDownloadUnsigned = false
                             if (signatureData == null) {
-                                printlnLocale("gurren.update.unsigned.warning", SpiralCoreData.sha256Hash)
+                                printlnLocale("gurren.update.unsigned.warning", SpiralCoreData.sha256Hash ?: SpiralLocale.constNull())
                                 printLocale("gurren.update.unsigned.warning_confirmation")
 
                                 shouldDownloadUnsigned = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -115,7 +118,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
                 if (build == null) {
                     //Unknown Build
-                    printlnLocale("gurren.patch.unsigned.warning", SpiralCoreData.sha256Hash)
+                    printlnLocale("gurren.patch.unsigned.warning", SpiralCoreData.sha256Hash ?: SpiralLocale.constNull())
                     printLocale("gurren.patch.unsigned.warning_confirmation")
 
                     runUpdate = SpiralLocale.readConfirmation(defaultToAffirmative = false)
@@ -244,7 +247,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
             SpiralCoreData.mainModule = "spiral-console"
 
-            LOGGER = LocaleLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version
+            LOGGER = SpiralLogger(LoggerFactory.getLogger(locale<String>("logger.commands.name", SpiralCoreData.version
                     ?: "Developer")))
             EventBus.getDefault()
                     .installLoggingSubscriber(LOGGER)
@@ -282,14 +285,16 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
 
     @Suppress("UNCHECKED_CAST")
     suspend operator fun <T> invoke(op: suspend SELF.() -> T): T = mutex.withLock { (this@Cockpit as SELF).op() }
+
     @Suppress("UNCHECKED_CAST")
     infix fun <T> with(op: suspend SELF.() -> T): T = runBlocking { mutex.withLock { (this@Cockpit as SELF).op() } }
+
     @Suppress("UNCHECKED_CAST")
     suspend infix fun <T> withAsync(op: suspend SELF.() -> T): T = mutex.withLock { (this@Cockpit as SELF).op() }
 
     fun registerCommandClass(commandRegistry: Any, registerSubclass: KClass<*> = ParboiledCommand::class) {
         commandRegistry.javaClass.kotlin.memberProperties.forEach { recruit ->
-            if((recruit.returnType.classifier as? KClass<*>)?.isSubclassOf(registerSubclass) == true || recruit.returnType.classifier == registerSubclass)
+            if ((recruit.returnType.classifier as? KClass<*>)?.isSubclassOf(registerSubclass) == true || recruit.returnType.classifier == registerSubclass)
                 bus.register(recruit.get(commandRegistry))
         }
     }
