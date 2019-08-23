@@ -183,9 +183,9 @@ operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: 
         if (isNullTermed && countedNullTerms == capacity)
             break
 
-        byteBuffer.flip()
+        byteBuffer.flipSafe()
         append(encoding.decode(byteBuffer).get())
-        byteBuffer.rewind()
+        byteBuffer.rewindSafe()
     }
 }
 
