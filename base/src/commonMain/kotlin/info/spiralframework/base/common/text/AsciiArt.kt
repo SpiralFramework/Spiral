@@ -1,14 +1,13 @@
-package info.spiralframework.base.util
+package info.spiralframework.base.common.text
 
 import info.spiralframework.base.binding.SpiralLocale
 import kotlinx.coroutines.*
-import java.text.DecimalFormat
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-fun <T> arbitraryProgressBar(
+suspend fun <T> arbitraryProgressBar(
         delay: Long = 100, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
@@ -20,7 +19,7 @@ fun <T> arbitraryProgressBar(
     try {
         return operation()
     } finally {
-        runBlocking { arbitrary.cancelAndJoin() } //This feels messy; is there a better way?
+        arbitrary.cancelAndJoin()
     }
 }
 
@@ -78,7 +77,7 @@ fun arbitraryProgressBar(
     }
 }
 
-val PERCENT_FORMAT = DecimalFormat("00.00")
+
 
 open class ProgressTracker protected constructor(
         val trackLength: Int = 10,
@@ -133,7 +132,7 @@ open class ProgressTracker protected constructor(
         print(buildString {
             append('\r')
             if (showPercentage) {
-                append(PERCENT_FORMAT.format(percent))
+                append(formatPercent(percent))
                 append("% ")
             }
             append(tracks[filled])

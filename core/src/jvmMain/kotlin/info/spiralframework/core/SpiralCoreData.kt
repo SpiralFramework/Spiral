@@ -6,6 +6,7 @@ import com.github.kittinunf.fuel.core.Response
 import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.binding.SpiralLocale
 import info.spiralframework.base.binding.SpiralLogger
+import info.spiralframework.base.common.text.arbitraryProgressBar
 import info.spiralframework.base.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -117,7 +118,8 @@ object SpiralCoreData: SpiralCoreConfigAccessor {
                     .userAgent()
                     .timeout(updateConnectTimeout) //Time out if it takes longer than 2s to connect to our API
                     .timeoutRead(updateReadTimeout) //Time out if it takes longer than 2s to read a response
-                    .response().also(this::printResponse).takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull() ?: return@arbitraryProgressBar null
+                    .response().also(this::printResponse).takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull()
+                    ?: return@arbitraryProgressBar null
 
             if (latestBuild > jenkinsBuild!!)
                 return@arbitraryProgressBar String.format(jenkinsArtifactForBuild, project, latestBuild.toString(), project.toLowerCase(), fileName) to latestBuild

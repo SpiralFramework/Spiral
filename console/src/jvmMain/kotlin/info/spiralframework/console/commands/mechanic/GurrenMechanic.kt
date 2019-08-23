@@ -1,5 +1,6 @@
 package info.spiralframework.console.commands.mechanic
 
+import info.spiralframework.base.common.text.ProgressTracker
 import info.spiralframework.base.util.*
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs

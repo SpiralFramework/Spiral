@@ -1,6 +1,6 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.util.arbitraryProgressBar
+import info.spiralframework.base.common.text.arbitraryProgressBar
 import info.spiralframework.base.util.ensureDirectoryExists
 import info.spiralframework.base.util.ensureFileExists
 import io.github.soc.directories.ProjectDirectories
