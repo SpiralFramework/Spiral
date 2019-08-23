@@ -2,6 +2,7 @@ package info.spiralframework.console
 
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.util.verify
+import info.spiralframework.console.commands.pilot.GurrenFlatPatchPilot
 import info.spiralframework.console.commands.pilot.GurrenPilot
 import info.spiralframework.console.commands.pilot.GurrenPluginPilot
 import info.spiralframework.console.data.GurrenArgs
@@ -33,6 +34,7 @@ class CockpitPilot internal constructor(args: GurrenArgs) : Cockpit<CockpitPilot
 
         registerCommandClass(GurrenPilot(parameterParser))
         registerCommandClass(GurrenPluginPilot(parameterParser))
+        registerCommandClass(GurrenFlatPatchPilot(parameterParser))
 
         if (SpiralSignatures.PUBLIC_KEY == null && SpiralSignatures.GITHUB_PUBLIC_KEY == null) {
             LOGGER.warn("gurren.pilot.plugin_load.missing_public")

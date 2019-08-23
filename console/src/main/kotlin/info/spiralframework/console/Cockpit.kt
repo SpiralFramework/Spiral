@@ -235,6 +235,7 @@ abstract class Cockpit<SELF: Cockpit<SELF>> internal constructor(val args: Gurre
             SpiralLocale.addBundle("SpiralConsole")
             SpiralLocale.addBundle("SpiralConsole-Mechanic")
             SpiralLocale.addBundle("SpiralConsole-Pilot")
+            SpiralLocale.addBundle("SpiralConsole-FlatPatchPilot")
 
             DataHandler.byteArrayToMap = { byteArray -> SpiralSerialisation.JSON_MAPPER.readValue(byteArray, Map::class.java).mapKeys { (key) -> key.toString() } }
             DataHandler.stringToMap = { string -> SpiralSerialisation.JSON_MAPPER.readValue(string, Map::class.java).mapKeys { (key) -> key.toString() } }
