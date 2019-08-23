@@ -6,6 +6,7 @@ import info.spiralframework.base.binding.SpiralConfig
 import info.spiralframework.base.binding.SpiralLocale
 import info.spiralframework.base.binding.SpiralLogger
 import info.spiralframework.base.common.locale.constNull
+import info.spiralframework.base.common.text.ProgressTracker
 import info.spiralframework.base.locale.readConfirmation
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.GurrenArgs

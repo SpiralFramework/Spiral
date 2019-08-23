@@ -4,7 +4,10 @@ import info.spiralframework.base.util.readFloatLE
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.archives.srd.*
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.TriFace
+import info.spiralframework.formats.utils.UV
+import info.spiralframework.formats.utils.Vertex
+import info.spiralframework.formats.utils.roundToPrecision
 import java.io.InputStream
 
 class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
@@ -53,7 +56,7 @@ class SRDIModel(val meshInfo: SRD, val dataSource: () -> InputStream) {
                             //stream.skip(20)
                             stream.skip(56 - 12)
 
-                            vertices.add(Vertex(x, y, z))
+                             vertices.add(Vertex(x, y, z))
                         }
                     }
 
