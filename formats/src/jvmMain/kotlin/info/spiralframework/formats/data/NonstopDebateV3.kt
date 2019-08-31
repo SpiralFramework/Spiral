@@ -1,6 +1,5 @@
 package info.spiralframework.formats.data
 
-import info.spiralframework.base.util.assertAsLocaleArgument
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.foldToInt16LE
@@ -42,12 +41,12 @@ class NonstopDebateV3 private constructor(val game: V3, val dataSource: () -> In
 
             sections = Array(sectionCount) {
                 val read = stream.read(sectionBuffer)
-                assertAsLocaleArgument(read == sectionBuffer.size, "formats.nonstop_v3.invalid_stream_size", read, sectionBuffer.size)
+                require(read == sectionBuffer.size) { localise("formats.nonstop_v3.invalid_stream_size", read, sectionBuffer.size) }
 
                 return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
             }
 
-            assertAsLocaleArgument(stream.read() == -1, "formats.nonstop_v3.invalid_stream_data")
+            require(stream.read() == -1) { localise("formats.nonstop_v3.invalid_stream_data") }
         } finally {
             stream.close()
         }

@@ -1,11 +1,12 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.*
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
 
-class DR1SaveFile private constructor(val dataSource: DataSource) {
+class DR1SaveFile private constructor(context: SpiralContext, val dataSource: DataSource) {
     companion object {
         const val MAGIC_NUMBER      = 0x617461640000000C
         const val BIN_MAGIC_NUMBER  = 0x3AC946E69622E.toInt()
@@ -41,28 +42,30 @@ class DR1SaveFile private constructor(val dataSource: DataSource) {
     val lastPlayedString: String
 
     init {
-        val stream = dataSource()
+        with(context) {
+            val stream = dataSource()
 
-        try {
-            val magic = stream.readInt64LE()
-            assertAsLocaleArgument(magic == MAGIC_NUMBER, "fuck.you")
+            try {
+                val magic = stream.readInt64LE()
+                require(magic == MAGIC_NUMBER) { localise("formats.save.dr1") }
 
-            val fileNumber = stream.readInt32LE().convertASCIIToInt()
-            assertAsLocaleArgument(fileNumber in FILE_NUMBER_RANGE, "fuck.you.range")
+                val fileNumber = stream.readInt32LE().convertASCIIToInt()
+                require(fileNumber in FILE_NUMBER_RANGE) { localise("formats.save.dr1.range") }
 
-            val binMagic = stream.readInt32LE()
-            assertAsLocaleArgument(binMagic == BIN_MAGIC_NUMBER, "fuck.you.bin")
+                val binMagic = stream.readInt32LE()
+                require(binMagic == BIN_MAGIC_NUMBER) { localise("formats.save.dr1.bin") }
 
-            size = stream.readInt32LE()
-            danganronpaString = String(stream.readXBytes(64), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
-            chapterSectionString = String(stream.readXBytes(128), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
-            debugInfoString = String(stream.readXBytes(512), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                size = stream.readInt32LE()
+                danganronpaString = String(stream.readXBytes(64), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                chapterSectionString = String(stream.readXBytes(128), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                debugInfoString = String(stream.readXBytes(512), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
 
-            lastPlayedString = String(stream.readXBytes(32), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                lastPlayedString = String(stream.readXBytes(32), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
 
-            //D880: coins
-        } finally {
-            stream.close()
+                //D880: coins
+            } finally {
+                stream.close()
+            }
         }
     }
 }

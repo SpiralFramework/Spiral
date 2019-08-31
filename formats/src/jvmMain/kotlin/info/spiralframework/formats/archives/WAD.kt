@@ -1,7 +1,7 @@
 package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
-import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.base.util.readString
@@ -13,7 +13,7 @@ import info.spiralframework.formats.utils.*
  * When destructing, component 1 is the major version, 2 is the minor version, 3 is a list of files, 4 is a list of directories, and 5 is the data offset
  * Why would you want that? Who knows
  */
-class WAD private constructor(val dataSource: DataSource): IArchive {
+class WAD private constructor(context: SpiralContext, val dataSource: DataSource): IArchive {
     companion object {
         val MAGIC_NUMBER = 0x52414741
 
@@ -64,55 +64,57 @@ class WAD private constructor(val dataSource: DataSource): IArchive {
     val dataOffset: Long
 
     init {
-        val stream = CountingInputStream(dataSource())
+        with(context) {
+            val stream = CountingInputStream(dataSource())
 
-        try {
-            val localMagic = stream.readInt32LE()
-            assertAsLocaleArgument(localMagic == MAGIC_NUMBER, "formats.wad.invalid_magic", localMagic, MAGIC_NUMBER)
+            try {
+                val localMagic = stream.readInt32LE()
+                require(localMagic == MAGIC_NUMBER) { localise("formats.wad.invalid_magic", localMagic, MAGIC_NUMBER) }
 
-            major = stream.readInt32LE()
-            minor = stream.readInt32LE()
+                major = stream.readInt32LE()
+                minor = stream.readInt32LE()
 
-            val headerSize = stream.readInt32LE()
-            header = ByteArray(headerSize)
+                val headerSize = stream.readInt32LE()
+                header = ByteArray(headerSize)
 
-            stream.read(header)
+                stream.read(header)
 
-            val fileCount = stream.readInt32LE()
-            assertAsLocaleArgument(fileCount in FILE_COUNT_RANGE, "formats.wad.invalid_file_count", fileCount, MIN_FILE_COUNT, MAX_FILE_COUNT)
+                val fileCount = stream.readInt32LE()
+                require(fileCount in FILE_COUNT_RANGE) { localise("formats.wad.invalid_file_count", fileCount, MIN_FILE_COUNT, MAX_FILE_COUNT) }
 
-            files = Array(fileCount) { index ->
-                val nameLen = stream.readInt32LE()
-                assertAsLocaleArgument(nameLen in FILENAME_LENGTH_RANGE, "formats.wad.invalid_file_name_length", nameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH)
-                val name = stream.readString(nameLen)
-                val size = stream.readInt64LE()
-                val offset = stream.readInt64LE()
+                files = Array(fileCount) { index ->
+                    val nameLen = stream.readInt32LE()
+                    require(nameLen in FILENAME_LENGTH_RANGE) { localise("formats.wad.invalid_file_name_length", nameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH) }
+                    val name = stream.readString(nameLen)
+                    val size = stream.readInt64LE()
+                    val offset = stream.readInt64LE()
 
-                return@Array WADFileEntry(name, size, offset, this)
-            }
-
-            val directoryCount = stream.readInt32LE()
-            directories = Array(directoryCount) { index ->
-                val nameLen = stream.readInt32LE()
-                val name = stream.readString(nameLen)
-                val subEntryCount = stream.readInt32LE()
-
-                val subEntries = Array(subEntryCount) sub@{ subIndex ->
-                    val subNameLen = stream.readInt32LE()
-                    assertAsLocaleArgument(subNameLen in FILENAME_LENGTH_RANGE, "formats.wad.invalid_subfile_name_length", subNameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH)
-                    val subName = stream.readString(subNameLen)
-
-                    val isDirectory = stream.read() == 1
-
-                    return@sub subName to isDirectory
+                    return@Array WADFileEntry(name, size, offset, this)
                 }
 
-                return@Array WADSubdirectoryEntry(name, subEntries)
-            }
+                val directoryCount = stream.readInt32LE()
+                directories = Array(directoryCount) { index ->
+                    val nameLen = stream.readInt32LE()
+                    val name = stream.readString(nameLen)
+                    val subEntryCount = stream.readInt32LE()
 
-            dataOffset = stream.streamOffset
-        } finally {
-            stream.close()
+                    val subEntries = Array(subEntryCount) sub@{ subIndex ->
+                        val subNameLen = stream.readInt32LE()
+                        require(subNameLen in FILENAME_LENGTH_RANGE) { localise("formats.wad.invalid_subfile_name_length", subNameLen, MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH) }
+                        val subName = stream.readString(subNameLen)
+
+                        val isDirectory = stream.read() == 1
+
+                        return@sub subName to isDirectory
+                    }
+
+                    return@Array WADSubdirectoryEntry(name, subEntries)
+                }
+
+                dataOffset = stream.streamOffset
+            } finally {
+                stream.close()
+            }
         }
     }
 }

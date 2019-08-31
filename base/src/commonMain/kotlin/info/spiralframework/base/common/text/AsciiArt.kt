@@ -1,13 +1,13 @@
 package info.spiralframework.base.common.text
 
-import info.spiralframework.base.binding.SpiralLocale
+import info.spiralframework.base.common.SpiralContext
 import kotlinx.coroutines.*
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-suspend fun <T> arbitraryProgressBar(
+suspend fun <T> SpiralContext.arbitraryProgressBar(
         delay: Long = 100, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
@@ -23,15 +23,31 @@ suspend fun <T> arbitraryProgressBar(
     }
 }
 
-fun arbitraryProgressBar(
+suspend fun <T> SpiralContext.arbitrarySuspendedProgressBar(
+        delay: Long = 100, limit: Int = 9,
+        start: Char = '[', end: Char = ']',
+        space: Char = ' ', indicator: Char = 'o',
+        loadingText: String = "ascii.arbitrary.loading",
+        loadedText: String = "ascii.arbitrary.loaded!",
+        operation: suspend () -> T
+): T {
+    val arbitrary = arbitraryProgressBar(delay, limit, start, end, space, indicator, loadingText, loadedText)
+    try {
+        return operation()
+    } finally {
+        arbitrary.cancelAndJoin()
+    }
+}
+
+fun SpiralContext.arbitraryProgressBar(
         delay: Long = 100, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
         loadingText: String = "ascii.arbitrary.loading",
         loadedText: String = "ascii.arbitrary.loaded"
 ): Job = GlobalScope.launch {
-    val localisedLoading = loadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
-    val localisedLoaded = loadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
+    val localisedLoading = localise(loadingText).takeIf(String::isNotBlank)
+    val localisedLoaded = localise(loadedText).takeIf(String::isNotBlank)
 
     try {
         while (isActive) {
@@ -80,6 +96,7 @@ fun arbitraryProgressBar(
 
 
 open class ProgressTracker protected constructor(
+        context: SpiralContext,
         val trackLength: Int = 10,
         val start: Char = '[', val end: Char = ']',
         val trackSpace: Char = ' ', val trackFilled: Char = '#',
@@ -88,23 +105,24 @@ open class ProgressTracker protected constructor(
         val showPercentage: Boolean = true
 ) {
     companion object {
-        val SILENT_TRACKER: ProgressTracker = object: ProgressTracker() {
+        val SILENT_TRACKER: ProgressTracker = object: ProgressTracker(SpiralContext.NoOp) {
             override fun finishedDownload() {}
             override fun trackDownload(downloaded: Long, total: Long) {}
         }
 
-        operator fun invoke(trackLength: Int = 10,
+        operator fun invoke(context: SpiralContext,
+                            trackLength: Int = 10,
                             start: Char = '[', end: Char = ']',
                             trackSpace: Char = ' ', trackFilled: Char = '#',
                             downloadingText: String = "ascii.progress.loading",
                             downloadedText: String = "ascii.progress.loaded",
                             showPercentage: Boolean = true): ProgressTracker {
-            return ProgressTracker(trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+            return ProgressTracker(context, trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
         }
     }
 
-    val downloadingText: String? = downloadingText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
-    val downloadedText: String? = downloadedText.takeIf(String::isNotBlank)?.let(SpiralLocale::localise)
+    val downloadingText: String? = context.localise(downloadingText).takeIf(String::isNotBlank)
+    val downloadedText: String? = context.localise(downloadedText).takeIf(String::isNotBlank)
     val percentPerTrackSpace = ceil(100.0 / trackLength.toDouble())
     val tracks = (0 until trackLength).map { filled ->
         buildString {
@@ -149,7 +167,7 @@ open class ProgressTracker protected constructor(
     }
 }
 
-fun <T> ProgressTracker(
+fun <T> SpiralContext.ProgressTracker(
         trackLength: Int = 20,
         start: Char = '[', end: Char = ']',
         trackSpace: Char = ' ', trackFilled: Char = '#',
@@ -158,7 +176,7 @@ fun <T> ProgressTracker(
         showPercentage: Boolean = true,
         op: ProgressTracker.() -> T
 ): T {
-    val tracker = ProgressTracker(trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+    val tracker = ProgressTracker(this, trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
     try {
         return tracker.op()
     } finally {

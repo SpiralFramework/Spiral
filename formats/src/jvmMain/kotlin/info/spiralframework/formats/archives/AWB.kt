@@ -1,62 +1,66 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readUInt32LE
-import info.spiralframework.formats.utils.DataHandler
-import java.io.InputStream
+import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
+import info.spiralframework.formats.utils.DataSource
 
-class AWB private constructor(val dataSource: () -> InputStream): IArchive {
+@ExperimentalUnsignedTypes
+class AWB private constructor(context: SpiralContext, val dataSource: DataSource) : IArchive {
     companion object {
         val MAGIC_NUMBER = 0x32534641
 
-        operator fun invoke(dataSource: () -> InputStream): AWB? {
-            try {
-                return AWB(dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.awb.invalid", dataSource, iae)
+        operator fun invoke(context: SpiralContext, dataSource: DataSource): AWB? {
+            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+                try {
+                    return AWB(this, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.awb.invalid", dataSource, iae)
 
-                return null
+                    return null
+                }
             }
         }
-
-        fun unsafe(dataSource: () -> InputStream): AWB = AWB(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): AWB = AWB(context.subcontext(SPIRAL_FORMATS_MODULE), dataSource)
     }
 
     val entries: Array<AWBEntry>
 
     init {
-        val stream = dataSource()
+        with(context) {
+            val stream = dataSource()
 
-        try {
-            val magic = stream.readInt32LE()
-            assertAsLocaleArgument(magic == MAGIC_NUMBER, "formats.awb.invalid_magic", magic, MAGIC_NUMBER)
+            try {
+                val magic = stream.readInt32LE()
+                require(magic == MAGIC_NUMBER) { localise("formats.awb.invalid_magic", magic, MAGIC_NUMBER) }
 
-            val unk1 = stream.readInt32LE()
+                val unk1 = stream.readInt32LE()
 
-            val numEntries = stream.readInt32LE()
-            val alignment = stream.readInt32LE()
+                val numEntries = stream.readInt32LE()
+                val alignment = stream.readInt32LE()
 
-            val awbFileIDs = IntArray(numEntries) { stream.readInt16LE() }
-            val headerEnd = stream.readUInt32LE().toLong()
+                val awbFileIDs = IntArray(numEntries) { stream.readInt16LE() }
+                val headerEnd = stream.readUInt32LE().toLong()
 
-            val awbFileEnds = LongArray(numEntries) { stream.readUInt32LE().toLong() }
+                val awbFileEnds = LongArray(numEntries) { stream.readUInt32LE().toLong() }
 
-            var start: Long
-            var end: Long = headerEnd
+                var start: Long
+                var end: Long = headerEnd
 
-            entries = Array(numEntries) { index ->
-                start = end
+                entries = Array(numEntries) { index ->
+                    start = end
 
-                if (end % alignment > 0)
-                    start += (alignment - (end % alignment))
-                end = awbFileEnds[index]
+                    if (end % alignment > 0)
+                        start += (alignment - (end % alignment))
+                    end = awbFileEnds[index]
 
-                return@Array AWBEntry(awbFileIDs[index], end - start, start, this)
+                    return@Array AWBEntry(awbFileIDs[index], end - start, start, this@AWB)
+                }
+            } finally {
+                stream.close()
             }
-        } finally {
-            stream.close()
         }
     }
 }

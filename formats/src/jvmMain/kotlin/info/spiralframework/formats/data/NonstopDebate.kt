@@ -1,13 +1,13 @@
 package info.spiralframework.formats.data
 
-import info.spiralframework.base.util.assertAsLocaleArgument
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.foldToInt16LE
 import java.io.InputStream
 
-class NonstopDebate private constructor(val game: HopesPeakKillingGame, val dataSource: () -> InputStream) {
+class NonstopDebate private constructor(context: SpiralContext, val game: HopesPeakKillingGame, val dataSource: () -> InputStream) {
     companion object {
         operator fun invoke(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate? {
             try {
@@ -37,28 +37,30 @@ class NonstopDebate private constructor(val game: HopesPeakKillingGame, val data
     val sections: Array<NonstopDebateSection>
 
     init {
-        val stream = dataSource()
+        with(context) {
+            val stream = dataSource()
 
-        try {
-            //First up, we have to read the time limit and number of sections, as Int16LE variables
-            timeLimit = stream.readInt16LE()
-            numberOfSections = stream.readInt16LE()
+            try {
+                //First up, we have to read the time limit and number of sections, as Int16LE variables
+                timeLimit = stream.readInt16LE()
+                numberOfSections = stream.readInt16LE()
 
-            gentleTimeLimit = timeLimit * 2
-            meanTimeLimit   = (timeLimit * 0.8).toInt()
+                gentleTimeLimit = timeLimit * 2
+                meanTimeLimit = (timeLimit * 0.8).toInt()
 
-            val sectionBuffer = ByteArray(game.nonstopDebateSectionSize)
+                val sectionBuffer = ByteArray(game.nonstopDebateSectionSize)
 
-            sections = Array(numberOfSections) {
-                val read = stream.read(sectionBuffer)
-                assertAsLocaleArgument(read == sectionBuffer.size, "formats.nonstop.invalid_stream_size", read, sectionBuffer.size)
+                sections = Array(numberOfSections) {
+                    val read = stream.read(sectionBuffer)
+                    require(read == sectionBuffer.size) { localise("formats.nonstop.invalid_stream_size", read, sectionBuffer.size) }
 
-                return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
+                    return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
+                }
+
+                require(stream.read() == -1) { localise("formats.nonstop.invalid_stream_data") }
+            } finally {
+                stream.close()
             }
-
-            assertAsLocaleArgument(stream.read() == -1, "formats.nonstop.invalid_stream_data")
-        } finally {
-            stream.close()
         }
     }
 }

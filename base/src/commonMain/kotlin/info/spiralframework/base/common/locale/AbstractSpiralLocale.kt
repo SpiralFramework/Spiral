@@ -4,6 +4,19 @@ import info.spiralframework.base.binding.DefaultLocaleBundle
 import info.spiralframework.base.common.properties.Observables
 
 interface SpiralLocale {
+    object NoOp: SpiralLocale {
+        override fun localise(msg: String): String = msg
+        override fun localise(msg: String, arg: Any): String = msg
+        override fun localise(msg: String, arg1: Any, arg2: Any): String = msg
+        override fun localise(msg: String, vararg args: Any): String = msg
+        override fun localiseArray(msg: String, args: Array<out Any>): String = msg
+        override fun localiseEnglish(msg: String): String = msg
+        override fun localiseEnglish(msg: String, arg: Any): String = msg
+        override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String = msg
+        override fun localiseEnglish(msg: String, vararg args: Any): String = msg
+        override fun localiseEnglishArray(msg: String, args: Array<out Any>): String = msg
+    }
+
     fun localise(msg: String): String
     fun localise(msg: String, arg: Any): String
     fun localise(msg: String, arg1: Any, arg2: Any): String

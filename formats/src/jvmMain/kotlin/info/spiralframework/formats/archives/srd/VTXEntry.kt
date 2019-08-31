@@ -1,12 +1,13 @@
 package info.spiralframework.formats.archives.srd
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.archives.SRD
 import info.spiralframework.formats.utils.FaceBlock
 import info.spiralframework.formats.utils.VertexBlock
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
 
-open class VTXEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
+open class VTXEntry(context: SpiralContext, dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(context, dataType, offset, dataLength, subdataLength, srd) {
     val meshTypeID: Int
     val meshType: EnumSRDIMeshType
     val vertexCount: Int
