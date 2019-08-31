@@ -1,8 +1,8 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.util.assertAsLocaleArgument
-import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
 import java.io.InputStream
 
 /**
@@ -16,56 +16,60 @@ import java.io.InputStream
  *
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
-class Pak private constructor(val dataSource: () -> InputStream, overrideSanityChecks: Boolean = false): IArchive {
+class Pak private constructor(context: SpiralContext, overrideSanityChecks: Boolean = false, val dataSource: () -> InputStream): IArchive {
     companion object {
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0
         var SANITY_MAX_FILE_SIZE = 64 * 1024 * 1024
 
-        operator fun invoke(overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak? {
-            try {
-                return Pak(dataSource, overrideSanityChecks)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.pak.invalid", dataSource, iae)
+        operator fun invoke(context: SpiralContext, overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak? {
+            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+                try {
+                    return Pak(this, overrideSanityChecks, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.pak.invalid", dataSource, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak = Pak(dataSource, overrideSanityChecks)
+        fun unsafe(context: SpiralContext, overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak = Pak(context, overrideSanityChecks, dataSource)
     }
 
     val files: Array<PakEntry>
 
     init {
-        val stream = dataSource()
+        with(context) {
+            val stream = dataSource()
 
-        try {
-            val fileCount = stream.readInt32LE()
-            assertAsLocaleArgument(fileCount > 1, "formats.pak.not_enough_files", fileCount)
-            assertAsLocaleArgument(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT, "formats.pak.too_many_files", fileCount, SANITY_MAX_FILE_COUNT)
+            try {
+                val fileCount = stream.readInt32LE()
+                require(fileCount > 1) { localise("formats.pak.not_enough_files", fileCount) }
+                require(overrideSanityChecks || fileCount < SANITY_MAX_FILE_COUNT) { localise("formats.pak.too_many_files", fileCount, SANITY_MAX_FILE_COUNT) }
 
-            val offsets = IntArray(fileCount) { index ->
-                val offset = stream.readInt32LE()
-                assertAsLocaleArgument(offset >= 0, "formats.pak.offset_too_low", index, offset) //That *one* file in DR2...
+                val offsets = IntArray(fileCount) { index ->
+                    val offset = stream.readInt32LE()
+                    require(offset >= 0) { localise("formats.pak.offset_too_low", index, offset) } //That *one* file in DR2...
 
-                return@IntArray offset
-            }
-
-            files = Array(fileCount) { index ->
-                val offset = offsets[index]
-                val size: Int
-                if(index == fileCount - 1) {
-                    size = -1
-                } else {
-                    size = offsets[index + 1] - offset
-                    assertAsLocaleArgument(overrideSanityChecks || size > SANITY_MIN_FILE_SIZE, "formats.pak.entry_too_small", index, size, SANITY_MIN_FILE_SIZE)
-                    assertAsLocaleArgument(overrideSanityChecks || size < SANITY_MAX_FILE_SIZE, "formats.pak.entry_too_large", index, size, SANITY_MAX_FILE_SIZE)
+                    return@IntArray offset
                 }
-                return@Array PakEntry(index, size, offset, this)
+
+                files = Array(fileCount) { index ->
+                    val offset = offsets[index]
+                    val size: Int
+                    if (index == fileCount - 1) {
+                        size = -1
+                    } else {
+                        size = offsets[index + 1] - offset
+                        require(overrideSanityChecks || size > SANITY_MIN_FILE_SIZE) { localise("formats.pak.entry_too_small", index, size, SANITY_MIN_FILE_SIZE) }
+                        require(overrideSanityChecks || size < SANITY_MAX_FILE_SIZE) { localise("formats.pak.entry_too_large", index, size, SANITY_MAX_FILE_SIZE) }
+                    }
+                    return@Array PakEntry(index, size, offset, this@Pak)
+                }
+            } finally {
+                stream.close()
             }
-        } finally {
-            stream.close()
         }
     }
 }

@@ -6,6 +6,43 @@ import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.SpiralLocale
 
 interface SpiralLogger {
+    object NoOp: SpiralLogger {
+        override fun SpiralContext.error(format: String) {}
+        override fun SpiralContext.error(format: String, arg: Any) {}
+        override fun SpiralContext.error(format: String, th: Throwable) {}
+        override fun SpiralContext.error(format: String, arg1: Any, arg2: Any) {}
+        override fun SpiralContext.error(format: String, vararg args: Any) {}
+        override fun SpiralContext.errorArray(format: String, args: Array<out Any>) {}
+
+        override fun SpiralContext.warn(format: String) {}
+        override fun SpiralContext.warn(format: String, arg: Any) {}
+        override fun SpiralContext.warn(format: String, th: Throwable) {}
+        override fun SpiralContext.warn(format: String, arg1: Any, arg2: Any) {}
+        override fun SpiralContext.warn(format: String, vararg args: Any) {}
+        override fun SpiralContext.warnArray(format: String, args: Array<out Any>) {}
+
+        override fun SpiralContext.info(format: String) {}
+        override fun SpiralContext.info(format: String, arg: Any) {}
+        override fun SpiralContext.info(format: String, th: Throwable) {}
+        override fun SpiralContext.info(format: String, arg1: Any, arg2: Any) {}
+        override fun SpiralContext.info(format: String, vararg args: Any) {}
+        override fun SpiralContext.infoArray(format: String, args: Array<out Any>) {}
+
+        override fun SpiralContext.debug(format: String) {}
+        override fun SpiralContext.debug(format: String, arg: Any) {}
+        override fun SpiralContext.debug(format: String, th: Throwable) {}
+        override fun SpiralContext.debug(format: String, arg1: Any, arg2: Any) {}
+        override fun SpiralContext.debug(format: String, vararg args: Any) {}
+        override fun SpiralContext.debugArray(format: String, args: Array<out Any>) {}
+
+        override fun SpiralContext.trace(format: String) {}
+        override fun SpiralContext.trace(format: String, arg: Any) {}
+        override fun SpiralContext.trace(format: String, th: Throwable) {}
+        override fun SpiralContext.trace(format: String, arg1: Any, arg2: Any) {}
+        override fun SpiralContext.trace(format: String, vararg args: Any) {}
+        override fun SpiralContext.traceArray(format: String, args: Array<out Any>) {}
+    }
+    
     fun SpiralContext.error(format: String)
     fun SpiralContext.error(format: String, arg: Any)
     fun SpiralContext.error(format: String, th: Throwable)

@@ -1,10 +1,11 @@
 package info.spiralframework.formats.archives.srd
 
-import info.spiralframework.formats.archives.SRD
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.archives.SRD
 
-open class TXREntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
+open class TXREntry(context: SpiralContext, dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(context, dataType, offset, dataLength, subdataLength, srd) {
     val unk1: Int
     val swizzle: Int
     val displayWidth: Int

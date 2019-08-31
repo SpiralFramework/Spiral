@@ -1,13 +1,14 @@
 package info.spiralframework.formats.archives.srd
 
 import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readNullTerminatedString
 import info.spiralframework.formats.archives.SRD
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.Mipmap
 
-open class RSIEntry(dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(dataType, offset, dataLength, subdataLength, srd) {
+open class RSIEntry(context: SpiralContext, dataType: String, offset: Long, dataLength: Int, subdataLength: Int, srd: SRD): SRDEntry(context, dataType, offset, dataLength, subdataLength, srd) {
     data class ResourceArray(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
     override val rsiEntry: RSIEntry? = null
 
