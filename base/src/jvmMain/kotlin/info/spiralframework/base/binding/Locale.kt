@@ -1,7 +1,6 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.common.locale.AbstractSpiralLocale
-import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.text.MessageFormat
@@ -115,4 +114,13 @@ actual fun localiseEnglishArray(msg: String, args: Array<out Any>): String = Spi
 internal actual fun defaultLocale(): CommonLocale {
     val jvmLocale = Locale.getDefault()
     return CommonLocale(jvmLocale.language, jvmLocale.country, jvmLocale.variant)
+}
+
+actual fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean): Boolean {
+    val affirmative = promptAffirmative()
+
+    val input = readLine()?.trim()?.takeIf(String::isNotBlank)
+            ?: if (defaultToAffirmative) affirmative else promptNegative()
+
+    return if (input.equals(input, true) || input.startsWith(promptShortAffirmative(), true)) AFFIRMATIVE else NEGATIVE
 }

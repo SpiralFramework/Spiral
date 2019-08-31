@@ -1,7 +1,6 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.common.locale.AbstractSpiralLocale
-import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.*
 
 expect class SpiralLogger(name: String) {
     fun error(format: String)
@@ -67,3 +66,5 @@ expect fun localiseEnglish(msg: String, vararg args: Any): String
 expect fun localiseEnglishArray(msg: String, args: Array<out Any>): String
 
 internal expect fun defaultLocale(): CommonLocale
+
+expect fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean
