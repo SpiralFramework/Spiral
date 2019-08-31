@@ -3,7 +3,21 @@ package info.spiralframework.base.common.locale
 import info.spiralframework.base.binding.DefaultLocaleBundle
 import info.spiralframework.base.common.properties.Observables
 
-abstract class AbstractSpiralLocale {
+interface SpiralLocale {
+    fun localise(msg: String): String
+    fun localise(msg: String, arg: Any): String
+    fun localise(msg: String, arg1: Any, arg2: Any): String
+    fun localise(msg: String, vararg args: Any): String
+    fun localiseArray(msg: String, args: Array<out Any>): String
+
+    fun localiseEnglish(msg: String): String
+    fun localiseEnglish(msg: String, arg: Any): String
+    fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String
+    fun localiseEnglish(msg: String, vararg args: Any): String
+    fun localiseEnglishArray(msg: String, args: Array<out Any>): String
+}
+
+abstract class AbstractSpiralLocale: SpiralLocale {
     private val _localisationBundles: MutableList<LocaleBundle> = ArrayList()
     private val _englishBundles: MutableList<LocaleBundle> = ArrayList()
 
@@ -11,18 +25,6 @@ abstract class AbstractSpiralLocale {
     val englishBundles: List<LocaleBundle> = _englishBundles
 
     var currentLocale: CommonLocale by Observables.newValue(CommonLocale.defaultLocale, this::changeLocale)
-
-    abstract fun localise(msg: String): String
-    abstract fun localise(msg: String, arg: Any): String
-    abstract fun localise(msg: String, arg1: Any, arg2: Any): String
-    abstract fun localise(msg: String, vararg args: Any): String
-    abstract fun localiseArray(msg: String, args: Array<out Any>): String
-
-    abstract fun localiseEnglish(msg: String): String
-    abstract fun localiseEnglish(msg: String, arg: Any): String
-    abstract fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String
-    abstract fun localiseEnglish(msg: String, vararg args: Any): String
-    abstract fun localiseEnglishArray(msg: String, args: Array<out Any>): String
 
     fun addBundle(bundleName: String) {
         _localisationBundles.add(DefaultLocaleBundle(bundleName, currentLocale))
