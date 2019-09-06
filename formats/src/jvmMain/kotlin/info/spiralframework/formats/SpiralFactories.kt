@@ -15,6 +15,24 @@ import info.spiralframework.formats.text.STX
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.video.SFL
 
+fun SpiralContext.AWB(dataSource: DataSource): AWB? = AWB(this, dataSource)
+fun SpiralContext.CPK(dataSource: DataSource): CPK? = CPK(this, dataSource)
+fun SpiralContext.Pak(overrideSanityChecks: Boolean = false, dataSource: DataSource): Pak? = Pak(this, overrideSanityChecks, dataSource)
+fun SpiralContext.SPC(dataSource: DataSource): SPC? = SPC(this, dataSource)
+fun SpiralContext.WAD(dataSource: DataSource): WAD? = WAD(this, dataSource)
+
+fun SpiralContext.FontMap(dataSource: DataSource): FontMap? = FontMap(this, dataSource)
+
+fun SpiralContext.Lin(game: HopesPeakDRGame, dataSource: DataSource): Lin? = Lin(this, game, dataSource)
+fun SpiralContext.WordScript(game: V3, dataSource: DataSource): WordScriptFile? = WordScriptFile(this, game, dataSource)
+
+fun SpiralContext.STX(dataSource: DataSource): STX? = STX(this, dataSource)
+
+fun SpiralContext.SFL(dataSource: DataSource): SFL? = SFL(this, dataSource)
+
+fun SpiralContext.NonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate? = NonstopDebate(this, game, dataSource)
+fun SpiralContext.NonstopDebateV3(game: V3, dataSource: DataSource): NonstopDebateV3? = NonstopDebateV3(this, game, dataSource)
+
 fun SpiralContext.UnsafeAWB(dataSource: DataSource): AWB = AWB.unsafe(this, dataSource)
 fun SpiralContext.UnsafeCPK(dataSource: DataSource): CPK = CPK.unsafe(this, dataSource)
 fun SpiralContext.UnsafePak(overrideSanityChecks: Boolean = false, dataSource: DataSource): Pak = Pak.unsafe(this, overrideSanityChecks, dataSource)
