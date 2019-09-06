@@ -3,8 +3,7 @@ package info.spiralframework.formats.data
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.*
-import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
-import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.align
 import java.io.InputStream
@@ -12,7 +11,7 @@ import java.io.InputStream
 class DataTableV3 private constructor(context: SpiralContext, val dataSource: DataSource) {
     companion object {
         operator fun invoke(context: SpiralContext, dataSource: () -> InputStream): DataTableV3? {
-            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+            withFormats(context) {
                 try {
                     return DataTableV3(this, dataSource)
                 } catch (iae: IllegalArgumentException) {
@@ -23,29 +22,29 @@ class DataTableV3 private constructor(context: SpiralContext, val dataSource: Da
             }
         }
 
-        fun unsafe(dataSource: () -> InputStream): DataTableV3 = DataTableV3(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: () -> InputStream): DataTableV3 = withFormats(context) { DataTableV3(this, dataSource) }
     }
 
     data class DataVariableHeader(val variableName: String, val variableType: String)
     sealed class DataVariable<T>(variableName: String, data: T) {
-        data class UnsignedByte(val variableName: String, val data: UByte): DataVariable<UByte>(variableName, data)
-        data class UnsignedShort(val variableName: String, val data: UShort): DataVariable<UShort>(variableName, data)
-        data class UnsignedInt(val variableName: String, val data: UInt): DataVariable<UInt>(variableName, data)
-        data class UnsignedLong(val variableName: String, val data: ULong): DataVariable<ULong>(variableName, data)
+        data class UnsignedByte(val variableName: String, val data: UByte) : DataVariable<UByte>(variableName, data)
+        data class UnsignedShort(val variableName: String, val data: UShort) : DataVariable<UShort>(variableName, data)
+        data class UnsignedInt(val variableName: String, val data: UInt) : DataVariable<UInt>(variableName, data)
+        data class UnsignedLong(val variableName: String, val data: ULong) : DataVariable<ULong>(variableName, data)
 
-        data class SignedByte(val variableName: String, val data: Byte): DataVariable<Byte>(variableName, data)
-        data class SignedShort(val variableName: String, val data: Short): DataVariable<Short>(variableName, data)
-        data class SignedInt(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
-        data class SignedLong(val variableName: String, val data: Long): DataVariable<Long>(variableName, data)
+        data class SignedByte(val variableName: String, val data: Byte) : DataVariable<Byte>(variableName, data)
+        data class SignedShort(val variableName: String, val data: Short) : DataVariable<Short>(variableName, data)
+        data class SignedInt(val variableName: String, val data: Int) : DataVariable<Int>(variableName, data)
+        data class SignedLong(val variableName: String, val data: Long) : DataVariable<Long>(variableName, data)
 
-        data class Float32(val variableName: String, val data: Float): DataVariable<Float>(variableName, data)
-        data class Float64(val variableName: String, val data: Double): DataVariable<Double>(variableName, data)
+        data class Float32(val variableName: String, val data: Float) : DataVariable<Float>(variableName, data)
+        data class Float64(val variableName: String, val data: Double) : DataVariable<Double>(variableName, data)
 
-        abstract class UTF8(variableName: String, open val data: Int): DataVariable<Int>(variableName, data)
-        data class Label(val variableName: String, override val data: Int): UTF8(variableName, data)
-        data class Refer(val variableName: String, override val data: Int): UTF8(variableName, data)
-        data class Ascii(val variableName: String, override val data: Int): UTF8(variableName, data)
-        data class UTF16(val variableName: String, val data: Int): DataVariable<Int>(variableName, data)
+        abstract class UTF8(variableName: String, open val data: Int) : DataVariable<Int>(variableName, data)
+        data class Label(val variableName: String, override val data: Int) : UTF8(variableName, data)
+        data class Refer(val variableName: String, override val data: Int) : UTF8(variableName, data)
+        data class Ascii(val variableName: String, override val data: Int) : UTF8(variableName, data)
+        data class UTF16(val variableName: String, val data: Int) : DataVariable<Int>(variableName, data)
 
         val dataVariableName: String = variableName
         val dataAsT = data

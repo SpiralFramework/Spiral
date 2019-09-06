@@ -2,28 +2,33 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.util.*
-import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readString
+import info.spiralframework.base.util.readUInt32LE
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 
-class SPC private constructor(context: SpiralContext, val dataSource: DataSource): IArchive {
+class SPC private constructor(context: SpiralContext, val dataSource: DataSource) : IArchive {
     companion object {
         val MAGIC_NUMBER = 0x2e535043
         val TABLE_MAGIC_NUMBER = 0x746f6f52
 
         val COMPRESSION_FLAG_ARRAYS = arrayOf(0x01, 0x02, 0x03)
 
-        operator fun invoke(dataSource: DataSource): SPC? {
-            try {
-                return SPC(dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.spc.invalid", dataSource, iae)
+        operator fun invoke(context: SpiralContext, dataSource: DataSource): SPC? {
+            withFormats(context) {
+                try {
+                    return SPC(this, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.spc.invalid", dataSource, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(dataSource: DataSource): SPC = SPC(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): SPC = withFormats(context) { SPC(this, dataSource) }
     }
 
     val files: Array<SPCEntry>
@@ -67,7 +72,7 @@ class SPC private constructor(context: SpiralContext, val dataSource: DataSource
 
                     stream.skip(compressedSize + dataPadding)
 
-                    return@Array SPCEntry(compressionFlag, unknownFlag, compressedSize, decompressedSize, name, position, this)
+                    return@Array SPCEntry(this, compressionFlag, unknownFlag, compressedSize, decompressedSize, name, position, this@SPC)
                 }
             } finally {
                 stream.close()

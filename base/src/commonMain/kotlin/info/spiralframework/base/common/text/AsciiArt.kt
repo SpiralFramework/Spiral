@@ -1,5 +1,6 @@
 package info.spiralframework.base.common.text
 
+import info.spiralframework.base.binding.formatPercent
 import info.spiralframework.base.common.SpiralContext
 import kotlinx.coroutines.*
 import kotlin.math.ceil

@@ -5,7 +5,8 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.base.util.readString
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.common.withFormats
+import info.spiralframework.formats.utils.DataSource
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding
@@ -41,17 +42,19 @@ class WAD private constructor(context: SpiralContext, val dataSource: DataSource
             }
         var FILENAME_LENGTH_RANGE: IntRange = MIN_FILENAME_LENGTH..MAX_FILENAME_LENGTH
 
-        operator fun invoke(dataSource: DataSource): WAD? {
-            try {
-                return WAD(dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.wad.invalid", dataSource, iae)
+        operator fun invoke(context: SpiralContext, dataSource: DataSource): WAD? {
+            withFormats(context) {
+                try {
+                    return WAD(this, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.wad.invalid", dataSource, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(dataSource: DataSource): WAD = WAD(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): WAD = withFormats(context) { WAD(this, dataSource) }
     }
 
     val major: Int
@@ -89,7 +92,7 @@ class WAD private constructor(context: SpiralContext, val dataSource: DataSource
                     val size = stream.readInt64LE()
                     val offset = stream.readInt64LE()
 
-                    return@Array WADFileEntry(name, size, offset, this)
+                    return@Array WADFileEntry(name, size, offset, this@WAD)
                 }
 
                 val directoryCount = stream.readInt32LE()

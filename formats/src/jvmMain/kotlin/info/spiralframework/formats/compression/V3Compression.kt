@@ -1,6 +1,6 @@
 package info.spiralframework.formats.compression
 
-import info.spiralframework.base.util.locale
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32BE
 import info.spiralframework.base.util.readInt32LE
 import java.io.InputStream
@@ -17,8 +17,8 @@ object V3Compression: ICompression {
 
     override val supportsChunking = true
 
-    override fun isCompressed(dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readInt32LE() == MAGIC_NUMBER }
-    override fun decompressToPipe(dataSource: () -> InputStream, sink: OutputStream) {
+    override fun isCompressed(context: SpiralContext, dataSource: () -> InputStream): Boolean = dataSource().use { stream -> stream.readInt32LE() == MAGIC_NUMBER }
+    override fun decompressToPipe(context: SpiralContext, dataSource: () -> InputStream, sink: OutputStream) {
         dataSource().use { stream ->
             stream.skip(4)
 
@@ -30,7 +30,7 @@ object V3Compression: ICompression {
             val unk = stream.readInt32BE()
 
             while (true) {
-                val chunk = decompressStreamChunk(stream)
+                val chunk = decompressStreamChunk(context, stream)
                 if (chunk.isEmpty())
                     break
 
@@ -39,11 +39,11 @@ object V3Compression: ICompression {
         }
     }
 
-    override fun prepareChunkStream(stream: InputStream) {
+    override fun prepareChunkStream(context: SpiralContext, stream: InputStream) {
         stream.skip(32)
     }
 
-    override fun decompressStreamChunk(stream: InputStream): ByteArray {
+    override fun decompressStreamChunk(context: SpiralContext, stream: InputStream): ByteArray {
         val mode = stream.readInt32LE()
 
         if (mode != CLN && mode != CL1 && mode != CL2 && mode != CR0)
@@ -58,44 +58,46 @@ object V3Compression: ICompression {
         if (mode == CR0)
             return chunk
         else
-            return decompressChunk(chunk, mode)
+            return decompressChunk(context, chunk, mode)
     }
 
-    fun decompressChunk(data: ByteArray, mode: Int): ByteArray {
-        val result: MutableList<Byte> = LinkedList()
+    fun decompressChunk(context: SpiralContext, data: ByteArray, mode: Int): ByteArray {
+        with(context) {
+            val result: MutableList<Byte> = LinkedList()
 
-        var flag = 1
-        var p = 0
+            var flag = 1
+            var p = 0
 
-        val shift: Int
+            val shift: Int
 
-        when (mode) {
-            CLN -> shift = 8
-            CL1 -> shift = 7
-            CL2 -> shift = 6
-            else -> throw locale<IllegalArgumentException>("formats.v3_compression.invalid_mode")
-        }
+            when (mode) {
+                CLN -> shift = 8
+                CL1 -> shift = 7
+                CL2 -> shift = 6
+                else -> throw IllegalArgumentException(localise("formats.v3_compression.invalid_mode"))
+            }
 
-        val mask = (1 shl shift) - 1
+            val mask = (1 shl shift) - 1
 
-        while (p < data.size) {
-            val b = data[p].toInt() and 0xFF
-            p++
-
-            if (b and 1 == 1) {
-                val count = (b and mask) shr 1
-                val offset = ((b shr shift) shl 8) or (data[p].toInt() and 0xFF)
+            while (p < data.size) {
+                val b = data[p].toInt() and 0xFF
                 p++
 
-                for (i in 0 until count)
-                    result.add(result[result.size - offset])
-            } else {
-                val count = b shr 1
-                result.addAll(data.copyOfRange(p, p + count).toTypedArray())
-                p += count
-            }
-        }
+                if (b and 1 == 1) {
+                    val count = (b and mask) shr 1
+                    val offset = ((b shr shift) shl 8) or (data[p].toInt() and 0xFF)
+                    p++
 
-        return result.toByteArray()
+                    for (i in 0 until count)
+                        result.add(result[result.size - offset])
+                } else {
+                    val count = b shr 1
+                    result.addAll(data.copyOfRange(p, p + count).toTypedArray())
+                    p += count
+                }
+            }
+
+            return result.toByteArray()
+        }
     }
 }

@@ -1,24 +1,27 @@
 package info.spiralframework.formats.data
 
-import info.spiralframework.formats.game.v3.V3
-import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.foldToInt16LE
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.formats.common.withFormats
+import info.spiralframework.formats.game.v3.V3
+import info.spiralframework.formats.utils.foldToInt16LE
 import java.io.InputStream
 
-class NonstopDebateV3 private constructor(val game: V3, val dataSource: () -> InputStream) {
+class NonstopDebateV3 private constructor(context: SpiralContext, val game: V3, val dataSource: () -> InputStream) {
     companion object {
-        operator fun invoke(game: V3, dataSource: () -> InputStream): NonstopDebateV3? {
-            try {
-                return NonstopDebateV3(game, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.nonstop_v3.invalid", dataSource, game, iae)
+        operator fun invoke(context: SpiralContext, game: V3, dataSource: () -> InputStream): NonstopDebateV3? {
+            withFormats(context) {
+                try {
+                    return NonstopDebateV3(this, game, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.nonstop_v3.invalid", dataSource, game, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(game: V3, dataSource: () -> InputStream): NonstopDebateV3 = NonstopDebateV3(game, dataSource)
+        fun unsafe(context: SpiralContext, game: V3, dataSource: () -> InputStream): NonstopDebateV3 = withFormats(context) { NonstopDebateV3(this, game, dataSource) }
     }
     val timeLimit: Int
     val unk: Int
@@ -26,29 +29,31 @@ class NonstopDebateV3 private constructor(val game: V3, val dataSource: () -> In
     val sections: Array<NonstopDebateSection>
 
     init {
-        val stream = dataSource()
+        with(context) {
+            val stream = dataSource()
 
-        try {
-            timeLimit = stream.readInt16LE()
+            try {
+                timeLimit = stream.readInt16LE()
 
-            val sectionCount = stream.read()
-            unk = stream.read()
+                val sectionCount = stream.read()
+                unk = stream.read()
 
-            otherBitsOfHeader = ByteArray(8)
-            stream.read(otherBitsOfHeader)
+                otherBitsOfHeader = ByteArray(8)
+                stream.read(otherBitsOfHeader)
 
-            val sectionBuffer = ByteArray(404)
+                val sectionBuffer = ByteArray(404)
 
-            sections = Array(sectionCount) {
-                val read = stream.read(sectionBuffer)
-                require(read == sectionBuffer.size) { localise("formats.nonstop_v3.invalid_stream_size", read, sectionBuffer.size) }
+                sections = Array(sectionCount) {
+                    val read = stream.read(sectionBuffer)
+                    require(read == sectionBuffer.size) { localise("formats.nonstop_v3.invalid_stream_size", read, sectionBuffer.size) }
 
-                return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
+                    return@Array NonstopDebateSection(sectionBuffer.foldToInt16LE())
+                }
+
+                require(stream.read() == -1) { localise("formats.nonstop_v3.invalid_stream_data") }
+            } finally {
+                stream.close()
             }
-
-            require(stream.read() == -1) { localise("formats.nonstop_v3.invalid_stream_data") }
-        } finally {
-            stream.close()
         }
     }
 }

@@ -2,10 +2,11 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.with
 import info.spiralframework.base.util.*
 import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
-import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
 import java.time.LocalDateTime
@@ -54,63 +55,65 @@ class CPK private constructor(context: SpiralContext, val dataSource: () -> Inpu
             }
         }
 
-        fun readTable(dataSource: () -> InputStream, offset: Long): UTFTableInfo =
-                CountingInputStream(dataSource()).use { stream ->
-                    stream.skip(offset)
+        fun SpiralContext.readTable(offset: Long, dataSource: () -> InputStream): UTFTableInfo =
+                with(SPIRAL_FORMATS_MODULE) {
+                    CountingInputStream(dataSource()).use { stream ->
+                        stream.skip(offset)
 
-                    val magic = stream.readInt32LE()
-                    assert(magic == UTF_MAGIC_NUMBER)
+                        val magic = stream.readInt32LE()
+                        assert(magic == UTF_MAGIC_NUMBER)
 
-                    val info = UTFTableInfo()
+                        val info = UTFTableInfo()
 
-                    info.tableOffset = offset
-                    info.tableSize = stream.readUInt32BE().toLong()
-                    info.schemaOffset = 0x20
-                    info.rowsOffset = stream.readUInt32BE().toLong()
-                    info.stringTableOffset = stream.readUInt32BE().toLong()
-                    info.dataOffset = stream.readUInt32BE().toLong()
+                        info.tableOffset = offset
+                        info.tableSize = stream.readUInt32BE().toLong()
+                        info.schemaOffset = 0x20
+                        info.rowsOffset = stream.readUInt32BE().toLong()
+                        info.stringTableOffset = stream.readUInt32BE().toLong()
+                        info.dataOffset = stream.readUInt32BE().toLong()
 
-                    val tableNameString = stream.readInt32BE()
+                        val tableNameString = stream.readInt32BE()
 
-                    info.columns = stream.readInt16BE()
-                    info.rowWidth = stream.readInt16BE()
-                    info.rows = stream.readUInt32BE().toLong()
+                        info.columns = stream.readInt16BE()
+                        info.rowWidth = stream.readInt16BE()
+                        info.rows = stream.readUInt32BE().toLong()
 
-                    info.stringTable = dataSource().use str@{ stringStream ->
-                        stringStream.skip(8 + info.stringTableOffset + offset)
-                        return@str stringStream.readString((info.dataOffset - info.stringTableOffset).toInt() + 1)
-                    }
-
-                    info.tableName = info.stringTable.substring(tableNameString).substringBefore(NULL_TERMINATOR)
-
-                    info.schema = Array(info.columns) {
-                        val column = UTFColumnInfo()
-
-                        column.type = stream.read()
-                        column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(NULL_TERMINATOR)
-
-                        if (column.type and COLUMN_STORAGE_MASK == COLUMN_STORAGE_CONSTANT) {
-                            column.constantOffset = stream.streamOffset
-
-                            when (column.type and COLUMN_TYPE_MASK) {
-                                COLUMN_TYPE_STRING -> stream.skip(4)
-                                COLUMN_TYPE_8BYTE -> stream.skip(8)
-                                COLUMN_TYPE_DATA -> stream.skip(8)
-                                COLUMN_TYPE_FLOAT -> stream.skip(4)
-                                COLUMN_TYPE_4BYTE -> stream.skip(4)
-                                COLUMN_TYPE_4BYTE2 -> stream.skip(4)
-                                COLUMN_TYPE_2BYTE -> stream.skip(2)
-                                COLUMN_TYPE_2BYTE2 -> stream.skip(2)
-                                COLUMN_TYPE_1BYTE -> stream.read()
-                                COLUMN_TYPE_1BYTE2 -> stream.read()
-                                else -> DataHandler.LOGGER.debug("formats.cpk.unknown_column_constant", column.type)
-                            }
+                        info.stringTable = dataSource().use str@{ stringStream ->
+                            stringStream.skip(8 + info.stringTableOffset + offset)
+                            return@str stringStream.readString((info.dataOffset - info.stringTableOffset).toInt() + 1)
                         }
 
-                        return@Array column
-                    }
+                        info.tableName = info.stringTable.substring(tableNameString).substringBefore(NULL_TERMINATOR)
 
-                    return@use info
+                        info.schema = Array(info.columns) {
+                            val column = UTFColumnInfo()
+
+                            column.type = stream.read()
+                            column.columnName = info.stringTable.substring(stream.readInt32BE()).substringBefore(NULL_TERMINATOR)
+
+                            if (column.type and COLUMN_STORAGE_MASK == COLUMN_STORAGE_CONSTANT) {
+                                column.constantOffset = stream.streamOffset
+
+                                when (column.type and COLUMN_TYPE_MASK) {
+                                    COLUMN_TYPE_STRING -> stream.skip(4)
+                                    COLUMN_TYPE_8BYTE -> stream.skip(8)
+                                    COLUMN_TYPE_DATA -> stream.skip(8)
+                                    COLUMN_TYPE_FLOAT -> stream.skip(4)
+                                    COLUMN_TYPE_4BYTE -> stream.skip(4)
+                                    COLUMN_TYPE_4BYTE2 -> stream.skip(4)
+                                    COLUMN_TYPE_2BYTE -> stream.skip(2)
+                                    COLUMN_TYPE_2BYTE2 -> stream.skip(2)
+                                    COLUMN_TYPE_1BYTE -> stream.read()
+                                    COLUMN_TYPE_1BYTE2 -> stream.read()
+                                    else -> debug("formats.cpk.unknown_column_constant", column.type)
+                                }
+                            }
+
+                            return@Array column
+                        }
+
+                        return@use info
+                    }
                 }
 
         val VALID_MONTHS = 1L..12
@@ -142,7 +145,7 @@ class CPK private constructor(context: SpiralContext, val dataSource: () -> Inpu
         }
 
         operator fun invoke(context: SpiralContext, dataSource: DataSource): CPK? {
-            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+            withFormats(context) {
                 try {
                     return CPK(this, dataSource)
                 } catch (iae: IllegalArgumentException) {
@@ -153,7 +156,7 @@ class CPK private constructor(context: SpiralContext, val dataSource: () -> Inpu
             }
         }
 
-        fun unsafe(context: SpiralContext, dataSource: DataSource): CPK = CPK(context, dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): CPK = withFormats(context) { CPK(this, dataSource) }
     }
 
     val headerInfo: UTFTableInfo
@@ -170,33 +173,33 @@ class CPK private constructor(context: SpiralContext, val dataSource: () -> Inpu
                 val magic = stream.readInt32LE()
                 require(magic == MAGIC_NUMBER) { localise("formats.cpk.invalid_magic", magic, MAGIC_NUMBER) }
 
-                headerInfo = readTable(dataSource, 0x10)
+                headerInfo = readTable(0x10, dataSource)
                 require(headerInfo.rows == 1L) { localise("formats.cpk.invalid_header_row_count", headerInfo.rows) }
 
-                val tocOffset = requireNotNull((headerInfo.getRow(dataSource, 0, TOC_OFFSET_COLUMN)?.second as? Number)?.toLong())
-                val etocOffset = (headerInfo.getRow(dataSource, 0, ETOC_OFFSET_COLUMN)?.second as? Number)?.toLong()
-                val contentOffset = requireNotNull((headerInfo.getRow(dataSource, 0, CONTENT_OFFSET_COLUMN)?.second as? Number)?.toLong())
-                val fileCount = requireNotNull((headerInfo.getRow(dataSource, 0, FILES_COLUMN)?.second as? Number)?.toLong())
+                val tocOffset = requireNotNull((headerInfo.getRow(this, dataSource, 0, TOC_OFFSET_COLUMN)?.second as? Number)?.toLong())
+                val etocOffset = (headerInfo.getRow(this, dataSource, 0, ETOC_OFFSET_COLUMN)?.second as? Number)?.toLong()
+                val contentOffset = requireNotNull((headerInfo.getRow(this, dataSource, 0, CONTENT_OFFSET_COLUMN)?.second as? Number)?.toLong())
+                val fileCount = requireNotNull((headerInfo.getRow(this, dataSource, 0, FILES_COLUMN)?.second as? Number)?.toLong())
 
-                tocHeader = readTable(dataSource, tocOffset + 0x10)
+                tocHeader = readTable(tocOffset + 0x10, dataSource)
                 require(tocHeader.rows == fileCount) { localise("formats.cpk.invalid_toc_header_row_count", tocHeader.rows, fileCount) }
 
-                etocHeader = etocOffset?.let { offset -> readTable(dataSource, offset + 0x10) }
+                etocHeader = etocOffset?.let { offset -> readTable(offset + 0x10, dataSource) }
 
                 files = Array(tocHeader.rows.toInt()) { i ->
-                    val filename = tocHeader.getRow(dataSource, i, FILENAME_COLUMN)?.second as? String
+                    val filename = tocHeader.getRow(this, dataSource, i, FILENAME_COLUMN)?.second as? String
                             ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR)
-                    val dirname = tocHeader.getRow(dataSource, i, DIRECTORY_NAME_COLUMN)?.second as? String
+                    val dirname = tocHeader.getRow(this, dataSource, i, DIRECTORY_NAME_COLUMN)?.second as? String
                             ?: tocHeader.stringTable.substringBefore(NULL_TERMINATOR)
-                    val fileSize = (tocHeader.getRow(dataSource, i, FILE_SIZE_COLUMN)?.second as? Number ?: -1).toLong()
-                    val extractSize = (tocHeader.getRow(dataSource, i, EXTRACT_SIZE_COLUMN)?.second as? Number
+                    val fileSize = (tocHeader.getRow(this, dataSource, i, FILE_SIZE_COLUMN)?.second as? Number ?: -1).toLong()
+                    val extractSize = (tocHeader.getRow(this, dataSource, i, EXTRACT_SIZE_COLUMN)?.second as? Number
                             ?: -1).toLong()
-                    val fileOffset = (tocHeader.getRow(dataSource, i, FILE_OFFSET_COLUMN)?.second as? Number
+                    val fileOffset = (tocHeader.getRow(this, dataSource, i, FILE_OFFSET_COLUMN)?.second as? Number
                             ?: -1).toLong() + minOf(contentOffset, tocOffset)
 
                     val isCompressed = extractSize > fileSize
 
-                    return@Array CPKFileEntry(filename, dirname, fileSize, extractSize, fileOffset, isCompressed, this@CPK)
+                    return@Array CPKFileEntry(this, filename, dirname, fileSize, extractSize, fileOffset, isCompressed, this@CPK)
                 }
             } finally {
                 stream.close()

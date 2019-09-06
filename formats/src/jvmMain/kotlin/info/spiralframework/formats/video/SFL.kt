@@ -2,9 +2,9 @@ package info.spiralframework.formats.video
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.common.withFormats
+import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.video.sfl.SFLTable
 import java.io.InputStream
 
@@ -12,17 +12,19 @@ class SFL private constructor(context: SpiralContext, val dataSource: () -> Inpu
     companion object {
         val MAGIC_NUMBER = 0x53464C4C
         
-        operator fun invoke(dataSource: DataSource): SFL? {
-            try {
-                 return SFL(dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.sfl.invalid", dataSource, iae)
-                
-                return null
+        operator fun invoke(context: SpiralContext, dataSource: DataSource): SFL? {
+            withFormats(context) {
+                try {
+                    return SFL(this, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.sfl.invalid", dataSource, iae)
+
+                    return null
+                }
             }
         }
 
-        fun unsafe(dataSource: DataSource): SFL = SFL(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): SFL = withFormats(context) { SFL(this, dataSource) }
     }
 
     val headerUnk1: Int
@@ -44,10 +46,10 @@ class SFL private constructor(context: SpiralContext, val dataSource: () -> Inpu
                 maxTableIndex = stream.readInt32LE()
 
                 if (headerUnk2 != 7)
-                    DataHandler.LOGGER.debug("formats.sfl.headerUnk2", headerUnk2)
+                    debug("formats.sfl.headerUnk2", headerUnk2)
 
                 if (maxTableIndex != 5 && maxTableIndex != 6)
-                    DataHandler.LOGGER.debug("formats.sfl.max_table_index", maxTableIndex)
+                    debug("formats.sfl.max_table_index", maxTableIndex)
 
                 tables = Array(maxTableIndex) {
                     val table = SFLTable(stream.readInt32LE(), stream.readInt32LE().toInt(), stream.readInt32LE(), stream.readInt32LE(), stream.streamOffset.toInt(), this@SFL)

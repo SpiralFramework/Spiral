@@ -1,7 +1,7 @@
 package info.spiralframework.base.util
 
-import info.spiralframework.base.ANSI
 import info.spiralframework.base.MappingIterator
+import info.spiralframework.base.common.text.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.ByteBuffer
@@ -110,8 +110,8 @@ public inline fun printlnErr(error: CharArray) {
 
 
 public inline fun printAndBack(message: String) {
-    System.out.print(message)
-    System.out.print(ANSI CURSOR_BACK message.length)
+    print(message)
+    print(Ansi CURSOR_BACK message.length)
 }
 
 public fun <T, V> Array<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)

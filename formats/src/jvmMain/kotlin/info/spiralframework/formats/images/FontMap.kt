@@ -4,8 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.common.withFormats
+import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
+import kotlin.collections.set
 
 /**
  * Font Map for Danganronpa 1 and 2
@@ -14,17 +16,19 @@ class FontMap private constructor(context: SpiralContext, val dataSource: () -> 
     companion object {
         val MAGIC_NUMBER = 0x453704674
 
-        operator fun invoke(dataSource: DataSource): FontMap? {
-            try {
-                return FontMap(dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.font_map.invalid", dataSource, iae)
+        operator fun invoke(context: SpiralContext, dataSource: DataSource): FontMap? {
+            withFormats(context) {
+                try {
+                    return FontMap(this, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.font_map.invalid", dataSource, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(dataSource: DataSource): FontMap = FontMap(dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): FontMap = withFormats(context) { FontMap(this, dataSource) }
     }
 
     val entryCount: Int
