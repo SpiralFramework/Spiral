@@ -67,3 +67,5 @@ fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
         }
     }
 }
+
+expect fun formatPercent(percentage: Double): String
