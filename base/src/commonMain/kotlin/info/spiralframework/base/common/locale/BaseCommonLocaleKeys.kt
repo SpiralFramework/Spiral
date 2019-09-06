@@ -1,7 +1,5 @@
 package info.spiralframework.base.common.locale
 
-import info.spiralframework.base.binding.SpiralLocale
-
 object BaseCommonLocaleKeys {
     const val PROMPT_AFFIRMATIVE = "base.prompt.affirmative"
     const val PROMPT_NEGATIVE = "base.prompt.negative"

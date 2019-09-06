@@ -1,12 +1,14 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readFloatBE
 import info.spiralframework.base.util.readInt16BE
 import info.spiralframework.base.util.readInt32BE
 import info.spiralframework.base.util.readInt64BE
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.utils.and
 import java.io.IOException
 import java.io.InputStream
+import kotlin.io.use
 
 data class UTFTableInfo(
         var tableOffset: Long = -1,
@@ -22,102 +24,107 @@ data class UTFTableInfo(
         var rows: Long = -1,
         var schema: Array<UTFColumnInfo> = emptyArray()
 ) {
-    fun getRows(dataSource: () -> InputStream, column: String): List<Triple<Int, CPKColumnType, Any>> {
+    fun getRows(context: SpiralContext, dataSource: () -> InputStream, column: String): List<Triple<Int, CPKColumnType, Any>> {
         val data: MutableList<Triple<Int, CPKColumnType, Any>> = ArrayList()
         for (i in 0 until rows.toInt()) {
-            val (a, b) = getRow(dataSource, i, column) ?: continue
+            val (a, b) = getRow(context, dataSource, i, column) ?: continue
             data.add(i to a and b)
         }
 
         return data
     }
 
-    fun getRow(dataSource: () -> InputStream, row: Int, column: String): Pair<CPKColumnType, Any>? {
-        var rowOffset = tableOffset + 8 + rowsOffset + (row * rowWidth)
+    fun getRow(context: SpiralContext, dataSource: () -> InputStream, row: Int, column: String): Pair<CPKColumnType, Any>? {
+        with(context) {
+            var rowOffset = tableOffset + 8 + rowsOffset + (row * rowWidth)
 
-        loop@ for (j in 0 until columns) {
-            dataSource().use { stream ->
-                var constant = false
+            loop@ for (j in 0 until columns) {
+                dataSource().use { stream ->
+                    var constant = false
 
-                when (val storageClass = schema[j].type and CPK.COLUMN_STORAGE_MASK) {
-                    CPK.COLUMN_STORAGE_PERROW -> {
+                    when (val storageClass = schema[j].type and CPK.COLUMN_STORAGE_MASK) {
+                        CPK.COLUMN_STORAGE_PERROW -> {
+                        }
+                        CPK.COLUMN_STORAGE_CONSTANT -> constant = true
+                        CPK.COLUMN_STORAGE_ZERO -> {
+                            if (schema[j].columnName == column)
+                                return CPKColumnType.getForMask(schema[j].type) to 0
+                            return@use
+                        }
+                        else -> debug("formats.cpk.unknown_storage_class", storageClass)
                     }
-                    CPK.COLUMN_STORAGE_CONSTANT -> constant = true
-                    CPK.COLUMN_STORAGE_ZERO -> {
-                        if (schema[j].columnName == column)
-                            return CPKColumnType.getForMask(schema[j].type) to 0
-                        return@use
+
+                    val dataOffset = if (constant) schema[j].constantOffset else rowOffset
+                    try {
+                        stream.skip(dataOffset)
+                    } catch (io: IOException) {
+                        io.printStackTrace()
                     }
-                    else -> DataHandler.LOGGER.debug("formats.cpk.unknown_storage_class", storageClass)
+
+                    val columnType = CPKColumnType.getForMask(schema[j].type)
+                    val dataObj: Any
+                    val bytesRead: Int
+
+                    when (columnType) {
+                        CPKColumnType.TYPE_STRING -> {
+                            val num = stream.readInt32BE()
+                            dataObj = num
+                            bytesRead = 4
+                        }
+                        CPKColumnType.TYPE_DATA -> {
+                            dataObj = (stream.readInt32BE() to stream.readInt32BE())
+                            bytesRead = 8
+                        }
+                        CPKColumnType.TYPE_8BYTE -> {
+                            dataObj = stream.readInt64BE()
+                            bytesRead = 8
+                        }
+                        CPKColumnType.TYPE_4BYTE2 -> {
+                            dataObj = stream.readInt32BE()
+                            bytesRead = 4
+                        }
+                        CPKColumnType.TYPE_4BYTE -> {
+                            dataObj = stream.readInt32BE()
+                            bytesRead = 4
+                        }
+                        CPKColumnType.TYPE_2BYTE2 -> {
+                            dataObj = stream.readInt16BE()
+                            bytesRead = 2
+                        }
+                        CPKColumnType.TYPE_2BYTE -> {
+                            dataObj = stream.readInt16BE()
+                            bytesRead = 2
+                        }
+                        CPKColumnType.TYPE_FLOAT -> {
+                            dataObj = (0.0f to stream.readFloatBE())
+                            bytesRead = 4
+                        }
+                        CPKColumnType.TYPE_1BYTE2 -> {
+                            dataObj = (stream.read() and 0xFF)
+                            bytesRead = 1
+                        }
+                        CPKColumnType.TYPE_1BYTE -> {
+                            dataObj = (stream.read() and 0xFF)
+                            bytesRead = 1
+                        }
+                        else -> {
+                            debug("formats.cpk.unknown_column_constant", columnType)
+                            dataObj = 0
+                            bytesRead = 0
+                        }
+                    }
+
+                    if (!constant)
+                        rowOffset += bytesRead
+
+                    if (schema[j].columnName == column)
+                        return columnType to (if (columnType == CPKColumnType.TYPE_STRING) CPK.sanitiseStringTable(stringTable, (dataObj as Number).toInt()) else dataObj)
                 }
-
-                val dataOffset = if (constant) schema[j].constantOffset else rowOffset
-                try { stream.skip(dataOffset) }
-                catch (io: IOException) { io.printStackTrace() }
-
-                val columnType = CPKColumnType.getForMask(schema[j].type)
-                val dataObj: Any
-                val bytesRead: Int
-
-                when (columnType) {
-                    CPKColumnType.TYPE_STRING -> {
-                        val num = stream.readInt32BE()
-                        dataObj = num
-                        bytesRead = 4
-                    }
-                    CPKColumnType.TYPE_DATA -> {
-                        dataObj = (stream.readInt32BE() to stream.readInt32BE())
-                        bytesRead = 8
-                    }
-                    CPKColumnType.TYPE_8BYTE -> {
-                        dataObj = stream.readInt64BE()
-                        bytesRead = 8
-                    }
-                    CPKColumnType.TYPE_4BYTE2 -> {
-                        dataObj = stream.readInt32BE()
-                        bytesRead = 4
-                    }
-                    CPKColumnType.TYPE_4BYTE -> {
-                        dataObj = stream.readInt32BE()
-                        bytesRead = 4
-                    }
-                    CPKColumnType.TYPE_2BYTE2 -> {
-                        dataObj = stream.readInt16BE()
-                        bytesRead = 2
-                    }
-                    CPKColumnType.TYPE_2BYTE -> {
-                        dataObj = stream.readInt16BE()
-                        bytesRead = 2
-                    }
-                    CPKColumnType.TYPE_FLOAT -> {
-                        dataObj = (0.0f to stream.readFloatBE())
-                        bytesRead = 4
-                    }
-                    CPKColumnType.TYPE_1BYTE2 -> {
-                        dataObj = (stream.read() and 0xFF)
-                        bytesRead = 1
-                    }
-                    CPKColumnType.TYPE_1BYTE -> {
-                        dataObj = (stream.read() and 0xFF)
-                        bytesRead = 1
-                    }
-                    else -> {
-                        DataHandler.LOGGER.debug("formats.cpk.unknown_column_constant", columnType)
-                        dataObj = 0
-                        bytesRead = 0
-                    }
-                }
-
-                if (!constant)
-                    rowOffset += bytesRead
-
-                if (schema[j].columnName == column)
-                    return columnType to (if (columnType == CPKColumnType.TYPE_STRING) CPK.sanitiseStringTable(stringTable, (dataObj as Number).toInt()) else dataObj)
             }
-        }
 
-        return null
+            return null
+        }
     }
 
-    fun dump(data: () -> InputStream): Map<String, List<Triple<Int, CPKColumnType, Any>>> = schema.map { it.columnName to getRows(data, it.columnName) }.toMap()
+    fun dump(context: SpiralContext, data: () -> InputStream): Map<String, List<Triple<Int, CPKColumnType, Any>>> = schema.map { it.columnName to getRows(context, data, it.columnName) }.toMap()
 }

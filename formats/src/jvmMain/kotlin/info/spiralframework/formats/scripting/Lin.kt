@@ -2,17 +2,15 @@ package info.spiralframework.formats.scripting
 
 import info.spiralframework.base.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.util.locale
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.scripting.lin.UnknownEntry
-import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.and
 import java.io.InputStream
-import java.lang.IllegalStateException
 import java.util.*
 
 class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame, val dataSource: () -> InputStream) {
@@ -24,17 +22,19 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
         var MAXIMUM_LIN_READ = 1024 * 1024 * 8 // 8 MB maximum read
         var MAXIMUM_LIN_STRING = 1024 * 8 // 8 KB String
 
-        operator fun invoke(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin? {
-            try {
-                return Lin(game, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.lin.invalid", dataSource, game, iae)
+        operator fun invoke(context: SpiralContext, game: HopesPeakDRGame, dataSource: () -> InputStream): Lin? {
+            withFormats(context) {
+                try {
+                    return Lin(this, game, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.lin.invalid", dataSource, game, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = Lin(game, dataSource)
+        fun unsafe(context: SpiralContext, game: HopesPeakDRGame, dataSource: () -> InputStream): Lin = withFormats(context) { Lin(this, game, dataSource) }
     }
 
     val linType: Int
@@ -116,7 +116,7 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
 //                }
 
                     if (arguments.size != argumentCount && argumentCount != -1) {
-                        DataHandler.LOGGER.warn("formats.lin.wrong_arg_count", "0x${opCode.toString(16)}", argumentCount, arguments.size)
+                        warn("formats.lin.wrong_arg_count", "0x${opCode.toString(16)}", argumentCount, arguments.size)
                     }
 
                     entries.add(getEntry(opCode, arguments))
@@ -124,7 +124,7 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
 
                 if (stream.count < textBlock) {
                     val skipping = textBlock - stream.count
-                    DataHandler.LOGGER.debug("formats.lin.undershot_block", stream.count, textBlock, skipping)
+                    debug("formats.lin.undershot_block", stream.count, textBlock, skipping)
 
                     stream.skip(skipping)
                 } else if (stream.count > textBlock) {
@@ -147,7 +147,7 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
                     for (textID in 0 until textLines) {
                         val size = textPositions[textID + 1] - textPositions[textID] - 2
                         if (size <= 0) {
-                            DataHandler.LOGGER.debug("formats.lin.text_size_zero", textID, size)
+                            debug("formats.lin.text_size_zero", textID, size)
                             continue
                         }
 

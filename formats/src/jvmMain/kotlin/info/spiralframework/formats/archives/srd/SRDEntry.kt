@@ -6,14 +6,14 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32BE
 import info.spiralframework.base.util.readString
 import info.spiralframework.formats.archives.SRD
-import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.align
 import java.io.InputStream
 
 open class SRDEntry(context: SpiralContext, val dataType: String, val offset: Long, val dataLength: Int, val subdataLength: Int, val srd: SRD) {
     companion object {
         operator fun invoke(context: SpiralContext, stream: CountingInputStream, srd: SRD): SRDEntry {
-            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+            withFormats(context) {
                 val dataType = stream.readString(4)
 
                 val dataLength = stream.readInt32BE()

@@ -1,5 +1,6 @@
 package info.spiralframework.formats
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.data.NonstopDebate
 import info.spiralframework.formats.data.NonstopDebateV3
@@ -14,23 +15,23 @@ import info.spiralframework.formats.text.STX
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.video.SFL
 
-fun UnsafeAWB(dataSource: DataSource): AWB = AWB.unsafe(dataSource)
-fun UnsafeCPK(dataSource: DataSource): CPK = CPK.unsafe(dataSource)
-fun UnsafePak(overrideSanityChecks: Boolean = false, dataSource: DataSource): Pak = Pak.unsafe(overrideSanityChecks, dataSource)
-fun UnsafeSPC(dataSource: DataSource): SPC = SPC.unsafe(dataSource)
-fun UnsafeWAD(dataSource: DataSource): WAD = WAD.unsafe(dataSource)
+fun SpiralContext.UnsafeAWB(dataSource: DataSource): AWB = AWB.unsafe(this, dataSource)
+fun SpiralContext.UnsafeCPK(dataSource: DataSource): CPK = CPK.unsafe(this, dataSource)
+fun SpiralContext.UnsafePak(overrideSanityChecks: Boolean = false, dataSource: DataSource): Pak = Pak.unsafe(this, overrideSanityChecks, dataSource)
+fun SpiralContext.UnsafeSPC(dataSource: DataSource): SPC = SPC.unsafe(this, dataSource)
+fun SpiralContext.UnsafeWAD(dataSource: DataSource): WAD = WAD.unsafe(this, dataSource)
 
-fun UnsafeFontMap(dataSource: DataSource): FontMap = FontMap.unsafe(dataSource)
+fun SpiralContext.UnsafeFontMap(dataSource: DataSource): FontMap = FontMap.unsafe(this, dataSource)
 
-fun UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin.unsafe(game, dataSource)
-fun UnsafeWordScript(game: V3, dataSource: DataSource): WordScriptFile = WordScriptFile.unsafe(game, dataSource)
+fun SpiralContext.UnsafeLin(game: HopesPeakDRGame, dataSource: DataSource): Lin = Lin.unsafe(this, game, dataSource)
+fun SpiralContext.UnsafeWordScript(game: V3, dataSource: DataSource): WordScriptFile = WordScriptFile.unsafe(this, game, dataSource)
 
-fun UnsafeSTX(dataSource: DataSource): STX = STX.unsafe(dataSource)
+fun SpiralContext.UnsafeSTX(dataSource: DataSource): STX = STX.unsafe(this, dataSource)
 
-fun UnsafeSFL(dataSource: DataSource): SFL = SFL.unsafe(dataSource)
+fun SpiralContext.UnsafeSFL(dataSource: DataSource): SFL = SFL.unsafe(this, dataSource)
 
-fun UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate = NonstopDebate.unsafe(game, dataSource)
-fun UnsafeNonstopDebateV3(game: V3, dataSource: DataSource): NonstopDebateV3 = NonstopDebateV3.unsafe(game, dataSource)
+fun SpiralContext.UnsafeNonstopDebate(game: HopesPeakKillingGame, dataSource: DataSource): NonstopDebate = NonstopDebate.unsafe(this, game, dataSource)
+fun SpiralContext.UnsafeNonstopDebateV3(game: V3, dataSource: DataSource): NonstopDebateV3 = NonstopDebateV3.unsafe(this, game, dataSource)
 
 fun customWAD(init: CustomWAD.() -> Unit): CustomWAD {
     val customWAD = CustomWAD()

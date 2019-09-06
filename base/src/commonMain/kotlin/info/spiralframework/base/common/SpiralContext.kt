@@ -1,8 +1,8 @@
 package info.spiralframework.base.common
 
-import info.spiralframework.base.binding.SpiralLogger
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.locale.SpiralLocale
+import info.spiralframework.base.common.logging.SpiralLogger
 
 interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig {
     object NoOp : SpiralContext,

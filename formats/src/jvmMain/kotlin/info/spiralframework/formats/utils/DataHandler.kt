@@ -1,10 +1,5 @@
 package info.spiralframework.formats.utils
 
-import info.spiralframework.base.binding.SpiralLocale
-import info.spiralframework.base.binding.SpiralLogger
-import info.spiralframework.base.util.locale
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -34,11 +29,4 @@ object DataHandler {
     }
 
     fun shouldReadMap(): Boolean = this::streamToMap.isInitialized
-
-    val LOGGER: Logger
-
-    init {
-        SpiralLocale.addBundle("SpiralFormats")
-        LOGGER = SpiralLogger(LoggerFactory.getLogger(locale<String>("logger.formats.name")))
-    }
 }

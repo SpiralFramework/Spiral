@@ -1,6 +1,7 @@
 package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.locale.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

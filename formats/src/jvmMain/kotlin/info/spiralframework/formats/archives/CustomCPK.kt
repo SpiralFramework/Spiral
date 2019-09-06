@@ -1,8 +1,9 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.*
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utfTable
-import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.align
 import info.spiralframework.formats.utils.use
 import java.io.File
@@ -52,226 +53,228 @@ class CustomCPK() {
         assert(files.put(name.replace(File.separator, "/"), size to supplier) == null)
     }
 
-    fun compile(output: OutputStream) {
-        DataHandler.LOGGER.warn("formats.custom_cpk.header_warning")
-        val filenames = files.keys.sorted()
+    fun compile(context: SpiralContext, output: OutputStream) {
+        withFormats(context) {
+            warn("formats.custom_cpk.header_warning")
+            val filenames = files.keys.sorted()
 
-        val header = utfTable {
-            schema = arrayOf(
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "UpdateDateTime"),
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "FileSize"),
-                    UTFColumnInfo(STORAGE_LONG, "ContentOffset"),
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "ContentSize"),
-                    UTFColumnInfo(STORAGE_LONG, "TocOffset"),
-                    UTFColumnInfo(STORAGE_LONG, "TocSize"),
-                    UTFColumnInfo(STORAGE_LONG, "EtocOffset"),
-                    UTFColumnInfo(STORAGE_LONG, "EtocSize"),
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "ItocOffset"),
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "ItocSize"),
-                    UTFColumnInfo(STORAGE_LONG, "EnabledPackedSize"),
-                    UTFColumnInfo(STORAGE_LONG, "EnabledDataSize"),
-                    UTFColumnInfo(ZERO_STORAGE_LONG, "TotalDataSize"),
-                    UTFColumnInfo(ZERO_STORAGE_INT, "Tocs"),
-                    UTFColumnInfo(STORAGE_INT, "Files"),
-                    UTFColumnInfo(ZERO_STORAGE_INT, "TotalFiles"),
-                    UTFColumnInfo(ZERO_STORAGE_INT, "Directories"),
-                    UTFColumnInfo(ZERO_STORAGE_INT, "Updates"),
-                    UTFColumnInfo(STORAGE_SHORT, "Version"),
-                    UTFColumnInfo(STORAGE_SHORT, "Revision"),
-                    UTFColumnInfo(STORAGE_SHORT, "Align"),
-                    UTFColumnInfo(STORAGE_SHORT, "Sorted"),
-                    UTFColumnInfo(STORAGE_STRING, "Tvers"),
-                    UTFColumnInfo(STORAGE_STRING, "Comment")
-            )
+            val header = utfTable {
+                schema = arrayOf(
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "UpdateDateTime"),
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "FileSize"),
+                        UTFColumnInfo(STORAGE_LONG, "ContentOffset"),
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "ContentSize"),
+                        UTFColumnInfo(STORAGE_LONG, "TocOffset"),
+                        UTFColumnInfo(STORAGE_LONG, "TocSize"),
+                        UTFColumnInfo(STORAGE_LONG, "EtocOffset"),
+                        UTFColumnInfo(STORAGE_LONG, "EtocSize"),
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "ItocOffset"),
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "ItocSize"),
+                        UTFColumnInfo(STORAGE_LONG, "EnabledPackedSize"),
+                        UTFColumnInfo(STORAGE_LONG, "EnabledDataSize"),
+                        UTFColumnInfo(ZERO_STORAGE_LONG, "TotalDataSize"),
+                        UTFColumnInfo(ZERO_STORAGE_INT, "Tocs"),
+                        UTFColumnInfo(STORAGE_INT, "Files"),
+                        UTFColumnInfo(ZERO_STORAGE_INT, "TotalFiles"),
+                        UTFColumnInfo(ZERO_STORAGE_INT, "Directories"),
+                        UTFColumnInfo(ZERO_STORAGE_INT, "Updates"),
+                        UTFColumnInfo(STORAGE_SHORT, "Version"),
+                        UTFColumnInfo(STORAGE_SHORT, "Revision"),
+                        UTFColumnInfo(STORAGE_SHORT, "Align"),
+                        UTFColumnInfo(STORAGE_SHORT, "Sorted"),
+                        UTFColumnInfo(STORAGE_STRING, "Tvers"),
+                        UTFColumnInfo(STORAGE_STRING, "Comment")
+                )
 
-            stringTable = buildString {
-                append("<NULL>")
-                append(NULL_TERMINATOR)
+                stringTable = buildString {
+                    append("<NULL>")
+                    append(NULL_TERMINATOR)
 
-                append("CpkHeader")
-                append(NULL_TERMINATOR)
+                    append("CpkHeader")
+                    append(NULL_TERMINATOR)
 
-                append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
-                append(NULL_TERMINATOR)
+                    append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
+                    append(NULL_TERMINATOR)
 
-                append(WRITER_TVERSION)
-                append(NULL_TERMINATOR)
+                    append(WRITER_TVERSION)
+                    append(NULL_TERMINATOR)
+                }
+
+                rows = 1
+                columns = schema.size
+                rowWidth = rowSizeOf(schema)
+                rowsOffset = 32L + (columns * 5)
+                stringTableOffset = rowsOffset + rowWidth
+
+                tableName = "CpkHeader"
+                tableSize = stringTableOffset + stringTable.length
+                dataOffset = tableSize
             }
 
-            rows = 1
-            columns = schema.size
-            rowWidth = rowSizeOf(schema)
-            rowsOffset = 32L + (columns * 5)
-            stringTableOffset = rowsOffset + rowWidth
+            val toc = utfTable {
+                schema = arrayOf(
+                        UTFColumnInfo(STORAGE_STRING, "DirName"),
+                        UTFColumnInfo(STORAGE_STRING, "FileName"),
+                        UTFColumnInfo(STORAGE_INT, "FileSize"),
+                        UTFColumnInfo(STORAGE_INT, "ExtractSize"),
+                        UTFColumnInfo(STORAGE_LONG, "FileOffset"),
+                        UTFColumnInfo(ZERO_STORAGE_INT, "Info"),
+                        UTFColumnInfo(STORAGE_STRING, "UserString")
+                )
 
-            tableName = "CpkHeader"
-            tableSize = stringTableOffset + stringTable.length
-            dataOffset = tableSize
-        }
+                stringTable = buildString {
+                    append("<NULL>")
+                    append(NULL_TERMINATOR)
 
-        val toc = utfTable {
-            schema = arrayOf(
-                    UTFColumnInfo(STORAGE_STRING, "DirName"),
-                    UTFColumnInfo(STORAGE_STRING, "FileName"),
-                    UTFColumnInfo(STORAGE_INT, "FileSize"),
-                    UTFColumnInfo(STORAGE_INT, "ExtractSize"),
-                    UTFColumnInfo(STORAGE_LONG, "FileOffset"),
-                    UTFColumnInfo(ZERO_STORAGE_INT, "Info"),
-                    UTFColumnInfo(STORAGE_STRING, "UserString")
-            )
+                    append("CpkTocInfo")
+                    append(NULL_TERMINATOR)
 
-            stringTable = buildString {
-                append("<NULL>")
-                append(NULL_TERMINATOR)
+                    append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
+                    append(NULL_TERMINATOR)
 
-                append("CpkTocInfo")
-                append(NULL_TERMINATOR)
+                    append(filenames.joinToString("$NULL_TERMINATOR") { name -> "${name.substringBeforeLast('/', missingDelimiterValue = "")}$NULL_TERMINATOR${name.substringAfterLast('/')}" })
+                    append(NULL_TERMINATOR)
+                }
 
-                append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
-                append(NULL_TERMINATOR)
+                rows = files.size.toLong()
+                columns = schema.size
+                rowWidth = rowSizeOf(schema)
+                rowsOffset = 32L + (columns * 5)
+                stringTableOffset = rowsOffset + (rowWidth * rows)
 
-                append(filenames.joinToString("$NULL_TERMINATOR") { name -> "${name.substringBeforeLast('/', missingDelimiterValue = "")}$NULL_TERMINATOR${name.substringAfterLast('/')}" })
-                append(NULL_TERMINATOR)
+                tableName = "CpkTocInfo"
+                tableSize = stringTableOffset + stringTable.length
+                dataOffset = tableSize
             }
 
-            rows = files.size.toLong()
-            columns = schema.size
-            rowWidth = rowSizeOf(schema)
-            rowsOffset = 32L + (columns * 5)
-            stringTableOffset = rowsOffset + (rowWidth * rows)
+            val etoc = utfTable {
+                schema = arrayOf(
+                        UTFColumnInfo(STORAGE_LONG, "UpdateDateTime"),
+                        UTFColumnInfo(STORAGE_STRING, "LocalDir")
+                )
 
-            tableName = "CpkTocInfo"
-            tableSize = stringTableOffset + stringTable.length
-            dataOffset = tableSize
-        }
+                stringTable = buildString {
+                    append("<NULL>")
+                    append(NULL_TERMINATOR)
 
-        val etoc = utfTable {
-            schema = arrayOf(
-                    UTFColumnInfo(STORAGE_LONG, "UpdateDateTime"),
-                    UTFColumnInfo(STORAGE_STRING, "LocalDir")
-            )
+                    append("CpkEtocInfo")
+                    append(NULL_TERMINATOR)
 
-            stringTable = buildString {
-                append("<NULL>")
-                append(NULL_TERMINATOR)
+                    append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
+                    append(NULL_TERMINATOR)
 
-                append("CpkEtocInfo")
-                append(NULL_TERMINATOR)
+                    append(filenames.joinToString("$NULL_TERMINATOR") { name -> name.substringBeforeLast('/', missingDelimiterValue = "") })
+                    append(NULL_TERMINATOR)
+                }
 
-                append(schema.joinToString("$NULL_TERMINATOR", transform = UTFColumnInfo::columnName))
-                append(NULL_TERMINATOR)
+                rows = files.size + 1L
+                columns = schema.size
+                rowWidth = rowSizeOf(schema)
+                rowsOffset = 32L + (columns * 5)
+                stringTableOffset = rowsOffset + (rowWidth * rows)
 
-                append(filenames.joinToString("$NULL_TERMINATOR") { name -> name.substringBeforeLast('/', missingDelimiterValue = "") })
-                append(NULL_TERMINATOR)
+                tableName = "CpkEtocInfo"
+                tableSize = stringTableOffset + stringTable.length
+                dataOffset = tableSize
             }
 
-            rows = files.size + 1L
-            columns = schema.size
-            rowWidth = rowSizeOf(schema)
-            rowsOffset = 32L + (columns * 5)
-            stringTableOffset = rowsOffset + (rowWidth * rows)
+            output.writeInt32LE(CPK.MAGIC_NUMBER)
+            output.writeInt32LE(0xFF)
+            output.writeInt32LE(header.tableSize + 8)
+            output.writeInt32LE(0x00)
 
-            tableName = "CpkEtocInfo"
-            tableSize = stringTableOffset + stringTable.length
-            dataOffset = tableSize
+            val totalSize = files.values.fold(0L) { count, (size) -> count + size + size.align(2048) }
+
+            //Write Table
+            writeTable(output, header)
+            writeTableDataSingleRow(output, header, mapOf(
+                    "ContentOffset" to 2048,
+                    "TocOffset" to 2048 + totalSize + totalSize.align(2048),
+                    "TocSize" to toc.tableSize + 0x10,
+                    "EtocOffset" to 2048 + totalSize + totalSize.align(2048) + toc.tableSize + 16 + (toc.tableSize + 16).align(2048),
+                    "EtocSize" to etoc.tableSize + 0x10,
+                    "EnabledPackedSize" to totalSize,
+                    "EnabledDataSize" to totalSize,
+                    "Files" to files.size,
+                    "Version" to WRITER_VERSION,
+                    "Revision" to WRITER_REVISION,
+                    "Align" to 2048,
+                    "Sorted" to 1,
+                    "Tvers" to WRITER_TVERSION,
+                    "Comment" to ""
+            ))
+
+            //Write String Table
+            output.write(header.stringTable.toByteArray())
+
+            //Padding
+            output.write(ByteArray((16 + header.tableSize).align(2048)))
+
+            //Write Data
+            filenames.forEach { name ->
+                val (size, source) = files[name] ?: return@forEach
+                val copied = source.use { stream -> stream.copyTo(output) }
+                if (copied != size)
+                    System.err.println("ERR: Compiled $name and copied $copied")
+
+                output.write(ByteArray(copied.align(2048)))
+            }
+
+            //Pad
+            output.write(ByteArray(totalSize.align(2048)))
+
+            //Write Toc
+            output.writeInt32LE(CPK.TOC_MAGIC_NUMBER)
+            output.writeInt32LE(0xFF)
+            output.writeInt32LE(toc.tableSize + 8)
+            output.writeInt32LE(0x00)
+
+            writeTable(output, toc)
+            writeTableData(output, toc, mapOf(
+                    "DirName" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") },
+                    "FileName" to filenames.map { name -> name.substringAfterLast('/') },
+                    "FileSize" to filenames.map { name -> files[name]?.first ?: 0L },
+                    "ExtractSize" to filenames.map { name -> files[name]?.first ?: 0L },
+                    "FileOffset" to LongArray(filenames.size).apply {
+                        var offset = 0L
+
+                        for (i in 0 until this.size) {
+                            this[i] = offset
+
+                            val filesize = files[filenames[i]]?.first ?: 0L
+                            offset += filesize + filesize.align(2048)
+                        }
+                    }.toList(),
+                    "UserString" to Array(filenames.size) { "" }.toList()
+            ))
+
+            //Write String Table
+            output.write(toc.stringTable.toByteArray())
+
+            //Pad
+            output.write(ByteArray((toc.tableSize + 16).align(2048)))
+
+            //Write Etoc
+            val etocTime = CPK.convertToEtocTime(LocalDateTime.now())
+
+            output.writeInt32LE(CPK.ETOC_MAGIC_NUMBER)
+            output.writeInt32LE(0xFF)
+            output.writeInt32LE(etoc.tableSize + 8)
+            output.writeInt32LE(0x00)
+
+            writeTable(output, etoc)
+            writeTableData(output, etoc, mapOf(
+                    "UpdateDateTime" to LongArray(filenames.size) { etocTime }.toMutableList().apply { add(0L) },
+                    "LocalDir" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.toMutableList().apply { add("$NULL_TERMINATOR$NULL_TERMINATOR") }
+            ))
+
+            //Write String Table
+            output.write(etoc.stringTable.toByteArray())
         }
-
-        output.writeInt32LE(CPK.MAGIC_NUMBER)
-        output.writeInt32LE(0xFF)
-        output.writeInt32LE(header.tableSize + 8)
-        output.writeInt32LE(0x00)
-
-        val totalSize = files.values.fold(0L) { count, (size) -> count + size + size.align(2048) }
-
-        //Write Table
-        writeTable(output, header)
-        writeTableDataSingleRow(output, header, mapOf(
-                "ContentOffset" to 2048,
-                "TocOffset" to 2048 + totalSize + totalSize.align(2048),
-                "TocSize" to toc.tableSize + 0x10,
-                "EtocOffset" to 2048 + totalSize + totalSize.align(2048) + toc.tableSize + 16 + (toc.tableSize + 16).align(2048),
-                "EtocSize" to etoc.tableSize + 0x10,
-                "EnabledPackedSize" to totalSize,
-                "EnabledDataSize" to totalSize,
-                "Files" to files.size,
-                "Version" to WRITER_VERSION,
-                "Revision" to WRITER_REVISION,
-                "Align" to 2048,
-                "Sorted" to 1,
-                "Tvers" to WRITER_TVERSION,
-                "Comment" to ""
-        ))
-
-        //Write String Table
-        output.write(header.stringTable.toByteArray())
-
-        //Padding
-        output.write(ByteArray((16 + header.tableSize).align(2048)))
-
-        //Write Data
-        filenames.forEach { name ->
-            val (size, source) = files[name] ?: return@forEach
-            val copied = source.use { stream -> stream.copyTo(output) }
-            if (copied != size)
-                System.err.println("ERR: Compiled $name and copied $copied")
-
-            output.write(ByteArray(copied.align(2048)))
-        }
-
-        //Pad
-        output.write(ByteArray(totalSize.align(2048)))
-
-        //Write Toc
-        output.writeInt32LE(CPK.TOC_MAGIC_NUMBER)
-        output.writeInt32LE(0xFF)
-        output.writeInt32LE(toc.tableSize + 8)
-        output.writeInt32LE(0x00)
-
-        writeTable(output, toc)
-        writeTableData(output, toc, mapOf(
-                "DirName" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") },
-                "FileName" to filenames.map { name -> name.substringAfterLast('/') },
-                "FileSize" to filenames.map { name -> files[name]?.first ?: 0L },
-                "ExtractSize" to filenames.map { name -> files[name]?.first ?: 0L },
-                "FileOffset" to LongArray(filenames.size).apply {
-                    var offset = 0L
-
-                    for (i in 0 until this.size) {
-                        this[i] = offset
-
-                        val filesize = files[filenames[i]]?.first ?: 0L
-                        offset += filesize + filesize.align(2048)
-                    }
-                }.toList(),
-                "UserString" to Array(filenames.size) { "" }.toList()
-        ))
-
-        //Write String Table
-        output.write(toc.stringTable.toByteArray())
-
-        //Pad
-        output.write(ByteArray((toc.tableSize + 16).align(2048)))
-
-        //Write Etoc
-        val etocTime = CPK.convertToEtocTime(LocalDateTime.now())
-
-        output.writeInt32LE(CPK.ETOC_MAGIC_NUMBER)
-        output.writeInt32LE(0xFF)
-        output.writeInt32LE(etoc.tableSize + 8)
-        output.writeInt32LE(0x00)
-
-        writeTable(output, etoc)
-        writeTableData(output, etoc, mapOf(
-                "UpdateDateTime" to LongArray(filenames.size) { etocTime }.toMutableList().apply { add(0L) },
-                "LocalDir" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.toMutableList().apply { add("$NULL_TERMINATOR$NULL_TERMINATOR") }
-        ))
-
-        //Write String Table
-        output.write(etoc.stringTable.toByteArray())
     }
 
-    fun writeTable(output: OutputStream, init: UTFTableInfo.() -> Unit) = writeTable(output, UTFTableInfo().apply(init))
-    fun writeTable(output: OutputStream, table: UTFTableInfo) {
+    fun SpiralContext.writeTable(output: OutputStream, init: UTFTableInfo.() -> Unit) = writeTable(output, UTFTableInfo().apply(init))
+    fun SpiralContext.writeTable(output: OutputStream, table: UTFTableInfo) {
         //Size = 32 + stringTable.length
         output.writeInt32LE(CPK.UTF_MAGIC_NUMBER)
 
@@ -295,8 +298,8 @@ class CustomCPK() {
         }
     }
 
-    fun writeTableDataSingleRow(output: OutputStream, table: UTFTableInfo, dataMap: Map<String, Any?>) = writeTableData(output, table, dataMap.mapValues { (_, value) -> listOf(value) })
-    fun writeTableData(output: OutputStream, table: UTFTableInfo, dataMap: Map<String, List<Any?>>) {
+    fun SpiralContext.writeTableDataSingleRow(output: OutputStream, table: UTFTableInfo, dataMap: Map<String, Any?>) = writeTableData(output, table, dataMap.mapValues { (_, value) -> listOf(value) })
+    fun SpiralContext.writeTableData(output: OutputStream, table: UTFTableInfo, dataMap: Map<String, List<Any?>>) {
         val stringTableRange = 0 until table.stringTable.length
         for (i in 0 until table.rows.toInt()) {
             table.schema.forEach { (type, name) ->
@@ -329,7 +332,7 @@ class CustomCPK() {
                     CPKColumnType.TYPE_FLOAT -> output.writeFloatBE((data as? Number ?: 0).toFloat())
                     CPKColumnType.TYPE_1BYTE2 -> output.write((data as? Number ?: 0).toInt() and 0xFF)
                     CPKColumnType.TYPE_1BYTE -> output.write((data as? Number ?: 0).toInt() and 0xFF)
-                    else -> throw locale<IllegalArgumentException>("formats.custom_cpk.unknown_column_constant", type)
+                    else -> throw IllegalArgumentException(localise("formats.custom_cpk.unknown_column_constant", type))
                 }
             }
         }

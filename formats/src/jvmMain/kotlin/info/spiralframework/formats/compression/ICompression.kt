@@ -1,5 +1,6 @@
 package info.spiralframework.formats.compression
 
+import info.spiralframework.base.common.SpiralContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -7,11 +8,11 @@ import java.io.OutputStream
 interface ICompression {
     val supportsChunking: Boolean
 
-    fun isCompressed(dataSource: () -> InputStream): Boolean
+    fun isCompressed(context: SpiralContext, dataSource: () -> InputStream): Boolean
 
-    fun decompress(dataSource: () -> InputStream): ByteArray = ByteArrayOutputStream().apply { decompressToPipe(dataSource, this) }.toByteArray()
-    fun decompressToPipe(dataSource: () -> InputStream, sink: OutputStream)
+    fun decompress(context: SpiralContext, dataSource: () -> InputStream): ByteArray = ByteArrayOutputStream().apply { decompressToPipe(context, dataSource, this) }.toByteArray()
+    fun decompressToPipe(context: SpiralContext, dataSource: () -> InputStream, sink: OutputStream)
 
-    fun prepareChunkStream(stream: InputStream) {}
-    fun decompressStreamChunk(stream: InputStream): ByteArray = ByteArray(0)
+    fun prepareChunkStream(context: SpiralContext, stream: InputStream) {}
+    fun decompressStreamChunk(context: SpiralContext, stream: InputStream): ByteArray = ByteArray(0)
 }

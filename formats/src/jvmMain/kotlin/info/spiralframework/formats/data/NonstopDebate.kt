@@ -2,24 +2,26 @@ package info.spiralframework.formats.data
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
-import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.formats.utils.foldToInt16LE
 import java.io.InputStream
 
 class NonstopDebate private constructor(context: SpiralContext, val game: HopesPeakKillingGame, val dataSource: () -> InputStream) {
     companion object {
-        operator fun invoke(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate? {
-            try {
-                return NonstopDebate(game, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                DataHandler.LOGGER.debug("formats.nonstop.invalid", dataSource, game, iae)
+        operator fun invoke(context: SpiralContext, game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate? {
+            withFormats(context) {
+                try {
+                    return NonstopDebate(this, game, dataSource)
+                } catch (iae: IllegalArgumentException) {
+                    debug("formats.nonstop.invalid", dataSource, game, iae)
 
-                return null
+                    return null
+                }
             }
         }
 
-        fun unsafe(game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate = NonstopDebate(game, dataSource)
+        fun unsafe(context: SpiralContext, game: HopesPeakKillingGame, dataSource: () -> InputStream): NonstopDebate = withFormats(context) { NonstopDebate(this, game, dataSource) }
     }
 
     /** Time limit in seconds */

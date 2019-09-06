@@ -4,7 +4,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readUInt32LE
-import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
+import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 
 @ExperimentalUnsignedTypes
@@ -13,7 +13,7 @@ class AWB private constructor(context: SpiralContext, val dataSource: DataSource
         val MAGIC_NUMBER = 0x32534641
 
         operator fun invoke(context: SpiralContext, dataSource: DataSource): AWB? {
-            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+            withFormats(context) {
                 try {
                     return AWB(this, dataSource)
                 } catch (iae: IllegalArgumentException) {
@@ -23,7 +23,7 @@ class AWB private constructor(context: SpiralContext, val dataSource: DataSource
                 }
             }
         }
-        fun unsafe(context: SpiralContext, dataSource: DataSource): AWB = AWB(context.subcontext(SPIRAL_FORMATS_MODULE), dataSource)
+        fun unsafe(context: SpiralContext, dataSource: DataSource): AWB = withFormats(context) { AWB(this, dataSource) }
     }
 
     val entries: Array<AWBEntry>

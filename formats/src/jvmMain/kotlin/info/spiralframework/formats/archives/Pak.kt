@@ -2,7 +2,7 @@ package info.spiralframework.formats.archives
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
-import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
+import info.spiralframework.formats.common.withFormats
 import java.io.InputStream
 
 /**
@@ -16,14 +16,14 @@ import java.io.InputStream
  *
  * The second thing to note is that the offset, unlike [WAD] offsets, are ***not*** zero indexed. 0 would, in this case, be right at the start of the file
  */
-class Pak private constructor(context: SpiralContext, overrideSanityChecks: Boolean = false, val dataSource: () -> InputStream): IArchive {
+class Pak private constructor(context: SpiralContext, overrideSanityChecks: Boolean = false, val dataSource: () -> InputStream) : IArchive {
     companion object {
         var SANITY_MAX_FILE_COUNT = 1024
         var SANITY_MIN_FILE_SIZE = 0
         var SANITY_MAX_FILE_SIZE = 64 * 1024 * 1024
 
         operator fun invoke(context: SpiralContext, overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak? {
-            with(context.subcontext(SPIRAL_FORMATS_MODULE)) {
+            withFormats(context) {
                 try {
                     return Pak(this, overrideSanityChecks, dataSource)
                 } catch (iae: IllegalArgumentException) {
@@ -34,7 +34,7 @@ class Pak private constructor(context: SpiralContext, overrideSanityChecks: Bool
             }
         }
 
-        fun unsafe(context: SpiralContext, overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak = Pak(context, overrideSanityChecks, dataSource)
+        fun unsafe(context: SpiralContext, overrideSanityChecks: Boolean = false, dataSource: () -> InputStream): Pak = withFormats(context) { Pak(this, overrideSanityChecks, dataSource) }
     }
 
     val files: Array<PakEntry>
