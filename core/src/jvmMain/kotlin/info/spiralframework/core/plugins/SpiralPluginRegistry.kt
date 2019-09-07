@@ -30,7 +30,7 @@ interface SpiralPluginRegistry {
     fun SpiralCoreContext.loadedPlugins(): List<ISpiralPlugin>
 
     fun SpiralCoreContext.discover(): List<PluginEntry>
-    fun SpiralCoreContext.loadPlugin(plugin: PluginEntry): LoadPluginResult
+    fun SpiralCoreContext.loadPlugin(pluginEntry: PluginEntry): LoadPluginResult
     fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean
     fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin)
 }

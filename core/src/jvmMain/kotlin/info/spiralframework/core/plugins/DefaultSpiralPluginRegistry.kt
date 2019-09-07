@@ -130,7 +130,7 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         return result
     }
 
-    private fun loadPluginInternal(pluginEntry: PluginEntry): LoadPluginResult {
+    private fun SpiralCoreContext.loadPluginInternal(pluginEntry: PluginEntry): LoadPluginResult {
         val classLoader: ClassLoader
         if (pluginEntry.source != null && pluginLoaders.values.none { loader -> loader.urLs.any { url -> url == pluginEntry.source } }) {
             classLoader = URLClassLoader.newInstance(arrayOf(pluginEntry.source))
@@ -146,13 +146,13 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
                 ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
 
         loadedPlugins.add(plugin)
-        plugin.load()
+        plugin.load(this)
 
         return LoadPluginResult.SUCCESS
     }
 
     override fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {
-        plugin.unload()
+        plugin.unload(this)
         loadedPlugins.remove(plugin)
         unloadPluginInternal(plugin.uid)
     }
