@@ -1,15 +1,21 @@
 package info.spiralframework.formats.game.hpa
 
+import info.spiralframework.base.common.text.toIntBaseN
+import info.spiralframework.formats.common.data.JsonOpCode
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.TextCountEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.formats.scripting.lin.udg.UDGTextEntry
 import info.spiralframework.formats.utils.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.*
 
 object UDG: HopesPeakDRGame {
-    override val pakNames: Map<String, Array<String>> = emptyMap() //Probably never gonna get this huh
+    override val pakNames: Map<String, List<String>> = emptyMap() //Probably never gonna get this huh
+
+    @UnstableDefault
     override val opCodes: OpCodeMap<IntArray, LinScript> =
             OpCodeHashMap<IntArray, LinScript>().apply {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
@@ -26,19 +32,13 @@ object UDG: HopesPeakDRGame {
                 this[0x1B] = "Fade In" to 2 and ::UnknownEntry
 //                this[0x30] = "Set Flag" to 8 and ::UnknownEntry
 
-                val udgOpCodes = File("udg-ops.json")
+                val opCodes = File("udg-ops.json")
 
-                if (udgOpCodes.exists()) {
-
-                    DataHandler.fileToMap(udgOpCodes)?.forEach { opName, params ->
-                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
-                            val str = any.toString()
-                            if (str.startsWith("0x"))
-                                return@mapNotNull str.substring(2).toIntOrNull(16)
-                            return@mapNotNull str.toIntOrNull()
-                        } ?: return@forEach
-                        this[array[0]] = opName to array[1] and ::UnknownEntry
-                    }
+                if (opCodes.exists()) {
+                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+                            .forEach { (name, op) ->
+                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+                            }
                 }
             }
 
@@ -66,5 +66,7 @@ object UDG: HopesPeakDRGame {
             mapOf()
     override val steamID: String = "555950"
 
-    override val itemNames: Array<String> = SharedHPA.itemNames["udg"] ?: emptyArray()
+    @UnstableDefault
+    @ExperimentalStdlibApi
+    override val itemNames: Array<String> = SharedHPA.itemNames.udg
 }

@@ -11,9 +11,14 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
             SpiralLogger by SpiralLogger.NoOp,
             SpiralConfig by SpiralConfig.NoOp,
             SpiralEnvironment by SpiralEnvironment.NoOp {
+        override val loadedModules: Map<String, SemanticVersion>
+            get() = throw IllegalStateException("NoOp context")
+
         override fun subcontext(module: String): SpiralContext = this
         override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?): SpiralContext = this
     }
+
+    val loadedModules: Map<String, SemanticVersion>
 
     fun subcontext(module: String): SpiralContext
     fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null): SpiralContext

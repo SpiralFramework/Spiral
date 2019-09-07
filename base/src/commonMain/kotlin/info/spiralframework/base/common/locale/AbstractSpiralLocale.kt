@@ -15,6 +15,18 @@ interface SpiralLocale {
         override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String = msg
         override fun localiseEnglish(msg: String, vararg args: Any): String = msg
         override fun localiseEnglishArray(msg: String, args: Array<out Any>): String = msg
+
+        override fun addBundle(bundleName: String) {}
+        override fun addBundle(localeBundle: LocaleBundle) {}
+        override fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {}
+        override fun addEnglishBundle(englishBundle: LocaleBundle) {}
+
+        override fun removeBundle(bundleName: String) {}
+        override fun removeBundle(localeBundle: LocaleBundle) {}
+        override fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {}
+        override fun removeEnglishBundle(englishBundle: LocaleBundle) {}
+
+        override fun changeLocale(locale: CommonLocale) {}
     }
 
     fun localise(msg: String): String
@@ -28,6 +40,18 @@ interface SpiralLocale {
     fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String
     fun localiseEnglish(msg: String, vararg args: Any): String
     fun localiseEnglishArray(msg: String, args: Array<out Any>): String
+
+    fun addBundle(bundleName: String)
+    fun addBundle(localeBundle: LocaleBundle)
+    fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle)
+    fun addEnglishBundle(englishBundle: LocaleBundle)
+
+    fun removeBundle(bundleName: String)
+    fun removeBundle(localeBundle: LocaleBundle)
+    fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle)
+    fun removeEnglishBundle(englishBundle: LocaleBundle)
+
+    fun changeLocale(locale: CommonLocale)
 }
 
 abstract class AbstractSpiralLocale: SpiralLocale {
@@ -37,39 +61,39 @@ abstract class AbstractSpiralLocale: SpiralLocale {
     val localisationBundles: List<LocaleBundle> = _localisationBundles
     val englishBundles: List<LocaleBundle> = _englishBundles
 
-    var currentLocale: CommonLocale by Observables.newValue(CommonLocale.defaultLocale, this::changeLocale)
+    var currentLocale: CommonLocale by Observables.newValue(CommonLocale.defaultLocale) { newValue -> changeLocale(newValue) }
 
-    fun addBundle(bundleName: String) {
+    override fun addBundle(bundleName: String) {
         _localisationBundles.add(DefaultLocaleBundle(bundleName, currentLocale))
         _englishBundles.add(DefaultLocaleBundle(bundleName, CommonLocale.ENGLISH))
     }
-    fun addBundle(localeBundle: LocaleBundle) {
+    override fun addBundle(localeBundle: LocaleBundle) {
         _localisationBundles.add(localeBundle)
     }
-    fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {
+    override fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {
         _localisationBundles.add(localeBundle)
         _englishBundles.add(englishBundle)
     }
-    fun addEnglishBundle(englishBundle: LocaleBundle) {
+    override fun addEnglishBundle(englishBundle: LocaleBundle) {
         _englishBundles.add(englishBundle)
     }
 
-    fun removeBundle(bundleName: String) {
+    override fun removeBundle(bundleName: String) {
         _localisationBundles.removeAll { bundle -> bundle.bundleName == bundleName }
         _englishBundles.removeAll { bundle -> bundle.bundleName == bundleName }
     }
-    fun removeBundle(localeBundle: LocaleBundle) {
+    override fun removeBundle(localeBundle: LocaleBundle) {
         _localisationBundles.remove(localeBundle)
     }
-    fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {
+    override fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {
         _localisationBundles.remove(localeBundle)
         _englishBundles.remove(englishBundle)
     }
-    fun removeEnglishBundle(englishBundle: LocaleBundle) {
+    override fun removeEnglishBundle(englishBundle: LocaleBundle) {
         _englishBundles.remove(englishBundle)
     }
 
-    fun changeLocale(locale: CommonLocale) {
+    override fun changeLocale(locale: CommonLocale) {
         val oldArray = localisationBundles.toTypedArray()
         _localisationBundles.clear()
         _localisationBundles.addAll(oldArray.mapNotNull { bundle -> bundle.loadWithLocale(locale) })

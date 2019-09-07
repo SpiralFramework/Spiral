@@ -1,12 +1,24 @@
 package info.spiralframework.formats.game.v3
 
+import info.spiralframework.base.common.text.toIntBaseN
+import info.spiralframework.formats.common.data.JsonOpCode
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.scripting.EnumWordScriptCommand
 import info.spiralframework.formats.scripting.wrd.*
 import info.spiralframework.formats.utils.*
+import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.list
+import kotlinx.serialization.map
+import kotlinx.serialization.serializer
 import java.io.File
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.mapNotNull
+import kotlin.collections.set
 
 object V3 : DRGame {
+    @UnstableDefault
     val opCodes: OpCodeMap<IntArray, WrdScript> =
             OpCodeHashMap<IntArray, WrdScript>().apply {
                 this[0x00] = "Set Flag" to 4 and ::UnknownEntry //FLG
@@ -40,7 +52,7 @@ object V3 : DRGame {
                 this[0x1C] = "Jingle" to -1 and ::UnknownEntry //JIN
                 this[0x1D] = "Speaker" to 2 and ::SpeakerEntry//CHN
                 this[0x1E] = "Camera Vibration" to 6 and ::UnknownEntry //VIB
-                this[0x1F] = "Fade Screen"  to 6 and ::UnknownEntry //FDS
+                this[0x1F] = "Fade Screen" to 6 and ::UnknownEntry //FDS
                 this[0x20] = null to -1 and ::UnknownEntry //FLA
                 this[0x21] = "Set Lighting Parameter" to 6 and ::UnknownEntry //LIG
                 this[0x22] = "Set Character Parameter" to 10 and ::UnknownEntry //CHR
@@ -89,19 +101,14 @@ object V3 : DRGame {
                 val opCodes = File("v3-ops.json")
 
                 if (opCodes.exists()) {
-
-                    DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
-                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
-                            val str = any.toString()
-                            if (str.startsWith("0x"))
-                                return@mapNotNull str.substring(2).toIntOrNull(16)
-                            return@mapNotNull str.toIntOrNull()
-                        } ?: return@forEach
-                        this[array[0]] = opName to array[1] and ::UnknownEntry
-                    }
+                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+                            .forEach { (name, op) ->
+                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+                            }
                 }
             }
 
+    @UnstableDefault
     val opCodeCommandEntries: Map<Int, Array<EnumWordScriptCommand>> =
             HashMap<Int, Array<EnumWordScriptCommand>>().apply {
                 this[0x00] = arrayOf(EnumWordScriptCommand.PARAMETER, EnumWordScriptCommand.PARAMETER)
@@ -115,14 +122,12 @@ object V3 : DRGame {
                 val opCodes = File("v3-command-entries.json")
 
                 if (opCodes.exists()) {
-                    DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
-                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
-                            val str = any.toString()
-                            return@mapNotNull EnumWordScriptCommand.values().firstOrNull { enum -> enum.name.equals(str, true) }
-                        } ?: return@forEach
-
-                        this[opName.toInt(16)] = array.toTypedArray()
-                    }
+                    Json.parse((String.serializer() to String.serializer().list).map, opCodes.readText())
+                            .forEach { (opName, params) ->
+                                this[opName.toIntBaseN()] = params.mapNotNull { str ->
+                                    return@mapNotNull EnumWordScriptCommand.values().firstOrNull { enum -> enum.name.equals(str, true) }
+                                }.toTypedArray()
+                            }
                 }
             }
 
@@ -157,54 +162,54 @@ object V3 : DRGame {
 
     val characterIDs: Map<Int, String> =
             mapOf(
-                      0 to "C000_Saiha",
-                      1 to "C001_Momot",
-                      2 to "C002_Hoshi",
-                      3 to "C003_Amami",
-                      4 to "C004_Gokuh",
-                      5 to "C005_Oma__",
-                      6 to "C006_Shing",
-                      7 to "C007_Ki-Bo",
-                      8 to "C008_Tojo_",
-                      9 to "C009_Yumen",
-                     10 to "C010_Haruk",
-                     11 to "C011_Chaba",
-                     12 to "C012_Shiro",
-                     13 to "C013_Yonag",
-                     14 to "C014_Iruma",
-                     15 to "C015_Akama",
-                     16 to "C016_GokuA",
-                     20 to "C020_Monok",
-                     21 to "C021_Mtaro",
-                     22 to "C022_Msuke",
-                     23 to "C023_Mfunn",
-                     24 to "C024_Mdam_",
-                     25 to "C025_Mkid_",
-                     26 to "C026_Eguis",
-                     27 to "C027_Mono5",
-                     28 to "C028_Mono4",
-                     29 to "C029_Mono3",
-                     31 to "C031_MonoMono2",
-                     33 to "C033_MonoMono5",
-                     34 to "C034_Mmono",
-                     35 to "C035_Exred",
-                     36 to "C036_Exyel",
-                     37 to "C037_Expin",
-                     //38 to "C038_Exgre"
-                     39 to "C039_Exblu",
-                     40 to "C040_ExMom",
-                     41 to "C041_ExOma",
-                     42 to "C042_Eno53",
-                     43 to "C043_MonoKibo",
-                     46 to "C046_Makot",
-                     47 to "C047_Clas1",
-                     48 to "C048_Clas2",
-                     49 to "C049_Clas3",
-                     54 to "C054_MomGF",
-                     55 to "C055_MomGM",
-                     56 to "C056_Child",
-                     57 to "C057_HeadT",
-                     58 to "C058_MonoMono4",
+                    0 to "C000_Saiha",
+                    1 to "C001_Momot",
+                    2 to "C002_Hoshi",
+                    3 to "C003_Amami",
+                    4 to "C004_Gokuh",
+                    5 to "C005_Oma__",
+                    6 to "C006_Shing",
+                    7 to "C007_Ki-Bo",
+                    8 to "C008_Tojo_",
+                    9 to "C009_Yumen",
+                    10 to "C010_Haruk",
+                    11 to "C011_Chaba",
+                    12 to "C012_Shiro",
+                    13 to "C013_Yonag",
+                    14 to "C014_Iruma",
+                    15 to "C015_Akama",
+                    16 to "C016_GokuA",
+                    20 to "C020_Monok",
+                    21 to "C021_Mtaro",
+                    22 to "C022_Msuke",
+                    23 to "C023_Mfunn",
+                    24 to "C024_Mdam_",
+                    25 to "C025_Mkid_",
+                    26 to "C026_Eguis",
+                    27 to "C027_Mono5",
+                    28 to "C028_Mono4",
+                    29 to "C029_Mono3",
+                    31 to "C031_MonoMono2",
+                    33 to "C033_MonoMono5",
+                    34 to "C034_Mmono",
+                    35 to "C035_Exred",
+                    36 to "C036_Exyel",
+                    37 to "C037_Expin",
+                    //38 to "C038_Exgre"
+                    39 to "C039_Exblu",
+                    40 to "C040_ExMom",
+                    41 to "C041_ExOma",
+                    42 to "C042_Eno53",
+                    43 to "C043_MonoKibo",
+                    46 to "C046_Makot",
+                    47 to "C047_Clas1",
+                    48 to "C048_Clas2",
+                    49 to "C049_Clas3",
+                    54 to "C054_MomGF",
+                    55 to "C055_MomGM",
+                    56 to "C056_Child",
+                    57 to "C057_HeadT",
+                    58 to "C058_MonoMono4",
                     100 to "C100_Naegi",
                     101 to "C101_Ishim",
                     102 to "C102_Togam",
