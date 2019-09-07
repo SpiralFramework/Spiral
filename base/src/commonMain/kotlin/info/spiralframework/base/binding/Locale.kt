@@ -43,7 +43,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.traceArray(format: String, args: Array<out Any>)
 }
 
-expect class DefaultSpiralLocale: AbstractSpiralLocale {
+expect class DefaultSpiralLocale(): AbstractSpiralLocale {
     override fun localise(msg: String): String
     override fun localise(msg: String, arg: Any): String
     override fun localise(msg: String, arg1: Any, arg2: Any): String
