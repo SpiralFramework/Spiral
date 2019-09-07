@@ -1,12 +1,7 @@
 package info.spiralframework.core.formats.audio
 
-import info.spiralframework.base.util.locale
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.utils.DataSource
 import java.io.File
 import java.io.OutputStream
@@ -15,9 +10,9 @@ import java.util.*
 open class SpiralAudioFormat(override val name: String, override val extension: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
 
-    override fun identify(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Optional<File>> {
+    override fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<Optional<File>> {
         try {
-            return super.identify(name, game, context, source)
+            return super.identify(context, readContext, source)
         } catch (ise: IllegalStateException) {
             return FormatResult.Fail(this, 1.0, ise)
         }
@@ -33,8 +28,8 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<File> {
-        throw locale<IllegalStateException>("core.formats.no_audio_impl.read", this)
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<File> {
+        throw IllegalStateException(context.localise("core.formats.no_audio_impl.read", this))
     }
 
     /**
@@ -46,8 +41,8 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean {
-        throw locale<IllegalStateException>("core.formats.no_audio_impl.support_write", this)
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean {
+        throw IllegalStateException(context.localise("core.formats.no_audio_impl.support_write", this))
     }
 
     /**
@@ -61,7 +56,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
-        throw locale<IllegalStateException>("core.formats.no_audio_impl.write", this)
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
+        throw IllegalStateException(context.localise("core.formats.no_audio_impl.write", this))
     }
 }

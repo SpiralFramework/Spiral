@@ -1,14 +1,10 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.archives.CustomWAD
 import info.spiralframework.formats.archives.IArchive
 import info.spiralframework.formats.archives.WAD
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 import java.util.zip.ZipFile
@@ -27,8 +23,8 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<WAD> {
-        val wad = WAD(source) ?: return FormatResult.Fail(this, 1.0)
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<WAD> {
+        val wad = WAD(context, source) ?: return FormatResult.Fail(this, 1.0)
 
         if (wad.files.size == 1)
             return FormatResult.Success(this, wad,0.75)
@@ -45,7 +41,7 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is IArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is IArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -58,7 +54,7 @@ object WadFormat: ReadableSpiralFormat<WAD>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         val customWad = CustomWAD()
 
         when (data) {

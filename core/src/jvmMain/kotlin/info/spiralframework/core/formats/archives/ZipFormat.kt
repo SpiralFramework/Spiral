@@ -1,16 +1,11 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.base.path
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.copyFromStream
 import info.spiralframework.base.util.copyToStream
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.archives.srd.SRDEntry
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.File
 import java.io.FileOutputStream
@@ -35,16 +30,17 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<ZipFile> {
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<ZipFile> {
         source().use { stream ->
-            val possibleFile = stream.path?.let(::File)
-            if (possibleFile?.exists() == true) {
-                try {
-                    return FormatResult.Success(this, ZipFile(possibleFile), 1.0)
-                } catch (io: IOException) {
-                    return FormatResult.Fail(this, 1.0, io)
-                }
-            } else {
+            //TODO: Switch over to data sources
+//            val possibleFile = stream.path?.let(::File)
+//            if (possibleFile?.exists() == true) {
+//                try {
+//                    return FormatResult.Success(this, ZipFile(possibleFile), 1.0)
+//                } catch (io: IOException) {
+//                    return FormatResult.Fail(this, 1.0, io)
+//                }
+//            } else {
                 val zip: ZipFile
                 val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
                 tmpFile.deleteOnExit()
@@ -59,7 +55,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
                 }
 
                 return FormatResult.Success(this, zip, 1.0)
-            }
+//            }
         }
     }
 
@@ -72,7 +68,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is IArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is IArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -85,7 +81,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         val zipOut = ZipOutputStream(stream)
 
         try {

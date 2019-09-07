@@ -1,15 +1,10 @@
 package info.spiralframework.core.formats.images
 
-import info.spiralframework.base.util.locale
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.game.DRGame
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.utils.BGRA
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.RGBA
 import java.awt.image.BufferedImage
@@ -42,25 +37,94 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<BufferedImage> {
-        source().use { stream ->
-            val magic = stream.readInt32LE()
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
+        with(context) {
+            source().use { stream ->
+                val magic = stream.readInt32LE()
 
-            if (magic != SHTX_MAGIC_NUMBER)
-                return FormatResult.Fail(this, 1.0)
+                if (magic != SHTX_MAGIC_NUMBER)
+                    return FormatResult.Fail(this@SHTXFormat, 1.0)
 
-            val formatMagic = stream.readInt16LE()
-            val width = stream.readInt16LE()
-            val height = stream.readInt16LE()
-            val unk = stream.readInt16LE()
+                val formatMagic = stream.readInt16LE()
+                val width = stream.readInt16LE()
+                val height = stream.readInt16LE()
+                val unk = stream.readInt16LE()
 
-            when (formatMagic) {
-                RGBA_PALETTE_MAGIC_NUMBER -> {
-                    val palette = IntArray(256) { RGBA(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF) }
+                when (formatMagic) {
+                    RGBA_PALETTE_MAGIC_NUMBER -> {
+                        val palette = IntArray(256) { RGBA(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF) }
 
-                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                    if (palette.all { colour -> colour == 0 }) {
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                        if (palette.all { colour -> colour == 0 }) {
 //                        println("Blank palette in Fs")
+                            val rgb = IntArray(width * height)
+                            val row = ByteArray(4 * width)
+                            var maxX: Int
+
+                            for (y in 0 until height) {
+                                maxX = stream.read(row)
+
+                                for (x in 0 until maxX step 4) {
+                                    rgb[(y * width) + x] = RGBA(row[x], row[x + 1], row[x + 2], row[x + 3])
+                                }
+                            }
+
+                            img.setRGB(0, 0, width, height, rgb, 0, width)
+                        } else {
+                            val rgb = IntArray(width * height)
+                            val row = ByteArray(width)
+                            var maxX: Int
+
+                            for (y in 0 until height) {
+                                maxX = stream.read(row)
+
+                                for (x in 0 until maxX) {
+                                    rgb[(y * width) + x] = palette[row[x].toInt() and 0xFF]
+                                }
+                            }
+                            img.setRGB(0, 0, width, height, rgb, 0, width)
+                        }
+
+                        return FormatResult.Success(this@SHTXFormat, img, 1.0)
+                    }
+                    BGRA_PALETTE_MAGIC_NUMBER -> {
+                        val palette = IntArray(256) { BGRA(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF) }
+
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+                        if (palette.all { colour -> colour == 0 }) {
+//                        println("Blank palette in Fs")
+                            val rgb = IntArray(width * height)
+                            val row = ByteArray(4 * width)
+                            var maxX: Int
+
+                            for (y in 0 until height) {
+                                maxX = stream.read(row)
+
+                                for (x in 0 until maxX step 4) {
+                                    rgb[(y * width) + x] = BGRA(row[x], row[x + 1], row[x + 2], row[x + 3])
+                                }
+                            }
+
+                            img.setRGB(0, 0, width, height, rgb, 0, width)
+                        } else {
+                            val rgb = IntArray(width * height)
+                            val row = ByteArray(width)
+                            var maxX: Int
+
+                            for (y in 0 until height) {
+                                maxX = stream.read(row)
+
+                                for (x in 0 until maxX) {
+                                    rgb[(y * width) + x] = palette[row[x].toInt() and 0xFF]
+                                }
+                            }
+                            img.setRGB(0, 0, width, height, rgb, 0, width)
+                        }
+
+                        return FormatResult.Success(this@SHTXFormat, img, 1.0)
+                    }
+                    RGBA_MAGIC_NUMBER -> {
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
                         val rgb = IntArray(width * height)
                         val row = ByteArray(4 * width)
                         var maxX: Int
@@ -72,31 +136,12 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                                 rgb[(y * width) + x] = RGBA(row[x], row[x + 1], row[x + 2], row[x + 3])
                             }
                         }
-
                         img.setRGB(0, 0, width, height, rgb, 0, width)
-                    } else {
-                        val rgb = IntArray(width * height)
-                        val row = ByteArray(width)
-                        var maxX: Int
 
-                        for (y in 0 until height) {
-                            maxX = stream.read(row)
-
-                            for (x in 0 until maxX) {
-                                rgb[(y * width) + x] = palette[row[x].toInt() and 0xFF]
-                            }
-                        }
-                        img.setRGB(0, 0, width, height, rgb, 0, width)
+                        return FormatResult.Success(this@SHTXFormat, img, 1.0)
                     }
-
-                    return FormatResult.Success(this, img, 1.0)
-                }
-                BGRA_PALETTE_MAGIC_NUMBER -> {
-                    val palette = IntArray(256) { BGRA(stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF, stream.read() and 0xFF) }
-
-                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                    if (palette.all { colour -> colour == 0 }) {
-//                        println("Blank palette in Fs")
+                    BGRA_MAGIC_NUMBER -> {
+                        val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
                         val rgb = IntArray(width * height)
                         val row = ByteArray(4 * width)
                         var maxX: Int
@@ -108,60 +153,12 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                                 rgb[(y * width) + x] = BGRA(row[x], row[x + 1], row[x + 2], row[x + 3])
                             }
                         }
-
                         img.setRGB(0, 0, width, height, rgb, 0, width)
-                    } else {
-                        val rgb = IntArray(width * height)
-                        val row = ByteArray(width)
-                        var maxX: Int
 
-                        for (y in 0 until height) {
-                            maxX = stream.read(row)
-
-                            for (x in 0 until maxX) {
-                                rgb[(y * width) + x] = palette[row[x].toInt() and 0xFF]
-                            }
-                        }
-                        img.setRGB(0, 0, width, height, rgb, 0, width)
+                        return FormatResult.Success(this@SHTXFormat, img, 1.0)
                     }
-
-                    return FormatResult.Success(this, img, 1.0)
+                    else -> return FormatResult.Fail(this@SHTXFormat, 1.0, IllegalArgumentException(localise("core.formats.shtx.unknown_format", "0x${formatMagic.toString(16)}")))
                 }
-                RGBA_MAGIC_NUMBER -> {
-                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                    val rgb = IntArray(width * height)
-                    val row = ByteArray(4 * width)
-                    var maxX: Int
-
-                    for (y in 0 until height) {
-                        maxX = stream.read(row)
-
-                        for (x in 0 until maxX step 4) {
-                            rgb[(y * width) + x] = RGBA(row[x], row[x + 1], row[x + 2], row[x + 3])
-                        }
-                    }
-                    img.setRGB(0, 0, width, height, rgb, 0, width)
-
-                    return FormatResult.Success(this, img, 1.0)
-                }
-                BGRA_MAGIC_NUMBER -> {
-                    val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-                    val rgb = IntArray(width * height)
-                    val row = ByteArray(4 * width)
-                    var maxX: Int
-
-                    for (y in 0 until height) {
-                        maxX = stream.read(row)
-
-                        for (x in 0 until maxX step 4) {
-                            rgb[(y * width) + x] = BGRA(row[x], row[x + 1], row[x + 2], row[x + 3])
-                        }
-                    }
-                    img.setRGB(0, 0, width, height, rgb, 0, width)
-
-                    return FormatResult.Success(this, img, 1.0)
-                }
-                else -> return FormatResult.Fail(this, 1.0, locale<IllegalArgumentException>("core.formats.shtx.unknown_format", "0x${formatMagic.toString(16)}"))
             }
         }
     }
@@ -175,7 +172,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean {
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -190,7 +187,7 @@ object SHTXFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

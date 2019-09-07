@@ -1,14 +1,8 @@
 package info.spiralframework.core.formats.images
 
-import info.spiralframework.base.util.locale
-import info.spiralframework.core.SpiralCoreData
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.*
 import info.spiralframework.core.use
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import net.npe.tga.TGAReader
 import java.awt.Image
@@ -33,17 +27,19 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<BufferedImage> {
-        try {
-            source.use { stream -> return FormatResult.Success(this, TGAReader.readImage(stream.readBytes()), 1.0) }
-        } catch (io: IOException) {
-            SpiralCoreData.LOGGER.debug("core.formats.tga.invalid", source, io)
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
+        with(context) {
+            try {
+                source.use { stream -> return FormatResult.Success(this@TGAFormat, TGAReader.readImage(stream.readBytes()), 1.0) }
+            } catch (io: IOException) {
+                debug("core.formats.tga.invalid", source, io)
 
-            return FormatResult.Fail(this, 1.0, io)
-        } catch (iae: IllegalArgumentException) {
-            SpiralCoreData.LOGGER.debug("core.formats.tga.invalid", source, iae)
+                return FormatResult.Fail(this@TGAFormat, 1.0, io)
+            } catch (iae: IllegalArgumentException) {
+                debug("core.formats.tga.invalid", source, iae)
 
-            return FormatResult.Fail(this, 1.0, iae)
+                return FormatResult.Fail(this@TGAFormat, 1.0, iae)
+            }
         }
     }
 
@@ -56,7 +52,7 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is Image
 
     /**
      * Writes [data] to [stream] in this format
@@ -69,30 +65,32 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
-        if (data !is Image)
-            return FormatWriteResponse.WRONG_FORMAT
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
+        with(context) {
+            if (data !is Image)
+                return FormatWriteResponse.WRONG_FORMAT
 
-        val width = data.getWidth(null)
-        val height = data.getHeight(null)
+            val width = data.getWidth(null)
+            val height = data.getHeight(null)
 
-        if (width < 0 || height < 0)
-            return FormatWriteResponse.FAIL(locale<IllegalArgumentException>("core.formats.img.invalid_dimensions", width, height))
+            if (width < 0 || height < 0)
+                return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", width, height)))
 
-        val tga = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-        val g = tga.graphics
-        try {
-            g.drawImage(data, 0, 0, null)
-        } finally {
-            g.dispose()
-        }
+            val tga = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+            val g = tga.graphics
+            try {
+                g.drawImage(data, 0, 0, null)
+            } finally {
+                g.dispose()
+            }
 
-        try {
-            ImageIO.write(tga, "TGA", stream)
+            try {
+                ImageIO.write(tga, "TGA", stream)
 
-            return FormatWriteResponse.SUCCESS
-        } catch (io: IOException) {
-            return FormatWriteResponse.FAIL(io)
+                return FormatWriteResponse.SUCCESS
+            } catch (io: IOException) {
+                return FormatWriteResponse.FAIL(io)
+            }
         }
     }
 }

@@ -1,11 +1,7 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.utils.DataSource
 import java.io.File
 import java.io.OutputStream
@@ -15,19 +11,19 @@ object FolderFormat : ReadableSpiralFormat<File>, WritableSpiralFormat {
     override val name: String = "folder"
     override val extension: String? = null
 
-    override fun identify(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Optional<File>> {
+    override fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<Optional<File>> {
         TODO("Not Implemented; Data Sources only provide Input Streams")
     }
 
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<File> {
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<File> {
         TODO("Not Implemented; Data Sources only provide Input Streams")
     }
 
-    override fun supportsWriting(data: Any): Boolean {
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

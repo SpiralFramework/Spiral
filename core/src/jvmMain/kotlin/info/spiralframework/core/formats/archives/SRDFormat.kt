@@ -1,10 +1,10 @@
 package info.spiralframework.core.formats.archives
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.archives.SRD
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 
 object SRDFormat: ReadableSpiralFormat<SRD> {
@@ -21,8 +21,8 @@ object SRDFormat: ReadableSpiralFormat<SRD> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SRD> {
-        val srd = SRD(source) ?: return FormatResult.Fail(this, 1.0)
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<SRD> {
+        val srd = SRD(context, source) ?: return FormatResult.Fail(this, 1.0)
 
         //TODO: Bump up the 'chance' for these results after proper fail states are used
         if (srd.entries.size == 1)

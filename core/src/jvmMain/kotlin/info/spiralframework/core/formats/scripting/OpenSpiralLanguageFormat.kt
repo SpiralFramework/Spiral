@@ -1,15 +1,11 @@
 package info.spiralframework.core.formats.scripting
 
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.*
 import info.spiralframework.formats.errors.HopesPeakMissingGameException
-import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.Lin
 import info.spiralframework.formats.scripting.lin.LinTextScript
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.use
 import info.spiralframework.osl.OpenSpiralLanguageParser
@@ -23,8 +19,8 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
     override val name: String = "OpenSpiralLangauge"
     override val extension: String = "osl"
 
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<OSLDrone> {
-        val parser = OpenSpiralLanguageParser { resourceName -> context(resourceName)?.invoke()?.use(InputStream::readBytes) }
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<OSLDrone> {
+        val parser = OpenSpiralLanguageParser { resourceName -> readContext?.dataContext?.invoke(resourceName)?.invoke()?.use(InputStream::readBytes) }
         val runner = BasicParseRunner<Any>(parser.OpenSpiralLanguage())
         val result = runner.run(String(source.use(InputStream::readBytes)))
 
@@ -33,24 +29,26 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
         return FormatResult.Success(this, OSLDrone(parser, result.valueStack, name), 1.0)
     }
 
-    override fun supportsWriting(data: Any): Boolean = data is Lin
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is Lin
 
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         when (data) {
             is Lin -> {
-                if (game !is HopesPeakDRGame)
-                    return FormatWriteResponse.FAIL(HopesPeakMissingGameException(game))
+                val game = writeContext?.game as? HopesPeakDRGame
+                        ?: return FormatWriteResponse.FAIL(HopesPeakMissingGameException(context, writeContext?.game))
 
                 val out = PrintStream(stream)
                 out.println("OSL Script")
-                out.println("Set Game Context to ${game.names.firstOrNull() ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
+                out.println("Set Game Context to ${game.names.firstOrNull()
+                        ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
                 out.println()
                 //TODO: Use LinScript#format eventually
                 data.entries.forEach { script ->
                     if (script is LinTextScript) {
                         out.println("Text|${script.text?.replace("\n", "\\n") ?: ""}")
                     } else {
-                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull() ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
+                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull()
+                                ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
                     }
                 }
 

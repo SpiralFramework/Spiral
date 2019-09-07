@@ -1,9 +1,9 @@
 package info.spiralframework.core.formats.images
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -23,7 +23,7 @@ open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, Rea
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<BufferedImage> {
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
         source().use { stream ->
             val imageStream = ImageIO.createImageInputStream(stream)
             val reader = ImageIO.getImageReaders(imageStream)

@@ -1,9 +1,9 @@
 package info.spiralframework.core.formats.video
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.video.SFL
 
@@ -22,8 +22,8 @@ object SFLFormat: ReadableSpiralFormat<SFL> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<SFL> {
-        val sfl = SFL(source) ?: return FormatResult.Fail(this, 1.0)
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<SFL> {
+        val sfl = SFL(context, source) ?: return FormatResult.Fail(this, 1.0)
         return FormatResult.Success(this, sfl, 1.0)
     }
 }
