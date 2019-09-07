@@ -1,25 +1,34 @@
 package info.spiralframework.formats.game.hpa
 
+import info.spiralframework.base.common.text.toIntBaseN
+import info.spiralframework.formats.common.data.JsonOpCode
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadMapEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadScriptEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2RunScriptEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2TrialCameraEntry
 import info.spiralframework.formats.utils.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.InputStream
 import java.util.*
 
 object DR2 : HopesPeakKillingGame {
-    override val pakNames: Map<String, Array<String>> =
-            DataHandler.readMapFromStream(DR1::class.java.classLoader.getResourceAsStream("pak/dr2.json"))?.mapValues { (_, value) ->
-                ((value as? List<*>)?.asIterable()
-                        ?: (value as? Array<*>)?.asIterable())?.mapNotNull { str -> str as? String }?.toTypedArray()
-                        ?: emptyArray()
-            } ?: emptyMap()
+    @UnstableDefault
+    @ExperimentalStdlibApi
+    override val pakNames: Map<String, List<String>> =
+            Json.parse((String.serializer() to String.serializer().list).map, DR1::class.java.classLoader
+                    ?.getResourceAsStream("pak/dr2.json")
+                    ?.use(InputStream::readBytes)
+                    ?.let(ByteArray::decodeToString)
+                    ?: "{}"
+            )
 
     fun StopScriptEntry(opCode: Int, args: IntArray): StopScriptEntry = StopScriptEntry()
     fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = EndFlagCheckEntry()
 
+    @UnstableDefault
     override val opCodes: OpCodeMap<IntArray, LinScript> =
             OpCodeHashMap<IntArray, LinScript>().apply {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
@@ -89,16 +98,10 @@ object DR2 : HopesPeakKillingGame {
                 val opCodes = File("dr2-ops.json")
 
                 if (opCodes.exists()) {
-
-                    DataHandler.fileToMap(opCodes)?.forEach { opName, params ->
-                        val array = ((params as? Array<*>)?.toList() ?: (params as? List<*>))?.mapNotNull { any ->
-                            val str = any.toString()
-                            if (str.startsWith("0x"))
-                                return@mapNotNull str.substring(2).toIntOrNull(16)
-                            return@mapNotNull str.toIntOrNull()
-                        } ?: return@forEach
-                        this[array[0]] = opName to array[1] and ::UnknownEntry
-                    }
+                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+                            .forEach { (name, op) ->
+                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+                            }
                 }
             }
 
@@ -330,7 +333,9 @@ object DR2 : HopesPeakKillingGame {
 
     override val steamID: String = "413420"
 
-    override val itemNames: Array<String> = SharedHPA.itemNames["dr2"] ?: emptyArray()
+    @UnstableDefault
+    @ExperimentalStdlibApi
+    override val itemNames: Array<String> = SharedHPA.itemNames.dr2
 
     override val nonstopDebateOpCodeNames: Map<Int, String> = HashMap<Int, String>().apply {
         this[0x00] = "TextID"
@@ -356,6 +361,10 @@ object DR2 : HopesPeakKillingGame {
     }
 
     override val nonstopDebateSectionSize: Int = 68
-    override val trialCameraNames: Array<String> = SharedHPA.trialCameraNames["dr2"] ?: emptyArray()
-    override val evidenceNames: Array<String> = SharedHPA.evidenceNames["dr2"] ?: emptyArray()
+    @UnstableDefault
+    @ExperimentalStdlibApi
+    override val trialCameraNames: Array<String> = SharedHPA.trialCameraNames.dr2
+    @UnstableDefault
+    @ExperimentalStdlibApi
+    override val evidenceNames: Array<String> = SharedHPA.evidenceNames.dr2
 }

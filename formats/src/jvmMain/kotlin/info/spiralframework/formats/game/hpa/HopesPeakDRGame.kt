@@ -11,7 +11,7 @@ import java.util.*
  * This helps bind things like Op Codes and PAK names to a general interface
  */
 interface HopesPeakDRGame: DRGame {
-    val pakNames: Map<String, Array<String>>
+    val pakNames: Map<String, List<String>>
     val opCodes: OpCodeMap<IntArray, LinScript>
 
     val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray>

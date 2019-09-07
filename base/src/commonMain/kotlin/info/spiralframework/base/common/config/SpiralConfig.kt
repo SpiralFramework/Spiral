@@ -15,5 +15,5 @@ interface SpiralConfig: SpiralCatalyst<SpiralContext> {
     fun SpiralContext.getLocalDataDir(group: String): String
 }
 
-fun SpiralConfig.getConfigFile(module: String, context: SpiralContext): String = context.getConfigFile(module)
-fun SpiralConfig.getLocalDataDir(group: String, context: SpiralContext): String = context.getLocalDataDir(group)
+fun SpiralConfig.getConfigFile(context: SpiralContext, module: String): String = context.getConfigFile(module)
+fun SpiralConfig.getLocalDataDir(context: SpiralContext, group: String): String = context.getLocalDataDir(group)
