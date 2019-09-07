@@ -1,7 +1,7 @@
 package info.spiralframework.core
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import info.spiralframework.base.util.SemVer
+import info.spiralframework.base.common.SemanticVersion
 
 open class SpiralCoreConfig(
         @JsonProperty("update_connect_timeout") val updateConnectTimeout: Int?,
@@ -11,5 +11,5 @@ open class SpiralCoreConfig(
         @JsonProperty("api_base") val apiBase: String?,
         @JsonProperty("jenkins_base") val jenkinsBase: String?,
 
-        @JsonProperty("enabled_plugins") val enabledPlugins: Map<String, SemVer>?
+        @JsonProperty("enabled_plugins") val enabledPlugins: Map<String, SemanticVersion>?
 )
