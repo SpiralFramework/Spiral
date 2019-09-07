@@ -1,9 +1,6 @@
 package info.spiralframework.core.formats
 
-import info.spiralframework.base.util.locale
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
-import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.OutputStream
 import java.util.*
@@ -18,7 +15,7 @@ interface SpiralFormat {
     val extension: String?
 
     companion object {
-        val DEFAULT_EXTENSION = "dat"
+        const val DEFAULT_EXTENSION = "dat"
     }
 }
 
@@ -44,27 +41,23 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      *
      * Formats are recommended to override this where possible.
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
+     * @param readContext Reading context for this data
      * @param source A function that returns an input stream
      *
      * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
      */
-    fun identify(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<Optional<T>>
-        = read(name, game, context, source).map { Optional.of(it) }
+    fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource): FormatResult<Optional<T>>
+        = read(context, readContext, source).map { Optional.of(it) }
 
     /**
      * Attempts to read the data source as [T]
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
+     * @param readContext Reading context for this data
      * @param source A function that returns an input stream
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    fun read(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, source: DataSource): FormatResult<T>
+    fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource): FormatResult<T>
 }
 
 /**
@@ -74,32 +67,30 @@ interface WritableSpiralFormat: SpiralFormat {
     /**
      * Does this format support writing [data]?
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     *
      * @return If we are able to write [data] as this format
      */
-    fun supportsWriting(data: Any): Boolean
+    fun supportsWriting(context: SpiralContext, data: Any): Boolean
 
     /**
      * Writes [data] to [stream] in this format
      *
      * @param name Name of the data, if any
      * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
+     * @param dataContext Context that we retrieved this file in
      * @param data The data to wrote
      * @param stream The stream to write to
      *
      * @return An enum for the success of the operation
      */
-    fun write(name: String? = null, game: DRGame? = null, context: DataContext = BLANK_DATA_CONTEXT, data: Any, stream: OutputStream): FormatWriteResponse
+    fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse
 }
 
 sealed class FormatWriteResponse {
     object SUCCESS: FormatWriteResponse()
     object WRONG_FORMAT: FormatWriteResponse()
-    class FAIL(val reason: Throwable = Throwable(locale<String>("gurren.errors.no_reason"))): FormatWriteResponse()
+    class FAIL(val reason: Throwable): FormatWriteResponse() {
+        constructor(context: SpiralContext): this(Throwable(context.localise("gurren.errors.no_reason")))
+    }
 }
 
 fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {

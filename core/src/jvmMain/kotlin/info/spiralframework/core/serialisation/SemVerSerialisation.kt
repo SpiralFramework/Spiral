@@ -8,32 +8,32 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
-import info.spiralframework.base.util.SemVer
+import info.spiralframework.base.common.SemanticVersion
 
-object SemVerSerialisation {
-    object SERIALISER : JsonSerializer<SemVer>() {
-        override fun serialize(value: SemVer, gen: JsonGenerator, serializers: SerializerProvider) {
+object SemanticVersionSerialisation {
+    object SERIALISER : JsonSerializer<SemanticVersion>() {
+        override fun serialize(value: SemanticVersion, gen: JsonGenerator, serializers: SerializerProvider) {
             gen.writeString("${value.major}.${value.minor}.${value.patch}")
         }
 
-        override fun handledType(): Class<SemVer> = SemVer::class.java
+        override fun handledType(): Class<SemanticVersion> = SemanticVersion::class.java
     }
 
-    object DESERIALISER : JsonDeserializer<SemVer>() {
-        override fun deserialize(p: JsonParser, ctxt: DeserializationContext): SemVer {
+    object DESERIALISER : JsonDeserializer<SemanticVersion>() {
+        override fun deserialize(p: JsonParser, ctxt: DeserializationContext): SemanticVersion {
             val components = p.valueAsString
                     ?.split('.')
                     ?.mapNotNull(String::toIntOrNull)
                     ?: emptyList()
-            return SemVer(
+            return SemanticVersion(
                     components.elementAtOrNull(0) ?: 0,
                     components.elementAtOrNull(1) ?: 0,
                     components.elementAtOrNull(2) ?: 0
             )
         }
 
-        override fun handledType(): Class<SemVer> = SemVer::class.java
+        override fun handledType(): Class<SemanticVersion> = SemanticVersion::class.java
     }
 
-    class MODULE : SimpleModule("Semantic Version Serialisation", Version.unknownVersion(), mapOf(SemVer::class.java to DESERIALISER), listOf(SERIALISER))
+    class MODULE : SimpleModule("Semantic Version Serialisation", Version.unknownVersion(), mapOf(SemanticVersion::class.java to DESERIALISER), listOf(SERIALISER))
 }

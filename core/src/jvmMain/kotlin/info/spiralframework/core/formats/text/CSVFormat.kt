@@ -1,10 +1,10 @@
 package info.spiralframework.core.formats.text
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.data.DataTableV3
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import java.io.OutputStream
 import java.io.PrintStream
 
@@ -26,7 +26,7 @@ object CSVFormat: WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(data: Any): Boolean = data is DataTableV3
+    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is DataTableV3
 
     /**
      * Writes [data] to [stream] in this format
@@ -39,7 +39,7 @@ object CSVFormat: WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
+    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
         when (data) {
             is DataTableV3 -> {
                 val out = PrintStream(stream)

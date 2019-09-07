@@ -1,10 +1,10 @@
 package info.spiralframework.core.formats.compression
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.compression.ICompression
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
 import java.io.Closeable
 import java.io.File
@@ -23,12 +23,12 @@ interface CompressionFormat<T: ICompression>: ReadableSpiralFormat<DataSource> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<DataSource> {
-        if (compressionFormat.isCompressed(source)) {
+    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<DataSource> {
+        if (compressionFormat.isCompressed(context, source)) {
             val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
             tmpFile.deleteOnExit()
 
-            tmpFile.outputStream().use { out -> compressionFormat.decompressToPipe(source, out) }
+            tmpFile.outputStream().use { out -> compressionFormat.decompressToPipe(context, source, out) }
 
             val result = FormatResult.Success<DataSource>(this, tmpFile::inputStream, 1.0)
             result.release.add(Closeable { tmpFile.delete() })
