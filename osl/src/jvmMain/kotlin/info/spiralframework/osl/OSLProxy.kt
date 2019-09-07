@@ -1,6 +1,5 @@
 package info.spiralframework.osl
 
-import info.spiralframework.formats.utils.DataHandler
 import info.spiralframework.osl.data.nonstopDebate.OSLVariable
 import info.spiralframework.osl.results.*
 import org.parboiled.Action
@@ -25,9 +24,6 @@ object OSLProxy {
     @JvmStatic
     fun main(args: Array<String>) {
         val jsonParser = JsonParser()
-
-        DataHandler.stringToMap = { string -> jsonParser.parse(string) }
-        DataHandler.streamToMap = { stream -> jsonParser.parse(String(stream.readBytes())) }
 
         val script = File(args.firstOrNull { str -> str.startsWith("--script=") }?.substringAfter('=')
                 ?: run { print("Script: "); readLine() ?: error("No script provided!") })
