@@ -5,6 +5,7 @@ import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
+import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import java.util.*
@@ -13,19 +14,22 @@ actual data class DefaultSpiralContext actual constructor(
         val locale: SpiralLocale,
         val logger: SpiralLogger,
         val config: SpiralConfig,
-        val environment: SpiralEnvironment
+        val environment: SpiralEnvironment,
+        val eventBus: SpiralEventBus
 ) : SpiralContext,
         SpiralLocale by locale,
         SpiralLogger by logger,
         SpiralConfig by config,
-        SpiralEnvironment by environment {
+        SpiralEnvironment by environment,
+        SpiralEventBus by eventBus {
     override fun subcontext(module: String): SpiralContext = this
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?): SpiralContext =
+    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralContext =
             DefaultSpiralContext(
                     newLocale ?: locale,
                     newLogger ?: logger,
                     newConfig ?: config,
-                    newEnvironment ?: environment
+                    newEnvironment ?: environment,
+                    newEventBus ?: eventBus
             )
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)

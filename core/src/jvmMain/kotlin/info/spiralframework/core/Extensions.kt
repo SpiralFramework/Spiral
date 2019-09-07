@@ -66,8 +66,7 @@ fun SpiralContext.decompress(dataSource: DataSource): Pair<DataSource, List<Comp
     return decompressed to mutableListOf(format).apply { addAll(list) }
 }
 
-fun Request.userAgent(ua: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"): Request
-        = this.header("User-Agent", ua)
+fun Request.userAgent(ua: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"): Request = this.header("User-Agent", ua)
 
 inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
     try {
@@ -106,7 +105,7 @@ inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
     return null
 }
 
-fun <T: Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
+fun <T : Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
     val (_, response, result) = this
 
     if (response.isSuccessful)
@@ -114,7 +113,7 @@ fun <T: Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
     return null
 }
 
-fun <T: Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
+fun <T : Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
     val (_, response, result) = this
 
     if (response.isSuccessful)
@@ -122,18 +121,18 @@ fun <T: Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
     return null
 }
 
-fun <T: CancellableSpiralEvent> EventBus.cancel(t: T) {
+fun <T : CancellableSpiralEvent> EventBus.cancel(t: T) {
     t.isCanceled = true
     cancelEventDelivery(t)
 }
 
-fun <T: CancellableSpiralEvent> EventBus.postCancellable(t: T): Boolean {
+fun <T : CancellableSpiralEvent> EventBus.postCancellable(t: T): Boolean {
     post(t)
 
     return t.isCanceled
 }
 
-inline fun <reified T: Any> EventBus.registerFunction(noinline func: (T) -> Unit): Any {
+inline fun <reified T : Any> EventBus.registerFunction(noinline func: (T) -> Unit): Any {
     val obj = FunctionSubscriber(func)
 
     register(obj)
@@ -141,11 +140,6 @@ inline fun <reified T: Any> EventBus.registerFunction(noinline func: (T) -> Unit
 }
 
 fun <T> T.identifySelf(): T = this
-
-fun <T> EventBus.postback(t: T): T {
-    post(t)
-    return t
-}
 
 fun EventBus.installLoggingSubscriber(logger: Logger): EventBus {
     LoggingSubscriber(this, logger)
