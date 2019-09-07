@@ -20,6 +20,7 @@ fun jenkinsArtifactForBuild(jenkinsBase: String, project: String, latestBuild: S
 
 val spiralFrameworkOnline: Boolean by lazy { Fuel.head("https://spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
 val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+val signaturesCdnOnline: Boolean by lazy { Fuel.head("https://storage.googleapis.com/signatures.spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
 
 suspend fun checkForUpdate(context: SpiralCoreContext, project: String): Pair<String, Int>? {
     with(context) {

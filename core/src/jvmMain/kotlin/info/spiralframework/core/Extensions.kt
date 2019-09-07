@@ -9,7 +9,7 @@ import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
-import info.spiralframework.base.properties.CachedFileReadOnlyProperty
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.eventbus.FunctionSubscriber
 import info.spiralframework.core.eventbus.LoggingSubscriber
 import info.spiralframework.core.formats.compression.*
@@ -55,11 +55,11 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
 
 val COMPRESSION_FORMATS = arrayOf(CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat)
 
-fun decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<*>>> {
-    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.read(source = dataSource) }
+fun SpiralContext.decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<*>>> {
+    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.read(source = dataSource, context = this) }
             .filter { pair -> pair.second.didSucceed }
-            .sortedBy { pair -> pair.second.chance }
-            .firstOrNull() ?: return dataSource to emptyList()
+            .minBy { pair -> pair.second.chance }
+            ?: return dataSource to emptyList()
 
     val (decompressed, list) = decompress(result.obj)
 
@@ -105,11 +105,6 @@ inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
 
     return null
 }
-
-inline fun <reified T: Any> cacheJson(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralSerialisation.JSON_MAPPER::readValue)
-inline fun <reified T: Any> cacheNullableJson(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralSerialisation.JSON_MAPPER::tryReadValue)
-inline fun <reified T: Any> cacheYaml(file: File): CachedFileReadOnlyProperty<Any, T> = CachedFileReadOnlyProperty(file, SpiralSerialisation.YAML_MAPPER::readValue)
-inline fun <reified T: Any> cacheNullableYaml(file: File): CachedFileReadOnlyProperty<Any, T?> = CachedFileReadOnlyProperty(file, SpiralSerialisation.YAML_MAPPER::tryReadValue)
 
 fun <T: Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
     val (_, response, result) = this

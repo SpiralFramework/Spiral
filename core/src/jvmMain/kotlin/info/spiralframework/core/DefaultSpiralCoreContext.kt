@@ -16,6 +16,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.common.SemanticVersion
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MD5_KEY
@@ -25,20 +26,24 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.common.SPIRAL_CORE_MODULE
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_MODULES_KEY
+import info.spiralframework.core.plugins.PluginEntry
+import info.spiralframework.core.plugins.SpiralCorePlugin
+import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.InstantSerialisation
-import info.spiralframework.core.serialisation.SemVerSerialisation
+import info.spiralframework.core.serialisation.SemanticVersionSerialisation
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
 
-class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val signatures: SpiralSignatures)
+open class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val signatures: SpiralSignatures, val pluginRegistry: SpiralPluginRegistry)
     : SpiralCoreContext,
         SpiralLocale by locale,
         SpiralLogger by logger,
         SpiralConfig by config,
         SpiralEnvironment by environment,
-        SpiralSignatures by signatures {
+        SpiralSignatures by signatures,
+        SpiralPluginRegistry by pluginRegistry {
     companion object {
         const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 5000
         const val DEFAULT_UPDATE_READ_TIMEOUT = 5000
@@ -71,7 +76,7 @@ class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLoc
     /** Jackson mapper for JSON data */
     override val jsonMapper: ObjectMapper = ObjectMapper()
             .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -80,7 +85,7 @@ class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLoc
     /** Jackson mapper for YAML data */
     override val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
             .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -105,25 +110,28 @@ class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLoc
             newLogger ?: logger,
             newConfig ?: config,
             newEnvironment ?: environment,
-            signatures
+            signatures,
+            pluginRegistry
     )
 
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newSignatures: SpiralSignatures?): SpiralCoreContext = DefaultSpiralCoreContext(
+    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?): SpiralContext = DefaultSpiralCoreContext(
             core,
             newLocale ?: locale,
             newLogger ?: logger,
             newConfig ?: config,
             newEnvironment ?: environment,
-            newSignatures ?: signatures
+            newSignatures ?: signatures,
+            newPluginRegistry ?: pluginRegistry
     )
 
-    fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newSignatures: SpiralSignatures? = null): SpiralCoreContext = DefaultSpiralCoreContext(
+    fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null): SpiralCoreContext = DefaultSpiralCoreContext(
             newCore ?: core,
             newLocale ?: locale,
             newLogger ?: logger,
             newConfig ?: config,
             newEnvironment ?: environment,
-            newSignatures ?: signatures
+            newSignatures ?: signatures,
+            newPluginRegistry ?: pluginRegistry
     )
 
     init {
@@ -146,5 +154,7 @@ class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLoc
                 }
             }
         }
+
+        loadPlugin(PluginEntry(SpiralCorePlugin(this).pojo, null))
     }
 }

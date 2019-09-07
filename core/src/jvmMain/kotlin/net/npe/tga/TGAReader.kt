@@ -2,7 +2,7 @@
 
 package net.npe.tga
 
-import info.spiralframework.base.binding.localise
+import info.spiralframework.base.common.SpiralContext
 import java.awt.image.BufferedImage
 import java.io.IOException
 import kotlin.properties.Delegates
@@ -40,7 +40,7 @@ object TGAReader {
     }
 
     @Throws(IOException::class)
-    fun readImage(data: ByteArray): BufferedImage {
+    fun SpiralContext.readImage(data: ByteArray): BufferedImage {
         val width = getWidth(data)
         val height = getHeight(data)
 
@@ -56,7 +56,7 @@ object TGAReader {
     }
 
     @Throws(IOException::class)
-    fun read(buffer: ByteArray, order: Order): IntArray? {
+    fun SpiralContext.read(buffer: ByteArray, order: Order): IntArray? {
 
         // header
         //		int idFieldLength = buffer[0] & 0xFF;
@@ -534,3 +534,5 @@ object TGAReader {
 
     class Order internal constructor(var redShift: Int, var greenShift: Int, var blueShift: Int, var alphaShift: Int)
 }
+
+fun TGAReader.readImage(context: SpiralContext, data: ByteArray) = context.readImage(data)
