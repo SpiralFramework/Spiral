@@ -1,3 +1,3 @@
 package info.spiralframework.base.common.environment
 
-expect class DefaultSpiralEnvironment: SpiralEnvironment
+expect class DefaultSpiralEnvironment(): SpiralEnvironment
