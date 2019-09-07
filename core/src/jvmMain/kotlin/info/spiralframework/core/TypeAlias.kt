@@ -6,6 +6,6 @@ data class FormatChance(val isFormat: Boolean, val confidence: Double) {
     }
 
     init {
-        check(confidence in ACCEPTABLE_RANGE)
+        require(confidence in ACCEPTABLE_RANGE)
     }
 }

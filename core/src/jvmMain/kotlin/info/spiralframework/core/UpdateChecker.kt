@@ -1,6 +1,7 @@
 package info.spiralframework.core
 
 import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_FILE_NAME_KEY
 import info.spiralframework.base.common.text.arbitraryProgressBar
 import info.spiralframework.base.util.UTF8String
@@ -16,6 +17,9 @@ fun apiCheckForUpdate(apiBase: String, project: String, build: String): String =
 fun apiLatestBuild(apiBase: String, project: String): String = String.format("%s/jenkins/projects/Spiral-%s/latest_build", apiBase, project)
 fun apiBuildForFingerprint(apiBase: String, fingerprint: String): String = String.format("%s/jenkins/fingerprint/%s/build", apiBase, apiBase, fingerprint)
 fun jenkinsArtifactForBuild(jenkinsBase: String, project: String, latestBuild: String, fileName: String): String = String.format("%s/job/Spiral-%s/%s/artifact/%s/build/libs/%s", jenkinsBase, project, latestBuild, project.toLowerCase(), fileName)
+
+val spiralFrameworkOnline: Boolean by lazy { Fuel.head("https://spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
 
 suspend fun checkForUpdate(context: SpiralCoreContext, project: String): Pair<String, Int>? {
     with(context) {

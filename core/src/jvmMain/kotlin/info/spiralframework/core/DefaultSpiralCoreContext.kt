@@ -1,5 +1,19 @@
 package info.spiralframework.core
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.config.SpiralConfig
@@ -11,16 +25,20 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.common.SPIRAL_CORE_MODULE
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_MODULES_KEY
+import info.spiralframework.core.security.SpiralSignatures
+import info.spiralframework.core.serialisation.InstantSerialisation
+import info.spiralframework.core.serialisation.SemVerSerialisation
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
 
-class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment)
+class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val signatures: SpiralSignatures)
     : SpiralCoreContext,
         SpiralLocale by locale,
         SpiralLogger by logger,
         SpiralConfig by config,
-        SpiralEnvironment by environment {
+        SpiralEnvironment by environment,
+        SpiralSignatures by signatures {
     companion object {
         const val DEFAULT_UPDATE_CONNECT_TIMEOUT = 5000
         const val DEFAULT_UPDATE_READ_TIMEOUT = 5000
@@ -50,13 +68,63 @@ class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLoc
             .map { module -> Pair(module.moduleName, module.moduleVersion) }
             .toMap()
 
+    /** Jackson mapper for JSON data */
+    override val jsonMapper: ObjectMapper = ObjectMapper()
+            .registerKotlinModule()
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+
+    /** Jackson mapper for YAML data */
+    override val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
+            .registerKotlinModule()
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemVerSerialisation.MODULE())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+
+    /** Jackson mapper for XML data */
+    override val xmlMapper: ObjectMapper = XmlMapper(JacksonXmlModule().apply { setDefaultUseWrapper(false) })
+            .registerKotlinModule()
+            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), InstantSerialisation.MODULE())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+            .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+            .setDefaultSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
+
     override fun subcontext(module: String): SpiralCoreContext = this
 
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?): SpiralCoreContext = DefaultSpiralCoreContext(core, newLocale
-            ?: locale, newLogger ?: logger, newConfig ?: config, newEnvironment ?: environment)
+    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?): SpiralCoreContext = DefaultSpiralCoreContext(
+            core,
+            newLocale ?: locale,
+            newLogger ?: logger,
+            newConfig ?: config,
+            newEnvironment ?: environment,
+            signatures
+    )
 
-    fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null): SpiralCoreContext = DefaultSpiralCoreContext(newCore
-            ?: core, newLocale ?: locale, newLogger ?: logger, newConfig ?: config, newEnvironment ?: environment)
+    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newSignatures: SpiralSignatures?): SpiralCoreContext = DefaultSpiralCoreContext(
+            core,
+            newLocale ?: locale,
+            newLogger ?: logger,
+            newConfig ?: config,
+            newEnvironment ?: environment,
+            newSignatures ?: signatures
+    )
+
+    fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newSignatures: SpiralSignatures? = null): SpiralCoreContext = DefaultSpiralCoreContext(
+            newCore ?: core,
+            newLocale ?: locale,
+            newLogger ?: logger,
+            newConfig ?: config,
+            newEnvironment ?: environment,
+            newSignatures ?: signatures
+    )
 
     init {
         storeStaticValue(SPIRAL_MODULE_KEY, SPIRAL_CORE_MODULE)
