@@ -2,7 +2,7 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
-import info.spiralframework.base.util.SemVer
+import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.osl.games.*
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -23,7 +23,7 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
 
     val variableData: MutableMap<String, OSLUnion> = HashMap()
 
-    var oslVersion: SemVer? = null
+    var oslVersion: SemanticVersion? = null
 
     fun getData(name: String): OSLUnion {
         if (name.equals("game", true))
@@ -41,7 +41,7 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
     }
 
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
-        val rawSemVer = ctx.HEADER_DECLARATION()
+        val rawSemanticVersion = ctx.HEADER_DECLARATION()
                 .text
                 .substring(OSL_HEADER_LENGTH)
                 .takeIf(String::isNotBlank)
@@ -51,10 +51,10 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
                 ?.mapNotNull(String::toIntOrNull)
                 ?: return OSLUnion.NoOpType
 
-        this.oslVersion = SemVer(
-                rawSemVer.getOrNull(0) ?: 0,
-                rawSemVer.getOrNull(1) ?: 0,
-                rawSemVer.getOrNull(2) ?: 0
+        this.oslVersion = SemanticVersion(
+                rawSemanticVersion.getOrNull(0) ?: 0,
+                rawSemanticVersion.getOrNull(1) ?: 0,
+                rawSemanticVersion.getOrNull(2) ?: 0
         )
 
         return OSLUnion.NoOpType

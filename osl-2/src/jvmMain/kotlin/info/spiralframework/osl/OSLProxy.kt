@@ -2,14 +2,12 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
+import info.spiralframework.base.binding.defaultSpiralContext
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.formats.customLin
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.WordScriptFile
 import info.spiralframework.formats.scripting.lin.*
-import info.spiralframework.formats.utils.DataHandler
-import info.spiralframework.json.JsonType
-import info.spiralframework.json.parseJsonFromAntlr
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
@@ -49,8 +47,6 @@ object OSLProxy {
     }
 
     fun osl() {
-        DataHandler.streamToMap = { stream -> (parseJsonFromAntlr(stream) as? JsonType.JsonObject)?.toMap() }
-
         val input = CharStreams.fromFileName("osl-2/src/main/antlr/tests/NonstopDebate.osl")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
@@ -65,7 +61,7 @@ object OSLProxy {
             is OSLUnion.CustomWrdType -> {
                 File("custom.wrd").outputStream().use(result.wrd::compile)
 
-                val loadedWrd = WordScriptFile(V3, File("custom.wrd")::inputStream)
+                val loadedWrd = WordScriptFile(defaultSpiralContext(), V3, File("custom.wrd")::inputStream)
                 println(loadedWrd)
             }
         }
