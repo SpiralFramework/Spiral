@@ -5,6 +5,7 @@ import info.spiralframework.core.formats.*
 import info.spiralframework.core.use
 import info.spiralframework.formats.utils.DataSource
 import net.npe.tga.TGAReader
+import net.npe.tga.readImage
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -30,7 +31,7 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
     override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
         with(context) {
             try {
-                source.use { stream -> return FormatResult.Success(this@TGAFormat, TGAReader.readImage(stream.readBytes()), 1.0) }
+                source.use { stream -> return FormatResult.Success(this@TGAFormat, TGAReader.readImage(this, stream.readBytes()), 1.0) }
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
 

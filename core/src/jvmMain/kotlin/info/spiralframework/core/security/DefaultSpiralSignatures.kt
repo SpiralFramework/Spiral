@@ -10,6 +10,7 @@ import info.spiralframework.core.userAgent
 import java.io.InputStream
 import java.security.PublicKey
 
+@ExperimentalStdlibApi
 class DefaultSpiralSignatures: SpiralSignatures {
     companion object {
         const val LAST_PUBLIC_KEY_SHA256 = "FD3B9DEAF32420F25BCA27B7B0B1F87CC505AFE4556BEFD88DD1869383D02C57"
@@ -21,7 +22,7 @@ class DefaultSpiralSignatures: SpiralSignatures {
                     .userAgent()
                     .timeout(2 * 1000)
                     .timeoutRead(2 * 1000)
-                    .response().takeIfSuccessful()?.let(::String)
+                    .response().takeIfSuccessful()?.let(ByteArray::decodeToString)
         }
 
         private val lastPublicKeySha256: String = CDN_LAST_PUBLIC_KEY_SHA256 ?: LAST_PUBLIC_KEY_SHA256

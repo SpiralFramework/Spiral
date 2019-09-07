@@ -7,9 +7,10 @@ import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 
-interface SpiralCoreContext: SpiralContext, SpiralSignatures {
+interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry {
     val updateConnectTimeout: Int
     val updateReadTimeout: Int
     val networkConnectTimeout: Int
@@ -25,5 +26,5 @@ interface SpiralCoreContext: SpiralContext, SpiralSignatures {
     val yamlMapper: ObjectMapper
     val xmlMapper: ObjectMapper
 
-    fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newSignatures: SpiralSignatures? = null): SpiralContext
+    fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null): SpiralContext
 }

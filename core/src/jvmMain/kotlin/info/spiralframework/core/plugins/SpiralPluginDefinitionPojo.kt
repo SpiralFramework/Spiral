@@ -1,6 +1,6 @@
 package info.spiralframework.core.plugins
 
-import info.spiralframework.base.util.SemVer
+import info.spiralframework.base.common.SemanticVersion
 
 data class SpiralPluginDefinitionPojo(
         val name: String,
@@ -14,7 +14,7 @@ data class SpiralPluginDefinitionPojo(
         val contentWarnings: Array<String>?,
 
         val version: String?,
-        val semanticVersion: SemVer,
+        val semanticVersion: SemanticVersion,
 
         val pluginClass: String,
 
