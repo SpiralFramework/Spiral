@@ -1,8 +1,8 @@
 package info.spiralframework.base.common.io
 
 @ExperimentalUnsignedTypes
-open class CommonBinaryDataSink(val buffer: MutableList<Byte> = ArrayList()): DataSink {
-    override var onClose: DataSinkEventHandler? = null
+open class CommonBinaryOutputFlow(val buffer: MutableList<Byte> = ArrayList()): OutputFlow {
+    override var onClose: OutputFlowEventHandler? = null
     override fun write(byte: Int) {
         buffer.add(byte.toByte())
     }

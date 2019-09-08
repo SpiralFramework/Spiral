@@ -8,6 +8,8 @@ import java.io.InputStream
  */
 open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
     var count = 0L
+    var mark = 0L
+
     open val streamOffset: Long by run {
         if (countedInputStream is CountingInputStream) {
             return@run countedInputStream::streamOffset
@@ -41,7 +43,12 @@ open class CountingInputStream(countedInputStream: InputStream) : DelegatedInput
 
     override fun reset() {
         super.reset()
-        count = 0L
+        count = mark
+    }
+
+    override fun mark(readlimit: Int) {
+        super.mark(readlimit)
+        mark = count
     }
 
     fun seekForward(n: Long): Long {
