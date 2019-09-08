@@ -29,6 +29,6 @@ data class CommonLocale(val language: String, val country: String = "", val vari
 
         val ROOT = CommonLocale("")
 
-        val defaultLocale: CommonLocale by lazy(::defaultLocale)
+        val defaultLocale: CommonLocale by lazy { info.spiralframework.base.binding.defaultLocale() }
     }
 }

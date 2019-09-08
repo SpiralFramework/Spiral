@@ -22,5 +22,9 @@ interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegist
 
     val enabledPlugins: Map<String, SemanticVersion>
 
-    fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralContext
+    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralContext
 }
+
+public inline fun <R> asCore(context: SpiralContext, block: SpiralCoreContext.() -> R): R? = (context as? SpiralCoreContext)?.let(block)
+
+fun SpiralContext.core(): SpiralCoreContext? = this as? SpiralCoreContext

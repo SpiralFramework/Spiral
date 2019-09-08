@@ -21,23 +21,23 @@ interface SpiralPluginRegistry {
 
     object NoOp: SpiralPluginRegistry {
         override fun SpiralCoreContext.loadedPlugins(): List<ISpiralPlugin> = emptyList()
-        override fun SpiralCoreContext.discover(): List<PluginEntry> = emptyList()
-        override fun SpiralCoreContext.loadPlugin(plugin: PluginEntry): LoadPluginResult = LoadPluginResult.NO_OP
-        override fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {}
-        override fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean = false
+        override suspend fun SpiralCoreContext.discover(): List<PluginEntry> = emptyList()
+        override suspend fun SpiralCoreContext.loadPlugin(plugin: PluginEntry): LoadPluginResult = LoadPluginResult.NO_OP
+        override suspend fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {}
+        override suspend fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean = false
     }
 
     fun SpiralCoreContext.loadedPlugins(): List<ISpiralPlugin>
 
-    fun SpiralCoreContext.discover(): List<PluginEntry>
-    fun SpiralCoreContext.loadPlugin(pluginEntry: PluginEntry): LoadPluginResult
-    fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean
-    fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin)
+    suspend fun SpiralCoreContext.discover(): List<PluginEntry>
+    suspend fun SpiralCoreContext.loadPlugin(pluginEntry: PluginEntry): LoadPluginResult
+    suspend fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean
+    suspend fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin)
 }
 
 fun SpiralPluginRegistry.loadedPlugins(context: SpiralCoreContext): List<ISpiralPlugin> = context.loadedPlugins()
 
-fun SpiralPluginRegistry.discover(context: SpiralCoreContext): List<PluginEntry> = context.discover()
-fun SpiralPluginRegistry.loadPlugin(context: SpiralCoreContext, plugin: PluginEntry) = context.loadPlugin(plugin)
-fun SpiralPluginRegistry.unloadPlugin(context: SpiralCoreContext, plugin: ISpiralPlugin) = context.unloadPlugin(plugin)
-fun SpiralPluginRegistry.queryEnablePlugin(context: SpiralCoreContext, plugin: PluginEntry): Boolean = context.queryEnablePlugin(plugin)
+suspend fun SpiralPluginRegistry.discover(context: SpiralCoreContext): List<PluginEntry> = context.discover()
+suspend fun SpiralPluginRegistry.loadPlugin(context: SpiralCoreContext, plugin: PluginEntry) = context.loadPlugin(plugin)
+suspend fun SpiralPluginRegistry.unloadPlugin(context: SpiralCoreContext, plugin: ISpiralPlugin) = context.unloadPlugin(plugin)
+suspend fun SpiralPluginRegistry.queryEnablePlugin(context: SpiralCoreContext, plugin: PluginEntry): Boolean = context.queryEnablePlugin(plugin)

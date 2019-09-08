@@ -9,6 +9,6 @@ class SpiralCorePlugin(context: SpiralCoreContext) : BaseSpiralPlugin(context, S
                 context.yamlMapper.readValue(requireNotNull(SpiralCorePlugin::class.java.classLoader.getResourceAsStream("spiralframework_core_plugin.yaml")))
     }
 
-    override fun load() {}
-    override fun unload() {}
+    override fun SpiralCoreContext.load() {}
+    override fun SpiralCoreContext.unload() {}
 }

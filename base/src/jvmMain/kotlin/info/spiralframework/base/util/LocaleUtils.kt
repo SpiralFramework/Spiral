@@ -14,6 +14,9 @@ public inline fun SpiralContext.printLocale(message: String, vararg args: Any) =
 /** Prints the given localised [message] and the line separator to the standard output stream. */
 public inline fun SpiralContext.printlnLocale(message: String, vararg args: Any) = println(localiseArray(message, args))
 
+/** Prints the given localised [message] and the line separator to the standard output stream. */
+public inline fun SpiralContext.printlnErrLocale(message: String, vararg args: Any) = System.err.println(localiseArray(message, args))
+
 /** Prints the given localised [error] to the standard output stream. */
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("Localisation requires a context")

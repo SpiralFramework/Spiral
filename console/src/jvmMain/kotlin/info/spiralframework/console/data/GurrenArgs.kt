@@ -1,7 +1,7 @@
 package info.spiralframework.console.data
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import info.spiralframework.base.ANSI
+import info.spiralframework.base.binding.isAnsiSupported
 
 data class GurrenArgs(
         val disableUpdateCheck: Boolean = DEFAULTS.DISABLE_UPDATE_CHECK,
@@ -75,7 +75,7 @@ data class GurrenArgs(
             args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT,
             args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT,
             args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT,
-            (ANSI.supported || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
+            (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
             args
     )
 
@@ -84,7 +84,7 @@ data class GurrenArgs(
             args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT || (pojo.isTool ?: DEFAULTS.IS_TOOL),
             args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT || (pojo.timeCommands ?: DEFAULTS.TIME_COMMANDS),
             args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT || (pojo.silenceOutput ?: DEFAULTS.SILENCE_OUTPUT),
-            (ANSI.supported || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT || pojo.ansiEnabled == true) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
+            (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT || pojo.ansiEnabled == true) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
             args
     )
 

@@ -5,6 +5,11 @@ import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.DataContext
 
 interface FormatWriteContext {
+    companion object {
+        operator fun invoke(name: String? = null, game: DRGame? = null, dataContext: DataContext? = null): FormatWriteContext =
+                DefaultFormatWriteContext(name, game, dataContext ?: BLANK_DATA_CONTEXT)
+    }
+
     val name: String?
     val game: DRGame?
     val dataContext: DataContext

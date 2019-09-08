@@ -6,7 +6,8 @@ import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*
-import org.greenrobot.eventbus.EventBus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
@@ -23,8 +24,8 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
 
     override fun SpiralCoreContext.loadedPlugins(): List<ISpiralPlugin> = loadedPlugins
 
-    override fun SpiralCoreContext.discover(): List<PluginEntry> {
-        if (EventBus.getDefault().postCancellable(BeginPluginDiscoveryEvent()))
+    override suspend fun SpiralCoreContext.discover(): List<PluginEntry> {
+        if (postCancellable(this, BeginPluginDiscoveryEvent()))
             return emptyList()
 
         //We scan five locations
@@ -61,14 +62,14 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         }.sortedBy { entry -> entry.pojo.semanticVersion }
                 .asReversed()
                 .distinctBy { entry -> entry.pojo.uid }
-                .filter { entry -> !EventBus.getDefault().postCancellable(DiscoveredPluginEvent(entry)) }
+                .filter { entry -> !postCancellable(this, DiscoveredPluginEvent(entry)) }
 
-        EventBus.getDefault().post(EndPluginDiscoveryEvent())
+        post(EndPluginDiscoveryEvent())
 
         return plugins
     }
 
-    fun Sequence<File>.discoverPlugins(context: SpiralCoreContext): List<PluginEntry> = this.flatMap { file ->
+    suspend fun Sequence<File>.discoverPlugins(context: SpiralCoreContext): List<PluginEntry> = this.flatMap { file ->
         try {
             val zip = ZipFile(file)
             zip.entries().asSequence().filter { entry -> entry.name.endsWith("plugin.yaml") || entry.name.endsWith("plugin.yml") || entry.name.endsWith("plugin.json')") }
@@ -84,8 +85,7 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         }
     }.toList()
 
-
-    override fun SpiralCoreContext.loadPlugin(pluginEntry: PluginEntry): LoadPluginResult {
+    override suspend fun SpiralCoreContext.loadPlugin(pluginEntry: PluginEntry): LoadPluginResult {
         //First thing's first, check to make sure the plugin hasn't already been loaded
 
         if (loadedPlugins.any { plugin -> plugin.uid == pluginEntry.pojo.uid }) {
@@ -114,23 +114,23 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
             return LoadPluginResult.MODULE_NOT_SUPPORTED
         }
 
-        if (EventBus.getDefault().postCancellable(BeginLoadingPluginEvent(pluginEntry))) {
+        if (postCancellable(this, BeginLoadingPluginEvent(pluginEntry))) {
             return LoadPluginResult.PLUGIN_LOAD_CANCELLED
         }
 
         val result = loadPluginInternal(pluginEntry)
 
         if (result.success) {
-            EventBus.getDefault().post(SuccessfulPluginLoadEvent(pluginEntry, result))
+            post(SuccessfulPluginLoadEvent(pluginEntry, result))
         } else {
-            EventBus.getDefault().post(FailedPluginLoadEvent(pluginEntry, result))
+            post(FailedPluginLoadEvent(pluginEntry, result))
             unloadPluginInternal(pluginEntry.pojo.uid)
         }
 
         return result
     }
 
-    private fun SpiralCoreContext.loadPluginInternal(pluginEntry: PluginEntry): LoadPluginResult {
+    private suspend fun SpiralCoreContext.loadPluginInternal(pluginEntry: PluginEntry): LoadPluginResult {
         val classLoader: ClassLoader
         if (pluginEntry.source != null && pluginLoaders.values.none { loader -> loader.urLs.any { url -> url == pluginEntry.source } }) {
             classLoader = URLClassLoader.newInstance(arrayOf(pluginEntry.source))
@@ -151,18 +151,20 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         return LoadPluginResult.SUCCESS
     }
 
-    override fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {
+    override suspend fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {
         plugin.unload(this)
         loadedPlugins.remove(plugin)
         unloadPluginInternal(plugin.uid)
     }
 
-    private fun unloadPluginInternal(uid: String) {
-        pluginLoaders.remove(uid)?.close()
+    private suspend fun unloadPluginInternal(uid: String) {
+        withContext(Dispatchers.IO) {
+            pluginLoaders.remove(uid)?.close()
+        }
     }
 
     //TODO: Rework, now that we load a key from the jar file
-    override fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean {
+    override suspend fun SpiralCoreContext.queryEnablePlugin(plugin: PluginEntry): Boolean {
         var loadPlugin = false
 
         val publicKey = this.publicKey

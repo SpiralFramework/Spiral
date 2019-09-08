@@ -10,7 +10,6 @@ import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.FAILURE
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
-import info.spiralframework.core.SpiralCoreData
 import info.spiralframework.core.decompress
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.SpiralFormat
@@ -155,7 +154,7 @@ class GurrenMechanic(override val parameterParser: ParameterParser) : CommandCla
 
         val (dataSource, compression) = decompress(args.extractPath::inputStream)
 
-        val result = GurrenShared.EXTRACTABLE_ARCHIVES.map { format -> format.read(source = dataSource) }
+        val result = GurrenShared.EXTRACTABLE_ARCHIVES.map { format -> format.read(context = this, source = dataSource) }
                 .filter(FormatResult<*>::didSucceed)
                 .sortedBy(FormatResult<*>::chance)
                 .asReversed()
@@ -212,7 +211,7 @@ class GurrenMechanic(override val parameterParser: ParameterParser) : CommandCla
         return@ParboiledCommand SUCCESS
     }
     val environment = ParboiledCommand(environmentRule) {
-        println(SpiralCoreData.ENVIRONMENT)
+        println(retrieveEnvironment().entries.joinToString("\n") { (k, v) -> "$k: $v"})
         return@ParboiledCommand SUCCESS
     }
 }

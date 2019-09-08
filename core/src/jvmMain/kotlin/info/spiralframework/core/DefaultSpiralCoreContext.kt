@@ -18,11 +18,13 @@ import info.spiralframework.core.plugins.SpiralCorePlugin
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
 
-data class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val eventBus: SpiralEventBus, val signatures: SpiralSignatures, val pluginRegistry: SpiralPluginRegistry, val serialisation: SpiralSerialisation)
+class DefaultSpiralCoreContext private constructor(val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val eventBus: SpiralEventBus, val signatures: SpiralSignatures, val pluginRegistry: SpiralPluginRegistry, val serialisation: SpiralSerialisation)
     : SpiralCoreContext,
         SpiralLocale by locale,
         SpiralLogger by logger,
@@ -43,9 +45,21 @@ data class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: Spir
         const val DEFAULT_JENKINS_BASE = "https://jenkins.abimon.org"
 
         val DEFAULT_ENABLED_PLUGINS = emptyMap<String, SemanticVersion>()
+
+        suspend operator fun invoke(core: SpiralCoreConfig, locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation): DefaultSpiralCoreContext {
+            val instance = DefaultSpiralCoreContext(core, locale, logger, config, environment, eventBus, signatures, pluginRegistry, serialisation)
+            instance.init()
+            return instance
+        }
+
+        suspend operator fun invoke(core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation): DefaultSpiralCoreContext {
+            val instance = DefaultSpiralCoreContext(core, parent, signatures, pluginRegistry, serialisation)
+            instance.init()
+            return instance
+        }
     }
 
-    constructor(core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation): this(core, parent, parent, parent, parent, parent, signatures, pluginRegistry, serialisation)
+    private constructor(core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation) : this(core, parent, parent, parent, parent, parent, signatures, pluginRegistry, serialisation)
 
     override val updateConnectTimeout: Int = core.updateConnectTimeout ?: DEFAULT_UPDATE_CONNECT_TIMEOUT
     override val updateReadTimeout: Int = core.updateReadTimeout ?: DEFAULT_UPDATE_READ_TIMEOUT
@@ -65,43 +79,55 @@ data class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: Spir
 
     override fun subcontext(module: String): SpiralCoreContext = this
 
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralCoreContext = DefaultSpiralCoreContext(
-            core,
-            newLocale ?: locale,
-            newLogger ?: logger,
-            newConfig ?: config,
-            newEnvironment ?: environment,
-            newEventBus ?: eventBus,
-            signatures,
-            pluginRegistry,
-            serialisation
-    )
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralCoreContext {
+        val instance = DefaultSpiralCoreContext(
+                core,
+                newLocale ?: locale,
+                newLogger ?: logger,
+                newConfig ?: config,
+                newEnvironment ?: environment,
+                newEventBus ?: eventBus,
+                signatures,
+                pluginRegistry,
+                serialisation
+        )
+        instance.init()
+        return instance
+    }
 
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralContext = DefaultSpiralCoreContext(
-            core,
-            newLocale ?: locale,
-            newLogger ?: logger,
-            newConfig ?: config,
-            newEnvironment ?: environment,
-            newEventBus ?: eventBus,
-            newSignatures ?: signatures,
-            newPluginRegistry ?: pluginRegistry,
-            newSerialisation ?: serialisation
-    )
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralContext {
+        val instance = DefaultSpiralCoreContext(
+                core,
+                newLocale ?: locale,
+                newLogger ?: logger,
+                newConfig ?: config,
+                newEnvironment ?: environment,
+                newEventBus ?: eventBus,
+                newSignatures ?: signatures,
+                newPluginRegistry ?: pluginRegistry,
+                newSerialisation ?: serialisation
+        )
+        instance.init()
+        return instance
+    }
 
-    fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus?, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralCoreContext = DefaultSpiralCoreContext(
-            newCore ?: core,
-            newLocale ?: locale,
-            newLogger ?: logger,
-            newConfig ?: config,
-            newEnvironment ?: environment,
-            newEventBus ?: eventBus,
-            newSignatures ?: signatures,
-            newPluginRegistry ?: pluginRegistry,
-            newSerialisation ?: serialisation
-    )
+    suspend fun copy(newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus?, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralCoreContext {
+        val instance = DefaultSpiralCoreContext(
+                newCore ?: core,
+                newLocale ?: locale,
+                newLogger ?: logger,
+                newConfig ?: config,
+                newEnvironment ?: environment,
+                newEventBus ?: eventBus,
+                newSignatures ?: signatures,
+                newPluginRegistry ?: pluginRegistry,
+                newSerialisation ?: serialisation
+        )
+        instance.init()
+        return instance
+    }
 
-    init {
+    suspend fun init() {
         moduleLoader.iterator().forEach { module -> module.register(this) }
         config.prime(this)
 
@@ -118,13 +144,63 @@ data class DefaultSpiralCoreContext(val core: SpiralCoreConfig, val locale: Spir
 
         val file = File(DefaultSpiralCoreContext::class.java.protectionDomain.codeSource.location.path)
         if (file.isFile) {
-            JarFile(file).use { jar ->
-                jar.manifest.mainAttributes.forEach { key, value ->
-                    storeStaticValue("manifest.${key.toString().toLowerCase()}", value.toString())
+            withContext(Dispatchers.IO) {
+                JarFile(file).use { jar ->
+                    jar.manifest.mainAttributes.forEach { key, value ->
+                        storeStaticValue("manifest.${key.toString().toLowerCase()}", value.toString())
+                    }
                 }
             }
         }
 
         this.loadPlugin(PluginEntry(SpiralCorePlugin(this).pojo, null))
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is DefaultSpiralCoreContext) return false
+
+        if (core != other.core) return false
+        if (locale != other.locale) return false
+        if (logger != other.logger) return false
+        if (config != other.config) return false
+        if (environment != other.environment) return false
+        if (eventBus != other.eventBus) return false
+        if (signatures != other.signatures) return false
+        if (pluginRegistry != other.pluginRegistry) return false
+        if (serialisation != other.serialisation) return false
+        if (updateConnectTimeout != other.updateConnectTimeout) return false
+        if (updateReadTimeout != other.updateReadTimeout) return false
+        if (networkConnectTimeout != other.networkConnectTimeout) return false
+        if (networkReadTimeout != other.networkReadTimeout) return false
+        if (apiBase != other.apiBase) return false
+        if (jenkinsBase != other.jenkinsBase) return false
+        if (enabledPlugins != other.enabledPlugins) return false
+        if (moduleLoader != other.moduleLoader) return false
+        if (loadedModules != other.loadedModules) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = core.hashCode()
+        result = 31 * result + locale.hashCode()
+        result = 31 * result + logger.hashCode()
+        result = 31 * result + config.hashCode()
+        result = 31 * result + environment.hashCode()
+        result = 31 * result + eventBus.hashCode()
+        result = 31 * result + signatures.hashCode()
+        result = 31 * result + pluginRegistry.hashCode()
+        result = 31 * result + serialisation.hashCode()
+        result = 31 * result + updateConnectTimeout
+        result = 31 * result + updateReadTimeout
+        result = 31 * result + networkConnectTimeout
+        result = 31 * result + networkReadTimeout
+        result = 31 * result + apiBase.hashCode()
+        result = 31 * result + jenkinsBase.hashCode()
+        result = 31 * result + enabledPlugins.hashCode()
+        result = 31 * result + (moduleLoader?.hashCode() ?: 0)
+        result = 31 * result + loadedModules.hashCode()
+        return result
     }
 }
