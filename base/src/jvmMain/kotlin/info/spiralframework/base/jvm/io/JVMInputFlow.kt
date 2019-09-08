@@ -5,6 +5,8 @@ import info.spiralframework.base.common.io.InputFlow
 import info.spiralframework.base.common.io.InputFlowEventHandler
 import info.spiralframework.base.common.io.readResultIsValid
 import info.spiralframework.base.common.io.skip
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 
 @ExperimentalUnsignedTypes
@@ -12,20 +14,20 @@ open class JVMInputFlow private constructor(val stream: CountingInputStream): In
     constructor(stream: InputStream): this(CountingInputStream(stream))
     override var onClose: InputFlowEventHandler? = null
 
-    override fun read(): Int? = stream.read().takeIf(::readResultIsValid)
-    override fun read(b: ByteArray): Int? = stream.read(b).takeIf(::readResultIsValid)
-    override fun read(b: ByteArray, off: Int, len: Int): Int? = stream.read(b, off, len).takeIf(::readResultIsValid)
-    override fun skip(n: ULong): ULong? = stream.skip(n.toLong()).toULong()
-    override fun available(): ULong? = stream.available().toULong()
-    override fun remaining(): ULong? = null
-    override fun size(): ULong? = null
-    override fun close() {
+    override suspend fun read(): Int? = withContext(Dispatchers.IO) { stream.read().takeIf(::readResultIsValid) }
+    override suspend fun read(b: ByteArray): Int? = withContext(Dispatchers.IO) { stream.read(b).takeIf(::readResultIsValid) }
+    override suspend fun read(b: ByteArray, off: Int, len: Int): Int? = withContext(Dispatchers.IO) { stream.read(b, off, len).takeIf(::readResultIsValid) }
+    override suspend fun skip(n: ULong): ULong? = withContext(Dispatchers.IO) { stream.skip(n.toLong()).toULong() }
+    override suspend fun available(): ULong? = withContext(Dispatchers.IO) { stream.available().toULong() }
+    override suspend fun remaining(): ULong? = null
+    override suspend fun size(): ULong? = null
+    override suspend fun close() {
         super.close()
         stream.close()
     }
 
-    override fun position(): ULong = stream.count.toULong()
-    override fun seek(pos: Long, mode: Int): ULong? {
+    override suspend fun position(): ULong = stream.count.toULong()
+    override suspend fun seek(pos: Long, mode: Int): ULong? {
         when (mode) {
             InputFlow.FROM_BEGINNING -> {
                 if (stream.markSupported()) {
@@ -41,7 +43,7 @@ open class JVMInputFlow private constructor(val stream: CountingInputStream): In
                 if (pos > 0) {
                     return skip(pos)
                 } else {
-                    val currentPosition = position() ?: return null
+                    val currentPosition = position()
                     return seek(currentPosition.toLong() + pos, InputFlow.FROM_BEGINNING)
                 }
             }

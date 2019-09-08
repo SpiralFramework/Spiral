@@ -23,7 +23,7 @@ interface DataSource<I : InputFlow>: DataCloseable {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSource<*>.copyToOutputFlow(sink: OutputFlow) {
+suspend fun DataSource<*>.copyToOutputFlow(sink: OutputFlow) {
     openInputFlow()?.copyToOutputFlow(sink)
 }
 

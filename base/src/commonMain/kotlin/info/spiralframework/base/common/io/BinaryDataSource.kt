@@ -29,8 +29,9 @@ class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1)
         openInstances.remove(flow)
     }
 
-    override fun close() {
+    override suspend fun close() {
         closed = true
-        openInstances.forEach(InputFlow::close)
+        openInstances.closeAll()
+        openInstances.clear()
     }
 }
