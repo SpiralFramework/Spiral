@@ -69,3 +69,4 @@ fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
 }
 
 expect fun formatPercent(percentage: Double): String
+expect fun uuidString(): String
