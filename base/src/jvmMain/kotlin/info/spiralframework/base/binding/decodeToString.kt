@@ -2,6 +2,7 @@ package info.spiralframework.base.binding
 
 import java.nio.charset.Charset
 import java.text.DecimalFormat
+import java.util.*
 
 val TextCharsets.java: Charset
     get() = when (this) {
@@ -17,3 +18,4 @@ actual fun ByteArray.decodeToString(charset: TextCharsets): String =
 private val PERCENT_FORMAT = DecimalFormat("00.00")
 
 actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
+actual fun uuidString(): String = UUID.randomUUID().toString()
