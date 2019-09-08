@@ -13,7 +13,7 @@ class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1)
     override val reproducibility: DataSourceReproducibility
         = DataSourceReproducibility(isStatic = true, isRandomAccess = true)
 
-    override fun openInputFlow(): BinaryInputFlow? {
+    override suspend fun openInputFlow(): BinaryInputFlow? {
         if (canOpenInputFlow()) {
             val stream = BinaryInputFlow(byteArray)
             stream.setCloseHandler(this::instanceClosed)
