@@ -121,4 +121,9 @@ open class WindowedInputFlow(val window: InputFlow, val offset: Long, val window
 @ExperimentalUnsignedTypes
 suspend inline fun InputFlow.skip(number: Number): ULong? = skip(number.toLong().toULong())
 
+@ExperimentalUnsignedTypes
+fun InputFlow.setCloseHandler(handler: InputFlowEventHandler) {
+    this.onClose = handler
+}
+
 fun readResultIsValid(byte: Int): Boolean = byte != -1

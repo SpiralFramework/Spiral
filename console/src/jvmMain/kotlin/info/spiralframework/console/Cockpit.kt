@@ -14,6 +14,9 @@ import info.spiralframework.base.common.events.SpiralEvent
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.events.SpiralEventListener
 import info.spiralframework.base.common.events.SpiralEventPriority
+import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.cacheFor
+import info.spiralframework.base.common.io.use
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.logging.SpiralLogger
@@ -29,6 +32,7 @@ import info.spiralframework.core.security.DefaultSpiralSignatures
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.DefaultSpiralSerialisation
 import info.spiralframework.spiral.updater.jarLocationAsFile
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -37,15 +41,22 @@ import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
 import java.nio.file.StandardOpenOption
+import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.system.exitProcess
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.toDuration
 
 /** The driving force behind the console interface for Spiral */
 //<SELF : Cockpit<SELF>>
-abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
+abstract class Cockpit @ExperimentalUnsignedTypes
+internal constructor(var context: SpiralCockpitContext) {
     companion object {
+        @ExperimentalTime
+        @ExperimentalUnsignedTypes
         @Suppress("BlockingMethodInNonBlockingContext")
         @ExperimentalStdlibApi
         @JvmStatic
@@ -57,7 +68,8 @@ abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                     .installLoggingSubscriber()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus)
+            val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider)
 
             val serialisation = DefaultSpiralSerialisation()
 
@@ -249,6 +261,7 @@ abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
             exitProcess(instance with { currentExitCode })
         }
 
+        @ExperimentalUnsignedTypes
         @ExperimentalStdlibApi
         suspend operator fun invoke(args: Array<String>): Cockpit {
             val locale: SpiralLocale = DefaultSpiralLocale()
@@ -257,7 +270,8 @@ abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                     .installLoggingSubscriber()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus)
+            val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider)
 
             val serialisation = DefaultSpiralSerialisation()
 
@@ -319,7 +333,7 @@ abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
     }
 
     init {
-        context.register(object: SpiralEventListener<SpiralEvent> {
+        context.register(object : SpiralEventListener<SpiralEvent> {
             override val eventClass: KClass<SpiralEvent> = SpiralEvent::class
             override val eventPriority: SpiralEventPriority = SpiralEventPriority.HIGHEST
 
@@ -344,7 +358,7 @@ abstract class Cockpit internal constructor(var context: SpiralCockpitContext) {
 //suspend operator fun <SELF: Cockpit, T> SELF.invoke(op: suspend SELF.() -> T): T = mutex.withLock { this.op() }
 
 @Suppress("UNCHECKED_CAST")
-infix fun <SELF: Cockpit, T> SELF.withBlocking(op: suspend SELF.() -> T): T = runBlocking { mutex.withLock { this@withBlocking.op() } }
+infix fun <SELF : Cockpit, T> SELF.withBlocking(op: suspend SELF.() -> T): T = runBlocking { mutex.withLock { this@withBlocking.op() } }
 
 @Suppress("UNCHECKED_CAST")
-suspend infix fun <SELF: Cockpit, T> SELF.with(op: suspend SELF.() -> T): T = mutex.withLock { this.op() }
+suspend infix fun <SELF : Cockpit, T> SELF.with(op: suspend SELF.() -> T): T = mutex.withLock { this.op() }
