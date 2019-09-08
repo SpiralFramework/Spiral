@@ -3,33 +3,43 @@
 package info.spiralframework.base.common.io
 
 @ExperimentalUnsignedTypes
-typealias DataStreamEventHandler = (DataStream) -> Unit
+typealias InputFlowEventHandler = (InputFlow) -> Unit
 
 @ExperimentalUnsignedTypes
-interface DataStream {
-    var onClose: DataStreamEventHandler?
+interface InputFlow: DataCloseable {
+    companion object {
+        const val FROM_BEGINNING = 0
+        const val FROM_END = 1
+        const val FROM_POSITION = 2
+    }
+
+    var onClose: InputFlowEventHandler?
 
     fun read(): Int?
     fun read(b: ByteArray): Int?
     fun read(b: ByteArray, off: Int, len: Int): Int?
     fun skip(n: ULong): ULong?
+    fun seek(pos: Long, mode: Int): ULong? = throw IllegalStateException("This flow is not seekable")
+    fun position(): ULong? = null
 
+    fun available(): ULong?
     fun remaining(): ULong?
-    fun close() {
+    fun size(): ULong?
+    override fun close() {
         onClose?.invoke(this)
     }
 }
 
 @ExperimentalUnsignedTypes
-open class CountingDataStream(val stream: DataStream) : DataStream by stream {
+open class CountingInputFlow(val stream: InputFlow) : InputFlow by stream {
     var _count = 0L
     val count
         get() = _count
 
     open val streamOffset: Long
-        get() = if (stream is CountingDataStream) stream.streamOffset else count
+        get() = if (stream is CountingInputFlow) stream.streamOffset else count
 //        set(value) {
-//            if (stream is CountingDataStream) stream.streamOffset = value else count = value
+//            if (stream is CountingInputFlow) stream.streamOffset = value else count = value
 //        }
 
     override fun read(): Int? {
@@ -61,7 +71,7 @@ open class CountingDataStream(val stream: DataStream) : DataStream by stream {
     }
 
     fun seekForward(n: ULong): ULong? {
-        return if (stream is CountingDataStream)
+        return if (stream is CountingInputFlow)
             stream.seekForward(n)
         else
             stream.skip(n)
@@ -69,8 +79,8 @@ open class CountingDataStream(val stream: DataStream) : DataStream by stream {
 }
 
 @ExperimentalUnsignedTypes
-open class WindowedDataStream(val window: DataStream, val offset: Long, val windowSize: Long) :
-    CountingDataStream(window) {
+open class WindowedInputFlow(val window: InputFlow, val offset: Long, val windowSize: Long) :
+    CountingInputFlow(window) {
     override val streamOffset: Long
         get() = offset + count
 
@@ -90,33 +100,6 @@ open class WindowedDataStream(val window: DataStream, val offset: Long, val wind
 }
 
 @ExperimentalUnsignedTypes
-public inline fun <T : DataStream?, R> T.use(block: (T) -> R): R {
-    var exception: Throwable? = null
-    try {
-        return block(this)
-    } catch (e: Throwable) {
-        exception = e
-        throw e
-    } finally {
-        this.closeFinally(exception)
-    }
-}
-
-@ExperimentalUnsignedTypes
-@PublishedApi
-internal fun DataStream?.closeFinally(cause: Throwable?) = when {
-    this == null -> {
-    }
-    cause == null -> close()
-    else ->
-        try {
-            close()
-        } catch (closeException: Throwable) {
-            //cause.addSuppressed(closeException)
-        }
-}
-
-@ExperimentalUnsignedTypes
-inline fun DataStream.skip(number: Number): ULong? = skip(number.toLong().toULong())
+inline fun InputFlow.skip(number: Number): ULong? = skip(number.toLong().toULong())
 
 fun readResultIsValid(byte: Int): Boolean = byte != -1

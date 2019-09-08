@@ -2,12 +2,12 @@
 
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.binding.BinaryDataSink
+import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.decodeToString
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt64LE(): Long? {
+fun InputFlow.readInt64LE(): Long? {
     val a = read()?.toLong() ?: return null
     val b = read()?.toLong() ?: return null
     val c = read()?.toLong() ?: return null
@@ -22,7 +22,7 @@ fun DataStream.readInt64LE(): Long? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt64BE(): Long? {
+fun InputFlow.readInt64BE(): Long? {
     val a = read()?.toLong() ?: return null
     val b = read()?.toLong() ?: return null
     val c = read()?.toLong() ?: return null
@@ -37,7 +37,7 @@ fun DataStream.readInt64BE(): Long? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readUInt64LE(): ULong? {
+fun InputFlow.readUInt64LE(): ULong? {
     val a = read()?.toLong() ?: return null
     val b = read()?.toLong() ?: return null
     val c = read()?.toLong() ?: return null
@@ -52,7 +52,7 @@ fun DataStream.readUInt64LE(): ULong? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readUInt64BE(): ULong? {
+fun InputFlow.readUInt64BE(): ULong? {
     val a = read()?.toLong() ?: return null
     val b = read()?.toLong() ?: return null
     val c = read()?.toLong() ?: return null
@@ -67,7 +67,7 @@ fun DataStream.readUInt64BE(): ULong? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt32LE(): Int? {
+fun InputFlow.readInt32LE(): Int? {
     val a = read() ?: return null
     val b = read() ?: return null
     val c = read() ?: return null
@@ -77,7 +77,7 @@ fun DataStream.readInt32LE(): Int? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt32BE(): Int? {
+fun InputFlow.readInt32BE(): Int? {
     val a = read() ?: return null
     val b = read() ?: return null
     val c = read() ?: return null
@@ -87,7 +87,7 @@ fun DataStream.readInt32BE(): Int? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readUInt32LE(): UInt? {
+fun InputFlow.readUInt32LE(): UInt? {
     val a = read() ?: return null
     val b = read() ?: return null
     val c = read() ?: return null
@@ -97,7 +97,7 @@ fun DataStream.readUInt32LE(): UInt? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readUInt32BE(): UInt? {
+fun InputFlow.readUInt32BE(): UInt? {
     val a = read() ?: return null
     val b = read() ?: return null
     val c = read() ?: return null
@@ -107,7 +107,7 @@ fun DataStream.readUInt32BE(): UInt? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt16LE(): Int? {
+fun InputFlow.readInt16LE(): Int? {
     val a = read() ?: return null
     val b = read() ?: return null
 
@@ -115,7 +115,7 @@ fun DataStream.readInt16LE(): Int? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readInt16BE(): Int? {
+fun InputFlow.readInt16BE(): Int? {
     val a = read() ?: return null
     val b = read() ?: return null
 
@@ -123,34 +123,34 @@ fun DataStream.readInt16BE(): Int? {
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readFloatBE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
+fun InputFlow.readFloatBE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readFloatLE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
+fun InputFlow.readFloatLE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readFloat32BE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
+fun InputFlow.readFloat32BE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readFloat32LE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
+fun InputFlow.readFloat32LE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readDoubleBE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
+fun InputFlow.readDoubleBE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readDoubleLE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
+fun InputFlow.readDoubleLE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readFloat64BE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
+fun InputFlow.readFloat64BE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
 @ExperimentalUnsignedTypes
-fun DataStream.readFloat64LE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
+fun InputFlow.readFloat64LE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
 
 @ExperimentalUnsignedTypes
-fun <T> DataStream.read(serialise: (DataStream) -> T?): T? = serialise(this)
-//fun <T> CountingDataStream.readSource(source: () -> DataStream, serialise: (() -> DataStream) -> T?): T? = serialise(source.from(streamOffset))
+fun <T> InputFlow.read(serialise: (InputFlow) -> T?): T? = serialise(this)
+//fun <T> CountingInputFlow.readSource(source: () -> InputFlow, serialise: (() -> InputFlow) -> T?): T? = serialise(source.from(streamOffset))
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeFloatBE(float: Float) = writeInt32BE(float.toRawBits())
+fun OutputFlow.writeFloatBE(float: Float) = writeInt32BE(float.toRawBits())
 @ExperimentalUnsignedTypes
-fun DataSink.writeFloatLE(float: Float) = writeInt32LE(float.toRawBits())
+fun OutputFlow.writeFloatLE(float: Float) = writeInt32LE(float.toRawBits())
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt64LE(num: Number) {
+fun OutputFlow.writeInt64LE(num: Number) {
     val long = num.toLong()
 
     write(long.toInt() and 0xFF)
@@ -164,7 +164,7 @@ fun DataSink.writeInt64LE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt64BE(num: Number) {
+fun OutputFlow.writeInt64BE(num: Number) {
     val long = num.toLong()
 
     write((long shr 56).toInt() and 0xFF)
@@ -178,7 +178,7 @@ fun DataSink.writeInt64BE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt32LE(num: Number) {
+fun OutputFlow.writeInt32LE(num: Number) {
     val int = num.toInt()
 
     write(int and 0xFF)
@@ -188,7 +188,7 @@ fun DataSink.writeInt32LE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt32BE(num: Number) {
+fun OutputFlow.writeInt32BE(num: Number) {
     val int = num.toInt()
 
     write((int shr 24) and 0xFF)
@@ -198,7 +198,7 @@ fun DataSink.writeInt32BE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeUInt32BE(num: Number) {
+fun OutputFlow.writeUInt32BE(num: Number) {
     val int = num.toInt()
 
     write((int ushr 24) and 0xFF)
@@ -208,7 +208,7 @@ fun DataSink.writeUInt32BE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt16LE(num: Number) {
+fun OutputFlow.writeInt16LE(num: Number) {
     val int = num.toShort().toInt()
 
     write(int and 0xFF)
@@ -216,7 +216,7 @@ fun DataSink.writeInt16LE(num: Number) {
 }
 
 @ExperimentalUnsignedTypes
-fun DataSink.writeInt16BE(num: Number) {
+fun OutputFlow.writeInt16BE(num: Number) {
     val int = num.toShort().toInt()
 
     write((int shr 8) and 0xFF)
@@ -227,7 +227,7 @@ fun DataSink.writeInt16BE(num: Number) {
  * Only supports 1, 2, 4, or 8
  */
 @ExperimentalUnsignedTypes
-inline fun DataStream.readIntXLE(x: Int): Number? =
+inline fun InputFlow.readIntXLE(x: Int): Number? =
         when (x) {
             1 -> read()
             2 -> readInt16LE()
@@ -237,7 +237,7 @@ inline fun DataStream.readIntXLE(x: Int): Number? =
         }
 
 @ExperimentalUnsignedTypes
-inline fun DataSink.writeIntXLE(num: Number, x: Int) =
+inline fun OutputFlow.writeIntXLE(num: Number, x: Int) =
         when (x) {
             1 -> write(num.toInt())
             2 -> writeInt16LE(num)
@@ -261,7 +261,7 @@ fun Number.toInt16LE(): IntArray {
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-fun DataStream.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String {
+fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String {
     val data =
         ByteArray(len.coerceAtLeast(0).run { if (!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
     read(data)
@@ -269,15 +269,15 @@ fun DataStream.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Bool
 }
 
 @ExperimentalUnsignedTypes
-fun DataStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
+fun InputFlow.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-fun DataStream.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = TextCharsets.UTF_8)
+fun InputFlow.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = TextCharsets.UTF_8)
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-fun DataStream.readNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
-    val data = BinaryDataSink()
+fun InputFlow.readNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
+    val data = BinaryOutputFlow()
     
     while (true) {
         val read = readIntXLE(encoding.bytesForNull) ?: break //This **should** work
@@ -292,8 +292,8 @@ fun DataStream.readNullTerminatedString(maxLen: Int = 255, encoding: TextCharset
 }
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-fun DataStream.readSingleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
-    val data = BinaryDataSink()
+fun InputFlow.readSingleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
+    val data = BinaryOutputFlow()
 
     while (true) {
         val read = read() ?: break
@@ -309,8 +309,8 @@ fun DataStream.readSingleByteNullTerminatedString(maxLen: Int = 255, encoding: T
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-fun DataStream.readDoubleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
-    val data = BinaryDataSink()
+fun InputFlow.readDoubleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
+    val data = BinaryOutputFlow()
 
     while (true) {
         val read = readInt16LE() ?: break
@@ -325,14 +325,14 @@ fun DataStream.readDoubleByteNullTerminatedString(maxLen: Int = 255, encoding: T
 }
 
 @ExperimentalUnsignedTypes
-public fun DataStream.copyToSink(sink: DataSink): Long = copyTo(sink)
+public fun InputFlow.copyToOutputFlow(output: OutputFlow): Long = copyTo(output)
 @ExperimentalUnsignedTypes
-public fun DataStream.copyTo(sink: DataSink, bufferSize: Int = 8192): Long {
+public fun InputFlow.copyTo(output: OutputFlow, bufferSize: Int = 8192): Long {
     var bytesCopied: Long = 0
     val buffer = ByteArray(bufferSize)
     var bytes = read(buffer)
     while (bytes != null) {
-        sink.write(buffer, 0, bytes)
+        output.write(buffer, 0, bytes)
         bytesCopied += bytes
         bytes = read(buffer)
     }
@@ -340,4 +340,4 @@ public fun DataStream.copyTo(sink: DataSink, bufferSize: Int = 8192): Long {
 }
 
 @ExperimentalUnsignedTypes
-public fun DataSink.copyFrom(stream: DataStream): Long = stream.copyTo(this)
+public fun OutputFlow.copyFrom(input: InputFlow): Long = input.copyTo(this)
