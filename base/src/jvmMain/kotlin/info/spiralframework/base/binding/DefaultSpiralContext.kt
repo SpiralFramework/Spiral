@@ -23,7 +23,7 @@ actual data class DefaultSpiralContext actual constructor(
         SpiralEnvironment by environment,
         SpiralEventBus by eventBus {
     override fun subcontext(module: String): SpiralContext = this
-    override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralContext =
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralContext =
             DefaultSpiralContext(
                     newLocale ?: locale,
                     newLogger ?: logger,

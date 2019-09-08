@@ -1,7 +1,5 @@
 package info.spiralframework.console.eventbus
 
-import info.spiralframework.core.plugins.events.CancellableSpiralEvent
+import info.spiralframework.base.common.events.CancellableSpiralEvent
 
-data class RegisterCommandRequest(val command: ParboiledCommand): CancellableSpiralEvent {
-    override var isCanceled: Boolean = false
-}
+data class RegisterCommandRequest(val command: ParboiledCommand, override var cancelled: Boolean = false): CancellableSpiralEvent

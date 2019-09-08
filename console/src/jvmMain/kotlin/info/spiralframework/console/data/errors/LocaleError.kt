@@ -1,12 +1,12 @@
 package info.spiralframework.console.data.errors
 
-import info.spiralframework.base.util.locale
+import info.spiralframework.base.common.locale.SpiralLocale
 import org.parboiled.Context
 import org.parboiled.buffers.InputBuffer
 import org.parboiled.errors.ParseError
 
-open class LocaleError(private val _startIndex: Int, private val _endIndex: Int, private val _inputBuffer: InputBuffer, private val _errorMessage: String, vararg val params: Any): ParseError {
-    constructor(context: Context<*>, errorMessage: String, vararg params: Any): this(context.startIndex, context.currentIndex, context.inputBuffer, errorMessage, *params)
+open class LocaleError(private val _startIndex: Int, private val _endIndex: Int, private val _inputBuffer: InputBuffer, private val _errorMessage: String): ParseError {
+    constructor(locale: SpiralLocale, context: Context<*>, errorMessage: String, vararg params: Any): this(context.startIndex, context.currentIndex, context.inputBuffer, locale.localiseArray(errorMessage, params))
 
     /**
      * Gets the start index of the parse error in the underlying input buffer.
@@ -27,7 +27,7 @@ open class LocaleError(private val _startIndex: Int, private val _endIndex: Int,
      *
      * @return an optional error message.
      */
-    override fun getErrorMessage(): String = locale(_errorMessage, *params)
+    override fun getErrorMessage(): String = _errorMessage
 
     /**
      * Gets the end index of the parse error in the underlying input buffer.

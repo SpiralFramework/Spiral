@@ -17,13 +17,13 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
             get() = throw IllegalStateException("NoOp context")
 
         override fun subcontext(module: String): SpiralContext = this
-        override fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralContext = this
+        override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?): SpiralContext = this
     }
 
     val loadedModules: Map<String, SemanticVersion>
 
     fun subcontext(module: String): SpiralContext
-    fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null): SpiralContext
+    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null): SpiralContext
 }
 
 inline fun <T> SpiralContext.with(module: String, block: SpiralContext.() -> T): T = subcontext(module).block()

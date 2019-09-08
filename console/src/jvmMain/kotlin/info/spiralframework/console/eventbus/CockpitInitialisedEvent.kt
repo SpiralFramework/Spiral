@@ -1,15 +1,15 @@
 package info.spiralframework.console.eventbus
 
+import info.spiralframework.base.common.events.SpiralEvent
 import info.spiralframework.console.Cockpit
 import info.spiralframework.console.CockpitMechanic
 import info.spiralframework.console.CockpitPilot
 import info.spiralframework.console.CockpitUpdate
-import info.spiralframework.core.plugins.events.SpiralEvent
 
-open class CockpitInitialisedEvent<T: Cockpit<T>> private constructor(open val cockpit: T): SpiralEvent {
+open class CockpitInitialisedEvent<T: Cockpit> private constructor(open val cockpit: T): SpiralEvent {
     companion object {
         @Suppress("UNCHECKED_CAST")
-        operator fun <T: Cockpit<T>> invoke(cockpit: T): CockpitInitialisedEvent<T> {
+        operator fun <T: Cockpit> invoke(cockpit: T): CockpitInitialisedEvent<T> {
             return when (cockpit) {
                 is CockpitMechanic -> CockpitMechanicInitialisedEvent(cockpit) as CockpitInitialisedEvent<T>
                 is CockpitPilot -> CockpitPilotInitialisedEvent(cockpit) as CockpitInitialisedEvent<T>

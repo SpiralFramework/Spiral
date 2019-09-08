@@ -1,21 +1,23 @@
 package info.spiralframework.console.eventbus
 
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.events.SpiralEventListener
+import info.spiralframework.base.common.events.SpiralEventPriority
 import info.spiralframework.base.util.printlnErr
 import info.spiralframework.base.util.printlnErrLocale
-import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.data.ParboiledMarker
-import org.greenrobot.eventbus.Subscribe
 import org.parboiled.Rule
 import org.parboiled.errors.ParseError
 import org.parboiled.parserunners.ReportingParseRunner
+import kotlin.reflect.KClass
 
-open class ParboiledCommand(val rule: Rule, val scope: String? = null, val failedCommand: ParboiledCommand.(List<ParseError>) -> Unit, val command: ParboiledCommand.(List<Any>) -> Boolean) {
+open class ParboiledCommand(val rule: Rule, val scope: String? = null, override val eventPriority: SpiralEventPriority = SpiralEventPriority.NORMAL, val failedCommand: suspend SpiralContext.(List<ParseError>) -> Unit, val command: suspend SpiralContext.(List<Any>) -> Boolean): SpiralEventListener<CommandRequest> {
     companion object {
         val FAILURE: Boolean = true
         val SUCCESS: Boolean = false
 
-        fun succeed(text: String, vararg params: Any): Boolean {
-            printlnLocale(text, *params)
+        fun SpiralContext.succeed(text: String, vararg params: Any): Boolean {
+            println(localiseArray(text, params))
             return SUCCESS
         }
         
@@ -30,8 +32,8 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, val faile
             return FAILURE
         }
 
-        fun fail(text: String, vararg params: Any): Boolean {
-            printlnLocale(text, *params)
+        fun SpiralContext.fail(text: String, vararg params: Any): Boolean {
+            println(localiseArray(text, params))
             return FAILURE
         }
 
@@ -46,7 +48,7 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, val faile
             return SUCCESS
         }
         
-        val invalidCommand: ParboiledCommand.(List<ParseError>) -> Unit = { failed ->
+        val invalidCommand: suspend SpiralContext.(List<ParseError>) -> Unit = { failed ->
             if (failed.isNotEmpty()) {
                 printlnErrLocale("commands.invalid")
                 failed.mapNotNull(ParseError::getErrorMessage).distinct().forEach { error -> printlnErr("\t$error") }
@@ -56,18 +58,19 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, val faile
         }
     }
 
-    constructor(rule: Rule, scope: String? = null, command: ParboiledCommand.(List<Any>) -> Boolean) : this(rule, scope, invalidCommand, command)
-    constructor(rule: Rule, scope: String? = null, help: String, command: ParboiledCommand.(List<Any>) -> Boolean) : this(rule, scope, { printlnErr(help) }, command)
+    constructor(rule: Rule, scope: String? = null, eventPriority: SpiralEventPriority = SpiralEventPriority.NORMAL, command: suspend SpiralContext.(List<Any>) -> Boolean) : this(rule, scope, eventPriority, invalidCommand, command)
+    constructor(rule: Rule, scope: String? = null, help: String, eventPriority: SpiralEventPriority = SpiralEventPriority.NORMAL, command: suspend SpiralContext.(List<Any>) -> Boolean) : this(rule, scope, eventPriority, { printlnErr(help) }, command)
 
     val runner = ReportingParseRunner<Any>(rule)
     var failed: Boolean = false
 
-    @Subscribe
-    fun handle(request: CommandRequest) {
-        if (scope != null && request.scope.scopeName != scope)
+    override val eventClass: KClass<CommandRequest> = CommandRequest::class
+
+    override suspend fun SpiralContext.handle(event: CommandRequest) {
+        if (scope != null && event.scope.scopeName != scope)
             return
 
-        val command = request.command
+        val command = event.command
 
         runner.parseErrors.clear()
         val result = runner.run(command)
@@ -83,8 +86,8 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, val faile
                 markers.forEach { marker ->
                     when (marker) {
                         is ParboiledMarker.SUCCESS_COMMAND -> failed = command(params) == FAILURE
-                        is ParboiledMarker.SUCCESS_BASE -> request.register(this)
-                        is ParboiledMarker.FAILED_LOCALE -> printlnLocale(marker.localeMsg, *marker.params)
+                        is ParboiledMarker.SUCCESS_BASE -> event.register(this@ParboiledCommand)
+                        is ParboiledMarker.FAILED_LOCALE -> println(localiseArray(marker.localeMsg, marker.params))
                     }
                 }
 

@@ -10,13 +10,9 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.eventbus.FunctionSubscriber
-import info.spiralframework.core.eventbus.LoggingSubscriber
+import info.spiralframework.base.common.events.*
 import info.spiralframework.core.formats.compression.*
-import info.spiralframework.core.plugins.events.CancellableSpiralEvent
 import info.spiralframework.formats.utils.DataSource
-import org.greenrobot.eventbus.EventBus
-import org.slf4j.Logger
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -121,27 +117,15 @@ fun <T : Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
     return null
 }
 
-fun <T : CancellableSpiralEvent> EventBus.cancel(t: T) {
-    t.isCanceled = true
-    cancelEventDelivery(t)
-}
+suspend fun <T : CancellableSpiralEvent> SpiralEventBus.postCancellable(context: SpiralContext, event: T): Boolean {
+    context.post(event)
 
-fun <T : CancellableSpiralEvent> EventBus.postCancellable(t: T): Boolean {
-    post(t)
-
-    return t.isCanceled
-}
-
-inline fun <reified T : Any> EventBus.registerFunction(noinline func: (T) -> Unit): Any {
-    val obj = FunctionSubscriber(func)
-
-    register(obj)
-    return obj
+    return event.cancelled
 }
 
 fun <T> T.identifySelf(): T = this
 
-fun EventBus.installLoggingSubscriber(logger: Logger): EventBus {
-    LoggingSubscriber(this, logger)
+fun <T: SpiralEventBus> T.installLoggingSubscriber(): T {
+    register("Logging", SpiralEventPriority.HIGHEST) { event: SpiralEvent -> trace("core.eventbus.logging.event", event) }
     return this
 }

@@ -270,4 +270,4 @@ fun RSAPrivateKeySpec(data: ByteArray): KeySpec
 fun RSAPublicKeySpec(data: ByteArray): KeySpec
         = X509EncodedKeySpec(data)
 
-fun String.matchesSha256(data: ByteArray): Boolean = data.sha256Hash() == this
+fun String.matchesSha256(data: ByteArray): Boolean = data.sha256Hash().equals(this, true)

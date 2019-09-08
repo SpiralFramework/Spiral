@@ -1,50 +1,61 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.util.locale
+import info.spiralframework.base.common.text.arbitraryProgressBar
 import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.data.GurrenArgs
+import info.spiralframework.console.data.SpiralCockpitContext
 import info.spiralframework.spiral.updater.jarLocation
 import info.spiralframework.spiral.updater.moveUpdate
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-class CockpitUpdate internal constructor(val updateFile: File, args: GurrenArgs, vararg rawArgs: String): Cockpit<CockpitUpdate>(args) {
+class CockpitUpdate internal constructor(val updateFile: File, startingContext: SpiralCockpitContext, vararg rawArgs: String) : Cockpit(startingContext) {
     companion object {
         val needsMove = AtomicBoolean(true)
     }
+
     val process: Process = ProcessBuilder("java", "-jar", updateFile.absolutePath, "--${GurrenArgs.DISABLE_UPDATE_CHECK}", *rawArgs)
             .inheritIO()
             .start()
 
-    override fun startAsync(scope: CoroutineScope): Job {
-        return scope.launch {
+    override suspend fun start() {
+        with(context) {
             try {
-                this@CockpitUpdate { currentExitCode = process.waitFor() }
+                val exitCode = suspendCoroutine<Int> { continuation -> continuation.resume(process.waitFor()) }
+                this@CockpitUpdate with { currentExitCode = exitCode }
             } catch (e: CancellationException) {
-                this@CockpitUpdate { currentExitCode = process.destroyForcibly().waitFor() }
+                val exitCode = suspendCoroutine<Int> { continuation -> continuation.resume(process.destroyForcibly().waitFor()) }
+                this@CockpitUpdate with { currentExitCode = exitCode }
             } finally {
                 //Move the update over
-                printlnLocale("gurren.update.moving")
-                moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI(), locale("gurren.update.finished_moving"))
-                needsMove.set(false)
+                move()
             }
         }
     }
 
-    init {
-        printlnLocale("gurren.update.init")
+    suspend fun SpiralCockpitContext.move() {
+        printlnLocale("gurren.update.moving")
+        arbitraryProgressBar {
+            moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI(), "")
+            needsMove.set(false)
+        }
+        printlnLocale("gurren.update.finished_moving")
+    }
 
-        Runtime.getRuntime().addShutdownHook(thread(false) {
-            if (needsMove.get()) {
-                printlnLocale("gurren.update.moving")
-                moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI(), locale("gurren.update.finished_moving"))
-                needsMove.set(false)
-            }
-        })
+    init {
+        with(startingContext) {
+            printlnLocale("gurren.update.init")
+
+            Runtime.getRuntime().addShutdownHook(thread(false) {
+                runBlocking {
+                    move()
+                }
+            })
+        }
     }
 }

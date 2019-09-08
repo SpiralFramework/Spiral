@@ -5,11 +5,11 @@ package info.spiralframework.base.common.events
  */
 inline class SpiralEventPriority(val priority: Int): Comparable<SpiralEventPriority> {
     companion object {
-        const val HIGHEST   = 0x80000
-        const val HIGH      = 0x60000
-        const val NORMAL    = 0x40000
-        const val LOW       = 0x20000
-        const val LOWEST    = 0x00000
+        val HIGHEST   = SpiralEventPriority(0x80000)
+        val HIGH      = SpiralEventPriority(0x60000)
+        val NORMAL    = SpiralEventPriority(0x40000)
+        val LOW       = SpiralEventPriority(0x20000)
+        val LOWEST    = SpiralEventPriority(0x00000)
     }
 
     override fun compareTo(other: SpiralEventPriority): Int = other.priority - this.priority

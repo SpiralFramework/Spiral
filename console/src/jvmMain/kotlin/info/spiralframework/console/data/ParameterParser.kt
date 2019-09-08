@@ -1,7 +1,6 @@
 package info.spiralframework.console.data
 
-import info.spiralframework.base.binding.SpiralLocale.localiseEnglish
-import info.spiralframework.base.binding.localise
+import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.console.data.errors.LocaleError
 import info.spiralframework.osl.SpiralParser
 import org.parboiled.Action
@@ -13,16 +12,16 @@ import org.parboiled.support.Var
 import java.io.File
 
 @BuildParseTree
-open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
+open class ParameterParser(val locale: SpiralLocale, parboiled: Boolean) : SpiralParser(parboiled) {
     companion object {
         const val MECHANIC_SEPARATOR = '\u001D'
-        operator fun invoke(): ParameterParser = Parboiled.createParser(ParameterParser::class.java, true)
+        operator fun invoke(locale: SpiralLocale): ParameterParser = Parboiled.createParser(ParameterParser::class.java, locale, true)
     }
 
     @Cached
     open fun Localised(str: String): Rule = FirstOf(
-            IgnoreCase(localise(str)),
-            IgnoreCase(localiseEnglish(str))
+            IgnoreCase(locale.localise(str)),
+            IgnoreCase(locale.localiseEnglish(str))
     )
 
     open fun Parameter(): Rule {
@@ -285,7 +284,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
                         if (file.exists()) {
                             return@Action push(file)
                         } else {
-                            context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str))
+                            context.parseErrors.add(LocaleError(locale, context, "errors.files.doesnt_exist", str))
                             return@Action false
                         }
                     }
@@ -318,7 +317,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                 if (file.exists()) {
                                     push(file)
                                 } else {
-                                    context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str.get()))
+                                    context.parseErrors.add(LocaleError(locale, context, "errors.files.doesnt_exist", str.get()))
                                     false
                                 }
                             }
@@ -353,7 +352,7 @@ open class ParameterParser(parboiled: Boolean) : SpiralParser(parboiled) {
                                 if (file.exists()) {
                                     push(file)
                                 } else {
-                                    context.parseErrors.add(LocaleError(context, "errors.files.doesnt_exist", str.get()))
+                                    context.parseErrors.add(LocaleError(locale, context, "errors.files.doesnt_exist", str.get()))
                                     false
                                 }
                             }
