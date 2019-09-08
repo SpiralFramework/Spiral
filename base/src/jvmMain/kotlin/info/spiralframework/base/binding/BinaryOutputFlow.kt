@@ -7,5 +7,6 @@ import java.io.ByteArrayOutputStream
 @ExperimentalUnsignedTypes
 actual open class BinaryOutputFlow(private val _internal: ByteArrayOutputStream) : OutputFlow by JVMOutputFlow(_internal) {
     actual constructor(): this(ByteArrayOutputStream())
+    actual fun getDataSize(): ULong = _internal.size().toULong()
     actual fun getData(): ByteArray = _internal.toByteArray()
 }
