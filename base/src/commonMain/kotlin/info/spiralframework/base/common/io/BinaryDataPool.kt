@@ -17,7 +17,7 @@ class BinaryDataPool(val output: BinaryOutputFlow = BinaryOutputFlow(), val maxI
     override fun openInputFlow(): BinaryInputFlow? {
         if (canOpenInputFlow()) {
             val stream = BinaryInputFlow(output.getData())
-            stream.onClose = this::instanceClosed
+            stream.setCloseHandler(this::instanceClosed)
             openInstances.add(stream)
             return stream
         } else {

@@ -16,7 +16,7 @@ class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1)
     override fun openInputFlow(): BinaryInputFlow? {
         if (canOpenInputFlow()) {
             val stream = BinaryInputFlow(byteArray)
-            stream.onClose = this::instanceClosed
+            stream.setCloseHandler(this::instanceClosed)
             openInstances.add(stream)
             return stream
         } else {
