@@ -18,7 +18,7 @@ interface DataSource<I : InputFlow>: DataCloseable {
      */
     val reproducibility: DataSourceReproducibility
 
-    fun openInputFlow(): I?
+    suspend fun openInputFlow(): I?
     fun canOpenInputFlow(): Boolean
 }
 

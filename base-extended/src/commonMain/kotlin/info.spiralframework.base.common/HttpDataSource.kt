@@ -1,23 +1,28 @@
-package info.spiralframework.base.jvm.io.files
+package info.spiralframework.base.common
 
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.DataSourceReproducibility
 import info.spiralframework.base.common.io.InputFlow
 import info.spiralframework.base.common.io.closeAll
-import java.io.File
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.http.Url
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class FileDataSource(val backing: File, val maxInstanceCount: Int = -1): DataSource<FileInputFlow> {
-    override val dataSize: ULong = backing.length().toULong()
-    private val openInstances: MutableList<FileInputFlow> = ArrayList(max(maxInstanceCount, 0))
+class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<ByteReadChannelInputFlow> {
+    private val client = HttpClient()
+
+    override var dataSize: ULong? = null
+
+    private val openInstances: MutableList<ByteReadChannelInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
 
-    override val reproducibility: DataSourceReproducibility = DataSourceReproducibility(isStatic = true, isRandomAccess = true)
+    override val reproducibility: DataSourceReproducibility = DataSourceReproducibility(isUnreliable = true)
 
-    override suspend fun openInputFlow(): FileInputFlow? {
+    override suspend fun openInputFlow(): ByteReadChannelInputFlow? {
         if (canOpenInputFlow()) {
-            val stream = FileInputFlow(backing)
+            val stream = ByteReadChannelInputFlow(client.get(url))
             stream.onClose = this::instanceClosed
             openInstances.add(stream)
             return stream
@@ -36,5 +41,6 @@ class FileDataSource(val backing: File, val maxInstanceCount: Int = -1): DataSou
         closed = true
         openInstances.closeAll()
         openInstances.clear()
+        client.close()
     }
 }

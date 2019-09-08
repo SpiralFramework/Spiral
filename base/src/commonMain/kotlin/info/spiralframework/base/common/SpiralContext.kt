@@ -19,6 +19,8 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
         override val loadedModules: Map<String, SemanticVersion>
             get() = throw IllegalStateException("NoOp context")
 
+        override fun prime(catalyst: SpiralContext) {}
+
         override fun subcontext(module: String): SpiralContext = this
         override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?): SpiralContext = this
     }

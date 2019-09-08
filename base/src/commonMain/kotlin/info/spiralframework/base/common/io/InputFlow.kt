@@ -16,7 +16,7 @@ interface InputFlow : DataCloseable {
     var onClose: InputFlowEventHandler?
 
     suspend fun read(): Int?
-    suspend fun read(b: ByteArray): Int?
+    suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
     suspend fun read(b: ByteArray, off: Int, len: Int): Int?
     suspend fun skip(n: ULong): ULong?
     suspend fun seek(pos: Long, mode: Int): ULong? = throw IllegalStateException("This flow is not seekable")
