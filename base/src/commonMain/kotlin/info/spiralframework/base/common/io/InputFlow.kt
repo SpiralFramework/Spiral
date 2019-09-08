@@ -3,7 +3,7 @@
 package info.spiralframework.base.common.io
 
 @ExperimentalUnsignedTypes
-typealias InputFlowEventHandler = (InputFlow) -> Unit
+typealias InputFlowEventHandler = suspend (flow: InputFlow) -> Unit
 
 @ExperimentalUnsignedTypes
 interface InputFlow : DataCloseable {

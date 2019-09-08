@@ -25,7 +25,7 @@ class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1)
     }
     override fun canOpenInputFlow(): Boolean = !closed && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
 
-    private fun instanceClosed(flow: InputFlow) {
+    private suspend fun instanceClosed(flow: InputFlow) {
         openInstances.remove(flow)
     }
 
