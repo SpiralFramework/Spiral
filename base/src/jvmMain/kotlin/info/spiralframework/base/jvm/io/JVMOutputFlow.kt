@@ -2,19 +2,21 @@ package info.spiralframework.base.jvm.io
 
 import info.spiralframework.base.common.io.OutputFlow
 import info.spiralframework.base.common.io.OutputFlowEventHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.OutputStream
 
 @ExperimentalUnsignedTypes
 open class JVMOutputFlow(val stream: OutputStream): OutputFlow {
     override var onClose: OutputFlowEventHandler? = null
 
-    override fun write(byte: Int) = stream.write(byte)
-    override fun write(b: ByteArray) = stream.write(b)
-    override fun write(b: ByteArray, off: Int, len: Int) = stream.write(b, off, len)
-    override fun flush() = stream.flush()
+    override suspend fun write(byte: Int) = withContext(Dispatchers.IO) { stream.write(byte) }
+    override suspend fun write(b: ByteArray) = withContext(Dispatchers.IO) { stream.write(b) }
+    override suspend fun write(b: ByteArray, off: Int, len: Int) = withContext(Dispatchers.IO) { stream.write(b, off, len) }
+    override suspend fun flush() = withContext(Dispatchers.IO) { stream.flush() }
 
-    override fun close() {
+    override suspend fun close() {
         super.close()
-        stream.close()
+        withContext(Dispatchers.IO) { stream.close() }
     }
 }

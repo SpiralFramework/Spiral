@@ -9,11 +9,11 @@ typealias OutputFlowEventHandler = (OutputFlow) -> Unit
 interface OutputFlow: DataCloseable {
     var onClose: OutputFlowEventHandler?
 
-    fun write(byte: Int)
-    fun write(b: ByteArray)
-    fun write(b: ByteArray, off: Int, len: Int)
-    fun flush()
-    override fun close() {
+    suspend fun write(byte: Int)
+    suspend fun write(b: ByteArray)
+    suspend fun write(b: ByteArray, off: Int, len: Int)
+    suspend fun flush()
+    override suspend fun close() {
         onClose?.invoke(this)
     }
 }
@@ -27,17 +27,17 @@ open class CountingOutputFlow(val sink: OutputFlow) : OutputFlow by sink {
     open val streamOffset: Long
         get() = if (sink is CountingOutputFlow) sink.streamOffset else count
 
-    override fun write(byte: Int) {
+    override suspend fun write(byte: Int) {
         sink.write(byte)
         _count++
     }
 
-    override fun write(b: ByteArray) {
+    override suspend fun write(b: ByteArray) {
         sink.write(b)
         _count += b.size
     }
 
-    override fun write(b: ByteArray, off: Int, len: Int) {
+    override suspend fun write(b: ByteArray, off: Int, len: Int) {
         require(len >= 0)
         sink.write(b, off, len)
         _count += len
@@ -45,4 +45,4 @@ open class CountingOutputFlow(val sink: OutputFlow) : OutputFlow by sink {
 }
 
 @ExperimentalUnsignedTypes
-fun OutputFlow.writeByte(byte: Number) = write(byte.toInt())
+suspend fun OutputFlow.writeByte(byte: Number) = write(byte.toInt())

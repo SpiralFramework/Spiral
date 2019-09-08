@@ -1,11 +1,11 @@
 package info.spiralframework.base.common.io
 
 interface DataCloseable {
-    fun close()
+    suspend fun close()
 }
 
 @ExperimentalUnsignedTypes
-public inline fun <T : DataCloseable?, R> T.use(block: (T) -> R): R {
+public suspend inline fun <T : DataCloseable?, R> T.use(block: (T) -> R): R {
     var exception: Throwable? = null
     try {
         return block(this)
@@ -19,7 +19,7 @@ public inline fun <T : DataCloseable?, R> T.use(block: (T) -> R): R {
 
 @ExperimentalUnsignedTypes
 @PublishedApi
-internal fun DataCloseable?.closeFinally(cause: Throwable?) = when {
+internal suspend fun DataCloseable?.closeFinally(cause: Throwable?) = when {
     this == null -> {
     }
     cause == null -> close()
@@ -30,3 +30,5 @@ internal fun DataCloseable?.closeFinally(cause: Throwable?) = when {
             //cause.addSuppressed(closeException)
         }
 }
+
+suspend fun <T: DataCloseable> List<T>.closeAll() = forEach { data -> data.close() }
