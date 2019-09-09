@@ -1,8 +1,8 @@
 package info.spiralframework.base.common
 
-import info.spiralframework.base.common.io.InputFlow
-import info.spiralframework.base.common.io.InputFlowEventHandler
-import info.spiralframework.base.common.io.readResultIsValid
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlowEventHandler
+import info.spiralframework.base.common.io.flow.readResultIsValid
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.discardExact
 

@@ -1,7 +1,7 @@
 package info.spiralframework.base.jvm.io.files
 
-import info.spiralframework.base.common.io.InputFlow
-import info.spiralframework.base.common.io.InputFlowEventHandler
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlowEventHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

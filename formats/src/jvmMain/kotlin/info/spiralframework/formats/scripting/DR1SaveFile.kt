@@ -1,7 +1,10 @@
 package info.spiralframework.formats.scripting
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.util.*
+import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.base.util.readInt64LE
+import info.spiralframework.base.util.readXBytes
+import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream
@@ -58,11 +61,11 @@ class DR1SaveFile private constructor(context: SpiralContext, val dataSource: Da
                 require(binMagic == BIN_MAGIC_NUMBER) { localise("formats.save.dr1.bin") }
 
                 size = stream.readInt32LE()
-                danganronpaString = String(stream.readXBytes(64), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
-                chapterSectionString = String(stream.readXBytes(128), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
-                debugInfoString = String(stream.readXBytes(512), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                danganronpaString = String(stream.readXBytes(64), Charsets.US_ASCII).trimEnd(NULL_TERMINATOR)
+                chapterSectionString = String(stream.readXBytes(128), Charsets.US_ASCII).trimEnd(NULL_TERMINATOR)
+                debugInfoString = String(stream.readXBytes(512), Charsets.US_ASCII).trimEnd(NULL_TERMINATOR)
 
-                lastPlayedString = String(stream.readXBytes(32), Charsets.US_ASCII, String.Mode.NULL_TERMINATED)
+                lastPlayedString = String(stream.readXBytes(32), Charsets.US_ASCII).trimEnd(NULL_TERMINATOR)
 
                 //D880: coins
             } finally {

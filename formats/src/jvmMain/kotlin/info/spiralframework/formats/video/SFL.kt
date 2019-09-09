@@ -1,6 +1,6 @@
 package info.spiralframework.formats.video
 
-import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.formats.common.withFormats

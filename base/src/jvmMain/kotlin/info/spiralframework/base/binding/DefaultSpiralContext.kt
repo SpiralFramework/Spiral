@@ -1,8 +1,8 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.SpiralModuleProvider
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus

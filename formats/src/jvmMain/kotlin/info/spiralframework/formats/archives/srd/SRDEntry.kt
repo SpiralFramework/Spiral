@@ -1,6 +1,6 @@
 package info.spiralframework.formats.archives.srd
 
-import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32BE

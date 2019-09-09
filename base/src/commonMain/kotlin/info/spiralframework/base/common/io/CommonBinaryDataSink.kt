@@ -1,5 +1,8 @@
 package info.spiralframework.base.common.io
 
+import info.spiralframework.base.common.io.flow.OutputFlow
+import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
+
 @ExperimentalUnsignedTypes
 open class CommonBinaryOutputFlow(val buffer: MutableList<Byte> = ArrayList()): OutputFlow {
     override var onClose: OutputFlowEventHandler? = null

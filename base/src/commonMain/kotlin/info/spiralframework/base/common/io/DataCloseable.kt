@@ -5,7 +5,7 @@ interface DataCloseable {
 }
 
 @ExperimentalUnsignedTypes
-public suspend inline fun <T : DataCloseable?, R> T.use(block: (T) -> R): R {
+public suspend inline fun <T : DataCloseable?, R> T.use(@Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE") block: suspend (T) -> R): R {
     var exception: Throwable? = null
     try {
         return block(this)
@@ -14,6 +14,32 @@ public suspend inline fun <T : DataCloseable?, R> T.use(block: (T) -> R): R {
         throw e
     } finally {
         this.closeFinally(exception)
+    }
+}
+
+@ExperimentalUnsignedTypes
+public suspend inline fun <T : DataCloseable?, R> T.useBlock(block: (T) -> R): R {
+    var exception: Throwable? = null
+    try {
+        return block(this)
+    } catch (e: Throwable) {
+        exception = e
+        throw e
+    } finally {
+        this.closeFinally(exception)
+    }
+}
+
+@ExperimentalUnsignedTypes
+public suspend inline fun <T : DataCloseable?, R> use(t: T, block: () -> R): R {
+    var exception: Throwable? = null
+    try {
+        return block()
+    } catch (e: Throwable) {
+        exception = e
+        throw e
+    } finally {
+        t.closeFinally(exception)
     }
 }
 

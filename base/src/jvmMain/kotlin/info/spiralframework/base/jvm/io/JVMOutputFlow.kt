@@ -1,7 +1,7 @@
 package info.spiralframework.base.jvm.io
 
-import info.spiralframework.base.common.io.OutputFlow
-import info.spiralframework.base.common.io.OutputFlowEventHandler
+import info.spiralframework.base.common.io.flow.OutputFlow
+import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.OutputStream

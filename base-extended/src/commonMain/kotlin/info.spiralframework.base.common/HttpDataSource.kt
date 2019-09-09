@@ -2,7 +2,7 @@ package info.spiralframework.base.common
 
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.DataSourceReproducibility
-import info.spiralframework.base.common.io.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.closeAll
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get

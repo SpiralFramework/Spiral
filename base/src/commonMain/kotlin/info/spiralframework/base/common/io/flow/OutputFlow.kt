@@ -1,6 +1,8 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package info.spiralframework.base.common.io
+package info.spiralframework.base.common.io.flow
+
+import info.spiralframework.base.common.io.DataCloseable
 
 @ExperimentalUnsignedTypes
 typealias OutputFlowEventHandler = suspend (flow: OutputFlow) -> Unit

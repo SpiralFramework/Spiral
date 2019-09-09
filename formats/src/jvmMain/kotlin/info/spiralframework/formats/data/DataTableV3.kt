@@ -1,6 +1,6 @@
 package info.spiralframework.formats.data
 
-import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.*
 import info.spiralframework.formats.common.withFormats

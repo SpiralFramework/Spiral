@@ -1,4 +1,4 @@
-package info.spiralframework.base.common.io
+package info.spiralframework.base.common.io.flow
 
 import kotlin.math.min
 

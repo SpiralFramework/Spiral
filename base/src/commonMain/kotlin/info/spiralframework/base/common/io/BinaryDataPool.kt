@@ -1,6 +1,10 @@
 package info.spiralframework.base.common.io
 
 import info.spiralframework.base.binding.BinaryOutputFlow
+import info.spiralframework.base.common.io.flow.BinaryInputFlow
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
+import info.spiralframework.base.common.io.flow.setCloseHandler
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes

@@ -1,10 +1,9 @@
 package info.spiralframework.base.jvm.io
 
-import info.spiralframework.base.CountingInputStream
-import info.spiralframework.base.common.io.InputFlow
-import info.spiralframework.base.common.io.InputFlowEventHandler
-import info.spiralframework.base.common.io.readResultIsValid
-import info.spiralframework.base.common.io.skip
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlowEventHandler
+import info.spiralframework.base.common.io.flow.readResultIsValid
+import info.spiralframework.base.common.io.flow.skip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream

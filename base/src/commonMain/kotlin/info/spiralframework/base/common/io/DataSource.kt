@@ -1,5 +1,8 @@
 package info.spiralframework.base.common.io
 
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
+
 @ExperimentalUnsignedTypes
 /**
  * An interface that loosely defines a source of data - usually reproducible. This data may come from anywhere
