@@ -36,10 +36,12 @@ class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val
     }
 
     override suspend fun close() {
-        closed = true
-        openInstances.closeAll()
-        openInstances.clear()
+        if (!closed) {
+            closed = true
+            openInstances.toTypedArray().closeAll()
+            openInstances.clear()
 
-        parent.close()
+            parent.close()
+        }
     }
 }

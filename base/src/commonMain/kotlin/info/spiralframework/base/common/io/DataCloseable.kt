@@ -57,4 +57,4 @@ internal suspend fun DataCloseable?.closeFinally(cause: Throwable?) = when {
         }
 }
 
-suspend fun <T: DataCloseable> List<T>.closeAll() = forEach { data -> data.close() }
+suspend fun <T: DataCloseable> Array<T>.closeAll() = forEach { data -> data.close() }

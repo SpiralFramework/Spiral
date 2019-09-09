@@ -32,8 +32,10 @@ class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1)
     }
 
     override suspend fun close() {
-        closed = true
-        openInstances.closeAll()
-        openInstances.clear()
+        if (!closed) {
+            closed = true
+            openInstances.toTypedArray().closeAll()
+            openInstances.clear()
+        }
     }
 }

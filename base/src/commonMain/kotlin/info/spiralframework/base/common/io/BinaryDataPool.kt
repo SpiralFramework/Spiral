@@ -42,7 +42,7 @@ class BinaryDataPool(val output: BinaryOutputFlow = BinaryOutputFlow(), val maxI
             closed = true
             if (!outputClosed)
                 output.close()
-            openInstances.closeAll()
+            openInstances.toTypedArray().closeAll()
             openInstances.clear()
         }
     }

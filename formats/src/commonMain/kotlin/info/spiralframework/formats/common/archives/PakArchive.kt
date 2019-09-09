@@ -16,6 +16,7 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
         const val DEFAULT_MAX_FILE_COUNT = 1000
         const val DEFAULT_MIN_FILE_SIZE = 0
         const val DEFAULT_MAX_FILE_SIZE = 64_000_000 //64 MB
+
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE): PakArchive? {
             try {
                 return unsafe(context, dataSource, minFileCount, maxFileCount, minFileSize, maxFileSize)

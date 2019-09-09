@@ -2,6 +2,7 @@ package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.InputFlowEventHandler
+import info.spiralframework.base.common.io.flow.readResultIsValid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -12,9 +13,8 @@ class FileInputFlow(val backingFile: File) : InputFlow {
     override var onClose: InputFlowEventHandler? = null
     private val channel = RandomAccessFile(backingFile, "r")
 
-    override suspend fun read(): Int? = withContext(Dispatchers.IO) { channel.read() }
-    override suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
-    override suspend fun read(b: ByteArray, off: Int, len: Int): Int? = withContext(Dispatchers.IO) { channel.read(b, off, len) }
+    override suspend fun read(): Int? = withContext(Dispatchers.IO) { channel.read().takeIf(::readResultIsValid) }
+    override suspend fun read(b: ByteArray, off: Int, len: Int): Int? = withContext(Dispatchers.IO) { channel.read(b, off, len).takeIf(::readResultIsValid) }
 
     override suspend fun skip(n: ULong): ULong? = withContext(Dispatchers.IO) { channel.skipBytes(n.toInt()).toULong() }
 

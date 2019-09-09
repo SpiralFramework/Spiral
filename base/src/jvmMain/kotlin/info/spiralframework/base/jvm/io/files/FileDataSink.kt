@@ -1,8 +1,8 @@
 package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.io.DataSink
-import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.common.io.closeAll
+import info.spiralframework.base.common.io.flow.OutputFlow
 import java.io.File
 
 @ExperimentalUnsignedTypes
@@ -28,8 +28,10 @@ class FileDataSink(val backing: File): DataSink<FileOutputFlow> {
     }
 
     override suspend fun close() {
-        closed = true
-        openInstances.closeAll()
-        openInstances.clear()
+        if (!closed) {
+            closed = true
+            openInstances.toTypedArray().closeAll()
+            openInstances.clear()
+        }
     }
 }
