@@ -2,6 +2,7 @@ package info.spiralframework.base
 
 import java.io.InputStream
 
+@Deprecated("Use InputFlow instead")
 open class DelegatedInputStream(val delegatedInputStream: InputStream) : InputStream() {
     override fun read(): Int = delegatedInputStream.read()
     override fun read(b: ByteArray): Int = delegatedInputStream.read(b)

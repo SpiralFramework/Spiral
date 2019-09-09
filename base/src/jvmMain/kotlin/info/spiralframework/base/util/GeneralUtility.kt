@@ -2,122 +2,18 @@ package info.spiralframework.base.util
 
 import info.spiralframework.base.MappingIterator
 import info.spiralframework.base.common.text.Ansi
+import info.spiralframework.base.jvm.io.flipSafe
+import info.spiralframework.base.jvm.io.rewindSafe
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.text.DecimalFormat
 
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Any?) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Int) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Long) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Byte) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Short) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Char) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Boolean) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Float) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: Double) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] to the standard error stream. */
-public inline fun printErr(error: CharArray) {
-    System.err.print(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Any?) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Int) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Long) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Byte) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Short) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Char) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Boolean) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Float) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: Double) {
-    System.err.println(error)
-}
-
-/** Prints the given [error] and the line separator to the standard error stream. */
-public inline fun printlnErr(error: CharArray) {
-    System.err.println(error)
-}
-
-
 public inline fun printAndBack(message: String) {
     print(message)
     print(Ansi CURSOR_BACK message.length)
 }
-
-public fun <T, V> Array<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
-public fun <T, V> List<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
-public fun <T, V> java.util.Enumeration<T>.iterator(map: (T) -> V): Iterator<V> = MappingIterator(this.iterator(), map)
-
 /**
  * Performs the given [operation] on each element of this [Iterator].
  * @sample samples.collections.Iterators.forEachIterator

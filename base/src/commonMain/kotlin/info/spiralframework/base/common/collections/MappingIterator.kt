@@ -1,4 +1,4 @@
-package info.spiralframework.base
+package info.spiralframework.base.common.collections
 
 class MappingIterator<T, V>(val iterator: Iterator<T>, val map: (T) -> V): Iterator<V> {
     /**

@@ -2,6 +2,7 @@ package info.spiralframework.base
 
 import java.io.InputStream
 
+@Deprecated("Use InputFlow instead")
 class WindowedInputStream(windowedInputStream: InputStream, val offset: Long, val windowSize: Long = windowedInputStream.available().toLong()) : CountingInputStream(windowedInputStream) {
     override val streamOffset: Long
         get() = offset + count

@@ -19,6 +19,7 @@ import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.ProgressTracker
+import info.spiralframework.base.jvm.io.files.relativePathFrom
 import info.spiralframework.base.util.*
 import info.spiralframework.console.data.*
 import info.spiralframework.console.eventbus.*

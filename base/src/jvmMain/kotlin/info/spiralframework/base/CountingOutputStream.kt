@@ -5,6 +5,7 @@ import java.io.OutputStream
 /**
  * Simple little wrapper that just does a count every time a byte is written
  */
+@Deprecated("Use InputFlow instead")
 open class CountingOutputStream(stream: OutputStream): DelegatedOutputStream(stream) {
     var count = 0L
     open val streamOffset: Long

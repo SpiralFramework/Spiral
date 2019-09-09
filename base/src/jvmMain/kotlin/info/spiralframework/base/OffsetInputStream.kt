@@ -2,6 +2,7 @@ package info.spiralframework.base
 
 import java.io.InputStream
 
+@Deprecated("Use InputFlow instead")
 class OffsetInputStream(offsetInputStream: InputStream, val offset: Long) : CountingInputStream(offsetInputStream) {
     override val streamOffset: Long
         get() = offset + count

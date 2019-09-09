@@ -3,6 +3,7 @@ package info.spiralframework.core.plugins
 import info.spiralframework.base.binding.readConfirmation
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MODULE_KEY
 import info.spiralframework.base.common.locale.constNull
+import info.spiralframework.base.jvm.io.files.ensureDirectoryExists
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*

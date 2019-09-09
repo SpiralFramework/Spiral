@@ -2,6 +2,7 @@ package info.spiralframework.base
 
 import java.io.InputStream
 
+@Deprecated("Use InputFlow instead")
 class HeaderInputStream(val header: InputStream, base: InputStream): DelegatedInputStream(base) {
     val shouldReadHeader: Boolean
         get() = header.available() > 0
