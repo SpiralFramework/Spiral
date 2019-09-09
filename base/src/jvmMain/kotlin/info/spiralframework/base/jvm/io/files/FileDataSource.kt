@@ -2,7 +2,7 @@ package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.DataSourceReproducibility
-import info.spiralframework.base.common.io.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.closeAll
 import java.io.File
 import kotlin.math.max

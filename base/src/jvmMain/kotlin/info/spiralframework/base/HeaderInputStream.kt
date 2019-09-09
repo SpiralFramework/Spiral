@@ -1,5 +1,6 @@
 package info.spiralframework.base
 
+import info.spiralframework.base.jvm.io.DelegatedInputStream
 import java.io.InputStream
 
 @Deprecated("Use InputFlow instead")

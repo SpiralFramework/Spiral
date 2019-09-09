@@ -1,6 +1,6 @@
 package info.spiralframework.base.jvm.crypto
 
-import info.spiralframework.base.common.io.InputFlow
+import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.jvm.io.flipSafe
 import info.spiralframework.base.jvm.io.rewindSafe
 import info.spiralframework.base.util.readChunked

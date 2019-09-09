@@ -1,6 +1,6 @@
 package info.spiralframework.base.util
 
-import info.spiralframework.base.CountingInputStream
+import info.spiralframework.base.jvm.io.CountingInputStream
 import java.io.InputStream
 import java.io.OutputStream
 

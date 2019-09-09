@@ -1,5 +1,7 @@
 package info.spiralframework.base.common.io
 
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext

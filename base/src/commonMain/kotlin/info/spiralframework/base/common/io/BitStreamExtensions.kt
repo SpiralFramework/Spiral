@@ -5,6 +5,8 @@ package info.spiralframework.base.common.io
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.decodeToString
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
 
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readInt64LE(): Long? {

@@ -1,4 +1,4 @@
-package info.spiralframework.base
+package info.spiralframework.base.jvm.io
 
 import info.spiralframework.base.jvm.properties.getValue
 import java.io.InputStream
@@ -6,7 +6,6 @@ import java.io.InputStream
 /**
  * Simple little wrapper that just does a count every time a byte is read
  */
-@Deprecated("Use InputFlow instead")
 open class CountingInputStream(countedInputStream: InputStream) : DelegatedInputStream(countedInputStream) {
     var count = 0L
     var mark = 0L

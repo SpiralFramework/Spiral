@@ -1,7 +1,7 @@
 package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.io.DataSink
-import info.spiralframework.base.common.io.OutputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.common.io.closeAll
 import java.io.File
 

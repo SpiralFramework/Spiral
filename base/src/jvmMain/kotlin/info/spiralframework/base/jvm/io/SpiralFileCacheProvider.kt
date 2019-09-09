@@ -3,6 +3,8 @@ package info.spiralframework.base.jvm.io
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
+import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.jvm.io.files.FileDataPool
 import info.spiralframework.base.jvm.io.files.ShortTermFileDataPool
 import java.io.File
