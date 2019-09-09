@@ -19,8 +19,10 @@ import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.ProgressTracker
+import info.spiralframework.base.jvm.crypto.md5Hash
+import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.base.jvm.io.files.relativePathFrom
-import info.spiralframework.base.util.*
+import info.spiralframework.base.jvm.toFileSize
 import info.spiralframework.console.data.*
 import info.spiralframework.console.eventbus.*
 import info.spiralframework.core.*

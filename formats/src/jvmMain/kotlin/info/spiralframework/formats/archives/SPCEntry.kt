@@ -3,7 +3,7 @@ package info.spiralframework.formats.archives
 import info.spiralframework.base.HeaderInputStream
 import info.spiralframework.base.WindowedInputStream
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.util.sha512Hash
+import info.spiralframework.base.jvm.crypto.sha512Hash
 import info.spiralframework.base.util.writeInt32LE
 import info.spiralframework.formats.compression.HeaderSPCCompression
 import info.spiralframework.formats.utils.DataHandler

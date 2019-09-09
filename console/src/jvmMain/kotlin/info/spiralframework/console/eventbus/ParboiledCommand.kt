@@ -1,10 +1,10 @@
 package info.spiralframework.console.eventbus
 
+import info.spiralframework.base.binding.printlnErr
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.SpiralEventListener
 import info.spiralframework.base.common.events.SpiralEventPriority
-import info.spiralframework.base.util.printlnErr
-import info.spiralframework.base.util.printlnErrLocale
+import info.spiralframework.base.common.locale.printlnErrLocale
 import info.spiralframework.console.data.ParboiledMarker
 import org.parboiled.Rule
 import org.parboiled.errors.ParseError

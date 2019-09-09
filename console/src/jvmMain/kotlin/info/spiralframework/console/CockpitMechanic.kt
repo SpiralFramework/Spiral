@@ -1,14 +1,17 @@
 package info.spiralframework.console
 
-import info.spiralframework.base.util.measureResultNanoTime
-import info.spiralframework.base.util.printlnLocale
-import info.spiralframework.base.util.times
+import info.spiralframework.base.common.locale.printlnLocale
+import info.spiralframework.base.jvm.times
 import info.spiralframework.console.commands.mechanic.GurrenMechanic
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.data.SpiralCockpitContext
 import info.spiralframework.console.eventbus.CommandRequest
 import info.spiralframework.console.eventbus.ParboiledCommand
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
+@ExperimentalUnsignedTypes
+@ExperimentalTime
 class CockpitMechanic internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext) {
     companion object {
         const val SUCCESS = 0
@@ -20,7 +23,7 @@ class CockpitMechanic internal constructor(startingContext: SpiralCockpitContext
         registerCommandClass(GurrenMechanic(parameterParser))
 
         with(context) {
-            val (foundCommands, ns) = measureResultNanoTime {
+            val (foundCommands, ns) = measureTimedValue {
                 post(
                         CommandRequest(
                                 context.args.filteredArgs.joinToString(ParameterParser.MECHANIC_SEPARATOR.toString()) { str -> str.trimStart('-') },
@@ -30,9 +33,9 @@ class CockpitMechanic internal constructor(startingContext: SpiralCockpitContext
             }
 
             if (args.timeCommands) {
-                printlnLocale("gurren.timing.command_runtime", foundCommands.size, ns)
+                printlnLocale("gurren.timing.command_runtime", foundCommands.size, ns.toLongNanoseconds())
             } else {
-                trace("gurren.timing.command_runtime", foundCommands.size, ns)
+                trace("gurren.timing.command_runtime", foundCommands.size, ns.toLongNanoseconds())
             }
 
             if (foundCommands.isEmpty()) {

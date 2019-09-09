@@ -5,7 +5,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.base.util.readXBytes
-import info.spiralframework.base.util.sha512Hash
+import info.spiralframework.base.jvm.crypto.sha512Hash
 import info.spiralframework.formats.compression.CRILAYLACompression
 import info.spiralframework.formats.utils.DataHandler
 import java.io.File

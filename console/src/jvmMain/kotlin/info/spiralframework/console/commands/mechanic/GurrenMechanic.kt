@@ -1,7 +1,10 @@
 package info.spiralframework.console.commands.mechanic
 
+import info.spiralframework.base.common.locale.printlnErrLocale
+import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.ProgressTracker
-import info.spiralframework.base.util.*
+import info.spiralframework.base.jvm.forEachFiltered
+import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.commands.data.CompileArgs
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.console.commands.shared.GurrenShared

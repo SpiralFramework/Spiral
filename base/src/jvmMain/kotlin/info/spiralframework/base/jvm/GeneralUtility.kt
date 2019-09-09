@@ -1,13 +1,8 @@
-package info.spiralframework.base.util
+package info.spiralframework.base.jvm
 
-import info.spiralframework.base.MappingIterator
 import info.spiralframework.base.common.text.Ansi
-import info.spiralframework.base.jvm.io.flipSafe
-import info.spiralframework.base.jvm.io.rewindSafe
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
 import java.text.DecimalFormat
 
 public inline fun printAndBack(message: String) {
@@ -18,7 +13,7 @@ public inline fun printAndBack(message: String) {
  * Performs the given [operation] on each element of this [Iterator].
  * @sample samples.collections.Iterators.forEachIterator
  */
-public inline fun <T> Iterator<T>.forEachIndexed(operation: (index: Int, T) -> Unit): Unit {
+public inline fun <T> Iterator<T>.forEachIndexed(operation: (index: Int, element: T) -> Unit): Unit {
     var index = 0
     for (element in this) operation(index++, element)
 }
@@ -27,26 +22,8 @@ public inline fun <T> Iterator<T>.forEachIndexed(operation: (index: Int, T) -> U
  * Performs the given [operation] on each element of this [Iterator].
  * @sample samples.collections.Iterators.forEachIterator
  */
-public inline fun <T> Iterator<T>.forEachFiltered(filter: (T) -> Boolean, operation: (T) -> Unit): Unit {
+public inline fun <T> Iterator<T>.forEachFiltered(filter: (element: T) -> Boolean, operation: (element: T) -> Unit): Unit {
     for (element in this) if (filter(element)) operation(element)
-}
-
-/**
- * Executes the given [block] and returns elapsed time in milliseconds.
- */
-public inline fun <T> measureResultTimeMillis(block: () -> T): Pair<T, Long> {
-    val start = System.currentTimeMillis()
-    val result = block()
-    return result to (System.currentTimeMillis() - start)
-}
-
-/**
- * Executes the given [block] and returns elapsed time in nanoseconds.
- */
-public inline fun <T> measureResultNanoTime(block: () -> T): Pair<T, Long> {
-    val start = System.nanoTime()
-    val result = block()
-    return result to (System.nanoTime() - start)
 }
 
 object Mode {
@@ -54,36 +31,6 @@ object Mode {
     val TWO_BYTES_PER_CHARACTER = 2
 
     val NULL_TERMINATED_UTF_16 = 13
-}
-
-val String.Companion.Mode: Mode
-    get() = info.spiralframework.base.util.Mode
-
-const val BYTE_NULL_TERMINATOR: Byte = 0
-
-operator fun String.Companion.invoke(bytes: ByteArray, encoding: Charset, mode: Int): String = buildString {
-    val capacity = if (mode and Mode.TWO_BYTES_PER_CHARACTER == Mode.TWO_BYTES_PER_CHARACTER) 2 else 1
-    val isNullTermed = mode and Mode.NULL_TERMINATED == Mode.NULL_TERMINATED
-    val byteBuffer = ByteBuffer.allocate(capacity)
-    var countedNullTerms = 0
-    var byte: Byte = 0
-
-    for (i in 0 until bytes.size step capacity) {
-        for (j in 0 until capacity) {
-            byte = bytes[i + j]
-            byteBuffer.put(bytes[i + j])
-
-            if (isNullTermed && byte == BYTE_NULL_TERMINATOR)
-                countedNullTerms++
-        }
-
-        if (isNullTermed && countedNullTerms == capacity)
-            break
-
-        byteBuffer.flipSafe()
-        append(encoding.decode(byteBuffer).get())
-        byteBuffer.rewindSafe()
-    }
 }
 
 operator fun String.times(num: Int): String = buildString {

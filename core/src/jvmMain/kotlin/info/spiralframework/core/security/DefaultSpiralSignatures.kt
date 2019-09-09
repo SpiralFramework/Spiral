@@ -3,8 +3,8 @@ package info.spiralframework.core.security
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.isSuccessful
-import info.spiralframework.base.util.RSAPublicKey
-import info.spiralframework.base.util.matchesSha256
+import info.spiralframework.base.jvm.crypto.RSAPublicKey
+import info.spiralframework.base.jvm.crypto.matchesSha256
 import info.spiralframework.core.takeIfSuccessful
 import info.spiralframework.core.userAgent
 import java.io.InputStream
