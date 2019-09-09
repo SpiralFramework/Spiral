@@ -2,8 +2,8 @@ package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.DataSourceReproducibility
-import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.closeAll
+import info.spiralframework.base.common.io.flow.InputFlow
 import java.io.File
 import kotlin.math.max
 
@@ -33,8 +33,10 @@ class FileDataSource(val backing: File, val maxInstanceCount: Int = -1): DataSou
     }
 
     override suspend fun close() {
-        closed = true
-        openInstances.closeAll()
-        openInstances.clear()
+        if (!closed) {
+            closed = true
+            openInstances.toTypedArray().closeAll()
+            openInstances.clear()
+        }
     }
 }

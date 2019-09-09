@@ -5,6 +5,10 @@ ext {
     serialization_version = "0.12.0"
 }
 
+repositories {
+    maven { url = uri("https://dl.bintray.com/korlibs/korlibs/") }
+}
+
 kotlin {
     jvm {
         compilations.main.kotlinOptions {
@@ -29,6 +33,8 @@ kotlin {
                 implementation kotlin('stdlib-common')
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC'
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
+
+                api "com.soywiz.korlibs.krypto:krypto:1.7.1"
 
                 api project(":base")
             }

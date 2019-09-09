@@ -9,7 +9,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 suspend fun <T> SpiralContext.arbitraryProgressBar(
-        delay: Long = 100, limit: Int = 9,
+        delay: Long = 200, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
         loadingText: String = "ascii.arbitrary.loading",
@@ -25,7 +25,7 @@ suspend fun <T> SpiralContext.arbitraryProgressBar(
 }
 
 suspend fun <T> SpiralContext.arbitrarySuspendedProgressBar(
-        delay: Long = 100, limit: Int = 9,
+        delay: Long = 200, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
         loadingText: String = "ascii.arbitrary.loading",
@@ -41,7 +41,7 @@ suspend fun <T> SpiralContext.arbitrarySuspendedProgressBar(
 }
 
 fun SpiralContext.arbitraryProgressBar(
-        delay: Long = 100, limit: Int = 9,
+        delay: Long = 200, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
         loadingText: String = "ascii.arbitrary.loading",
@@ -51,33 +51,32 @@ fun SpiralContext.arbitraryProgressBar(
     val localisedLoaded = localise(loadedText).takeIf(String::isNotBlank)
 
     try {
+        var progress: Int = 0
+        var goingRight: Boolean = true
+
         while (isActive) {
-            var progress: Int = 0
-            var goingRight: Boolean = true
-            while (true) {
-                print(buildString {
-                    append('\r')
-                    append(start)
-                    for (i in 0 until progress)
-                        append(space)
-                    append(indicator)
-                    for (i in 0 until (limit - progress))
-                        append(space)
-                    append(end)
-                    append(' ')
-                    localisedLoading?.let(this::append)
-                })
+            print(buildString {
+                append('\r')
+                append(start)
+                for (i in 0 until progress)
+                    append(space)
+                append(indicator)
+                for (i in 0 until (limit - progress))
+                    append(space)
+                append(end)
+                append(' ')
+                localisedLoading?.let(this::append)
+            })
 
-                if (goingRight)
-                    progress++
-                else
-                    progress--
+            if (goingRight)
+                progress++
+            else
+                progress--
 
-                if (progress == limit || progress == 0)
-                    goingRight = !goingRight
+            if (progress == limit || progress == 0)
+                goingRight = !goingRight
 
-                delay(delay)
-            }
+            delay(delay)
         }
     } finally {
         print(buildString {
@@ -95,7 +94,6 @@ fun SpiralContext.arbitraryProgressBar(
 }
 
 
-
 open class ProgressTracker protected constructor(
         context: SpiralContext,
         val trackLength: Int = 10,
@@ -106,7 +104,7 @@ open class ProgressTracker protected constructor(
         val showPercentage: Boolean = true
 ) {
     companion object {
-        val SILENT_TRACKER: ProgressTracker = object: ProgressTracker(SpiralContext.NoOp) {
+        val SILENT_TRACKER: ProgressTracker = object : ProgressTracker(SpiralContext.NoOp) {
             override fun finishedDownload() {}
             override fun trackDownload(downloaded: Long, total: Long) {}
         }

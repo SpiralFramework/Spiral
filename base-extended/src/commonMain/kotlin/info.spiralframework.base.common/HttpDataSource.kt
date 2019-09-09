@@ -2,8 +2,8 @@ package info.spiralframework.base.common
 
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.DataSourceReproducibility
-import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.closeAll
+import info.spiralframework.base.common.io.flow.InputFlow
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.Url
@@ -38,9 +38,11 @@ class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<B
     }
 
     override suspend fun close() {
-        closed = true
-        openInstances.closeAll()
-        openInstances.clear()
-        client.close()
+        if (!closed) {
+            closed = true
+            openInstances.toTypedArray().closeAll()
+            openInstances.clear()
+            client.close()
+        }
     }
 }

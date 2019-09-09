@@ -2,7 +2,9 @@
 
 package info.spiralframework.base.common.io.flow
 
+import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.io.DataCloseable
+import info.spiralframework.base.common.io.copyTo
 
 @ExperimentalUnsignedTypes
 typealias InputFlowEventHandler = suspend (flow: InputFlow) -> Unit
@@ -35,6 +37,13 @@ interface InputFlow : DataCloseable {
 
 @ExperimentalUnsignedTypes
 suspend inline fun InputFlow.skip(number: Number): ULong? = skip(number.toLong().toULong())
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.readBytes(bufferSize: Int = 8192): ByteArray {
+    val buffer = BinaryOutputFlow()
+    copyTo(buffer, bufferSize)
+    return buffer.getData()
+}
 
 @ExperimentalUnsignedTypes
 fun InputFlow.setCloseHandler(handler: InputFlowEventHandler) {
