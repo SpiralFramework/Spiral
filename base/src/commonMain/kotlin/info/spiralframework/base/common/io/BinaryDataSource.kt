@@ -1,6 +1,5 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.binding.BinaryInputFlow
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
