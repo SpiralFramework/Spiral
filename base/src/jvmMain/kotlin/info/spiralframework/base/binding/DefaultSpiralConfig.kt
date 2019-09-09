@@ -4,8 +4,8 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.text.arbitraryProgressBar
-import info.spiralframework.base.util.ensureDirectoryExists
-import info.spiralframework.base.util.ensureFileExists
+import info.spiralframework.base.jvm.io.files.ensureDirectoryExists
+import info.spiralframework.base.jvm.io.files.ensureFileExists
 import io.github.soc.directories.ProjectDirectories
 import kotlinx.coroutines.runBlocking
 import java.io.File

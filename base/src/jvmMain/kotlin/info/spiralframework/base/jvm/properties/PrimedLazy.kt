@@ -1,4 +1,4 @@
-package info.spiralframework.base.properties
+package info.spiralframework.base.jvm.properties
 
 import info.spiralframework.base.common.properties.*
 

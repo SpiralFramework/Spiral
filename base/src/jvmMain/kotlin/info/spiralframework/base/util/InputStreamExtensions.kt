@@ -5,15 +5,19 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.Charset
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.readString(len: Int, encoding: String = "UTF-8", overrideMaxLen: Boolean = false): String {
     val data = ByteArray(len.coerceAtLeast(0).run { if (!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
     read(data)
     return String(data, Charset.forName(encoding))
 }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = Charsets.UTF_8)
+@Deprecated("Use InputFlow instead")
 fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = Charsets.UTF_8, bytesPer: Int = 1): String {
     val baos = ByteArrayOutputStream()
 
@@ -30,14 +34,17 @@ fun InputStream.readNullTerminatedString(maxLen: Int = 255, encoding: Charset = 
     return String(baos.toByteArray(), encoding)
 }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.copyToStream(out: OutputStream): Unit {
     this.copyTo(out)
 }
 
+@Deprecated("Use InputFlow instead")
 fun OutputStream.copyFromStream(stream: InputStream): Unit {
     stream.copyTo(this)
 }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, progress: ((Long) -> Unit)?): Long {
     var bytesCopied = 0L
     val buffer = ByteArray(bufferSize)
@@ -51,6 +58,7 @@ fun InputStream.copyWithProgress(out: OutputStream, bufferSize: Int = DEFAULT_BU
     return bytesCopied
 }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.readOrNull(): Int? {
     val read = read()
     if (read == -1)
@@ -58,6 +66,7 @@ fun InputStream.readOrNull(): Int? {
     return read
 }
 
+@Deprecated("Use InputFlow instead")
 fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, processChunk: (ByteArray) -> Unit): Int {
     val buffer = ByteArray(bufferSize)
     var read = 0
@@ -84,6 +93,7 @@ fun InputStream.readChunked(bufferSize: Int = 8192, closeAfter: Boolean = true, 
     return total
 }
 
+@Deprecated("Use InputFlow instead")
 fun (() -> InputStream).from(offset: Long): () -> InputStream = {
     val stream = this()
     stream.skip(offset)

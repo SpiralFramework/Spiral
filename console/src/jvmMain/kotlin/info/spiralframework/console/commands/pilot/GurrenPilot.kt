@@ -2,6 +2,8 @@ package info.spiralframework.console.commands.pilot
 
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.text.ProgressTracker
+import info.spiralframework.base.jvm.io.files.absoluteParentFile
+import info.spiralframework.base.jvm.io.files.relativePathTo
 import info.spiralframework.base.util.*
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ConvertArgs

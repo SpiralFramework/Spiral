@@ -1,5 +1,7 @@
 package info.spiralframework.base.util
 
+import info.spiralframework.base.jvm.io.flipSafe
+import info.spiralframework.base.jvm.io.rewindSafe
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger
