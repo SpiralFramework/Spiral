@@ -2,7 +2,6 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
-import info.spiralframework.base.common.environment.DefaultSpiralEnvironment
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.io.SpiralCacheProvider

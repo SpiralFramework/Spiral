@@ -1,6 +1,5 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.binding.BinaryInputFlow
 import info.spiralframework.base.binding.BinaryOutputFlow
 import kotlin.math.max
 
