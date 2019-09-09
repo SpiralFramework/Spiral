@@ -1,6 +1,6 @@
 package info.spiralframework.osl.games.v3
 
-import info.spiralframework.base.util.addAll
+import info.spiralframework.base.jvm.addAll
 import info.spiralframework.base.util.toInt16LE
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.CustomWordScript

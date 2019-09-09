@@ -1,7 +1,9 @@
-package info.spiralframework.base.util
+package info.spiralframework.base.jvm.crypto
 
+import info.spiralframework.base.common.io.InputFlow
 import info.spiralframework.base.jvm.io.flipSafe
 import info.spiralframework.base.jvm.io.rewindSafe
+import info.spiralframework.base.util.readChunked
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger
@@ -109,6 +111,42 @@ fun ReadableByteChannel.sha256Hash(): String = hash("SHA-256")
 fun ReadableByteChannel.sha384Hash(): String = hash("SHA-384")
 /** ***Do not use for things like passwords*** */
 fun ReadableByteChannel.sha512Hash(): String = hash("SHA-512")
+
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.hash(algorithm: String): String {
+    val md = MessageDigest.getInstance(algorithm)
+    val buffer = ByteArray(8192)
+
+    while (true) {
+        val read = read(buffer) ?: break
+        md.update(buffer, 0, read)
+    }
+
+    val hashBytes = md.digest()
+    return String.format("%032x", BigInteger(1, hashBytes))
+}
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.md2Hash(): String = hash("MD2")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.md5Hash(): String = hash("MD5")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.sha1Hash(): String = hash("SHA-1")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.sha224Hash(): String = hash("SHA-224")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.sha256Hash(): String = hash("SHA-256")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.sha384Hash(): String = hash("SHA-384")
+/** ***Do not use for things like passwords*** */
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.sha512Hash(): String = hash("SHA-512")
 
 fun CharArray.toByteArray(): ByteArray {
     val byteBuffer = Charset.forName("UTF-8").encode(CharBuffer.wrap(this))

@@ -8,8 +8,8 @@ import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MD5_KEY
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MODULE_KEY
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_SHA256_KEY
-import info.spiralframework.base.util.md5Hash
-import info.spiralframework.base.util.sha256Hash
+import info.spiralframework.base.jvm.crypto.md5Hash
+import info.spiralframework.base.jvm.crypto.sha256Hash
 import java.io.File
 import java.io.InputStream
 
