@@ -18,7 +18,17 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
         /** 'AGAR' */
         const val MAGIC_NUMBER_BE = 0x41474152
 
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): WadArchive? {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): WadArchive? {
+            try {
+                return unsafe(context, dataSource)
+            } catch (iae: IllegalArgumentException) {
+                withFormats(context) { debug("formats.wad.invalid", dataSource, iae) }
+
+                return null
+            }
+        }
+
+        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): WadArchive {
             withFormats(context) {
                 val notEnoughData: () -> Any = { localise("formats.wad.not_enough_data") }
                 val flow = requireNotNull(dataSource.openInputFlow())
@@ -74,7 +84,7 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
         }
     }
 
-    infix fun entryFor(name: String): WadFileEntry? = files.firstOrNull { entry -> entry.name == name }
+    operator fun get(name: String): WadFileEntry? = files.firstOrNull { entry -> entry.name == name }
 
     suspend fun openSource(file: WadFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, dataOffset + file.offset.toULong(), file.size.toULong())
     suspend fun openFlow(file: WadFileEntry): InputFlow? {
