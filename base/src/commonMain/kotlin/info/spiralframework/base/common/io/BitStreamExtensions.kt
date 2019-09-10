@@ -125,6 +125,22 @@ suspend fun InputFlow.readInt16BE(): Int? {
 }
 
 @ExperimentalUnsignedTypes
+suspend fun InputFlow.readUInt16LE(): Int? {
+    val a = read() ?: return null
+    val b = read() ?: return null
+
+    return ((b shl 8) or a) and 0xFFFF
+}
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.readUInt16BE(): Int? {
+    val a = read() ?: return null
+    val b = read() ?: return null
+
+    return ((a shl 8) or b) and 0xFFFF
+}
+
+@ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloatBE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloatLE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
@@ -141,6 +157,176 @@ suspend fun InputFlow.readDoubleLE(): Double? = this.readInt64LE()?.let { Double
 suspend fun InputFlow.readFloat64BE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloat64LE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt64LE(index: Int): Long? {
+    if (size - 8 < index)
+        return null
+
+    val a = this[index].toLong() and 0xFF
+    val b = this[index + 1].toLong() and 0xFF
+    val c = this[index + 2].toLong() and 0xFF
+    val d = this[index + 3].toLong() and 0xFF
+    val e = this[index + 4].toLong() and 0xFF
+    val f = this[index + 5].toLong() and 0xFF
+    val g = this[index + 6].toLong() and 0xFF
+    val h = this[index + 7].toLong() and 0xFF
+
+    return (h shl 56) or (g shl 48) or (f shl 40) or (e shl 32) or
+            (d shl 24) or (c shl 16) or (b shl 8) or a
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt64BE(index: Int): Long? {
+    if (size - 8 < index)
+        return null
+
+    val a = this[index].toLong() and 0xFF
+    val b = this[index + 1].toLong() and 0xFF
+    val c = this[index + 2].toLong() and 0xFF
+    val d = this[index + 3].toLong() and 0xFF
+    val e = this[index + 4].toLong() and 0xFF
+    val f = this[index + 5].toLong() and 0xFF
+    val g = this[index + 6].toLong() and 0xFF
+    val h = this[index + 7].toLong() and 0xFF
+
+    return (a shl 56) or (b shl 48) or (c shl 40) or (d shl 32) or
+            (e shl 24) or (f shl 16) or (g shl 8) or h
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readUInt64LE(index: Int): ULong? {
+    if (size - 8 < index)
+        return null
+
+    val a = this[index].toULong() and 0xFFu
+    val b = this[index + 1].toULong() and 0xFFu
+    val c = this[index + 2].toULong() and 0xFFu
+    val d = this[index + 3].toULong() and 0xFFu
+    val e = this[index + 4].toULong() and 0xFFu
+    val f = this[index + 5].toULong() and 0xFFu
+    val g = this[index + 6].toULong() and 0xFFu
+    val h = this[index + 7].toULong() and 0xFFu
+
+    return (h shl 56) or (g shl 48) or (f shl 40) or (e shl 32) or
+            (d shl 24) or (c shl 16) or (b shl 8) or a
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readUInt64BE(index: Int): ULong? {
+    if (size - 8 < index)
+        return null
+
+    val a = this[index].toULong() and 0xFFu
+    val b = this[index + 1].toULong() and 0xFFu
+    val c = this[index + 2].toULong() and 0xFFu
+    val d = this[index + 3].toULong() and 0xFFu
+    val e = this[index + 4].toULong() and 0xFFu
+    val f = this[index + 5].toULong() and 0xFFu
+    val g = this[index + 6].toULong() and 0xFFu
+    val h = this[index + 7].toULong() and 0xFFu
+
+    return (a shl 56) or (b shl 48) or (c shl 40) or (d shl 32) or
+            (e shl 24) or (f shl 16) or (g shl 8) or h
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt32LE(index: Int): Int? {
+    if (size - 4 < index)
+        return null
+
+    val a = this[index].toInt() and 0xFF
+    val b = this[index + 1].toInt() and 0xFF
+    val c = this[index + 2].toInt() and 0xFF
+    val d = this[index + 3].toInt() and 0xFF
+
+    return (d shl 24) or (c shl 16) or (b shl 8) or a
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt32BE(index: Int): Int? {
+    if (size - 4 < index)
+        return null
+
+    val a = this[index].toInt() and 0xFF
+    val b = this[index + 1].toInt() and 0xFF
+    val c = this[index + 2].toInt() and 0xFF
+    val d = this[index + 3].toInt() and 0xFF
+
+    return (a shl 24) or (b shl 16) or (c shl 8) or d
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readUInt32LE(index: Int): UInt? {
+    if (size - 4 < index)
+        return null
+
+    val a = this[index].toUInt() and 0xFFu
+    val b = this[index + 1].toUInt() and 0xFFu
+    val c = this[index + 2].toUInt() and 0xFFu
+    val d = this[index + 3].toUInt() and 0xFFu
+
+    return ((d shl 24) or (c shl 16) or (b shl 8) or a)
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readUInt32BE(index: Int): UInt? {
+    if (size - 4 < index)
+        return null
+
+    val a = this[index].toUInt() and 0xFFu
+    val b = this[index + 1].toUInt() and 0xFFu
+    val c = this[index + 2].toUInt() and 0xFFu
+    val d = this[index + 3].toUInt() and 0xFFu
+
+    return ((a shl 24) or (b shl 16) or (c shl 8) or d).toUInt()
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt16LE(index: Int): Int? {
+    if (size - 2 < index)
+        return null
+
+    val a = this[index].toInt() and 0xFF
+    val b = this[index + 1].toInt() and 0xFF
+
+    return (b shl 8) or a
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readInt16BE(index: Int): Int? {
+    if (size - 2 < index)
+        return null
+
+    val a = this[index].toInt() and 0xFF
+    val b = this[index + 1].toInt() and 0xFF
+
+    return (a shl 8) or b
+}
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloatBE(index: Int): Float? = this.readInt32BE(index)?.let { Float.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloatLE(index: Int): Float? = this.readInt32LE(index)?.let { Float.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloat32BE(index: Int): Float? = this.readInt32BE(index)?.let { Float.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloat32LE(index: Int): Float? = this.readInt32LE(index)?.let { Float.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readDoubleBE(index: Int): Double? = this.readInt64BE(index)?.let { Double.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readDoubleLE(index: Int): Double? = this.readInt64LE(index)?.let { Double.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloat64BE(index: Int): Double? = this.readInt64BE(index)?.let { Double.fromBits(it) }
+
+@ExperimentalUnsignedTypes
+fun ByteArray.readFloat64LE(index: Int): Double? = this.readInt64LE(index)?.let { Double.fromBits(it) }
 
 @ExperimentalUnsignedTypes
 fun <T> InputFlow.read(serialise: (InputFlow) -> T?): T? = serialise(this)
