@@ -4,7 +4,9 @@ package info.spiralframework.base.common.io.flow
 
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.io.DataCloseable
+import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.copyTo
+import info.spiralframework.base.common.io.use
 
 @ExperimentalUnsignedTypes
 typealias InputFlowEventHandler = suspend (flow: InputFlow) -> Unit
@@ -48,6 +50,22 @@ suspend fun InputFlow.readBytes(bufferSize: Int = 8192): ByteArray {
 @ExperimentalUnsignedTypes
 fun InputFlow.setCloseHandler(handler: InputFlowEventHandler) {
     this.onClose = handler
+}
+
+@ExperimentalUnsignedTypes
+suspend inline fun <T> InputFlow.fauxSeekFromStart(offset: ULong, dataSource: DataSource<*>, noinline block: suspend (InputFlow) -> T): T? {
+    val bookmark = position()
+    return if (seek(offset.toLong(), InputFlow.FROM_BEGINNING) == null) {
+        val flow = dataSource.openInputFlow() ?: return null
+        use(flow) {
+            flow.skip(offset)
+            block(flow)
+        }
+    } else {
+        val result = block(this)
+        seek(bookmark.toLong(), InputFlow.FROM_BEGINNING)
+        result
+    }
 }
 
 fun readResultIsValid(byte: Int): Boolean = byte != -1

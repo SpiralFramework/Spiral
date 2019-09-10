@@ -21,7 +21,7 @@ class BinaryInputFlow(private val array: ByteArray, private var pos: Int = 0, pr
         if (len <= 0)
             return 0
 
-        array.copyInto(b, pos, off, len)
+        array.copyInto(b, off, pos, pos + len)
         pos += len
         return len
     }

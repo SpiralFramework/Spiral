@@ -60,17 +60,17 @@ open class WindowedInputFlow private constructor(val window: InputFlow, val offs
             InputFlow.FROM_BEGINNING -> {
                 val n = pos.coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(n, mode)
+                window.seek(offset.toLong() + n, mode)
             }
             InputFlow.FROM_POSITION -> {
                 val n = (this.position.toLong() + pos).coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(n, mode)
+                window.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
             }
             InputFlow.FROM_END -> {
                 val n = (this.windowSize.toLong() - pos).coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(n, mode)
+                window.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
             }
             else -> return null
         }

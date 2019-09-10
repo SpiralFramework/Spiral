@@ -1,5 +1,7 @@
 package info.spiralframework.base.common.io
 
+import kotlin.contracts.ExperimentalContracts
+
 interface DataCloseable {
     suspend fun close()
 }
@@ -30,8 +32,13 @@ public suspend inline fun <T : DataCloseable?, R> T.useBlock(block: (T) -> R): R
     }
 }
 
+//@ExperimentalContracts
 @ExperimentalUnsignedTypes
 public suspend inline fun <T : DataCloseable?, R> use(t: T, block: () -> R): R {
+//    contract {
+//        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+//    }
+
     var exception: Throwable? = null
     try {
         return block()
