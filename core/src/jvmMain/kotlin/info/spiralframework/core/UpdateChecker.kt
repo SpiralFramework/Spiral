@@ -3,9 +3,9 @@ package info.spiralframework.core
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_FILE_NAME_KEY
+import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.arbitraryProgressBar
 import info.spiralframework.base.jvm.UTF8String
-import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 
 fun SpiralCoreContext.apiCheckForUpdate(project: String, build: String): String = apiCheckForUpdate(apiBase, project, build)

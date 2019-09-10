@@ -1,6 +1,7 @@
 package info.spiralframework.console.commands.shared
 
-import info.spiralframework.base.util.iterator
+import info.spiralframework.base.common.collections.iterator
+import info.spiralframework.base.common.collections.map
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -120,7 +121,7 @@ object GurrenShared {
             }
 
             is ZipFile -> {
-                files = result.entries().iterator { entry -> entry.name to result.getInputStream(entry) }
+                files = result.entries().asIterator().map { entry -> entry.name to result.getInputStream(entry) }
                 totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }.toLong()
             }
 

@@ -1,7 +1,7 @@
 package info.spiralframework.console
 
+import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.arbitraryProgressBar
-import info.spiralframework.base.util.printlnLocale
 import info.spiralframework.console.data.GurrenArgs
 import info.spiralframework.console.data.SpiralCockpitContext
 import info.spiralframework.spiral.updater.jarLocation

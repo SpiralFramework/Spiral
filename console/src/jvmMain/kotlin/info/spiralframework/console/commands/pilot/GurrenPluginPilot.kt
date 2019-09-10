@@ -1,8 +1,8 @@
 package info.spiralframework.console.commands.pilot
 
 import info.spiralframework.base.binding.readConfirmation
-import info.spiralframework.base.util.printLocale
-import info.spiralframework.base.util.printlnLocale
+import info.spiralframework.base.common.locale.printLocale
+import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.data.ParameterParser
 import info.spiralframework.console.eventbus.CommandClass
