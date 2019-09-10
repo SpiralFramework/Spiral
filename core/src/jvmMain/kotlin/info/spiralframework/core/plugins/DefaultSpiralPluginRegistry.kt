@@ -3,6 +3,8 @@ package info.spiralframework.core.plugins
 import info.spiralframework.base.binding.readConfirmation
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MODULE_KEY
 import info.spiralframework.base.common.locale.constNull
+import info.spiralframework.base.common.locale.printLocale
+import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.crypto.sha256Hash
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.base.jvm.io.files.ensureDirectoryExists

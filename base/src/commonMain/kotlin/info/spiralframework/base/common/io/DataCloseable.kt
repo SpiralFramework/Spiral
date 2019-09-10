@@ -1,13 +1,11 @@
 package info.spiralframework.base.common.io
 
-import kotlin.contracts.ExperimentalContracts
-
 interface DataCloseable {
     suspend fun close()
 }
 
 @ExperimentalUnsignedTypes
-public suspend inline fun <T : DataCloseable?, R> T.use(@Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE") block: suspend (T) -> R): R {
+public suspend inline fun <T : DataCloseable?, R> T.use(noinline block: suspend (T) -> R): R {
     var exception: Throwable? = null
     try {
         return block(this)
