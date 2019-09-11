@@ -60,8 +60,8 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
         }
     }
 
-    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong())
-    suspend fun openFlow(file: PakFileEntry): InputFlow? {
+    suspend fun openSource(file: AwbFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong())
+    suspend fun openFlow(file: AwbFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
     }
