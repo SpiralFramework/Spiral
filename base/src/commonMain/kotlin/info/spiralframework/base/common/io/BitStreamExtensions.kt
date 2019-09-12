@@ -283,6 +283,18 @@ fun ByteArray.readUInt32BE(index: Int): UInt? {
 }
 
 @ExperimentalUnsignedTypes
+fun ByteArray.readInt24BE(index: Int): Int? {
+    if (size - 3 < index)
+        return null
+
+    val a = this[index].toInt() and 0xFF
+    val b = this[index + 1].toInt() and 0xFF
+    val c = this[index + 2].toInt() and 0xFF
+
+    return (a shl 16) or (b shl 8) or c
+}
+
+@ExperimentalUnsignedTypes
 fun ByteArray.readInt16LE(index: Int): Int? {
     if (size - 2 < index)
         return null
