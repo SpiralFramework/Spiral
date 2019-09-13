@@ -101,6 +101,8 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
         }
     }
 
+    operator fun get(name: String): CpkFileEntry? = files.firstOrNull { entry -> entry.name == name }
+
     suspend fun SpiralContext.openRawSource(file: CpkFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.fileOffset.toULong(), file.fileSize.toULong())
     suspend fun SpiralContext.openRawFlow(file: CpkFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null

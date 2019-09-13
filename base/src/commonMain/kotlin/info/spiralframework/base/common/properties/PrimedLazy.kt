@@ -71,7 +71,7 @@ public enum class PrimedLazyThreadSafetyMode {
 }
 
 
-internal object UNINITIALIZED_VALUE
+object UNINITIALIZED_VALUE
 
 // internal to be called from primedLazy in JS
 internal class UnsafePrimedLazyImpl<out T, P>(initializer: (P) -> T) : PrimedLazy<T, P> {

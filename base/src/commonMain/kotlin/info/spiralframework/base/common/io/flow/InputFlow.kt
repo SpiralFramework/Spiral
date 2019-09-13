@@ -48,6 +48,15 @@ suspend fun InputFlow.readBytes(bufferSize: Int = 8192): ByteArray {
 }
 
 @ExperimentalUnsignedTypes
+suspend fun InputFlow.readAndClose(bufferSize: Int = 8192): ByteArray {
+    use(this) {
+        val buffer = BinaryOutputFlow()
+        copyTo(buffer, bufferSize)
+        return buffer.getData()
+    }
+}
+
+@ExperimentalUnsignedTypes
 fun InputFlow.setCloseHandler(handler: InputFlowEventHandler) {
     this.onClose = handler
 }
@@ -69,3 +78,17 @@ suspend inline fun <T> InputFlow.fauxSeekFromStart(offset: ULong, dataSource: Da
 }
 
 fun readResultIsValid(byte: Int): Boolean = byte != -1
+
+@ExperimentalUnsignedTypes
+public suspend inline fun <T : InputFlow, R> bookmark(t: T, block: () -> R): R {
+//    contract {
+//        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+//    }
+
+    val position = t.position()
+    try {
+        return block()
+    } finally {
+        t.seek(position.toLong(), InputFlow.FROM_BEGINNING)
+    }
+}

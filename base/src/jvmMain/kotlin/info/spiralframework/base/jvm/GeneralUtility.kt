@@ -1,9 +1,51 @@
 package info.spiralframework.base.jvm
 
+import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.text.Ansi
+import info.spiralframework.base.jvm.io.JVMInputFlow
+import info.spiralframework.base.jvm.io.files.FileInputFlow
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.PrintStream
 import java.text.DecimalFormat
+
+val spiralModules = arrayOf(
+        "antlr-json",
+        "base",
+        "base-extended",
+        "core",
+        "console",
+        "gui",
+        "formats",
+        "osl",
+        "osl-2",
+        "updater"
+)
+
+val platformModules = arrayOf(
+        "commonMain",
+        "jvmMain"
+)
+
+/** This is mainly just here because IntelliJ sucks */
+@ExperimentalUnsignedTypes
+fun ClassLoader.getResourceAsFlow(name: String): InputFlow? {
+    val stream = getResourceAsStream(name)
+    if (stream != null)
+        return JVMInputFlow(stream)
+    val file = File(name)
+    if (file.exists())
+        return FileInputFlow(file)
+    for (module in spiralModules) {
+        for (platform in platformModules) {
+            val resourceFolder = File("$module/src/$platform/resources/$name")
+            if (resourceFolder.exists())
+                return FileInputFlow(resourceFolder)
+        }
+    }
+
+    return null
+}
 
 public inline fun printAndBack(message: String) {
     print(message)
