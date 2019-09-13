@@ -7,6 +7,7 @@ import info.spiralframework.base.common.io.DataCloseable
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.copyTo
 import info.spiralframework.base.common.io.use
+import info.spiralframework.base.common.takeIf
 
 @ExperimentalUnsignedTypes
 typealias InputFlowEventHandler = suspend (flow: InputFlow) -> Unit
@@ -45,6 +46,25 @@ suspend fun InputFlow.readBytes(bufferSize: Int = 8192): ByteArray {
     val buffer = BinaryOutputFlow()
     copyTo(buffer, bufferSize)
     return buffer.getData()
+}
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.readExact(buffer: ByteArray): ByteArray? = readExact(buffer, 0, buffer.size)
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.readExact(buffer: ByteArray, offset: Int, length: Int): ByteArray? {
+    var currentOffset: Int = offset
+    var remainingLength: Int = length
+
+    var read: Int
+
+    while (remainingLength > 0 && (currentOffset + remainingLength) <= buffer.size) {
+        read = read(buffer, currentOffset, remainingLength) ?: break
+        currentOffset += read
+        remainingLength -= read
+    }
+
+    return buffer.takeIf(remainingLength == 0)
 }
 
 @ExperimentalUnsignedTypes
