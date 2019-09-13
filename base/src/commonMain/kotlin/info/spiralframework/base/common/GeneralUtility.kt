@@ -2,6 +2,8 @@ package info.spiralframework.base.common
 
 @ExperimentalUnsignedTypes
 infix fun UInt.alignmentNeededFor(alignment: Int): UInt = (toLong() alignmentNeededFor alignment).toUInt()
+@ExperimentalUnsignedTypes
+infix fun ULong.alignmentNeededFor(alignment: Int): UInt = (toLong() alignmentNeededFor alignment).toUInt()
 infix fun Int.alignmentNeededFor(alignment: Int): Int = (alignment - this % alignment) % alignment
 infix fun Long.alignmentNeededFor(alignment: Int): Int = ((alignment - this % alignment) % alignment).toInt()
 

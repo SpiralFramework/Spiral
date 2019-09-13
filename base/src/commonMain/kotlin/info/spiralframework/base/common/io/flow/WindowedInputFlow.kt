@@ -20,7 +20,7 @@ open class WindowedInputFlow private constructor(val window: InputFlow, val offs
         null
     }
     override suspend fun read(b: ByteArray, off: Int, len: Int): Int? {
-        if (len < 0 || off < 0 || b.size > len - off)
+        if (len < 0 || off < 0 || len > b.size - off)
             throw IndexOutOfBoundsException()
 
         val avail = minOf((windowSize - position).toInt(), len)

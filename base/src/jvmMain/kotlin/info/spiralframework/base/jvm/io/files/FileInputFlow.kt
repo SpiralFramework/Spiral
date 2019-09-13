@@ -16,7 +16,10 @@ class FileInputFlow(val backingFile: File) : InputFlow {
     override suspend fun read(): Int? = withContext(Dispatchers.IO) { channel.read().takeIf(::readResultIsValid) }
     override suspend fun read(b: ByteArray, off: Int, len: Int): Int? = withContext(Dispatchers.IO) { channel.read(b, off, len).takeIf(::readResultIsValid) }
 
-    override suspend fun skip(n: ULong): ULong? = withContext(Dispatchers.IO) { channel.skipBytes(n.toInt()).toULong() }
+    override suspend fun skip(n: ULong): ULong = withContext(Dispatchers.IO) {
+        channel.seek(channel.filePointer + n.toLong())
+        n
+    }
 
     override suspend fun available(): ULong = remaining()
     override suspend fun remaining(): ULong = size() - position()
