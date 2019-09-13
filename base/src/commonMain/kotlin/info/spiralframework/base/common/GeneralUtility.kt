@@ -18,3 +18,7 @@ fun ByteArray.toHexString(): String = buildString {
 
 fun Byte.reverseBits(): Int =
         (((this.toInt() and 0xFF) * 0x0202020202L and 0x010884422010L) % 1023).toInt() and 0xFF
+
+public inline fun <T> T.takeIf(predicate: Boolean): T? {
+    return if (predicate) this else null
+}
