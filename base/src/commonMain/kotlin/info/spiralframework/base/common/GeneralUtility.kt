@@ -22,3 +22,6 @@ fun Byte.reverseBits(): Int =
 public inline fun <T> T.takeIf(predicate: Boolean): T? {
     return if (predicate) this else null
 }
+
+fun ByteArray.foldToInt16LE(): IntArray = IntArray(size / 2) { i -> (this[i * 2 + 1].toInt() and 0xFF shl 8) or (this[i * 2].toInt() and 0xFF) }
+fun ByteArray.foldToInt16BE(): IntArray = IntArray(size / 2) { i -> (this[i * 2].toInt() and 0xFF shl 8) or (this[i * 2 + 1].toInt() and 0xFF) }

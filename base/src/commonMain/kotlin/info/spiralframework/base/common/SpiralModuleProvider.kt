@@ -4,5 +4,5 @@ interface SpiralModuleProvider {
     val moduleName: String
     val moduleVersion: SemanticVersion
 
-    fun register(context: SpiralContext)
+    suspend fun register(context: SpiralContext)
 }

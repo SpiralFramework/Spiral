@@ -26,12 +26,16 @@ data class RSISrdEntry(
     }
 
     data class ResourceIndex(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
+    data class LabelledResourceIndex(val name: Int, val start: Int, val length: Int, val unk2: Int)
 
     var unk1: Int by oneTimeMutable()
     var unk2: Int by oneTimeMutable()
-    var resourceCount: Int by oneTimeMutable()
     var unk3: Int by oneTimeMutable()
+    var resourceCount: Int by oneTimeMutable()
     var unk4: Int by oneTimeMutable()
+    var unk5: Int by oneTimeMutable()
+    var unk6: Int by oneTimeMutable()
+    var unk7: Int by oneTimeMutable()
 
     var resources: Array<ResourceIndex> by oneTimeMutable()
     var name: String by oneTimeMutable()
@@ -50,11 +54,14 @@ data class RSISrdEntry(
     private suspend fun SpiralContext.setup(flow: InputFlow) {
         requireNotNull(flow.seek(0, InputFlow.FROM_BEGINNING))
 
-        unk1 = requireNotNull(flow.readInt16LE())
+        unk1 = requireNotNull(flow.read())
         unk2 = requireNotNull(flow.read())
+        unk3 = requireNotNull(flow.read())
         resourceCount = requireNotNull(flow.read())
-        unk3 = requireNotNull(flow.readInt32LE())
-        unk4 = requireNotNull(flow.readInt32LE())
+        unk4 = requireNotNull(flow.readInt16LE())
+        unk5 = requireNotNull(flow.readInt16LE())
+        unk6 = requireNotNull(flow.readInt16LE())
+        unk7 = requireNotNull(flow.readInt16LE())
 
         val nameOffset = requireNotNull(flow.readInt32LE())
 

@@ -60,5 +60,5 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
 
     override var parent: LocaleBundle? = null
 
-    override fun loadWithLocale(locale: CommonLocale): LocaleBundle? = loadBundle(bundleName, locale)
+    override suspend fun loadWithLocale(locale: CommonLocale): LocaleBundle? = loadBundle(bundleName, locale)
 }

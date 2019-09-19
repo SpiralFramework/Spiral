@@ -27,7 +27,7 @@ actual class DefaultLocaleBundle(val bundle: ResourceBundle, override val locale
 
     override fun isEmpty(): Boolean = !bundle.keys.hasMoreElements()
 
-    override fun loadWithLocale(locale: CommonLocale): LocaleBundle? = DefaultLocaleBundle(bundleName, locale)
+    override suspend fun loadWithLocale(locale: CommonLocale): LocaleBundle? = DefaultLocaleBundle(bundleName, locale)
 }
 
 fun CommonLocale.jvm(): Locale = Locale(language, country, variant)

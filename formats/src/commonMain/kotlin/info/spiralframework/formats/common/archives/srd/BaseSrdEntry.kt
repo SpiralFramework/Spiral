@@ -67,13 +67,13 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         }
     }
 
-    suspend fun openMainDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL, mainDataLength)
+    suspend fun openMainDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL, mainDataLength, closeParent = false)
     suspend fun openMainDataFlow(): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return WindowedInputFlow(parent, 16uL, mainDataLength)
     }
 
-    suspend fun openSubDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10), subDataLength)
+    suspend fun openSubDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10), subDataLength, closeParent = false)
     suspend fun openSubDataFlow(): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10), subDataLength)

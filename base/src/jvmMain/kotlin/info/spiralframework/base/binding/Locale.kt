@@ -1,8 +1,8 @@
 package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.locale.*
+import info.spiralframework.base.common.logging.SpiralLogger
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.text.MessageFormat
@@ -94,10 +94,6 @@ actual class DefaultSpiralLocale : AbstractSpiralLocale() {
     actual override fun localiseEnglishArray(msg: String, args: Array<out Any>): String {
         val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str, *args)
-    }
-
-    init {
-        addBundle("SpiralBase")
     }
 }
 

@@ -14,11 +14,11 @@ import java.io.File
 
 object OSLProxy {
     @JvmStatic
-    fun main(args: Array<String>) {
+    suspend fun main(args: Array<String>) {
         osl()
     }
 
-    fun locale() {
+    suspend fun locale() {
 //        val input = CharStreams.fromString(buildString {
 //            val data = SpiralLocale::class.java.classLoader.getResourceAsStream("SpiralBase.properties")?.let(InputStream::readBytes)
 //                    ?: return@buildString
@@ -46,7 +46,7 @@ object OSLProxy {
 //        println(visitor.visitScript(tree).represent())
     }
 
-    fun osl() {
+    suspend fun osl() {
         val input = CharStreams.fromFileName("osl-2/src/main/antlr/tests/NonstopDebate.osl")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)

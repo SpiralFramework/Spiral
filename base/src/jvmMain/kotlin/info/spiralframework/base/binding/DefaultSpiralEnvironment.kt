@@ -2,6 +2,7 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SPIRAL_BASE_MODULE
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.environment.DynamicEnvironmentFunction
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_FILE_NAME_KEY
@@ -21,6 +22,8 @@ actual class DefaultSpiralEnvironment : SpiralEnvironment {
             "java.vendor", "java.version", "java.vendor.url",
             "file.separator", "path.separator", "line.separator"
     )
+    val moduleProviders: MutableMap<String, SpiralModuleProvider> = HashMap()
+    val enabledModules: MutableSet<String> = HashSet()
 
     override fun SpiralContext.retrieveEnvironment(): Map<String, String> {
         val envMap = HashMap(staticEnvironment)
@@ -55,5 +58,18 @@ actual class DefaultSpiralEnvironment : SpiralEnvironment {
         }
 
         staticEnvironment[SPIRAL_MODULE_KEY] = SPIRAL_BASE_MODULE
+    }
+
+    override suspend fun addModuleProvider(moduleProvider: SpiralModuleProvider) {
+        moduleProviders["${moduleProvider.moduleName} v${moduleProvider.moduleVersion}"] = moduleProvider
+    }
+
+    override suspend fun SpiralContext.registerAllModules() {
+        moduleProviders.forEach { (name, provider) ->
+            if (name !in enabledModules) {
+                provider.register(this)
+                enabledModules.add(name)
+            }
+        }
     }
 }

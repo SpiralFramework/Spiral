@@ -6,7 +6,7 @@ import info.spiralframework.base.common.io.flow.setCloseHandler
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val windowSize: ULong, val maxInstanceCount: Int = -1) : DataSource<WindowedInputFlow> {
+class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val windowSize: ULong, val maxInstanceCount: Int = -1, val closeParent: Boolean = true) : DataSource<WindowedInputFlow> {
     companion object {}
 
     override val dataSize: ULong?
@@ -41,7 +41,9 @@ class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val
             openInstances.toTypedArray().closeAll()
             openInstances.clear()
 
-            parent.close()
+            if (closeParent) {
+                parent.close()
+            }
         }
     }
 }

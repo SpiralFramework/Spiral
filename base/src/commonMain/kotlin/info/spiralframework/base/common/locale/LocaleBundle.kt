@@ -5,5 +5,5 @@ interface LocaleBundle: Map<String, String> {
     val locale: CommonLocale
     var parent: LocaleBundle?
 
-    fun loadWithLocale(locale: CommonLocale): LocaleBundle?
+    suspend fun loadWithLocale(locale: CommonLocale): LocaleBundle?
 }

@@ -12,7 +12,6 @@ import info.spiralframework.base.common.io.flow.setCloseHandler
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.withFormats
-import kotlin.time.ExperimentalTime
 
 @ExperimentalUnsignedTypes
 class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataSource: DataSource<*>) {
@@ -44,7 +43,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
             withFormats(context) {
                 val notEnoughData: () -> Any = { localise("formats.spc.not_enough_data") }
 
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = requireNotNull(dataSource.openInputFlow()) { "Couldn't open file?" }
 
                 use(flow) {
                     val magic = requireNotNull(flow.readInt32LE(), notEnoughData)
@@ -93,7 +92,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
 
     operator fun get(name: String): SpcFileEntry? = files.firstOrNull { entry -> entry.name == name }
 
-    suspend fun SpiralContext.openRawSource(file: SpcFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset, file.compressedSize.toULong())
+    suspend fun SpiralContext.openRawSource(file: SpcFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset, file.compressedSize.toULong(), closeParent = false)
     suspend fun SpiralContext.openRawFlow(file: SpcFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return WindowedInputFlow(parent, file.offset, file.compressedSize.toULong())

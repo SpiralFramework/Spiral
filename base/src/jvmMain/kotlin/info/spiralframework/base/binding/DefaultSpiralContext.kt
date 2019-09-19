@@ -2,6 +2,7 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -26,16 +27,28 @@ actual data class DefaultSpiralContext actual constructor(
         SpiralEnvironment by environment,
         SpiralEventBus by eventBus,
         SpiralCacheProvider by cacheProvider {
+    actual companion object {
+        actual suspend operator fun invoke(locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider): DefaultSpiralContext {
+            val context = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider)
+            context.init()
+            return context
+        }
+    }
+
     override fun subcontext(module: String): SpiralContext = this
-    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?): SpiralContext =
-            DefaultSpiralContext(
-                    newLocale ?: locale,
-                    newLogger ?: logger,
-                    newConfig ?: config,
-                    newEnvironment ?: environment,
-                    newEventBus ?: eventBus,
-                    newCacheProvider ?: cacheProvider
-            )
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?): SpiralContext {
+        val context =
+                DefaultSpiralContext(
+                        newLocale ?: locale,
+                        newLogger ?: logger,
+                        newConfig ?: config,
+                        newEnvironment ?: environment,
+                        newEventBus ?: eventBus,
+                        newCacheProvider ?: cacheProvider
+                )
+        context.init()
+        return context
+    }
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)
     override val loadedModules: Map<String, SemanticVersion> = moduleLoader.iterator()
@@ -48,8 +61,11 @@ actual data class DefaultSpiralContext actual constructor(
         cacheProvider.prime(this)
     }
 
-    init {
-        moduleLoader.iterator().forEach { module -> module.register(this) }
+    actual suspend fun init() {
+        addModuleProvider(SpiralModuleBase())
+        registerAllModules()
+        //moduleLoader.iterator().forEach { module -> module.register(this) }
+
         prime(this)
     }
 }

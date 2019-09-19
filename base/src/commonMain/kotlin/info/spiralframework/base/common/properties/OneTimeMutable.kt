@@ -10,6 +10,8 @@ class OneTimeMutable<T> {
         set(value) {
             if (_value === UNINITIALIZED_VALUE) {
                 _value = value
+            } else {
+                println("Value was already set") //Escalate?
             }
         }
 }
