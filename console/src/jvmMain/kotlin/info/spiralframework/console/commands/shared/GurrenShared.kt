@@ -121,7 +121,7 @@ object GurrenShared {
             }
 
             is ZipFile -> {
-                files = result.entries().asIterator().map { entry -> entry.name to result.getInputStream(entry) }
+                files = result.entries().iterator().map { entry -> entry.name to result.getInputStream(entry) }
                 totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }.toLong()
             }
 

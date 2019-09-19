@@ -9,14 +9,24 @@ import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 
 @ExperimentalUnsignedTypes
-expect class DefaultSpiralContext(
+expect class DefaultSpiralContext private constructor(
         locale: SpiralLocale,
         logger: SpiralLogger,
         config: SpiralConfig,
         environment: SpiralEnvironment,
         eventBus: SpiralEventBus,
         cacheProvider: SpiralCacheProvider
-) : SpiralContext
+) : SpiralContext {
+    companion object {
+        suspend operator fun invoke(locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider): DefaultSpiralContext
+    }
+
+    suspend fun init()
+}
 
 @ExperimentalUnsignedTypes
-fun defaultSpiralContext(): SpiralContext = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider())
+suspend fun defaultSpiralContext(): SpiralContext {
+    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider())
+    context.init()
+    return context
+}

@@ -6,7 +6,7 @@ import info.spiralframework.base.common.io.flow.setCloseHandler
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class OffsetDataSource(val parent: DataSource<*>, val offset: ULong, val maxInstanceCount: Int = -1) : DataSource<OffsetInputFlow> {
+class OffsetDataSource(val parent: DataSource<*>, val offset: ULong, val maxInstanceCount: Int = -1, val closeParent: Boolean = true) : DataSource<OffsetInputFlow> {
     companion object {}
 
     override val dataSize: ULong?
@@ -41,7 +41,9 @@ class OffsetDataSource(val parent: DataSource<*>, val offset: ULong, val maxInst
             openInstances.toTypedArray().closeAll()
             openInstances.clear()
 
-            parent.close()
+            if (closeParent) {
+                parent.close()
+            }
         }
     }
 }

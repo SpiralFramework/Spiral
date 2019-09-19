@@ -9,5 +9,5 @@ class SpiralModuleOSL: SpiralModuleProvider {
     override val moduleName: String = "spiral-osl"
     override val moduleVersion: SemanticVersion = SPIRAL_VERSION
 
-    override fun register(context: SpiralContext) {}
+    override suspend fun register(context: SpiralContext) {}
 }
