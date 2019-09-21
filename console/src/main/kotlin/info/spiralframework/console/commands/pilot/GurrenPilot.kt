@@ -526,7 +526,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                 val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
                         ?: SpiralFormat.DEFAULT_EXTENSION}")
                 val response = FileOutputStream(output).use { outStream ->
-                    formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                    formatConvertTo.write(output.name, game, file.absoluteParentFile?.dataContext
                             ?: BLANK_DATA_CONTEXT, data, outStream)
                 }
 
@@ -637,7 +637,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                             val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
                                     ?: SpiralFormat.DEFAULT_EXTENSION}")
                             val response = FileOutputStream(output).use { outStream ->
-                                formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                                formatConvertTo.write(output.name, game, file.absoluteParentFile?.dataContext
                                         ?: BLANK_DATA_CONTEXT, data, outStream)
                             }
 
