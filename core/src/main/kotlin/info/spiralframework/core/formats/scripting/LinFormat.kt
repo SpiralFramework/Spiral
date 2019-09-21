@@ -35,8 +35,8 @@ object LinFormat: ReadableSpiralFormat<Lin>, WritableSpiralFormat {
         //For the purposes of this, we can ignore flag check fuckery
         val lin = Lin(UnknownHopesPeakGame, source) ?: return FormatResult.Fail(this, 0.9)
         if (lin.entries.isEmpty())
-            return FormatResult.Success(this, Optional.of(lin), 0.55)
-        return FormatResult.Success(this, Optional.of(lin), 0.85)
+            return FormatResult.Success(this, Optional.empty(), 0.55)
+        return FormatResult.Success(this, Optional.empty(), 0.85)
     }
 
     override fun read(name: String?, game: DRGame?, context: DataContext, source: DataSource): FormatResult<Lin> {
