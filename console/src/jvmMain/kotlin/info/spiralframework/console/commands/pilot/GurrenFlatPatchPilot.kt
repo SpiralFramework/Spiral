@@ -1,8 +1,15 @@
 package info.spiralframework.console.commands.pilot
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import info.spiralframework.base.util.*
-import info.spiralframework.console.Cockpit.Companion.LOGGER
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.SpiralLocale
+import info.spiralframework.base.common.locale.printLocale
+import info.spiralframework.base.common.locale.printlnLocale
+import info.spiralframework.base.common.text.ProgressTracker
+import info.spiralframework.base.common.text.arbitraryProgressBar
+import info.spiralframework.base.jvm.crypto.sha256Hash
+import info.spiralframework.base.jvm.io.files.relativePathFrom
+import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ExtractWorkspaceArgs
 import info.spiralframework.console.commands.data.LinkContentArgs
@@ -13,7 +20,7 @@ import info.spiralframework.console.eventbus.CommandClass
 import info.spiralframework.console.eventbus.ParboiledCommand
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.SUCCESS
 import info.spiralframework.console.eventbus.ParboiledCommand.Companion.fail
-import info.spiralframework.core.SpiralSerialisation
+import info.spiralframework.core.serialisation.SpiralSerialisation
 import info.spiralframework.formats.archives.CPK
 import info.spiralframework.formats.archives.CPKFileEntry
 import info.spiralframework.formats.archives.WAD
@@ -30,7 +37,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.system.measureTimeMillis
 
-class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : CommandClass {
+class GurrenFlatPatchPilot(val locale: SpiralLocale, override val parameterParser: ParameterParser) : CommandClass {
     companion object {
         val DR1_WAD_REGEX = "dr1_data(_keyboard)?(_[a-z]{2})?\\.wad".toRegex()
         val DR1_WAD_LANG_REGEX = "dr1_data(_keyboard)_[a-z]{2}\\.wad".toRegex()
@@ -128,7 +135,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                 DR2.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = DR2
                                 V3.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = V3
                                 else -> return@Action pushMarkerFailedLocale(
-                                    locale("commands.pilot.flatpatch.prepare_workspace.err_no_game_for_name", gameStr)
+                                    locale.localise("commands.pilot.flatpatch.prepare_workspace.err_no_game_for_name", gameStr)
                                 )
                             }
 
@@ -170,7 +177,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                 DR2.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = DR2
                                 V3.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = V3
                                 else -> return@Action pushMarkerFailedLocale(
-                                    locale("commands.pilot.flatpatch.patch_executable.err_no_game_for_name", gameStr)
+                                    locale.localise("commands.pilot.flatpatch.patch_executable.err_no_game_for_name", gameStr)
                                 )
                             }
 
@@ -234,7 +241,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                     DR2.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = DR2
                                     V3.names.any { str -> str.equals(gameStr, true) } -> argsVar.get().game = V3
                                     else -> return@Action pushMarkerFailedLocale(
-                                        locale("commands.pilot.flatpatch.link_content.err_no_game_for_name", gameStr)
+                                        locale.localise("commands.pilot.flatpatch.link_content.err_no_game_for_name", gameStr)
                                     )
                                 }
 
@@ -347,7 +354,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
         return@ParboiledCommand SUCCESS
     }
 
-    fun prepareWadGame(workplacePath: File, wadRegex: Regex, langRegex: Regex, kbRegex: Regex, seRegex: Regex) {
+    suspend fun SpiralContext.prepareWadGame(workplacePath: File, wadRegex: Regex, langRegex: Regex, kbRegex: Regex, seRegex: Regex) {
         val wadFiles = workplacePath.listFiles().filter { file -> file.name.matches(wadRegex) }
             .sortedBy { file ->
                 var weight = 0
@@ -371,7 +378,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
         backupWadPath.mkdir()
 
         wadFiles.forEach { wadFile ->
-            val wad = WAD(wadFile::inputStream)
+            val wad = WAD(this, wadFile::inputStream)
                 ?: return@forEach printlnLocale(
                     "commands.pilot.flatpatch.prepare_workspace.err_not_wad",
                     wadFile.name
@@ -387,7 +394,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                 val files = wad.files.sortedBy(WADFileEntry::offset)
 
                 arbitraryProgressBar(
-                    loadingText = locale(
+                    loadingText = localise(
                         "commands.pilot.flatpatch.prepare_workspace.extracting",
                         wadFile.name
                     ), loadedText = ""
@@ -405,7 +412,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
 //                val totalCount = files.size.toLong()
 //                var extracted: Long = 0
                 arbitraryProgressBar(
-                    loadingText = locale(
+                    loadingText = localise(
                         "commands.pilot.flatpatch.prepare_workspace.extracting",
                         wadFile.name
                     ), loadedText = ""
@@ -420,7 +427,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
             }
             val linkTime = measureTimeMillis {
                 arbitraryProgressBar(
-                    loadingText = locale(
+                    loadingText = localise(
                         "commands.pilot.flatpatch.prepare_workspace.linking",
                         wadFile.name
                     ), loadedText = ""
@@ -473,7 +480,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
         }
     }
 
-    fun prepareCpkGame(
+    suspend fun SpiralContext.prepareCpkGame(
         workplacePath: File,
         cpkRegex: Regex,
         makeEmptyArchives: Boolean,
@@ -497,7 +504,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
         backupCpkPath.mkdir()
 
         cpkFiles.forEach { cpkFile ->
-            val cpk = CPK(cpkFile::inputStream)
+            val cpk = CPK(this, cpkFile::inputStream)
                 ?: return@forEach printlnLocale(
                     "commands.pilot.flatpatch.prepare_workspace.err_not_cpk",
                     cpkFile.name
@@ -513,10 +520,10 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                 val files = cpk.files.sortedBy(CPKFileEntry::offset)
 
                 ProgressTracker(
-                    downloadingText = locale(
-                        "commands.pilot.flatpatch.prepare_workspace.extracting",
-                        cpkFile.name
-                    ), downloadedText = ""
+                        downloadingText = localise(
+                                "commands.pilot.flatpatch.prepare_workspace.extracting",
+                                cpkFile.name
+                        ), downloadedText = ""
                 ) {
                     //Due to the **hefty** nature of these files, we're gonna chunk them to give some feedback to the user
 
@@ -541,7 +548,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
             }
             val linkTime = measureTimeMillis {
                 arbitraryProgressBar(
-                    loadingText = locale(
+                    loadingText = localise(
                         "commands.pilot.flatpatch.prepare_workspace.linking",
                         cpkFile.name
                     ), loadedText = ""
@@ -576,12 +583,15 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
             if (makeEmptyArchives) {
                 GurrenFlatPatchPilot::class.java.classLoader.getResourceAsStream("empty.cpk")?.use { empty ->
                     FileOutputStream(cpkFile).use(empty::copyToStream)
-                } ?: LOGGER.error("commands.pilot.flatpatch.prepare_workspace.err_no_empty_cpk")
+                } ?: this.error("commands.pilot.flatpatch.prepare_workspace.err_no_empty_cpk")
             }
         }
     }
 
     val patchExecutable = ParboiledCommand(patchExecutableRule) { stack ->
+        if (this !is SpiralSerialisation)
+            throw IllegalStateException(localise("gurren.errors.invalid_context", localise(this::class.qualifiedName ?: "constants.null"), localise(SpiralSerialisation::class.qualifiedName ?: "constants.null")))
+
         val executableBuilder = stack[0] as PatchExecutableArgs
 
         //Step 1. Check all our data's there
@@ -688,7 +698,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
 
                         //Find all the strings
                         arbitraryProgressBar(
-                            loadingText = locale(
+                            loadingText = localise(
                                 "commands.pilot.flatpatch.patch_executable.mapping",
                                 args.executablePath.name
                             ), loadedText = "commands.pilot.flatpatch.patch_executable.finished_mapping"
@@ -731,9 +741,9 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                             }
                         )
 
-                        SpiralSerialisation.JSON_MAPPER.writeValue(executableMapFile, executableMap)
+                        jsonMapper.writeValue(executableMapFile, executableMap)
                     } else {
-                        executableMap = SpiralSerialisation.JSON_MAPPER.readValue(executableMapFile)
+                        executableMap = jsonMapper.readValue(executableMapFile)
                     }
 
                     val size = executableMap.archiveLocations.size + 1L
@@ -750,7 +760,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                 raf.write(current.replace("archive:", "content/").toByteArray(Charsets.US_ASCII))
                             } else {
                                 patchWarnings.add(
-                                    locale(
+                                    localise(
                                         "commands.pilot.flatpatch.patch_executable.warn_differing_content",
                                         "0x${addr.toString(16)}",
                                         original,
@@ -770,7 +780,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                 raf.write(current.replace("wav", "ogg").toByteArray(Charsets.US_ASCII))
                             } else {
                                 patchWarnings.add(
-                                    locale(
+                                    localise(
                                         "commands.pilot.flatpatch.patch_executable.warn_differing_content",
                                         "0x${addr.toString(16)}",
                                         original,
@@ -778,14 +788,14 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                                     )
                                 )
                             }
-                        } ?: LOGGER.warn(
+                        } ?: warn(
                             "commands.pilot.flatpatch.patch_executable.warn_no_sfx"
                         )
 
                         trackDownload(size, size)
                     }
 
-                    patchWarnings.forEach(LOGGER::warn)
+                    patchWarnings.forEach { warn(it) }
                 }
             }
         }
@@ -924,7 +934,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                         dest.delete()
 
                     if (!source.exists())
-                        LOGGER.warn("commands.pilot.flatpatch.link_content.warn_missing_source", source)
+                        warn("commands.pilot.flatpatch.link_content.warn_missing_source", source)
 
                     Files.createLink(dest.toPath(), source.toPath())
                 }
@@ -937,7 +947,7 @@ class GurrenFlatPatchPilot(override val parameterParser: ParameterParser) : Comm
                         dest.delete()
 
                     if (!source.exists())
-                        LOGGER.warn("commands.pilot.flatpatch.link_content.warn_missing_source", source)
+                        warn("commands.pilot.flatpatch.link_content.warn_missing_source", source)
                     else {
                         Files.createLink(dest.toPath(), source.toPath())
                     }
