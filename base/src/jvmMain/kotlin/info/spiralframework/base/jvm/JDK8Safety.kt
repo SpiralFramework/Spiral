@@ -1,4 +1,4 @@
-package info.spiralframework.base.util
+package info.spiralframework.base.jvm
 
 import java.nio.Buffer
 import java.nio.InvalidMarkException
