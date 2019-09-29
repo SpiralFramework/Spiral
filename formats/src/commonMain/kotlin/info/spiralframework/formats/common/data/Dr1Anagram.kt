@@ -7,7 +7,7 @@ import info.spiralframework.base.common.io.use
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
-class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerIndex: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val unk5: Int, val unk6: Int, val gentleFilledLetters: BooleanArray, val kindFilledLetters: BooleanArray, val meanFilledLetters: BooleanArray) {
+class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerIndex: Int, val incorrectAnswerIndex: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val unk5: Int, val unk6: Int, val gentleFilledLetters: BooleanArray, val kindFilledLetters: BooleanArray, val meanFilledLetters: BooleanArray) {
     companion object {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): Dr1Anagram? {
             try {
@@ -43,7 +43,7 @@ class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerInde
                     val kindFilledLetters = BooleanArray(letters) { requireNotNull(flow.readInt16LE(), notEnoughData) == 1 }
                     val meanFilledLetters = BooleanArray(letters) { requireNotNull(flow.readInt16LE(), notEnoughData) == 1 }
 
-                    return Dr1Anagram(timeLimit, damageTaken, correctAnswerIndex, unk1, unk2, unk3, unk4, unk5, unk6, gentleFilledLetters, kindFilledLetters, meanFilledLetters)
+                    return Dr1Anagram(timeLimit, damageTaken, correctAnswerIndex, incorrectAnswerIndex, unk1, unk2, unk3, unk4, unk5, unk6, gentleFilledLetters, kindFilledLetters, meanFilledLetters)
                 }
             }
         }

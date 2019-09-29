@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.foldToInt16LE
 
-class HopesPeakNonstopDebateSection private constructor(val data: IntArray) {
+class HopesPeakNonstopDebateSection private constructor(override val data: IntArray): IntArrayDataStructure {
     companion object {
         fun fromData(data: ByteArray) = HopesPeakNonstopDebateSection(data.foldToInt16LE())
         fun fromData(data: IntArray) = HopesPeakNonstopDebateSection(data.copyOf())
@@ -13,89 +13,28 @@ class HopesPeakNonstopDebateSection private constructor(val data: IntArray) {
     operator fun get(index: Int): Int = data[index]
     operator fun set(index: Int, value: Int) { data[index] = value }
 
-    var textID: Int
-        get()       = data[0x00]
-        set(value)  { data[0x00] = value }
+    var textID: Int by intIndex(0x00)
+    var type: Int by intIndex(0x01)
+    var shootWithEvidence: Int by intIndex(0x03)
+    val shouldShootWithEvidence: Boolean by boolIndex(0x03, 0x0000, 0xFFFF)
+    var hasWeakPoint: Boolean by boolIndex(0x06)
+    var advance: Int by intIndex(0x07)
+    var transition: Int by intIndex(0x0A)
+    var fadeout: Int by intIndex(0x0B)
+    var horizontal: Int by intIndex(0x0C)
+    var vertical: Int by intIndex(0x0D)
+    var angleAcceleration: Int by intIndex(0x0E)
+    var angle: Int by intIndex(0x0F)
 
-    var type: Int
-        get()       = data[0x01]
-        set(value)  { data[0x01] = value }
-
-    var shootWithEvidence: Int
-        get()       = data[0x03]
-        set(value)  { data[0x03] = value }
-
-    var shouldShootWithEvidence: Boolean
-        get()       = data[0x03] != 65535
-        set(value)  { if(!value) data[0x03] = 65535 }
-
-    var hasWeakPoint: Boolean
-        get()       = data[0x06] > 0
-        set(value)  { data[0x06] = (if(value) 1 else 0) }
-
-    var advance: Int
-        get()       = data[0x07]
-        set(value)  { data[0x07] = value }
-
-    var transition: Int
-        get()       = data[0x0A]
-        set(value)  { data[0x0A] = value }
-
-    var fadeout: Int
-        get()       = data[0x0B]
-        set(value)  { data[0x0B] = value }
-
-    var horizontal: Int
-        get()       = data[0x0C]
-        set(value)  { data[0x0C] = value }
-
-    var vertical: Int
-        get()       = data[0x0D]
-        set(value)  { data[0x0D] = value }
-
-    var angleAcceleration: Int
-        get()       = data[0x0E]
-        set(value)  { data[0x0E] = value }
-
-    var angle: Int
-        get()       = data[0x0F]
-        set(value)  { data[0x0F] = value }
-
-    var scale: Int
-        get()       = data[0x10]
-        set(value)  { data[0x10] = value }
-
-    var finalScale: Int
-        get()       = data[0x11]
-        set(value)  { data[0x11] = value }
-
-    var rotation: Int
-        get()       = data[0x13]
-        set(value)  { data[0x13] = value }
-
-    var rotationSpeed: Int
-        get()       = data[0x14]
-        set(value)  { data[0x14] = value }
-
-    var character: Int
-        get()       = data[0x15] //21 / 42
-        set(value)  { data[0x15] = value }
-
-    var sprite: Int
-        get()       = data[0x16] //22 / 44
-        set(value)  { data[0x16] = value }
-
-    var backgroundAnimation: Int
-        get()       = data[0x17]
-        set(value)  { data[0x17] = value }
-
-    var voice: Int
-        get()       = data[0x19] //25 / 50
-        set(value)  { data[0x19] = value }
-
-    var chapter: Int
-        get()       = data[0x1B]
-        set(value)  { data[0x1B] = value }
+    var scale: Int by intIndex(0x10)
+    var finalScale: Int by intIndex(0x11)
+    var rotation: Int by intIndex(0x13)
+    var rotationSpeed: Int by intIndex(0x14)
+    var character: Int by intIndex(0x15)//21 / 42
+    var sprite: Int by intIndex(0x16)
+    var backgroundAnimation: Int by intIndex(0x17)
+    var voice: Int by intIndex(0x19)
+    var chapter: Int by intIndex(0x1B)
 
     operator fun component1(): Int = textID
     operator fun component2(): Int = type
