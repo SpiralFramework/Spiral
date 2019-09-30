@@ -20,7 +20,7 @@ object V3 : DRGame {
                 this[0x08] = "Set Game Mode" to 8 and ::UnknownEntry //MOD
                 this[0x09] = null to 2 and ::UnknownEntry //HUM
                 this[0x0A] = "Check For Variable" to 2 and ::UnknownEntry //CHK, seems to check if a given variable/flag exists?
-                this[0x0B] = "Truth Bullet" to 4 and ::UnknownEntry
+                this[0x0B] = "Truth Bullet" to 4 and ::UnknownEntry //KTB
                 this[0x0C] = null to -1 and ::UnknownEntry //CLR
                 this[0x0D] = null to -1 and ::UnknownEntry //RET
                 this[0x0E] = "Camera Look" to 10 and ::UnknownEntry //KNM
@@ -73,7 +73,7 @@ object V3 : DRGame {
                 this[0x3D] = "Move Object to Position" to -1 and ::UnknownEntry //MVP
                 this[0x3E] = "Create Position" to 10 and ::UnknownEntry //POS
                 this[0x3F] = "Program World Character Icon" to -1 and ::UnknownEntry //ICO
-                this[0x40] = "Set Exisal AI Parameters" to 10 and ::UnknownEntry //EAI
+                this[0x40] = "Set Exisal AI Parameters" to 20 and ::UnknownEntry //EAI
                 this[0x41] = "Set Object Collision" to -1 and ::UnknownEntry //COL
                 this[0x42] = "Camera Follow Path" to -1 and ::UnknownEntry //CFP
                 this[0x43] = "Set Text Color" to -1 and ::UnknownEntry //CLT=

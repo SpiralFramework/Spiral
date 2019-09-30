@@ -25,7 +25,7 @@ object OSLProxy {
         if (args[0] == "-x" || args[0] == "--extract") {
             convertToOsl(args[1])
             println("Done!")
-        } else if (args[1] == "-o" || args[0] == "--compile") {
+        } else if (args[0] == "-o" || args[0] == "--compile") {
             parseOsl(args[1], args[2])
             println("Done!")
         } else {
@@ -35,7 +35,7 @@ object OSLProxy {
 
     fun convertToOsl(path: String) {
         val loadedWrd = WordScriptFile.unsafe(V3, File(path)::inputStream)
-        val out = PrintStream(path.replace("wrd", "osl"))
+        val out = PrintStream(path.replaceAfterLast('.', "osl"))
         out.println("OSL Script")
         out.println()
 //        loadedWrd.labels.forEach { label -> out.println("//Label: $label") }
@@ -61,7 +61,7 @@ object OSLProxy {
     }
 
     fun parseOsl(path: String, resultSpcPath: String) {
-        val input = CharStreams.fromFileName(path.replace("wrd", "osl"))
+        val input = CharStreams.fromFileName(path)
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = OpenSpiralParser(tokens)
@@ -78,14 +78,14 @@ object OSLProxy {
         val result = visitor.visitScript(tree)
         println(result)
         require(result is OSLUnion.CustomWrdType)
-        File(path).outputStream().use(result.wrd::compile)
+        File(path.replaceAfterLast('.', "wrd")).outputStream().use(result.wrd::compile)
 
         val resultSpcFile = File(resultSpcPath)
         val baseSpcPath = resultSpcFile.readBytes()
         val baseSpc = SPC.unsafe(baseSpcPath::inputStream)
         val spc = customSPC {
             add(baseSpc)
-            add(path.substringAfterLast('/').substringAfterLast('\\'), File(path))
+            add(path.substringAfterLast('/').substringAfterLast('\\').replaceAfterLast('.', "wrd"), File(path.replaceAfterLast('.', "wrd")))
         }
 
         resultSpcFile.outputStream().use(spc::compile)
