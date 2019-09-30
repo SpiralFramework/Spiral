@@ -18,5 +18,8 @@ class V3NonstopDebateSection private constructor(override val data: IntArray): I
     var shootWithEvidence: Int by intIndex(0x10)
     val shouldShootWithEvidence: Boolean by boolIndex(0x10)
 
+    var characterID: Int by intIndex(0xAB)
+    var modelID: Int by intIndex(0xAC)
+
 //    var xPos: Int by intIndex(0x24)
 }
