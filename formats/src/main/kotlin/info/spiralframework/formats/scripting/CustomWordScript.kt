@@ -1,10 +1,11 @@
 package info.spiralframework.formats.scripting
 
-import info.spiralframework.formats.scripting.wrd.WrdScript
-import info.spiralframework.formats.utils.removeEscapes
 import info.spiralframework.base.util.writeInt16BE
 import info.spiralframework.base.util.writeInt16LE
 import info.spiralframework.base.util.writeInt32LE
+import info.spiralframework.formats.scripting.wrd.WrdScript
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.formats.utils.removeEscapes
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
@@ -57,17 +58,45 @@ class CustomWordScript {
         val parameterData = ByteArrayOutputStream()
 
         val localBranches: MutableList<Pair<Int, Int>> = ArrayList()
+
+        val sublabels = entries.filter { entry -> entry.opCode == 0x4A }
+                .map { entry -> entry.rawArguments[0] }
+                .distinct()
+                .sorted()
+        if (sublabels.isNotEmpty() && sublabels[0] < 0) {
+            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_small", 0, sublabels[0])
+        }
+
+        if (sublabels.isNotEmpty() && sublabels.last() > sublabels.size) {
+            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_large", sublabels.size + 1, sublabels.last())
+        }
+        if (strings.isEmpty() && externalStringCount == 0) {
+            val highestTextID = entries.filter { entry -> entry.opCode == 0x46 }
+                    .maxBy { script -> script.rawArguments[0] }
+                    ?.rawArguments?.get(0)
+
+            if (highestTextID != null) {
+                externalStringCount = highestTextID + 1
+            }
+        }
+
         val sections: MutableList<Int> = ArrayList()
 
         entries.forEach { entry ->
-            if (entry.opCode == 0x4A)
-                localBranches.add(entryData.size() to entry.rawArguments[0])
-            else if (entry.opCode == 0x14)
+            val mutatedArguments = entry.rawArguments
+
+            if (entry.opCode == 0x4A) {
+                mutatedArguments[0] = sublabels.indexOf(mutatedArguments[0])
+                localBranches.add(entryData.size() to mutatedArguments[0])
+            } else if (entry.opCode == 0x14)
                 sections.add(entryData.size())
+            else if (entry.opCode == 0x4B) {
+                mutatedArguments[0] = sublabels.indexOf(mutatedArguments[0])
+            }
 
             entryData.write(0x70)
             entryData.write(entry.opCode)
-            entry.rawArguments.forEach { arg -> entryData.writeInt16BE(arg) }
+            mutatedArguments.forEach { arg -> entryData.writeInt16BE(arg) }
         }
 
         labels.forEach { label ->

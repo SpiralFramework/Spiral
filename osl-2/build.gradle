@@ -9,6 +9,8 @@ dependencies {
     compile project(":formats")
     compile project(":osl-json")
 
+    compile("ch.qos.logback:logback-classic:$logback_version")
+
     antlr "org.antlr:antlr4:4.7.2"
 }
 

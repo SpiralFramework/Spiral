@@ -75,16 +75,16 @@ class WordScriptFile private constructor(val game: V3, val dataSource: () -> Inp
 
             if (stringOffset > 0)
                 strings = dataSource().use { stringStream ->
-                stringStream.skip(stringOffset.toLong())
-                return@use Array(stringCount) {
-                    var stringLen = stream.read()
+                    stringStream.skip(stringOffset.toLong())
+                    return@use Array(stringCount) {
+                        var stringLen = stream.read()
 
-                    if (stringLen >= 0x80)
-                        stringLen += (stream.read() - 1) shl 8
+                        if (stringLen >= 0x80)
+                            stringLen += (stream.read() - 1) shl 8
 
-                    return@Array stream.readNullTerminatedString(stringLen + 2, Charsets.UTF_16LE, 2)
+                        return@Array stream.readNullTerminatedString(stringLen + 2, Charsets.UTF_16LE, 2)
+                    }
                 }
-            }
             else
                 strings = emptyArray()
 
@@ -109,7 +109,7 @@ class WordScriptFile private constructor(val game: V3, val dataSource: () -> Inp
 
                 if (size < 0) {
                     throw locale<IllegalArgumentException>("formats.wrd.bad_size", index, size)
-                } else if(sectionOffsets[index] <= 0) {
+                } else if (sectionOffsets[index] <= 0) {
                     throw locale<IllegalArgumentException>("formats.wrd.bad_offset", index, sectionOffsets[index])
                 }
 
@@ -132,18 +132,19 @@ class WordScriptFile private constructor(val game: V3, val dataSource: () -> Inp
                         val (_, argumentCount, getEntry) = game.opCodes[opCode] ?: (null to -1 and ::UnknownEntry)
                         val rawArguments: IntArray
 
-//                        if (argumentCount == -1) {
-                        val args: MutableList<Int> = ArrayList()
+                        //*Should* work-ish
+                        if (argumentCount == -1) {
+                            val args: MutableList<Int> = ArrayList()
 
-                        while (wrdData.peek() != 0x70 && wrdData.isNotEmpty()) {
-                            args.add(wrdData.poll() ?: break)
+                            while (wrdData.peek() != 0x70 && wrdData.isNotEmpty()) {
+                                args.add(wrdData.poll() ?: break)
+                            }
+
+                            args.dropLast(args.size % 2)
+                            rawArguments = args.toIntArray()
+                        } else {
+                            rawArguments = IntArray(argumentCount) { wrdData.poll() }
                         }
-
-                        args.dropLast(args.size % 2)
-                        rawArguments = args.toIntArray()
-//                        } else {
-//                            rawArguments = IntArray(argumentCount) { wrdData.poll() }
-//                        }
 
                         val arguments = IntArray(rawArguments.size / 2) { index -> ((rawArguments[index * 2] shl 8) or rawArguments[index * 2 + 1]) }
 
