@@ -22,10 +22,14 @@ import java.util.*
 object OSLProxy {
     @JvmStatic
     fun main(args: Array<String>) {
-        if (args[0] == "-x") {
+        if (args[0] == "-x" || args[0] == "--extract") {
             convertToOsl(args[1])
-        } else if (args[1] == "-o") {
+            println("Done!")
+        } else if (args[1] == "-o" || args[0] == "--compile") {
             parseOsl(args[1], args[2])
+            println("Done!")
+        } else {
+            println("Unknown operation ${args[0]}")
         }
     }
 
