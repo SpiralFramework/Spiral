@@ -1,10 +1,9 @@
 package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.locale.AbstractSpiralLocale
 import info.spiralframework.base.common.locale.CommonLocale
-import info.spiralframework.base.common.locale.SpiralLocale
+import info.spiralframework.base.common.logging.SpiralLogger
 
 expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.error(format: String)
@@ -71,4 +70,5 @@ expect class DefaultSpiralLocale(): AbstractSpiralLocale {
 
 internal expect fun defaultLocale(): CommonLocale
 
-expect fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean
+//TODO: Don't think this needs to be in
+//expect fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean

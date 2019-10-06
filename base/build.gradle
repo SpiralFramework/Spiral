@@ -7,6 +7,7 @@ kotlin {
             freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
         }
     }
+    js()
 //    js {
 //        browser {
 //        }
@@ -48,12 +49,12 @@ kotlin {
                 implementation kotlin('test-junit')
             }
         }
-//        jsMain {
-//            dependencies {
-//                implementation kotlin('stdlib-js')
-//                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.0-RC'
-//            }
-//        }
+        jsMain {
+            dependencies {
+                implementation kotlin('stdlib-js')
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.0-RC'
+            }
+        }
 //        jsTest {
 //            dependencies {
 //                implementation kotlin('test-js')

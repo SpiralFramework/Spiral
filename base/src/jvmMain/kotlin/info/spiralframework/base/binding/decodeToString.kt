@@ -18,4 +18,4 @@ actual fun ByteArray.decodeToString(charset: TextCharsets): String =
 private val PERCENT_FORMAT = DecimalFormat("00.00")
 
 actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
-actual fun uuidString(): String = UUID.randomUUID().toString()
+//actual fun uuidString(): String = UUID.randomUUID().toString()

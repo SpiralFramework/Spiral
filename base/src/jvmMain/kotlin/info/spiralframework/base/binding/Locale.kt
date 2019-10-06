@@ -114,7 +114,7 @@ internal actual fun defaultLocale(): CommonLocale {
     return CommonLocale(jvmLocale.language, jvmLocale.country, jvmLocale.variant)
 }
 
-actual fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean): Boolean {
+fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean {
     val affirmative = promptAffirmative()
 
     val input = readLine()?.trim()?.takeIf(String::isNotBlank)

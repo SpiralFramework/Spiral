@@ -4,7 +4,9 @@ import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
 
 @ExperimentalUnsignedTypes
-open class CommonBinaryOutputFlow(val buffer: MutableList<Byte> = ArrayList()): OutputFlow {
+open class CommonBinaryOutputFlow(val buffer: MutableList<Byte>): OutputFlow {
+    constructor(): this(ArrayList())
+
     override var onClose: OutputFlowEventHandler? = null
     override suspend fun write(byte: Int) {
         buffer.add(byte.toByte())
@@ -17,4 +19,5 @@ open class CommonBinaryOutputFlow(val buffer: MutableList<Byte> = ArrayList()): 
     }
     override suspend fun flush() {}
     fun getData(): ByteArray = buffer.toByteArray()
+    fun getDataSize(): ULong = buffer.size.toULong()
 }
