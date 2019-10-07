@@ -3,6 +3,7 @@ package info.spiralframework.base.binding
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.AbstractSpiralLocale
 import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.stripJavaQuirks
 import info.spiralframework.base.common.logging.SpiralLogger
 import kotlin.browser.window
 
@@ -70,23 +71,24 @@ actual class DefaultSpiralLogger actual constructor(val name: String) : SpiralLo
     }
 }
 
+/** Since we don't have a message formatter, we have to manually replace single quotes */
 actual class DefaultSpiralLocale actual constructor() : AbstractSpiralLocale() {
     actual override fun localise(msg: String): String =
-            localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+            stripJavaQuirks(localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
 
     actual override fun localise(msg: String, arg: Any): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = stripJavaQuirks(localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         return str.replace("{0}", arg.toString())
     }
 
     actual override fun localise(msg: String, arg1: Any, arg2: Any): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = stripJavaQuirks(localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         return str.replace("{0}", arg1.toString()).replace("{1}", arg2.toString())
     }
 
     actual override fun localise(msg: String, vararg args: Any): String = localiseArray(msg, args)
     actual override fun localiseArray(msg: String, args: Array<out Any>): String {
-        var str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        var str = stripJavaQuirks(localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         for (i in args.indices) {
             str = str.replace("{$i}", args[i].toString())
         }
@@ -94,21 +96,21 @@ actual class DefaultSpiralLocale actual constructor() : AbstractSpiralLocale() {
     }
 
     actual override fun localiseEnglish(msg: String): String =
-            englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+            stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
 
     actual override fun localiseEnglish(msg: String, arg: Any): String {
-        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         return str.replace("{0}", arg.toString())
     }
 
     actual override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String {
-        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         return str.replace("{0}", arg1.toString()).replace("{1}", arg2.toString())
     }
 
     actual override fun localiseEnglish(msg: String, vararg args: Any): String = localiseEnglishArray(msg, args)
     actual override fun localiseEnglishArray(msg: String, args: Array<out Any>): String {
-        var str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        var str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
         for (i in args.indices) {
             str = str.replace("{$i}", args[i].toString())
         }

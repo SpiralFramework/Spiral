@@ -11,22 +11,21 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.promise
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array
-import org.w3c.xhr.ARRAYBUFFER
-import org.w3c.xhr.XMLHttpRequest
-import org.w3c.xhr.XMLHttpRequestResponseType
+import org.w3c.files.File
+import org.w3c.files.FileReader
 import kotlin.js.Promise
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class AjaxDataSource private constructor(val url: String, val maxInstanceCount: Int = -1) : DataSource<BinaryInputFlow> {
+class JsFileDataSource private constructor(val file: File, val maxInstanceCount: Int = -1) : DataSource<BinaryInputFlow> {
     companion object {
-        suspend operator fun invoke(url: String): AjaxDataSource {
-            val ajax = AjaxDataSource(url)
+        suspend operator fun invoke(file: File): JsFileDataSource {
+            val ajax = JsFileDataSource(file)
             ajax.init()
             return ajax
         }
 
-        fun async(url: String): Promise<AjaxDataSource> = GlobalScope.promise { invoke(url) }
+        fun async(file: File): Promise<JsFileDataSource> = GlobalScope.promise { invoke(file) }
     }
 
     private var data: ByteArray? = null
@@ -63,11 +62,9 @@ class AjaxDataSource private constructor(val url: String, val maxInstanceCount: 
 
     private suspend fun init() {
         val buffer = Promise { resolve: (ArrayBuffer?) -> Unit, _: (Throwable) -> Unit ->
-            val headRequest = XMLHttpRequest()
-            headRequest.open("GET", url)
-            headRequest.responseType = XMLHttpRequestResponseType.ARRAYBUFFER
-            headRequest.onreadystatechange = { if (headRequest.readyState == XMLHttpRequest.DONE) resolve(if (headRequest.status.toInt() == 200) headRequest.response as ArrayBuffer else null) }
-            headRequest.send()
+            val reader = FileReader()
+            reader.onloadend = { _ -> resolve(reader.result as? ArrayBuffer) }
+            reader.readAsArrayBuffer(file)
         }.await()
 
         if (buffer == null) {
