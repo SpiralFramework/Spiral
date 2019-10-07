@@ -22,7 +22,7 @@ internal class PropertiesFlow(val backing: InputFlow) {
 
         while (true) {
             if (inOff >= inLimit) {
-                inLimit = backing.read(inByteBuf) ?: return -1
+                inLimit = backing.read(inByteBuf) ?: -1
                 inOff = 0
                 if (inLimit <= 0) {
                     if (len == 0 || isCommentLine) {
@@ -94,6 +94,7 @@ internal class PropertiesFlow(val backing: InputFlow) {
                         if (precedingBackslash) {
                             len--
                         }
+
                         return len
                     }
                 }
@@ -128,8 +129,9 @@ suspend fun InputFlow.loadProperties(): Map<String, String> {
 
     while (true) {
         limit = reader.readLine()
-        if (limit <= 0)
+        if (limit <= 0) {
             break
+        }
         c = 0.toChar()
         keyLen = 0
         valueStart = limit

@@ -31,11 +31,13 @@ class CommonLocaleBundle(override val bundleName: String, override val locale: C
         }
 
         @ExperimentalUnsignedTypes
-        suspend fun load(bundleName: String, locale: CommonLocale, dataSource: DataSource<*>, parent: LocaleBundle?, context: KClass<*>): CommonLocaleBundle? =
-                dataSource.openInputFlow()?.use { flow ->
-                    val properties = flow.loadProperties()
-                    return@use CommonLocaleBundle(bundleName, locale, parent, properties, context)
-                }
+        suspend fun load(bundleName: String, locale: CommonLocale, dataSource: DataSource<*>, parent: LocaleBundle?, context: KClass<*>): CommonLocaleBundle? {
+            val flow = dataSource.openInputFlow() ?: return null
+            use(flow) {
+                val properties = flow.loadProperties()
+                return CommonLocaleBundle(bundleName, locale, parent, properties, context)
+            }
+        }
     }
 
     @ExperimentalUnsignedTypes

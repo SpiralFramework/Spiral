@@ -14,3 +14,5 @@ public inline fun SpiralContext.printlnLocale(message: String, vararg args: Any)
 
 /** Prints the given localised [message] and the line separator to the standard output stream. */
 public inline fun SpiralContext.printlnErrLocale(message: String, vararg args: Any) = printlnErr(localiseArray(message, args))
+
+fun stripJavaQuirks(str: String): String = str.replace("''", "'")

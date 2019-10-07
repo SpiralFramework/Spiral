@@ -30,6 +30,7 @@ class DataTableStructure(val entries: Array<Array<DataVariable>>, val utf8String
         data class UTF16(val variableName: String, val data: Int) : DataVariable(variableName, data)
 
         val dataVariableName: String = variableName
+        val genericData: Any = data
     }
 
     companion object {

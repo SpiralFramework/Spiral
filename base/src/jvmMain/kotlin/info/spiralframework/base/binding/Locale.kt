@@ -48,8 +48,10 @@ actual class DefaultSpiralLogger(val logger: Logger) : SpiralLogger {
 }
 
 actual class DefaultSpiralLocale : AbstractSpiralLocale() {
-    actual override fun localise(msg: String): String =
-            localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+    actual override fun localise(msg: String): String {
+        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        return MessageFormat.format(str)
+    }
 
     actual override fun localise(msg: String, arg: Any): String {
         val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
@@ -72,8 +74,10 @@ actual class DefaultSpiralLocale : AbstractSpiralLocale() {
         return MessageFormat.format(str, *args)
     }
 
-    actual override fun localiseEnglish(msg: String): String =
-            localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+    actual override fun localiseEnglish(msg: String): String {
+        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        return MessageFormat.format(str)
+    }
 
     actual override fun localiseEnglish(msg: String, arg: Any): String {
         val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
