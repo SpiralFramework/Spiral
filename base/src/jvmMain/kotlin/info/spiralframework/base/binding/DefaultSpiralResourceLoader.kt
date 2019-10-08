@@ -1,5 +1,6 @@
 package info.spiralframework.base.binding
 
+import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.jvm.io.JVMDataSource
@@ -35,7 +36,7 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
         val file = File(name)
         if (file.exists())
             return FileDataSource(file)
-        val classLoaderResource = classLoader.getResource(name)
+        var classLoaderResource = classLoader.getResource(name)
         if (classLoaderResource != null)
             return JVMDataSource(classLoaderResource::openStream)
         for (module in spiralModules) {
@@ -45,6 +46,10 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
                     return FileDataSource(resourceFolderFile)
             }
         }
+
+        classLoaderResource = SpiralModuleBase::class.java.classLoader.getResource(name)
+        if (classLoaderResource != null)
+            return JVMDataSource(classLoaderResource::openStream)
 
         return null
     }
