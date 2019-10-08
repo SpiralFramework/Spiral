@@ -1,5 +1,6 @@
 package info.spiralframework.base.common.locale
 
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import kotlin.reflect.KClass
 
 interface SpiralLocale {
@@ -15,7 +16,7 @@ interface SpiralLocale {
         override fun localiseEnglish(msg: String, vararg args: Any): String = msg
         override fun localiseEnglishArray(msg: String, args: Array<out Any>): String = msg
 
-        override suspend fun addBundle(bundleName: String, context: KClass<*>) {}
+        override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>) {}
         override fun addBundle(localeBundle: LocaleBundle) {}
         override fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {}
         override fun addEnglishBundle(englishBundle: LocaleBundle) {}
@@ -25,7 +26,7 @@ interface SpiralLocale {
         override fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle) {}
         override fun removeEnglishBundle(englishBundle: LocaleBundle) {}
 
-        override suspend fun changeLocale(locale: CommonLocale) {}
+        override suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale) {}
     }
 
     fun localise(msg: String): String
@@ -40,7 +41,7 @@ interface SpiralLocale {
     fun localiseEnglish(msg: String, vararg args: Any): String
     fun localiseEnglishArray(msg: String, args: Array<out Any>): String
 
-    suspend fun addBundle(bundleName: String, context: KClass<*>)
+    suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>)
     fun addBundle(localeBundle: LocaleBundle)
     fun addBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle)
     fun addEnglishBundle(englishBundle: LocaleBundle)
@@ -50,7 +51,7 @@ interface SpiralLocale {
     fun removeBundle(localeBundle: LocaleBundle, englishBundle: LocaleBundle)
     fun removeEnglishBundle(englishBundle: LocaleBundle)
 
-    suspend fun changeLocale(locale: CommonLocale)
+    suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale)
 }
 
 abstract class AbstractSpiralLocale: SpiralLocale {
@@ -63,9 +64,9 @@ abstract class AbstractSpiralLocale: SpiralLocale {
     private var currentLocale: CommonLocale = CommonLocale.defaultLocale
 
     @ExperimentalUnsignedTypes
-    override suspend fun addBundle(bundleName: String, context: KClass<*>) {
-        _localisationBundles.add(requireNotNull(CommonLocaleBundle.load(bundleName, currentLocale, context)))
-        _englishBundles.add(requireNotNull(CommonLocaleBundle.load(bundleName, CommonLocale.ENGLISH, context)))
+    override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>) {
+        _localisationBundles.add(requireNotNull(CommonLocaleBundle.load(this, bundleName, currentLocale, context)))
+        _englishBundles.add(requireNotNull(CommonLocaleBundle.load(this, bundleName, CommonLocale.ENGLISH, context)))
     }
     override fun addBundle(localeBundle: LocaleBundle) {
         _localisationBundles.add(localeBundle)
@@ -93,13 +94,16 @@ abstract class AbstractSpiralLocale: SpiralLocale {
         _englishBundles.remove(englishBundle)
     }
 
-    override suspend fun changeLocale(locale: CommonLocale) {
+    override suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale) {
         val oldArray = localisationBundles.toTypedArray()
         _localisationBundles.clear()
-        _localisationBundles.addAll(oldArray.mapNotNull { bundle -> bundle.loadWithLocale(locale) })
+        _localisationBundles.addAll(oldArray.mapNotNull { bundle -> bundle.loadWithLocale(this, locale) })
 
-        this.currentLocale = locale
+        this@AbstractSpiralLocale.currentLocale = locale
     }
 }
 
-suspend inline fun <reified T: Any> SpiralLocale.addBundle(bundleName: String) = addBundle(bundleName, T::class)
+suspend inline fun <reified T: Any> SpiralLocale.addBundle(resourceLoader: SpiralResourceLoader, bundleName: String) = resourceLoader.addBundle(bundleName, T::class)
+
+suspend fun SpiralLocale.addBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>) = resourceLoader.addBundle(bundleName, context)
+suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, locale: CommonLocale) = resourceLoader.changeLocale(locale)
