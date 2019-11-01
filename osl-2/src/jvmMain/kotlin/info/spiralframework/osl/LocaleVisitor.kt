@@ -3,7 +3,9 @@ package info.spiralframework.osl
 import info.spiralframework.antlr.osl.OSLLocaleParser
 import info.spiralframework.antlr.osl.OSLLocaleParserBaseVisitor
 import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.LocaleBundle
 import org.antlr.v4.runtime.tree.TerminalNode
+import kotlin.reflect.KClass
 
 class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
     private val localeMap: MutableMap<String, String> = HashMap()
@@ -40,5 +42,10 @@ class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
         localeMap[key] = processed
     }
 
-    fun createLocaleBundle(bundleName: String, locale: CommonLocale) = OSLLocaleBundle(bundleName, locale, localeMap)
+    fun createLocaleBundle(bundleName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): LocaleBundle {
+        val bundleMap: MutableMap<String, String> = HashMap()
+        bundleMap.putAll(parent ?: emptyMap())
+        bundleMap.putAll(this.localeMap)
+        return OSLLocaleBundle(bundleName, locale, bundleMap, from)
+    }
 }

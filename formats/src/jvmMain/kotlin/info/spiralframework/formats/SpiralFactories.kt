@@ -2,6 +2,7 @@ package info.spiralframework.formats
 
 import info.spiralframework.base.binding.*
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.environment.registerAllModules
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.data.NonstopDebate
 import info.spiralframework.formats.data.NonstopDebateV3
@@ -114,8 +115,8 @@ fun utfTable(init: UTFTableInfo.() -> Unit): UTFTableInfo {
 
 @ExperimentalUnsignedTypes
 suspend fun defaultSpiralContextWithFormats(): SpiralContext {
-    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider())
+    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider(), DefaultSpiralResourceLoader())
     context.addModuleProvider(SpiralModuleFormats())
-    context.init()
+    context.registerAllModules(context)
     return context
 }

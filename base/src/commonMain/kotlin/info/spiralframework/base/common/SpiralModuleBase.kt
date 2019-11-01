@@ -1,6 +1,6 @@
 package info.spiralframework.base.common
 
-import info.spiralframework.base.common.locale.addBundle
+import info.spiralframework.base.common.locale.loadBundle
 
 class SpiralModuleBase: SpiralModuleProvider {
     override val moduleName: String = "spiral-base"
@@ -8,6 +8,7 @@ class SpiralModuleBase: SpiralModuleProvider {
 
     @ExperimentalUnsignedTypes
     override suspend fun register(context: SpiralContext) {
-        context.addBundle<SpiralModuleBase>("SpiralBase")
+        //TODO: Fix SpiralContext
+        context.loadBundle<SpiralModuleBase>(context, "SpiralBase")
     }
 }

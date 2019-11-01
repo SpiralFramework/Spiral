@@ -7,6 +7,7 @@ import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.DefaultSpiralCoreContext
@@ -28,20 +29,33 @@ import java.util.*
 import java.util.jar.JarFile
 
 @ExperimentalUnsignedTypes
-class DefaultSpiralCockpitContext private constructor(override val args: GurrenArgs, val core: SpiralCoreConfig, val locale: SpiralLocale, val logger: SpiralLogger, val config: SpiralConfig, val environment: SpiralEnvironment, val eventBus: SpiralEventBus, val cacheProvider: SpiralCacheProvider, val signatures: SpiralSignatures, val pluginRegistry: SpiralPluginRegistry, val serialisation: SpiralSerialisation)
-    : SpiralCockpitContext,
+class DefaultSpiralCockpitContext private constructor(
+        override val args: GurrenArgs,
+        val core: SpiralCoreConfig,
+        val locale: SpiralLocale,
+        val logger: SpiralLogger,
+        val config: SpiralConfig,
+        val environment: SpiralEnvironment,
+        val eventBus: SpiralEventBus,
+        val cacheProvider: SpiralCacheProvider,
+        val resourceLoader: SpiralResourceLoader,
+        val signatures: SpiralSignatures,
+        val pluginRegistry: SpiralPluginRegistry,
+        val serialisation: SpiralSerialisation
+) : SpiralCockpitContext,
         SpiralLocale by locale,
         SpiralLogger by logger,
         SpiralConfig by config,
         SpiralEnvironment by environment,
         SpiralEventBus by eventBus,
         SpiralCacheProvider by cacheProvider,
+        SpiralResourceLoader by resourceLoader,
         SpiralSignatures by signatures,
         SpiralPluginRegistry by pluginRegistry,
         SpiralSerialisation by serialisation {
     companion object {
-        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation): DefaultSpiralCockpitContext {
-            val instance = DefaultSpiralCockpitContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, signatures, pluginRegistry, serialisation)
+        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider, resourceLoader: SpiralResourceLoader, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation): DefaultSpiralCockpitContext {
+            val instance = DefaultSpiralCockpitContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, signatures, pluginRegistry, serialisation)
             instance.init()
             return instance
         }
@@ -59,8 +73,8 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
         }
     }
 
-    private constructor(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation) : this(args, core, parent, parent, parent, parent, parent, parent, signatures, pluginRegistry, serialisation)
-    private constructor(args: GurrenArgs, parent: SpiralCoreContext) : this(args, if (parent is DefaultSpiralCoreContext) parent.core else SpiralCoreConfig(parent), parent, parent, parent, parent, parent, parent, parent, parent, parent)
+    private constructor(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation) : this(args, core, parent, parent, parent, parent, parent, parent, parent, signatures, pluginRegistry, serialisation)
+    private constructor(args: GurrenArgs, parent: SpiralCoreContext) : this(args, if (parent is DefaultSpiralCoreContext) parent.core else SpiralCoreConfig(parent), parent, parent, parent, parent, parent, parent, parent, parent, parent, parent)
 
     override val updateConnectTimeout: Int = core.updateConnectTimeout
             ?: DefaultSpiralCoreContext.DEFAULT_UPDATE_CONNECT_TIMEOUT
@@ -84,7 +98,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
 
     override fun subcontext(module: String): SpiralCoreContext = this
 
-    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?): SpiralContext {
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newResourceLoader: SpiralResourceLoader?): SpiralContext {
         val instance = DefaultSpiralCockpitContext(
                 args,
                 core,
@@ -94,6 +108,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
                 newEnvironment ?: environment,
                 newEventBus ?: eventBus,
                 newCacheProvider ?: cacheProvider,
+                newResourceLoader ?: resourceLoader,
                 signatures,
                 pluginRegistry,
                 serialisation
@@ -102,7 +117,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
         return instance
     }
 
-    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralContext {
+    override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newResourceLoader: SpiralResourceLoader?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralContext {
         val instance = DefaultSpiralCockpitContext(
                 args,
                 core,
@@ -112,6 +127,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
                 newEnvironment ?: environment,
                 newEventBus ?: eventBus,
                 newCacheProvider ?: cacheProvider,
+                newResourceLoader ?: resourceLoader,
                 newSignatures ?: signatures,
                 newPluginRegistry ?: pluginRegistry,
                 newSerialisation ?: serialisation
@@ -120,7 +136,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
         return instance
     }
 
-    override suspend fun copy(newArgs: GurrenArgs?, newCore: SpiralCoreConfig?, newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralCockpitContext {
+    override suspend fun copy(newArgs: GurrenArgs?, newCore: SpiralCoreConfig?, newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newResourceLoader: SpiralResourceLoader?, newSignatures: SpiralSignatures?, newPluginRegistry: SpiralPluginRegistry?, newSerialisation: SpiralSerialisation?): SpiralCockpitContext {
         val instance = DefaultSpiralCockpitContext(
                 newArgs ?: args,
                 newCore ?: core,
@@ -130,6 +146,7 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
                 newEnvironment ?: environment,
                 newEventBus ?: eventBus,
                 newCacheProvider ?: cacheProvider,
+                newResourceLoader ?: resourceLoader,
                 newSignatures ?: signatures,
                 newPluginRegistry ?: pluginRegistry,
                 newSerialisation ?: serialisation
@@ -183,6 +200,8 @@ class DefaultSpiralCockpitContext private constructor(override val args: GurrenA
         if (config != other.config) return false
         if (environment != other.environment) return false
         if (eventBus != other.eventBus) return false
+        if (cacheProvider != other.cacheProvider) return false
+        if (resourceLoader != other.resourceLoader) return false
         if (signatures != other.signatures) return false
         if (pluginRegistry != other.pluginRegistry) return false
         if (serialisation != other.serialisation) return false

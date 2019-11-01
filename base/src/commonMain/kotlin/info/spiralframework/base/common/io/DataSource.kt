@@ -30,6 +30,9 @@ suspend fun DataSource<*>.copyToOutputFlow(sink: OutputFlow) {
     openInputFlow()?.copyToOutputFlow(sink)
 }
 
+@ExperimentalUnsignedTypes
+suspend inline fun <T: InputFlow, R> DataSource<T>.useInputFlow(noinline block: suspend (T) -> R): R? = openInputFlow()?.use(block)
+
 inline class DataSourceReproducibility(val flag: Byte) {
     constructor(flag: Number) : this(flag.toByte())
     constructor(isStatic: Boolean = false,

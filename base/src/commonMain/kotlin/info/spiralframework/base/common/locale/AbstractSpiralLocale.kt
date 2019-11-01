@@ -1,5 +1,6 @@
 package info.spiralframework.base.common.locale
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import kotlin.reflect.KClass
 
@@ -103,7 +104,8 @@ abstract class AbstractSpiralLocale: SpiralLocale {
     }
 }
 
-suspend inline fun <reified T: Any> SpiralLocale.addBundle(resourceLoader: SpiralResourceLoader, bundleName: String) = resourceLoader.addBundle(bundleName, T::class)
+suspend inline fun <reified T: Any> SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String) = resourceLoader.addBundle(bundleName, T::class)
+suspend inline fun <reified T: Any, B> B.loadTestBundle(bundleName: String) where B: SpiralLocale, B: SpiralContext = (this as SpiralResourceLoader).addBundle(bundleName, T::class)
 
-suspend fun SpiralLocale.addBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>) = resourceLoader.addBundle(bundleName, context)
+suspend fun SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>) = resourceLoader.addBundle(bundleName, context)
 suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, locale: CommonLocale) = resourceLoader.changeLocale(locale)

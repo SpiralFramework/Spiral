@@ -2,23 +2,27 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OSLLocaleLexer
 import info.spiralframework.antlr.osl.OSLLocaleParser
-import info.spiralframework.base.binding.DefaultLocaleBundle
+import info.spiralframework.base.common.io.SpiralResourceLoader
+import info.spiralframework.base.common.io.flow.readAndClose
+import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.misc.ParseCancellationException
-import java.io.InputStream
 import java.util.*
+import kotlin.reflect.KClass
 
-open class OSLLocaleBundle(override val bundleName: String, override val locale: CommonLocale, val map: Map<String, String>): LocaleBundle, Map<String, String> by map {
+open class OSLLocaleBundle(override val bundleName: String, override val locale: CommonLocale, val map: Map<String, String>, private val from: KClass<*>): LocaleBundle, Map<String, String> by map {
     companion object {
-        @JvmOverloads
-        fun loadBundle(baseName: String, locale: CommonLocale = CommonLocale.defaultLocale): LocaleBundle? {
-            val superBundle = loadBundleByName(baseName, locale)
-            val langBundle = loadBundleByName("${baseName}_${locale.language}", locale)
-            val localeBundle = loadBundleByName("${baseName}_${locale.language}_${locale.country}", locale)
+        suspend inline fun <reified T: Any> loadBundle(resourceLoader: SpiralResourceLoader, baseName: String, locale: CommonLocale = CommonLocale.defaultLocale) = loadBundle(resourceLoader, baseName, locale, T::class)
+        @ExperimentalUnsignedTypes
+        suspend fun loadBundle(resourceLoader: SpiralResourceLoader, baseName: String, locale: CommonLocale = CommonLocale.defaultLocale, from: KClass<*>): LocaleBundle? {
+            val superBundle = loadBundleByName(resourceLoader, baseName, locale, null, from)
+            val langBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}", locale, superBundle, from)
+            val localeBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}_${locale.country}", locale, langBundle ?: superBundle, from)
 
 //            superBundle?.name = baseName
 //            langBundle?.name = baseName
@@ -27,16 +31,17 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
 //            langBundle?.setLocale(locale)
 //            localeBundle?.setLocale(locale)
 //
-            langBundle?.parent = superBundle
-            localeBundle?.parent = langBundle ?: superBundle
+//            langBundle?.parent = superBundle
+//            localeBundle?.parent = langBundle ?: superBundle
 
             return localeBundle ?: langBundle ?: superBundle
         }
 
-        fun loadBundleByName(fullName: String, locale: CommonLocale): LocaleBundle? {
-            OSLLocaleBundle::class.java.classLoader.getResourceAsStream("$fullName.properties")?.let { stream ->
+        @ExperimentalUnsignedTypes
+        suspend fun loadBundleByName(resourceLoader: SpiralResourceLoader, fullName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): LocaleBundle? {
+            resourceLoader.loadResource("$fullName.properties", from)?.useInputFlow { flow ->
                 val input = CharStreams.fromString(buildString {
-                    appendln(String(stream.use(InputStream::readBytes), Charsets.UTF_8))
+                    appendln(String(flow.readAndClose(), Charsets.UTF_8))
                 })
                 val lexer = OSLLocaleLexer(input)
                 val tokens = CommonTokenStream(lexer)
@@ -47,18 +52,15 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
                     val tree = parser.locale()
                     val visitor = LocaleVisitor()
                     visitor.visit(tree)
-                    return visitor.createLocaleBundle(fullName, locale)
+                    return@useInputFlow visitor.createLocaleBundle(fullName, locale, parent, from)
                 } catch (pce: ParseCancellationException) {}
             }
             try {
-                return DefaultLocaleBundle(fullName, locale)
+                return CommonLocaleBundle.load(resourceLoader, fullName, locale, from)
             } catch (mre: MissingResourceException) {
                 return null
             }
         }
     }
-
-    override var parent: LocaleBundle? = null
-
-    override suspend fun loadWithLocale(locale: CommonLocale): LocaleBundle? = loadBundle(bundleName, locale)
+    override suspend fun SpiralResourceLoader.loadWithLocale(locale: CommonLocale): LocaleBundle? = loadBundle(this, bundleName, locale, from)
 }

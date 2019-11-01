@@ -4,7 +4,7 @@ import info.spiralframework.base.common.SPIRAL_VERSION
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleProvider
-import info.spiralframework.base.common.locale.addBundle
+import info.spiralframework.base.common.locale.loadBundle
 
 @ExperimentalUnsignedTypes
 class SpiralModuleFormats: SpiralModuleProvider {
@@ -12,6 +12,6 @@ class SpiralModuleFormats: SpiralModuleProvider {
     override val moduleVersion: SemanticVersion = SPIRAL_VERSION
 
     override suspend fun register(context: SpiralContext) {
-        context.addBundle<SpiralModuleFormats>("SpiralFormats")
+        context.loadBundle<SpiralModuleFormats>(context, "SpiralFormats")
     }
 }

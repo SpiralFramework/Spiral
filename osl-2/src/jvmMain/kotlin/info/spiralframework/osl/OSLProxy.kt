@@ -2,8 +2,12 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
+import info.spiralframework.base.binding.DefaultSpiralResourceLoader
 import info.spiralframework.base.binding.defaultSpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.CommonLocale
+import info.spiralframework.base.common.locale.loadWithLocale
 import info.spiralframework.formats.customLin
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.WordScriptFile
@@ -37,8 +41,9 @@ object OSLProxy {
 //
 //        println()
 
-        val bundle = OSLLocaleBundle.loadBundle("SpiralBase")
-        println(bundle?.loadWithLocale(CommonLocale.CHINESE)?.locale)
+        val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
+        val bundle = OSLLocaleBundle.loadBundle<SpiralModuleBase>(resourceLoader, "SpiralBase")
+        println(bundle?.loadWithLocale(resourceLoader, CommonLocale.CHINESE)?.locale)
 
 
 //        println(visitor.visit(tree))

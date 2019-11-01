@@ -5,6 +5,7 @@ import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 
@@ -15,10 +16,11 @@ expect class DefaultSpiralContext private constructor(
         config: SpiralConfig,
         environment: SpiralEnvironment,
         eventBus: SpiralEventBus,
-        cacheProvider: SpiralCacheProvider
+        cacheProvider: SpiralCacheProvider,
+        resourceLoader: SpiralResourceLoader
 ) : SpiralContext {
     companion object {
-        suspend operator fun invoke(locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider): DefaultSpiralContext
+        suspend operator fun invoke(locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider, resourceLoader: SpiralResourceLoader): DefaultSpiralContext
     }
 
     suspend fun init()
@@ -26,7 +28,7 @@ expect class DefaultSpiralContext private constructor(
 
 @ExperimentalUnsignedTypes
 suspend fun defaultSpiralContext(): SpiralContext {
-    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider())
+    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider(), DefaultSpiralResourceLoader())
     context.init()
     return context
 }

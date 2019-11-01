@@ -6,6 +6,7 @@ import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.plugins.SpiralPluginRegistry
@@ -24,7 +25,7 @@ interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegist
 
     val enabledPlugins: Map<String, SemanticVersion>
 
-    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralContext
+    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralContext
 }
 
 @ExperimentalUnsignedTypes

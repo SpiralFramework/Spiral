@@ -14,6 +14,7 @@ import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.events.SpiralEventListener
 import info.spiralframework.base.common.events.SpiralEventPriority
 import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printLocale
@@ -67,7 +68,8 @@ internal constructor(var context: SpiralCockpitContext) {
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                     .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider)
+            val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
 
             val serialisation = DefaultSpiralSerialisation()
 
@@ -270,7 +272,8 @@ internal constructor(var context: SpiralCockpitContext) {
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                     .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider)
+            val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
 
             val serialisation = DefaultSpiralSerialisation()
 
