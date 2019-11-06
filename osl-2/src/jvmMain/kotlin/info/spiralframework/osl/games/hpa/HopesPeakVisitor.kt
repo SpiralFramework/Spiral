@@ -2,7 +2,7 @@ package info.spiralframework.osl.games.hpa
 
 import info.spiralframework.base.jvm.addAll
 import info.spiralframework.base.util.toInt16LE
-import info.spiralframework.formats.game.hpa.HopesPeakDRGame
+import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.osl.OSLUnion

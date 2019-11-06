@@ -1,5 +1,7 @@
 package info.spiralframework.formats.game.hpa
 
+import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
+
 /**
  * The Hope's Peak arc of killing games
  */

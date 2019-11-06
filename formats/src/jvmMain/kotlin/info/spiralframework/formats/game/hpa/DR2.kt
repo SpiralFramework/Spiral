@@ -2,6 +2,7 @@ package info.spiralframework.formats.game.hpa
 
 import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.formats.common.data.JsonOpCode
+import info.spiralframework.formats.common.games.SharedHPA
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadMapEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadScriptEntry

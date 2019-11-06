@@ -1,7 +1,7 @@
 package info.spiralframework.osl.games
 
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.game.hpa.HopesPeakDRGame
+import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.osl.OSLUnion
 import info.spiralframework.osl.games.hpa.HopesPeakVisitor

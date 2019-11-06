@@ -2,6 +2,8 @@ package info.spiralframework.formats.game.hpa
 
 import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.formats.common.data.JsonOpCode
+import info.spiralframework.formats.common.games.SharedHPA
+import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.TextCountEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
