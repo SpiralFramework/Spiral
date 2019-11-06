@@ -1,12 +1,14 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.common.io.flow.OutputFlow
+import info.spiralframework.base.common.io.flow.CountingOutputFlow
 import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
 
 @ExperimentalUnsignedTypes
-open class CommonBinaryOutputFlow(val buffer: MutableList<Byte>): OutputFlow {
+open class CommonBinaryOutputFlow(val buffer: MutableList<Byte>): CountingOutputFlow {
     constructor(): this(ArrayList())
 
+    override val streamOffset: Long
+        get() = buffer.size.toLong()
     override var onClose: OutputFlowEventHandler? = null
     override suspend fun write(byte: Int) {
         buffer.add(byte.toByte())

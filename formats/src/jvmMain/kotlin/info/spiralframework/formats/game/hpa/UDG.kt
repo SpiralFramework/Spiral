@@ -2,17 +2,18 @@ package info.spiralframework.formats.game.hpa
 
 import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.formats.common.data.JsonOpCode
-import info.spiralframework.formats.common.games.SharedHPA
-import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.TextCountEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.formats.scripting.lin.udg.UDGTextEntry
 import info.spiralframework.formats.utils.*
-import kotlinx.serialization.*
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.map
+import kotlinx.serialization.serializer
 import java.io.File
 import java.util.*
+import kotlin.collections.set
 
 object UDG: HopesPeakDRGame {
     override val pakNames: Map<String, List<String>> = emptyMap() //Probably never gonna get this huh

@@ -1,6 +1,6 @@
 package info.spiralframework.base.jvm.io.files
 
-import info.spiralframework.base.common.io.flow.OutputFlow
+import info.spiralframework.base.common.io.flow.CountingOutputFlow
 import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,9 +8,12 @@ import java.io.File
 import java.io.FileOutputStream
 
 @ExperimentalUnsignedTypes
-class FileOutputFlow(val backing: File) : OutputFlow {
+class FileOutputFlow(val backing: File) : CountingOutputFlow {
     override var onClose: OutputFlowEventHandler? = null
     private val stream = FileOutputStream(backing)
+    private val channel = stream.channel
+    override val streamOffset: Long
+        get() = channel.position()
 
     override suspend fun write(byte: Int) = withContext(Dispatchers.IO) { stream.write(byte) }
     override suspend fun write(b: ByteArray) = write(b, 0, b.size)

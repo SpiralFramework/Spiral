@@ -6,7 +6,7 @@ import info.spiralframework.base.common.environment.registerAllModules
 import info.spiralframework.formats.archives.*
 import info.spiralframework.formats.data.NonstopDebate
 import info.spiralframework.formats.data.NonstopDebateV3
-import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
+import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.images.FontMap

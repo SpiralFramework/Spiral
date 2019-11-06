@@ -3,6 +3,7 @@ enableFeaturePreview("GRADLE_METADATA")
 include 'antlr-json'
 include 'base'
 include 'base-extended'
+include 'bst'
 include 'core'
 include 'console'
 include 'gui'

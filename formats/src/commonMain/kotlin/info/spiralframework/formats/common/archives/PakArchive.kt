@@ -1,17 +1,16 @@
 package info.spiralframework.formats.common.archives
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.WindowedDataSource
+import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.flow.OffsetInputFlow
 import info.spiralframework.base.common.io.flow.WindowedInputFlow
-import info.spiralframework.base.common.io.readInt32LE
-import info.spiralframework.base.common.io.use
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
 class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) {
     companion object {
+        const val MAGIC_NUMBER = 0x2E50414B
         const val DEFAULT_MIN_FILE_COUNT = 1
         const val DEFAULT_MAX_FILE_COUNT = 1000
         const val DEFAULT_MIN_FILE_SIZE = 0
@@ -65,9 +64,12 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
 
     operator fun get(index: Int): PakFileEntry = files[index]
 
-    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong())
+    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong()) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong())
     suspend fun openFlow(file: PakFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
-        return WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
+        return if (file.size == -1)
+            WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
+        else
+            OffsetInputFlow(parent, file.offset.toULong())
     }
 }

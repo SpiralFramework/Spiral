@@ -8,7 +8,8 @@ import kotlin.math.max
 @ExperimentalUnsignedTypes
 class BinaryDataSource(val byteArray: ByteArray, val maxInstanceCount: Int = -1): DataSource<BinaryInputFlow> {
     companion object {}
-    override val dataSize: ULong = byteArray.size.toULong()
+    override val dataSize: ULong
+        get() = byteArray.size.toULong()
     private val openInstances: MutableList<BinaryInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
 

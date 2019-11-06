@@ -20,13 +20,17 @@ interface OutputFlow: DataCloseable {
     }
 }
 
+interface CountingOutputFlow: OutputFlow {
+    val streamOffset: Long
+}
+
 @ExperimentalUnsignedTypes
-open class CountingOutputFlow(val sink: OutputFlow) : OutputFlow by sink {
+open class SinkCountingOutputFlow(val sink: OutputFlow) : CountingOutputFlow, OutputFlow by sink {
     var _count = 0L
     val count
         get() = _count
 
-    open val streamOffset: Long
+    override val streamOffset: Long
         get() = if (sink is CountingOutputFlow) sink.streamOffset else count
 
     override suspend fun write(byte: Int) {

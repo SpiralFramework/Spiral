@@ -2,18 +2,23 @@ package info.spiralframework.formats.game.hpa
 
 import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.formats.common.data.JsonOpCode
-import info.spiralframework.formats.common.games.SharedHPA
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadMapEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadScriptEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2RunScriptEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2TrialCameraEntry
 import info.spiralframework.formats.utils.*
-import kotlinx.serialization.*
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.list
+import kotlinx.serialization.map
+import kotlinx.serialization.serializer
 import java.io.File
 import java.io.InputStream
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 object DR2 : HopesPeakKillingGame {
     @UnstableDefault

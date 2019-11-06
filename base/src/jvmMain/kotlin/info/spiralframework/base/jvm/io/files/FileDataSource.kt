@@ -9,7 +9,8 @@ import kotlin.math.max
 
 @ExperimentalUnsignedTypes
 class FileDataSource(val backing: File, val maxInstanceCount: Int = -1): DataSource<FileInputFlow> {
-    override val dataSize: ULong = backing.length().toULong()
+    override val dataSize: ULong
+        get() = backing.length().toULong()
     private val openInstances: MutableList<FileInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
 
