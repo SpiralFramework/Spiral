@@ -5,49 +5,83 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.formats.common.archives.CustomPakArchive
-import info.spiralframework.formats.common.archives.PakArchive
+import info.spiralframework.formats.common.archives.*
 
+@ExperimentalStdlibApi
 object BstProcessor {
+    const val STATE_OK = 0
+    const val STATE_BREAK = 1
+    const val STATE_SKIP = 2
+
     const val OPCODE_PARSE_DATA = 0x00
     const val OPCODE_ADD_MAGIC_NUMBER = 0x01
     const val OPCODE_ITERATE_SUBFILES = 0x02
     const val OPCODE_DONE = 0x03
     const val OPCODE_BREAK = 0x04
+    const val OPCODE_SKIP = 0x05
 
     const val FILE_TYPE_PAK = 0x00
+    const val FILE_TYPE_SPC = 0x01
+    const val FILE_TYPE_LIN = 0x02
+    const val FILE_TYPE_WRD = 0x03
+    const val FILE_TYPE_SRD = 0x04
+    const val FILE_TYPE_SRDI = 0x05
+    const val FILE_TYPE_SRDV = 0x06
+
+    const val FILE_TYPE_DR1_LOOP = 0x10
+    const val FILE_TYPE_DR1_CLIMAX_EP = 0x11
+    const val FILE_TYPE_DR1_ANAGRAM = 0x12
+    const val FILE_TYPE_DR1_NONSTOP = 0x13
+    const val FILE_TYPE_ROOMOBJECT = 0x14
+
+    const val FILE_TYPE_V3_DATA_TABLE = 0x30
+
     const val FILE_TYPE_RAW = 0xFF
 
-    const val MAGIC_NUMBER_PAK = 0x00
+    const val MAGIC_NUMBER_PAK = 0x00 //4B 41 50 2E
+    const val MAGIC_NUMBER_LIN = 0x01 //4E 49 4C 2E
+    const val MAGIC_NUMBER_WRD = 0x02 //44 52 57 2E
+    const val MAGIC_NUMBER_SRD = 0x03 //44 52 53 2E
+    const val MAGIC_NUMBER_SRDI = 0x04 //49 44 52 53
+    const val MAGIC_NUMBER_SRDV = 0x05 //56 44 52 53
+
+    const val MAGIC_NUMBER_DR1_LOOP = 0x10 //31 50 4C 2E
+    const val MAGIC_NUMBER_DR1_CLIMAX_EP = 0x11 //31 45 43 2E
+    const val MAGIC_NUMBER_DR1_ANAGRAM = 0x12 //31 47 48 2E
+    const val MAGIC_NUMBER_DR1_NONSTOP = 0x13 //31 44 4E 2E
+    const val MAGIC_NUMBER_DR1_ROOMOBJECT = 0x14 //31 4F 52 2E
+
+    const val MAGIC_NUMBER_V3_DATA_TABLE = 0x30 //33 54 44 2E
+
     const val MAGIC_NUMBER_RAW_INT8 = 0xFC
     const val MAGIC_NUMBER_RAW_INT16 = 0xFD
     const val MAGIC_NUMBER_RAW_INT32 = 0xFE
     const val MAGIC_NUMBER_RAW_INT64 = 0xFF
 
     @ExperimentalUnsignedTypes
-    suspend fun SpiralContext.process(source: DataSource<*>, bst: InputFlow, output: OutputFlow): Boolean {
-        var scriptData: Any? = null
+    suspend fun SpiralContext.process(source: DataSource<*>, bst: InputFlow, output: OutputFlow, startingData: Any? = null): Int {
+        var scriptData: Any? = startingData
 
         return requireNotNull(source.openInputFlow()).use { input ->
             loop@ while (true) {
-                val op = bst.read() ?: break@loop
-                when (op) {
+                when (bst.read() ?: break@loop) {
                     OPCODE_PARSE_DATA -> scriptData = processParseFileAs(input, source, bst, output, scriptData)
                             ?: scriptData
                     OPCODE_ADD_MAGIC_NUMBER -> processAddMagicNumber(input, source, bst, output, scriptData)
                     OPCODE_ITERATE_SUBFILES -> processIterateSubfiles(input, source, bst, output, scriptData)
                     OPCODE_DONE -> {
                         processFlush(input, source, bst, output, scriptData)
-                        return@use false
+                        return@use STATE_OK
                     }
                     OPCODE_BREAK -> {
                         processFlush(input, source, bst, output, scriptData)
-                        return@use true
+                        return@use STATE_BREAK
                     }
+                    OPCODE_SKIP -> return@use STATE_SKIP
                 }
             }
 
-            return@use false
+            return@use STATE_OK
         }
     }
 
@@ -60,6 +94,12 @@ object BstProcessor {
                 basePak.files.forEach { entry -> customPak[entry.index] = basePak.openSource(entry) }
                 return customPak
             }
+            FILE_TYPE_SPC -> {
+                val baseSpc = SpcArchive(this, source) ?: return null
+                val customSpc = CustomPatchSpcArchive(baseSpc)
+                customSpc.addAllBaseFiles(this)
+                return customSpc
+            }
             else -> return null
         }
     }
@@ -67,7 +107,7 @@ object BstProcessor {
     @ExperimentalUnsignedTypes
     suspend fun SpiralContext.processAddMagicNumber(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (bst.read() ?: return) {
-            MAGIC_NUMBER_PAK -> output.writeInt32LE(PakArchive.MAGIC_NUMBER)
+            MAGIC_NUMBER_PAK -> output.writeInt32LE(PakArchive.MAGIC_NUMBER_LE)
 
             MAGIC_NUMBER_RAW_INT8 -> output.write(bst.read() ?: return)
             MAGIC_NUMBER_RAW_INT16 -> output.writeInt16LE(bst.readInt16LE() ?: return)
@@ -77,15 +117,61 @@ object BstProcessor {
     }
 
     @ExperimentalUnsignedTypes
+    //TODO: Look at streaming this; remember what Cap said
     suspend fun SpiralContext.processIterateSubfiles(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (scriptData) {
             is CustomPakArchive -> {
-                for ((index, subSource) in scriptData.files) {
+                loop@ for ((index, subSource) in scriptData.files) {
                     val customOutput = BinaryOutputFlow()
-                    val shouldBreak = process(subSource, bst, customOutput)
-                    scriptData[index] = BinaryDataSource(customOutput.getData())
-                    if (shouldBreak)
-                        break
+                    when (process(subSource, bst, customOutput)) {
+                        STATE_OK -> {
+                            subSource.close()
+                            scriptData[index] = BinaryDataSource(customOutput.getData())
+                        }
+                        STATE_BREAK -> break@loop
+                        STATE_SKIP -> continue@loop
+                    }
+                }
+            }
+            is CustomPatchSpcArchive -> {
+                loop@ for ((name, entry) in scriptData.files) {
+                    val customOutput = BinaryOutputFlow()
+                    val subSource = scriptData.baseSpc.openDecompressedSource(this, requireNotNull(scriptData.baseSpc[name]))
+                            ?: entry.dataSource
+                    try {
+                        when (process(subSource, bst, customOutput, entry)) {
+                            STATE_OK -> {
+                                val raw = customOutput.getData()
+                                val compressed = raw //compressSpcData()
+                                val compressionFlag = 0
+
+                                entry.dataSource.close()
+                                scriptData[name, compressionFlag, compressed.size.toLong(), raw.size.toLong()] = BinaryDataSource(compressed)
+                            }
+                            STATE_BREAK -> break@loop
+                            STATE_SKIP -> continue@loop
+                        }
+                    } finally {
+                        if (subSource !== entry.dataSource)
+                            subSource.close()
+                    }
+                }
+            }
+            is CustomSpcArchive -> {
+                loop@ for ((name, entry) in scriptData.files) {
+                    val customOutput = BinaryOutputFlow()
+                    when (process(entry.dataSource, bst, customOutput, entry)) {
+                        STATE_OK -> {
+                            val raw = customOutput.getData()
+                            val compressed = raw //compressSpcData()
+                            val compressionFlag = 0
+
+                            entry.dataSource.close()
+                            scriptData[name, compressionFlag, compressed.size.toLong(), raw.size.toLong()] = BinaryDataSource(compressed)
+                        }
+                        STATE_BREAK -> break@loop
+                        STATE_SKIP -> continue@loop
+                    }
                 }
             }
         }
@@ -95,10 +181,12 @@ object BstProcessor {
     suspend fun SpiralContext.processFlush(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (scriptData) {
             is CustomPakArchive -> scriptData.compile(output)
+            is CustomSpcArchive -> scriptData.compile(output)
             else -> input.copyToOutputFlow(output)
         }
     }
 }
 
+@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun BstProcessor.process(context: SpiralContext, source: DataSource<*>, bst: InputFlow, output: OutputFlow): Boolean = context.process(source, bst, output)
+suspend fun BstProcessor.process(context: SpiralContext, source: DataSource<*>, bst: InputFlow, output: OutputFlow, startingData: Any? = null) = context.process(source, bst, output, startingData)

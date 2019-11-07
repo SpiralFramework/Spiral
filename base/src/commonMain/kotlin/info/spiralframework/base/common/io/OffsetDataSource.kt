@@ -10,7 +10,7 @@ class OffsetDataSource(val parent: DataSource<*>, val offset: ULong, val maxInst
     companion object {}
 
     override val dataSize: ULong?
-        get() = parent.dataSize
+        get() = parent.dataSize?.minus(offset)
     private val openInstances: MutableList<OffsetInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
 

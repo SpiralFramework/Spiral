@@ -105,12 +105,12 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
             val cache = cacheShortTerm(compressedData.sha256().toHexString())
             val output = cache.openOutputFlow()
             if (output == null) {
+                //Cache has failed; store in memory
                 cache.close()
-                return null
+                return BinaryDataSource(decompressSpcData(compressedData, file.decompressedSize.toInt()))
             }
 
             output.write(decompressSpcData(compressedData, file.decompressedSize.toInt()))
-
             return cache
         } else {
             return openRawSource(file)

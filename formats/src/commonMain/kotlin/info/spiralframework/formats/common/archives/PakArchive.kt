@@ -10,7 +10,8 @@ import info.spiralframework.formats.common.withFormats
 @ExperimentalUnsignedTypes
 class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) {
     companion object {
-        const val MAGIC_NUMBER = 0x2E50414B
+        const val MAGIC_NUMBER_LE = 0x2E50414B
+
         const val DEFAULT_MIN_FILE_COUNT = 1
         const val DEFAULT_MAX_FILE_COUNT = 1000
         const val DEFAULT_MIN_FILE_SIZE = 0

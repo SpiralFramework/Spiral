@@ -10,7 +10,7 @@ class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val
     companion object {}
 
     override val dataSize: ULong?
-        get() = parent.dataSize
+        get() = parent.dataSize?.minus(windowOffset)?.coerceAtMost(windowSize)
     private val openInstances: MutableList<WindowedInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
 
