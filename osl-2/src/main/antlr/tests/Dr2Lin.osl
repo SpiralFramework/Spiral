@@ -1,0 +1,66 @@
+OSL Script
+
+Text Count|0, 0
+Screen Fade|1, 0, 1
+Change UI|11, 1
+Change UI|10, 1
+Change UI|28, 255
+Change UI|7, 0
+Change UI|16, 0
+Set Game Parameter|0, 0, 0, 0
+Set Game Parameter|2, 0, 0, 100
+Set Game Parameter|3, 0, 0, 100
+Set Game Parameter|15, 0, 0, 44
+Set Game Parameter|20, 0, 0, 0
+Set Flag|12, 32, 0
+Set Flag|13, 32, 0
+Set Flag|14, 32, 0
+Set Flag|15, 32, 0
+Set Flag|0, 19, 0
+Set Flag|0, 4, 0
+Set Flag|0, 5, 0
+Set Flag|0, 6, 0
+Set Flag|0, 7, 0
+0x1|1, 99, 0, 252
+0x1|1, 99, 0, 253
+0x1|1, 99, 0, 254
+Set Title|0, 0, 0
+Set Title|1, 0, 0
+Set Title|2, 0, 0
+Set Title|3, 0, 0
+Set Title|4, 0, 0
+Set Title|5, 0, 0
+Set Title|6, 0, 0
+Set Title|7, 0, 0
+Set Title|8, 0, 0
+Set Title|9, 0, 0
+Set Title|10, 0, 0
+Set Title|11, 0, 0
+Set Title|12, 0, 0
+Set Title|13, 0, 0
+Set Title|14, 0, 0
+Set Title|15, 0, 0
+Set Flag|0, 15, 0
+Set Flag|0, 16, 0
+Set Flag|17, 0, 0
+Set Flag|17, 1, 0
+Set Flag|17, 2, 0
+Set Flag|17, 3, 0
+Set Flag|17, 4, 0
+Set Flag|17, 5, 0
+Set Flag|17, 6, 0
+Set Flag|17, 7, 0
+Set Flag|17, 8, 0
+Set Flag|17, 9, 0
+Set Flag|17, 10, 0
+Set Flag|17, 11, 0
+Set Flag|17, 12, 0
+Set Flag|17, 13, 0
+Set Flag|17, 14, 0
+Set Flag|17, 15, 0
+Truth Bullet|255, 0
+Screen Fade|101, 1, 24
+Set Game Parameter|8, 0, 0, 0
+Script|0, 0, 1, 0, 0
+Stop Script|
+Stop Script|0, 0

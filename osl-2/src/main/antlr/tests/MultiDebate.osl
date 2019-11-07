@@ -1,0 +1,34 @@
+OSL Script v2
+
+[Nonstop Debate {0}]
+
+if-g (logic_difficulty == MEAN) {
+    Enable Truth Bullets: "Evidence of a Struggle", "Replica Sword"
+} else {
+    Enable Truth Bullet: "Evidence of a Struggle"
+}
+
+Kiyotaka: I assert that the one who was &{br} murdered was &{weak_point} Miss Sayaka Maizono! &{clear}
+Yasuhiro: ...Yeah, we know that part already.
+Byakuya: And the murder took place in &{br} &{weak_point} Makoto's room &{clear}
+Correct Evidence: "Evidence of a Struggle"
+
+On Incorrect Evidence {
+    if-g (evidence == "Replica Sword") {
+        Byakuya (Angry): You &{yellow} dare &{clear} talk about my legs?
+    } else {
+        Byakuya (Angry): You &{yellow} dare &{clear} speak to me?
+    }
+}
+
+On Trial Loop {
+    Makoto (Confused): Uh...
+}
+
+On Out of Health {
+    Makoto (Happy): Woo!
+}
+
+On Out of Time {
+    Makoto (Sad): Oh...
+}

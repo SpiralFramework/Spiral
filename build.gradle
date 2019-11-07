@@ -1,12 +1,15 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'org.jetbrains.kotlin.multiplatform' version '1.3.50' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.3.50' apply false
     id 'com.github.johnrengelman.shadow' version '4.0.3' apply false
 }
 
 ext {
     artifact_group = 'info.spiralframework'
-    project_version = "${System.getenv('GIT_COMMIT') ?: System.getProperty("GIT_COMMIT") ?: "unknown"}".substring(0, 7) //'1.0.0-alpha'
+    project_version = "${System.getenv('GIT_COMMIT') ?: System.getProperty("GIT_COMMIT") ?: "unknown"}".substring(0, 7)
+    //'1.0.0-alpha'
 
     jackson_version = '2.9.4'
     sfl4j_version = '1.7.25'
@@ -17,7 +20,7 @@ ext {
 
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'kotlin'
+//    apply plugin: 'kotlin'
     apply plugin: 'maven-publish'
 
     group = artifact_group
@@ -30,32 +33,32 @@ allprojects {
         compile.extendsFrom(compileInclude)
     }
 
-    jar {
-        baseName = "spiral"
-        appendix = "$project.name"
-        version = ""
-    }
-
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        baseName = jar.baseName
-        appendix = jar.appendix
-        version = jar.version
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        baseName = jar.baseName
-        appendix = jar.appendix
-        version = jar.version
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
+//    jar {
+//        baseName = "spiral"
+//        appendix = "$project.name"
+//        version = ""
+//    }
+//
+//    task sourcesJar(type: Jar, dependsOn: classes) {
+//        classifier = 'sources'
+//        baseName = jar.baseName
+//        appendix = jar.appendix
+//        version = jar.version
+//        from sourceSets.main.allSource
+//    }
+//
+//    task javadocJar(type: Jar, dependsOn: javadoc) {
+//        classifier = 'javadoc'
+//        baseName = jar.baseName
+//        appendix = jar.appendix
+//        version = jar.version
+//        from javadoc.destinationDir
+//    }
+//
+//    artifacts {
+//        archives sourcesJar
+//        archives javadocJar
+//    }
 
     publishing {
         repositories {
@@ -66,12 +69,12 @@ allprojects {
         }
 
         publications {
-            maven(MavenPublication) {
-                artifactId = "spiral-$project.name"
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
-            }
+//            maven(MavenPublication) {
+//                artifactId = "spiral-$project.name"
+//                from components.java
+////                artifact sourcesJar
+////                artifact javadocJar
+//            }
         }
     }
 
@@ -95,12 +98,12 @@ allprojects {
     }
 }
 
-subprojects {
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.10"
-        compile "org.jetbrains.kotlin:kotlin-reflect:1.3.10"
-        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
-
-        testCompile group: 'junit', name: 'junit', version: '4.12'
-    }
-}
+//subprojects {
+//    dependencies {
+//        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.10"
+//        compile "org.jetbrains.kotlin:kotlin-reflect:1.3.10"
+//        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
+//
+//        testCompile group: 'junit', name: 'junit', version: '4.12'
+//    }
+//}

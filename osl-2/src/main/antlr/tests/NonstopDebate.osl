@@ -1,0 +1,225 @@
+OSL Script v1.2.3
+
+[New Section]
+TextID|0
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|270
+0x8|0
+0x9|0
+Transition|0
+Fade Out|270
+Horizontal|240
+Vertical|180
+Angle Acceleration|0
+Angle|0
+Scale|90
+Final Scale|110
+0x12|1
+Rotation|0
+Rotation Speed|0
+Character|1
+Sprite|7
+Background Animation|221
+0x18|1
+Voice|2
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|1
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|160
+0x8|0
+0x9|0
+Transition|0
+Fade Out|160
+Horizontal|280
+Vertical|170
+Angle Acceleration|15
+Angle|270
+Scale|110
+Final Scale|100
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|6
+Sprite|13
+Background Animation|158
+0x18|0
+Voice|1
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|2
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|210
+0x8|0
+0x9|0
+Transition|0
+Fade Out|210
+Horizontal|140
+Vertical|160
+Angle Acceleration|15
+Angle|90
+Scale|100
+Final Scale|100
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|2
+Sprite|8
+Background Animation|191
+0x18|0
+Voice|1
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|3
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|160
+0x8|0
+0x9|0
+Transition|0
+Fade Out|160
+Horizontal|290
+Vertical|140
+Angle Acceleration|10
+Angle|180
+Scale|110
+Final Scale|100
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|9
+Sprite|8
+Background Animation|197
+0x18|0
+Voice|1
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|4
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|160
+0x8|0
+0x9|0
+Transition|0
+Fade Out|160
+Horizontal|220
+Vertical|60
+Angle Acceleration|0
+Angle|0
+Scale|110
+Final Scale|105
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|14
+Sprite|12
+Background Animation|160
+0x18|0
+Voice|1
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|5
+Type|0
+0x2|0
+Shoot With Evidence|65535
+0x4|65535
+0x5|2000
+Has Weak Point|0
+Advance|260
+0x8|0
+0x9|0
+Transition|0
+Fade Out|260
+Horizontal|220
+Vertical|120
+Angle Acceleration|0
+Angle|0
+Scale|90
+Final Scale|105
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|14
+Sprite|0
+Background Animation|183
+0x18|0
+Voice|2
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
+
+[New Section]
+TextID|6
+Type|0
+0x2|0
+Shoot With Evidence|1
+0x4|65535
+0x5|2000
+Has Weak Point|1
+Advance|220
+0x8|0
+0x9|0
+Transition|0
+Fade Out|210
+Horizontal|220
+Vertical|190
+Angle Acceleration|0
+Angle|0
+Scale|80
+Final Scale|105
+0x12|0
+Rotation|0
+Rotation Speed|0
+Character|14
+Sprite|7
+Background Animation|198
+0x18|0
+Voice|3
+0x1a|10
+Chapter|1
+0x1c|0
+0x1d|0
