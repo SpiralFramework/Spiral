@@ -50,3 +50,5 @@ gradle-app.setting
 .vscode
 gen
 graph
+
+Bootstrap.kt
