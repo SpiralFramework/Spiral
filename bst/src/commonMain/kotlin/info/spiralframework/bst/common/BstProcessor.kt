@@ -108,6 +108,18 @@ object BstProcessor {
     suspend fun SpiralContext.processAddMagicNumber(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (bst.read() ?: return) {
             MAGIC_NUMBER_PAK -> output.writeInt32LE(PakArchive.MAGIC_NUMBER_LE)
+            MAGIC_NUMBER_LIN -> output.writeInt32LE(0x2E4C494E)
+            MAGIC_NUMBER_WRD -> output.writeInt32LE(0x2E575244)
+            MAGIC_NUMBER_SRD -> output.writeInt32LE(0x2E535244)
+            MAGIC_NUMBER_SRDI -> output.writeInt32LE(0x53524449)
+            MAGIC_NUMBER_SRDV -> output.writeInt32LE(0x53524456)
+
+            MAGIC_NUMBER_DR1_LOOP -> output.writeInt32LE(0x2E4C5031)
+            MAGIC_NUMBER_DR1_CLIMAX_EP -> output.writeInt32LE(0x2E434531)
+            MAGIC_NUMBER_DR1_ANAGRAM -> output.writeInt32LE(0x2E484731)
+            MAGIC_NUMBER_DR1_ROOMOBJECT -> output.writeInt32LE(0x2E524F31)
+
+            MAGIC_NUMBER_V3_DATA_TABLE -> output.writeInt32LE(0x2E445433)
 
             MAGIC_NUMBER_RAW_INT8 -> output.write(bst.read() ?: return)
             MAGIC_NUMBER_RAW_INT16 -> output.writeInt16LE(bst.readInt16LE() ?: return)
