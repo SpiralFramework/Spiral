@@ -8,8 +8,23 @@ import info.spiralframework.base.common.io.flow.fauxSeekFromStart
 import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.withFormats
 
+open class UtfTableSchema(open val name: String, open val size: UInt, open val schemaOffset: UInt, open val rowsOffset: UInt, open val stringTable: String, open val stringOffset: UInt, open val dataOffset: UInt, open val columnCount: Int, open val rowWidth: Int, open val rowCount: UInt, open val schema: Array<out UtfColumnSchema>)
+
 @ExperimentalUnsignedTypes
-data class UtfTableInfo(val name: String, val size: UInt, val schemaOffset: UInt, val rowsOffset: UInt, val stringTable: String, val stringOffset: UInt, val dataOffset: UInt, val columnCount: Int, val rowWidth: Int, val rowCount: UInt, val schema: Array<UtfColumnInfo>, val dataSource: DataSource<*>) {
+data class UtfTableInfo(
+        override val name: String,
+        override val size: UInt,
+        override val schemaOffset: UInt,
+        override val rowsOffset: UInt,
+        override val stringTable: String,
+        override val stringOffset: UInt,
+        override val dataOffset: UInt,
+        override val columnCount: Int,
+        override val rowWidth: Int,
+        override val rowCount: UInt,
+        override val schema: Array<out UtfColumnInfo>,
+        val dataSource: DataSource<*>
+): UtfTableSchema(name, size, schemaOffset, rowsOffset, stringTable, stringOffset, dataOffset, columnCount, rowWidth, rowCount, schema) {
     companion object {
         const val UTF_MAGIC_NUMBER_LE = 0x46545540
 
@@ -198,6 +213,34 @@ data class UtfTableInfo(val name: String, val size: UInt, val schemaOffset: UInt
             }
         }
     }
+}
+
+@ExperimentalUnsignedTypes
+class UtfTableSchemaBuilder {
+    var name: String = ""
+    @ExperimentalUnsignedTypes
+    var size: UInt = 1u
+    var schemaOffset: UInt = 0u
+    var rowsOffset: UInt = 0u
+    var stringTable: String = ""
+    var stringOffset: UInt = 0u
+    var dataOffset: UInt = 0u
+    var columnCount: Int = 0
+    var rowWidth: Int = 0
+    var rowCount: UInt = 0u
+    var schema: Array<out UtfColumnSchema> = emptyArray()
+
+    fun schema(vararg columns: UtfColumnSchema) {
+        this.schema = columns
+    }
+
+    fun build(): UtfTableSchema = UtfTableSchema(name, size, schemaOffset, rowsOffset, stringTable, stringOffset, dataOffset, columnCount, rowWidth, rowCount, schema)
+}
+
+fun utfTableSchema(init: UtfTableSchemaBuilder.() -> Unit): UtfTableSchema {
+    val builder = UtfTableSchemaBuilder()
+    builder.init()
+    return builder.build()
 }
 
 fun UtfTableInfo.getColumn(name: String): UtfColumnInfo = schema.first { utfColumnInfo -> utfColumnInfo.name == name }
