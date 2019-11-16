@@ -27,7 +27,7 @@ class SrdArchive(val entries: Array<BaseSrdEntry>) {
                 while (true) {
                     val offsetDataSource = OffsetDataSource(dataSource, pos, closeParent = false)
                     val entry = BaseSrdEntry.pseudoSafe(this, offsetDataSource) ?: break
-                    pos += 16uL + entry.mainDataLength + entry.mainDataLength.alignmentNeededFor(0x10) + entry.subDataLength + entry.subDataLength.alignmentNeededFor(0x10)
+                    pos += 16uL + entry.mainDataLength + entry.mainDataLength.alignmentNeededFor(0x10).toUInt() + entry.subDataLength + entry.subDataLength.alignmentNeededFor(0x10).toUInt()
                     entries.add(entry)
                 }
 

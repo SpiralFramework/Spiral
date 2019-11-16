@@ -48,7 +48,7 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
 
                     val entries = Array(numEntries) { index ->
                         start = end
-                        start += end alignmentNeededFor align
+                        start += (end alignmentNeededFor align).toUInt()
                         end = awbFileEnds[index]
 
                         AwbFileEntry(awbFileIDs[index], start, end - start)

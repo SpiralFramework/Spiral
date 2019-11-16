@@ -32,8 +32,8 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
                     val subDataLength = requireNotNull(flow.readUInt32BE(), notEnoughData)
                     val unknown = requireNotNull(flow.readInt32BE(), notEnoughData)
 
-                    flow.skip((mainDataLength + mainDataLength.alignmentNeededFor(0x10)).toULong())
-                    flow.skip((subDataLength + subDataLength.alignmentNeededFor(0x10)).toULong())
+                    flow.skip(mainDataLength + mainDataLength.alignmentNeededFor(0x10).toULong())
+                    flow.skip(subDataLength + subDataLength.alignmentNeededFor(0x10).toULong())
 
                     val entry = when (classifier) {
                         CFHSrdEntry.MAGIC_NUMBER_BE -> CFHSrdEntry(classifier, mainDataLength.toULong(), subDataLength.toULong(), unknown, dataSource)
@@ -73,10 +73,10 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         return WindowedInputFlow(parent, 16uL, mainDataLength)
     }
 
-    suspend fun openSubDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10), subDataLength, closeParent = false)
+    suspend fun openSubDataSource(): DataSource<out InputFlow> = WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength, closeParent = false)
     suspend fun openSubDataFlow(): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
-        return WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10), subDataLength)
+        return WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength)
     }
 
     open suspend fun SpiralContext.setup() {}

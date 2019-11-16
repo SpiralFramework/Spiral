@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.archives
 
 import com.soywiz.krypto.sha256
+import info.spiralframework.base.common.Moment
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
@@ -98,6 +99,34 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
                 }
             }
             println("$indents==[/${table.name}]==")
+        }
+
+        val VALID_MONTHS = 1..12
+        val VALID_DAYS = 1..31
+        val VALID_HOURS = 0 until 24
+        val VALID_MINUTES = 0 until 60
+        val VALID_SECONDS = 0 until 60
+
+        fun convertFromEtocTime(time: Long): Moment {
+            val year = ((time shr 48)).toInt()
+            val month = ((time shr 40) and 0xFF).toInt().coerceIn(VALID_MONTHS)
+            val day = ((time shr 32) and 0xFF).toInt().coerceIn(VALID_DAYS)
+            val hour = ((time shr 24) and 0xFF).toInt().coerceIn(VALID_HOURS)
+            val minute = ((time shr 16) and 0xFF).toInt().coerceIn(VALID_MINUTES)
+            val second = ((time shr 8) and 0xFF).toInt().coerceIn(VALID_SECONDS)
+
+            return Moment(year, month, day, hour, minute, second, 0)
+        }
+
+        fun convertToEtocTime(moment: Moment): Long {
+            val year = moment.year.toLong()
+            val month = moment.month.toLong()
+            val day = moment.day.toLong()
+            val hour = moment.hour.toLong()
+            val minute = moment.minute.toLong()
+            val second = moment.second.toLong()
+
+            return (year shl 48) or (month shl 40) or (day shl 32) or (hour shl 24) or (minute shl 16) or (second shl 8)
         }
     }
 
