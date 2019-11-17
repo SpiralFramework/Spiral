@@ -112,3 +112,8 @@ public suspend inline fun <T : InputFlow, R> bookmark(t: T, block: () -> R): R {
         t.seek(position.toLong(), InputFlow.FROM_BEGINNING)
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.globalOffset(): ULong = if (this is OffsetInputFlow) offset + backing.globalOffset() else if (this is WindowedInputFlow) offset + window.globalOffset() else 0u
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.offsetPosition(): ULong = globalOffset() + position()

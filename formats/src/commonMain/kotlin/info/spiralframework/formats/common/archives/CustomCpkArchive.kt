@@ -10,13 +10,16 @@ import info.spiralframework.formats.common.withFormats
 @ExperimentalUnsignedTypes
 open class CustomCpkArchive {
     companion object {
+        val STORAGE_DATA = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_DATA
         val STORAGE_STRING = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_STRING
         val STORAGE_LONG = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_8BYTE
         val STORAGE_INT = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_4BYTE
         val STORAGE_SHORT = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_2BYTE
 
+        val ZERO_STORAGE_STRING = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_STRING
         val ZERO_STORAGE_LONG = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_8BYTE
         val ZERO_STORAGE_INT = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_4BYTE
+        val ZERO_STORAGE_SHORT = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_2BYTE
 
         val TOC_MAGIC_NUMBER_LE = 0x20434f54
         val ETOC_MAGIC_NUMBER_LE = 0x434f5445
@@ -62,21 +65,31 @@ open class CustomCpkArchive {
 
             val header = utfTableSchema {
                 schema(
-                        UtfColumnSchema("UpdateDateTime", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("UpdateDateTime", STORAGE_LONG),
                         UtfColumnSchema("FileSize", ZERO_STORAGE_LONG),
                         UtfColumnSchema("ContentOffset", STORAGE_LONG),
-                        UtfColumnSchema("ContentSize", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("ContentSize", STORAGE_LONG),
                         UtfColumnSchema("TocOffset", STORAGE_LONG),
                         UtfColumnSchema("TocSize", STORAGE_LONG),
+                        UtfColumnSchema("TocCrc", ZERO_STORAGE_INT),
+                        UtfColumnSchema("HtocOffset", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("HtocSize", ZERO_STORAGE_LONG),
                         UtfColumnSchema("EtocOffset", STORAGE_LONG),
                         UtfColumnSchema("EtocSize", STORAGE_LONG),
                         UtfColumnSchema("ItocOffset", ZERO_STORAGE_LONG),
                         UtfColumnSchema("ItocSize", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("GtocOffset", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("GtocSize", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("GtocCrc", ZERO_STORAGE_INT),
+                        UtfColumnSchema("HgtocOffset", ZERO_STORAGE_LONG),
+                        UtfColumnSchema("HgtocSize", ZERO_STORAGE_LONG),
                         UtfColumnSchema("EnabledPackedSize", STORAGE_LONG),
                         UtfColumnSchema("EnabledDataSize", STORAGE_LONG),
                         UtfColumnSchema("TotalDataSize", ZERO_STORAGE_LONG),
                         UtfColumnSchema("Tocs", ZERO_STORAGE_INT),
                         UtfColumnSchema("Files", STORAGE_INT),
+                        UtfColumnSchema("Groups", STORAGE_INT),
+                        UtfColumnSchema("Attrs", STORAGE_INT),
                         UtfColumnSchema("TotalFiles", ZERO_STORAGE_INT),
                         UtfColumnSchema("Directories", ZERO_STORAGE_INT),
                         UtfColumnSchema("Updates", ZERO_STORAGE_INT),
@@ -84,8 +97,17 @@ open class CustomCpkArchive {
                         UtfColumnSchema("Revision", STORAGE_SHORT),
                         UtfColumnSchema("Align", STORAGE_SHORT),
                         UtfColumnSchema("Sorted", STORAGE_SHORT),
+                        UtfColumnSchema("EnableFileName", STORAGE_SHORT),
+                        UtfColumnSchema("EID", ZERO_STORAGE_SHORT),
+                        UtfColumnSchema("CpkMode", STORAGE_INT),
                         UtfColumnSchema("Tvers", STORAGE_STRING),
-                        UtfColumnSchema("Comment", STORAGE_STRING)
+                        UtfColumnSchema("Comment", ZERO_STORAGE_STRING),
+                        UtfColumnSchema("Codec", STORAGE_INT),
+                        UtfColumnSchema("DpkItoc", STORAGE_INT),
+                        UtfColumnSchema("EnableTocCrc", STORAGE_SHORT),
+                        UtfColumnSchema("EnableFileCrc", STORAGE_SHORT),
+                        UtfColumnSchema("CrcMode", STORAGE_INT),
+                        UtfColumnSchema("CrcTable", STORAGE_DATA)
                 )
 
                 stringTable = buildString {
@@ -105,13 +127,14 @@ open class CustomCpkArchive {
                 rowCount = 1u
                 columnCount = schema.size
                 rowWidth = rowSizeOf(schema)
-                rowsOffset = (32 + (columnCount * 5)).toUInt()
+                rowsOffset = (24L + (columnCount * 5)).toUInt()
                 stringOffset = rowsOffset + rowWidth.toUInt()
 
                 name = "CpkHeader"
                 size = stringOffset + stringTable.length.toUInt()
                 dataOffset = size
             }
+            val headerAlignedSize = header.size.toInt() + (header.size.toInt() + 8).alignmentNeededFor(16)
 
             val toc = utfTableSchema {
                 schema(
@@ -120,6 +143,7 @@ open class CustomCpkArchive {
                         UtfColumnSchema("FileSize", STORAGE_INT),
                         UtfColumnSchema("ExtractSize", STORAGE_INT),
                         UtfColumnSchema("FileOffset", STORAGE_LONG),
+                        UtfColumnSchema("ID", STORAGE_INT),
                         UtfColumnSchema("Info", ZERO_STORAGE_INT),
                         UtfColumnSchema("UserString", STORAGE_STRING)
                 )
@@ -134,20 +158,24 @@ open class CustomCpkArchive {
                     append(schema.joinToString("$NULL_TERMINATOR", transform = UtfColumnSchema::name))
                     append(NULL_TERMINATOR)
 
-                    append(filenames.joinToString("$NULL_TERMINATOR") { name -> "${name.substringBeforeLast('/', missingDelimiterValue = "")}$NULL_TERMINATOR${name.substringAfterLast('/')}" })
+                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.distinct().joinToString("$NULL_TERMINATOR"))
+                    append(NULL_TERMINATOR)
+
+                    append(filenames.map { name -> name.substringAfterLast('/') }.distinct().joinToString("$NULL_TERMINATOR"))
                     append(NULL_TERMINATOR)
                 }
 
                 rowCount = files.size.toUInt()
                 columnCount = schema.size
                 rowWidth = rowSizeOf(schema)
-                rowsOffset = (32L + (columnCount * 5)).toUInt()
+                rowsOffset = (24L + (columnCount * 5)).toUInt()
                 stringOffset = rowsOffset + (rowWidth.toUInt() * rowCount)
 
                 name = "CpkTocInfo"
                 size = stringOffset + stringTable.length.toUInt()
                 dataOffset = size
             }
+            val tocAlignedSize = toc.size.toInt() + (toc.size.toInt() + 8).alignmentNeededFor(16)
 
             val etoc = utfTableSchema {
                 schema(
@@ -165,73 +193,84 @@ open class CustomCpkArchive {
                     append(schema.joinToString("$NULL_TERMINATOR", transform = UtfColumnSchema::name))
                     append(NULL_TERMINATOR)
 
-                    append(filenames.joinToString("$NULL_TERMINATOR") { name -> name.substringBeforeLast('/', missingDelimiterValue = "") })
+                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.distinct().joinToString("$NULL_TERMINATOR"))
                     append(NULL_TERMINATOR)
                 }
 
                 rowCount = 1u + files.size
                 columnCount = schema.size
                 rowWidth = rowSizeOf(schema)
-                rowsOffset = 32u + (columnCount * 5)
+                rowsOffset = (24L + (columnCount * 5)).toUInt()
                 stringOffset = (rowsOffset + (rowWidth * rowCount)).toUInt()
 
                 name = "CpkEtocInfo"
                 size = stringOffset + stringTable.length.toUInt()
-                dataOffset = size
+                dataOffset = size + size.alignmentNeededFor(16).toInt()
             }
+            val etocAlignedSize = etoc.size.toInt() + (etoc.size.toInt() + 8).alignmentNeededFor(16)
 
             output.writeInt32LE(CpkArchive.MAGIC_NUMBER_LE)
             output.writeInt32LE(0xFF)
-            output.writeInt32LE(header.size.toInt() + 8)
+            output.writeInt32LE(headerAlignedSize + 8) //We add 8 to this because of header stuff
             output.writeInt32LE(0x00)
 
-            val totalSize = _files.values.sumBy { source ->
-                val size = source.dataSize!!
-                size.alignmentNeededFor(2048).toInt()
+            val totalSize = _files.values.sumByLong { source ->
+                val size = source.dataSize!!.toLong()
+                size alignedTo 2048
             }
+
+            require(totalSize.alignmentNeededFor(2048) == 0)
 
             //Write Table
             writeTable(output, header)
             writeTableDataSingleRow(output, header, mapOf(
-                    "ContentOffset" to 2048,
-                    "TocOffset" to 2048 + totalSize + totalSize.alignmentNeededFor(2048),
-                    "TocSize" to toc.size + 0x10u,
-                    "EtocOffset" to 2048u + totalSize + totalSize.alignmentNeededFor(2048) + toc.size + 16u + (toc.size + 16u).alignmentNeededFor(2048),
-                    "EtocSize" to etoc.size + 0x10u,
-                    "EnabledPackedSize" to totalSize,
-                    "EnabledDataSize" to totalSize,
+                    "UpdateDateTime" to 1, //??
+                    "ContentOffset" to (2048u + (tocAlignedSize + 16u).alignedTo(2048)).toInt(),
+                    "ContentSize" to totalSize.alignedTo(2048),
+                    "TocOffset" to 2048,
+                    "TocSize" to tocAlignedSize + 24,
+                    "EtocOffset" to (2048u + (tocAlignedSize + 16u).alignedTo(2048) + totalSize.alignedTo(2048)).toInt(),
+                    "EtocSize" to etocAlignedSize + 24,
+                    "EnabledPackedSize" to totalSize, //?????
+                    "EnabledDataSize" to totalSize, //??????
                     "Files" to files.size,
+                    "Groups" to 0,
+                    "Attrs" to 0,
                     "Version" to writerVersion,
                     "Revision" to writerRevision,
                     "Align" to 2048,
                     "Sorted" to 1,
+                    "CpkMode" to 1,
                     "Tvers" to writerTextVersion,
-                    "Comment" to ""
+                    "Comment" to "",
+                    "Codec" to 0,
+                    "DpkItoc" to 0,
+                    "EnableTocCrc" to 0,
+                    "EnableFileCrc" to 0,
+                    "CrcMode" to 0,
+                    "CrcTable" to Pair(header.dataOffset.toInt(), 0)
             ))
 
             //Write String Table
             output.write(header.stringTable.encodeToByteArray())
+//            output.write(ByteArray((8 + header.size) alignmentNeededFor 16))
 
             //Padding
-            output.write(ByteArray((16 + header.size).alignmentNeededFor(2048)))
-
-            //Write Data
-            filenames.forEach { name ->
-                val source = _files.getValue(name)
-                val copied = source.useInputFlow(output::copyFrom) ?: return@forEach
-                if (copied != source.dataSize?.toLong())
-                    error("CPK: Was told to copy {0} bytes; copied {1} instead", source.dataSize.toString(), copied)
-
-                output.write(ByteArray(copied.alignmentNeededFor(2048)))
-            }
-
-            //Pad
-            output.write(ByteArray(totalSize.alignmentNeededFor(2048)))
+            val headerPadding = ByteArray((24 + header.size).alignmentNeededFor(2048))
+            //(c)CRI
+            //No idea if this matters, but ¯\_(ツ)_/¯
+            headerPadding[headerPadding.size - 6] = 0x28 //(
+            headerPadding[headerPadding.size - 5] = 0x63 //c
+            headerPadding[headerPadding.size - 4] = 0x29 //)
+            headerPadding[headerPadding.size - 3] = 0x43 //C
+            headerPadding[headerPadding.size - 2] = 0x52 //R
+            headerPadding[headerPadding.size - 1] = 0x49 //I
+            output.write(headerPadding)
 
             //Write Toc
             output.writeInt32LE(TOC_MAGIC_NUMBER_LE)
             output.writeInt32LE(0xFF)
-            output.writeInt32LE(8 + toc.size)
+            output.writeInt32LE(tocAlignedSize + 8) //We add 8 to this because of header stuff
             output.writeInt32LE(0x00)
 
             writeTable(output, toc)
@@ -241,30 +280,46 @@ open class CustomCpkArchive {
                     "FileSize" to filenames.map { name -> _files.getValue(name).dataSize!!.toLong() },
                     "ExtractSize" to filenames.map { name -> _files.getValue(name).dataSize!!.toLong() },
                     "FileOffset" to LongArray(filenames.size).apply {
-                        var offset = 0L
+                        var offset = (tocAlignedSize + 16).alignedTo(2048).toLong() //0L
 
                         for (i in 0 until this.size) {
                             this[i] = offset
-
-                            val filesize = _files.getValue(filenames[i]).dataSize!!
-                            offset += filesize + filesize.alignmentNeededFor(2048)
+                            offset += _files.getValue(filenames[i]).dataSize!!.toLong() alignedTo 2048
                         }
                     }.toList(),
+                    "ID" to IntArray(filenames.size) { index -> 6 + index }.toList(),
                     "UserString" to Array(filenames.size) { "" }.toList()
             ))
 
             //Write String Table
             output.write(toc.stringTable.encodeToByteArray())
+//            output.write(ByteArray((8 + toc.size) alignmentNeededFor 16))
 
             //Pad
-            output.write(ByteArray((toc.size + 16u).alignmentNeededFor(2048).toInt()))
+            output.write(ByteArray((24 + toc.size).alignmentNeededFor(2048)))
+
+            //NOTE: In DR cpk files, data comes after toc
+            //Write Data
+            filenames.forEach { name ->
+                val source = _files.getValue(name)
+                val copied = source.useInputFlow(output::copyFrom) ?: return@forEach debug("Skipping {0}", name)
+                if (copied != source.dataSize?.toLong())
+                    warn("CPK: Was told to copy {0} bytes; copied {1} instead", source.dataSize.toString(), copied)
+                else
+                    trace("Copied {0} bytes as expected", copied)
+
+                output.write(ByteArray(copied.alignmentNeededFor(2048)))
+            }
+
+            //Pad
+            output.write(ByteArray(totalSize.alignmentNeededFor(2048)))
 
             //Write Etoc
             val etocTime = CpkArchive.convertToEtocTime(Moment.now())
 
             output.writeInt32LE(ETOC_MAGIC_NUMBER_LE)
             output.writeInt32LE(0xFF)
-            output.writeInt32LE(8 + etoc.size)
+            output.writeInt32LE(etocAlignedSize + 8) //We add 8 to this because of header stuff
             output.writeInt32LE(0x00)
 
             writeTable(output, etoc)
@@ -275,17 +330,19 @@ open class CustomCpkArchive {
 
             //Write String Table
             output.write(etoc.stringTable.encodeToByteArray())
+            output.write(ByteArray((8 + etoc.size) alignmentNeededFor 16))
         }
     }
 
+    //TODO: Support data writing maybe
     suspend fun SpiralContext.writeTable(output: OutputFlow, init: UtfTableSchemaBuilder.() -> Unit) = writeTable(output, utfTableSchema(init))
     suspend fun SpiralContext.writeTable(output: OutputFlow, table: UtfTableSchema) {
         //Size = 32 + stringTable.length
         output.writeInt32LE(UtfTableInfo.UTF_MAGIC_NUMBER_LE)
 
-        output.writeInt32BE(table.size.toInt())
-        output.writeUInt32BE(table.rowsOffset.toInt() - 8) //So weird
-        output.writeUInt32BE(table.stringOffset.toInt() - 8) //This is still so weird
+        output.writeInt32BE(table.size.toInt() + (table.size.toInt() + 8).alignmentNeededFor(16))
+        output.writeUInt32BE(table.rowsOffset.toInt())
+        output.writeUInt32BE(table.stringOffset.toInt())
         output.writeUInt32BE(table.dataOffset.toInt())
 
         val stringTable = table.stringTable

@@ -7,6 +7,13 @@ infix fun ULong.alignmentNeededFor(alignment: Int): Long = (alignment - this % a
 infix fun Int.alignmentNeededFor(alignment: Int): Int = (alignment - this % alignment) % alignment
 infix fun Long.alignmentNeededFor(alignment: Int): Int = ((alignment - this % alignment) % alignment).toInt()
 
+@ExperimentalUnsignedTypes
+infix fun UInt.alignedTo(alignment: Int): ULong = this + alignmentNeededFor(alignment)
+@ExperimentalUnsignedTypes
+infix fun ULong.alignedTo(alignment: Int): ULong = this + alignmentNeededFor(alignment)
+infix fun Int.alignedTo(alignment: Int): Int = alignmentNeededFor(alignment) + this
+infix fun Long.alignedTo(alignment: Int): Long = alignmentNeededFor(alignment) + this
+
 fun ByteArray.toHexString(): String = buildString {
     this@toHexString.forEach { byte ->
         append(byte.toInt()
@@ -29,3 +36,14 @@ fun ByteArray.foldToInt16BE(): IntArray = IntArray(size / 2) { i -> (this[i * 2]
 public fun byteArrayOfHex(vararg elements: Int): ByteArray = ByteArray(elements.size) { i -> elements[i].toByte() }
 
 public inline fun <reified T> Array<out T>.recast(): Array<T> = Array(size, this::get)
+
+/**
+ * Returns the sum of all values produced by [selector] function applied to each element in the collection.
+ */
+public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Number): Long {
+    var sum: Long = 0
+    for (element in this) {
+        sum += selector(element).toLong()
+    }
+    return sum
+}

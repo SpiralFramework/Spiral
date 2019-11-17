@@ -5,6 +5,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.fauxSeekFromStart
+import info.spiralframework.base.common.io.flow.offsetPosition
 import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.withFormats
 
@@ -24,7 +25,7 @@ data class UtfTableInfo(
         override val rowCount: UInt,
         override val schema: Array<out UtfColumnInfo>,
         val dataSource: DataSource<*>
-): UtfTableSchema(name, size, schemaOffset, rowsOffset, stringTable, stringOffset, dataOffset, columnCount, rowWidth, rowCount, schema) {
+) : UtfTableSchema(name, size, schemaOffset, rowsOffset, stringTable, stringOffset, dataOffset, columnCount, rowWidth, rowCount, schema) {
     companion object {
         const val UTF_MAGIC_NUMBER_LE = 0x46545540
 
@@ -65,7 +66,7 @@ data class UtfTableInfo(
 
                 use(flow) {
                     val magic = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    require(magic == UTF_MAGIC_NUMBER_LE) { localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}") }
+                    require(magic == UTF_MAGIC_NUMBER_LE) { localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}", "0x${flow.offsetPosition().minus(4u).toString(16)}") }
 
                     val tableSize = requireNotNull(flow.readUInt32BE(), notEnoughData)
                     val schemaOffset = 0x20u
@@ -248,6 +249,7 @@ fun UtfTableInfo.getColumn(name: String): UtfColumnInfo = schema.first { utfColu
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*>? = context.readRowData(rowIndex, columnInfo)
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*> = context.readRowDataUnsafe(rowIndex, columnInfo)
@@ -255,6 +257,7 @@ suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnName: String): UtfRowData<*>? = get(columnName)?.let { columnInfo -> context.readRowData(rowIndex, columnInfo) }
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnName: String): UtfRowData<*> = context.readRowDataUnsafe(rowIndex, getColumn(columnName))
