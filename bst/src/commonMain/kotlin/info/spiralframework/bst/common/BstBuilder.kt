@@ -52,6 +52,11 @@ class BstBuilder(val out: OutputFlow) {
             out.write(BstProcessor.MAGIC_NUMBER_SRDV)
         }
 
+        suspend fun tga() {
+            out.write(BstProcessor.OPCODE_ADD_MAGIC_NUMBER)
+            out.write(BstProcessor.MAGIC_NUMBER_TGA)
+        }
+
         suspend fun dr1Loop() {
             out.write(BstProcessor.OPCODE_ADD_MAGIC_NUMBER)
             out.write(BstProcessor.MAGIC_NUMBER_DR1_LOOP)
@@ -121,6 +126,9 @@ class BstBuilder(val out: OutputFlow) {
     }
     suspend fun skip() {
         out.write(BstProcessor.OPCODE_SKIP)
+    }
+    suspend fun flush() {
+        out.write(BstProcessor.OPCODE_FLUSH)
     }
 }
 
