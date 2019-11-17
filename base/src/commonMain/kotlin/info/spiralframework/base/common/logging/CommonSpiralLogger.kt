@@ -4,23 +4,26 @@ import info.spiralframework.base.common.SpiralContext
 
 class CommonSpiralLogger(val name: String, var loggerLevel: Int = ERROR) : SpiralLogger {
     companion object {
-        const val TRACE = 0x0000
-        const val DEBUG = 0x1000
-        const val INFO = 0x2000
-        const val WARN = 0x3000
-        const val ERROR = 0x4000
-        
+        const val TRACE = 0b0000001
+        const val DEBUG = 0b0000010
+        const val INFO = 0b0000100
+        const val WARN = 0b0001000
+        const val ERROR = 0b0010000
+
         const val TRACE_LABEL = "TRACE"
         const val DEBUG_LABEL = "DEBUG"
-        const val INFO_LABEL  = " INFO"
-        const val WARN_LABEL  = " WARN"
+        const val INFO_LABEL = " INFO"
+        const val WARN_LABEL = " WARN"
         const val ERROR_LABEL = "ERROR"
     }
+
+    constructor(name: String, errorEnabled: Boolean = false, warnEnabled: Boolean = false, infoEnabled: Boolean = false, debugEnabled: Boolean = false, traceEnabled: Boolean = false)
+            : this(name, (if (errorEnabled) ERROR else 0) or (if (warnEnabled) WARN else 0) or (if (infoEnabled) INFO else 0) or (if (debugEnabled) DEBUG else 0) or (if (traceEnabled) TRACE else 0))
 
     var isTraceEnabled
         get() = isLevelEnabled(TRACE)
         set(value) = setLevelEnabled(TRACE, value)
-    
+
     var isDebugEnabled
         get() = isLevelEnabled(DEBUG)
         set(value) = setLevelEnabled(DEBUG, value)
@@ -37,7 +40,7 @@ class CommonSpiralLogger(val name: String, var loggerLevel: Int = ERROR) : Spira
         get() = isLevelEnabled(ERROR)
         set(value) = setLevelEnabled(ERROR, value)
 
-    fun isLevelEnabled(level: Int): Boolean = loggerLevel and level > 0
+    fun isLevelEnabled(level: Int): Boolean = loggerLevel and level == level
     fun setLevelEnabled(level: Int, enabled: Boolean) {
         if (enabled) {
             loggerLevel = loggerLevel or level
