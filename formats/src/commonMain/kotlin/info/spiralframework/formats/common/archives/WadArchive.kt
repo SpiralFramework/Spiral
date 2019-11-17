@@ -86,7 +86,7 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
 
     operator fun get(name: String): WadFileEntry? = files.firstOrNull { entry -> entry.name == name }
 
-    suspend fun openSource(file: WadFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, dataOffset + file.offset.toULong(), file.size.toULong())
+    suspend fun openSource(file: WadFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, dataOffset + file.offset.toULong(), file.size.toULong(), closeParent = false)
     suspend fun openFlow(file: WadFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return WindowedInputFlow(parent, dataOffset + file.offset.toULong(), file.size.toULong())

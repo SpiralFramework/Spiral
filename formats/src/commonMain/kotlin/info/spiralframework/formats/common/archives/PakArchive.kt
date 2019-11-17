@@ -65,7 +65,7 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
 
     operator fun get(index: Int): PakFileEntry = files[index]
 
-    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong()) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong())
+    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
     suspend fun openFlow(file: PakFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return if (file.size == -1)
