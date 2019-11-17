@@ -2,6 +2,7 @@ package info.spiralframework.bst.common
 
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.byteArrayOfHex
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.OutputFlow
@@ -19,6 +20,7 @@ object BstProcessor {
     const val OPCODE_DONE = 0x03
     const val OPCODE_BREAK = 0x04
     const val OPCODE_SKIP = 0x05
+    const val OPCODE_FLUSH = 0x06
 
     const val FILE_TYPE_PAK = 0x00
     const val FILE_TYPE_SPC = 0x01
@@ -44,6 +46,10 @@ object BstProcessor {
     const val MAGIC_NUMBER_SRD = 0x03 //44 52 53 2E
     const val MAGIC_NUMBER_SRDI = 0x04 //49 44 52 53
     const val MAGIC_NUMBER_SRDV = 0x05 //56 44 52 53
+    const val MAGIC_NUMBER_TGA = 0x06   // 00 00 00 00 00 00 00 00
+    // 54 52 55 45 56 49 53 49
+    // 4F 4E 2D 58 46 49 4C 45
+    // 2E 00
 
     const val MAGIC_NUMBER_DR1_LOOP = 0x10 //31 50 4C 2E
     const val MAGIC_NUMBER_DR1_CLIMAX_EP = 0x11 //31 45 43 2E
@@ -74,10 +80,11 @@ object BstProcessor {
                         return@use STATE_OK
                     }
                     OPCODE_BREAK -> {
-                        processFlush(input, source, bst, output, scriptData)
+//                        processFlush(input, source, bst, output, scriptData)
                         return@use STATE_BREAK
                     }
                     OPCODE_SKIP -> return@use STATE_SKIP
+                    OPCODE_FLUSH -> processFlush(input, source, bst, output, scriptData)
                 }
             }
 
@@ -113,6 +120,11 @@ object BstProcessor {
             MAGIC_NUMBER_SRD -> output.writeInt32LE(0x2E535244)
             MAGIC_NUMBER_SRDI -> output.writeInt32LE(0x53524449)
             MAGIC_NUMBER_SRDV -> output.writeInt32LE(0x53524456)
+            MAGIC_NUMBER_TGA -> output.write(byteArrayOfHex(
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x54, 0x52, 0x55, 0x45, 0x56, 0x49, 0x53, 0x49,
+                    0x4F, 0x4E, 0x2D, 0x58, 0x46, 0x49, 0x4C, 0x45, 0x2E, 0x00
+            ))
 
             MAGIC_NUMBER_DR1_LOOP -> output.writeInt32LE(0x2E4C5031)
             MAGIC_NUMBER_DR1_CLIMAX_EP -> output.writeInt32LE(0x2E434531)
