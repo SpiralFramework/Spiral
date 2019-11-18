@@ -112,21 +112,28 @@ class BstBuilder(val out: OutputFlow) {
         }
     }
 
+    /** 0x00 */
     suspend fun parseDataAs(init: suspend ParseDataAsBuilder.() -> Unit) = ParseDataAsBuilder(out).init()
+    /** 0x01 */
     suspend fun addMagicNumber(init: suspend AddMagicNumberBuilder.() -> Unit) = AddMagicNumberBuilder(out).init()
+    /* 0x02 */
     suspend fun iterateSubfiles(init: suspend BstBuilder.() -> Unit) {
         out.write(BstProcessor.OPCODE_ITERATE_SUBFILES)
         BstBuilder(out).init()
     }
+    /* 0x03 */
     suspend fun done() {
         out.write(BstProcessor.OPCODE_DONE)
     }
+    /* 0x04 */
     suspend fun breakOut() {
         out.write(BstProcessor.OPCODE_BREAK)
     }
+    /* 0x05 */
     suspend fun skip() {
         out.write(BstProcessor.OPCODE_SKIP)
     }
+    /* 0x06 */
     suspend fun flush() {
         out.write(BstProcessor.OPCODE_FLUSH)
     }

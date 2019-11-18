@@ -64,13 +64,16 @@ object BstProcessor {
     const val MAGIC_NUMBER_RAW_INT32 = 0xFE
     const val MAGIC_NUMBER_RAW_INT64 = 0xFF
 
+    @Suppress("UNREACHABLE_CODE")
     @ExperimentalUnsignedTypes
     suspend fun SpiralContext.process(source: DataSource<*>, bst: InputFlow, output: OutputFlow, startingData: Any? = null): Int {
         var scriptData: Any? = startingData
 
         return requireNotNull(source.openInputFlow()).use { input ->
             loop@ while (true) {
-                when (bst.read() ?: break@loop) {
+                val op = bst.read() ?: return@use STATE_BREAK
+                trace("0x{0}", op.toString(16).padStart(2, '0'))
+                when (op) {
                     OPCODE_PARSE_DATA -> scriptData = processParseFileAs(input, source, bst, output, scriptData)
                             ?: scriptData
                     OPCODE_ADD_MAGIC_NUMBER -> processAddMagicNumber(input, source, bst, output, scriptData)

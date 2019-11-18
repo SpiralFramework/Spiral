@@ -34,7 +34,8 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
                 val flow = requireNotNull(dataSource.openInputFlow())
 
                 use(flow) {
-                    val fileCount = requireNotNull(flow.readInt32LE(), notEnoughData)
+                    val possibleMagicNumber = requireNotNull(flow.readInt32LE(), notEnoughData)
+                    val fileCount = if(possibleMagicNumber == MAGIC_NUMBER_LE) requireNotNull(flow.readInt32LE(), notEnoughData) else possibleMagicNumber
                     require(fileCount in minFileCount..maxFileCount) { localise("formats.pak.invalid_file_count", fileCount, minFileCount, maxFileCount) }
 
                     val entryOffsets = IntArray(fileCount) { index ->
