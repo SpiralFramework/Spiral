@@ -3,7 +3,7 @@ package info.spiralframework.formats.common.archives
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OffsetInputFlow
+import info.spiralframework.base.common.io.flow.SinkOffsetInputFlow
 import info.spiralframework.base.common.io.flow.WindowedInputFlow
 import info.spiralframework.formats.common.withFormats
 
@@ -72,6 +72,6 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
         return if (file.size == -1)
             WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
         else
-            OffsetInputFlow(parent, file.offset.toULong())
+            SinkOffsetInputFlow(parent, file.offset.toULong())
     }
 }

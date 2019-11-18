@@ -10,17 +10,12 @@ import info.spiralframework.base.common.io.use
 import info.spiralframework.base.common.takeIf
 
 @ExperimentalUnsignedTypes
-typealias InputFlowEventHandler = suspend (flow: InputFlow) -> Unit
-
-@ExperimentalUnsignedTypes
 interface InputFlow : DataCloseable {
     companion object {
         const val FROM_BEGINNING = 0
         const val FROM_END = 1
         const val FROM_POSITION = 2
     }
-
-    var onClose: InputFlowEventHandler?
 
     suspend fun read(): Int?
     suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
@@ -32,10 +27,6 @@ interface InputFlow : DataCloseable {
     suspend fun available(): ULong?
     suspend fun remaining(): ULong?
     suspend fun size(): ULong?
-
-    override suspend fun close() {
-        onClose?.invoke(this)
-    }
 }
 
 @ExperimentalUnsignedTypes
@@ -77,11 +68,6 @@ suspend fun InputFlow.readAndClose(bufferSize: Int = 8192): ByteArray {
 }
 
 @ExperimentalUnsignedTypes
-fun InputFlow.setCloseHandler(handler: InputFlowEventHandler) {
-    this.onClose = handler
-}
-
-@ExperimentalUnsignedTypes
 suspend inline fun <T> InputFlow.fauxSeekFromStart(offset: ULong, dataSource: DataSource<*>, noinline block: suspend (InputFlow) -> T): T? {
     val bookmark = position()
     return if (seek(offset.toLong(), InputFlow.FROM_BEGINNING) == null) {
@@ -114,6 +100,6 @@ public suspend inline fun <T : InputFlow, R> bookmark(t: T, block: () -> R): R {
 }
 
 @ExperimentalUnsignedTypes
-suspend fun InputFlow.globalOffset(): ULong = if (this is OffsetInputFlow) offset + backing.globalOffset() else if (this is WindowedInputFlow) offset + window.globalOffset() else 0u
+suspend fun InputFlow.globalOffset(): ULong = if (this is SinkOffsetInputFlow) baseOffset + backing.globalOffset() else if (this is WindowedInputFlow) baseOffset + window.globalOffset() else 0u
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.offsetPosition(): ULong = globalOffset() + position()

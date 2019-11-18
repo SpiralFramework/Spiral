@@ -17,7 +17,8 @@ class TimedDataPool<I: InputFlow, O: OutputFlow>(val backing: DataPool<I, O>, cl
     }
 
     override suspend fun close() {
-        backing.close()
+        super.close()
+
         closingJob.cancel()
     }
 

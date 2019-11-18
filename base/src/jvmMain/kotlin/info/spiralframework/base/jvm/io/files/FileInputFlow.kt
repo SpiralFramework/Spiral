@@ -1,7 +1,7 @@
 package info.spiralframework.base.jvm.io.files
 
+import info.spiralframework.base.common.io.DataCloseableEventHandler
 import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.InputFlowEventHandler
 import info.spiralframework.base.common.io.flow.readResultIsValid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,8 +10,12 @@ import java.io.RandomAccessFile
 
 @ExperimentalUnsignedTypes
 class FileInputFlow(val backingFile: File) : InputFlow {
-    override var onClose: InputFlowEventHandler? = null
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
+
     private val channel = RandomAccessFile(backingFile, "r")
+    private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun read(): Int? = withContext(Dispatchers.IO) { channel.read().takeIf(::readResultIsValid) }
     override suspend fun read(b: ByteArray, off: Int, len: Int): Int? = withContext(Dispatchers.IO) { channel.read(b, off, len).takeIf(::readResultIsValid) }
@@ -39,6 +43,10 @@ class FileInputFlow(val backingFile: File) : InputFlow {
 
     override suspend fun close() {
         super.close()
-        withContext(Dispatchers.IO) { channel.close() }
+
+        if (!closed) {
+            withContext(Dispatchers.IO) { channel.close() }
+            closed = true
+        }
     }
 }

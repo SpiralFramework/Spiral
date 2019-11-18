@@ -8,7 +8,6 @@ import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.WindowedInputFlow
 import info.spiralframework.base.common.io.flow.readBytes
-import info.spiralframework.base.common.io.flow.setCloseHandler
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.withFormats
@@ -126,7 +125,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
                 return null
             }
 
-            input.setCloseHandler { source.close() }
+            input.addCloseHandler { source.close() }
             return input
         } else {
             return openRawFlow(file)

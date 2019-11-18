@@ -9,15 +9,10 @@ typealias OutputFlowEventHandler = suspend (flow: OutputFlow) -> Unit
 
 @ExperimentalUnsignedTypes
 interface OutputFlow: DataCloseable {
-    var onClose: OutputFlowEventHandler?
-
     suspend fun write(byte: Int)
     suspend fun write(b: ByteArray)
     suspend fun write(b: ByteArray, off: Int, len: Int)
     suspend fun flush()
-    override suspend fun close() {
-        onClose?.invoke(this)
-    }
 }
 
 interface CountingOutputFlow: OutputFlow {

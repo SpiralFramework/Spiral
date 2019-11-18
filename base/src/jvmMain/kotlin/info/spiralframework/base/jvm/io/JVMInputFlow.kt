@@ -1,7 +1,7 @@
 package info.spiralframework.base.jvm.io
 
+import info.spiralframework.base.common.io.DataCloseableEventHandler
 import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.InputFlowEventHandler
 import info.spiralframework.base.common.io.flow.readResultIsValid
 import info.spiralframework.base.common.io.flow.skip
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +11,12 @@ import java.io.InputStream
 @ExperimentalUnsignedTypes
 open class JVMInputFlow private constructor(val stream: CountingInputStream): InputFlow {
     constructor(stream: InputStream): this(CountingInputStream(stream))
-    override var onClose: InputFlowEventHandler? = null
+
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
+
+    private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun read(): Int? = withContext(Dispatchers.IO) { stream.read().takeIf(::readResultIsValid) }
     override suspend fun read(b: ByteArray): Int? = withContext(Dispatchers.IO) { stream.read(b).takeIf(::readResultIsValid) }
@@ -22,7 +27,11 @@ open class JVMInputFlow private constructor(val stream: CountingInputStream): In
     override suspend fun size(): ULong? = null
     override suspend fun close() {
         super.close()
-        stream.close()
+
+        if (!closed) {
+            stream.close()
+            closed = true
+        }
     }
 
     override suspend fun position(): ULong = stream.count.toULong()

@@ -1,22 +1,33 @@
 package info.spiralframework.base.common.io.flow
 
+import info.spiralframework.base.common.io.DataCloseableEventHandler
+
 @ExperimentalUnsignedTypes
-open class OffsetInputFlow private constructor(val backing: InputFlow, val offset: ULong) : InputFlow {
+interface OffsetInputFlow: InputFlow {
+    val baseOffset: ULong
+}
+
+@ExperimentalUnsignedTypes
+open class SinkOffsetInputFlow private constructor(val backing: InputFlow, override val baseOffset: ULong) : OffsetInputFlow {
     companion object {
-        suspend operator fun invoke(backing: InputFlow, offset: ULong): OffsetInputFlow {
-            val flow = OffsetInputFlow(backing, offset)
+        suspend operator fun invoke(backing: InputFlow, offset: ULong): SinkOffsetInputFlow {
+            val flow = SinkOffsetInputFlow(backing, offset)
             flow.initialSkip()
             return flow
         }
     }
 
-    override var onClose: InputFlowEventHandler? = null
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
     private var position: ULong = 0uL
+    private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun read(): Int? {
         position++
         return backing.read()
     }
+
     override suspend fun read(b: ByteArray, off: Int, len: Int): Int? {
         if (len < 0 || off < 0 || b.size > len - off)
             throw IndexOutOfBoundsException()
@@ -34,32 +45,32 @@ open class OffsetInputFlow private constructor(val backing: InputFlow, val offse
 
     override suspend fun available(): ULong? = backing.available()
     override suspend fun remaining(): ULong? = backing.remaining()
-    override suspend fun size(): ULong? = backing.size()?.minus(offset)
+    override suspend fun size(): ULong? = backing.size()?.minus(baseOffset)
     override suspend fun position(): ULong = position
 
     override suspend fun seek(pos: Long, mode: Int): ULong? {
         when (mode) {
             InputFlow.FROM_BEGINNING -> {
                 this.position = pos.toULong()
-                backing.seek(offset.toLong() + pos, mode)
+                backing.seek(baseOffset.toLong() + pos, mode)
             }
             InputFlow.FROM_POSITION -> {
                 val n = this.position.toLong() + pos
                 this.position = n.toULong()
-                backing.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
+                backing.seek(baseOffset.toLong() + n, InputFlow.FROM_BEGINNING)
             }
             InputFlow.FROM_END -> {
                 val size = size()
                 if (size == null) {
                     val result = backing.seek(pos, mode) ?: return null
-                    if (result < offset) {
-                        backing.skip(offset - result)
+                    if (result < baseOffset) {
+                        backing.skip(baseOffset - result)
                         this.position = 0u
                     }
                 } else {
                     val n = (size.toLong() - pos)
                     this.position = n.toULong()
-                    backing.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
+                    backing.seek(baseOffset.toLong() + n, InputFlow.FROM_BEGINNING)
                 }
             }
             else -> return null
@@ -69,11 +80,15 @@ open class OffsetInputFlow private constructor(val backing: InputFlow, val offse
     }
 
     suspend fun initialSkip() {
-        backing.skip(offset)
+        backing.skip(baseOffset)
     }
 
     override suspend fun close() {
         super.close()
-        backing.close()
+
+        if (!closed) {
+            backing.close()
+            closed = true
+        }
     }
 }

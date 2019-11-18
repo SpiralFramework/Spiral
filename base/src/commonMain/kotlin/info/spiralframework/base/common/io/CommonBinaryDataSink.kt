@@ -1,15 +1,19 @@
 package info.spiralframework.base.common.io
 
 import info.spiralframework.base.common.io.flow.CountingOutputFlow
-import info.spiralframework.base.common.io.flow.OutputFlowEventHandler
 
 @ExperimentalUnsignedTypes
 open class CommonBinaryOutputFlow(val buffer: MutableList<Byte>): CountingOutputFlow {
     constructor(): this(ArrayList())
 
+    private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
+
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
     override val streamOffset: Long
         get() = buffer.size.toLong()
-    override var onClose: OutputFlowEventHandler? = null
+
     override suspend fun write(byte: Int) {
         buffer.add(byte.toByte())
     }
@@ -22,4 +26,10 @@ open class CommonBinaryOutputFlow(val buffer: MutableList<Byte>): CountingOutput
     override suspend fun flush() {}
     fun getData(): ByteArray = buffer.toByteArray()
     fun getDataSize(): ULong = buffer.size.toULong()
+
+    override suspend fun close() {
+        super.close()
+
+        closed = true
+    }
 }

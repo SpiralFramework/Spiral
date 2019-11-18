@@ -1,7 +1,9 @@
 package info.spiralframework.base.common.io.flow
 
+import info.spiralframework.base.common.io.DataCloseableEventHandler
+
 @ExperimentalUnsignedTypes
-open class WindowedInputFlow private constructor(val window: InputFlow, val offset: ULong, val windowSize: ULong) : InputFlow {
+open class WindowedInputFlow private constructor(val window: InputFlow, override val baseOffset: ULong, val windowSize: ULong) : OffsetInputFlow {
     companion object {
         suspend operator fun invoke(window: InputFlow, offset: ULong, windowSize: ULong): WindowedInputFlow {
             val flow = WindowedInputFlow(window, offset, windowSize)
@@ -10,8 +12,11 @@ open class WindowedInputFlow private constructor(val window: InputFlow, val offs
         }
     }
 
-    override var onClose: InputFlowEventHandler? = null
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
     private var position: ULong = 0uL
+    private var closed: Boolean = true
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun read(): Int? = if (position < windowSize) {
         position++
@@ -60,17 +65,17 @@ open class WindowedInputFlow private constructor(val window: InputFlow, val offs
             InputFlow.FROM_BEGINNING -> {
                 val n = pos.coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(offset.toLong() + n, mode)
+                window.seek(baseOffset.toLong() + n, mode)
             }
             InputFlow.FROM_POSITION -> {
                 val n = (this.position.toLong() + pos).coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
+                window.seek(baseOffset.toLong() + n, InputFlow.FROM_BEGINNING)
             }
             InputFlow.FROM_END -> {
                 val n = (this.windowSize.toLong() - pos).coerceIn(0 until windowSize.toLong())
                 this.position = n.toULong()
-                window.seek(offset.toLong() + n, InputFlow.FROM_BEGINNING)
+                window.seek(baseOffset.toLong() + n, InputFlow.FROM_BEGINNING)
             }
             else -> return null
         }
@@ -79,11 +84,15 @@ open class WindowedInputFlow private constructor(val window: InputFlow, val offs
     }
 
     suspend fun initialSkip() {
-        window.skip(offset)
+        window.skip(baseOffset)
     }
 
     override suspend fun close() {
         super.close()
-        window.close()
+
+        if (!closed) {
+            window.close()
+            closed = true
+        }
     }
 }

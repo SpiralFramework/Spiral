@@ -8,9 +8,7 @@ import info.spiralframework.base.common.io.flow.OutputFlow
  * An interface that loosely defines a source of data - usually reproducible. This data may come from anywhere
  */
 interface DataSource<I : InputFlow>: DataCloseable {
-    companion object {
-
-    }
+    companion object {}
 
     val dataSize: ULong?
 
@@ -22,7 +20,7 @@ interface DataSource<I : InputFlow>: DataCloseable {
     val reproducibility: DataSourceReproducibility
 
     suspend fun openInputFlow(): I?
-    fun canOpenInputFlow(): Boolean
+    suspend fun canOpenInputFlow(): Boolean
 }
 
 @ExperimentalUnsignedTypes

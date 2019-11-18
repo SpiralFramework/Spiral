@@ -1,10 +1,15 @@
 package info.spiralframework.base.common.io.flow
 
+import info.spiralframework.base.common.io.DataCloseableEventHandler
 import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 class BinaryInputFlow(private val array: ByteArray, private var pos: Int = 0, private var size: Int = array.size): InputFlow {
-    override var onClose: InputFlowEventHandler? = null
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
+
+    private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun read(): Int? = if (pos < size) array[pos++].toInt() and 0xFF else null
     override suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
@@ -46,5 +51,10 @@ class BinaryInputFlow(private val array: ByteArray, private var pos: Int = 0, pr
         }
 
         return position()
+    }
+
+    override suspend fun close() {
+        super.close()
+        closed = true
     }
 }

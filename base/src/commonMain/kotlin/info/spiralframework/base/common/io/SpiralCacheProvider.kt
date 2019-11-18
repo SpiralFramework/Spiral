@@ -10,8 +10,21 @@ import kotlin.time.ExperimentalTime
 @ExperimentalUnsignedTypes
 interface SpiralShortTermCacheProvider {
     object Memory : SpiralShortTermCacheProvider {
+        val memCaches: MutableMap<String, DataPool<out InputFlow, out OutputFlow>> = HashMap()
+
         override fun supportsShortTermCaching(): Boolean = true
-        override fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
+        override fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> {
+            val pool = memCaches.getOrPut(name, Memory::newDataPool)
+            if (pool.isClosed) {
+                val newPool = newDataPool()
+                memCaches[name] = newPool
+                return newPool
+            }
+
+            return pool
+        }
+
+        fun newDataPool(): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
     }
 
     fun supportsShortTermCaching(): Boolean
@@ -21,8 +34,10 @@ interface SpiralShortTermCacheProvider {
 @ExperimentalUnsignedTypes
 interface SpiralPersistentCacheProvider {
     object Memory : SpiralPersistentCacheProvider {
+        val memCaches: MutableMap<String, DataPool<out InputFlow, out OutputFlow>> = HashMap()
+
         override fun supportsPersistentCaching(): Boolean = true
-        override fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
+        override fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> = memCaches.getOrPut(name) { BinaryDataPool() }
     }
 
     fun supportsPersistentCaching(): Boolean
@@ -32,6 +47,8 @@ interface SpiralPersistentCacheProvider {
 @ExperimentalUnsignedTypes
 interface SpiralTimedCacheProvider {
     object Memory : SpiralTimedCacheProvider {
+        val memCaches: MutableMap<String, DataPool<out InputFlow, out OutputFlow>> = HashMap()
+
         override fun supportsTimedCaching(): Boolean = true
         @ExperimentalTime
         override fun SpiralContext.cacheFor(name: String, duration: Duration): DataPool<out InputFlow, out OutputFlow> = TimedDataPool(BinaryDataPool(), duration)

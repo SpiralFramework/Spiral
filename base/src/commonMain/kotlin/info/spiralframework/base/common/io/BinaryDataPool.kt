@@ -2,9 +2,6 @@ package info.spiralframework.base.common.io
 
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.io.flow.BinaryInputFlow
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.base.common.io.flow.setCloseHandler
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
@@ -13,44 +10,53 @@ class BinaryDataPool(val output: BinaryOutputFlow = BinaryOutputFlow(), val maxI
         get() = output.getDataSize()
 
     override val reproducibility: DataSourceReproducibility = DataSourceReproducibility(isDeterministic = true, isRandomAccess = true)
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
+
     private val openInstances: MutableList<BinaryInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
     private var outputClosed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override suspend fun openInputFlow(): BinaryInputFlow? {
         if (canOpenInputFlow()) {
             val stream = BinaryInputFlow(output.getData())
-            stream.setCloseHandler(this::instanceClosed)
+            stream.addCloseHandler(this::instanceClosed)
             openInstances.add(stream)
             return stream
         } else {
             return null
         }
     }
-    override fun canOpenInputFlow(): Boolean = !closed && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
+    override suspend fun canOpenInputFlow(): Boolean = !closed && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
 
-    private suspend fun instanceClosed(flow: InputFlow) {
-        openInstances.remove(flow)
+    private suspend fun instanceClosed(closeable: DataCloseable) {
+        if (closeable is BinaryInputFlow) {
+            openInstances.remove(closeable)
+        }
     }
 
-    private suspend fun onOutputClosed(flow: OutputFlow) {
-        outputClosed = true
+    private suspend fun onOutputClosed(closeable: DataCloseable) {
+        if (closeable is BinaryOutputFlow) {
+            outputClosed = true
+            output.close()
+        }
     }
 
     override suspend fun close() {
+        super.close()
+
         if (!closed) {
             closed = true
-            if (!outputClosed)
-                output.close()
             openInstances.toTypedArray().closeAll()
             openInstances.clear()
         }
     }
 
-    override fun openOutputFlow(): BinaryOutputFlow? = if (canOpenOutputFlow()) output else null
-    override fun canOpenOutputFlow(): Boolean = !outputClosed
+    override suspend fun openOutputFlow(): BinaryOutputFlow? = if (canOpenOutputFlow()) output else null
+    override suspend fun canOpenOutputFlow(): Boolean = !outputClosed
 
     init {
-        output.onClose = this::onOutputClosed
+        output.addCloseHandler(this::onOutputClosed)
     }
 }

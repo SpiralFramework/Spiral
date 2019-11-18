@@ -1,7 +1,22 @@
 package info.spiralframework.base.common.io
 
+@ExperimentalUnsignedTypes
+typealias DataCloseableEventHandler = suspend (closeable: DataCloseable) -> Unit
+
+@ExperimentalUnsignedTypes
 interface DataCloseable {
-    suspend fun close()
+    val closeHandlers: MutableList<DataCloseableEventHandler>
+    val isClosed: Boolean
+    suspend fun close() {
+        if (!isClosed) {
+            closeHandlers.forEach { closed -> closed(this) }
+        }
+    }
+}
+
+@ExperimentalUnsignedTypes
+fun DataCloseable.addCloseHandler(handler: DataCloseableEventHandler) {
+    closeHandlers.add(handler)
 }
 
 @ExperimentalUnsignedTypes

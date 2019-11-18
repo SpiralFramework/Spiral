@@ -1,9 +1,6 @@
 package info.spiralframework.base.common
 
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.DataSourceReproducibility
-import info.spiralframework.base.common.io.closeAll
-import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.*
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.Url
@@ -14,16 +11,19 @@ class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<B
     private val client = HttpClient()
 
     override var dataSize: ULong? = null
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
 
     private val openInstances: MutableList<ByteReadChannelInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override val reproducibility: DataSourceReproducibility = DataSourceReproducibility(isUnreliable = true)
 
     override suspend fun openInputFlow(): ByteReadChannelInputFlow? {
         if (canOpenInputFlow()) {
             val stream = ByteReadChannelInputFlow(client.get(url))
-            stream.onClose = this::instanceClosed
+            stream.addCloseHandler(this::instanceClosed)
             openInstances.add(stream)
             return stream
         } else {
@@ -31,13 +31,17 @@ class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<B
         }
     }
 
-    override fun canOpenInputFlow(): Boolean = !closed && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
+    override suspend fun canOpenInputFlow(): Boolean = !closed && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
 
-    private suspend fun instanceClosed(flow: InputFlow) {
-        openInstances.remove(flow)
+    private suspend fun instanceClosed(closeable: DataCloseable) {
+        if (closeable is ByteReadChannelInputFlow) {
+            openInstances.remove(closeable)
+        }
     }
 
     override suspend fun close() {
+        super.close()
+
         if (!closed) {
             closed = true
             openInstances.toTypedArray().closeAll()

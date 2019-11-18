@@ -7,6 +7,6 @@ import info.spiralframework.base.common.io.flow.OutputFlow
  */
 @ExperimentalUnsignedTypes
 interface DataSink<O: OutputFlow>: DataCloseable {
-    fun openOutputFlow(): O?
-    fun canOpenOutputFlow(): Boolean
+    suspend fun openOutputFlow(): O?
+    suspend fun canOpenOutputFlow(): Boolean
 }

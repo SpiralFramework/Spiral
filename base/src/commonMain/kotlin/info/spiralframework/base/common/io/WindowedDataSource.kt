@@ -1,18 +1,20 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.WindowedInputFlow
-import info.spiralframework.base.common.io.flow.setCloseHandler
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val windowSize: ULong, val maxInstanceCount: Int = -1, val closeParent: Boolean = true) : DataSource<WindowedInputFlow> {
+open class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val windowSize: ULong, val maxInstanceCount: Int = -1, val closeParent: Boolean = true) : DataSource<WindowedInputFlow> {
     companion object {}
 
     override val dataSize: ULong?
         get() = parent.dataSize?.minus(windowOffset)?.coerceAtMost(windowSize)
+
+    override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
     private val openInstances: MutableList<WindowedInputFlow> = ArrayList(max(maxInstanceCount, 0))
     private var closed: Boolean = false
+    override val isClosed: Boolean
+        get() = closed
 
     override val reproducibility: DataSourceReproducibility
         get() = parent.reproducibility or DataSourceReproducibility.DETERMINISTIC_MASK
@@ -21,7 +23,7 @@ class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val
         if (canOpenInputFlow()) {
             val parentFlow = parent.openInputFlow() ?: return null
             val flow = WindowedInputFlow(parentFlow, windowOffset, windowSize)
-            flow.setCloseHandler(this::instanceClosed)
+            flow.addCloseHandler(this::instanceClosed)
             openInstances.add(flow)
             return flow
         } else {
@@ -29,10 +31,12 @@ class WindowedDataSource(val parent: DataSource<*>, val windowOffset: ULong, val
         }
     }
 
-    override fun canOpenInputFlow(): Boolean = !closed && parent.canOpenInputFlow() && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
+    override suspend fun canOpenInputFlow(): Boolean = !closed && parent.canOpenInputFlow() && (maxInstanceCount == -1 || openInstances.size < maxInstanceCount)
 
-    private suspend fun instanceClosed(flow: InputFlow) {
-        openInstances.remove(flow)
+    private suspend fun instanceClosed(closeable: DataCloseable) {
+        if (closeable is WindowedInputFlow) {
+            openInstances.remove(closeable)
+        }
     }
 
     override suspend fun close() {
