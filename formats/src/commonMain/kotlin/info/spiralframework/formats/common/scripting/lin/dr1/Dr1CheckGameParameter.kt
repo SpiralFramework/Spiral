@@ -1,26 +1,28 @@
-package info.spiralframework.formats.common.scripting.lin
+package info.spiralframework.formats.common.scripting.lin.dr1
 
-inline class CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
-    constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+
+inline class Dr1CheckGameParameter(override val rawArguments: IntArray) : LinEntry {
+    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
 
     override val opcode: Int
-        get() = 0x35
+        get() = 0x36
 
     fun conditions(): String = buildString {
         //TODO: Figure out a way to properly represent this
-        append("if (")
-        val firstGroup = Triple((rawArguments[0] shl 8) or rawArguments[1], rawArguments[2], rawArguments[3])
+        append("if-param (")
+        val firstGroup = Triple(rawArguments[1], rawArguments[2], (rawArguments[3] shl 8) or rawArguments[4])
         append(firstGroup.first)
         append(" ")
         append(formatCondition(firstGroup.second))
         append(" ")
         append(firstGroup.third)
-        for (i in 0 until (rawArguments.size - 4) / 5) {
-            val comparatorN = rawArguments[(i * 5) + 4]
+        for (i in 0 until (rawArguments.size - 5) / 6) {
+            val comparatorN = rawArguments[(i * 6) + 5]
             append(" ")
             append(formatLogical(comparatorN))
             append(" ")
-            val groupN = Triple((rawArguments[(i * 5) + 5] shl 8) or rawArguments[(i * 5) + 6], rawArguments[(i * 5) + 7], rawArguments[(i * 5) + 8])
+            val groupN = Triple(rawArguments[(i * 6) + 7], rawArguments[(i * 6) + 8], (rawArguments[(i * 6) + 9] shl 8) or rawArguments[(i * 6) + 10])
             append(groupN.first)
             append(" ")
             append(formatCondition(groupN.second))
@@ -45,4 +47,6 @@ inline class CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
         7 -> "&&"
         else -> "{$logical}"
     }
+
+    override fun format(): String = conditions()
 }

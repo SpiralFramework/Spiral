@@ -6,7 +6,9 @@ import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.Dr1GameJson
-import info.spiralframework.formats.common.scripting.lin.*
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.lin.UnknownEntry
+import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.json.Json
 
@@ -102,47 +104,58 @@ open class Dr1(
         opcode(0x33, argumentCount = 4, name = "Set Game Parameter")
         opcode(0x34, argumentCount = 2, names = arrayOf("Go To Label", "Goto Label", "Goto"))
 
-            flagCheck(0x35, names = arrayOf("Check Flag", "Check Flag A"),              flagGroupLength = 4, endFlagCheckOpcode = 0x3C)
-            flagCheck(0x36, names = arrayOf("Check Game Parameter", "Check Flag B"),    flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
+        flagCheck(0x35, names = arrayOf("Check Flag", "Check Flag A"), flagGroupLength = 4, endFlagCheckOpcode = 0x3C)
+        flagCheck(0x36, names = arrayOf("Check Game Parameter", "Check Flag B"), flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
 //            flagCheck(0x37, names = null,                                               flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
 //            flagCheck(0x38, names = null,                                               flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
 
-            opcode(0x39, argumentCount = 5, names = null)
-            opcode(0x3A, argumentCount = 0, name = "Wait for Input")
-            opcode(0x3B, argumentCount = 0, name = "Wait Frame")
-            opcode(0x3C, argumentCount = 0, name = "End Flag Check")
+        opcode(0x39, argumentCount = 5, names = null)
+        opcode(0x3A, argumentCount = 0, name = "Wait for Input")
+        opcode(0x3B, argumentCount = 0, name = "Wait Frame")
+        opcode(0x3C, argumentCount = 0, name = "End Flag Check")
     }
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
-        0x00 -> TextCountEntry(opcode, rawArguments)
-        0x02 -> TextEntry(opcode, rawArguments)
-        0x03 -> FormatEntry(opcode, rawArguments)
-        0x04 -> FilterEntry(opcode, rawArguments)
-        0x05 -> MovieEntry(opcode, rawArguments)
-        0x06 -> AnimationEntry(opcode, rawArguments)
-        0x08 -> VoiceLineEntry(opcode, rawArguments)
-        0x0A -> SoundEffectAEntry(opcode, rawArguments)
-        0x0B -> SoundEffectBEntry(opcode, rawArguments)
-        0x0C -> TruthBulletEntry(opcode, rawArguments)
-        0x0F -> SetStudentTitleEntry(opcode, rawArguments)
+        0x00 -> Dr1TextCountEntry(opcode, rawArguments)
+        0x02 -> Dr1TextEntry(opcode, rawArguments)
+        0x03 -> Dr1FormatEntry(opcode, rawArguments)
+        0x04 -> Dr1FilterEntry(opcode, rawArguments)
+        0x05 -> Dr1MovieEntry(opcode, rawArguments)
+        0x06 -> Dr1AnimationEntry(opcode, rawArguments)
+        0x08 -> Dr1VoiceLineEntry(opcode, rawArguments)
+        0x0A -> Dr1SoundEffectAEntry(opcode, rawArguments)
+        0x0B -> Dr1SoundEffectBEntry(opcode, rawArguments)
+        0x0C -> Dr1TruthBulletEntry(opcode, rawArguments)
+        0x0F -> Dr1SetStudentTitleEntry(opcode, rawArguments)
 
-        0x10 -> SetStudentReportInfoEntry(opcode, rawArguments)
-        0x1A -> StopScriptEntry(opcode, rawArguments)
-        0x1E -> SpriteEntry(opcode, rawArguments)
-        0x1F -> ScreenFlashEntry(opcode, rawArguments)
+        0x10 -> Dr1SetStudentReportInfoEntry(opcode, rawArguments)
+        0x14 -> Dr1TrialCameraEntry(opcode, rawArguments)
+        0x15 -> Dr1LoadMapEntry(opcode, rawArguments)
+        0x19 -> Dr1LoadScriptEntry(opcode, rawArguments)
+        0x1A -> Dr1StopScriptEntry(opcode, rawArguments)
+        0x1B -> Dr1RunScriptEntry(opcode, rawArguments)
+        0x1E -> Dr1SpriteEntry(opcode, rawArguments)
+        0x1F -> Dr1ScreenFlashEntry(opcode, rawArguments)
 
-        0x21 -> SpeakerEntry(opcode, rawArguments)
-        0x22 -> ScreenFadeEntry(opcode, rawArguments)
-        0x25 -> ChangeUIEntry(opcode, rawArguments)
-        0x26 -> SetFlagEntry(opcode, rawArguments)
-        0x27 -> CheckCharacterEntry(opcode, rawArguments)
-        0x29 -> CheckObjectEntry(opcode, rawArguments)
-        0x2B -> BranchEntry(opcode, rawArguments)
+        0x21 -> Dr1SpeakerEntry(opcode, rawArguments)
+        0x22 -> Dr1ScreenFadeEntry(opcode, rawArguments)
+        0x25 -> Dr1ChangeUIEntry(opcode, rawArguments)
+        0x26 -> Dr1SetFlagEntry(opcode, rawArguments)
+        0x27 -> Dr1CheckCharacterEntry(opcode, rawArguments)
+        0x29 -> Dr1CheckObjectEntry(opcode, rawArguments)
+        0x2A -> Dr1MarkLabelEntry(opcode, rawArguments)
+        0x2B -> Dr1BranchEntry(opcode, rawArguments)
 
-        0x30 -> ShowBackgroundEntry(opcode, rawArguments)
-        0x35 -> CheckFlagEntry(opcode, rawArguments)
+        0x30 -> Dr1ShowBackgroundEntry(opcode, rawArguments)
+        0x33 -> Dr1SetGameParameterEntry(opcode, rawArguments)
+        0x34 -> Dr1GoToLabelEntry(opcode, rawArguments)
 
-        0x3C -> EndFlagCheckEntry(opcode, rawArguments)
+        0x35 -> Dr1CheckFlagEntry(opcode, rawArguments)
+        0x36 -> Dr1CheckGameParameter(opcode, rawArguments)
+
+        0x3A -> Dr1WaitForInputEntry(opcode, rawArguments)
+        0x3B -> Dr1WaitFrameEntry(opcode, rawArguments)
+        0x3C -> Dr1EndFlagCheckEntry(opcode, rawArguments)
 
         else -> UnknownEntry(opcode, rawArguments)
     }

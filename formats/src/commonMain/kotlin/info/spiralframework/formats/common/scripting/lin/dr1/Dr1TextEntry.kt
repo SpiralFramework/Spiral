@@ -1,6 +1,8 @@
-package info.spiralframework.formats.common.scripting.lin
+package info.spiralframework.formats.common.scripting.lin.dr1
 
-inline class TextEntry(override val rawArguments: IntArray) : LinEntry {
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+
+inline class Dr1TextEntry(override val rawArguments: IntArray) : LinEntry {
     constructor(textID: Int): this(intArrayOf(textID shr 8, textID and 0xFF))
     constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
 

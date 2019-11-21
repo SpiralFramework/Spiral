@@ -1,7 +1,9 @@
-package info.spiralframework.formats.common.scripting.lin
+package info.spiralframework.formats.common.scripting.lin.dr1
+
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 /** Give truth bullet? */
-inline class TruthBulletEntry(override val rawArguments: IntArray): LinEntry {
+inline class Dr1TruthBulletEntry(override val rawArguments: IntArray): LinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
 
     override val opcode: Int

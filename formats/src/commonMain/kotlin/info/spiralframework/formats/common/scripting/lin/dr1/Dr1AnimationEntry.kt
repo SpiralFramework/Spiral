@@ -1,6 +1,8 @@
-package info.spiralframework.formats.common.scripting.lin
+package info.spiralframework.formats.common.scripting.lin.dr1
 
-inline class AnimationEntry(override val rawArguments: IntArray) : LinEntry {
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+
+inline class Dr1AnimationEntry(override val rawArguments: IntArray) : LinEntry {
     constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
     constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int): this(intArrayOf(id shr 8, id % 256, arg3, arg4, arg5, arg6, arg7, frame))
 
