@@ -2,6 +2,8 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.io.toUTF16BE
 import info.spiralframework.base.common.io.toUTF16LE
+import info.spiralframework.base.common.io.writeInt16BE
+import info.spiralframework.base.common.io.writeInt16LE
 
 enum class TextCharsets(val bytesForNull: Int) {
     UTF_8(1),
@@ -64,6 +66,46 @@ fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
                 builder.append(toUTF16BE(array[i * 2], array[i * 2 + 1]).toChar())
 
             return builder.toString()
+        }
+    }
+}
+
+@ExperimentalStdlibApi
+expect suspend fun String.encodeToString(charset: TextCharsets): ByteArray
+@ExperimentalStdlibApi
+suspend fun String.encodeToUTF8String(): ByteArray = encodeToString(TextCharsets.UTF_8)
+@ExperimentalStdlibApi
+suspend fun String.encodeToUTF16String(): ByteArray = encodeToString(TextCharsets.UTF_16)
+@ExperimentalStdlibApi
+suspend fun String.encodeToUTF16LEString(): ByteArray = encodeToString(TextCharsets.UTF_16LE)
+@ExperimentalStdlibApi
+suspend fun String.encodeToUTF16BEString(): ByteArray = encodeToString(TextCharsets.UTF_16BE)
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun manuallyEncode(text: String, charset: TextCharsets, includeByteOrderMarker: Boolean = true): ByteArray {
+    when (charset) {
+        TextCharsets.UTF_8 -> return text.encodeToByteArray()
+        TextCharsets.UTF_16 -> return manuallyEncode(text, TextCharsets.UTF_16LE, includeByteOrderMarker)
+        TextCharsets.UTF_16LE -> {
+            val output = BinaryOutputFlow()
+
+            if (includeByteOrderMarker)
+                output.writeInt16LE(TextCharsets.UTF_16LE_BOM)
+
+            text.forEach { character -> output.writeInt16LE(character.toInt()) }
+
+            return output.getData()
+        }
+        TextCharsets.UTF_16BE -> {
+            val output = BinaryOutputFlow()
+
+            if (includeByteOrderMarker)
+                output.writeInt16LE(TextCharsets.UTF_16BE_BOM)
+
+            text.forEach { character -> output.writeInt16BE(character.toInt()) }
+
+            return output.getData()
         }
     }
 }

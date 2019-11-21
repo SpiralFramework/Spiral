@@ -1,11 +1,12 @@
 package info.spiralframework.formats.scripting.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import java.text.DecimalFormat
 
-data class ScreenFadeEntry(val fadeIn: Boolean, val colour: Int, val frameDuration: Int): LinScript {
+data class ScreenFadeEntry(val fadeIn: Boolean, val colour: Int, val frameDuration: Int): LinEntry {
     constructor(opCode: Int, args: IntArray): this(args[0] == 0, args[1], args[2])
 
-    override val opCode: Int = 0x22
+    override val opcode: Int = 0x22
     override val rawArguments: IntArray = intArrayOf(if(fadeIn) 0 else 1, colour, frameDuration)
 
     override fun format(): String = buildString {

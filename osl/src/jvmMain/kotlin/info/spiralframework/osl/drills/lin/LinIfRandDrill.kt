@@ -1,5 +1,6 @@
 package info.spiralframework.osl.drills.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.*
@@ -11,12 +12,12 @@ import org.parboiled.BaseParser
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinIfRandDrill : DrillHead<Array<LinScript>> {
-    object JOIN_BACK : DrillHead<Array<LinScript>> {
-        override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+object LinIfRandDrill : DrillHead<Array<LinEntry>> {
+    object JOIN_BACK : DrillHead<Array<LinEntry>> {
+        override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
         override fun OpenSpiralLanguageParser.syntax(): Rule = BaseParser.NOTHING
 
-        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
             val indentation = --parser.flagCheckIndentation
             val branch = parser.data.remove("FLAG_JUMP_BRANCH_FOR_$indentation").toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag jump branch found for $indentation")
@@ -28,11 +29,11 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
         }
     }
 
-    object JUMP_BACK : DrillHead<Array<LinScript>> {
-        override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    object JUMP_BACK : DrillHead<Array<LinEntry>> {
+        override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
         override fun OpenSpiralLanguageParser.syntax(): Rule = BaseParser.NOTHING
 
-        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_JUMP_BRANCH_FOR_$indentation"].toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag jump branch found for $indentation")
@@ -44,11 +45,11 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
         }
     }
 
-    object ELSE : DrillHead<Array<LinScript>> {
-        override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    object ELSE : DrillHead<Array<LinEntry>> {
+        override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
         override fun OpenSpiralLanguageParser.syntax(): Rule = BaseParser.NOTHING
 
-        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+        override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
             val indentation = parser.flagCheckIndentation - 1
             val branch = parser["FLAG_ELSE_BRANCH_FOR_$indentation"].toString().toIntOrNull()
                     ?: throw SpiralDrillException("No flag else branch found for $indentation")
@@ -61,7 +62,7 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
     }
 
     val cmd = "LIN-IF-GAME"
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
@@ -100,7 +101,7 @@ object LinIfRandDrill : DrillHead<Array<LinScript>> {
                     pushAction(listOf(SpiralDrillBit(JOIN_BACK, "")))
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
         val indent = parser.flagCheckIndentation++
         val jumpTo = parser.findLabel()
         val jumpElse = parser.findLabel()

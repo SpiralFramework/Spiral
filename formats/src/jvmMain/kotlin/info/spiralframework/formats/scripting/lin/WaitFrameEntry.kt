@@ -1,6 +1,8 @@
 package info.spiralframework.formats.scripting.lin
 
-class WaitFrameEntry(override val opCode: Int): LinScript {
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+
+class WaitFrameEntry(override val opcode: Int): LinEntry {
     companion object {
         val DR1: WaitFrameEntry
             get() = WaitFrameEntry(0x3B)

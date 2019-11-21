@@ -1,5 +1,6 @@
 package info.spiralframework.osl.data.nonstopDebate
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.customLin
 import info.spiralframework.formats.customNonstopDebate
 import info.spiralframework.formats.data.NonstopDebateSection
@@ -31,17 +32,17 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
 
     val customNonstopDebate = customNonstopDebate { this.game = this@NonstopDebateMinigame.game }
 
-    val preScriptEntries: MutableList<LinScript> = ArrayList()
-    val preTextEntries: MutableList<LinScript> = ArrayList()
-    val postTextEntries: MutableList<LinScript> = ArrayList()
-    val postScriptEntries: MutableList<LinScript> = ArrayList()
+    val preScriptEntries: MutableList<LinEntry> = ArrayList()
+    val preTextEntries: MutableList<LinEntry> = ArrayList()
+    val postTextEntries: MutableList<LinEntry> = ArrayList()
+    val postScriptEntries: MutableList<LinEntry> = ArrayList()
 
     val textSections: MutableList<NonstopDebateMinigameSection> = ArrayList()
-    val workingTextStack: MutableList<LinScript> = ArrayList()
+    val workingTextStack: MutableList<LinEntry> = ArrayList()
     var sectionStack: NonstopDebateSection? = null
-    val correctStack: MutableList<LinScript> = ArrayList()
-    val incorrectStack: MutableList<LinScript> = ArrayList()
-    val textStack: MutableList<LinScript> = ArrayList()
+    val correctStack: MutableList<LinEntry> = ArrayList()
+    val incorrectStack: MutableList<LinEntry> = ArrayList()
+    val textStack: MutableList<LinEntry> = ArrayList()
 
     var characterDefined: Boolean = false
     var spriteDefined: Boolean = false
@@ -96,69 +97,69 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
 
     val labels: MutableList<Int> = ArrayList()
 
-    fun addPreScriptEntry(entry: LinScript) {
+    fun addPreScriptEntry(entry: LinEntry) {
         preScriptEntries.add(entry)
     }
 
-    fun addPreTextEntry(entry: LinScript) {
+    fun addPreTextEntry(entry: LinEntry) {
         preTextEntries.add(entry)
     }
 
-    fun addPostTextEntry(entry: LinScript) {
+    fun addPostTextEntry(entry: LinEntry) {
         postTextEntries.add(entry)
     }
 
-    fun addPostScriptEntry(entry: LinScript) {
+    fun addPostScriptEntry(entry: LinEntry) {
         postScriptEntries.add(entry)
     }
 
-    fun addPreScriptEntries(entries: Array<LinScript>) {
+    fun addPreScriptEntries(entries: Array<LinEntry>) {
         preScriptEntries.addAll(entries)
     }
 
-    fun addPreTextEntries(entries: Array<LinScript>) {
+    fun addPreTextEntries(entries: Array<LinEntry>) {
         preTextEntries.addAll(entries)
     }
 
-    fun addPostTextEntries(entries: Array<LinScript>) {
+    fun addPostTextEntries(entries: Array<LinEntry>) {
         postTextEntries.addAll(entries)
     }
 
-    fun addPostScriptEntries(entries: Array<LinScript>) {
+    fun addPostScriptEntries(entries: Array<LinEntry>) {
         postScriptEntries.addAll(entries)
     }
 
-    fun addWorkingTextEntry(entry: LinScript) {
+    fun addWorkingTextEntry(entry: LinEntry) {
         workingTextStack.add(entry)
     }
 
-    fun addWorkingTextEntries(entries: Array<LinScript>) {
+    fun addWorkingTextEntries(entries: Array<LinEntry>) {
         workingTextStack.addAll(entries)
     }
 
-    fun addTextEntry(entry: LinScript) {
+    fun addTextEntry(entry: LinEntry) {
         workingTextStack.add(entry)
         textStack.add(entry)
     }
 
-    fun addTextEntries(entries: Array<LinScript>) {
+    fun addTextEntries(entries: Array<LinEntry>) {
         workingTextStack.addAll(entries)
         textStack.addAll(entries)
     }
 
-    fun addCorrectEntry(entry: LinScript) {
+    fun addCorrectEntry(entry: LinEntry) {
         correctStack.add(entry)
     }
 
-    fun addCorrectEntries(entries: Array<LinScript>) {
+    fun addCorrectEntries(entries: Array<LinEntry>) {
         correctStack.addAll(entries)
     }
 
-    fun addIncorrectEntry(entry: LinScript) {
+    fun addIncorrectEntry(entry: LinEntry) {
         incorrectStack.add(entry)
     }
 
-    fun addIncorrectEntries(entries: Array<LinScript>) {
+    fun addIncorrectEntries(entries: Array<LinEntry>) {
         incorrectStack.addAll(entries)
     }
 
@@ -212,7 +213,7 @@ class NonstopDebateMinigame(val game: HopesPeakKillingGame) {
                 }
             }
 
-            val textEntries: Array<LinScript> = if (textStack.isEmpty()) {
+            val textEntries: Array<LinEntry> = if (textStack.isEmpty()) {
                 arrayOf(workingTextStack.firstOfInstanceOrNull(TextEntry::class), workingTextStack.firstOfInstanceOrNull(SpriteEntry::class)).filterNotNull().toTypedArray()
             } else {
                 textStack.toTypedArray()

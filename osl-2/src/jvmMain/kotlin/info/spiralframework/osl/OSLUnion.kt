@@ -2,7 +2,7 @@ package info.spiralframework.osl
 
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.CustomWordScript
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.wrd.WrdScript
 
 sealed class OSLUnion {
@@ -26,14 +26,14 @@ sealed class OSLUnion {
         inline operator fun <T> invoke(operation: Boolean.() -> T): T = boolean.operation()
     }
 
-    data class LinEntryType(val entry: LinScript): OSLUnion() {
+    data class LinEntryType(val entry: LinEntry): OSLUnion() {
         override fun represent(): String = entry.format()
 
-        inline operator fun <T> invoke(operation: LinScript.() -> T): T = entry.operation()
+        inline operator fun <T> invoke(operation: LinEntry.() -> T): T = entry.operation()
     }
     data class CustomLinType(val lin: CustomLin): OSLUnion() {
         override fun represent(): String = buildString {
-            appendln(lin.entries.joinToString("\n", transform = LinScript::format))
+            appendln(lin.entries.joinToString("\n", transform = LinEntry::format))
             lin.linesOfText.forEachIndexed { index, str -> appendln("${index shr 8},${index and 0xFF}: $str") }
         }
 

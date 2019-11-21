@@ -1,14 +1,13 @@
 package info.spiralframework.osl.drills.lin
 
-import info.spiralframework.osl.EnumArithmetic
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinArithmeticGameState: DrillHead<Array<LinScript>> {
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+object LinArithmeticGameState: DrillHead<Array<LinEntry>> {
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
     val cmd = "LIN-ARITHMETIC"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
@@ -35,7 +34,7 @@ object LinArithmeticGameState: DrillHead<Array<LinScript>> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
         val variable = rawParams[0].toString().toInt()
 
         val operationName = rawParams[1].toString()

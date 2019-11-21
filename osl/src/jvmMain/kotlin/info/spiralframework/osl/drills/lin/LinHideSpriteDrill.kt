@@ -1,24 +1,23 @@
 package info.spiralframework.osl.drills.lin
 
-import info.spiralframework.osl.AllButMatcher
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.SpriteEntry
 import org.parboiled.Action
 import org.parboiled.Rule
 import java.util.*
 import kotlin.reflect.KClass
 
-object LinHideSpriteDrill : DrillHead<LinScript> {
+object LinHideSpriteDrill : DrillHead<LinEntry> {
     val cmd: String = "LIN-HIDE-SPRITE"
     val NAME = info.spiralframework.osl.AllButMatcher(charArrayOf(':', '\n'))
     val NUMERAL_REGEX = "\\d+".toRegex()
 
-    override val klass: KClass<LinScript> = LinScript::class
+    override val klass: KClass<LinEntry> = LinEntry::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
@@ -52,7 +51,7 @@ object LinHideSpriteDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val characterStr = rawParams[0].toString()
         val character = parser.customIdentifiers[characterStr]
                 ?: (parser.hopesPeakGame ?: UnknownHopesPeakGame).characterIdentifiers[characterStr]

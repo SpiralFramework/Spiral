@@ -5,6 +5,8 @@ import info.spiralframework.base.common.SpiralContext
 const val SPIRAL_FORMATS_MODULE = "Spiral Formats"
 const val SPIRAL_FORMATS_LOCALE_BUNDLE = "SpiralFormats"
 const val NULL_TERMINATOR = '\u0000'
+const val BOM_BE = 0xFEFF
+const val BOM_LE = 0xFFFE
 
 /** Steam ID for Danganronpa: Trigger Happy Havoc */
 const val STEAM_DANGANRONPA_TRIGGER_HAPPY_HAVOC = "413410"

@@ -4,15 +4,15 @@ import info.spiralframework.osl.LineCodeMatcher
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object NamedLinSpiralDrill : DrillHead<LinScript> {
+object NamedLinSpiralDrill : DrillHead<LinEntry> {
     val cmd = "NAMED-LIN"
 
-    override val klass: KClass<LinScript> = LinScript::class
+    override val klass: KClass<LinEntry> = LinEntry::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
@@ -43,7 +43,7 @@ object NamedLinSpiralDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val opName = rawParams[0].toString()
         rawParams[0] = (parser.hopesPeakGame
                 ?: UnknownHopesPeakGame).opCodes.entries.first { (_, triple) -> opName in triple.first }.key.toString(16)

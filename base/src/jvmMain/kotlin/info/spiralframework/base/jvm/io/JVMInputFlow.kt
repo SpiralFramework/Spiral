@@ -41,7 +41,11 @@ open class JVMInputFlow private constructor(val stream: CountingInputStream): In
                 if (stream.markSupported()) {
                     stream.reset()
                     stream.mark(Int.MAX_VALUE)
-                    return skip(pos)
+                    skip(pos)
+                    return position()
+                } else if (pos >= stream.count) {
+                    skip(pos)
+                    return position()
                 } else {
                     return null
                 }
@@ -49,7 +53,8 @@ open class JVMInputFlow private constructor(val stream: CountingInputStream): In
             InputFlow.FROM_END -> return null
             InputFlow.FROM_POSITION -> {
                 if (pos > 0) {
-                    return skip(pos)
+                    skip(pos)
+                    return position()
                 } else {
                     val currentPosition = position()
                     return seek(currentPosition.toLong() + pos, InputFlow.FROM_BEGINNING)

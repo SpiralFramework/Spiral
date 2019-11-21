@@ -5,18 +5,18 @@ import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.AnimationEntry
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import org.parboiled.Action
 import org.parboiled.Rule
 import org.parboiled.support.Var
 import kotlin.reflect.KClass
 
-object LinAnimationDrill : DrillHead<LinScript> {
+object LinAnimationDrill : DrillHead<LinEntry> {
     val cmd: String = "LIN-ANIMATION"
 
     val NUMERAL_REGEX = "\\d+".toRegex()
 
-    override val klass: KClass<LinScript> = LinScript::class
+    override val klass: KClass<LinEntry> = LinEntry::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
         val unk1 = Var<MutableList<Int>>(ArrayList(5))
@@ -73,7 +73,7 @@ object LinAnimationDrill : DrillHead<LinScript> {
         )
     }
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val majorID = rawParams[0].toString().toInt()
         val minorID = rawParams[1].toString().toInt()
 

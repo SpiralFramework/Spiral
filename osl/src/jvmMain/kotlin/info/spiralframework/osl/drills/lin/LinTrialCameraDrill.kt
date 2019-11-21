@@ -4,14 +4,14 @@ import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.dr1.DR1TrialCameraEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2TrialCameraEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinTrialCameraDrill: DrillHead<LinScript> {
-    override val klass: KClass<LinScript> = LinScript::class
+object LinTrialCameraDrill: DrillHead<LinEntry> {
+    override val klass: KClass<LinEntry> = LinEntry::class
     val cmd = "LIN-TRIAL-CAMERA"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
@@ -34,7 +34,7 @@ object LinTrialCameraDrill: DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
         val third = rawParams[2].toString().toIntOrNull() ?: 0

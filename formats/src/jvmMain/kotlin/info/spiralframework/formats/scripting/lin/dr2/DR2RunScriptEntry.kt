@@ -1,11 +1,11 @@
 package info.spiralframework.formats.scripting.lin.dr2
 
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 
-class DR2RunScriptEntry(val chapter: Int, val scene: Int, val room: Int): LinScript {
+class DR2RunScriptEntry(val chapter: Int, val scene: Int, val room: Int): LinEntry {
     constructor(opCode: Int, args: IntArray): this(args[0], (args[1] shl 8) or args[2], (args[3] shl 8) or args[4])
 
-    override val opCode: Int = 0x1B
+    override val opcode: Int = 0x1B
     override val rawArguments: IntArray = intArrayOf(chapter, scene shr 8, scene % 256, room shr 8, room % 256)
 
     override fun format(): String = "Run Script|$chapter, ${scene shr 8}, ${scene % 256}, ${room shr 8}, ${room % 256}"

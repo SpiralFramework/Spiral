@@ -1,7 +1,7 @@
 package info.spiralframework.formats.scripting
 
 import info.spiralframework.base.util.writeInt32LE
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.scripting.lin.TextCountEntry
 import info.spiralframework.formats.utils.removeEscapes
@@ -11,26 +11,26 @@ import java.io.OutputStream
 class CustomLin {
     var type = 2
     var header: ByteArray = ByteArray(0)
-    val entries: MutableList<LinScript> = ArrayList()
+    val entries: MutableList<LinEntry> = ArrayList()
     val linesOfText: MutableList<String> = ArrayList()
 
     var writeTextBOM: Boolean = true
 
-    fun add(entry: LinScript) {
-        if (entry is LinTextScript) addText(entry)
+    fun add(entry: LinEntry) {
+//        if (entry is LinTextScript) addText(entry)
         entries.add(entry)
     }
 
-    fun addDirectly(entry: LinScript) {
+    fun addDirectly(entry: LinEntry) {
         entries.add(entry)
     }
 
-    fun addAll(entries: Array<LinScript>) {
+    fun addAll(entries: Array<LinEntry>) {
         entries.forEach { entry -> if (entry is LinTextScript) addText(entry) }
         this.entries.addAll(entries)
     }
 
-    fun addAll(entries: List<LinScript>) {
+    fun addAll(entries: List<LinEntry>) {
         entries.forEach { entry -> if (entry is LinTextScript) addText(entry) }
         this.entries.addAll(entries)
     }
@@ -64,7 +64,7 @@ class CustomLin {
 
         entries.forEach { entry ->
             entryData.write(0x70)
-            entryData.write(entry.opCode)
+            entryData.write(entry.opcode)
 
 //            if (entry is LinTextScript) {
 //                val strData = (entry.text ?: "Hello, Null!").removeEscapes().toByteArray(Charsets.UTF_16LE)

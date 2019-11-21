@@ -1,7 +1,7 @@
 package info.spiralframework.formats.game.hpa
 
 import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.utils.OpCodeMap
 import java.util.*
 
@@ -12,7 +12,7 @@ import java.util.*
  */
 interface HopesPeakDRGame: DRGame {
     val pakNames: Map<String, List<String>>
-    val opCodes: OpCodeMap<IntArray, LinScript>
+    val opCodes: OpCodeMap<IntArray, LinEntry>
 
     val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray>
 

@@ -7,7 +7,7 @@ import info.spiralframework.osl.drills.circuits.DrillCircuit
 import info.spiralframework.osl.drills.headerCircuits.ItemSelectionDrill
 import info.spiralframework.formats.scripting.lin.ChangeUIEntry
 import info.spiralframework.formats.scripting.lin.ChoiceEntry
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import org.parboiled.Action
 import org.parboiled.Rule
 
@@ -22,7 +22,7 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                     OptionalWhitespace(),
                     '{',
                     '\n',
-                    Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChangeUIEntry(19, 1)), ""))) },
+                    Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChangeUIEntry(19, 1)), ""))) },
                     OneOrMore(
                             FirstOf(
                                     Sequence(
@@ -39,7 +39,7 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                             OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
-                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(252)), ""))) },
+                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(252)), ""))) },
                                             OpenSpiralLines(),
                                             OptionalWhitespace(),
                                             '}',
@@ -60,7 +60,7 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                             OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
-                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(253)), ""))) },
+                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(253)), ""))) },
                                             OpenSpiralLines(),
                                             OptionalWhitespace(),
                                             '}',
@@ -81,7 +81,7 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                             OptionalInlineWhitespace(),
                                             '{',
                                             '\n',
-                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(254)), ""))) },
+                                            Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(254)), ""))) },
                                             OpenSpiralLines(),
                                             OptionalWhitespace(),
                                             '}',
@@ -93,7 +93,7 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                                             ItemID(),
                                             Action<Any> {
                                                 val id = pop().toString().toIntOrNull() ?: 0
-                                                return@Action push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(id)), "")))
+                                                return@Action push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(id)), "")))
                                             },
                                             Optional(
                                                     OptionalInlineWhitespace(),
@@ -111,6 +111,6 @@ object InternalLinItemSelectionDrill : DrillCircuit {
                             )
                     ),
                     '}',
-                    Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(255)), ""))) }
+                    Action<Any> { push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(255)), ""))) }
             )
 }

@@ -1,8 +1,9 @@
 package info.spiralframework.formats.scripting.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.game.DRGame
 
-data class SetLabelEntry(override val opCode: Int, val id: Int): LinScript {
+data class SetLabelEntry(override val opcode: Int, val id: Int): LinEntry {
     companion object {
         fun DR1(labelID: Int): GoToLabelEntry = GoToLabelEntry(0x2A, labelID)
         fun DR2(labelID: Int): GoToLabelEntry = GoToLabelEntry(0x2C, labelID)

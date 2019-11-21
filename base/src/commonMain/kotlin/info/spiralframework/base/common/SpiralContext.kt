@@ -16,7 +16,7 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
             SpiralConfig by SpiralConfig.NoOp,
             SpiralEnvironment by SpiralEnvironment.NoOp,
             SpiralEventBus by SpiralEventBus.NoOp,
-            SpiralCacheProvider by SpiralCacheProvider.Memory,
+            SpiralCacheProvider by SpiralCacheProvider.Memory(),
             SpiralResourceLoader by SpiralResourceLoader.NoOp {
         override val loadedModules: Map<String, SemanticVersion>
             get() = throw IllegalStateException("NoOp context")

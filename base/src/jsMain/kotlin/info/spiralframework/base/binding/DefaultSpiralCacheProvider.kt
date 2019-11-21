@@ -10,19 +10,4 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @ExperimentalUnsignedTypes
-actual class DefaultSpiralCacheProvider actual constructor() : SpiralCacheProvider {
-    override fun supportsShortTermCaching(): Boolean = false
-
-    override fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
-
-    override fun supportsPersistentCaching(): Boolean = false
-
-    override fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
-
-    override fun supportsTimedCaching(): Boolean = false
-
-    @ExperimentalTime
-    override fun SpiralContext.cacheFor(name: String, duration: Duration): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool()
-
-    override fun prime(catalyst: SpiralContext) {}
-}
+actual typealias DefaultSpiralCacheProvider = SpiralCacheProvider.Memory

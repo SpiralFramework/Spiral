@@ -5,7 +5,7 @@ import info.spiralframework.core.formats.*
 import info.spiralframework.formats.errors.HopesPeakMissingGameException
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.Lin
-import info.spiralframework.formats.scripting.lin.LinTextScript
+import info.spiralframework.formats.common.scripting.lin.LinTextScript
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.use
 import info.spiralframework.osl.OpenSpiralLanguageParser
@@ -47,8 +47,8 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
                     if (script is LinTextScript) {
                         out.println("Text|${script.text?.replace("\n", "\\n") ?: ""}")
                     } else {
-                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull()
-                                ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
+                        out.println("${game.opCodes[script.opcode]?.first?.firstOrNull()
+                                ?: "0x${script.opcode.toString(16)}"}|${script.rawArguments.joinToString()}")
                     }
                 }
 

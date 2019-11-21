@@ -4,16 +4,16 @@ import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.formats.utils.and
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object BasicLinSpiralDrill : DrillHead<LinScript> {
+object BasicLinSpiralDrill : DrillHead<LinEntry> {
     val cmd = "BASIC-LIN"
 
-    override val klass: KClass<LinScript> = LinScript::class
+    override val klass: KClass<LinEntry> = LinEntry::class
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
                     clearTmpStack(cmd),
@@ -40,9 +40,9 @@ object BasicLinSpiralDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript = formScript(rawParams, parser.hopesPeakGame ?: UnknownHopesPeakGame)
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry = formScript(rawParams, parser.hopesPeakGame ?: UnknownHopesPeakGame)
 
-    fun formScript(rawParams: Array<Any>, game: HopesPeakDRGame): LinScript {
+    fun formScript(rawParams: Array<Any>, game: HopesPeakDRGame): LinEntry {
         val opCode = "${rawParams[0]}".toInt(16)
 
         val params = rawParams.copyOfRange(1, rawParams.size).map { str -> "$str".toInt() }.toIntArray()

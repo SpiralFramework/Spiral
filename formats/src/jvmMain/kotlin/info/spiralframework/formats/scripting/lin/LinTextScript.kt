@@ -4,5 +4,5 @@ interface LinTextScript {
     var text: String?
     var textID: Int
 
-    val writeBOM: Boolean
+    val writeByteOrderMarker: Boolean
 }

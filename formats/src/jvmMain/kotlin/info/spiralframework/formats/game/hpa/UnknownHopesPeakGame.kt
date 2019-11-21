@@ -1,30 +1,25 @@
 package info.spiralframework.formats.game.hpa
 
-import info.spiralframework.base.common.text.toIntBaseN
-import info.spiralframework.formats.common.data.JsonOpCode
-import info.spiralframework.formats.scripting.lin.LinScript
-import info.spiralframework.formats.scripting.lin.UnknownEntry
-import info.spiralframework.formats.utils.*
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.utils.OpCodeHashMap
+import info.spiralframework.formats.utils.OpCodeMap
 import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.map
-import kotlinx.serialization.serializer
 import java.io.File
 import java.util.*
 
 object UnknownHopesPeakGame : HopesPeakKillingGame {
     override val pakNames: Map<String, List<String>> = emptyMap()
     @UnstableDefault
-    override val opCodes: OpCodeMap<IntArray, LinScript> =
-            OpCodeHashMap<IntArray, LinScript>().apply {
+    override val opCodes: OpCodeMap<IntArray, LinEntry> =
+            OpCodeHashMap<IntArray, LinEntry>().apply {
                 val opCodes = File("unk-ops.json")
 
-                if (opCodes.exists()) {
-                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
-                            .forEach { (name, op) ->
-                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
-                            }
-                }
+//                if (opCodes.exists()) {
+//                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+//                            .forEach { (name, op) ->
+//                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+//                            }
+//                }
             }
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> = emptyMap()
     override val characterIDs: Map<Int, String> = emptyMap()

@@ -1,5 +1,6 @@
 package info.spiralframework.osl.drills.nonstopDebateMinigame
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.SpiralDrillBit
@@ -9,8 +10,8 @@ import org.parboiled.Rule
 import org.parboiled.support.Var
 import kotlin.reflect.KClass
 
-object NonstopEnableTruthBullets : DrillHead<Array<LinScript>> {
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+object NonstopEnableTruthBullets : DrillHead<Array<LinEntry>> {
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule {
         val evidenceCarrier = Var<MutableList<Int>>(ArrayList())
@@ -52,7 +53,7 @@ object NonstopEnableTruthBullets : DrillHead<Array<LinScript>> {
         )
     }
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
         val label = parser.findLabel()
         val evidence = rawParams[0] as? IntArray ?: intArrayOf()
         return Array(evidence.size + 5) { i ->

@@ -1,5 +1,6 @@
 package info.spiralframework.osl.drills.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.*
@@ -11,9 +12,9 @@ import org.parboiled.Rule
 import kotlin.reflect.KClass
 
 /** This may be easier to do with 0x33's op code 14 */
-object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
+object LinRandChoicesDrill : DrillHead<Array<LinEntry>> {
     val cmd = "LIN-RANDOM-CHOICES"
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
@@ -152,7 +153,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         groups[0].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
+                                        push(listOf(SpiralDrillBit<LinEntry>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     2 -> {
                                         val ifTrue = findLabel()
@@ -177,7 +178,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         groups[1].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
+                                        push(listOf(SpiralDrillBit<LinEntry>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     3 -> {
                                         val loop = findLabel()
@@ -220,7 +221,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         groups[2].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
+                                        push(listOf(SpiralDrillBit<LinEntry>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     4 -> {
                                         val firstIf = findLabel()
@@ -261,7 +262,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         groups[3].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
+                                        push(listOf(SpiralDrillBit<LinEntry>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                     5 -> {
                                         val loop = findLabel()
@@ -320,7 +321,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
 
                                         groups[4].forEach(this::pushValue)
 
-                                        push(listOf(SpiralDrillBit<LinScript>(SetLabelEntry.forGame(drGame, join))))
+                                        push(listOf(SpiralDrillBit<LinEntry>(SetLabelEntry.forGame(drGame, join))))
                                     }
                                 }
 
@@ -330,7 +331,7 @@ object LinRandChoicesDrill : DrillHead<Array<LinScript>> {
                     "}"
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry>? {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry.forGame(parser.drGame, label))

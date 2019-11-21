@@ -4,8 +4,8 @@ import info.spiralframework.formats.game.hpa.HopesPeakKillingGame
 import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.CustomNonstopDebate
 import info.spiralframework.formats.data.NonstopDebateSection
-import info.spiralframework.formats.scripting.lin.LinScript
-import info.spiralframework.formats.scripting.lin.LinTextScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.lin.LinTextScript
 import info.spiralframework.formats.utils.castToTypedArray
 import info.spiralframework.osl.SpiralDrillBit
 import info.spiralframework.osl.data.nonstopDebate.NonstopDebateMinigame
@@ -21,7 +21,7 @@ open class CustomNonstopMinigameOSL(val game: HopesPeakKillingGame) : OSLCompila
 
     override fun <T : Any> handle(drill: SpiralDrillBit, product: T, klass: KClass<out T>) {
         when (product) {
-            is LinScript -> {
+            is LinEntry -> {
                 if (product is LinTextScript && stage <= OSLVariable.VALUES.NONSTOP_STAGE_TEXT && operatingBlock == OSLVariable.VALUES.NONSTOP_OPERATING_BLOCK_NONE) {
                     if (stage < OSLVariable.VALUES.NONSTOP_STAGE_TEXT)
                         stage = OSLVariable.VALUES.NONSTOP_STAGE_TEXT
@@ -45,7 +45,7 @@ open class CustomNonstopMinigameOSL(val game: HopesPeakKillingGame) : OSLCompila
             }
             is Array<*> -> {
                 if (klass == CustomLinOSL.ARRAY_LIN_SCRIPT) {
-                    val scripts = product.castToTypedArray<LinScript>() ?: emptyArray()
+                    val scripts = product.castToTypedArray<LinEntry>() ?: emptyArray()
 
                     if (scripts.any { script -> script is LinTextScript } && stage <= OSLVariable.VALUES.NONSTOP_STAGE_TEXT && operatingBlock == OSLVariable.VALUES.NONSTOP_OPERATING_BLOCK_NONE) {
                         if (stage < OSLVariable.VALUES.NONSTOP_STAGE_TEXT)

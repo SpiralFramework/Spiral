@@ -2,7 +2,9 @@ package info.spiralframework.base.jvm.io
 
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
+import info.spiralframework.base.common.io.DataPool
+import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.TimedDataPool
 import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.jvm.io.files.FileDataPool
@@ -21,14 +23,20 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
     override fun supportsPersistentCaching(): Boolean = true
     override fun supportsTimedCaching(): Boolean = true
 
-    override fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.isCachedShortTerm(name: String): Boolean = File(shortTermDir, name).exists()
+
+    override suspend fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> =
             ShortTermFileDataPool(File(shortTermDir, name))
 
-    override fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = File(persistentDir, name).exists()
+
+    override suspend fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> =
             FileDataPool(File(persistentDir, name))
 
+    override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = isCachedShortTerm(name)
+
     @ExperimentalTime
-    override fun SpiralContext.cacheFor(name: String, duration: Duration): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration): DataPool<out InputFlow, out OutputFlow> =
             TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration)
 
     override fun prime(catalyst: SpiralContext) {

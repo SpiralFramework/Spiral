@@ -1,12 +1,12 @@
 package info.spiralframework.formats.scripting
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
-import info.spiralframework.formats.scripting.lin.LinScript
 import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.formats.utils.and
@@ -46,7 +46,7 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
     val textBlock: Int
 
     val header: ByteArray
-    val entries: Array<LinScript>
+    val entries: Array<LinEntry>
 
     init {
         with(context) {
@@ -74,7 +74,7 @@ class Lin private constructor(context: SpiralContext, val game: HopesPeakDRGame,
                 }
 
                 header = ByteArray(headerSize)
-                val entries: MutableList<LinScript> = ArrayList()
+                val entries: MutableList<LinEntry> = ArrayList()
 
                 require(textBlock > headerSpace) { context.localise("formats.lin.invalid_text_block", textBlock, headerSpace) }
 

@@ -21,12 +21,17 @@ interface InputFlow : DataCloseable {
     suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
     suspend fun read(b: ByteArray, off: Int, len: Int): Int?
     suspend fun skip(n: ULong): ULong?
-    suspend fun seek(pos: Long, mode: Int): ULong? = throw IllegalStateException("This flow is not seekable")
+    suspend fun seek(pos: Long, mode: Int): ULong? = null
     suspend fun position(): ULong
 
     suspend fun available(): ULong?
     suspend fun remaining(): ULong?
     suspend fun size(): ULong?
+}
+
+@ExperimentalUnsignedTypes
+interface PeekableInputFlow: InputFlow {
+    suspend fun peek(forward: Int = 1): Int?
 }
 
 @ExperimentalUnsignedTypes
@@ -68,7 +73,7 @@ suspend fun InputFlow.readAndClose(bufferSize: Int = 8192): ByteArray {
 }
 
 @ExperimentalUnsignedTypes
-suspend inline fun <T> InputFlow.fauxSeekFromStart(offset: ULong, dataSource: DataSource<*>, noinline block: suspend (InputFlow) -> T): T? {
+suspend inline fun <F: InputFlow, T> F.fauxSeekFromStart(offset: ULong, dataSource: DataSource<out F>, noinline block: suspend (F) -> T): T? {
     val bookmark = position()
     return if (seek(offset.toLong(), InputFlow.FROM_BEGINNING) == null) {
         val flow = dataSource.openInputFlow() ?: return null

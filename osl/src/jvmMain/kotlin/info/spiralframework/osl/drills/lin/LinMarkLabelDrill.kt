@@ -2,15 +2,15 @@ package info.spiralframework.osl.drills.lin
 
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.SetLabelEntry
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinMarkLabelDrill : DrillHead<LinScript> {
-    override val klass: KClass<LinScript> = LinScript::class
+object LinMarkLabelDrill : DrillHead<LinEntry> {
+    override val klass: KClass<LinEntry> = LinEntry::class
 
     val cmd = "LIN-MARK-LABEL"
 
@@ -30,7 +30,7 @@ object LinMarkLabelDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
         val second = rawParams[1].toString().toIntOrNull() ?: 0
 

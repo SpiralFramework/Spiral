@@ -4,13 +4,13 @@ import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.SetFlagEntry
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinSetFlagDrill : DrillHead<LinScript> {
-    override val klass: KClass<LinScript> = LinScript::class
+object LinSetFlagDrill : DrillHead<LinEntry> {
+    override val klass: KClass<LinEntry> = LinEntry::class
 
     val cmd = "LIN-SET-FLAG"
 
@@ -35,7 +35,7 @@ object LinSetFlagDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val group = rawParams[0].toString().toIntOrNull() ?: 0
         val flagID = rawParams[1].toString().toIntOrNull() ?: 0
 

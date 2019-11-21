@@ -3,7 +3,7 @@ package info.spiralframework.osl.drills.lin
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.game.hpa.UDG
-import info.spiralframework.formats.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.SpeakerEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.osl.OpenSpiralLanguageParser
@@ -11,8 +11,8 @@ import info.spiralframework.osl.drills.DrillHead
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinSpeakerDrill : DrillHead<LinScript> {
-    override val klass: KClass<LinScript> = LinScript::class
+object LinSpeakerDrill : DrillHead<LinEntry> {
+    override val klass: KClass<LinEntry> = LinEntry::class
     val cmd = "LIN-SPEAKER"
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
@@ -31,7 +31,7 @@ object LinSpeakerDrill : DrillHead<LinScript> {
                     pushStackWithHead(cmd)
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinScript {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): LinEntry {
         val first = rawParams[0].toString().toIntOrNull() ?: 0
 
         return when (parser.hopesPeakGame) {

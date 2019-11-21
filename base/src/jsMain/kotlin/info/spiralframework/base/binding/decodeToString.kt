@@ -52,3 +52,6 @@ fun uuidString(): String {
         append(((lsb shr 0) and 0xFFFFFFFFFFFFu).toString(16).padStart(12, '0'))
     }
 }
+
+@ExperimentalStdlibApi
+actual suspend fun String.encodeToString(charset: TextCharsets): ByteArray = manuallyEncode(this, charset)

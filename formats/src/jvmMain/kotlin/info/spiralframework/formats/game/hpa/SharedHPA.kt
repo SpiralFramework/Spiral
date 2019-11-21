@@ -1,6 +1,6 @@
 package info.spiralframework.formats.game.hpa
 
-import info.spiralframework.formats.common.data.JsonGameStrings
+import info.spiralframework.formats.common.data.json.JsonGameStrings
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import java.io.InputStream

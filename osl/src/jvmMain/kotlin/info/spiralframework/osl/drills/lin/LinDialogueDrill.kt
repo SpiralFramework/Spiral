@@ -1,5 +1,6 @@
 package info.spiralframework.osl.drills.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.game.hpa.UDG
@@ -15,11 +16,11 @@ import org.parboiled.Rule
 import org.parboiled.support.Var
 import kotlin.reflect.KClass
 
-object LinDialogueDrill : DrillHead<Array<LinScript>> {
+object LinDialogueDrill : DrillHead<Array<LinEntry>> {
     val NAME = info.spiralframework.osl.AllButMatcher(charArrayOf(':', '\n', '('))
     val cmd = "LIN-DIALOGUE"
 
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
     override fun OpenSpiralLanguageParser.syntax(): Rule {
         val character = Var<Int>(0)
 
@@ -94,7 +95,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
         )
     }
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript> {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry> {
         val game = parser.hopesPeakGame ?: UnknownHopesPeakGame
         val speakerID = rawParams[0].toString().toIntOrNull() ?: 0
         val spriteID = rawParams[1].toString().toIntOrNull()
@@ -103,7 +104,7 @@ object LinDialogueDrill : DrillHead<Array<LinScript>> {
         val trialCamera = if (trialCameraMajor != null && trialCameraMinor != null) (trialCameraMajor shl 8) or trialCameraMinor else null
         val text = rawParams[4].toString()
 
-        val entries: MutableList<LinScript> = ArrayList(6)
+        val entries: MutableList<LinEntry> = ArrayList(6)
 
         if (spriteID != null)
             entries.add(SpriteEntry(if (parser.gameContext is info.spiralframework.osl.GameContext.HopesPeakTrialContext) speakerID else 0, speakerID, spriteID, 0, 0))

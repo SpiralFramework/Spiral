@@ -1,7 +1,6 @@
 package info.spiralframework.formats.game.hpa
 
-import info.spiralframework.base.common.text.toIntBaseN
-import info.spiralframework.formats.common.data.JsonOpCode
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr1.DR1LoadMapEntry
 import info.spiralframework.formats.scripting.lin.dr1.DR1LoadScriptEntry
@@ -16,19 +15,9 @@ import kotlinx.serialization.serializer
 import java.io.File
 import java.io.InputStream
 import java.util.*
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.forEach
-import kotlin.collections.hashMapOf
-import kotlin.collections.isNotEmpty
-import kotlin.collections.mapOf
-import kotlin.collections.mapValues
 import kotlin.collections.set
-import kotlin.collections.toIntArray
 
 object DR1 : HopesPeakKillingGame {
     @UnstableDefault
@@ -45,8 +34,8 @@ object DR1 : HopesPeakKillingGame {
     fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = EndFlagCheckEntry()
 
     @UnstableDefault
-    override val opCodes: OpCodeMap<IntArray, LinScript> =
-            OpCodeHashMap<IntArray, LinScript>().apply {
+    override val opCodes: OpCodeMap<IntArray, LinEntry> =
+            OpCodeHashMap<IntArray, LinEntry>().apply {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
                 this[0x01] = null to 3 and ::UnknownEntry
                 this[0x02] = "Text" to 2 and ::TextEntry
@@ -63,6 +52,7 @@ object DR1 : HopesPeakKillingGame {
                 this[0x0D] = "Manage Item" to 3 and ::UnknownEntry
                 this[0x0E] = null to 2 and ::UnknownEntry
                 this[0x0F] = "Set Title" to 3 and ::SetStudentTitleEntry
+
                 this[0x10] = "Set Report Info" to 3 and ::SetStudentReportInfo
                 this[0x11] = null to 4 and ::UnknownEntry
                 this[0x12] = null to -1 and ::UnknownEntry
@@ -74,12 +64,12 @@ object DR1 : HopesPeakKillingGame {
                 this[0x18] = null to -1 and ::UnknownEntry
                 this[0x19] = arrayOf("Script", "Load Script") to 3 and ::DR1LoadScriptEntry
                 this[0x1A] = arrayOf("Stop Script", "End Script") to 0 and DR1::StopScriptEntry
-
                 this[0x1B] = "Run Script" to 3 and ::DR1RunScript
                 this[0x1C] = null to 0 and ::UnknownEntry
                 this[0x1D] = null to -1 and ::UnknownEntry
                 this[0x1E] = "Sprite" to 5 and ::SpriteEntry
                 this[0x1F] = "Screen Flash" to 7 and ::ScreenFlashEntry
+
                 this[0x20] = null to 5 and ::UnknownEntry
                 this[0x21] = "Speaker" to 1 and ::SpeakerEntry
                 this[0x22] = "Screen Fade" to 3 and ::ScreenFadeEntry
@@ -96,6 +86,7 @@ object DR1 : HopesPeakKillingGame {
                 this[0x2D] = null to -1 and ::UnknownEntry
                 this[0x2E] = null to 2 and ::UnknownEntry
                 this[0x2F] = null to 10 and ::UnknownEntry
+
                 this[0x30] = "Show Background" to 3 and ::ShowBackgroundEntry
                 this[0x31] = null to -1 and ::UnknownEntry
                 this[0x32] = null to 1 and ::UnknownEntry
@@ -112,12 +103,12 @@ object DR1 : HopesPeakKillingGame {
 
                 val opCodes = File("dr1-ops.json")
 
-                if (opCodes.exists()) {
-                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
-                            .forEach { (name, op) ->
-                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
-                            }
-                }
+//                if (opCodes.exists()) {
+//                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+//                            .forEach { (name, op) ->
+//                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+//                            }
+//                }
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =

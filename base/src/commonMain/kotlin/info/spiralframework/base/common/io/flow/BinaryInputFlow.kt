@@ -4,17 +4,18 @@ import info.spiralframework.base.common.io.DataCloseableEventHandler
 import kotlin.math.min
 
 @ExperimentalUnsignedTypes
-class BinaryInputFlow(private val array: ByteArray, private var pos: Int = 0, private var size: Int = array.size): InputFlow {
+class BinaryInputFlow(private val array: ByteArray, private var pos: Int = 0, private var size: Int = array.size): PeekableInputFlow {
     override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
 
     private var closed: Boolean = false
     override val isClosed: Boolean
         get() = closed
 
+    override suspend fun peek(forward: Int): Int? = if ((pos + forward - 1) < size) array[pos + forward - 1].toInt() and 0xFF else null
     override suspend fun read(): Int? = if (pos < size) array[pos++].toInt() and 0xFF else null
     override suspend fun read(b: ByteArray): Int? = read(b, 0, b.size)
     override suspend fun read(b: ByteArray, off: Int, len: Int): Int? {
-        if (len < 0 || off < 0 || b.size > len - off)
+        if (len < 0 || off < 0 || len > b.size - off)
             throw IndexOutOfBoundsException()
 
         if (pos >= size)

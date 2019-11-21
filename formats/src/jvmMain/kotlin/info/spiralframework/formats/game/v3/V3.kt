@@ -1,7 +1,7 @@
 package info.spiralframework.formats.game.v3
 
 import info.spiralframework.base.common.text.toIntBaseN
-import info.spiralframework.formats.common.data.JsonOpCode
+import info.spiralframework.formats.common.data.json.JsonOpCode
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.scripting.EnumWordScriptCommand
 import info.spiralframework.formats.scripting.wrd.*

@@ -1,7 +1,6 @@
 package info.spiralframework.formats.game.hpa
 
-import info.spiralframework.base.common.text.toIntBaseN
-import info.spiralframework.formats.common.data.JsonOpCode
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.*
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadMapEntry
 import info.spiralframework.formats.scripting.lin.dr2.DR2LoadScriptEntry
@@ -35,8 +34,8 @@ object DR2 : HopesPeakKillingGame {
     fun EndFlagCheckEntry(opCode: Int, args: IntArray): EndFlagCheckEntry = EndFlagCheckEntry()
 
     @UnstableDefault
-    override val opCodes: OpCodeMap<IntArray, LinScript> =
-            OpCodeHashMap<IntArray, LinScript>().apply {
+    override val opCodes: OpCodeMap<IntArray, LinEntry> =
+            OpCodeHashMap<IntArray, LinEntry>().apply {
                 this[0x00] = "Text Count" to 2 and ::TextCountEntry
                 this[0x01] = null to 4 and ::UnknownEntry
                 this[0x02] = "Text" to 2 and ::TextEntry
@@ -103,12 +102,12 @@ object DR2 : HopesPeakKillingGame {
 
                 val opCodes = File("dr2-ops.json")
 
-                if (opCodes.exists()) {
-                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
-                            .forEach { (name, op) ->
-                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
-                            }
-                }
+//                if (opCodes.exists()) {
+//                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+//                            .forEach { (name, op) ->
+//                                this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
+//                            }
+//                }
             }
 
     override val customOpCodeArgumentReader: Map<Int, (LinkedList<Int>) -> IntArray> =

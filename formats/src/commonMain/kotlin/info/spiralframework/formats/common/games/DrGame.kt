@@ -1,12 +1,13 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.formats.common.OpcodeMap
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 /**
  * The Danganronpa Games all share similar properties, which can be accessed here
  * This is only used as a form of abstraction.
  */
-interface DRGame {
+interface DrGame {
     val names: Array<String>
     val identifier: String
         get() = names.firstOrNull() ?: "none"
@@ -15,9 +16,13 @@ interface DRGame {
 
     /** Traits */
 
+    interface ScriptOpcodeFactory<S> {
+        fun entryFor(opcode: Int, rawArguments: IntArray): S
+    }
+
     /** A game that supports lin scripts */
     interface LinScriptable {
-        val linOpcodeMap: OpcodeMap<String>
+        val linOpcodeMap: OpcodeMap<LinEntry>
 
         /** Name -> Internal ID */
         val linCharacterIdentifiers: Map<String, Int>

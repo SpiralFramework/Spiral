@@ -47,3 +47,9 @@ public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Number): Long {
     }
     return sum
 }
+
+/** Puts [value] in this, and returns [value] back */
+fun <K, V> MutableMap<K, V>.putBack(key: K, value: V): V {
+    this[key] = value
+    return value
+}

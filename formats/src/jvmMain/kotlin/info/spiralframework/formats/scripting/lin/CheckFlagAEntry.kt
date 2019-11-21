@@ -1,13 +1,14 @@
 package info.spiralframework.formats.scripting.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.utils.and
 
-class CheckFlagAEntry: LinScript {
+class CheckFlagAEntry: LinEntry {
     val flags: Array<Triple<Int, Int, Int>>
     val flagOperations: IntArray
     val failLabel: Int
 
-    override val opCode: Int = 0x35
+    override val opcode: Int = 0x35
     override val rawArguments: IntArray
 
     constructor(opCode: Int, args: IntArray) {

@@ -1,5 +1,6 @@
 package info.spiralframework.osl
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.*
 
 object ArithmeticOperations {
@@ -9,8 +10,8 @@ object ArithmeticOperations {
     var OVERFLOW = false
 
     //TODO: Make this work on other games
-    fun operate(parser: OpenSpiralLanguageParser, variable: Int, amount: Int, operation: (Int, Int) -> Int): Array<LinScript> {
-        val operations = ArrayList<LinScript>(MAX - MIN * 8)
+    fun operate(parser: OpenSpiralLanguageParser, variable: Int, amount: Int, operation: (Int, Int) -> Int): Array<LinEntry> {
+        val operations = ArrayList<LinEntry>(MAX - MIN * 8)
         val endLabel = parser.findLabel()
 
         for (i in MIN until MAX) {

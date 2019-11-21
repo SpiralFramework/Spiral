@@ -1,5 +1,6 @@
 package info.spiralframework.osl.drills.lin
 
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.game.hpa.DR1
 import info.spiralframework.formats.game.hpa.DR2
 import info.spiralframework.formats.scripting.lin.*
@@ -11,9 +12,9 @@ import org.parboiled.Action
 import org.parboiled.Rule
 import kotlin.reflect.KClass
 
-object LinChoicesDrill : DrillHead<Array<LinScript>> {
+object LinChoicesDrill : DrillHead<Array<LinEntry>> {
     val cmd = "LIN-CHOICES"
-    override val klass: KClass<Array<LinScript>> = Array<LinScript>::class
+    override val klass: KClass<Array<LinEntry>> = Array<LinEntry>::class
 
     override fun OpenSpiralLanguageParser.syntax(): Rule =
             Sequence(
@@ -40,7 +41,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                             '\n',
                             Action<Any> {
                                 data["$cmd-LABEL"] = findLabel()
-                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChangeUIEntry(18, 4)), "")))
+                                push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChangeUIEntry(18, 4)), "")))
                             },
                             OneOrMore(
                                     Sequence(
@@ -55,9 +56,9 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                                 val currentChoice = data["$cmd-CHOICE"]?.toString()?.toIntOrNull() ?: 0
                                                 data["$cmd-CHOICE"] = currentChoice + 1
 
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(ChoiceEntry(currentChoice + 1)), "")))
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(ChoiceEntry(currentChoice + 1)), "")))
                                                 push(listOf(SpiralDrillBit(BasicLinTextDrill, ""), name))
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(when (hopesPeakGame) {
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(when (hopesPeakGame) {
                                                     DR1 -> WaitFrameEntry.DR1
                                                     DR2 -> WaitFrameEntry.DR2
                                                     else -> TODO("Unknown game $hopesPeakGame (Text hasn't been completely documented!)")
@@ -68,7 +69,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                                             '\n',
                                             OpenSpiralLines(),
                                             Action<Any> {
-                                                push(listOf(SpiralDrillBit(StaticDrill<LinScript>(GoToLabelEntry.forGame(drGame, (data["$cmd-LABEL"] as Int))), "")))
+                                                push(listOf(SpiralDrillBit(StaticDrill<LinEntry>(GoToLabelEntry.forGame(drGame, (data["$cmd-LABEL"] as Int))), "")))
                                             },
                                             OptionalWhitespace(),
                                             '}',
@@ -96,7 +97,7 @@ object LinChoicesDrill : DrillHead<Array<LinScript>> {
                     }
             )
 
-    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinScript>? {
+    override fun operate(parser: OpenSpiralLanguageParser, rawParams: Array<Any>): Array<LinEntry>? {
         val label = rawParams[1].toString().toIntOrNull() ?: parser.findLabel()
         if (rawParams[0].toString().isBlank())
             return arrayOf(ChoiceEntry(18), ChoiceEntry(19), ChoiceEntry(255), SetLabelEntry.forGame(parser.drGame, label))
