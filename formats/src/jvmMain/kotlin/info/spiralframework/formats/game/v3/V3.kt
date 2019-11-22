@@ -1,7 +1,7 @@
 package info.spiralframework.formats.game.v3
 
 import info.spiralframework.base.common.text.toIntBaseN
-import info.spiralframework.formats.common.data.json.JsonOpCode
+import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.scripting.EnumWordScriptCommand
 import info.spiralframework.formats.scripting.wrd.*
@@ -101,7 +101,7 @@ object V3 : DRGame {
                 val opCodes = File("v3-ops.json")
 
                 if (opCodes.exists()) {
-                    Json.parse((String.serializer() to JsonOpCode.serializer()).map, opCodes.readText())
+                    Json.parse((String.serializer() to JsonOpcode.serializer()).map, opCodes.readText())
                             .forEach { (name, op) ->
                                 this[op.opcode.toIntBaseN()] = name to op.argCount and ::UnknownEntry
                             }

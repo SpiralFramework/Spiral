@@ -22,6 +22,14 @@ interface DrGame {
 
     /** A game that supports lin scripts */
     interface LinScriptable {
+        object Unknown: LinScriptable {
+            override val linOpcodeMap: OpcodeMap<LinEntry> = emptyMap()
+            override val linCharacterIdentifiers: Map<String, Int> = emptyMap()
+            override val linCharacterIDs: Map<Int, String> = emptyMap()
+            override val linItemNames: Array<String> = emptyArray()
+            override val linColourCodes: Map<String, Int> = emptyMap()
+        }
+
         val linOpcodeMap: OpcodeMap<LinEntry>
 
         /** Name -> Internal ID */
@@ -36,6 +44,7 @@ interface DrGame {
         val linColourCodes: Map<String, Int>
     }
 
+    /** TODO: Figure out how to do this full stop */
     interface LinNonstopScriptable {
         val linNonstopOpcodeNames: OpcodeMap<String>
         val linNonstopSectionSize: Int

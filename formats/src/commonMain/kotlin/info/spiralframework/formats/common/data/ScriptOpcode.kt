@@ -1,8 +1,10 @@
 package info.spiralframework.formats.common.data
 
+import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.formats.common.OpcodeHashMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.OpcodeMutableMap
+import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.games.DrGame
 
 data class FlagCheckDetails(val flagGroupLength: Int, val endFlagCheckOpcode: Int)
@@ -72,6 +74,14 @@ class ScriptOpcodeListBuilder<T> {
     fun flagCheck(opcode: Int, name: String, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) = flagCheck(opcode, arrayOf(name), flagGroupLength, endFlagCheckOpcode, entryConstructor)
     fun flagCheck(opcode: Int, names: Array<String>?, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) {
         opcodes[opcode] = ScriptOpcode(opcode, -1, names, FlagCheckDetails(flagGroupLength, endFlagCheckOpcode), entryConstructor)
+    }
+
+    fun DrGame.ScriptOpcodeFactory<T>.fromList(list: List<JsonOpcode>) = list.forEach { entry ->
+        opcode(
+                entry.opcode.toIntBaseN(),
+                argumentCount = entry.argCount,
+                names = entry.names ?: entry.name?.let { arrayOf(it) }
+        )
     }
 }
 

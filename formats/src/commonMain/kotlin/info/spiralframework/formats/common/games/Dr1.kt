@@ -5,12 +5,14 @@ import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
-import info.spiralframework.formats.common.data.json.Dr1GameJson
+import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownEntry
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.list
 
 @ExperimentalUnsignedTypes
 open class Dr1(
@@ -18,9 +20,13 @@ open class Dr1(
         override val linCharacterIdentifiers: Map<String, Int>,
         override val linColourCodes: Map<String, Int>,
         override val linItemNames: Array<String>,
-        override val pakNames: Map<String, Array<String>>
+        override val pakNames: Map<String, Array<String>>,
+        customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<LinEntry> {
     companion object {
+        @Serializable
+        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
+
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): Dr1? {
             try {
@@ -37,7 +43,16 @@ open class Dr1(
                 //                if (isCachedShortTerm("games/dr1.json"))
                 val gameSource = requireNotNull(loadResource("games/dr1.json", Dr1::class))
                 val gameJson = Json.parse(Dr1GameJson.serializer(), requireNotNull(gameSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-                return Dr1(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names)
+
+                val customOpcodeSource = loadResource("opcodes/dr1.json", Dr1::class)
+                val customOpcodes: List<JsonOpcode>
+                if (customOpcodeSource != null) {
+                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
+                } else {
+                    customOpcodes = emptyList()
+                }
+
+                return Dr1(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes)
             }
         }
     }
@@ -47,7 +62,7 @@ open class Dr1(
     override val identifier: String = "dr1"
 
     override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
-        opcode(0x00, 2, "Text Count")
+        opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x01, argumentCount = 3, names = null)
         opcode(0x02, argumentCount = 2, name = "Text")
         opcode(0x03, argumentCount = 1, name = "Format")
@@ -113,6 +128,8 @@ open class Dr1(
         opcode(0x3A, argumentCount = 0, name = "Wait for Input")
         opcode(0x3B, argumentCount = 0, name = "Wait Frame")
         opcode(0x3C, argumentCount = 0, name = "End Flag Check")
+
+        fromList(customOpcodes)
     }
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
@@ -164,3 +181,7 @@ open class Dr1(
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.Dr1(): Dr1? = Dr1(this)
+
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1.unsafe(this)
