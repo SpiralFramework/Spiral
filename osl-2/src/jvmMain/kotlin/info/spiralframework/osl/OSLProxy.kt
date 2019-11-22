@@ -2,27 +2,96 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
-import info.spiralframework.base.binding.DefaultSpiralResourceLoader
-import info.spiralframework.base.binding.defaultSpiralContext
-import info.spiralframework.base.common.SpiralModuleBase
-import info.spiralframework.base.common.io.SpiralResourceLoader
-import info.spiralframework.base.common.locale.CommonLocale
-import info.spiralframework.base.common.locale.loadWithLocale
+import info.spiralframework.base.locale.CustomLocaleBundle
+import info.spiralframework.formats.archives.SPC
 import info.spiralframework.formats.customLin
+import info.spiralframework.formats.customSPC
 import info.spiralframework.formats.game.v3.V3
+import info.spiralframework.formats.scripting.EnumWordScriptCommand
 import info.spiralframework.formats.scripting.WordScriptFile
 import info.spiralframework.formats.scripting.lin.*
+import info.spiralframework.formats.utils.DataHandler
+import info.spiralframework.json.JsonType
+import info.spiralframework.json.parseJsonFromAntlr
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
+import java.io.PrintStream
+import java.util.*
 
 object OSLProxy {
     @JvmStatic
-    suspend fun main(args: Array<String>) {
-        osl()
+    fun main(args: Array<String>) {
+        if (args[0] == "-x" || args[0] == "--extract") {
+            convertToOsl(args[1])
+            println("Done!")
+        } else if (args[0] == "-o" || args[0] == "--compile") {
+            parseOsl(args[1], args[2])
+            println("Done!")
+        } else {
+            println("Unknown operation ${args[0]}")
+        }
     }
 
-    suspend fun locale() {
+    fun convertToOsl(path: String) {
+        val loadedWrd = WordScriptFile.unsafe(V3, File(path)::inputStream)
+        val out = PrintStream(path.replaceAfterLast('.', "osl"))
+        out.println("OSL Script")
+        out.println()
+//        loadedWrd.labels.forEach { label -> out.println("//Label: $label") }
+//        out.println()
+//        loadedWrd.parameters.forEach { parameter -> out.println("//Parameter: $parameter") }
+//        out.println()
+//        loadedWrd.strings.forEach { string -> out.println("//String: $string") }
+//        out.println()
+        loadedWrd.entries.forEach { section ->
+            section.forEach { entry ->
+                val name = V3.opCodes[entry.opCode]?.first?.firstOrNull() ?: "0x${entry.opCode.toString(16).toUpperCase().padStart(2, '0')}"
+                out.print("$name|")
+                out.println(entry.rawArguments.mapIndexed { index, arg ->
+                    when (V3.opCodeCommandEntries[entry.opCode]?.getOrNull(index) ?: EnumWordScriptCommand.PARAMETER) {
+                        EnumWordScriptCommand.LABEL -> loadedWrd.labels.getOrNull(arg)?.let { "@{$it}" } ?: arg.toString()
+                        EnumWordScriptCommand.PARAMETER -> loadedWrd.parameters.getOrNull(arg)?.let { "%{$it}" } ?: arg.toString()
+                        EnumWordScriptCommand.STRING -> loadedWrd.strings.getOrNull(arg)?.let { "\"$it\"" } ?: arg.toString()
+                        EnumWordScriptCommand.RAW -> arg.toString()
+                    }
+                }.joinToString(","))
+            }
+        }
+    }
+
+    fun parseOsl(path: String, resultSpcPath: String) {
+        val input = CharStreams.fromFileName(path)
+        val lexer = OpenSpiralLexer(input)
+        val tokens = CommonTokenStream(lexer)
+        val parser = OpenSpiralParser(tokens)
+        val tree = parser.script()
+        val visitor = OSLVisitor()
+        visitor.game = V3
+//        val v3GameVisitor = requireNotNull(visitor.gameVisitor as? V3Visitor)
+
+//        val base = WordScriptFile.unsafe(V3, File("C:\\Users\\under\\Downloads\\DRV3-Tools_v0.3.2_beta\\chap1_US\\c01_202_000.wrd")::inputStream)
+//        v3GameVisitor.customWrd.labels.addAll(base.labels.toList().shuffled())
+//        v3GameVisitor.customWrd.parameters.addAll(base.parameters.toList().shuffled())
+//        v3GameVisitor.customWrd.strings.addAll(base.strings.toList().shuffled())
+
+        val result = visitor.visitScript(tree)
+        println(result)
+        require(result is OSLUnion.CustomWrdType)
+        File(path.replaceAfterLast('.', "wrd")).outputStream().use(result.wrd::compile)
+
+        val resultSpcFile = File(resultSpcPath)
+        val baseSpcPath = resultSpcFile.readBytes()
+        val baseSpc = SPC.unsafe(baseSpcPath::inputStream)
+        val spc = customSPC {
+            add(baseSpc)
+            add(path.substringAfterLast('/').substringAfterLast('\\').replaceAfterLast('.', "wrd"), File(path.replaceAfterLast('.', "wrd")))
+        }
+
+        resultSpcFile.outputStream().use(spc::compile)
+    }
+
+    fun locale() {
 //        val input = CharStreams.fromString(buildString {
 //            val data = SpiralLocale::class.java.classLoader.getResourceAsStream("SpiralBase.properties")?.let(InputStream::readBytes)
 //                    ?: return@buildString

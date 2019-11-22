@@ -9,7 +9,8 @@ import info.spiralframework.osl.OSLUnion
 import info.spiralframework.osl.games.DRGameVisitor
 
 open class V3Visitor(val game: V3): DRGameVisitor {
-    private val customWrd = CustomWordScript()
+    //TODO: Make private again
+    val customWrd = CustomWordScript()
 
     override fun handleScriptLine(line: OSLUnion) {
         when (line) {
@@ -38,9 +39,9 @@ open class V3Visitor(val game: V3): DRGameVisitor {
     override fun handleArgumentForEntry(arguments: MutableList<Int>, argument: OSLUnion) {
         when (argument) {
             is OSLUnion.NumberType -> arguments.add(argument { toInt() and 0xFFFF })
-            is OSLUnion.RawStringType -> arguments.addAll(argument { customWrd.string(this) }.toInt16LE())
-            is OSLUnion.LabelType -> arguments.addAll(argument { customWrd.label(this) }.toInt16LE())
-            is OSLUnion.ParameterType -> arguments.addAll(argument { customWrd.parameter(this) }.toInt16LE())
+            is OSLUnion.RawStringType -> arguments.add(argument { customWrd.string(this) })
+            is OSLUnion.LabelType -> arguments.add(argument { customWrd.label(this) })
+            is OSLUnion.ParameterType -> arguments.add(argument { customWrd.parameter(this) })
             is OSLUnion.BooleanType -> TODO("Little more research on this")
             is OSLUnion.LinEntryType -> {}
             is OSLUnion.CustomLinType -> {}
