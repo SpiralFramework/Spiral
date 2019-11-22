@@ -5,10 +5,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
-import info.spiralframework.formats.common.data.buildScriptOpcodes
+import info.spiralframework.formats.common.data.buildLinScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.UnknownEntry
+import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -60,7 +60,7 @@ class UDG(
     override val identifier: String = "udg"
     override val steamID: String = "555950"
 
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<LinEntry> = buildLinScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x01, argumentCount = 2, name = "Text")
         opcode(0x05, argumentCount = 3, name = "Movie")
@@ -78,6 +78,6 @@ class UDG(
     }
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
-        else -> UnknownEntry(opcode, rawArguments)
+        else -> UnknownLinEntry(opcode, rawArguments)
     }
 }

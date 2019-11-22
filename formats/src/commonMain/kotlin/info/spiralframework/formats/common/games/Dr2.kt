@@ -4,10 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
-import info.spiralframework.formats.common.data.buildScriptOpcodes
+import info.spiralframework.formats.common.data.buildLinScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.UnknownEntry
+import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -59,9 +59,19 @@ open class Dr2(
     override val names: Array<String> = arrayOf("DR2", "SDR2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
     override val steamID: String = "413420"
     override val identifier: String = "dr2"
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<LinEntry> = buildLinScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x02, argumentCount = 2, name = "Text")
+        opcode(0x05, argumentCount = 2, name = "Movie")
+        opcode(0x08, argumentCount = 5, name = "Voice Line")
+        opcode(0x09, argumentCount = 3, names = arrayOf("Music", "BGM"))
+
+        opcode(0x14, argumentCount = 6, name = "Trial Camera")
+        opcode(0x15, argumentCount = 4, name = "Load Map")
+        opcode(0x1E, argumentCount = 5, name = "Sprite")
+
+        opcode(0x4B, argumentCount = 0, name = "Wait for Input")
+        opcode(0x4C, argumentCount = 0, name = "Wait Frame")
 
         /**
          * this[0x00] = "Text Count" to 2 and ::TextCountEntry
@@ -133,7 +143,7 @@ open class Dr2(
     }
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
-        else -> UnknownEntry(opcode, rawArguments)
+        else -> UnknownLinEntry(opcode, rawArguments)
     }
 }
 

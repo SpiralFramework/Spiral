@@ -4,10 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
-import info.spiralframework.formats.common.data.buildScriptOpcodes
+import info.spiralframework.formats.common.data.buildLinScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.UnknownEntry
+import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
@@ -61,7 +61,7 @@ open class Dr1(
     override val steamID: String = "413410"
     override val identifier: String = "dr1"
 
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<LinEntry> = buildLinScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x01, argumentCount = 3, names = null)
         opcode(0x02, argumentCount = 2, name = "Text")
@@ -71,7 +71,7 @@ open class Dr1(
         opcode(0x06, argumentCount = 8, name = "Animation")
 //            opcode(0x07, argumentCount = -1, names = null)
         opcode(0x08, argumentCount = 5, name = "Voice Line")
-        opcode(0x09, argumentCount = 3, names = arrayOf("Music, BGM"), entryConstructor = ::UnknownEntry)
+        opcode(0x09, argumentCount = 3, names = arrayOf("Music, BGM"), entryConstructor = ::UnknownLinEntry)
         opcode(0x0A, argumentCount = 3, name = "SFX A")
         opcode(0x0B, argumentCount = 2, name = "SFX B")
         opcode(0x0C, argumentCount = 2, name = "Truth Bullet")
@@ -174,7 +174,7 @@ open class Dr1(
         0x3B -> Dr1WaitFrameEntry(opcode, rawArguments)
         0x3C -> Dr1EndFlagCheckEntry(opcode, rawArguments)
 
-        else -> UnknownEntry(opcode, rawArguments)
+        else -> UnknownLinEntry(opcode, rawArguments)
     }
 }
 

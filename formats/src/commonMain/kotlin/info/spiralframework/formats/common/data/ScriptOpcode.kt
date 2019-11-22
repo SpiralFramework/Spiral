@@ -6,50 +6,30 @@ import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.OpcodeMutableMap
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.games.DrGame
+import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 data class FlagCheckDetails(val flagGroupLength: Int, val endFlagCheckOpcode: Int)
-data class ScriptOpcode<out T>(val opcode: Int, val argumentCount: Int, val names: Array<String>?, val flagCheckDetails: FlagCheckDetails?, val entryConstructor: (Int, IntArray) -> T) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ScriptOpcode<*>) return false
+abstract class ScriptOpcode<out T>(open val opcode: Int, open val argumentCount: Int, open val names: Array<String>?, open val entryConstructor: (Int, IntArray) -> T)
+data class LinScriptOpcode<T: LinEntry>(override val opcode: Int, override val argumentCount: Int, override val names: Array<String>?, val flagCheckDetails: FlagCheckDetails?, override val entryConstructor: (Int, IntArray) -> T): ScriptOpcode<T>(opcode, argumentCount, names, entryConstructor)
 
-        if (opcode != other.opcode) return false
-        if (argumentCount != other.argumentCount) return false
-        if (names != null) {
-            if (other.names == null) return false
-            if (!names.contentEquals(other.names)) return false
-        } else if (other.names != null) return false
-        if (flagCheckDetails != other.flagCheckDetails) return false
-        if (entryConstructor != other.entryConstructor) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = opcode
-        result = 31 * result + argumentCount
-        result = 31 * result + (names?.contentHashCode() ?: 0)
-        result = 31 * result + flagCheckDetails.hashCode()
-        result = 31 * result + entryConstructor.hashCode()
-        return result
-    }
-
-}
-
-class ScriptOpcodeBuilder<T> {
+abstract class ScriptOpcodeBuilder<T> {
     var argumentCount: Int = -1
     var names: Array<String>? = null
-    var flagCheckDetails: FlagCheckDetails? = null
     lateinit var entryConstructor: (Int, IntArray) -> T
 }
 
-class ScriptOpcodeListBuilder<T> {
+open class LinScriptOpcodeBuilder<T: LinEntry>: ScriptOpcodeBuilder<T>() {
+    var flagCheckDetails: FlagCheckDetails? = null
+}
+//open class WrdScriptOpcodeBuilder<T: >
+
+class LinScriptOpcodeListBuilder<T: LinEntry> {
     val opcodes: OpcodeMutableMap<T> = OpcodeHashMap()
 
     fun opcode(opcode: Int, init: ScriptOpcodeBuilder<T>.() -> Unit) {
-        val builder = ScriptOpcodeBuilder<T>()
+        val builder = LinScriptOpcodeBuilder<T>()
         builder.init()
-        opcodes[opcode] = ScriptOpcode(opcode, builder.argumentCount, builder.names, builder.flagCheckDetails, builder.entryConstructor)
+        opcodes[opcode] = LinScriptOpcode(opcode, builder.argumentCount, builder.names, builder.flagCheckDetails, builder.entryConstructor)
     }
 
     fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int) = opcode(opcode, argumentCount, this::entryFor)
@@ -65,7 +45,7 @@ class ScriptOpcodeListBuilder<T> {
     fun opcode(opcode: Int, argumentCount: Int, name: String, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, arrayOf(name), flagCheckDetails, entryConstructor)
     fun opcode(opcode: Int, argumentCount: Int, names: Array<String>?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, names, null, entryConstructor)
     fun opcode(opcode: Int, argumentCount: Int, names: Array<String>?, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) {
-        opcodes[opcode] = ScriptOpcode(opcode, argumentCount, names, flagCheckDetails, entryConstructor)
+        opcodes[opcode] = LinScriptOpcode(opcode, argumentCount, names, flagCheckDetails, entryConstructor)
     }
 
     fun DrGame.ScriptOpcodeFactory<T>.flagCheck(opcode: Int, name: String, flagGroupLength: Int, endFlagCheckOpcode: Int) = flagCheck(opcode, arrayOf(name), flagGroupLength, endFlagCheckOpcode, this::entryFor)
@@ -73,7 +53,7 @@ class ScriptOpcodeListBuilder<T> {
 
     fun flagCheck(opcode: Int, name: String, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) = flagCheck(opcode, arrayOf(name), flagGroupLength, endFlagCheckOpcode, entryConstructor)
     fun flagCheck(opcode: Int, names: Array<String>?, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) {
-        opcodes[opcode] = ScriptOpcode(opcode, -1, names, FlagCheckDetails(flagGroupLength, endFlagCheckOpcode), entryConstructor)
+        opcodes[opcode] = LinScriptOpcode(opcode, -1, names, FlagCheckDetails(flagGroupLength, endFlagCheckOpcode), entryConstructor)
     }
 
     fun DrGame.ScriptOpcodeFactory<T>.fromList(list: List<JsonOpcode>) = list.forEach { entry ->
@@ -85,8 +65,8 @@ class ScriptOpcodeListBuilder<T> {
     }
 }
 
-inline fun <reified T> buildScriptOpcodes(init: ScriptOpcodeListBuilder<T>.() -> Unit): OpcodeMap<T> {
-    val builder = ScriptOpcodeListBuilder<T>()
+inline fun <reified T: LinEntry> buildLinScriptOpcodes(init: LinScriptOpcodeListBuilder<T>.() -> Unit): OpcodeMap<T> {
+    val builder = LinScriptOpcodeListBuilder<T>()
     builder.init()
     return builder.opcodes
 }

@@ -6,7 +6,7 @@ import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.*
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.UnknownEntry
+import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
@@ -97,7 +97,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                         }
                         arguments = rawArguments.toIntArray()
 
-                        entries.add(UnknownEntry(opStart and 0x00FF, arguments))
+                        entries.add(UnknownLinEntry(opStart and 0x00FF, arguments))
                     } else {
                         val rawArguments = ByteArray(opcode!!.argumentCount)
                         require(flow.read(rawArguments) == rawArguments.size, notEnoughData)
