@@ -1,7 +1,10 @@
 package info.spiralframework.formats.common.games
 
+import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
+import info.spiralframework.formats.common.data.EnumWordScriptCommand
 import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 
 /**
  * The Danganronpa Games all share similar properties, which can be accessed here
@@ -58,13 +61,15 @@ interface DrGame {
 
     /** A game that supports word scripts */
     interface WordScriptable {
-        val wrdOpcodeMap: OpcodeMap<String>
+        val wrdOpcodeMap: OpcodeMap<WrdEntry>
+
+        val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand>
 
         /** Name -> Internal ID */
         val wrdCharacterIdentifiers: Map<String, String>
 
         /** Internal ID -> Name */
-        val wrdCharacterIDs: Map<String, String>
+        val wrdCharacterNames: Map<String, String>
 
         val wrdItemNames: Array<String>
 

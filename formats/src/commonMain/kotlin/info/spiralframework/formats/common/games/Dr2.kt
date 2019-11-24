@@ -4,7 +4,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
-import info.spiralframework.formats.common.data.buildLinScriptOpcodes
+import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
@@ -59,7 +59,7 @@ open class Dr2(
     override val names: Array<String> = arrayOf("DR2", "SDR2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
     override val steamID: String = "413420"
     override val identifier: String = "dr2"
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildLinScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x02, argumentCount = 2, name = "Text")
         opcode(0x05, argumentCount = 2, name = "Movie")

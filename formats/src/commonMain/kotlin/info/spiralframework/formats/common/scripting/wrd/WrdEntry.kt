@@ -1,11 +1,8 @@
 package info.spiralframework.formats.common.scripting.wrd
 
-import info.spiralframework.formats.common.data.EnumWordScriptCommand
-
 interface WrdEntry {
     val opcode: Int
     val rawArguments: IntArray
-    val rawArgumentTypes: Array<EnumWordScriptCommand>
 
     /**
      * This should be an interpretable statement in something like OSL

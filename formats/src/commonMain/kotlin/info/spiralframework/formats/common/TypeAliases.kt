@@ -8,3 +8,5 @@ typealias LinEntryConstructor =  (Int, IntArray) -> LinEntry
 typealias OpcodeMap<S> = Map<Int, ScriptOpcode<S>>
 typealias OpcodeMutableMap<S> = MutableMap<Int, ScriptOpcode<S>>
 typealias OpcodeHashMap<S> = HashMap<Int, ScriptOpcode<S>>
+
+typealias OpcodeCommandTypeMap<S> = Map<Int, (Int) -> S>
