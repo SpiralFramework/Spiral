@@ -106,7 +106,7 @@ open class Dr1(
         opcode(0x27, argumentCount = 1, name = "Check Character")
 //            opcode(0x28, argumentCount = -1, names = null, entryConstructor = ::UnknownEntry)
         opcode(0x29, argumentCount = 1, name = "Check Object")
-        opcode(0x2A, argumentCount = 2, name = "Set Label")
+        opcode(0x2A, argumentCount = 2, names = arrayOf("Mark Label", "Set Label"))
         opcode(0x2B, argumentCount = 1, names = arrayOf("Branch", "Choice"))
         opcode(0x2C, argumentCount = 2, names = null)
 //            opcode(0x2D, argumentCount = -1, names = null, entryConstructor = ::UnknownEntry)

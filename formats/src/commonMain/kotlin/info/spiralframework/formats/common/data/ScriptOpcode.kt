@@ -9,7 +9,7 @@ import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.games.DrGame
 
 data class FlagCheckDetails(val flagGroupLength: Int, val endFlagCheckOpcode: Int)
-data class ScriptOpcode<out T>(val opcode: Int, val argumentCount: Int, val names: Array<String>?, val flagCheckDetails: FlagCheckDetails?, val entryConstructor: (Int, IntArray) -> T) {
+data class ScriptOpcode<out T>(val opcode: Int, val argumentCount: Int, val names: Array<out String>?, val flagCheckDetails: FlagCheckDetails?, val entryConstructor: (Int, IntArray) -> T) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ScriptOpcode<*>) return false
@@ -39,7 +39,7 @@ data class ScriptOpcode<out T>(val opcode: Int, val argumentCount: Int, val name
 
 class ScriptOpcodeBuilder<T> {
     var argumentCount: Int = -1
-    var names: Array<String>? = null
+    var names: Array<out String>? = null
     var flagCheckDetails: FlagCheckDetails? = null
     lateinit var entryConstructor: (Int, IntArray) -> T
 }
@@ -56,24 +56,24 @@ class ScriptOpcodeListBuilder<T> {
     fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int) = opcode(opcode, argumentCount, this::entryFor)
     fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, flagCheckDetails: FlagCheckDetails?) = opcode(opcode, argumentCount, flagCheckDetails, this::entryFor)
     fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, name: String) = opcode(opcode, argumentCount, name, this::entryFor)
-    fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, names: Array<String>?) = opcode(opcode, argumentCount, names, this::entryFor)
+    fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, names: Array<out String>?) = opcode(opcode, argumentCount, names, this::entryFor)
     fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, name: String, flagCheckDetails: FlagCheckDetails?) = opcode(opcode, argumentCount, name, flagCheckDetails, this::entryFor)
-    fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, names: Array<String>?, flagCheckDetails: FlagCheckDetails?) = opcode(opcode, argumentCount, names, flagCheckDetails, this::entryFor)
+    fun DrGame.ScriptOpcodeFactory<T>.opcode(opcode: Int, argumentCount: Int, names: Array<out String>?, flagCheckDetails: FlagCheckDetails?) = opcode(opcode, argumentCount, names, flagCheckDetails, this::entryFor)
 
     fun opcode(opcode: Int, argumentCount: Int, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, null, null, entryConstructor)
     fun opcode(opcode: Int, argumentCount: Int, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, null, flagCheckDetails, entryConstructor)
     fun opcode(opcode: Int, argumentCount: Int, name: String, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, arrayOf(name), null, entryConstructor)
     fun opcode(opcode: Int, argumentCount: Int, name: String, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, arrayOf(name), flagCheckDetails, entryConstructor)
-    fun opcode(opcode: Int, argumentCount: Int, names: Array<String>?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, names, null, entryConstructor)
-    fun opcode(opcode: Int, argumentCount: Int, names: Array<String>?, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) {
+    fun opcode(opcode: Int, argumentCount: Int, names: Array<out String>?, entryConstructor: (Int, IntArray) -> T) = opcode(opcode, argumentCount, names, null, entryConstructor)
+    fun opcode(opcode: Int, argumentCount: Int, names: Array<out String>?, flagCheckDetails: FlagCheckDetails?, entryConstructor: (Int, IntArray) -> T) {
         opcodes[opcode] = ScriptOpcode(opcode, argumentCount, names, flagCheckDetails, entryConstructor)
     }
 
     fun DrGame.ScriptOpcodeFactory<T>.flagCheck(opcode: Int, name: String, flagGroupLength: Int, endFlagCheckOpcode: Int) = flagCheck(opcode, arrayOf(name), flagGroupLength, endFlagCheckOpcode, this::entryFor)
-    fun DrGame.ScriptOpcodeFactory<T>.flagCheck(opcode: Int, names: Array<String>?, flagGroupLength: Int, endFlagCheckOpcode: Int) = flagCheck(opcode, names, flagGroupLength, endFlagCheckOpcode, this::entryFor)
+    fun DrGame.ScriptOpcodeFactory<T>.flagCheck(opcode: Int, names: Array<out String>?, flagGroupLength: Int, endFlagCheckOpcode: Int) = flagCheck(opcode, names, flagGroupLength, endFlagCheckOpcode, this::entryFor)
 
     fun flagCheck(opcode: Int, name: String, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) = flagCheck(opcode, arrayOf(name), flagGroupLength, endFlagCheckOpcode, entryConstructor)
-    fun flagCheck(opcode: Int, names: Array<String>?, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) {
+    fun flagCheck(opcode: Int, names: Array<out String>?, flagGroupLength: Int, endFlagCheckOpcode: Int, entryConstructor: (Int, IntArray) -> T) {
         opcodes[opcode] = ScriptOpcode(opcode, -1, names, FlagCheckDetails(flagGroupLength, endFlagCheckOpcode), entryConstructor)
     }
 
@@ -91,6 +91,10 @@ class OpcodeCommandTypeBuilder {
 
     fun opcode(opcode: Int, vararg types: EnumWordScriptCommand) {
         opcodeCommandTypes[opcode] = types::get
+    }
+
+    fun opcode(opcode: Int, vararg types: Int) {
+        opcodeCommandTypes[opcode] = types.map(EnumWordScriptCommand.values()::get)::get
     }
 
     fun opcode(opcode: Int, func: (Int) -> EnumWordScriptCommand) {
