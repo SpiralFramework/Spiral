@@ -1,10 +1,10 @@
 package info.spiralframework.formats.archives
 
+import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.with
 import info.spiralframework.base.util.*
-import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.SPIRAL_FORMATS_MODULE
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource

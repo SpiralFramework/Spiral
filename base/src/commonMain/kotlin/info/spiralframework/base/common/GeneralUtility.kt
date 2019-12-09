@@ -53,3 +53,5 @@ fun <K, V> MutableMap<K, V>.putBack(key: K, value: V): V {
     this[key] = value
     return value
 }
+
+inline fun String.trimNulls(): String = trimEnd(NULL_TERMINATOR)

@@ -2,8 +2,7 @@ package info.spiralframework.osl.drills.lin
 
 import info.spiralframework.osl.OpenSpiralLanguageParser
 import info.spiralframework.osl.drills.DrillHead
-import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
-import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
+import info.spiralframework.formats.game.hpa.*
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.scripting.lin.UnknownEntry
 import info.spiralframework.formats.utils.and

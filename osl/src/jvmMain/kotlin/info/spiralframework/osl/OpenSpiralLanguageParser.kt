@@ -1,6 +1,5 @@
 package info.spiralframework.osl
 
-import info.spiralframework.formats.common.games.hpa.HopesPeakDRGame
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.game.hpa.*
 import info.spiralframework.formats.game.v3.V3
@@ -131,63 +130,63 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open val extraRules = extraRuleBuilders(this)
 
-    var gameContext: info.spiralframework.osl.GameContext? = null
+    var gameContext: GameContext? = null
     var drGame: DRGame?
-        get() = (gameContext as? info.spiralframework.osl.GameContext.DRGameContext)?.game
+        get() = (gameContext as? GameContext.DRGameContext)?.game
         set(value) {
             gameContext = when (value) {
-                DR1 -> info.spiralframework.osl.GameContext.DR1GameContext
-                DR2 -> info.spiralframework.osl.GameContext.DR2GameContext
-                UDG -> info.spiralframework.osl.GameContext.UDGGameContext
-                UnknownHopesPeakGame -> info.spiralframework.osl.GameContext.UnknownHopesPeakGameContext
-                V3 -> info.spiralframework.osl.GameContext.V3GameContextObject
-                is HopesPeakDRGame -> info.spiralframework.osl.GameContext.CatchAllHopesPeakGameContext(value)
+                DR1 -> GameContext.DR1GameContext
+                DR2 -> GameContext.DR2GameContext
+                UDG -> GameContext.UDGGameContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
+                V3 -> GameContext.V3GameContextObject
+                is HopesPeakDRGame -> GameContext.CatchAllHopesPeakGameContext(value)
                 else -> null
             }
         }
     var hopesPeakGame: HopesPeakDRGame?
-        get() = (gameContext as? info.spiralframework.osl.GameContext.HopesPeakGameContext)?.game
+        get() = (gameContext as? GameContext.HopesPeakGameContext)?.game
         set(value) {
             gameContext = when (value) {
-                DR1 -> info.spiralframework.osl.GameContext.DR1GameContext
-                DR2 -> info.spiralframework.osl.GameContext.DR2GameContext
-                UDG -> info.spiralframework.osl.GameContext.UDGGameContext
-                UnknownHopesPeakGame -> info.spiralframework.osl.GameContext.UnknownHopesPeakGameContext
+                DR1 -> GameContext.DR1GameContext
+                DR2 -> GameContext.DR2GameContext
+                UDG -> GameContext.UDGGameContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
                 null -> null
-                else -> info.spiralframework.osl.GameContext.CatchAllHopesPeakGameContext(value)
+                else -> GameContext.CatchAllHopesPeakGameContext(value)
             }
         }
     var v3Game: V3?
-        get() = (gameContext as? info.spiralframework.osl.GameContext.V3GameContext)?.game
+        get() = (gameContext as? GameContext.V3GameContext)?.game
         set(value) {
             gameContext = when (value) {
-                V3 -> info.spiralframework.osl.GameContext.V3GameContextObject
+                V3 -> GameContext.V3GameContextObject
                 null -> null
-                else -> info.spiralframework.osl.GameContext.CatchAllV3GameContext(value)
+                else -> GameContext.CatchAllV3GameContext(value)
             }
         }
 
     var nonstopDebateGame: HopesPeakKillingGame?
-        get() = (gameContext as? info.spiralframework.osl.GameContext.NonstopDebateDataContext)?.game
+        get() = (gameContext as? GameContext.NonstopDebateDataContext)?.game
         set(value) {
             gameContext = when (value) {
-                DR1 -> info.spiralframework.osl.GameContext.DR1NonstopDebateDataContext
-                DR2 -> info.spiralframework.osl.GameContext.DR2NonstopDebateDataContext
-                UnknownHopesPeakGame -> info.spiralframework.osl.GameContext.UnknownHopesPeakNonstopDebateDataContext
+                DR1 -> GameContext.DR1NonstopDebateDataContext
+                DR2 -> GameContext.DR2NonstopDebateDataContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakNonstopDebateDataContext
                 null -> null
-                else -> info.spiralframework.osl.GameContext.CatchAllNonstopDebateDataContext(value)
+                else -> GameContext.CatchAllNonstopDebateDataContext(value)
             }
         }
 
     var hopesPeakKillingGame: HopesPeakKillingGame?
-        get() = (gameContext as? info.spiralframework.osl.GameContext.HopesPeakGameContext)?.game as? HopesPeakKillingGame
+        get() = (gameContext as? GameContext.HopesPeakGameContext)?.game as? HopesPeakKillingGame
         set(value) {
             gameContext = when (value) {
-                DR1 -> info.spiralframework.osl.GameContext.DR1GameContext
-                DR2 -> info.spiralframework.osl.GameContext.DR2GameContext
-                UnknownHopesPeakGame -> info.spiralframework.osl.GameContext.UnknownHopesPeakGameContext
+                DR1 -> GameContext.DR1GameContext
+                DR2 -> GameContext.DR2GameContext
+                UnknownHopesPeakGame -> GameContext.UnknownHopesPeakGameContext
                 null -> null
-                else -> info.spiralframework.osl.GameContext.CatchAllHopesPeakGameContext(value)
+                else -> GameContext.CatchAllHopesPeakGameContext(value)
             }
         }
 
@@ -438,19 +437,19 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     Sequence(
                             Sequence(
                                     OneOrMore(
-                                            OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n', '&'))),
+                                            OneOrMore(AllButMatcher(charArrayOf('\n', '&'))),
                                             '&',
                                             '{',
-                                            OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('"', '}'))),
+                                            OneOrMore(AllButMatcher(charArrayOf('"', '}'))),
                                             '}'
                                     ),
-                                    ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n', Chars.EOI, '}')))
+                                    ZeroOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}')))
                             ),
                             Action<Any> { push(arrayOf(null, match())) }
                     ),
                     Sequence(
                             Sequence(
-                                    OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n', '{', '}'))),
+                                    OneOrMore(AllButMatcher(charArrayOf('\n', '{', '}'))),
                                     '{',
                                     OptionalInlineWhitespace(),
                                     '\n'
@@ -467,7 +466,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             OptionalInlineWhitespace(),
                                             "else",
                                             OptionalInlineWhitespace(),
-                                            ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n', Chars.EOI, '{'))),
+                                            ZeroOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '{'))),
                                             OptionalWhitespace(),
                                             '{',
                                             OptionalInlineWhitespace(),
@@ -483,7 +482,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             )
                     ),
                     Sequence(
-                            OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
+                            OneOrMore(AllButMatcher(charArrayOf('\n', Chars.EOI, '}'))),
                             Action<Any> { push(arrayOf(null, match())) }
                     )
             )
@@ -521,7 +520,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open fun SpiralLinLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is info.spiralframework.osl.GameContext.HopesPeakGameContext },
+                    Action<Any> { gameContext is GameContext.HopesPeakGameContext },
                     FirstOf(
                             FirstOf(extraRules.lin),
                             Sequence(
@@ -562,7 +561,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open fun SpiralWrdLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is info.spiralframework.osl.GameContext.V3GameContext },
+                    Action<Any> { gameContext is GameContext.V3GameContext },
                     FirstOf(
                             FirstOf(extraRules.wrd),
                             WordCommandDrill,
@@ -580,7 +579,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open fun SpiralSTXLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is info.spiralframework.osl.GameContext.STXGameContext },
+                    Action<Any> { gameContext is GameContext.STXGameContext },
                     FirstOf(
                             FirstOf(extraRules.stx),
                             WordStringDrill,
@@ -590,7 +589,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open fun SpiralNonstopDebateLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is info.spiralframework.osl.GameContext.NonstopDebateDataContext },
+                    Action<Any> { gameContext is GameContext.NonstopDebateDataContext },
                     SpiralNonstopDebateLineRaw()
             )
 
@@ -606,7 +605,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
 
     open fun SpiralNonstopMinigameLine(): Rule =
             Sequence(
-                    Action<Any> { gameContext is info.spiralframework.osl.GameContext.NonstopDebateMinigameContext },
+                    Action<Any> { gameContext is GameContext.NonstopDebateMinigameContext },
                     FirstOf(
                             FirstOf(extraRules.nonstopMinigame),
                             Sequence(
@@ -717,8 +716,8 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             }
                     ),
                     Sequence(
-                            FirstOf(info.spiralframework.osl.EnumLinFlagCheck.NAMES),
-                            Action<Any> { push(info.spiralframework.osl.EnumLinFlagCheck.values().first { enum -> match() in enum.names }.flag) }
+                            FirstOf(EnumLinFlagCheck.NAMES),
+                            Action<Any> { push(EnumLinFlagCheck.values().first { enum -> match() in enum.names }.flag) }
                     )
             )
 
@@ -754,8 +753,8 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             }
                     ),
                     Sequence(
-                            FirstOf(info.spiralframework.osl.EnumLinJoinerFlagCheck.NAMES),
-                            Action<Any> { push(info.spiralframework.osl.EnumLinJoinerFlagCheck.values().first { enum -> match() in enum.names }.flag) }
+                            FirstOf(EnumLinJoinerFlagCheck.NAMES),
+                            Action<Any> { push(EnumLinJoinerFlagCheck.values().first { enum -> match() in enum.names }.flag) }
                     )
             )
 
@@ -770,7 +769,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     Sequence(
                             clearTmpStack("LIN-TEXT-$cmd"),
                             "local.",
-                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
+                            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
                             Action<Any> { context ->
                                 val localString = localiser(pop().toString())
                                 val parserCopy = copy()
@@ -802,7 +801,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             clearTmpStack("LIN-TEXT-$cmd"),
                             OneOrMore(FirstOf(
                                     Sequence(
-                                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
                                             '\\',
                                             FirstOf('&', '#'),
                                             Action<Any> { context ->
@@ -811,7 +810,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             }
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
                                             "&clear",
                                             Action<Any> { context ->
                                                 val text = pop().toString()
@@ -822,7 +821,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             }
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
                                             FirstOf("&break", "&br", "&newline"),
                                             Action<Any> { context ->
                                                 val text = pop().toString()
@@ -833,7 +832,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             }
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             FirstOf(
                                                     Sequence(
                                                             '&',
@@ -872,7 +871,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             )
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             FirstOf(
                                                     Sequence(
 
@@ -942,7 +941,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             )
                                     ),
                                     Sequence(
-                                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n').plus(allBut)))),
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
                                             pushTmpFromStack("LIN-TEXT-$cmd")
                                     )
                             )),
@@ -959,7 +958,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     Sequence(
                             clearTmpStack("WRD-TEXT-$cmd"),
                             "local.",
-                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
+                            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf('\\', '\n')).plus(allBut)))),
                             Action<Any> { context ->
                                 val localString = localiser(pop().toString())
                                 val parserCopy = copy()
@@ -991,7 +990,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             clearTmpStack("WRD-TEXT-$cmd"),
                             OneOrMore(FirstOf(
                                     Sequence(
-                                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\\', '\n').plus(allBut)))),
                                             '\\',
                                             FirstOf('&', '#'),
                                             Action<Any> { context ->
@@ -1000,7 +999,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             }
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '\n').plus(allBut)))),
                                             "&clear",
                                             Action<Any> { context ->
                                                 val text = pop().toString()
@@ -1011,7 +1010,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             }
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             Sequence(
                                                     '&',
                                                     FirstOf(WRD_COLOUR_CODES.flatMap { (_, values) -> values.keys }.toTypedArray()),
@@ -1030,7 +1029,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             )
                                     ),
                                     Sequence(
-                                            RuleWithVariables(ZeroOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
+                                            RuleWithVariables(ZeroOrMore(AllButMatcher(charArrayOf('&', '#', '\n').plus(allBut)))),
                                             FirstOf(
                                                     Sequence(
                                                             '&',
@@ -1066,7 +1065,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                                             )
                                     ),
                                     Sequence(
-                                            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(charArrayOf('\n').plus(allBut)))),
+                                            RuleWithVariables(OneOrMore(AllButMatcher(charArrayOf('\n').plus(allBut)))),
                                             pushTmpFromStack("WRD-TEXT-$cmd")
                                     )
                             )),
@@ -1089,7 +1088,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     RuleWithVariables(OneOrMore(ParamMatcher)),
                     '"'
             ),
-            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')))))
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')))))
     )
 
     override fun ParameterBut(cmd: String, vararg allBut: Char): Rule = FirstOf(
@@ -1100,7 +1099,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     '"'
             ),
             Sequence(
-                    RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut)))),
+                    RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut)))),
                     pushTmpFromStack(cmd)
             )
     )
@@ -1111,7 +1110,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                     RuleWithVariables(OneOrMore(ParamMatcher)),
                     '"'
             ),
-            RuleWithVariables(OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut))))
+            RuleWithVariables(OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')')).plus(allBut))))
     )
 
     open fun RuleWithVariables(matching: Rule): Rule =
@@ -1134,7 +1133,7 @@ open class OpenSpiralLanguageParser(open val extraRuleBuilders: ExtraRuleBuilder
                             Sequence(
                                     Sequence(
                                             '%',
-                                            OneOrMore(info.spiralframework.osl.AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')'))))
+                                            OneOrMore(AllButMatcher(whitespace.plus(charArrayOf(',', '|', ')'))))
                                     ),
                                     Action<Any> { match().substring(1).let { key -> key in data || key == "GAME" || key == "ENVIRONMENT" } },
                                     Action<Any> { push(match()) }

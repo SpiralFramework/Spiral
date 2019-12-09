@@ -64,11 +64,11 @@ class CustomWordScript {
                 .distinct()
                 .sorted()
         if (sublabels.isNotEmpty() && sublabels[0] < 0) {
-            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_small", 0, sublabels[0])
+//            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_small", 0, sublabels[0])
         }
 
         if (sublabels.isNotEmpty() && sublabels.last() > sublabels.size) {
-            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_large", sublabels.size + 1, sublabels.last())
+//            DataHandler.LOGGER.warn("formats.custom_wrd.sublabel_too_large", sublabels.size + 1, sublabels.last())
         }
         if (strings.isEmpty() && externalStringCount == 0) {
             val highestTextID = entries.filter { entry -> entry.opCode == 0x46 }

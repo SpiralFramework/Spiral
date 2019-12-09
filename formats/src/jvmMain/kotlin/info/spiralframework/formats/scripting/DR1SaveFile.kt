@@ -1,10 +1,10 @@
 package info.spiralframework.formats.scripting
 
+import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.base.util.readXBytes
-import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import java.io.InputStream

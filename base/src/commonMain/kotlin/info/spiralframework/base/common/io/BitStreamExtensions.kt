@@ -275,19 +275,25 @@ suspend fun InputFlow.readUInt16BE(): Int? {
 
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloatBE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloatLE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloat32BE(): Float? = this.readInt32BE()?.let { Float.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloat32LE(): Float? = this.readInt32LE()?.let { Float.fromBits(it) }
 
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readDoubleBE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readDoubleLE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloat64BE(): Double? = this.readInt64BE()?.let { Double.fromBits(it) }
+
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.readFloat64LE(): Double? = this.readInt64LE()?.let { Double.fromBits(it) }
 
@@ -479,6 +485,7 @@ fun <T> InputFlow.read(serialise: (InputFlow) -> T?): T? = serialise(this)
 
 @ExperimentalUnsignedTypes
 suspend fun OutputFlow.writeFloatBE(float: Float) = writeInt32BE(float.toRawBits())
+
 @ExperimentalUnsignedTypes
 suspend fun OutputFlow.writeFloatLE(float: Float) = writeInt32LE(float.toRawBits())
 
@@ -569,7 +576,7 @@ suspend inline fun InputFlow.readIntXLE(x: Int): Number? {
             for (i in 0 until maxPos) {
                 num = num or ((read()?.toLong() ?: return null) shl (i * 8))
             }
-            return  num
+            return num
         }
     }
 }
@@ -606,23 +613,34 @@ fun Number.toInt16LE(): IntArray {
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String {
-    val data =
-        ByteArray(len.coerceAtLeast(0).run { if (!overrideMaxLen) this.coerceAtMost(1024 * 1024) else this })
+    val data = ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024))
     read(data)
     return data.decodeToString(encoding)
 }
 
 @ExperimentalUnsignedTypes
-suspend fun InputFlow.readXBytes(x: Int): ByteArray = ByteArray(x).apply { this@readXBytes.read(this) }
+suspend fun InputFlow.readAsciiString(len: Int, overrideMaxLen: Boolean = false): String? {
+    val data = ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024))
+    if (read(data) != data.size) return null
+    return String(CharArray(data.size) { data[it].toChar() })
+}
+
+@ExperimentalUnsignedTypes
+suspend fun InputFlow.readNumBytes(num: Int): ByteArray {
+    val data = ByteArray(num)
+    read(data)
+    return data
+}
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun InputFlow.readNullTerminatedUTF8String(): String = readNullTerminatedString(encoding = TextCharsets.UTF_8)
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun InputFlow.readNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
     val data = BinaryOutputFlow()
-    
+
     while (true) {
         val read = readIntXLE(encoding.bytesForNull) ?: break //This **should** work
         require(read != -1) { "Uho..., it's -1 somehow" }
@@ -634,6 +652,7 @@ suspend fun InputFlow.readNullTerminatedString(maxLen: Int = 255, encoding: Text
 
     return data.getData().decodeToString(encoding)
 }
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun InputFlow.readSingleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
@@ -670,6 +689,7 @@ suspend fun InputFlow.readDoubleByteNullTerminatedString(maxLen: Int = 255, enco
 
 @ExperimentalUnsignedTypes
 public suspend fun InputFlow.copyToOutputFlow(output: OutputFlow): Long = copyTo(output)
+
 @ExperimentalUnsignedTypes
 public suspend fun InputFlow.copyTo(output: OutputFlow, bufferSize: Int = 8192, dataSize: Int = Int.MAX_VALUE): Long {
     var bytesCopied: Long = 0

@@ -5,7 +5,7 @@ import info.spiralframework.formats.scripting.CustomLin
 import info.spiralframework.formats.scripting.CustomNonstopDebate
 import info.spiralframework.formats.data.NonstopDebateSection
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.LinTextScript
+import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.utils.castToTypedArray
 import info.spiralframework.osl.SpiralDrillBit
 import info.spiralframework.osl.data.nonstopDebate.NonstopDebateMinigame
