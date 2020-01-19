@@ -21,11 +21,15 @@ open class Dr1(
         override val linColourCodes: Map<String, Int>,
         override val linItemNames: Array<String>,
         override val pakNames: Map<String, Array<String>>,
+        val voiceLineArray: IntArray,
         customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<LinEntry> {
     companion object {
+        private const val MAXIMUM_CHAPTER = 8
+        private const val MAXIMUM_CHARACTER = 33
+        
         @Serializable
-        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
+        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>, val voice_lines: List<Int>)
 
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): Dr1? {
@@ -52,7 +56,7 @@ open class Dr1(
                     customOpcodes = emptyList()
                 }
 
-                return Dr1(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes)
+                return Dr1(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, gameJson.voice_lines.toIntArray(), customOpcodes)
             }
         }
     }
@@ -175,6 +179,54 @@ open class Dr1(
         0x3C -> Dr1EndFlagCheckEntry(opcode, rawArguments)
 
         else -> UnknownLinEntry(opcode, rawArguments)
+    }
+
+    override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
+        val chapter: Int
+
+        when (originalChapter) {
+            10 -> chapter = 7
+            99 -> chapter = 8
+            else -> chapter = originalChapter
+        }
+
+        if (chapter > MAXIMUM_CHAPTER)
+            return -1
+        if (character > 33)
+            return -1
+
+        val characterIndex = (character + chapter + (MAXIMUM_CHAPTER * character)) * 2
+        val minID = voiceLineArray[characterIndex - 1]
+
+        if (minID == 0xFFFF)
+            return -1
+
+        if (voiceID < minID || voiceID > voiceLineArray[characterIndex])
+            return -1
+
+        var baseIndex = 0
+
+        for (charID in 0 until character) {
+            for (chapID in 1 .. MAXIMUM_CHAPTER) {
+                val min = voiceLineArray[((charID + chapID + (MAXIMUM_CHAPTER * charID)) * 2) - 1]
+                val max = voiceLineArray[(charID + chapID + (MAXIMUM_CHAPTER * charID)) * 2]
+                if (min != 0xFFFF)
+                    baseIndex += max - min + 1
+            }
+        }
+
+        for (chapID in 1 until chapter) {
+            val min = voiceLineArray[((character + chapID + (MAXIMUM_CHAPTER * character)) * 2) - 1]
+            val max = voiceLineArray[(character + chapID + (MAXIMUM_CHAPTER * character)) * 2]
+            if (min != 0xFFFF)
+                baseIndex += max - min + 1
+        }
+
+        return baseIndex - minID + voiceID
+    }
+
+    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
 

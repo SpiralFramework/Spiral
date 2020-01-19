@@ -5,7 +5,7 @@ import info.spiralframework.core.formats.*
 import info.spiralframework.formats.errors.HopesPeakMissingGameException
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
 import info.spiralframework.formats.scripting.Lin
-import info.spiralframework.formats.common.scripting.lin.LinTextScript
+import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.use
 import info.spiralframework.osl.OpenSpiralLanguageParser

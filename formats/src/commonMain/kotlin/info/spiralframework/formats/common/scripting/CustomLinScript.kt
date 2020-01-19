@@ -7,7 +7,7 @@ import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.common.io.writeInt16LE
 import info.spiralframework.base.common.io.writeInt32LE
 import info.spiralframework.base.common.sumByLong
-import info.spiralframework.formats.common.NULL_TERMINATOR
+import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 class CustomLinScript {

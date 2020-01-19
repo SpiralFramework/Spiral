@@ -31,6 +31,8 @@ interface DrGame {
             override val linCharacterIDs: Map<Int, String> = emptyMap()
             override val linItemNames: Array<String> = emptyArray()
             override val linColourCodes: Map<String, Int> = emptyMap()
+            override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int = -1
+            override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> = Triple(-1, -1, -1)
         }
 
         val linOpcodeMap: OpcodeMap<LinEntry>
@@ -45,6 +47,9 @@ interface DrGame {
 
         /** A map of the colour to the internal clt number */
         val linColourCodes: Map<String, Int>
+
+        fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int
+        fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>
     }
 
     /** TODO: Figure out how to do this full stop */

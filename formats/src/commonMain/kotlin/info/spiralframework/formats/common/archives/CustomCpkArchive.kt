@@ -4,7 +4,6 @@ import info.spiralframework.base.binding.now
 import info.spiralframework.base.common.*
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.formats.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes

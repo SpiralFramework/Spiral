@@ -145,6 +145,14 @@ open class Dr2(
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
         else -> UnknownLinEntry(opcode, rawArguments)
     }
+
+    override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
 
 @ExperimentalStdlibApi
