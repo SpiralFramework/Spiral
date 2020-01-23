@@ -58,7 +58,7 @@ fun deflateChunkV3(context: SpiralContext, chunk: ByteArray, mode: Int): ByteArr
     with(context) {
         val output: MutableList<Byte> = ArrayList()
 
-        var flag = 1
+//        var flag = 1
         var p = 0
 
         val shift: Int = when(mode) {
