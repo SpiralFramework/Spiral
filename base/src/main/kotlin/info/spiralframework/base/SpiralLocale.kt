@@ -14,6 +14,8 @@ object SpiralLocale {
         get() = localiseString("base.prompt.affirmative")
     val PROMPT_NEGATIVE: String
         get() = localiseString("base.prompt.negative")
+    val PROMPT_EXIT: String
+        get() = localiseString("base.prompt.exit")
 
     fun localise(base: String, vararg values: Any?): String {
         val msg = localisationBundles.firstOrNull { bundle -> bundle.containsKey(base) }?.getString(base) ?: base

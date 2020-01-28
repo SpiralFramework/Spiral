@@ -5,3 +5,6 @@ import info.spiralframework.formats.game.DRGame
 
 class HopesPeakMissingGameException(val providedGame: DRGame?):
         IllegalStateException(locale<String>("formats.exceptions.hpa_missing", if (providedGame == null) "(No game provided)" else providedGame.names.firstOrNull() ?: providedGame))
+
+class V3MissingGameException(val providedGame: DRGame?):
+        IllegalStateException(locale<String>("formats.exceptions.v3_missing", if (providedGame == null) "(No game provided)" else providedGame.names.firstOrNull() ?: providedGame))

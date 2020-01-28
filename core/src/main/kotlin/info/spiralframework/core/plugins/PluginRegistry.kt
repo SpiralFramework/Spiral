@@ -1,19 +1,26 @@
 package info.spiralframework.core.plugins
 
+import com.github.kittinunf.fuel.Fuel
 import info.spiralframework.base.SpiralLocale
 import info.spiralframework.base.config.SpiralConfig
 import info.spiralframework.base.util.*
 import info.spiralframework.core.*
+import info.spiralframework.core.SpiralCoreData.printResponse
 import info.spiralframework.core.plugins.events.*
 import org.greenrobot.eventbus.EventBus
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URLClassLoader
+import java.security.SecureRandom
 import java.util.*
 import java.util.zip.ZipFile
+import kotlin.collections.ArrayList
+import kotlin.experimental.xor
 import kotlin.reflect.full.createInstance
 
-object PluginRegistry {
+object PluginRegistry : SpiralCoreConfigAccessor {
     interface PojoProvider {
         val pojo: SpiralPluginDefinitionPojo
     }
@@ -154,7 +161,8 @@ object PluginRegistry {
         val pluginKlass = classLoader.loadClass(pluginEntry.pojo.pluginClass).kotlin
         val plugin = (pluginKlass.objectInstance
                 ?: runCatching { pluginKlass.createInstance() }.getOrDefault(null)
-                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
+                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin
+                ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
 
         mutableLoadedPlugins.add(plugin)
         plugin.load()
@@ -171,7 +179,7 @@ object PluginRegistry {
     private fun unloadPluginInternal(uid: String) {
         pluginLoaders.remove(uid)?.close()
     }
-    
+
     //Checks
     fun queryEnablePlugin(plugin: PluginEntry): Boolean {
         var loadPlugin = false
@@ -240,7 +248,8 @@ object PluginRegistry {
             } else {
                 if (plugin.source?.openStream()?.verify(signature, publicKey) == true) {
                     //Signature verified
-                    printlnLocale("core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version ?: plugin.pojo.semanticVersion)
+                    printlnLocale("core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version
+                            ?: plugin.pojo.semanticVersion)
                     loadPlugin = true
                 } else {
                     //Signature cannot be verified
@@ -252,6 +261,94 @@ object PluginRegistry {
 
         return loadPlugin
     }
+
+    fun unloadAll(uid: String): List<Triple<String, String, SemVer>> {
+        val loaded = loadedPlugins.filter { plugin -> plugin.uid == uid }
+        loaded.forEach(this::unloadPlugin)
+
+        return loaded.map { plugin -> Triple(plugin.uid, plugin.name, plugin.version) }
+    }
+
+    fun searchDatabase(name: String? = null, description: String? = null): Array<SpiralPluginDefinitionPojo> =
+            Fuel.get("$spiralApiBase/plugins/search", listOfNotNull(name?.let("name"::to), description?.let("desc"::to)))
+                    .timeout(networkConnectTimeout) //Time out if it takes longer than 5s to connect to our API
+                    .timeoutRead(networkReadTimeout) //Time out if it takes longer than 5s to read a response
+                    .response().also(SpiralCoreData::printResponse)
+                    .takeIfSuccessful()
+                    ?.let { SpiralSerialisation.JSON_MAPPER.tryReadValue<Array<SpiralPluginDefinitionPojo>>(it) }
+                    ?: emptyArray()
+
+    fun getDownloadInfo(uid: String, target: String? = null, version: String? = null): SpiralPluginDownloadInfo? =
+            Fuel.get("$spiralApiBase/plugins/${listOfNotNull(uid, target, version).joinToString("/")}/download_info")
+                    .timeout(networkConnectTimeout)
+                    .timeoutRead(networkReadTimeout)
+                    .response().also(SpiralCoreData::printResponse)
+                    .takeIfSuccessful()
+                    ?.let { SpiralSerialisation.JSON_MAPPER.tryReadValue(it) }
+
+    fun getDownloadUrl(uid: String, target: String? = null, version: String? = null): String =
+            "$spiralApiBase/plugins/${listOfNotNull(uid, target, version).joinToString("/")}/download"
+
+    const val QUARANTINE_MAGIC_NUMBER = 0x4C525053544E5251L
+    val quarantineRandom = SecureRandom.getInstanceStrong()
+
+    fun quarantinePlugin(pluginFile: File) {
+        if (isQuarantined(pluginFile))
+            return
+
+        val quarantinePlugin = File(pluginFile.absolutePath + ".quarantine")
+        FileOutputStream(quarantinePlugin).use { out ->
+            //This won't give us a super secure quarantined file, but it will ensure that the file can't just be run
+            //At the point where we need to worry about a process restoring these plugin files, it's already game over
+            val xorNums = ByteArray(8).apply { quarantineRandom.nextBytes(this) }
+
+            out.writeInt64LE(QUARANTINE_MAGIC_NUMBER)
+            xorNums.forEach { out.write(it.toInt() and 0xFF) }
+            FileInputStream(pluginFile).use { pluginIn ->
+                var index = 0
+
+                pluginIn.readChunked { chunk ->
+                    for (i in chunk.indices) {
+                        chunk[i] = chunk[i] xor xorNums[index++ % xorNums.size]
+                    }
+
+                    out.write(chunk)
+                }
+            }
+        }
+
+        FileOutputStream(pluginFile).use { out -> out.write(0) }
+        pluginFile.delete()
+    }
+
+    fun restorePlugin(quarantineFile: File) {
+        if (!isQuarantined(quarantineFile))
+            return
+
+        val pluginFile = File(quarantineFile.absolutePath.substringBeforeLast(".quarantine"))
+        FileOutputStream(pluginFile).use { out ->
+            FileInputStream(quarantineFile).use { pluginIn ->
+                pluginIn.skip(8)
+                val xorNums = ByteArray(8)
+                pluginIn.read(xorNums)
+                var index = 0
+
+                pluginIn.readChunked { chunk ->
+                    for (i in chunk.indices) {
+                        chunk[i] = chunk[i] xor xorNums[index++ % xorNums.size]
+                    }
+
+                    out.write(chunk)
+                }
+            }
+        }
+
+        FileOutputStream(quarantineFile).use { out -> out.write(0) }
+        quarantineFile.delete()
+    }
+
+    fun isQuarantined(pluginFile: File) =
+            FileInputStream(pluginFile).use { stream -> stream.readInt64LE() == QUARANTINE_MAGIC_NUMBER }
 
     init {
         loadPlugin(PluginEntry(SpiralCorePlugin.pojo, null))

@@ -10,6 +10,7 @@ open class SpiralCoreConfig(
         @JsonProperty("network_read_Timeout") val networkReadTimeout: Int?,
         @JsonProperty("api_base") val apiBase: String?,
         @JsonProperty("jenkins_base") val jenkinsBase: String?,
+        @JsonProperty("spiral_api_base") val spiralApiBase: String?,
 
         @JsonProperty("enabled_plugins") val enabledPlugins: Map<String, SemVer>?
 )

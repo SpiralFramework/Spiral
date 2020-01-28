@@ -253,3 +253,5 @@ fun Throwable.retrieveStackTrace(): String {
 
     return String(baos.toByteArray(), Charsets.UTF_8)
 }
+
+fun String.truncate(len: Int, truncateStr: String): String = if (length <= len) this else "${this.substring(0, len)}$truncateStr"

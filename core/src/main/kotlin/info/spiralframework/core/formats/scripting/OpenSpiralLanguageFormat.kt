@@ -5,9 +5,12 @@ import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.errors.HopesPeakMissingGameException
+import info.spiralframework.formats.errors.V3MissingGameException
 import info.spiralframework.formats.game.DRGame
 import info.spiralframework.formats.game.hpa.HopesPeakDRGame
+import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.scripting.Lin
+import info.spiralframework.formats.scripting.WordScriptFile
 import info.spiralframework.formats.scripting.lin.LinTextScript
 import info.spiralframework.formats.utils.DataContext
 import info.spiralframework.formats.utils.DataSource
@@ -33,7 +36,7 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
         return FormatResult.Success(this, OSLDrone(parser, result.valueStack, name), 1.0)
     }
 
-    override fun supportsWriting(data: Any): Boolean = data is Lin
+    override fun supportsWriting(data: Any): Boolean = data is Lin || data is WordScriptFile
 
     override fun write(name: String?, game: DRGame?, context: DataContext, data: Any, stream: OutputStream): FormatWriteResponse {
         when (data) {
@@ -43,14 +46,41 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OSLDrone>, WritableSpiral
 
                 val out = PrintStream(stream)
                 out.println("OSL Script")
-                out.println("Set Game Context to ${game.names.firstOrNull() ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
+                out.println("Set Game Context to ${game.names.firstOrNull()
+                        ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
                 out.println()
                 data.entries.forEach { script ->
                     if (script is LinTextScript) {
                         out.println("Text|${script.text ?: ""}")
                     } else {
-                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull() ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
+                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull()
+                                ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
                     }
+                }
+
+                return FormatWriteResponse.SUCCESS
+            }
+            is WordScriptFile -> {
+                if (game !is V3)
+                    return FormatWriteResponse.FAIL(V3MissingGameException(game))
+
+                val out = PrintStream(stream)
+                out.println("OSL Script")
+                out.println("Set Game Context to ${game.names.firstOrNull()
+                        ?: "CRASH [REASON: $game HAS NO NAMES]"}") //TODO: Actually crash here :/
+                out.println()
+
+                data.labels.forEach { label -> out.println("Word Command Label: $label") }
+                data.parameters.forEach { param -> out.println("Word Command Parameter: $param") }
+                data.strings.forEach { string -> out.println("Word Command String: $string") }
+
+                data.entries.forEach { section ->
+                    section.forEach { script ->
+                        out.println("${game.opCodes[script.opCode]?.first?.firstOrNull()
+                                ?: "0x${script.opCode.toString(16)}"}|${script.rawArguments.joinToString()}")
+                    }
+
+                    out.println()
                 }
 
                 return FormatWriteResponse.SUCCESS

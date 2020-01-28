@@ -12,4 +12,5 @@ object SpiralConfig {
         ProjectDirectories.from("info", "Spiral Framework", "Spiral")
     }
     fun getConfigFile(module: String): File = File(File(projectDirectories.configDir).ensureDirectoryExists(), "$module.yaml").ensureFileExists()
+    fun getPluginFile(name: String): File = File(File(projectDirectories.dataLocalDir, "plugins").ensureDirectoryExists(), name).ensureFileExists()
 }
