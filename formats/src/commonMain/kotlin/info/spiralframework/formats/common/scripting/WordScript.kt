@@ -104,8 +104,15 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         @ExperimentalStdlibApi
         suspend fun SpiralContext.readStrings(flow: InputFlow, count: Int, notEnoughData: () -> Any): Array<String> = Array(count) {
             var length = requireNotNull(flow.read(), notEnoughData)
-            if (length >= 0x80)
-                length += (requireNotNull(flow.read(), notEnoughData) - 1) shl 8
+            if (length > 0x7F) {
+                /**
+                 *  Bitwise maths...
+                 *  :dearlord:
+                 *  The dark arts.
+                 *      - Jill
+                 */
+                length = (length and 0x7F) or (requireNotNull(flow.read(), notEnoughData) shr 7)
+            }
             flow.readDoubleByteNullTerminatedString(length + 2, TextCharsets.UTF_16LE)
         }
 

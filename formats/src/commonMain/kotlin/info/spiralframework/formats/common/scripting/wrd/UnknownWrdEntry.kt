@@ -1,6 +1,10 @@
 package info.spiralframework.formats.common.scripting.wrd
 
-data class UnknownWrdEntry(override val opcode: Int, override val rawArguments: IntArray): WrdEntry {
+import info.spiralframework.formats.common.games.DrGame
+
+data class UnknownWrdEntry(override val opcode: Int, override val rawArguments: IntArray, val wrdGame: DrGame.WordScriptable?): WrdEntry {
+    constructor(opcode: Int, rawArguments: IntArray): this(opcode, rawArguments, DrGame.WordScriptable.Unknown)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is UnknownWrdEntry) return false

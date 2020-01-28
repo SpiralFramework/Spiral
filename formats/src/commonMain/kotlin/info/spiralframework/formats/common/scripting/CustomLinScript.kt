@@ -11,7 +11,7 @@ import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 class CustomLinScript {
-    val _textData: MutableList<String> = ArrayList()
+    private val _textData: MutableList<String> = ArrayList()
     val textData: List<String>
         get() = _textData
 

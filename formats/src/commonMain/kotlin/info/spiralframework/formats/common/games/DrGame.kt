@@ -66,6 +66,14 @@ interface DrGame {
 
     /** A game that supports word scripts */
     interface WordScriptable {
+        object Unknown: WordScriptable {
+            override val wrdOpcodeMap: OpcodeMap<WrdEntry> = emptyMap()
+            override val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand> = emptyMap()
+            override val wrdCharacterIdentifiers: Map<String, String> = emptyMap()
+            override val wrdCharacterNames: Map<String, String> = emptyMap()
+            override val wrdItemNames: Array<String> = emptyArray()
+            override val wrdColourCodes: Map<String, String> = emptyMap()
+        }
         val wrdOpcodeMap: OpcodeMap<WrdEntry>
 
         val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand>

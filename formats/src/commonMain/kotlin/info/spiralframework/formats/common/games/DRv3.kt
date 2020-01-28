@@ -234,6 +234,6 @@ open class DRv3(
     }
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): WrdEntry = when (opcode) {
-        else -> UnknownWrdEntry(opcode, rawArguments)
+        else -> UnknownWrdEntry(opcode, rawArguments, this)
     }
 }

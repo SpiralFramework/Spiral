@@ -71,15 +71,15 @@ fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
 }
 
 @ExperimentalStdlibApi
-expect suspend fun String.encodeToString(charset: TextCharsets): ByteArray
+expect suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray
 @ExperimentalStdlibApi
-suspend fun String.encodeToUTF8String(): ByteArray = encodeToString(TextCharsets.UTF_8)
+suspend fun String.encodeToUTF8ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_8)
 @ExperimentalStdlibApi
-suspend fun String.encodeToUTF16String(): ByteArray = encodeToString(TextCharsets.UTF_16)
+suspend fun String.encodeToUTF16ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16)
 @ExperimentalStdlibApi
-suspend fun String.encodeToUTF16LEString(): ByteArray = encodeToString(TextCharsets.UTF_16LE)
+suspend fun String.encodeToUTF16LEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16LE)
 @ExperimentalStdlibApi
-suspend fun String.encodeToUTF16BEString(): ByteArray = encodeToString(TextCharsets.UTF_16BE)
+suspend fun String.encodeToUTF16BEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16BE)
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
