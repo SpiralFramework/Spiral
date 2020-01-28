@@ -21,7 +21,7 @@ open class Dr2(
         override val linItemNames: Array<String>,
         override val pakNames: Map<String, Array<String>>,
         customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<LinEntry> {
+) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
     companion object {
         @Serializable
         data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
@@ -59,7 +59,7 @@ open class Dr2(
     override val names: Array<String> = arrayOf("DR2", "SDR2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
     override val steamID: String = "413420"
     override val identifier: String = "dr2"
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x02, argumentCount = 2, name = "Text")
         opcode(0x05, argumentCount = 2, name = "Movie")

@@ -1,6 +1,8 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.flow.readBytes
+import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -8,6 +10,7 @@ import info.spiralframework.formats.common.data.buildOpcodeCommandTypes
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
+import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.coroutines.MainScope
@@ -24,7 +27,7 @@ open class DRv3(
         override val wrdColourCodes: Map<String, String>,
         override val wrdItemNames: Array<String>,
         customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.WordScriptable, DrGame.ScriptOpcodeFactory<WrdEntry> {
+) : DrGame, DrGame.WordScriptable, DrGame.ScriptOpcodeFactory<Array<WordScriptValue>, WrdEntry> {
     companion object {
         @Serializable
         data class DRv3GameJson(val character_names: Map<String, String>, val character_identifiers: Map<String, String>, val colour_codes: Map<String, String>, val item_names: Array<String>)
@@ -71,7 +74,7 @@ open class DRv3(
     override val identifier: String = "drv3"
     override val steamID: String = "567640"
 
-    override val wrdOpcodeMap: OpcodeMap<WrdEntry> = buildScriptOpcodes {
+    override val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry> = buildScriptOpcodes {
         opcode(0x00, names = arrayOf("Set Flag", "FLG"), argumentCount = 2) //FLG
         flagCheck(0x01, names = arrayOf("Check Flag", "If Flag", "IFF"), flagGroupLength = 3, endFlagCheckOpcode = 0x49) //IFF
         opcode(0x02, names = arrayOf("Set Game Parameter", "WAK"), argumentCount = 3) //WAK
@@ -233,7 +236,7 @@ open class DRv3(
         opcode(0x4B, types = *intArrayOf(1))                  // Jump to Local Branch (for branching case statements)
     }
 
-    override fun entryFor(opcode: Int, rawArguments: IntArray): WrdEntry = when (opcode) {
-        else -> UnknownWrdEntry(opcode, rawArguments)
+    override fun entryFor(opcode: Int, rawArguments: Array<WordScriptValue>): WrdEntry = when (opcode) {
+        else -> UnknownWrdEntry(opcode, rawArguments, this)
     }
 }

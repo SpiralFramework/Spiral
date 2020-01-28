@@ -23,7 +23,7 @@ open class Dr1(
         override val pakNames: Map<String, Array<String>>,
         val voiceLineArray: IntArray,
         customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<LinEntry> {
+) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
     companion object {
         private const val MAXIMUM_CHAPTER = 8
         private const val MAXIMUM_CHARACTER = 33
@@ -65,7 +65,7 @@ open class Dr1(
     override val steamID: String = "413410"
     override val identifier: String = "dr1"
 
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x01, argumentCount = 3, names = null)
         opcode(0x02, argumentCount = 2, name = "Text")

@@ -21,7 +21,7 @@ class UDG(
         override val linColourCodes: Map<String, Int>,
         override val linItemNames: Array<String>,
         customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.ScriptOpcodeFactory<LinEntry> {
+) : DrGame, DrGame.LinScriptable, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
     companion object {
         @Serializable
         data class UDGGameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>)
@@ -60,7 +60,7 @@ class UDG(
     override val identifier: String = "udg"
     override val steamID: String = "555950"
 
-    override val linOpcodeMap: OpcodeMap<LinEntry> = buildScriptOpcodes {
+    override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x01, argumentCount = 2, name = "Text")
         opcode(0x05, argumentCount = 3, name = "Movie")

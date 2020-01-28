@@ -4,6 +4,7 @@ import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
 import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 
 /**
@@ -19,14 +20,14 @@ interface DrGame {
 
     /** Traits */
 
-    interface ScriptOpcodeFactory<S> {
-        fun entryFor(opcode: Int, rawArguments: IntArray): S
+    interface ScriptOpcodeFactory<P, S> {
+        fun entryFor(opcode: Int, rawArguments: P): S
     }
 
     /** A game that supports lin scripts */
     interface LinScriptable {
         object Unknown: LinScriptable {
-            override val linOpcodeMap: OpcodeMap<LinEntry> = emptyMap()
+            override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = emptyMap()
             override val linCharacterIdentifiers: Map<String, Int> = emptyMap()
             override val linCharacterIDs: Map<Int, String> = emptyMap()
             override val linItemNames: Array<String> = emptyArray()
@@ -35,7 +36,7 @@ interface DrGame {
             override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> = Triple(-1, -1, -1)
         }
 
-        val linOpcodeMap: OpcodeMap<LinEntry>
+        val linOpcodeMap: OpcodeMap<IntArray, LinEntry>
 
         /** Name -> Internal ID */
         val linCharacterIdentifiers: Map<String, Int>
@@ -54,7 +55,7 @@ interface DrGame {
 
     /** TODO: Figure out how to do this full stop */
     interface LinNonstopScriptable {
-        val linNonstopOpcodeNames: OpcodeMap<String>
+        val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
         val linNonstopSectionSize: Int
     }
 
@@ -66,7 +67,15 @@ interface DrGame {
 
     /** A game that supports word scripts */
     interface WordScriptable {
-        val wrdOpcodeMap: OpcodeMap<WrdEntry>
+        object Unknown: WordScriptable {
+            override val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry> = emptyMap()
+            override val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand> = emptyMap()
+            override val wrdCharacterIdentifiers: Map<String, String> = emptyMap()
+            override val wrdCharacterNames: Map<String, String> = emptyMap()
+            override val wrdItemNames: Array<String> = emptyArray()
+            override val wrdColourCodes: Map<String, String> = emptyMap()
+        }
+        val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry>
 
         val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand>
 

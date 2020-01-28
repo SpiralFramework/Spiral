@@ -5,8 +5,8 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 typealias LinEntryConstructor =  (Int, IntArray) -> LinEntry
 
-typealias OpcodeMap<S> = Map<Int, ScriptOpcode<S>>
-typealias OpcodeMutableMap<S> = MutableMap<Int, ScriptOpcode<S>>
-typealias OpcodeHashMap<S> = HashMap<Int, ScriptOpcode<S>>
+typealias OpcodeMap<P, S> = Map<Int, ScriptOpcode<P, S>>
+typealias OpcodeMutableMap<P, S> = MutableMap<Int, ScriptOpcode<P, S>>
+typealias OpcodeHashMap<P, S> = HashMap<Int, ScriptOpcode<P, S>>
 
 typealias OpcodeCommandTypeMap<S> = Map<Int, (Int) -> S>
