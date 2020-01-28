@@ -65,7 +65,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
 
                     flow.skip(2u)
                     val opcode = game.linOpcodeMap[opStart and 0x00FF]
-                    val arguments: IntArray
+//                    val arguments: IntArray
 
                     if (opcode?.flagCheckDetails != null) {
                         val flagCheckDetails = opcode.flagCheckDetails
@@ -84,10 +84,10 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                             flagGroup.forEach { rawArguments.add(it.toInt() and 0xFF) }
                         }
 
-                        arguments = rawArguments.toIntArray()
+//                        arguments = rawArguments.toIntArray()
 
-                        entries.add(opcode.entryConstructor(opcode.opcode, arguments))
-                    } else if (opcode?.argumentCount ?: -1 == -1) {
+                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                    } else if (opcode?.argumentCount == -1) {
                         val rawArguments: MutableList<Int> = ArrayList()
                         while (true) {
                             if ((flow.peek() ?: break) == 0x70)
@@ -95,15 +95,26 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
 
                             rawArguments.add(requireNotNull(flow.read(), notEnoughData))
                         }
-                        arguments = rawArguments.toIntArray()
+//                        arguments = rawArguments.toIntArray()
 
-                        entries.add(UnknownLinEntry(opStart and 0x00FF, arguments))
-                    } else {
+                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                    } else if (opcode != null) {
                         val rawArguments = ByteArray(opcode!!.argumentCount)
                         require(flow.read(rawArguments) == rawArguments.size, notEnoughData)
-                        arguments = IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }
+//                        arguments = IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }
 
-                        entries.add(opcode.entryConstructor(opcode.opcode, arguments))
+                        entries.add(opcode.entryConstructor(opcode.opcode, IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }))
+                    } else {
+                        val rawArguments: MutableList<Int> = ArrayList()
+                        while (true) {
+                            if ((flow.peek() ?: break) == 0x70)
+                                break
+
+                            rawArguments.add(requireNotNull(flow.read(), notEnoughData))
+                        }
+//                        arguments = rawArguments.toIntArray()
+
+                        entries.add(UnknownLinEntry(opStart and 0x00FF, rawArguments.toIntArray()))
                     }
                 }
 

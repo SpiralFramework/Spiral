@@ -3,13 +3,14 @@ package info.spiralframework.formats.common.scripting
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.fauxSeekFromStart
+import info.spiralframework.base.common.io.flow.*
 import info.spiralframework.formats.common.games.DrGame
+import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
+import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
-class WordScript {
+class WordScript(val labels: Array<String>, val parameters: Array<String>, val strings: Array<String>?, val localBranchNumbers: Array<Pair<Int, Int>>, val scriptDataBlocks: Array<Array<WrdEntry>>) {
     companion object {
         const val MAGIC_NUMBER_LE = 0x2E575244
 
@@ -73,7 +74,23 @@ class WordScript {
 
                     println()
 
-                    return WordScript()
+                    val scriptDataBlocks = Array(labelCount) { index ->
+                        val size: Int
+
+                        if (index == labelCount - 1)
+                            size = localBranchOffset - sectionOffsets[index]
+                        else
+                            size = sectionOffsets[index + 1] - sectionOffsets[index]
+
+                        require(size >= 0) { localise("formats.wrd.bad_size", index, size) }
+                        require(sectionOffsets[index] > 0) { localise("formats.wrd.bad_offset", index, sectionOffsets[index]) }
+
+                        requireNotNull(flow.fauxSeekFromStart(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
+                            readScriptData(game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
+                        })
+                    }
+
+                    return WordScript(labels, parameters, strings, localBranchNumbers, scriptDataBlocks)
                 }
             }
         }
@@ -90,6 +107,79 @@ class WordScript {
             if (length >= 0x80)
                 length += (requireNotNull(flow.read(), notEnoughData) - 1) shl 8
             flow.readDoubleByteNullTerminatedString(length + 2, TextCharsets.UTF_16LE)
+        }
+
+        suspend fun SpiralContext.readScriptData(game: DrGame.WordScriptable, flow: PeekableInputFlow): Array<WrdEntry> {
+            withFormats(this) {
+                val notEnoughData: () -> Any = { localise("formats.wrd.not_enough_data") }
+                val entries: MutableList<WrdEntry> = ArrayList()
+
+                while (true) {
+                    val opStart = flow.peekInt16BE() ?: break
+
+                    if (opStart and 0xFF00 != 0x7000)
+                        break
+
+                    flow.skip(2u)
+
+                    val opcode = game.wrdOpcodeMap[opStart and 0x00FF]
+//                    val arguments: IntArray
+
+                    if (opcode?.flagCheckDetails != null) {
+                        val flagCheckDetails = opcode.flagCheckDetails
+                        val endFlagCheck = 0x7000 or flagCheckDetails.endFlagCheckOpcode
+                        val flagGroup = ByteArray(flagCheckDetails.flagGroupLength * 2)
+                        val rawArguments: MutableList<Int> = ArrayList()
+
+                        requireNotNull(flow.readExact(flagGroup), notEnoughData)
+                        for (i in 0 until flagCheckDetails.flagGroupLength) rawArguments.add(((flagGroup[i * 2].toInt() and 0xFF shl 8) or (flagGroup[i * 2 + 1].toInt() and 0xFF)))
+
+                        while (true) {
+                            if ((flow.peekInt16BE() ?: break) == endFlagCheck)
+                                break
+
+                            rawArguments.add(requireNotNull(flow.readInt16BE(), notEnoughData))
+
+                            requireNotNull(flow.readExact(flagGroup), notEnoughData)
+                            for (i in 0 until flagCheckDetails.flagGroupLength) rawArguments.add(((flagGroup[i * 2].toInt() and 0xFF shl 8) or (flagGroup[i * 2 + 1].toInt() and 0xFF)))
+                        }
+
+//                        arguments = rawArguments.toIntArray()
+
+                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                    } else if (opcode?.argumentCount == -1) {
+                        val rawArguments: MutableList<Int> = ArrayList()
+                        while (true) {
+                            if ((flow.peekInt16BE() ?: break) and 0xFF00 == 0x7000)
+                                break
+
+                            rawArguments.add(requireNotNull(flow.readInt16BE(), notEnoughData))
+                        }
+//                        arguments = rawArguments.toIntArray()
+
+                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                    } else if (opcode != null) {
+                        val rawArguments = ByteArray(opcode.argumentCount * 2)
+                        requireNotNull(flow.readExact(rawArguments), notEnoughData)
+//                        arguments = IntArray(opcode.argumentCount) { index -> ((rawArguments[index * 2].toInt() and 0xFF shl 8) or (rawArguments[index * 2 + 1].toInt() and 0xFF)) }
+
+                        entries.add(opcode.entryConstructor(opcode.opcode, IntArray(opcode.argumentCount) { index -> ((rawArguments[index * 2].toInt() and 0xFF shl 8) or (rawArguments[index * 2 + 1].toInt() and 0xFF)) }))
+                    } else {
+                        val rawArguments: MutableList<Int> = ArrayList()
+                        while (true) {
+                            if ((flow.peekInt16BE() ?: break) and 0xFF00 == 0x7000)
+                                break
+
+                            rawArguments.add(requireNotNull(flow.readInt16BE(), notEnoughData))
+                        }
+//                        arguments = rawArguments.toIntArray()
+
+                        entries.add(UnknownWrdEntry(opStart and 0x00FF, rawArguments.toIntArray()))
+                    }
+                }
+
+                return entries.toTypedArray()
+            }
         }
     }
 }
