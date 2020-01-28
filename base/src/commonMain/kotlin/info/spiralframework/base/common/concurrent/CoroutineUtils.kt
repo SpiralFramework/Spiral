@@ -12,6 +12,12 @@ public suspend inline fun IntArray.suspendForEach(action: suspend (Int) -> Unit)
     for (element in this) action(element)
 }
 
+/**
+ * Performs the given [action] on each element.
+ */
+public suspend inline fun <T> Array<T>.suspendForEach(action: suspend (T) -> Unit) {
+    for (element in this) action(element)
+}
 
 /**
  * Performs the given [action] on each element.

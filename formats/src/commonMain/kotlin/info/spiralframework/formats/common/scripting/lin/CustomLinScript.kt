@@ -1,4 +1,4 @@
-package info.spiralframework.formats.common.scripting
+package info.spiralframework.formats.common.scripting.lin
 
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.TextCharsets
@@ -8,7 +8,6 @@ import info.spiralframework.base.common.io.writeInt16LE
 import info.spiralframework.base.common.io.writeInt32LE
 import info.spiralframework.base.common.sumByLong
 import info.spiralframework.base.common.NULL_TERMINATOR
-import info.spiralframework.formats.common.scripting.lin.LinEntry
 
 class CustomLinScript {
     private val _textData: MutableList<String> = ArrayList()

@@ -1,12 +1,10 @@
-package info.spiralframework.formats.common.scripting
+package info.spiralframework.formats.common.scripting.lin
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.*
 import info.spiralframework.formats.common.games.DrGame
-import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes

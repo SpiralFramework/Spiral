@@ -1,4 +1,4 @@
-package info.spiralframework.formats.common.scripting
+package info.spiralframework.formats.common.scripting.wrd
 
 import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.encodeToUTF16LEByteArray
@@ -11,8 +11,6 @@ import info.spiralframework.base.common.io.writeInt16LE
 import info.spiralframework.base.common.io.writeInt32LE
 import info.spiralframework.base.common.text.removeEscapes
 import info.spiralframework.formats.common.games.DRv3
-import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
-import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 
 class CustomWordScript {
     private val _labels: MutableList<String> = ArrayList()
@@ -37,12 +35,20 @@ class CustomWordScript {
     }
 
     fun addEntry(entry: WrdEntry) {
+        entry.arguments.forEach { value ->
+            when (value) {
+                is WordScriptValue.Label -> addLabel(value.label)
+                is WordScriptValue.Parameter -> addParameter(value.param)
+                is WordScriptValue.InternalText -> addText(value.text)
+            }
+        }
+
         _scriptData.add(entry)
     }
 
-    fun addString(str: String): Int = add(str, _strings)
+    fun addText(text: String): Int = add(text, _strings)
     fun addLabel(label: String): Int = add(label, _labels)
-    fun parameter(parameter: String): Int = add(parameter, _parameters)
+    fun addParameter(parameter: String): Int = add(parameter, _parameters)
 
     @ExperimentalStdlibApi
     @ExperimentalUnsignedTypes
@@ -56,7 +62,7 @@ class CustomWordScript {
         val localBranches: MutableList<Pair<ULong, Int>> = ArrayList()
 
         val subLabels = scriptData.filter { entry -> entry.opcode == 0x4A }
-                .map { entry -> entry.rawArguments[0] }
+                .map { entry -> entry.arguments[0].raw }
                 .distinct()
                 .sorted()
 
@@ -70,9 +76,10 @@ class CustomWordScript {
 
         if (strings.isEmpty() && externalStringCount == 0) {
             val highestTextID = scriptData.filter { entry -> entry.opcode == 0x46 }
-                    .maxBy { script -> script.rawArguments[0] }
-                    ?.rawArguments
+                    .maxBy { script -> script.arguments[0].raw }
+                    ?.arguments
                     ?.get(0)
+                    ?.raw
 
             if (highestTextID != null) {
                 externalStringCount = highestTextID + 1
@@ -82,26 +89,26 @@ class CustomWordScript {
         val sections: MutableList<Long> = ArrayList()
 
         scriptData.forEach { entry ->
-            val mutatedArguments = entry.rawArguments
+            val mutatedArguments = entry.arguments
 
             when (entry.opcode) {
                 0x14 -> sections.add(entryData.getDataSize().toLong())
                 0x4A -> {
                     if (rewriteSubLabels && entry is UnknownWrdEntry && entry.wrdGame is DRv3) {
-                        mutatedArguments[0] = subLabels.indexOf(mutatedArguments[0])
-                        localBranches.add(entryData.getDataSize() to mutatedArguments[0])
+                        mutatedArguments[0] = WordScriptValue.Raw(subLabels.indexOf(mutatedArguments[0].raw))
+                        localBranches.add(entryData.getDataSize() to mutatedArguments[0].raw)
                     }
                 }
                 0x4B -> {
                     if (rewriteSubLabels && entry is UnknownWrdEntry && entry.wrdGame is DRv3) {
-                        mutatedArguments[0] = subLabels.indexOf(mutatedArguments[0])
+                        mutatedArguments[0] = WordScriptValue.Raw(subLabels.indexOf(mutatedArguments[0].raw))
                     }
                 }
             }
 
             entryData.write(0x70)
             entryData.write(entry.opcode)
-            mutatedArguments.suspendForEach(entryData::writeInt16BE)
+            mutatedArguments.forEach { value -> entryData.writeInt16BE(value.raw) }
         }
 
         labels.forEach { label ->

@@ -1,12 +1,10 @@
-package info.spiralframework.formats.common.scripting
+package info.spiralframework.formats.common.scripting.wrd
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.io.flow.*
 import info.spiralframework.formats.common.games.DrGame
-import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
-import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
@@ -86,7 +84,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         require(sectionOffsets[index] > 0) { localise("formats.wrd.bad_offset", index, sectionOffsets[index]) }
 
                         requireNotNull(flow.fauxSeekFromStart(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
-                            readScriptData(game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
+                            readScriptData(labels, parameters, strings, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
                         })
                     }
 
@@ -116,7 +114,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
             flow.readDoubleByteNullTerminatedString(length + 2, TextCharsets.UTF_16LE)
         }
 
-        suspend fun SpiralContext.readScriptData(game: DrGame.WordScriptable, flow: PeekableInputFlow): Array<WrdEntry> {
+        suspend fun SpiralContext.readScriptData(labels: Array<String>, parameters: Array<String>, text: Array<String>?, game: DrGame.WordScriptable, flow: PeekableInputFlow): Array<WrdEntry> {
             withFormats(this) {
                 val notEnoughData: () -> Any = { localise("formats.wrd.not_enough_data") }
                 val entries: MutableList<WrdEntry> = ArrayList()
@@ -130,6 +128,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                     flow.skip(2u)
 
                     val opcode = game.wrdOpcodeMap[opStart and 0x00FF]
+                    val commandTypes = game.wrdOpcodeCommandType[opStart and 0x00FF]
 //                    val arguments: IntArray
 
                     if (opcode?.flagCheckDetails != null) {
@@ -153,7 +152,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
 
 //                        arguments = rawArguments.toIntArray()
 
-                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                        entries.add(opcode.entryConstructor(opcode.opcode, WordScriptValue.parse(rawArguments, labels, parameters, text, commandTypes)))
                     } else if (opcode?.argumentCount == -1) {
                         val rawArguments: MutableList<Int> = ArrayList()
                         while (true) {
@@ -164,13 +163,13 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         }
 //                        arguments = rawArguments.toIntArray()
 
-                        entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
+                        entries.add(opcode.entryConstructor(opcode.opcode, WordScriptValue.parse(rawArguments, labels, parameters, text, commandTypes)))
                     } else if (opcode != null) {
                         val rawArguments = ByteArray(opcode.argumentCount * 2)
                         requireNotNull(flow.readExact(rawArguments), notEnoughData)
 //                        arguments = IntArray(opcode.argumentCount) { index -> ((rawArguments[index * 2].toInt() and 0xFF shl 8) or (rawArguments[index * 2 + 1].toInt() and 0xFF)) }
 
-                        entries.add(opcode.entryConstructor(opcode.opcode, IntArray(opcode.argumentCount) { index -> ((rawArguments[index * 2].toInt() and 0xFF shl 8) or (rawArguments[index * 2 + 1].toInt() and 0xFF)) }))
+                        entries.add(opcode.entryConstructor(opcode.opcode, WordScriptValue.parse(rawArguments, labels, parameters, text, commandTypes)))
                     } else {
                         val rawArguments: MutableList<Int> = ArrayList()
                         while (true) {
@@ -181,7 +180,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         }
 //                        arguments = rawArguments.toIntArray()
 
-                        entries.add(UnknownWrdEntry(opStart and 0x00FF, rawArguments.toIntArray()))
+                        entries.add(UnknownWrdEntry(opStart and 0x00FF, WordScriptValue.parse(rawArguments, labels, parameters, text, commandTypes)))
                     }
                 }
 
