@@ -1,7 +1,6 @@
 package info.spiralframework.console.commands.pilot
 
 import info.spiralframework.base.util.*
-import info.spiralframework.base.util.copyToStream
 import info.spiralframework.console.CommandBuilders
 import info.spiralframework.console.commands.data.ConvertArgs
 import info.spiralframework.console.commands.data.ExtractArgs
@@ -18,6 +17,11 @@ import info.spiralframework.core.formats.FormatResult.Companion.NO_FORMAT_DEFINE
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.SpiralFormat
+import info.spiralframework.formats.game.hpa.DR1
+import info.spiralframework.formats.game.hpa.DR2
+import info.spiralframework.formats.game.hpa.UDG
+import info.spiralframework.formats.game.hpa.UnknownHopesPeakGame
+import info.spiralframework.formats.game.v3.V3
 import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
 import info.spiralframework.formats.utils.dataContext
 import info.spiralframework.formats.video.SFL
@@ -149,6 +153,12 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                                         Sequence(
                                                 Localised("commands.pilot.convert.builder"),
                                                 Action<Any> { argsVar.get().builder = true; true }
+                                        ),
+                                        Sequence(
+                                                Localised("commands.pilot.convert.game"),
+                                                InlineWhitespace(),
+                                                Parameter(),
+                                                Action<Any> { argsVar.get().game = pop() as String; true }
                                         )
                                 )
                         ),
@@ -408,6 +418,17 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
             return@ParboiledCommand FAILURE
         }
 
+        val game = args.game?.let { gameName ->
+            when {
+                DR1.names.any { name -> name.equals(gameName, true) } -> DR1
+                DR2.names.any { name -> name.equals(gameName, true) } -> DR2
+                V3.names.any { name -> name.equals(gameName, true) } -> V3
+                UDG.names.any { name -> name.equals(gameName, true) } -> UDG
+                UnknownHopesPeakGame.names.any { name -> name.equals(gameName, true) } -> UnknownHopesPeakGame
+                else -> null
+            }
+        }
+
         if (args.converting.isFile) {
             val file = args.converting
 
@@ -420,7 +441,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
             val formatResult = if (args.from == null) {
                 GurrenShared.READABLE_FORMATS
                         .map { format ->
-                            format.identify(file.name, null, file.absoluteParentFile?.dataContext
+                            format.identify(file.name, game, file.absoluteParentFile?.dataContext
                                     ?: BLANK_DATA_CONTEXT, dataSource)
                         }
                         .filter(FormatResult<*>::didSucceed)
@@ -429,14 +450,15 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                         .firstOrNull()
             } else {
                 val formatForName = GurrenShared.READABLE_FORMATS
-                        .firstOrNull { format -> format.name.equals(args.from, true) }
+                        .firstOrNull { format -> format.name.equals(args.from, true) } ?: GurrenShared.READABLE_FORMATS
+                        .firstOrNull { format -> format.extension?.equals(args.from, true) == true }
 
                 if (formatForName == null) {
                     printlnLocale("commands.pilot.convert.err_no_known_format_name", "reading", args.from)
                     return@ParboiledCommand FAILURE
                 }
 
-                formatForName.identify(file.name, null, file.absoluteParentFile?.dataContext
+                formatForName.identify(file.name, game, file.absoluteParentFile?.dataContext
                         ?: BLANK_DATA_CONTEXT, dataSource)
                         .takeIf(FormatResult<*>::didSucceed)
             }
@@ -476,7 +498,8 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                     preferred
                 } else {
                     val formatForName = GurrenShared.WRITABLE_FORMATS
-                            .firstOrNull { format -> format.name.equals(args.to, true) }
+                            .firstOrNull { format -> format.name.equals(args.to, true) } ?: GurrenShared.WRITABLE_FORMATS
+                            .firstOrNull { format -> format.extension?.equals(args.to, true) == true }
 
                     if (formatForName == null) {
                         printlnErrLocale("commands.pilot.convert.err_no_known_format_name", "writing", args.to)
@@ -487,7 +510,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                 }
 
                 val data = formatResult.obj.takeIf(Optional<*>::isPresent)?.get()
-                        ?: ourFormat.read(file.name, null, file.absoluteParentFile?.dataContext
+                        ?: ourFormat.read(file.name, game, file.absoluteParentFile?.dataContext
                                 ?: BLANK_DATA_CONTEXT, dataSource).safeObj
 
                 if (data == null) {
@@ -503,7 +526,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                 val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
                         ?: SpiralFormat.DEFAULT_EXTENSION}")
                 val response = FileOutputStream(output).use { outStream ->
-                    formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                    formatConvertTo.write(output.name, game, file.absoluteParentFile?.dataContext
                             ?: BLANK_DATA_CONTEXT, data, outStream)
                 }
 
@@ -548,7 +571,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                         val formatResult = if (args.from == null) {
                             GurrenShared.READABLE_FORMATS
                                     .map { format ->
-                                        format.identify(file.name, null, file.absoluteParentFile?.dataContext
+                                        format.identify(file.name, game, file.absoluteParentFile?.dataContext
                                                 ?: BLANK_DATA_CONTEXT, dataSource)
                                     }
                                     .filter(FormatResult<*>::didSucceed)
@@ -557,10 +580,11 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                                     .firstOrNull()
                         } else {
                             val formatForName = GurrenShared.READABLE_FORMATS
-                                    .firstOrNull { format -> format.name.equals(args.from, true) }
+                                    .firstOrNull { format -> format.name.equals(args.from, true) } ?: GurrenShared.READABLE_FORMATS
+                                    .firstOrNull { format -> format.extension?.equals(args.from, true) == true }
                                     ?: return@mapIndexed ConvertResponse(file, null, null, locale("commands.pilot.convert.err_no_known_format_name", "reading", args.from))
 
-                            formatForName.identify(file.name, null, file.absoluteParentFile?.dataContext
+                            formatForName.identify(file.name, game, file.absoluteParentFile?.dataContext
                                     ?: BLANK_DATA_CONTEXT, dataSource)
                                     .takeIf(FormatResult<*>::didSucceed)
                         }
@@ -594,14 +618,15 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                                 preferred
                             } else {
                                 val formatForName = GurrenShared.WRITABLE_FORMATS
-                                        .firstOrNull { format -> format.name.equals(args.to, true) }
+                                        .firstOrNull { format -> format.name.equals(args.to, true) } ?: GurrenShared.WRITABLE_FORMATS
+                                        .firstOrNull { format -> format.extension?.equals(args.to, true) == true }
                                         ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_known_format_name", "writing", args.to))
 
                                 formatForName
                             }
 
                             val data = formatResult.obj.takeIf(Optional<*>::isPresent)?.get()
-                                    ?: ourFormat.read(file.name, null, file.absoluteParentFile?.dataContext
+                                    ?: ourFormat.read(file.name, game, file.absoluteParentFile?.dataContext
                                             ?: BLANK_DATA_CONTEXT, dataSource).safeObj
                                     ?: return@mapIndexed ConvertResponse(file, formatString, null, locale("commands.pilot.convert.err_no_readable_data", ourFormat.name))
 
@@ -612,7 +637,7 @@ class GurrenPilot(override val parameterParser: ParameterParser) : CommandClass 
                             val output = File("${file.absolutePath.substringBeforeLast('.')}.${formatConvertTo.extension
                                     ?: SpiralFormat.DEFAULT_EXTENSION}")
                             val response = FileOutputStream(output).use { outStream ->
-                                formatConvertTo.write(output.name, null, file.absoluteParentFile?.dataContext
+                                formatConvertTo.write(output.name, game, file.absoluteParentFile?.dataContext
                                         ?: BLANK_DATA_CONTEXT, data, outStream)
                             }
 
