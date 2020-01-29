@@ -106,4 +106,6 @@ open class ParboiledCommand(val rule: Rule, val scope: String? = null, override 
 //            failed = (command(result.valueStack.reversed()) == FAILURE)
 //        }
     }
+
+    operator fun invoke(params: List<Any>): Boolean = command(params)
 }

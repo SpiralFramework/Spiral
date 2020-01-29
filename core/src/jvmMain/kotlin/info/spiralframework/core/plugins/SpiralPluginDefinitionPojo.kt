@@ -16,7 +16,7 @@ data class SpiralPluginDefinitionPojo(
         val version: String?,
         val semanticVersion: SemanticVersion,
 
-        val pluginClass: String,
+        val pluginClass: String?,
 
         val pluginFileName: String?
 ) {
@@ -61,7 +61,7 @@ data class SpiralPluginDefinitionPojo(
         result = 31 * result + (contentWarnings?.contentHashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + semanticVersion.hashCode()
-        result = 31 * result + pluginClass.hashCode()
+        result = 31 * result + (pluginClass?.hashCode() ?: 0)
         result = 31 * result + (pluginFileName?.hashCode() ?: 0)
         return result
     }
