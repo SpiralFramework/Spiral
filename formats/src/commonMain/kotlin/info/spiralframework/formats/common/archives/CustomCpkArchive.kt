@@ -2,9 +2,9 @@ package info.spiralframework.formats.common.archives
 
 import info.spiralframework.base.binding.now
 import info.spiralframework.base.common.*
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.OutputFlow
 
 @ExperimentalUnsignedTypes
 open class CustomCpkArchive {
@@ -352,7 +352,7 @@ open class CustomCpkArchive {
         output.writeInt16BE(table.rowWidth)
         output.writeInt32BE(table.rowCount.toInt())
 
-        val stringTableRange = 0 until table.stringTable.length
+        val stringTableRange = table.stringTable.indices
         table.schema.forEach { column ->
             output.write(column.type)
             output.writeInt32BE(table.stringTable.indexOf(column.name).coerceIn(stringTableRange))

@@ -1,11 +1,11 @@
 package info.spiralframework.formats.common.archives
 
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.copyFrom
-import info.spiralframework.base.common.io.flow.CountingOutputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.base.common.io.useInputFlow
-import info.spiralframework.base.common.io.writeInt32LE
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.copyFrom
+import org.abimon.kornea.io.common.flow.CountingOutputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.common.useInputFlow
+import org.abimon.kornea.io.common.writeInt32LE
 
 @ExperimentalUnsignedTypes
 class CustomPakArchive {

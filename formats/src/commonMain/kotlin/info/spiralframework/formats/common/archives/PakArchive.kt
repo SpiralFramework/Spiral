@@ -1,11 +1,11 @@
 package info.spiralframework.formats.common.archives
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.SinkOffsetInputFlow
-import info.spiralframework.base.common.io.flow.WindowedInputFlow
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.SinkOffsetInputFlow
+import org.abimon.kornea.io.common.flow.WindowedInputFlow
 
 @ExperimentalUnsignedTypes
 class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) {

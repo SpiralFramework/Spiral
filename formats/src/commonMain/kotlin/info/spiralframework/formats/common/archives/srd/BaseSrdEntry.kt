@@ -2,10 +2,10 @@ package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.WindowedInputFlow
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.WindowedInputFlow
 
 @ExperimentalUnsignedTypes
 abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: ULong, open val subDataLength: ULong, open val unknown: Int, open val dataSource: DataSource<*>) {

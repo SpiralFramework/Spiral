@@ -1,11 +1,11 @@
 package info.spiralframework.formats.data
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.*
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.align
+import org.abimon.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 
 class DataTableV3 private constructor(context: SpiralContext, val dataSource: DataSource) {

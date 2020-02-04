@@ -1,6 +1,7 @@
 package info.spiralframework.base.common.io
 
 import info.spiralframework.base.common.SpiralModuleBase
+import org.abimon.kornea.io.common.DataSource
 import kotlin.reflect.KClass
 
 //@ExperimentalUnsignedTypes

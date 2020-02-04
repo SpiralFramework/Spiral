@@ -1,6 +1,6 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.jvm.io.SpiralFileCacheProvider
+import info.spiralframework.base.jvm.io.files.SpiralFileCacheProvider
 
 @ExperimentalUnsignedTypes
-public actual typealias DefaultSpiralCacheProvider = SpiralFileCacheProvider
+actual typealias DefaultSpiralCacheProvider = SpiralFileCacheProvider

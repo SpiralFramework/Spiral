@@ -1,8 +1,6 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.flow.readBytes
-import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -13,6 +11,8 @@ import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list
+import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 open class Dr1(

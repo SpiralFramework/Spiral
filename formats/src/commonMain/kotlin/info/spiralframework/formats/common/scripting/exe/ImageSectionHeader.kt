@@ -1,11 +1,14 @@
 package info.spiralframework.formats.common.scripting.exe
 
-import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.readAsciiString
 import info.spiralframework.base.common.trimNulls
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtualAddress: Int, val sizeOfRawData: Int, val pointerToRawData: Int, val pointerToRelocations: Int, val pointerToLineNumbers: Int, val numberOfRelocations: Int, val numberOfLineNumbers: Int, val characteristics: Int) {

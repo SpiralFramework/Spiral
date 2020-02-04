@@ -1,11 +1,11 @@
 package info.spiralframework.formats.video
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.video.sfl.SFLTable
+import org.abimon.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 
 class SFL private constructor(context: SpiralContext, val dataSource: () -> InputStream) {

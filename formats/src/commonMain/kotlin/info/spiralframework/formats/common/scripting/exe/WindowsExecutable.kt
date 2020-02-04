@@ -1,12 +1,11 @@
 package info.spiralframework.formats.common.scripting.exe
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.SinkOffsetInputFlow
-import info.spiralframework.base.common.io.flow.WindowedInputFlow
 import info.spiralframework.formats.common.archives.PakFileEntry
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.WindowedInputFlow
 
 @ExperimentalUnsignedTypes
 open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArray, val coffHeader: COFFHeader, val peOptionalHeader: PEOptionalHeader, val imageSectionHeaders: Array<ImageSectionHeader>, val dataSource: DataSource<*>) {

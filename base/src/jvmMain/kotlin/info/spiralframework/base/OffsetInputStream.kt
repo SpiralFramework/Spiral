@@ -1,6 +1,6 @@
 package info.spiralframework.base
 
-import info.spiralframework.base.jvm.io.CountingInputStream
+import org.abimon.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 
 @Deprecated("Use InputFlow instead")

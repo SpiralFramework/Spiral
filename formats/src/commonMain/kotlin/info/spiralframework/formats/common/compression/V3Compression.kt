@@ -1,10 +1,10 @@
 package info.spiralframework.formats.common.compression
 
-import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.flow.BinaryInputFlow
-import info.spiralframework.base.common.io.flow.readExact
-import info.spiralframework.base.common.io.readInt32BE
+import org.abimon.kornea.io.common.flow.BinaryInputFlow
+import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import org.abimon.kornea.io.common.flow.readExact
+import org.abimon.kornea.io.common.readInt32BE
 
 const val MAGIC_NUMBER = 0x24434D50 //0x504d4324
 

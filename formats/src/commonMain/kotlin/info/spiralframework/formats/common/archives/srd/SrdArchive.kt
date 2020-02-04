@@ -2,9 +2,9 @@ package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.OffsetDataSource
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.OffsetDataSource
 
 @ExperimentalUnsignedTypes
 class SrdArchive(val entries: Array<BaseSrdEntry>) {

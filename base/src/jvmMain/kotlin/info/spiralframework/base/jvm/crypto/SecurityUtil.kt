@@ -1,9 +1,9 @@
 package info.spiralframework.base.jvm.crypto
 
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.jvm.io.flipSafe
-import info.spiralframework.base.jvm.io.rewindSafe
 import info.spiralframework.base.util.readChunked
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.jvm.flipSafe
+import org.abimon.kornea.io.jvm.rewindSafe
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger

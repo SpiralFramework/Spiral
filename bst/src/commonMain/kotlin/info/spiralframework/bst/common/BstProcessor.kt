@@ -1,12 +1,12 @@
 package info.spiralframework.bst.common
 
-import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.byteArrayOfHex
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.formats.common.archives.*
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
 
 @ExperimentalStdlibApi
 object BstProcessor {

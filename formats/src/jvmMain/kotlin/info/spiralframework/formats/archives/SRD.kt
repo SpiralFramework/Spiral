@@ -1,9 +1,9 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.archives.srd.SRDEntry
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 
 class SRD private constructor(context: SpiralContext, val dataSource: () -> InputStream): IArchive {

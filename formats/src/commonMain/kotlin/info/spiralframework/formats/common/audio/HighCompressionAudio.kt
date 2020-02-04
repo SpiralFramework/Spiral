@@ -2,8 +2,8 @@ package info.spiralframework.formats.common.audio
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
 import kotlin.experimental.or
 import kotlin.math.min
 
@@ -340,23 +340,23 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         ).map { longs -> longs.map(Long::toInt).map(Float.Companion::fromBits).toFloatArray() }
 
         val IMDCT_WINDOW = longArrayOf(
-                0x3A3504F0,0x3B0183B8,0x3B70C538,0x3BBB9268,0x3C04A809,0x3C308200,0x3C61284C,0x3C8B3F17,
-                0x3CA83992,0x3CC77FBD,0x3CE91110,0x3D0677CD,0x3D198FC4,0x3D2DD35C,0x3D434643,0x3D59ECC1,
-                0x3D71CBA8,0x3D85741E,0x3D92A413,0x3DA078B4,0x3DAEF522,0x3DBE1C9E,0x3DCDF27B,0x3DDE7A1D,
-                0x3DEFB6ED,0x3E00D62B,0x3E0A2EDA,0x3E13E72A,0x3E1E00B1,0x3E287CF2,0x3E335D55,0x3E3EA321,
-                0x3E4A4F75,0x3E56633F,0x3E62DF37,0x3E6FC3D1,0x3E7D1138,0x3E8563A2,0x3E8C72B7,0x3E93B561,
-                0x3E9B2AEF,0x3EA2D26F,0x3EAAAAAB,0x3EB2B222,0x3EBAE706,0x3EC34737,0x3ECBD03D,0x3ED47F46,
-                0x3EDD5128,0x3EE6425C,0x3EEF4EFF,0x3EF872D7,0x3F00D4A9,0x3F0576CA,0x3F0A1D3B,0x3F0EC548,
-                0x3F136C25,0x3F180EF2,0x3F1CAAC2,0x3F213CA2,0x3F25C1A5,0x3F2A36E7,0x3F2E9998,0x3F32E705,
+                0x3A3504F0, 0x3B0183B8, 0x3B70C538, 0x3BBB9268, 0x3C04A809, 0x3C308200, 0x3C61284C, 0x3C8B3F17,
+                0x3CA83992, 0x3CC77FBD, 0x3CE91110, 0x3D0677CD, 0x3D198FC4, 0x3D2DD35C, 0x3D434643, 0x3D59ECC1,
+                0x3D71CBA8, 0x3D85741E, 0x3D92A413, 0x3DA078B4, 0x3DAEF522, 0x3DBE1C9E, 0x3DCDF27B, 0x3DDE7A1D,
+                0x3DEFB6ED, 0x3E00D62B, 0x3E0A2EDA, 0x3E13E72A, 0x3E1E00B1, 0x3E287CF2, 0x3E335D55, 0x3E3EA321,
+                0x3E4A4F75, 0x3E56633F, 0x3E62DF37, 0x3E6FC3D1, 0x3E7D1138, 0x3E8563A2, 0x3E8C72B7, 0x3E93B561,
+                0x3E9B2AEF, 0x3EA2D26F, 0x3EAAAAAB, 0x3EB2B222, 0x3EBAE706, 0x3EC34737, 0x3ECBD03D, 0x3ED47F46,
+                0x3EDD5128, 0x3EE6425C, 0x3EEF4EFF, 0x3EF872D7, 0x3F00D4A9, 0x3F0576CA, 0x3F0A1D3B, 0x3F0EC548,
+                0x3F136C25, 0x3F180EF2, 0x3F1CAAC2, 0x3F213CA2, 0x3F25C1A5, 0x3F2A36E7, 0x3F2E9998, 0x3F32E705,
 
-                0xBF371C9E,0xBF3B37FE,0xBF3F36F2,0xBF431780,0xBF46D7E6,0xBF4A76A4,0xBF4DF27C,0xBF514A6F,
-                0xBF547DC5,0xBF578C03,0xBF5A74EE,0xBF5D3887,0xBF5FD707,0xBF6250DA,0xBF64A699,0xBF66D908,
-                0xBF68E90E,0xBF6AD7B1,0xBF6CA611,0xBF6E5562,0xBF6FE6E7,0xBF715BEF,0xBF72B5D1,0xBF73F5E6,
-                0xBF751D89,0xBF762E13,0xBF7728D7,0xBF780F20,0xBF78E234,0xBF79A34C,0xBF7A5397,0xBF7AF439,
-                0xBF7B8648,0xBF7C0ACE,0xBF7C82C8,0xBF7CEF26,0xBF7D50CB,0xBF7DA88E,0xBF7DF737,0xBF7E3D86,
-                0xBF7E7C2A,0xBF7EB3CC,0xBF7EE507,0xBF7F106C,0xBF7F3683,0xBF7F57CA,0xBF7F74B6,0xBF7F8DB6,
-                0xBF7FA32E,0xBF7FB57B,0xBF7FC4F6,0xBF7FD1ED,0xBF7FDCAD,0xBF7FE579,0xBF7FEC90,0xBF7FF22E,
-                0xBF7FF688,0xBF7FF9D0,0xBF7FFC32,0xBF7FFDDA,0xBF7FFEED,0xBF7FFF8F,0xBF7FFFDF,0xBF7FFFFC
+                0xBF371C9E, 0xBF3B37FE, 0xBF3F36F2, 0xBF431780, 0xBF46D7E6, 0xBF4A76A4, 0xBF4DF27C, 0xBF514A6F,
+                0xBF547DC5, 0xBF578C03, 0xBF5A74EE, 0xBF5D3887, 0xBF5FD707, 0xBF6250DA, 0xBF64A699, 0xBF66D908,
+                0xBF68E90E, 0xBF6AD7B1, 0xBF6CA611, 0xBF6E5562, 0xBF6FE6E7, 0xBF715BEF, 0xBF72B5D1, 0xBF73F5E6,
+                0xBF751D89, 0xBF762E13, 0xBF7728D7, 0xBF780F20, 0xBF78E234, 0xBF79A34C, 0xBF7A5397, 0xBF7AF439,
+                0xBF7B8648, 0xBF7C0ACE, 0xBF7C82C8, 0xBF7CEF26, 0xBF7D50CB, 0xBF7DA88E, 0xBF7DF737, 0xBF7E3D86,
+                0xBF7E7C2A, 0xBF7EB3CC, 0xBF7EE507, 0xBF7F106C, 0xBF7F3683, 0xBF7F57CA, 0xBF7F74B6, 0xBF7F8DB6,
+                0xBF7FA32E, 0xBF7FB57B, 0xBF7FC4F6, 0xBF7FD1ED, 0xBF7FDCAD, 0xBF7FE579, 0xBF7FEC90, 0xBF7FF22E,
+                0xBF7FF688, 0xBF7FF9D0, 0xBF7FFC32, 0xBF7FFDDA, 0xBF7FFEED, 0xBF7FFF8F, 0xBF7FFFDF, 0xBF7FFFFC
         ).map(Long::toInt).map(Float.Companion::fromBits).toFloatArray()
 
         @ExperimentalStdlibApi
@@ -406,12 +406,12 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
 
                     val channels = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
                     pos += 1
-                    require(channels in 1..16) { localise("formats.hca.invalid_channel_count", channels) }
+                    require(channels in 1 .. 16) { localise("formats.hca.invalid_channel_count", channels) }
 
                     /* encoder max seems 48000 */
                     val sampleRate = requireNotNull(header.readInt24BE(pos), notEnoughData)
                     pos += 3
-                    require(sampleRate in 1..0x7FFFFF) { localise("formats.hca.invalid_sample_rate", sampleRate) }
+                    require(sampleRate in 1 .. 0x7FFFFF) { localise("formats.hca.invalid_sample_rate", sampleRate) }
 
                     val frameCount = requireNotNull(header.readInt32BE(pos), notEnoughData)
                     pos += 4
@@ -512,7 +512,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                         val noiseLevel = requireNotNull(header.readInt16BE(pos), notEnoughData)
                         pos += 2
 
-                        require(audioInfo.frameSize == 0 && maxFrameSize in 9..0x1FF)
+                        require(audioInfo.frameSize == 0 && maxFrameSize in 9 .. 0x1FF)
                         vbrInfo = HcaVariableRateInfo(maxFrameSize, noiseLevel)
                     } else {
                         vbrInfo = null
@@ -546,7 +546,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                         val endPadding = requireNotNull(header.readInt16BE(pos), notEnoughData)
                         pos += 2
 
-                        require(startFrame in 0..endFrame && endFrame < frameCount)
+                        require(startFrame in 0 .. endFrame && endFrame < frameCount)
 
                         loopInfo = HcaLoopInfo(startFrame, endFrame, startDelay, endPadding)
                     } else {
@@ -595,7 +595,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
 
                     require(pos + 2 == headerSize) { localise("formats.hca.invalid_position", pos, headerSize) }
                     /* actual max seems 0x155*channels */
-                    require(audioInfo.frameSize in 0x08..0xFFFF)
+                    require(audioInfo.frameSize in 0x08 .. 0xFFFF)
                     require(audioInfo.minResolution == 1 && audioInfo.maxResolution == 15)
 
                     val hfrGroupCountA = audioInfo.totalBandCount - audioInfo.baseBandCount - audioInfo.stereoBandCount
@@ -936,7 +936,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                     if (delta != expectedDelta) {
                         /* may happen with bad keycodes, scalefactors must be 6b indexes */
                         val scalefactorTest = scalefactorPrev + delta - extraDelta
-                        require(scalefactorTest in 0..63)
+                        require(scalefactorTest in 0 .. 63)
                         scalefactorPrev = (scalefactorPrev + delta - extraDelta) and 0xFF
                     } else {
                         scalefactorPrev = bitReader.read(6)
@@ -1210,5 +1210,6 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
 
 @ExperimentalUnsignedTypes
 suspend fun HighCompressionAudio.readFrame(context: SpiralContext, index: Int) = context.readFrame(index)
+
 @ExperimentalUnsignedTypes
 suspend fun HighCompressionAudio.readAudioSamples(context: SpiralContext) = context.readAudioSamples()

@@ -3,13 +3,13 @@ package info.spiralframework.formats.common.archives
 import com.soywiz.krypto.sha256
 import info.spiralframework.base.common.Moment
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.WindowedInputFlow
-import info.spiralframework.base.common.io.flow.readBytes
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.WindowedInputFlow
+import org.abimon.kornea.io.common.flow.readBytes
 
 @ExperimentalUnsignedTypes
 class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etocHeader: UtfTableInfo?, val itocHeader: UtfTableInfo?, val gtocHeader: UtfTableInfo?, val files: Array<CpkFileEntry>, val dataSource: DataSource<*>) {

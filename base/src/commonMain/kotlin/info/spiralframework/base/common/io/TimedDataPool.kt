@@ -1,8 +1,9 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
 import kotlinx.coroutines.*
+import org.abimon.kornea.io.common.DataPool
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration

@@ -1,6 +1,6 @@
 package info.spiralframework.formats.common.compression
 
-import info.spiralframework.base.common.io.readUInt32LE
+import org.abimon.kornea.io.common.readUInt32LE
 
 const val DR_VITA_MAGIC = 0xA755AAFCu
 const val DR_VITA_GX3_MAGIC = 0x335847

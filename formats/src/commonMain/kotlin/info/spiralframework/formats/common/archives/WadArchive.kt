@@ -3,11 +3,12 @@ package info.spiralframework.formats.common.archives
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.WindowedInputFlow
+import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.WindowedInputFlow
 
 @ExperimentalUnsignedTypes
 class WadArchive(val version: SemanticVersion, val header: ByteArray, val files: Array<WadFileEntry>, val directories: Array<WadDirectoryEntry>, val dataOffset: ULong, val dataSource: DataSource<*>) {

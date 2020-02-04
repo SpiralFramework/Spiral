@@ -2,8 +2,12 @@ package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.readFloatLE
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, val y: Float, val z: Float, val width: Float, val height: Float, val perspective: Float, val unk4: Int) {

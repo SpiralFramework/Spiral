@@ -1,6 +1,9 @@
 package info.spiralframework.base.jvm.io.files
 
-import info.spiralframework.base.common.io.DataPool
+import org.abimon.kornea.io.common.DataPool
+import org.abimon.kornea.io.jvm.files.FileDataPool
+import org.abimon.kornea.io.jvm.files.FileInputFlow
+import org.abimon.kornea.io.jvm.files.FileOutputFlow
 import java.io.File
 
 @ExperimentalUnsignedTypes

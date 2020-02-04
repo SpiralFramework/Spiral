@@ -1,11 +1,14 @@
 package info.spiralframework.formats.common.data
 
-import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
+import info.spiralframework.base.common.io.readAsciiString
 import info.spiralframework.base.common.trimNulls
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.readInt64LE
+import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 class Dr1SaveFile {

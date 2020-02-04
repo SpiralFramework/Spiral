@@ -1,14 +1,13 @@
-package info.spiralframework.base.jvm.io
+package info.spiralframework.base.jvm.io.files
 
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataPool
 import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.TimedDataPool
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.base.jvm.io.files.FileDataPool
-import info.spiralframework.base.jvm.io.files.ShortTermFileDataPool
+import org.abimon.kornea.io.common.DataPool
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.jvm.files.FileDataPool
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.time.Duration

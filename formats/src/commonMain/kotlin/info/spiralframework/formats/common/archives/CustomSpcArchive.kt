@@ -2,8 +2,8 @@ package info.spiralframework.formats.common.archives
 
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.byteArrayOfHex
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.OutputFlow
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.OutputFlow
 
 @ExperimentalUnsignedTypes
 open class CustomSpcArchive {

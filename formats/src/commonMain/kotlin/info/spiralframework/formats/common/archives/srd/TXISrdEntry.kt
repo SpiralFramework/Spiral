@@ -1,17 +1,17 @@
 package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.flow.BinaryInputFlow
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.bookmark
-import info.spiralframework.base.common.io.flow.readBytes
-import info.spiralframework.base.common.io.readInt32LE
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
-import info.spiralframework.base.common.io.use
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.properties.oneTimeMutable
 import info.spiralframework.base.common.properties.setValue
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.BinaryInputFlow
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.bookmark
+import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 /** Texture Information? */

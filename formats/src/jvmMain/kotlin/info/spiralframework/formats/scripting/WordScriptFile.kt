@@ -1,6 +1,5 @@
 package info.spiralframework.formats.scripting
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt16LE
 import info.spiralframework.base.util.readInt32LE
@@ -11,6 +10,7 @@ import info.spiralframework.formats.scripting.wrd.UnknownEntry
 import info.spiralframework.formats.scripting.wrd.WrdScript
 import info.spiralframework.formats.utils.DataSource
 import info.spiralframework.formats.utils.and
+import org.abimon.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 import java.util.*
 

@@ -1,13 +1,17 @@
 package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.BinaryInputFlow
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.readAndClose
+import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.properties.oneTimeMutable
 import info.spiralframework.base.common.properties.setValue
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.BinaryInputFlow
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 /** ResourceInfoEntry? */

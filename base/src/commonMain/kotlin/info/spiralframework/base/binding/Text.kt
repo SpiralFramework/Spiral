@@ -1,9 +1,10 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.common.io.toUTF16BE
-import info.spiralframework.base.common.io.toUTF16LE
-import info.spiralframework.base.common.io.writeInt16BE
-import info.spiralframework.base.common.io.writeInt16LE
+import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import org.abimon.kornea.io.common.toUTF16BE
+import org.abimon.kornea.io.common.toUTF16LE
+import org.abimon.kornea.io.common.writeInt16BE
+import org.abimon.kornea.io.common.writeInt16LE
 
 enum class TextCharsets(val bytesForNull: Int) {
     UTF_8(1),

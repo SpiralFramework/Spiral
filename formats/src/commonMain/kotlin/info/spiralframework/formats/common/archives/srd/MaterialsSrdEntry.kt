@@ -1,14 +1,14 @@
 package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.flow.BinaryInputFlow
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.bookmark
-import info.spiralframework.base.common.io.flow.readBytes
-import info.spiralframework.base.common.io.readInt16LE
 import info.spiralframework.base.common.io.readNullTerminatedString
-import info.spiralframework.base.common.io.use
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.BinaryInputFlow
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.bookmark
+import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 data class MaterialsSrdEntry(

@@ -2,8 +2,9 @@ package info.spiralframework.formats.common.images
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.fauxSeekFromStart
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.fauxSeekFromStart
 
 @ExperimentalUnsignedTypes
 class FontMap(val unk1: Int, val unk2: Int, val mappingTable: Map<Char, Int>, val glyphs: Array<Glyph>) {

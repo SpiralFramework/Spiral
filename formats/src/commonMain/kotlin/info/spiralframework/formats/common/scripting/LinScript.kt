@@ -2,12 +2,16 @@ package info.spiralframework.formats.common.scripting
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.*
+import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.*
+import org.abimon.kornea.io.common.peekInt16BE
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {

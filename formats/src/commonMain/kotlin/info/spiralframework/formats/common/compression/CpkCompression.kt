@@ -1,8 +1,8 @@
 package info.spiralframework.formats.common.compression
 
-import info.spiralframework.base.common.io.ReversedBitPoolInput
-import info.spiralframework.base.common.io.readInt64BE
-import info.spiralframework.base.common.io.readUInt32LE
+import org.abimon.kornea.io.common.ReversedBitPoolInput
+import org.abimon.kornea.io.common.readInt64BE
+import org.abimon.kornea.io.common.readUInt32LE
 
 const val CRILAYLA_MAGIC = 0x4352494C41594C41
 

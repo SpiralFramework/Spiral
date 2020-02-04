@@ -2,11 +2,16 @@ package info.spiralframework.formats.common.scripting
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.fauxSeekFromStart
+import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
+import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.fauxSeekFromStart
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.readInt32LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 class WordScript {

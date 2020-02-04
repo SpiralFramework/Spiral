@@ -4,10 +4,11 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.fauxSeekFromStart
-import info.spiralframework.base.common.io.flow.offsetPosition
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.fauxSeekFromStart
+import org.abimon.kornea.io.common.flow.offsetPosition
 
 open class UtfTableSchema(open val name: String, open val size: UInt, open val schemaOffset: UInt, open val rowsOffset: UInt, open val stringTable: String, open val stringOffset: UInt, open val dataOffset: UInt, open val columnCount: Int, open val rowWidth: Int, open val rowCount: UInt, open val schema: Array<out UtfColumnSchema>)
 

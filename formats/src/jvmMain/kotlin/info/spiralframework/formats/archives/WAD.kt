@@ -1,12 +1,12 @@
 package info.spiralframework.formats.archives
 
-import info.spiralframework.base.jvm.io.CountingInputStream
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.util.readInt32LE
 import info.spiralframework.base.util.readInt64LE
 import info.spiralframework.base.util.readString
 import info.spiralframework.formats.common.withFormats
 import info.spiralframework.formats.utils.DataSource
+import org.abimon.kornea.io.jvm.CountingInputStream
 
 /**
  * A central object to handle the WAD format used by the Steam releases of DR 1 and 2, our primary targets for modding

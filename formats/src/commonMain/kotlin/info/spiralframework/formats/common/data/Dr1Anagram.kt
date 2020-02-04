@@ -1,10 +1,10 @@
 package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.readInt16LE
-import info.spiralframework.base.common.io.use
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerIndex: Int, val incorrectAnswerIndex: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val unk5: Int, val unk6: Int, val gentleFilledLetters: BooleanArray, val kindFilledLetters: BooleanArray, val meanFilledLetters: BooleanArray) {

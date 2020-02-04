@@ -1,10 +1,10 @@
 package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralModuleBase
-import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import info.spiralframework.base.jvm.io.JVMDataSource
-import info.spiralframework.base.jvm.io.files.FileDataSource
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.jvm.JVMDataSource
+import org.abimon.kornea.io.jvm.files.FileDataSource
 import java.io.File
 import kotlin.reflect.KClass
 

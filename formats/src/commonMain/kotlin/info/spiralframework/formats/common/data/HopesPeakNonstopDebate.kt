@@ -1,11 +1,11 @@
 package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.DataSource
-import info.spiralframework.base.common.io.flow.readExact
-import info.spiralframework.base.common.io.readInt16LE
-import info.spiralframework.base.common.io.use
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.readExact
+import org.abimon.kornea.io.common.readInt16LE
+import org.abimon.kornea.io.common.use
 import kotlin.math.round
 
 @ExperimentalUnsignedTypes

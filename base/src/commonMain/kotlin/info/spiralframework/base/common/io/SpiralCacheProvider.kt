@@ -2,9 +2,11 @@ package info.spiralframework.base.common.io
 
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.OutputFlow
 import info.spiralframework.base.common.putBack
+import org.abimon.kornea.io.common.BinaryDataPool
+import org.abimon.kornea.io.common.DataPool
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -91,7 +93,7 @@ interface SpiralTimedCacheProvider {
 
 @ExperimentalUnsignedTypes
 interface SpiralCacheProvider : SpiralShortTermCacheProvider, SpiralPersistentCacheProvider, SpiralTimedCacheProvider, SpiralCatalyst<SpiralContext> {
-    class Memory : SpiralCacheProvider, SpiralShortTermCacheProvider by SpiralShortTermCacheProvider.Memory(), SpiralPersistentCacheProvider by SpiralPersistentCacheProvider.Memory(), SpiralTimedCacheProvider by SpiralTimedCacheProvider.Memory() {
+    class Memory() : SpiralCacheProvider, SpiralShortTermCacheProvider by SpiralShortTermCacheProvider.Memory(), SpiralPersistentCacheProvider by SpiralPersistentCacheProvider.Memory(), SpiralTimedCacheProvider by SpiralTimedCacheProvider.Memory() {
         override fun prime(catalyst: SpiralContext) {}
     }
 }

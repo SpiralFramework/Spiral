@@ -1,10 +1,10 @@
 package info.spiralframework.base.common
 
-import info.spiralframework.base.common.io.DataCloseableEventHandler
-import info.spiralframework.base.common.io.flow.InputFlow
-import info.spiralframework.base.common.io.flow.readResultIsValid
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.discardExact
+import org.abimon.kornea.io.common.DataCloseableEventHandler
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.readResultIsValid
 
 @ExperimentalUnsignedTypes
 class ByteReadChannelInputFlow(val channel: ByteReadChannel) : InputFlow {

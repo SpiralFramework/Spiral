@@ -1,9 +1,9 @@
 package info.spiralframework.base.common.locale
 
-import info.spiralframework.base.common.io.DataSource
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import info.spiralframework.base.common.io.loadProperties
-import info.spiralframework.base.common.io.use
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.loadProperties
+import org.abimon.kornea.io.common.use
 import kotlin.reflect.KClass
 
 class CommonLocaleBundle(override val bundleName: String, override val locale: CommonLocale, val backing: Map<String, String>, val context: KClass<*>) : LocaleBundle, Map<String, String> by backing {

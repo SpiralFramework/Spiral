@@ -4,10 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.text.arbitraryProgressBar
-import info.spiralframework.base.jvm.io.files.ensureDirectoryExists
-import info.spiralframework.base.jvm.io.files.ensureFileExists
 import io.github.soc.directories.ProjectDirectories
 import kotlinx.coroutines.runBlocking
+import org.abimon.kornea.io.jvm.files.ensureDirectoryExists
+import org.abimon.kornea.io.jvm.files.ensureFileExists
 import java.io.File
 
 actual class DefaultSpiralConfig: SpiralConfig {

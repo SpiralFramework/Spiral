@@ -1,6 +1,6 @@
 package info.spiralframework.formats.common.archives.srd
 
-import info.spiralframework.base.common.io.DataSource
+import org.abimon.kornea.io.common.DataSource
 
 @ExperimentalUnsignedTypes
 data class TRESrdEntry(

@@ -14,7 +14,7 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import java.util.*
 
 @ExperimentalUnsignedTypes
-actual data class DefaultSpiralContext actual private constructor(
+actual data class DefaultSpiralContext private actual constructor(
         val locale: SpiralLocale,
         val logger: SpiralLogger,
         val config: SpiralConfig,

@@ -5,6 +5,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.io.*
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
 
 @ExperimentalUnsignedTypes
 class DataTableStructure(val entries: Array<Array<DataVariable>>, val utf8Strings: Array<String>, val utf16Strings: Array<String>) {

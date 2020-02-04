@@ -7,3 +7,11 @@ fun String.toIntBaseN(): Int = when {
     startsWith("0d") -> substring(2).toInt()
     else -> toInt()
 }
+
+fun Int.toHexString(): String = buildString {
+    append("0x")
+    val hex = toString(16)
+    for (i in 0 until hex.length % 2)
+        append('0')
+    append(hex)
+}
