@@ -1,7 +1,10 @@
 package info.spiralframework.osl
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
-import info.spiralframework.formats.scripting.lin.*
+import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
+import info.spiralframework.formats.common.scripting.lin.dr1.Dr1EndFlagCheckEntry
+import info.spiralframework.formats.common.scripting.lin.dr1.Dr1GoToLabelEntry
+import info.spiralframework.formats.common.scripting.lin.dr1.Dr1MarkLabelEntry
 
 object ArithmeticOperations {
     val MIN = 0
@@ -18,26 +21,26 @@ object ArithmeticOperations {
             val ifTrue = parser.findLabel()
             val ifFalse = parser.findLabel()
 
-            operations.add(UnknownEntry(0x36, intArrayOf(0, variable, 1, 0, i)))
-            operations.add(EndFlagCheckEntry())
-            operations.add(GoToLabelEntry.forGame(parser.drGame, ifTrue))
-            operations.add(GoToLabelEntry.forGame(parser.drGame, ifFalse))
-            operations.add(SetLabelEntry.forGame(parser.drGame, ifTrue))
-            operations.add(UnknownEntry(0x33, intArrayOf(variable, 0, 0, operation(i, amount).coerceAtMost(MAX).coerceAtLeast(MIN))))
-            operations.add(GoToLabelEntry.forGame(parser.drGame, endLabel))
-            operations.add(SetLabelEntry.forGame(parser.drGame, ifFalse))
+            operations.add(UnknownLinEntry(0x36, intArrayOf(0, variable, 1, 0, i)))
+            operations.add(Dr1EndFlagCheckEntry())
+            operations.add(Dr1GoToLabelEntry(ifTrue))
+            operations.add(Dr1GoToLabelEntry(ifFalse))
+            operations.add(Dr1MarkLabelEntry(ifTrue))
+            operations.add(UnknownLinEntry(0x33, intArrayOf(variable, 0, 0, operation(i, amount).coerceAtMost(MAX).coerceAtLeast(MIN))))
+            operations.add(Dr1GoToLabelEntry(endLabel))
+            operations.add(Dr1MarkLabelEntry(ifFalse))
         }
 
         val ifTrue = parser.findLabel()
 
-        operations.add(UnknownEntry(0x36, intArrayOf(0, variable, 1, 0, MAX)))
-        operations.add(EndFlagCheckEntry())
-        operations.add(GoToLabelEntry.forGame(parser.drGame, ifTrue))
-        operations.add(GoToLabelEntry.forGame(parser.drGame, endLabel))
-        operations.add(SetLabelEntry.forGame(parser.drGame, ifTrue))
-        operations.add(UnknownEntry(0x33, intArrayOf(variable, 0, 0, operation(MAX, amount).coerceAtMost(MAX).coerceAtLeast(MIN))))
-        operations.add(GoToLabelEntry.forGame(parser.drGame, endLabel))
-        operations.add(SetLabelEntry.forGame(parser.drGame, endLabel))
+        operations.add(UnknownLinEntry(0x36, intArrayOf(0, variable, 1, 0, MAX)))
+        operations.add(Dr1EndFlagCheckEntry())
+        operations.add(Dr1GoToLabelEntry(ifTrue))
+        operations.add(Dr1GoToLabelEntry(endLabel))
+        operations.add(Dr1MarkLabelEntry(ifTrue))
+        operations.add(UnknownLinEntry(0x33, intArrayOf(variable, 0, 0, operation(MAX, amount).coerceAtMost(MAX).coerceAtLeast(MIN))))
+        operations.add(Dr1GoToLabelEntry(endLabel))
+        operations.add(Dr1MarkLabelEntry(endLabel))
 
         return operations.toTypedArray()
     }
