@@ -1,16 +1,16 @@
 package info.spiralframework.formats.common.scripting.wrd
 
-import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.encodeToUTF16LEByteArray
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.base.common.io.writeInt16BE
-import info.spiralframework.base.common.io.writeInt16LE
-import info.spiralframework.base.common.io.writeInt32LE
 import info.spiralframework.base.common.text.removeEscapes
 import info.spiralframework.formats.common.games.DRv3
+import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.common.writeInt16BE
+import org.abimon.kornea.io.common.writeInt16LE
+import org.abimon.kornea.io.common.writeInt32LE
 
 class CustomWordScript {
     private val _labels: MutableList<String> = ArrayList()

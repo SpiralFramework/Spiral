@@ -54,4 +54,4 @@ fun uuidString(): String {
 }
 
 @ExperimentalStdlibApi
-actual suspend fun String.encodeToString(charset: TextCharsets): ByteArray = manuallyEncode(this, charset)
+actual suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray = manuallyEncode(this, charset)

@@ -2,10 +2,12 @@ package info.spiralframework.formats.common.scripting.wrd
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.io.flow.*
+import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
+import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.*
 
 @ExperimentalUnsignedTypes
 class WordScript(val labels: Array<String>, val parameters: Array<String>, val strings: Array<String>?, val localBranchNumbers: Array<Pair<Int, Int>>, val scriptDataBlocks: Array<Array<WrdEntry>>) {

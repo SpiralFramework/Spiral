@@ -1,13 +1,13 @@
 package info.spiralframework.formats.common.scripting.lin
 
-import info.spiralframework.base.binding.BinaryOutputFlow
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.manuallyEncode
-import info.spiralframework.base.common.io.flow.OutputFlow
-import info.spiralframework.base.common.io.writeInt16LE
-import info.spiralframework.base.common.io.writeInt32LE
 import info.spiralframework.base.common.sumByLong
 import info.spiralframework.base.common.NULL_TERMINATOR
+import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.common.writeInt16LE
+import org.abimon.kornea.io.common.writeInt32LE
 
 class CustomLinScript {
     private val _textData: MutableList<String> = ArrayList()

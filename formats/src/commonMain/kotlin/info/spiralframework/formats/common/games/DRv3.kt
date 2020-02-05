@@ -1,8 +1,6 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.flow.readBytes
-import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -13,7 +11,6 @@ import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
-import kotlinx.coroutines.MainScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.list

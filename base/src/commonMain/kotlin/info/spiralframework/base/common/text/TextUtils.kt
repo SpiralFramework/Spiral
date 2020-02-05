@@ -15,3 +15,31 @@ fun Int.toHexString(): String = buildString {
         append('0')
     append(hex)
 }
+
+fun String.removeEscapes(): String =
+        buildString {
+            var i = 0
+            while (i in this@removeEscapes.indices) {
+                val c = this@removeEscapes[i++]
+                if (c == '\\' && (i++) in this@removeEscapes.indices) {
+                    when (this@removeEscapes[i]) {
+                        'n' -> append('\n')
+                        't' -> append('\t')
+                        'b' -> append('\b')
+                        'r' -> append('\r')
+                        '0' -> append(0x00.toChar())
+                        'u' -> {
+                            val hex = this@removeEscapes.substring(i, i + 4)
+                            i += 4
+                            hex.toIntOrNull(16)?.toChar()?.let(this::append)
+                        }
+                        else -> {
+                            append('\\')
+                            append(c)
+                        }
+                    }
+                } else {
+                    append(c)
+                }
+            }
+        }
