@@ -91,3 +91,17 @@ open class CustomWadArchive {
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+inline fun wadArchive(block: CustomWadArchive.() -> Unit): CustomWadArchive {
+    val wad = CustomWadArchive()
+    wad.block()
+    return wad
+}
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun OutputFlow.compileWadArchive(block: CustomWadArchive.() -> Unit) {
+    val wad = CustomWadArchive()
+    wad.block()
+    wad.compile(this)
+}

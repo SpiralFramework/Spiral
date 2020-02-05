@@ -145,3 +145,10 @@ suspend fun SpcArchive.openDecompressedSource(context: SpiralContext, file: SpcF
 
 @ExperimentalUnsignedTypes
 suspend fun SpcArchive.openDecompressedFlow(context: SpiralContext, file: SpcFileEntry) = context.openDecompressedFlow(file)
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.SpcArchive(dataSource: DataSource<*>) = SpcArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeSpcArchive(dataSource: DataSource<*>) = SpcArchive.unsafe(this, dataSource)

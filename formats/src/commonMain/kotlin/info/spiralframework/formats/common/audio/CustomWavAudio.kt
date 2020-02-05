@@ -47,3 +47,16 @@ class CustomWavAudio {
         out.write(pcmSamples.getData())
     }
 }
+
+@ExperimentalUnsignedTypes
+inline fun wavAudio(block: CustomWavAudio.() -> Unit): CustomWavAudio {
+    val wav = CustomWavAudio()
+    wav.block()
+    return wav
+}
+@ExperimentalUnsignedTypes
+suspend fun OutputFlow.writeWavAudio(block: CustomWavAudio.() -> Unit) {
+    val wav = CustomWavAudio()
+    wav.block()
+    wav.write(this)
+}

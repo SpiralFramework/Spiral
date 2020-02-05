@@ -53,3 +53,16 @@ class CustomPakArchive {
         return _files.size
     }
 }
+
+@ExperimentalUnsignedTypes
+inline fun pakArchive(block: CustomPakArchive.() -> Unit): CustomPakArchive {
+    val pak = CustomPakArchive()
+    pak.block()
+    return pak
+}
+@ExperimentalUnsignedTypes
+suspend fun OutputFlow.compilePakArchive(block: CustomPakArchive.() -> Unit) {
+    val pak = CustomPakArchive()
+    pak.block()
+    pak.compile(this)
+}

@@ -60,3 +60,8 @@ open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArra
         return WindowedInputFlow(parent, sectionHeader.pointerToRawData.toULong(), sectionHeader.sizeOfRawData.toULong())
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.WindowsExecutable(dataSource: DataSource<*>) = WindowsExecutable(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeWindowsExecutable(dataSource: DataSource<*>) = WindowsExecutable.unsafe(this, dataSource)

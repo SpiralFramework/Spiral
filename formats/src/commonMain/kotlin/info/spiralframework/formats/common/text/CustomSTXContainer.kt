@@ -173,3 +173,18 @@ class CustomSTXContainer {
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+inline fun stxContainer(block: CustomSTXContainer.() -> Unit): CustomSTXContainer {
+    val stx = CustomSTXContainer()
+    stx.block()
+    return stx
+}
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun OutputFlow.compileSTXContainer(block: CustomSTXContainer.() -> Unit) {
+    val stx = CustomSTXContainer()
+    stx.block()
+    stx.compile(this)
+}

@@ -66,3 +66,8 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
         return WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.AwbArchive(dataSource: DataSource<*>) = AwbArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeAwbArchive(dataSource: DataSource<*>) = AwbArchive.unsafe(this, dataSource)

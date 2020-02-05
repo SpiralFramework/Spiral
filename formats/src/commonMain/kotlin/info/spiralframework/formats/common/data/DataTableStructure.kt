@@ -111,3 +111,10 @@ class DataTableStructure(val entries: Array<Array<DataVariable>>, val utf8String
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.DataTableStructure(dataSource: DataSource<*>) = DataTableStructure(this, dataSource)
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDataTableStructure(dataSource: DataSource<*>) = DataTableStructure.unsafe(this, dataSource)

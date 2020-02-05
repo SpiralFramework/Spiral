@@ -53,3 +53,12 @@ class Dr1SaveFile {
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.Dr1SaveFile(dataSource: DataSource<*>) = Dr1SaveFile(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.Dr1SaveFile(flow: InputFlow) = Dr1SaveFile(this, flow)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1SaveFile(dataSource: DataSource<*>) = Dr1SaveFile.unsafe(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1SaveFile(flow: InputFlow) = Dr1SaveFile.unsafe(this, flow)

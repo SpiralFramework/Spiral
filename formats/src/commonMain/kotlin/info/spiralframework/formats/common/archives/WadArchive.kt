@@ -93,3 +93,10 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
         return WindowedInputFlow(parent, dataOffset + file.offset.toULong(), file.size.toULong())
     }
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.WadArchive(dataSource: DataSource<*>) = WadArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeWadArchive(dataSource: DataSource<*>) = WadArchive.unsafe(this, dataSource)

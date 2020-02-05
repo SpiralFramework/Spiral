@@ -2,10 +2,10 @@ package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.foldToInt16LE
 
-class HopesPeakNonstopDebateSection private constructor(override val data: IntArray): IntArrayDataStructure {
+class LinNonstopDebateSection private constructor(override val data: IntArray): IntArrayDataStructure {
     companion object {
-        fun fromData(data: ByteArray) = HopesPeakNonstopDebateSection(data.foldToInt16LE())
-        fun fromData(data: IntArray) = HopesPeakNonstopDebateSection(data.copyOf())
+        fun fromData(data: ByteArray) = LinNonstopDebateSection(data.foldToInt16LE())
+        fun fromData(data: IntArray) = LinNonstopDebateSection(data.copyOf())
     }
 
     constructor(size: Int): this(IntArray(size))

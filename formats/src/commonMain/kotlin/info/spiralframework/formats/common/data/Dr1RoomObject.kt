@@ -49,3 +49,12 @@ class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, 
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.Dr1RoomObject(dataSource: DataSource<*>) = Dr1RoomObject(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.Dr1RoomObject(flow: InputFlow) = Dr1RoomObject(this, flow)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1RoomObject(dataSource: DataSource<*>) = Dr1RoomObject.unsafe(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1RoomObject(flow: InputFlow) = Dr1RoomObject.unsafe(this, flow)

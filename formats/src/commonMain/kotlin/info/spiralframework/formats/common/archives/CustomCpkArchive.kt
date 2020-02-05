@@ -400,5 +400,19 @@ open class CustomCpkArchive {
     }
 }
 
+@ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun CustomCpkArchive.compile(context: SpiralContext, output: OutputFlow) = context.compile(output)
+@ExperimentalUnsignedTypes
+inline fun cpkArchive(block: CustomCpkArchive.() -> Unit): CustomCpkArchive {
+    val custom = CustomCpkArchive()
+    custom.block()
+    return custom
+}
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun OutputFlow.compileCpkArchive(context: SpiralContext, block: CustomCpkArchive.() -> Unit) {
+    val custom = CustomCpkArchive()
+    custom.block()
+    custom.compile(context, this)
+}

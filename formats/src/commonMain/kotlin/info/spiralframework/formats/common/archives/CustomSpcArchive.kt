@@ -66,3 +66,17 @@ open class CustomSpcArchive {
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+inline fun spcArchive(block: CustomSpcArchive.() -> Unit): CustomSpcArchive {
+    val spc = CustomSpcArchive()
+    spc.block()
+    return spc
+}
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun OutputFlow.compileSpcArchive(block: CustomSpcArchive.() -> Unit) {
+    val spc = CustomSpcArchive()
+    spc.block()
+    spc.compile(this)
+}

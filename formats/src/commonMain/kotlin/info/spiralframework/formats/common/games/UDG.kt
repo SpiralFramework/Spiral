@@ -89,3 +89,10 @@ class UDG(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UDG() = UDG(this)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeUDG() = UDG.unsafe(this)

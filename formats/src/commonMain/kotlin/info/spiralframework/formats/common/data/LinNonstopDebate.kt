@@ -6,12 +6,12 @@ import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.readExact
 import org.abimon.kornea.io.common.readInt16LE
 import org.abimon.kornea.io.common.use
-import kotlin.math.round
+import kotlin.math.roundToInt
 
 @ExperimentalUnsignedTypes
-class HopesPeakNonstopDebate(val baseTimeLimit: Int, val sections: Array<HopesPeakNonstopDebateSection>) {
+class LinNonstopDebate(val baseTimeLimit: Int, val sections: Array<LinNonstopDebateSection>) {
     companion object {
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): HopesPeakNonstopDebate? {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): LinNonstopDebate? {
             try {
                 return unsafe(context, dataSource)
             } catch (iae: IllegalArgumentException) {
@@ -21,7 +21,7 @@ class HopesPeakNonstopDebate(val baseTimeLimit: Int, val sections: Array<HopesPe
             }
         }
 
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): HopesPeakNonstopDebate {
+        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): LinNonstopDebate {
             withFormats(context) {
                 val notEnoughData: () -> Any = { localise("formats.hpa_nonstop_debate.not_enough_data") }
 
@@ -35,10 +35,10 @@ class HopesPeakNonstopDebate(val baseTimeLimit: Int, val sections: Array<HopesPe
 
                     val sections = Array(sectionCount) {
                         requireNotNull(flow.readExact(sectionBuffer), notEnoughData)
-                        HopesPeakNonstopDebateSection.fromData(sectionBuffer)
+                        LinNonstopDebateSection.fromData(sectionBuffer)
                     }
 
-                    return HopesPeakNonstopDebate(timeLimit, sections)
+                    return LinNonstopDebate(timeLimit, sections)
                 }
             }
         }
@@ -51,5 +51,10 @@ class HopesPeakNonstopDebate(val baseTimeLimit: Int, val sections: Array<HopesPe
     val kindTimeLimit = baseTimeLimit * 1
 
     /** 0.8 * timeLimit */
-    val meanTimeLimit = round(baseTimeLimit * 0.8).toInt()
+    val meanTimeLimit = (baseTimeLimit * 0.8).roundToInt()
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.HopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeHopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate.unsafe(this, dataSource)

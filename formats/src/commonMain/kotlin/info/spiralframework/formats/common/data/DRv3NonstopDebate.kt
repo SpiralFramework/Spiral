@@ -9,9 +9,9 @@ import org.abimon.kornea.io.common.use
 import kotlin.math.round
 
 @ExperimentalUnsignedTypes
-class V3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val sections: Array<V3NonstopDebateSection>) {
+class DRv3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val sections: Array<DRv3NonstopDebateSection>) {
     companion object {
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): V3NonstopDebate? {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): DRv3NonstopDebate? {
             try {
                 return unsafe(context, dataSource)
             } catch (iae: IllegalArgumentException) {
@@ -21,7 +21,7 @@ class V3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, val 
             }
         }
 
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): V3NonstopDebate {
+        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): DRv3NonstopDebate {
             withFormats(context) {
                 val notEnoughData: () -> Any = { localise("formats.v3_nonstop_debate.not_enough_data") }
 
@@ -41,10 +41,10 @@ class V3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, val 
                     val sections = Array(sectionCount) {
                         println(flow.position())
                         requireNotNull(flow.readExact(sectionBuffer), notEnoughData)
-                        V3NonstopDebateSection.fromData(sectionBuffer)
+                        DRv3NonstopDebateSection.fromData(sectionBuffer)
                     }
 
-                    return V3NonstopDebate(timeLimit, unk1, unk2, unk3, unk4, sections)
+                    return DRv3NonstopDebate(timeLimit, unk1, unk2, unk3, unk4, sections)
                 }
             }
         }
@@ -59,3 +59,8 @@ class V3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, val 
     /** 0.8 * timeLimit */
     val meanTimeLimit = round(baseTimeLimit * 0.8).toInt()
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.DRv3NonstopDebate(dataSource: DataSource<*>) = DRv3NonstopDebate(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDRv3NonstopDebate(dataSource: DataSource<*>) = DRv3NonstopDebate.unsafe(this, dataSource)

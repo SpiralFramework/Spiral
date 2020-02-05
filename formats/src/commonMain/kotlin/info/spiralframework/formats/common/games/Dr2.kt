@@ -21,8 +21,10 @@ open class Dr2(
         override val linItemNames: Array<String>,
         override val pakNames: Map<String, Array<String>>,
         customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
+) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
     companion object {
+        const val NONSTOP_DEBATE_SECTION_SIZE = 34
+
         @Serializable
         data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
 
@@ -153,6 +155,9 @@ open class Dr2(
     override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes {  }
+    override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
 @ExperimentalStdlibApi

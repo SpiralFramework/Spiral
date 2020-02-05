@@ -191,3 +191,10 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.WordScript(game: DrGame.WordScriptable, dataSource: DataSource<*>) = WordScript(this, game, dataSource)
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeWordScript(game: DrGame.WordScriptable, dataSource: DataSource<*>) = WordScript.unsafe(this, game, dataSource)

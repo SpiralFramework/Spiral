@@ -84,3 +84,10 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
 
 @ExperimentalUnsignedTypes
 suspend fun BaseSrdEntry.setup(context: SpiralContext) = context.setup()
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.BaseSrdEntry(dataSource: DataSource<*>) = BaseSrdEntry(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeBaseSrdEntry(dataSource: DataSource<*>) = BaseSrdEntry.unsafe(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.PseudoSafeBaseSrdEntry(dataSource: DataSource<*>) = BaseSrdEntry.pseudoSafe(this, dataSource)

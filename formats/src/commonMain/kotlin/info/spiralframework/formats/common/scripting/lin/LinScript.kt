@@ -152,3 +152,10 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
 
     operator fun get(textID: Int): String = textData[textID]
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.LinScript(game: DrGame.LinScriptable, dataSource: DataSource<*>) = LinScript(this, game, dataSource)
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeLinScript(game: DrGame.LinScriptable, dataSource: DataSource<*>) = LinScript.unsafe(this, game, dataSource)

@@ -176,3 +176,17 @@ class CustomWordScript {
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun CustomWordScript.compile(output: OutputFlow, context: SpiralContext) = context.compile(output)
+
+inline fun wordScript(block: CustomWordScript.() -> Unit): CustomWordScript {
+    val script = CustomWordScript()
+    script.block()
+    return script
+}
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun OutputFlow.compileWordScript(context: SpiralContext, block: CustomWordScript.() -> Unit) {
+    val script = CustomWordScript()
+    script.block()
+    return script.compile(this, context)
+}

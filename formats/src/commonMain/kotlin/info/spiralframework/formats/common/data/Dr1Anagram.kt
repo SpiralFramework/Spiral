@@ -49,3 +49,8 @@ class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerInde
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.Dr1Anagram(dataSource: DataSource<*>) = Dr1Anagram(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeDr1Anagram(dataSource: DataSource<*>) = Dr1Anagram.unsafe(this, dataSource)

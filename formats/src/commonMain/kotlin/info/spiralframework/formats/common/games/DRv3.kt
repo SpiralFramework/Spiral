@@ -237,3 +237,10 @@ open class DRv3(
         else -> UnknownWrdEntry(opcode, rawArguments, this)
     }
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.DRv3() = DRv3(this)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeDRv3() = DRv3.unsafe(this)

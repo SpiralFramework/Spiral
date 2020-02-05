@@ -1213,3 +1213,10 @@ suspend fun HighCompressionAudio.readFrame(context: SpiralContext, index: Int) =
 
 @ExperimentalUnsignedTypes
 suspend fun HighCompressionAudio.readAudioSamples(context: SpiralContext) = context.readAudioSamples()
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.HighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio(this, dataSource)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeHighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio.unsafe(this, dataSource)

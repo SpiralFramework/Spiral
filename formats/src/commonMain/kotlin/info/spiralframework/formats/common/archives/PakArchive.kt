@@ -75,3 +75,8 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
             SinkOffsetInputFlow(parent, file.offset.toULong())
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.PakArchive(dataSource: DataSource<*>) = PakArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafePakArchive(dataSource: DataSource<*>) = PakArchive.unsafe(this, dataSource)

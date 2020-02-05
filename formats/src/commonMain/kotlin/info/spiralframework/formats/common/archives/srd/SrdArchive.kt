@@ -40,3 +40,8 @@ class SrdArchive(val entries: Array<BaseSrdEntry>) {
 
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.SrdArchive(dataSource: DataSource<*>) = SrdArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeSrdArchive(dataSource: DataSource<*>) = SrdArchive.unsafe(this, dataSource)

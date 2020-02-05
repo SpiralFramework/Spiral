@@ -79,3 +79,16 @@ class CustomLinScript {
         }
     }
 }
+
+inline fun linScript(block: CustomLinScript.() -> Unit): CustomLinScript {
+    val lin = CustomLinScript()
+    lin.block()
+    return lin
+}
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun OutputFlow.compileLinScript(block: CustomLinScript.() -> Unit) {
+    val lin = CustomLinScript()
+    lin.block()
+    lin.compile(this)
+}

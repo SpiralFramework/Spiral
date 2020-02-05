@@ -184,3 +184,10 @@ suspend fun CpkArchive.openDecompressedSource(context: SpiralContext, file: CpkF
 
 @ExperimentalUnsignedTypes
 suspend fun CpkArchive.openDecompressedFlow(context: SpiralContext, file: CpkFileEntry) = context.openDecompressedFlow(file)
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.CpkArchive(dataSource: DataSource<*>) = CpkArchive(this, dataSource)
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.UnsafeCpkArchive(dataSource: DataSource<*>) = CpkArchive.unsafe(this, dataSource)

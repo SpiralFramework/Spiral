@@ -6,11 +6,9 @@ import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
 import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.fauxSeekFromStart
 import org.abimon.kornea.io.common.readInt32LE
 import org.abimon.kornea.io.common.use
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 abstract class STXContainer {
@@ -139,3 +137,10 @@ abstract class STXContainer {
 
     abstract fun strings(): Array<String?>
 }
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+suspend fun SpiralContext.STXContainer(dataSource: DataSource<*>) = STXContainer(this, dataSource)
+@ExperimentalStdlibApi
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeSTXContainer(dataSource: DataSource<*>) = STXContainer.unsafe(this, dataSource)

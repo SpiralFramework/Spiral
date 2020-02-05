@@ -81,3 +81,8 @@ class FontMap(val unk1: Int, val unk2: Int, val mappingTable: Map<Char, Int>, va
         }
     }
 }
+
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.FontMap(dataSource: DataSource<*>) = FontMap(this, dataSource)
+@ExperimentalUnsignedTypes
+suspend fun SpiralContext.UnsafeFontMap(dataSource: DataSource<*>) = FontMap.unsafe(this, dataSource)
