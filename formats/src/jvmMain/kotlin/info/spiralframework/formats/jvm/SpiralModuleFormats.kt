@@ -1,4 +1,4 @@
-package info.spiralframework.formats
+package info.spiralframework.formats.jvm
 
 import info.spiralframework.base.common.SPIRAL_VERSION
 import info.spiralframework.base.common.SemanticVersion

@@ -30,7 +30,7 @@ crashlytics-build.properties
 fabric.properties
 ### Gradle template
 .gradle
-/build/
+build/
 */build/
 
 # Ignore Gradle GUI config
@@ -52,4 +52,4 @@ gen
 graph
 
 Bootstrap.kt
-/formats/src/jvmMain/kotlin/Bootstrap.kt
+formats/src/jvmMain/kotlin/Bootstrap.kt
