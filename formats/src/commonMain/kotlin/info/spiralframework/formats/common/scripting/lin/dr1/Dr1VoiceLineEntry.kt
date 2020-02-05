@@ -1,24 +1,29 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
-import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 
-inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): LinEntry {
+inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    constructor(characterID: Int, chapterID: Int, voiceLineID: Int, volume: Int): this(intArrayOf(characterID, chapterID, voiceLineID, volume))
 
     override val opcode: Int
         get() = 0x08
 
-    val characterID: Int
-        get() = rawArguments[0]
+    var characterID: Int
+        get() = get(0)
+        set(value) = set(0, value)
 
-    val chapterID: Int
-        get() = rawArguments[1]
+    var chapterID: Int
+        get() = get(1)
+        set(value) = set(1, value)
 
-    val voiceLineID: Int
-        get() = (rawArguments[2] shl 8) or rawArguments[3]
+    var voiceLineID: Int
+        get() = getInt16BE(2)
+        set(value) = setInt16BE(2, value)
 
-    val volume: Int
-        get() = rawArguments[4]
+    var volume: Int
+        get() = get(4)
+        set(value) = set(4, value)
 
     override fun format(): String = "Voice Line|$characterID, $chapterID, ${voiceLineID shr 8}, ${voiceLineID and 0xFF}, $volume"
 }

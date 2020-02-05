@@ -1,21 +1,26 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 
-inline class Dr1SetStudentTitleEntry(override val rawArguments: IntArray): LinEntry {
+inline class Dr1SetStudentTitleEntry(override val rawArguments: IntArray): MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    constructor(characterID: Int, arg2: Int, state: Int): this(intArrayOf(characterID, arg2, state))
 
     override val opcode: Int
         get() = 0x0F
 
-    val characterID: Int
-        get() = rawArguments[0]
+    var characterID: Int
+        get() = get(0)
+        set(value) = set(0, value)
 
-    val arg2: Int
-        get() = rawArguments[1]
+    var arg2: Int
+        get() = get(1)
+        set(value) = set(1, value)
 
-    val state: Int
-        get() = rawArguments[2]
+    var state: Int
+        get() = get(2)
+        set(value) = set(2, value)
 
     override fun format(): String = "Set Title|$characterID, $arg2, $state"
 }

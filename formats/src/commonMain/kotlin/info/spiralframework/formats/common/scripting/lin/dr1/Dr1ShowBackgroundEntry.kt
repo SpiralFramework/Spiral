@@ -1,18 +1,22 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
+import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 
-inline class Dr1ShowBackgroundEntry(override val rawArguments: IntArray) : LinEntry {
+inline class Dr1ShowBackgroundEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    constructor(backgroundID: Int, state: Int): this(intArrayOf(backgroundID, state))
 
     override val opcode: Int
         get() = 0x30
 
-    val backgroundID: Int
-        get() = rawArguments[0]
+    var backgroundID: Int
+        get() = get(0)
+        set(value) = set(0, value)
 
-    val state: Int
-        get() = rawArguments[1]
+    var state: Int
+        get() = get(1)
+        set(value) = set(1, value)
 
     override fun format(): String = "Show Background|$backgroundID, $state"
 }
