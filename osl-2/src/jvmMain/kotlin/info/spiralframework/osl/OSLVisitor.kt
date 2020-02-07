@@ -3,42 +3,29 @@ package info.spiralframework.osl
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
 import info.spiralframework.base.common.SemanticVersion
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.osl.games.*
+import info.spiralframework.osbc.common.OSLUnion
+import info.spiralframework.osbc.common.OpenSpiralBitcodeBuilder
+import info.spiralframework.osbc.common.buildAction
+import info.spiralframework.osbc.common.buildLongReference
+import kotlinx.coroutines.runBlocking
+import org.abimon.kornea.io.common.flow.OutputFlow
 import org.antlr.v4.runtime.tree.TerminalNode
-import kotlin.properties.Delegates
 
-class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
+@ExperimentalUnsignedTypes
+class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVisitor<OSLUnion>() {
     companion object {
         const val OSL_HEADER_LENGTH = "OSL Script".length
+        suspend operator fun invoke(output: OutputFlow) = OSLVisitor(OpenSpiralBitcodeBuilder(output))
+
+        operator fun <T> OpenSpiralBitcodeBuilder.invoke(block: suspend OpenSpiralBitcodeBuilder.() -> T) =
+                runBlocking { this@invoke.block() }
     }
 
-    //var environment: String
-    var game: DRGame? by Delegates.observable(null) { _, _: DRGame?, new: DRGame? ->
-        _gameVisitor = new?.let(DRGameVisitor.Companion::visitorFor)
-    }
-    private var _gameVisitor: DRGameVisitor? = null
-    val gameVisitor: DRGameVisitor?
-        get() = _gameVisitor
-
-    val variableData: MutableMap<String, OSLUnion> = HashMap()
-
-    var oslVersion: SemanticVersion? = null
-
-    fun getData(name: String): OSLUnion {
-        if (name.equals("game", true))
-            return OSLUnion.RawStringType(game?.identifier ?: "none")
-        else if (name.equals("version", true))
-            return OSLUnion.RawStringType(oslVersion.toString())
-        else
-            return variableData[name] ?: OSLUnion.UndefinedType
-    }
-
-    override fun visitScript(ctx: OpenSpiralParser.ScriptContext): OSLUnion {
-        visitHeaderDeclaration(ctx.headerDeclaration())
-        ctx.scriptLine().forEach { lineCtx -> gameVisitor?.handleScriptLine(visitScriptLine(lineCtx)) }
-        return gameVisitor?.scriptResult() ?: OSLUnion.UndefinedType
-    }
+//    override fun visitScript(ctx: OpenSpiralParser.ScriptContext): OSLUnion {
+//        visitHeaderDeclaration(ctx.headerDeclaration())
+//        ctx.scriptLine().forEach { lineCtx -> gameVisitor?.handleScriptLine(visitScriptLine(lineCtx)) }
+//        return OSLUnion.
+//    }
 
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
         val rawSemanticVersion = ctx.HEADER_DECLARATION()
@@ -51,11 +38,15 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
                 ?.mapNotNull(String::toIntOrNull)
                 ?: return OSLUnion.NoOpType
 
-        this.oslVersion = SemanticVersion(
-                rawSemanticVersion.getOrNull(0) ?: 0,
-                rawSemanticVersion.getOrNull(1) ?: 0,
-                rawSemanticVersion.getOrNull(2) ?: 0
-        )
+        builder {
+            setVersion(
+                    SemanticVersion(
+                            rawSemanticVersion.getOrNull(0) ?: 0,
+                            rawSemanticVersion.getOrNull(1) ?: 0,
+                            rawSemanticVersion.getOrNull(2) ?: 0
+                    )
+            )
+        }
 
         return OSLUnion.NoOpType
     }
@@ -67,20 +58,27 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
 //        return OSLUnion.UndefinedType
 //    }
 
+    @ExperimentalStdlibApi
     override fun visitBasicDrill(ctx: OpenSpiralParser.BasicDrillContext): OSLUnion {
-        val opCode = ctx.INTEGER().text.toIntVariable()
-        val arguments: MutableList<Int> = ArrayList()
-        ctx.basicDrillValue().forEach { valueCtx -> gameVisitor?.handleArgumentForEntry(arguments, visitBasicDrillValue(valueCtx)) }
-        return gameVisitor.entryForOpCode(opCode, arguments.toIntArray())
+        val opcode = ctx.INTEGER().text.toIntVariable()
+        builder {
+            val values = ctx.basicDrillValue()
+            addOpcode(opcode, Array(values.size) { i -> visitBasicDrillValue(values[i]) })
+        }
+        return OSLUnion.NoOpType
     }
 
+    @ExperimentalStdlibApi
     override fun visitBasicDrillNamed(ctx: OpenSpiralParser.BasicDrillNamedContext): OSLUnion {
-        val opCodeName = ctx.NAME_IDENTIFIER().text.trim('|')
-        val arguments: MutableList<Int> = ArrayList()
-        ctx.basicDrillValue().forEach { valueCtx -> gameVisitor?.handleArgumentForEntry(arguments, visitBasicDrillValue(valueCtx)) }
-        return gameVisitor.entryForName(opCodeName, arguments.toIntArray())
+        val opcodeName = ctx.NAME_IDENTIFIER().text.trimEnd('|')
+        builder {
+            val values = ctx.basicDrillValue()
+            addOpcode(opcodeName, Array(values.size) { i -> visitBasicDrillValue(values[i]) })
+        }
+        return OSLUnion.NoOpType
     }
 
+    @ExperimentalStdlibApi
     override fun visitBasicDrillValue(ctx: OpenSpiralParser.BasicDrillValueContext): OSLUnion {
         ctx.wrdLabelReference()?.let(this::visitWrdLabelReference)?.let { return it }
         ctx.wrdParameterReference()?.let(this::visitWrdParameterReference)?.let { return it }
@@ -89,6 +87,7 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         return OSLUnion.UndefinedType
     }
 
+    @ExperimentalStdlibApi
     override fun visitWrdLabelReference(ctx: OpenSpiralParser.WrdLabelReferenceContext): OSLUnion {
         ctx.WRD_SHORT_LABEL_REFERENCE()?.let { node -> return OSLUnion.LabelType(node.text.substring(1)) }
         ctx.wrdLongLabelReference()?.let(this::visitWrdLongLabelReference)?.let { return it }
@@ -96,6 +95,7 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         return OSLUnion.UndefinedType
     }
 
+    @ExperimentalStdlibApi
     override fun visitWrdParameterReference(ctx: OpenSpiralParser.WrdParameterReferenceContext): OSLUnion {
         ctx.WRD_SHORT_PARAMETER_REFERENCE()?.let { node -> return OSLUnion.ParameterType(node.text.substring(1)) }
         ctx.wrdLongParameterReference()?.let(this::visitWrdLongParameterReference)?.let { return it }
@@ -103,91 +103,112 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         return OSLUnion.UndefinedType
     }
 
-    override fun visitWrdLongLabelReference(ctx: OpenSpiralParser.WrdLongLabelReferenceContext): OSLUnion.LabelType =
-            OSLUnion.LabelType(visitLongReference(ctx.longReference()).string)
+    @ExperimentalStdlibApi
+    override fun visitWrdLongLabelReference(ctx: OpenSpiralParser.WrdLongLabelReferenceContext): OSLUnion.LongLabelType =
+            OSLUnion.LongLabelType(visitLongReference(ctx.longReference()).longReference)
 
-    override fun visitWrdLongParameterReference(ctx: OpenSpiralParser.WrdLongParameterReferenceContext): OSLUnion.ParameterType =
-            OSLUnion.ParameterType(visitLongReference(ctx.longReference()).string)
+    @ExperimentalStdlibApi
+    override fun visitWrdLongParameterReference(ctx: OpenSpiralParser.WrdLongParameterReferenceContext): OSLUnion.LongParameterType =
+            OSLUnion.LongParameterType(visitLongReference(ctx.longReference()).longReference)
 
-    override fun visitLongReference(ctx: OpenSpiralParser.LongReferenceContext): OSLUnion.RawStringType {
-        val string = buildString {
-            ctx.children.forEach { node ->
-                if (node !is TerminalNode)
-                    return@forEach
+    @ExperimentalStdlibApi
+    override fun visitLongReference(ctx: OpenSpiralParser.LongReferenceContext): OSLUnion.LongReferenceType {
+        val longReference = builder {
+            buildLongReference {
+                val builder = StringBuilder()
+                ctx.children.forEach { node ->
+                    if (node !is TerminalNode)
+                        return@forEach
 
-                when (node.symbol.type) {
-                    OpenSpiralParser.LONG_REF_ESCAPES -> {
-                        when (node.text[1]) {
-                            'b' -> append('\b')
-                            'f' -> append(0x0C.toChar())
-                            'n' -> append('\n')
-                            'r' -> append('\r')
-                            't' -> append('\t')
-                            'u' -> append(node.text.substring(2).toInt(16).toChar())
+                    when (node.symbol.type) {
+                        OpenSpiralParser.LONG_REF_ESCAPES -> {
+                            when (node.text[1]) {
+                                'b' -> builder.append('\b')
+                                'f' -> builder.append(0x0C.toChar())
+                                'n' -> builder.append('\n')
+                                'r' -> builder.append('\r')
+                                't' -> builder.append('\t')
+                                'u' -> builder.append(node.text.substring(2).toInt(16).toChar())
+                            }
+                        }
+                        OpenSpiralParser.LONG_REF_CHARACTERS -> builder.append(node.text)
+                        OpenSpiralParser.LONG_REF_VARIABLE_REFERENCE -> {
+                            if (builder.isNotEmpty()) {
+                                appendText(builder.toString())
+                                builder.clear()
+                            }
+                            appendVariable(node.text.substring(1))
                         }
                     }
-                    OpenSpiralParser.LONG_REF_CHARACTERS -> append(node.text)
-                    OpenSpiralParser.LONG_REF_VARIABLE_REFERENCE -> append(getData(node.text.substring(1)).represent())
+                }
+
+                if (builder.isNotEmpty()) {
+                    appendText(builder.toString())
+                    builder.clear()
                 }
             }
         }
 
-        return OSLUnion.RawStringType(string)
+        return OSLUnion.LongReferenceType(longReference)
     }
 
-    override fun visitQuotedString(ctx: OpenSpiralParser.QuotedStringContext): OSLUnion.RawStringType {
-        val string = buildString {
-            var cltOpen = false
-            ctx.children.forEach { node ->
-                if (node !is TerminalNode)
-                    return@forEach
+    @ExperimentalStdlibApi
+    override fun visitQuotedString(ctx: OpenSpiralParser.QuotedStringContext): OSLUnion.LongReferenceType {
+        val longReference = builder {
+            buildLongReference {
+                val builder = StringBuilder()
+                ctx.children.forEach { node ->
+                    if (node !is TerminalNode)
+                        return@forEach
 
-                when (node.symbol.type) {
-                    OpenSpiralParser.ESCAPES -> {
-                        when (node.text[1]) {
-                            'b' -> append('\b')
-                            'f' -> append(0x0C.toChar())
-                            'n' -> append('\n')
-                            'r' -> append('\r')
-                            't' -> append('\t')
-                            'u' -> append(node.text.substring(2).toInt(16).toChar())
+                    when (node.symbol.type) {
+                        OpenSpiralParser.ESCAPES -> {
+                            when (node.text[1]) {
+                                'b' -> builder.append('\b')
+                                'f' -> builder.append(0x0C.toChar())
+                                'n' -> builder.append('\n')
+                                'r' -> builder.append('\r')
+                                't' -> builder.append('\t')
+                                'u' -> builder.append(node.text.substring(2).toInt(16).toChar())
+                            }
                         }
-                    }
-                    OpenSpiralParser.STRING_CHARACTERS -> append(node.text)
-                    OpenSpiralParser.QUOTED_STRING_VARIABLE_REFERENCE -> append(getData(node.text.substring(1)).represent())
-                    OpenSpiralParser.QUOTED_COLOUR_CODE -> {
-                        val colourCode = node.text.substring(1).trim().let { str -> game?.colourCodes?.get(str) ?: str }
-                        if (colourCode.equals("clear", true)) {
-                            if (gameVisitor.clearCltCode(this)) {
-                                cltOpen = false
-                            } else {
-                                append(colourCode)
+                        OpenSpiralParser.STRING_CHARACTERS -> builder.append(node.text)
+                        OpenSpiralParser.QUOTED_STRING_VARIABLE_REFERENCE -> {
+                            if (builder.isNotEmpty()) {
+                                appendText(builder.toString())
+                                builder.clear()
                             }
-                        } else {
-                            if (gameVisitor.handleCltCode(this, colourCode)) {
-                                cltOpen = true
-                            } else {
-                                append(colourCode)
+                            appendVariable(node.text.substring(1))
+                        }
+                        OpenSpiralParser.QUOTED_COLOUR_CODE -> {
+                            if (builder.isNotEmpty()) {
+                                appendText(builder.toString())
+                                builder.clear()
                             }
+                            appendColourCode(node.text.substring(1).trim())
                         }
                     }
                 }
-            }
 
-            if (cltOpen)
-                gameVisitor?.closeCltCode(this)
+                if (builder.isNotEmpty()) {
+                    appendText(builder.toString())
+                    builder.clear()
+                }
+            }
         }
 
-        return OSLUnion.RawStringType(string)
+        return OSLUnion.LongReferenceType(longReference)
     }
 
+    @ExperimentalStdlibApi
     override fun visitMetaVariableAssignment(ctx: OpenSpiralParser.MetaVariableAssignmentContext): OSLUnion {
         val name = ctx.ASSIGN_VARIABLE_NAME().text.substringAfter(' ')
         val value = visitVariableValue(ctx.variableValue())
-        variableData[name] = value
+        builder { setVariable(name, value) }
         return OSLUnion.NoOpType
     }
 
+    @ExperimentalStdlibApi
     override fun visitVariableValue(ctx: OpenSpiralParser.VariableValueContext): OSLUnion {
         //        ctx.BASIC_LIN_DOUBLE()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
 //        ctx.BASIC_LIN_INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
@@ -198,7 +219,7 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
 
         ctx.DECIMAL_NUMBER()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
         ctx.INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
-        ctx.VARIABLE_REFERENCE()?.let { varRef -> return getData(varRef.text.substring(1)) }
+        ctx.VARIABLE_REFERENCE()?.let { varRef -> return OSLUnion.VariableReferenceType(varRef.text.substring(1)) }
 //        ctx.LOCALISED_STRING()
         ctx.booleanRule()?.let(this::visitBooleanRule)?.let { return it }
         ctx.NULL()?.let { return OSLUnion.NullType }
@@ -214,32 +235,42 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLUnion>() {
         return OSLUnion.UndefinedType
     }
 
+    @ExperimentalStdlibApi
     override fun visitActionDeclaration(ctx: OpenSpiralParser.ActionDeclarationContext): OSLUnion {
-        val actionName = buildString {
-            ctx.children.forEach { node ->
-                if (node !is TerminalNode)
-                    return@forEach
+        val actionName = builder {
+            buildAction {
+                val builder = StringBuilder()
+                ctx.children.forEach { node ->
+                    if (node !is TerminalNode)
+                        return@forEach
 
-                when (node.symbol.type) {
-                    OpenSpiralParser.ACTION_ESCAPES -> {
-                        when (node.text[1]) {
-                            'b' -> append('\b')
-                            'f' -> append(0x0C.toChar())
-                            'n' -> append('\n')
-                            'r' -> append('\r')
-                            't' -> append('\t')
-                            'u' -> append(node.text.substring(2).toInt(16).toChar())
+                    when (node.symbol.type) {
+                        OpenSpiralParser.ACTION_ESCAPES -> {
+                            when (node.text[1]) {
+                                'b' -> builder.append('\b')
+                                'f' -> builder.append(0x0C.toChar())
+                                'n' -> builder.append('\n')
+                                'r' -> builder.append('\r')
+                                't' -> builder.append('\t')
+                                'u' -> builder.append(node.text.substring(2).toInt(16).toChar())
+                            }
+                        }
+                        OpenSpiralParser.ACTION_CHARACTERS -> builder.append(node.text)
+                        OpenSpiralParser.ACTION_VARIABLE_REFERENCE -> {
+                            if (builder.isNotEmpty()) {
+                                appendText(builder.toString())
+                                builder.clear()
+                            }
+                            appendVariable(node.text.substring(1))
                         }
                     }
-                    OpenSpiralParser.ACTION_CHARACTERS -> append(node.text)
-                    OpenSpiralParser.ACTION_VARIABLE_REFERENCE -> append(getData(node.text.substring(1)).represent())
                 }
+
+                if (builder.isNotEmpty()) appendText(builder.toString())
             }
         }
 
-        println(actionName)
-
-        return OSLUnion.RawStringType(actionName)
+        return OSLUnion.ActionType(actionName)
     }
 
     fun String.toIntVariable(): Int = when {

@@ -1,7 +1,9 @@
 package info.spiralframework.formats.common.archives
 
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.byteArrayOfHex
+import info.spiralframework.base.common.environment.set
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.OutputFlow
 
@@ -31,6 +33,11 @@ open class CustomSpcArchive {
     val files: List<Map.Entry<String, CustomSpcEntry>>
         get() = _files.entries.toList()
 
+    suspend fun SpiralContext.add(spc: SpcArchive) {
+        spc.files.forEach { entry -> this@CustomSpcArchive[entry.name] = CustomSpcEntry(entry.compressionFlag, entry.compressedSize, entry.decompressedSize, spc.openRawSource(this, entry)) }
+    }
+
+    operator fun set(name: String, source: DataSource<*>) = set(name, CustomSpcEntry(0x00, source.dataSize!!.toLong(), source.dataSize!!.toLong(), source))
     operator fun set(name: String, compressionFlag: Int, compressedSize: Long, decompressedSize: Long, dataSource: DataSource<*>) = set(name, CustomSpcEntry(compressionFlag, compressedSize, decompressedSize, dataSource))
     operator fun set(name: String, entry: CustomSpcEntry) {
         require(entry.compressedSize == entry.dataSource.dataSize?.toLong())
@@ -80,3 +87,6 @@ suspend fun OutputFlow.compileSpcArchive(block: CustomSpcArchive.() -> Unit) {
     spc.block()
     spc.compile(this)
 }
+
+@ExperimentalUnsignedTypes
+suspend fun CustomSpcArchive.add(spc: SpcArchive, context: SpiralContext) = context.add(spc)

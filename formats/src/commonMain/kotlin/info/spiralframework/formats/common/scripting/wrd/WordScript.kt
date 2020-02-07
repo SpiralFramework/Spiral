@@ -72,8 +72,6 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         IntArray(labelCount) { requireNotNull(sectionFlow.readInt16LE(), notEnoughData) }
                     })
 
-                    println()
-
                     val scriptDataBlocks = Array(labelCount) { index ->
                         val size: Int
 
@@ -111,7 +109,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                  *  The dark arts.
                  *      - Jill
                  */
-                length = (length and 0x7F) or (requireNotNull(flow.read(), notEnoughData) shr 7)
+                length = (length and 0x7F) or (requireNotNull(flow.read(), notEnoughData) shl 7)
             }
             flow.readDoubleByteNullTerminatedString(length + 2, TextCharsets.UTF_16LE)
         }

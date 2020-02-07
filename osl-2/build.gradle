@@ -1,9 +1,13 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
-apply plugin: 'antlr'
+//apply plugin: 'antlr'
 
 mainClassName = "info.spiralframework.osl.OSLProxy"
+
+ext {
+    serialization_version = "0.12.0"
+}
 
 kotlin {
     jvm {
@@ -11,6 +15,8 @@ kotlin {
             jvmTarget = "1.8"
         }
     }
+    js()
+
 //    js {
 //        browser {
 //        }
@@ -27,7 +33,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.3'
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
 
                 api project(":base")
                 api project(":formats")
@@ -40,14 +47,21 @@ kotlin {
                 implementation kotlin('test-annotations-common')
             }
         }
+        jsMain {
+            dependencies {
+                api kotlin('stdlib-js')
+//                implementation npm('react', '16.12.0')
+            }
+        }
         jvmMain {
             kotlin.srcDir("$buildDir/generated-src-mpp/antlr/jvmMain")
 
             dependencies {
                 implementation kotlin('stdlib-jdk8')
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC'
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 
-                api "org.antlr:antlr4:4.7.2"
+                implementation project(":antlr-osl-java")
             }
         }
         jvmTest {
@@ -74,10 +88,6 @@ kotlin {
     }
 }
 
-dependencies {
-    antlr "org.antlr:antlr4:4.7.2"
-}
-
 shadowJar {
     baseName = jar.baseName
     appendix = jar.appendix
@@ -86,7 +96,7 @@ shadowJar {
     classifier = "shadow"
 }
 
-generateGrammarSource {
-    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.osl']
-    outputDirectory = file("$buildDir/generated-src-mpp/antlr/jvmMain/info/spiralframework/antlr/osl")
-}
+//generateGrammarSource {
+//    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.osl']
+//    outputDirectory = file("$buildDir/generated-src-mpp/antlr/jvmMain/info/spiralframework/antlr/osl")
+//}

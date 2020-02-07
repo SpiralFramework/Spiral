@@ -1,4 +1,4 @@
-package info.spiralframework.osl
+package info.spiralframework.antlr.osl
 
 sealed class LocaleUnion {
 }

@@ -1,0 +1,23 @@
+{
+  "name": "spiral-osl-ts",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "antlr4ts-osl": "antlr4ts -visitor -Xexact-output-dir -o src/antlr ../antlr-osl-java/src/main/antlr/*.g4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "antlr4ts-cli": "^0.5.0-alpha.3",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.5",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.3"
+  }
+}

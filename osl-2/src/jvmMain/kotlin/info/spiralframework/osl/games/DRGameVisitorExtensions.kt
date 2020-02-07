@@ -1,6 +1,6 @@
 package info.spiralframework.osl.games
 
-import info.spiralframework.osl.OSLUnion
+import info.spiralframework.osbc.common.OSLUnion
 
 fun DRGameVisitor?.handleCltCode(builder: StringBuilder, code: String): Boolean =
         this?.handleCltCode(builder, code) == true

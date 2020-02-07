@@ -22,6 +22,25 @@ sealed class WordScriptValue(open val raw: Int) {
                 null -> Unknown(raw)
             }
         }
+
+        fun parse(raw: ByteArray, labels: List<String>, parameters: List<String>, text: List<String>?, types: ((Int) -> EnumWordScriptCommand)?): Array<WordScriptValue> =
+                Array(raw.size / 2) { invoke((raw[it * 2].toInt() and 0xFF shl 8) or (raw[it * 2 + 1].toInt() and 0xFF), labels, parameters, text, types?.invoke(it)) }
+
+        fun parse(raw: IntArray, labels: List<String>, parameters: List<String>, text: List<String>?, types: ((Int) -> EnumWordScriptCommand)?): Array<WordScriptValue> =
+                Array(raw.size) { invoke(raw[it], labels, parameters, text, types?.invoke(it)) }
+
+        fun parse(raw: List<Int>, labels: List<String>, parameters: List<String>, text: List<String>?, types: ((Int) -> EnumWordScriptCommand)?): Array<WordScriptValue> =
+                Array(raw.size) { invoke(raw[it], labels, parameters, text, types?.invoke(it)) }
+
+        operator fun invoke(raw: Int, labels: List<String>, parameters: List<String>, text: List<String>?, type: EnumWordScriptCommand?): WordScriptValue {
+            return when (type) {
+                EnumWordScriptCommand.LABEL -> Label(labels[raw], raw)
+                EnumWordScriptCommand.PARAMETER -> Parameter(parameters[raw], raw)
+                EnumWordScriptCommand.TEXT -> if (text != null) InternalText(text[raw], raw) else ExternalText(raw)
+                EnumWordScriptCommand.RAW -> Raw(raw)
+                null -> Unknown(raw)
+            }
+        }
     }
 
     data class Label(val label: String, override val raw: Int) : WordScriptValue(raw) {

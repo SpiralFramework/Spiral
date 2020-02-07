@@ -1,5 +1,6 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
+apply plugin: 'net.akehurst.kotlin.kt2ts'
 
 ext {
     serialization_version = "0.12.0"

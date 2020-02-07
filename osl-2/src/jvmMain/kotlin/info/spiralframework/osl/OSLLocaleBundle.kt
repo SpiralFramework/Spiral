@@ -1,13 +1,14 @@
 package info.spiralframework.osl
 
+import info.spiralframework.antlr.osl.LocaleVisitor
 import info.spiralframework.antlr.osl.OSLLocaleLexer
 import info.spiralframework.antlr.osl.OSLLocaleParser
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import info.spiralframework.base.common.io.flow.readAndClose
-import info.spiralframework.base.common.io.useInputFlow
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
+import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.useInputFlow
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
