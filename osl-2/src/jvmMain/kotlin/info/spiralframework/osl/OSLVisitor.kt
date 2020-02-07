@@ -3,10 +3,10 @@ package info.spiralframework.osl
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
 import info.spiralframework.base.common.SemanticVersion
-import info.spiralframework.osbc.common.OSLUnion
-import info.spiralframework.osbc.common.OpenSpiralBitcodeBuilder
-import info.spiralframework.osbc.common.buildAction
-import info.spiralframework.osbc.common.buildLongReference
+import info.spiralframework.osb.common.OSLUnion
+import info.spiralframework.osb.common.OpenSpiralBitcodeBuilder
+import info.spiralframework.osb.common.buildAction
+import info.spiralframework.osb.common.buildLongReference
 import kotlinx.coroutines.runBlocking
 import org.abimon.kornea.io.common.flow.OutputFlow
 import org.antlr.v4.runtime.tree.TerminalNode

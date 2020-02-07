@@ -4,7 +4,7 @@ import info.spiralframework.formats.common.games.DRv3
 import info.spiralframework.formats.common.scripting.wrd.CustomWordScript
 import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
-import info.spiralframework.osbc.common.OSLUnion
+import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osl.games.DRGameVisitor
 
 @ExperimentalUnsignedTypes

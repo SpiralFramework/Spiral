@@ -1,4 +1,4 @@
-package info.spiralframework.osbc.common
+package info.spiralframework.osb.common
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
@@ -42,7 +42,7 @@ object OpenSpiralBitcode {
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralVisitor) {
+class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcodeVisitor) {
     companion object {
         const val PREFIX = "osl.bitcode.parser"
     }
@@ -138,7 +138,7 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralVisito
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun <T : OpenSpiralVisitor> InputFlow.parseOpenSpiralBitcode(context: SpiralContext, visitor: T): T {
+suspend fun <T : OpenSpiralBitcodeVisitor> InputFlow.parseOpenSpiralBitcode(context: SpiralContext, visitor: T): T {
     val magic = requireNotNull(readInt32LE()) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.not_enough_data") }
     require(magic == OpenSpiralBitcode.MAGIC_NUMBER_LE) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.invalid_magic") }
     val parser = OpenSpiralBitcodeParser(this, visitor)

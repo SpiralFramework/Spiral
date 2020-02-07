@@ -1,7 +1,7 @@
 package info.spiralframework.osl.games
 
 import info.spiralframework.formats.common.games.DrGame
-import info.spiralframework.osbc.common.OSLUnion
+import info.spiralframework.osb.common.OSLUnion
 
 interface DRGameVisitor {
     companion object {

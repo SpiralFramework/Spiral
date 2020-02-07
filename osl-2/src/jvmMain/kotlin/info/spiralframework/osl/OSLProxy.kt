@@ -4,22 +4,15 @@ import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.formats.common.archives.UnsafeSpcArchive
-import info.spiralframework.formats.common.archives.spcArchive
 import info.spiralframework.formats.common.games.UnsafeDRv3
 import info.spiralframework.formats.common.scripting.wrd.UnsafeWordScript
-import info.spiralframework.formats.common.scripting.wrd.compile
 import info.spiralframework.formats.jvm.defaultSpiralContextWithFormats
-import info.spiralframework.osbc.common.OSLUnion
-import info.spiralframework.osbc.common.OpenSpiralVisitor
-import info.spiralframework.osbc.common.parseOpenSpiralBitcode
+import info.spiralframework.osb.common.OpenSpiralBitcodeVisitor
+import info.spiralframework.osb.common.parseOpenSpiralBitcode
 import kotlinx.coroutines.runBlocking
-import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.use
 import org.abimon.kornea.io.jvm.files.FileDataSource
-import org.abimon.kornea.io.jvm.files.FileOutputFlow
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
@@ -79,6 +72,6 @@ object OSLProxy {
         val visitor = OSLVisitor(binary)
         val result = visitor.visitScript(tree)
         BinaryInputFlow(binary.getData())
-                .parseOpenSpiralBitcode(this, OpenSpiralVisitor.DEBUG)
+                .parseOpenSpiralBitcode(this, OpenSpiralBitcodeVisitor.DEBUG)
     }
 }

@@ -27,7 +27,6 @@ kotlin {
 
                 api project(":base")
                 api project(":formats")
-                api project(":osl")
             }
         }
         commonTest {

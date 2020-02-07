@@ -1,4 +1,4 @@
-package info.spiralframework.osbc.common
+package info.spiralframework.osb.common
 
 import info.spiralframework.base.common.text.appendln
 import info.spiralframework.base.common.text.toHexString

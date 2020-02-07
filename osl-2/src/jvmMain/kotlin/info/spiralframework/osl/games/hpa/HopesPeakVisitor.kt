@@ -4,7 +4,7 @@ import info.spiralframework.base.jvm.addAll
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.CustomLinScript
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
-import info.spiralframework.osbc.common.OSLUnion
+import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osl.games.DRGameVisitor
 import org.abimon.kornea.io.common.toInt16LE
 
