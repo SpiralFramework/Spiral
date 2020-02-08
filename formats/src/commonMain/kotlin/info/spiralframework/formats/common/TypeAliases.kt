@@ -10,3 +10,6 @@ typealias OpcodeMutableMap<P, S> = MutableMap<Int, ScriptOpcode<P, S>>
 typealias OpcodeHashMap<P, S> = HashMap<Int, ScriptOpcode<P, S>>
 
 typealias OpcodeCommandTypeMap<S> = Map<Int, (Int) -> S>
+
+operator fun <P, S> OpcodeMap<P, S>.get(name: String) =
+        this.values.firstOrNull { opcode -> opcode.names?.contains(name) == true }

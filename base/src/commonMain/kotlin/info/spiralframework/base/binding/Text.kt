@@ -15,6 +15,7 @@ enum class TextCharsets(val bytesForNull: Int) {
     companion object {
         const val UTF_16BE_BOM = 0xFEFF
         const val UTF_16LE_BOM = 0xFFFE
+        const val UTF_16_BOM = 0xFEFF
     }
 }
 
@@ -92,7 +93,7 @@ suspend fun manuallyEncode(text: String, charset: TextCharsets, includeByteOrder
             val output = BinaryOutputFlow()
 
             if (includeByteOrderMarker)
-                output.writeInt16LE(TextCharsets.UTF_16LE_BOM)
+                output.writeInt16LE(TextCharsets.UTF_16_BOM)
 
             text.forEach { character -> output.writeInt16LE(character.toInt()) }
 
@@ -102,7 +103,7 @@ suspend fun manuallyEncode(text: String, charset: TextCharsets, includeByteOrder
             val output = BinaryOutputFlow()
 
             if (includeByteOrderMarker)
-                output.writeInt16LE(TextCharsets.UTF_16BE_BOM)
+                output.writeInt16BE(TextCharsets.UTF_16_BOM)
 
             text.forEach { character -> output.writeInt16BE(character.toInt()) }
 

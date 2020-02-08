@@ -5,11 +5,14 @@ import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.UnsafeDRv3
+import info.spiralframework.formats.common.games.UnsafeDr1
+import info.spiralframework.formats.common.scripting.lin.LinScript
+import info.spiralframework.formats.common.scripting.lin.UnsafeLinScript
 import info.spiralframework.formats.common.scripting.wrd.UnsafeWordScript
 import info.spiralframework.formats.jvm.defaultSpiralContextWithFormats
-import info.spiralframework.osb.common.OpenSpiralBitcodeVisitor
-import info.spiralframework.osb.common.parseOpenSpiralBitcode
+import info.spiralframework.osb.common.compileLinFromBitcode
 import kotlinx.coroutines.runBlocking
+import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.jvm.files.FileDataSource
@@ -32,8 +35,8 @@ object OSLProxy {
 //                context.parseOsl(args[1], args[2])
 //                println("Done!")
 //            } else {
-                context.parseOsl("", "")
-                println("Unknown operation ${args[0]}")
+            context.parseOsl("", "")
+            println("Unknown operation ${args[0]}")
 //            }
         }
     }
@@ -63,7 +66,7 @@ object OSLProxy {
     @ExperimentalUnsignedTypes
     @ExperimentalStdlibApi
     suspend fun SpiralContext.parseOsl(path: String, resultSpcPath: String) {
-        val input = CharStreams.fromString("OSL Script\n0x01|1, 2, 3\nText|2, 3, 4\n0x03|3, %{4}, \"F\\ni\\u0020v\$e\"")
+        val input = CharStreams.fromString("OSL Script\n0x01|\"Test\"\nval test = 1.23\nMakoto: \"Hello, world!\"\nText|\"OwO What's \$test?\"")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
         val parser = OpenSpiralParser(tokens)
@@ -71,7 +74,9 @@ object OSLProxy {
         val binary = BinaryOutputFlow()
         val visitor = OSLVisitor(binary)
         val result = visitor.visitScript(tree)
-        BinaryInputFlow(binary.getData())
-                .parseOpenSpiralBitcode(this, OpenSpiralBitcodeVisitor.DEBUG)
+        val linOut = BinaryOutputFlow()
+        linOut.compileLinFromBitcode(this, UnsafeDr1(), BinaryInputFlow(binary.getData()))
+        val lin = UnsafeLinScript(UnsafeDr1(), BinaryDataSource(linOut.getData()))
+        println(lin)
     }
 }

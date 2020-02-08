@@ -31,7 +31,7 @@ open class Dr1(
         const val NONSTOP_DEBATE_SECTION_SIZE = 30
         
         @Serializable
-        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>, val voice_lines: List<Int>)
+        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>, val voice_lines: List<Int> = emptyList())
 
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): Dr1? {

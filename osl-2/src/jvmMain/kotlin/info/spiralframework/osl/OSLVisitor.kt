@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.abimon.kornea.io.common.flow.OutputFlow
 import org.antlr.v4.runtime.tree.TerminalNode
 
+@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVisitor<OSLUnion>() {
     companion object {
@@ -202,7 +203,7 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
     @ExperimentalStdlibApi
     override fun visitMetaVariableAssignment(ctx: OpenSpiralParser.MetaVariableAssignmentContext): OSLUnion {
-        val name = ctx.ASSIGN_VARIABLE_NAME().text.substringAfter(' ')
+        val name = ctx.ASSIGN_VARIABLE_NAME().text.substringAfter(' ').trim()
         val value = visitVariableValue(ctx.variableValue())
         builder { setVariable(name, value) }
         return OSLUnion.NoOpType
@@ -235,7 +236,6 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         return OSLUnion.UndefinedType
     }
 
-    @ExperimentalStdlibApi
     override fun visitActionDeclaration(ctx: OpenSpiralParser.ActionDeclarationContext): OSLUnion {
         val actionName = builder {
             buildAction {
@@ -271,6 +271,20 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         }
 
         return OSLUnion.ActionType(actionName)
+    }
+
+    override fun visitDialogueDrill(ctx: OpenSpiralParser.DialogueDrillContext): OSLUnion {
+        if (ctx.NAME_IDENTIFIER() != null) {
+            val speakerName = ctx.NAME_IDENTIFIER().text
+            builder { addDialogue(speakerName, visitVariableValue(ctx.variableValue())) }
+            return OSLUnion.NoOpType
+        } else if (ctx.VARIABLE_REFERENCE() != null) {
+            val speakerVariable = ctx.VARIABLE_REFERENCE().text.substring(1)
+            builder { addDialogueVariable(speakerVariable, visitVariableValue(ctx.variableValue())) }
+            return OSLUnion.NoOpType
+        } else {
+            return OSLUnion.NoOpType
+        }
     }
 
     fun String.toIntVariable(): Int = when {
