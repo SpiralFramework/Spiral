@@ -74,7 +74,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                         val endFlagCheck = 0x7000 or flagCheckDetails.endFlagCheckOpcode
                         val flagGroup = ByteArray(flagCheckDetails.flagGroupLength)
                         val rawArguments: MutableList<Int> = ArrayList()
-                        require(flow.read(flagGroup) == 4, notEnoughData)
+                        requireNotNull(flow.readExact(flagGroup), notEnoughData)
                         flagGroup.forEach { rawArguments.add(it.toInt() and 0xFF) }
 
                         while (true) {
@@ -82,7 +82,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                                 break
 
                             rawArguments.add(requireNotNull(flow.read(), notEnoughData))
-                            require(flow.read(flagGroup) == 4, notEnoughData)
+                            requireNotNull(flow.readExact(flagGroup), notEnoughData)
                             flagGroup.forEach { rawArguments.add(it.toInt() and 0xFF) }
                         }
 
@@ -102,7 +102,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                         entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
                     } else if (opcode != null) {
                         val rawArguments = ByteArray(opcode!!.argumentCount)
-                        require(flow.read(rawArguments) == rawArguments.size, notEnoughData)
+                        requireNotNull(flow.readExact(rawArguments), notEnoughData)
 //                        arguments = IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }
 
                         entries.add(opcode.entryConstructor(opcode.opcode, IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }))

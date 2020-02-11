@@ -22,12 +22,6 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
                 runBlocking { this@invoke.block() }
     }
 
-//    override fun visitScript(ctx: OpenSpiralParser.ScriptContext): OSLUnion {
-//        visitHeaderDeclaration(ctx.headerDeclaration())
-//        ctx.scriptLine().forEach { lineCtx -> gameVisitor?.handleScriptLine(visitScriptLine(lineCtx)) }
-//        return OSLUnion.
-//    }
-
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
         val rawSemanticVersion = ctx.HEADER_DECLARATION()
                 .text
@@ -51,14 +45,7 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
         return OSLUnion.NoOpType
     }
-
-//    override fun visitScriptLine(ctx: OpenSpiralParser.ScriptLineContext): OSLUnion {
-//        ctx.basicDrill()?.let { basicDrill -> return visitBasicDrill(basicDrill) }
-//        ctx.basicDrillNamed()?.let { basicDrill -> return visitBasicDrillNamed(basicDrill) }
-//
-//        return OSLUnion.UndefinedType
-//    }
-
+    
     @ExperimentalStdlibApi
     override fun visitBasicDrill(ctx: OpenSpiralParser.BasicDrillContext): OSLUnion {
         val opcode = ctx.INTEGER().text.toIntVariable()
@@ -211,13 +198,6 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
     @ExperimentalStdlibApi
     override fun visitVariableValue(ctx: OpenSpiralParser.VariableValueContext): OSLUnion {
-        //        ctx.BASIC_LIN_DOUBLE()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
-//        ctx.BASIC_LIN_INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
-//        ctx.BASIC_LIN_VARIABLE_REFERENCE()?.let { varRef -> return getData(varRef.text.substring(1)) }
-//        ctx.BASIC_LIN_BOOLEAN()?.let { boolean -> return OSLUnion.BooleanType(boolean.text.toBoolean()) }
-//        ctx.BASIC_LIN_NULL()?.let { return OSLUnion.NullType }
-//        ctx.basicDrillQuotedString()?.let(this::visitBasicDrillQuotedString)?.let { return it }
-
         ctx.DECIMAL_NUMBER()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
         ctx.INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
         ctx.VARIABLE_REFERENCE()?.let { varRef -> return OSLUnion.VariableReferenceType(varRef.text.substring(1)) }

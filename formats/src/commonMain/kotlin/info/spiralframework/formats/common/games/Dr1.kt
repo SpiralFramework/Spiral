@@ -174,7 +174,7 @@ open class Dr1(
         0x34 -> Dr1GoToLabelEntry(opcode, rawArguments)
 
         0x35 -> Dr1CheckFlagEntry(opcode, rawArguments)
-        0x36 -> Dr1CheckGameParameter(opcode, rawArguments)
+        0x36 -> Dr1CheckGameParameterEntry(opcode, rawArguments)
 
         0x3A -> Dr1WaitForInputEntry(opcode, rawArguments)
         0x3B -> Dr1WaitFrameEntry(opcode, rawArguments)

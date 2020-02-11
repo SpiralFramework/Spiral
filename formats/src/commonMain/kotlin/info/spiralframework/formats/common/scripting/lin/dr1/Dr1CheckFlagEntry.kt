@@ -11,7 +11,7 @@ inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
     fun conditions(): String = buildString {
         //TODO: Figure out a way to properly represent this
         append("if (")
-        val firstGroup = Triple((rawArguments[0] shl 8) or rawArguments[1], rawArguments[2], rawArguments[3])
+        val firstGroup = Triple("(${rawArguments[0]},${rawArguments[1]})", rawArguments[2], rawArguments[3])
         append(firstGroup.first)
         append(" ")
         append(formatCondition(firstGroup.second))
@@ -22,14 +22,14 @@ inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
             append(" ")
             append(formatLogical(comparatorN))
             append(" ")
-            val groupN = Triple((rawArguments[(i * 5) + 5] shl 8) or rawArguments[(i * 5) + 6], rawArguments[(i * 5) + 7], rawArguments[(i * 5) + 8])
+            val groupN = Triple("(${rawArguments[(i * 5) + 5]},${rawArguments[(i * 5) + 6]})", rawArguments[(i * 5) + 7], rawArguments[(i * 5) + 8])
             append(groupN.first)
             append(" ")
             append(formatCondition(groupN.second))
             append(" ")
             append(groupN.third)
         }
-        append(") {}")
+        append(")")
     }
 
     private fun formatCondition(condition: Int): String = when (condition) {

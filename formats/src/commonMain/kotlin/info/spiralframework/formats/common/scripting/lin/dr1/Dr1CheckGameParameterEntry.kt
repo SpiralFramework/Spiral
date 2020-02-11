@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 
-inline class Dr1CheckGameParameter(override val rawArguments: IntArray) : LinEntry {
+inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : LinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
 
     override val opcode: Int
@@ -29,7 +29,7 @@ inline class Dr1CheckGameParameter(override val rawArguments: IntArray) : LinEnt
             append(" ")
             append(groupN.third)
         }
-        append(") {}")
+        append(")")
     }
 
     private fun formatCondition(condition: Int): String = when (condition) {
