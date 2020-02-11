@@ -8,6 +8,4 @@ inline class Dr1WaitFrameEntry(override val rawArguments: IntArray) : LinEntry {
 
     override val opcode: Int
         get() = 0x3B
-
-    override fun format(): String = "Wait Frame|"
 }

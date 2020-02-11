@@ -25,6 +25,4 @@ inline class Dr1FilterEntry(override val rawArguments: IntArray) : MutableLinEnt
     var arg4: Int
         get() = rawArguments[3]
         set(value) = set(3, value)
-
-    override fun format(): String = "Filter|$arg1, $filter, $arg3, $arg4"
 }

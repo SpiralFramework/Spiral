@@ -21,6 +21,4 @@ inline class Dr1SetStudentTitleEntry(override val rawArguments: IntArray): Mutab
     var state: Int
         get() = get(2)
         set(value) = set(2, value)
-
-    override fun format(): String = "Set Title|$characterID, $arg2, $state"
 }

@@ -20,6 +20,4 @@ inline class Dr1RunScriptEntry(override val rawArguments: IntArray) : MutableLin
 
     override val opcode: Int
         get() = 0x1B
-
-    override fun format(): String = "Run Script|$chapter, $scene, $room"
 }

@@ -13,6 +13,4 @@ inline class Dr1MarkLabelEntry(override val rawArguments: IntArray) : MutableLin
     var id: Int
         get() = getInt16LE(0)
         set(value) = setInt16LE(0, value)
-
-    override fun format(): String = "Mark Label|${rawArguments[0]}, ${rawArguments[1]}"
 }

@@ -26,6 +26,4 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
     var enabled: Boolean
         get() = get(2) > 0
         set(value) = set(2, if (value) 1 else 0)
-
-    override fun format(): String = "Set Flag|$flagGroup, $flagID, $state"
 }

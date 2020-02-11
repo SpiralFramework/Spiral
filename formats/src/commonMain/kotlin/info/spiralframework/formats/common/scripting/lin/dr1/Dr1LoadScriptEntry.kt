@@ -21,6 +21,4 @@ inline class Dr1LoadScriptEntry(override val rawArguments: IntArray) : MutableLi
 
     override val opcode: Int
         get() = 0x19
-
-    override fun format(): String = "Load Script|$chapter, $scene, $room"
 }

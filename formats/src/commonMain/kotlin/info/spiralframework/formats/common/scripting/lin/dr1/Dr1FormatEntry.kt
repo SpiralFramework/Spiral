@@ -12,6 +12,4 @@ inline class Dr1FormatEntry(override val rawArguments: IntArray) : MutableLinEnt
     var formatValue: Int
         get() = rawArguments[0]
         set(value) = set(0, value)
-
-    override fun format(): String = "Format|$formatValue"
 }

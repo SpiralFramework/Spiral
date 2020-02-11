@@ -17,6 +17,4 @@ inline class Dr1SoundEffectAEntry(override val rawArguments: IntArray): MutableL
     var volume: Int
         get() = get(0)
         set(value) = set(2, value)
-
-    override fun format(): String = "SFX A|${rawArguments[0]}, ${rawArguments[1]}, $volume"
 }

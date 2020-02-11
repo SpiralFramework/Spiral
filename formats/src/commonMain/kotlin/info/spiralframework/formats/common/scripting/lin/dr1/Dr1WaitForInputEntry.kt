@@ -8,6 +8,4 @@ inline class Dr1WaitForInputEntry(override val rawArguments: IntArray) : LinEntr
 
     override val opcode: Int
         get() = 0x3A
-
-    override fun format(): String = "Wait for Input|"
 }

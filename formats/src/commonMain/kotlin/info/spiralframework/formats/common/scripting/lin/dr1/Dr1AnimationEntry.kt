@@ -31,6 +31,4 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
     var frame: Int
         get() = rawArguments[7]
         set(value) = set(7, value)
-
-    override fun format(): String = "Animation|${rawArguments[0]}, ${rawArguments[1]}, $arg3, $arg4, $arg5, $arg6, $arg7, $frame"
 }

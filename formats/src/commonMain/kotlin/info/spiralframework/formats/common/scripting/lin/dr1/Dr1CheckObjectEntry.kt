@@ -12,6 +12,4 @@ inline class Dr1CheckObjectEntry(override val rawArguments: IntArray) : MutableL
     var objectID: Int
         get() = rawArguments[0]
         set(value) = set(0, value)
-
-    override fun format(): String = "Check Object|$objectID"
 }

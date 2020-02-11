@@ -12,6 +12,4 @@ inline class Dr1BranchEntry(override val rawArguments: IntArray) : MutableLinEnt
     var branchValue: Int
         get() = rawArguments[0]
         set(value) = set(0, value)
-
-    override fun format(): String = "Branch|$branchValue"
 }

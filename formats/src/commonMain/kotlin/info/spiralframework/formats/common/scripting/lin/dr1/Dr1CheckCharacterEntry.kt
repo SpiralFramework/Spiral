@@ -12,6 +12,4 @@ inline class Dr1CheckCharacterEntry(override val rawArguments: IntArray): Mutabl
     var characterID: Int
         get() = rawArguments[0]
         set(value) = set(0, value)
-
-    override fun format(): String = "Check Character|$characterID"
 }

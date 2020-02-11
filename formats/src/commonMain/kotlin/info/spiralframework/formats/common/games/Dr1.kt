@@ -20,8 +20,15 @@ open class Dr1(
         override val linCharacterIdentifiers: Map<String, Int>,
         override val linColourCodes: Map<String, Int>,
         override val linItemNames: Array<String>,
+        override val linBgmNames: Array<String>,
+        override val linEvidenceNames: Array<String>,
+        override val linSkillNames: Array<String>,
+        override val linMapNames: Array<String>,
+        override val linMovieNames: Array<String>,
         override val pakNames: Map<String, Array<String>>,
         val voiceLineArray: IntArray,
+        val gameParameterNames: Map<Int, String>,
+        val gameParameterValues: Map<Int, Map<Int, String>>,
         customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
     companion object {
@@ -29,9 +36,23 @@ open class Dr1(
         private const val MAXIMUM_CHARACTER = 33
 
         const val NONSTOP_DEBATE_SECTION_SIZE = 30
-        
+
         @Serializable
-        data class Dr1GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>, val voice_lines: List<Int> = emptyList())
+        data class Dr1GameJson(
+                val character_ids: Map<Int, String>,
+                val character_identifiers: Map<String, Int>,
+                val colour_codes: Map<String, Int>,
+                val item_names: Array<String>,
+                val bgm_names: Array<String>,
+                val evidence_names: Array<String>,
+                val skill_names: Array<String>,
+                val map_names: Array<String>,
+                val movie_names: Array<String>,
+                val pak_names: Map<String, Array<String>>,
+                val voice_lines: List<Int> = emptyList(),
+                val game_parameter_names: Map<Int, String> = emptyMap(),
+                val game_parameter_values: Map<Int, Map<Int, String>> = emptyMap()
+        )
 
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): Dr1? {
@@ -58,7 +79,22 @@ open class Dr1(
                     customOpcodes = emptyList()
                 }
 
-                return Dr1(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, gameJson.voice_lines.toIntArray(), customOpcodes)
+                return Dr1(
+                        gameJson.character_ids,
+                        gameJson.character_identifiers,
+                        gameJson.colour_codes,
+                        gameJson.item_names,
+                        gameJson.bgm_names,
+                        gameJson.evidence_names,
+                        gameJson.skill_names,
+                        gameJson.map_names,
+                        gameJson.movie_names,
+                        gameJson.pak_names,
+                        gameJson.voice_lines.toIntArray(),
+                        gameJson.game_parameter_names,
+                        gameJson.game_parameter_values,
+                        customOpcodes
+                )
             }
         }
     }
@@ -77,7 +113,7 @@ open class Dr1(
         opcode(0x06, argumentCount = 8, name = "Animation")
 //            opcode(0x07, argumentCount = -1, names = null)
         opcode(0x08, argumentCount = 5, name = "Voice Line")
-        opcode(0x09, argumentCount = 3, names = arrayOf("Music, BGM"), entryConstructor = ::UnknownLinEntry)
+        opcode(0x09, argumentCount = 3, names = arrayOf("Music", "BGM"))
         opcode(0x0A, argumentCount = 3, name = "SFX A")
         opcode(0x0B, argumentCount = 2, name = "SFX B")
         opcode(0x0C, argumentCount = 2, name = "Truth Bullet")
@@ -146,6 +182,7 @@ open class Dr1(
         0x05 -> Dr1MovieEntry(opcode, rawArguments)
         0x06 -> Dr1AnimationEntry(opcode, rawArguments)
         0x08 -> Dr1VoiceLineEntry(opcode, rawArguments)
+        0x09 -> Dr1BgmEntry(opcode, rawArguments)
         0x0A -> Dr1SoundEffectAEntry(opcode, rawArguments)
         0x0B -> Dr1SoundEffectBEntry(opcode, rawArguments)
         0x0C -> Dr1TruthBulletEntry(opcode, rawArguments)
@@ -230,6 +267,10 @@ open class Dr1(
     override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun getNameOfGameParameter(parameter: Int): String? = gameParameterNames[parameter]
+
+    override fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = gameParameterValues[parameter]?.get(value)
 
     override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes {
 

@@ -12,6 +12,4 @@ inline class Dr1GoToLabelEntry(override val rawArguments: IntArray) : MutableLin
     var id: Int
         get() = getInt16LE(0)
         set(value) = setInt16LE(0, value)
-
-    override fun format(): String = "Go To Label|${rawArguments[0]}, ${rawArguments[1]}"
 }

@@ -20,6 +20,4 @@ inline class Dr1SoundEffectBEntry(override val rawArguments: IntArray): MutableL
     var arg2: Int
         get() = get(1)
         set(value) = set(1, value)
-
-    override fun format(): String = "SFX B|$arg1, $arg2"
 }

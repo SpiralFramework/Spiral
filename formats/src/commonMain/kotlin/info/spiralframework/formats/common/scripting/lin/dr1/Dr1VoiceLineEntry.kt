@@ -24,6 +24,4 @@ inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): MutableLinE
     var volume: Int
         get() = get(4)
         set(value) = set(4, value)
-
-    override fun format(): String = "Voice Line|$characterID, $chapterID, ${voiceLineID shr 8}, ${voiceLineID and 0xFF}, $volume"
 }

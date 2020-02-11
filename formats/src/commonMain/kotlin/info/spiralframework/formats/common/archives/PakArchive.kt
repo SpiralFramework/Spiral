@@ -70,9 +70,9 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
     suspend fun openFlow(file: PakFileEntry): InputFlow? {
         val parent = dataSource.openInputFlow() ?: return null
         return if (file.size == -1)
-            WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
-        else
             SinkOffsetInputFlow(parent, file.offset.toULong())
+        else
+            WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
     }
 }
 

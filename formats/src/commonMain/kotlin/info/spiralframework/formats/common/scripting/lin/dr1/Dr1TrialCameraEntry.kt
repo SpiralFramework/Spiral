@@ -17,6 +17,4 @@ inline class Dr1TrialCameraEntry(override val rawArguments: IntArray) : MutableL
     var cameraID: Int
         get() = getInt16BE(1)
         set(value) = setInt16BE(1, value)
-
-    override fun format(): String = "Trial Camera|$characterID, ${rawArguments[1]}, ${rawArguments[2]}"
 }

@@ -13,6 +13,4 @@ inline class Dr1TextEntry(override val rawArguments: IntArray) : MutableLinEntry
     var textID: Int
         get() = getInt16BE(0)
         set(value) = setInt16BE(0, value)
-
-    override fun format(): String = "Text|${rawArguments[0]}, ${rawArguments[1]}"
 }

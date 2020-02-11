@@ -8,6 +8,4 @@ inline class Dr1EndFlagCheckEntry(override val rawArguments: IntArray): LinEntry
 
     override val opcode: Int
         get() = 0x3C
-
-    override fun format(): String = "End Flag Check|"
 }

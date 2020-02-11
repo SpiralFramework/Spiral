@@ -29,6 +29,4 @@ inline class Dr1SpriteEntry(override val rawArguments: IntArray) : MutableLinEnt
     var transition: Int
         get() = get(4)
         set(value) = set(4, value)
-
-    override fun format(): String = "Sprite|$position, $characterID, $spriteID, $state, $transition"
 }

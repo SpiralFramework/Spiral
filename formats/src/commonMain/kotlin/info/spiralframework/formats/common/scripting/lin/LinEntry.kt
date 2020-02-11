@@ -1,5 +1,7 @@
 package info.spiralframework.formats.common.scripting.lin
 
+import info.spiralframework.formats.common.scripting.osl.LinTranspiler
+
 interface LinEntry {
     companion object {
         val EMPTY_ARGUMENT_ARRAY = IntArray(0)
@@ -12,22 +14,39 @@ interface LinEntry {
     fun getInt16LE(index: Int) = (rawArguments[index] or (rawArguments[index + 1] shl 8))
     fun getInt16BE(index: Int) = (rawArguments[index + 1] or (rawArguments[index] shl 8))
 
-    /**
-     * This should be an interpretable statement in something like OSL
-     */
-    fun format(): String = "0x${opcode.toString(16).padStart(2, '0').toUpperCase()}|${rawArguments.joinToString()}"
+    @ExperimentalUnsignedTypes
+    fun LinTranspiler.transpile(indent: Int = 0) {
+        addOutput {
+            repeat(indent) { append('\t') }
+            append(nameFor(this@LinEntry))
+            append('|')
+            transpileArguments(this)
+        }
+    }
+
+    @ExperimentalUnsignedTypes
+    fun LinTranspiler.transpileArguments(builder: StringBuilder) {
+        rawArguments.joinTo(builder)
+    }
 }
 
-interface MutableLinEntry: LinEntry {
+interface MutableLinEntry : LinEntry {
     fun set(index: Int, value: Int) {
         rawArguments[index] = value and 0xFF
     }
+
     fun setInt16LE(index: Int, value: Int) {
         rawArguments[index + 0] = (value shr 0) and 0xFF
         rawArguments[index + 1] = (value shr 8) and 0xFF
     }
+
     fun setInt16BE(index: Int, value: Int) {
         rawArguments[index + 0] = (value shr 8) and 0xFF
         rawArguments[index + 1] = (value shr 0) and 0xFF
     }
 }
+
+@ExperimentalUnsignedTypes
+fun LinEntry.transpile(transpiler: LinTranspiler, index: Int = 0) = transpiler.transpile(index)
+@ExperimentalUnsignedTypes
+fun LinEntry.transpileArguments(transpiler: LinTranspiler, builder: StringBuilder) = transpiler.transpileArguments(builder)

@@ -4,50 +4,46 @@ import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.NumberValue
 
-inline class Dr1LoadMapEntry(override val rawArguments: IntArray) : MutableLinEntry {
+inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(room: Int, state: Int, arg3: Int): this(intArrayOf(room, state, arg3))
 
     override val opcode: Int
-        get() = 0x15
+        get() = 0x09
 
-    var room: Int
+    var bgmID: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    var state: Int
+    var volume: Int
         get() = get(1)
         set(value) = set(1, value)
-
-    var arg3: Int
-        get() = get(2)
-        set(value) = set(2, value)
 
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         with(builder) {
-            val mapName = game?.linMapNames
-                    ?.getOrNull(room)
+            val bgmName = game?.linBgmNames
+                    ?.getOrNull(bgmID)
                     ?.toLowerCase()
                     ?.replace(' ', '_')
                     ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
-            if (mapName != null) {
-                val mapVariable = "map_$mapName"
-                if (mapVariable !in variables)
-                    variables[mapVariable] = NumberValue(room)
+            if (bgmName != null) {
+                val bgmVariable = "bgm_$bgmName"
+                if (bgmVariable !in variables)
+                    variables[bgmVariable] = NumberValue(bgmID)
 
                 append('$')
-                append(mapVariable)
+                append(bgmVariable)
                 append(", ")
             } else {
-                append(room)
+                append(bgmID)
                 append(", ")
             }
 
-            append(state)
+            append(volume)
             append(", ")
-            append(arg3)
+
+            append(rawArguments[2])
         }
     }
 }

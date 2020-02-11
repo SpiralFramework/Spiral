@@ -8,6 +8,4 @@ inline class Dr1StopScriptEntry(override val rawArguments: IntArray): LinEntry {
 
     override val opcode: Int
         get() = 0x1A
-
-    override fun format(): String = "Stop Script|"
 }

@@ -16,6 +16,4 @@ inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinE
     var state: Int
         get() = rawArguments[1]
         set(value) = set(1, value)
-
-    override fun format(): String = "Change UI|$element, $state"
 }

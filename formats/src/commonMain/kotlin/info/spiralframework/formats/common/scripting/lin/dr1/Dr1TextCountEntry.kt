@@ -12,6 +12,4 @@ inline class Dr1TextCountEntry(override val rawArguments: IntArray): MutableLinE
     var linesOfText: Int
         get() = getInt16LE(0)
         set(value) = setInt16LE(0, value)
-
-    override fun format(): String = "Text Count|$linesOfText"
 }

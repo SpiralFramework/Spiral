@@ -73,7 +73,7 @@ suspend fun InputFlow.readSingleByteNullTerminatedString(maxLen: Int = 255, enco
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun InputFlow.readDoubleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
+suspend fun InputFlow.readDoubleByteNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_16): String {
     val data = BinaryOutputFlow()
 
     while (true) {

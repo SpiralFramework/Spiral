@@ -44,6 +44,4 @@ inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableL
     var opacity: Int
         get() = get(6)
         set(value) = set(6, value)
-
-    override fun format(): String = "Screen Flash|$red, $green, $blue, $fadeInDuration, $holdDuration, $fadeOutDuration, $opacity"
 }

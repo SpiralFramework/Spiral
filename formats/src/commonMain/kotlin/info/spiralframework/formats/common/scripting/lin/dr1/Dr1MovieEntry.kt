@@ -12,6 +12,4 @@ inline class Dr1MovieEntry(override val rawArguments: IntArray) : MutableLinEntr
     var movieID: Int
         get() = getInt16BE(0)
         set(value) = setInt16BE(0, value)
-
-    override fun format(): String = "Movie|${rawArguments[0]}, ${rawArguments[1]}"
 }

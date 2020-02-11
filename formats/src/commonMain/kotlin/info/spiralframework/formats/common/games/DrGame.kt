@@ -35,7 +35,12 @@ interface DrGame {
             override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = emptyMap()
             override val linCharacterIdentifiers: Map<String, Int> = emptyMap()
             override val linCharacterIDs: Map<Int, String> = emptyMap()
+            override val linBgmNames: Array<String> = emptyArray()
             override val linItemNames: Array<String> = emptyArray()
+            override val linEvidenceNames: Array<String> = emptyArray()
+            override val linMapNames: Array<String> = emptyArray()
+            override val linMovieNames: Array<String> = emptyArray()
+            override val linSkillNames: Array<String> = emptyArray()
             override val linColourCodes: Map<String, Int> = emptyMap()
             override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int = -1
             override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> = Triple(-1, -1, -1)
@@ -49,13 +54,21 @@ interface DrGame {
         /** Internal ID -> Name */
         val linCharacterIDs: Map<Int, String>
 
+        val linBgmNames: Array<String>
         val linItemNames: Array<String>
+        val linEvidenceNames: Array<String>
+        val linSkillNames: Array<String>
+        val linMapNames: Array<String>
+        val linMovieNames: Array<String>
 
         /** A map of the colour to the internal clt number */
         val linColourCodes: Map<String, Int>
 
         fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int
         fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>
+
+        fun getNameOfGameParameter(parameter: Int): String? = null
+        fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = null
     }
 
     /** TODO: Figure out how to do this full stop */

@@ -12,7 +12,7 @@ import org.abimon.kornea.io.common.readInt32LE
 import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
-class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
+class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, val game: DrGame.LinScriptable? = null) {
     companion object {
         const val MAGIC_NUMBER_LE = 0x2E4C494E
 
@@ -49,7 +49,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>) {
                         readTextData(this, textDataFlow, linBlocks[1])
                     })
 
-                    return LinScript(scriptData, textData)
+                    return LinScript(scriptData, textData, game)
                 }
             }
         }

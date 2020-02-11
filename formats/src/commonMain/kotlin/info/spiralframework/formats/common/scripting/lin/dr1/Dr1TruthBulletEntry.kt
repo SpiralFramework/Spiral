@@ -17,6 +17,4 @@ inline class Dr1TruthBulletEntry(override val rawArguments: IntArray): MutableLi
     var arg2: Int
         get() = get(1)
         set(value) = set(1, value)
-
-    override fun format(): String = "Truth Bullet|$arg1, $arg2"
 }

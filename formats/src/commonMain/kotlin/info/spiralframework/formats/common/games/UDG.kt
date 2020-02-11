@@ -77,6 +77,12 @@ class UDG(
         fromList(customOpcodes)
     }
 
+    override val linBgmNames: Array<String> = emptyArray()
+    override val linEvidenceNames: Array<String> = emptyArray()
+    override val linMapNames: Array<String> = emptyArray()
+    override val linMovieNames: Array<String> = emptyArray()
+    override val linSkillNames: Array<String> = emptyArray()
+
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
         else -> UnknownLinEntry(opcode, rawArguments)
     }

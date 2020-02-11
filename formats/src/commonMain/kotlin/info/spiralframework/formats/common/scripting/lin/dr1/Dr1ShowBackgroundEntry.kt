@@ -17,6 +17,4 @@ inline class Dr1ShowBackgroundEntry(override val rawArguments: IntArray) : Mutab
     var state: Int
         get() = get(1)
         set(value) = set(1, value)
-
-    override fun format(): String = "Show Background|$backgroundID, $state"
 }
