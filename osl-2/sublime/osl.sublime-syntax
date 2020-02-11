@@ -1,0 +1,202 @@
+%YAML 1.2
+---
+name: OSL
+file_extensions: [osl]
+first_line_match: OSL Script
+scope: source.osl
+
+variables:
+  indent: ([ \t]+)
+  number: ((0b[0-1]+)|(0o[0-7]+)|(0x[0-9a-fA-F]+)|((?:0d)?[0-9]+))
+  identifier: ([a-zA-Z_][ a-zA-Z0-9_]+)
+  variable_identifier: ([a-zA-Z0-9_]+)
+  name_identifier: ([a-zA-Z_][a-zA-Z0-9_\- ]*)
+
+contexts:
+  main:
+    - match: \bOSL Script\b
+      scope: keyword.operator.word.osl.header
+
+    - match: ^{{indent}}?{{number}}(?=\|)
+      scope: keyword.operator.word.osl.drill.basic.numerical
+
+    - match: ^{{indent}}?{{identifier}}(?=\|)
+      scope: keyword.operator.word.osl.drill.basic.text
+
+    - match: \b{{number}}\b
+      scope: constant.numeric.osl
+
+    - match: \${{variable_identifier}}
+      scope: variable.language
+
+    - match: ^{{indent}}?(//|#).+$
+      scope: comment.osl
+
+    - match: \bval\b
+      scope: keyword.operator.word
+
+    - match: ^{{indent}}?{{identifier}}(?=\:)
+      scope: constant.character
+
+    - match: '"'
+      push: string
+
+  string:
+    - meta_scope: string.quoted.double.osl
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '"'
+      pop: true
+    - match: '<CLT 10.'
+      push: clt_10
+    - match: '<CLT 11.'
+      push: clt_11
+    - match: '<CLT 23.'
+      push: clt_23
+    - match: '<CLT 33.'
+      push: clt_33
+    - match: '<CLT 34.'
+      push: clt_34
+    - match: '<CLT 45.'
+      push: clt_45
+    - match: '<CLT 47.'
+      push: clt_47
+    - match: '<CLT 48.'
+      push: clt_48
+    - match: '<CLT 61.'
+      push: clt_61
+    - match: '<CLT 0?0.'
+      push: clt_0
+    - match: '<CLT 0?1.'
+      push: clt_1
+    - match: '<CLT 0?2.'
+      push: clt_2
+    - match: '<CLT 0?3.'
+      push: clt_3
+    - match: '<CLT 0?4.'
+      push: clt_4
+    - match: '<CLT 0?5.'
+      push: clt_5
+    - match: '<CLT 0?6.'
+      push: clt_6
+    - match: '<CLT (\d\d?).'
+      push: clt_generic
+
+  clt_0:
+    - meta_content_scope: string.quoted.double.osl.clt.0
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_1:
+    - meta_content_scope: string.quoted.double.osl.clt.1
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_2:
+    - meta_content_scope: string.quoted.double.osl.clt.2
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_3:
+    - meta_content_scope: string.quoted.double.osl.clt.3
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_4:
+    - meta_content_scope: string.quoted.double.osl.clt.4
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_5:
+    - meta_content_scope: string.quoted.double.osl.clt.5
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_6:
+    - meta_content_scope: string.quoted.double.osl.clt.6
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_10:
+    - meta_content_scope: string.quoted.double.osl.clt.10
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_11:
+    - meta_content_scope: string.quoted.double.osl.clt.11
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_23:
+    - meta_content_scope: string.quoted.double.osl.clt.23
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_33:
+    - meta_content_scope: string.quoted.double.osl.clt.33
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_34:
+    - meta_content_scope: string.quoted.double.osl.clt.34
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_45:
+    - meta_content_scope: string.quoted.double.osl.clt.45
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_47:
+    - meta_content_scope: string.quoted.double.osl.clt.47
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_48:
+    - meta_content_scope: string.quoted.double.osl.clt.48
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_61:
+    - meta_content_scope: string.quoted.double.osl.clt.61
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
+
+  clt_generic:
+    - meta_content_scope: string.quoted.double.osl.clt.other
+    - match: \\.
+      scope: constant.character.escape.osl
+    - match: '<CLT>'
+      pop: true
