@@ -15,6 +15,7 @@ object OpenSpiralBitcode {
     const val OPERATION_SET_VERSION = 0x00
     const val OPERATION_ADD_DIALOGUE = 0x01
     const val OPERATION_ADD_DIALOGUE_VARIABLE = 0x02
+    const val OPERATION_ADD_FUNCTION_CALL = 0x03
 
     const val OPERATION_ADD_PLAIN_OPCODE = 0x70
     const val OPERATION_ADD_VARIABLE_OPCODE = 0x71
@@ -65,7 +66,8 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                     when (flow.read() ?: return) {
                         OpenSpiralBitcode.OPERATION_SET_VERSION -> setVersion(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_DIALOGUE -> addDialogue(notEnoughData)
-                        OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE -> addDialogue(notEnoughData)
+                        OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE -> addDialogueVariable(notEnoughData)
+                        OpenSpiralBitcode.OPERATION_ADD_FUNCTION_CALL -> addFunctionCall(notEnoughData)
 
                         OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE -> addPlainOpcode(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED -> addPlainOpcodeNamed(notEnoughData)
@@ -105,6 +107,18 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
             is OSLUnion.NumberType -> visitor.addDialogue(data.number.toInt(), dialogue)
             else -> visitor.addDialogue(visitor.stringify(data), dialogue)
         }
+    }
+
+    private suspend fun SpiralContext.addFunctionCall(notEnoughData: () -> String) {
+        val functionName = flow.readNullTerminatedUTF8String()
+        val paramCount = requireNotNull(flow.read())
+        val parameters = Array(paramCount) {
+            val paramName = flow.readNullTerminatedUTF8String().takeUnless(String::isBlank)
+            val param = readArg(notEnoughData)
+            OSLUnion.FunctionParameterType(paramName, param)
+        }
+
+        visitor.addFunctionCall(functionName, parameters)
     }
 
     private suspend fun SpiralContext.addPlainOpcode(notEnoughData: () -> String) {

@@ -64,12 +64,6 @@ kotlin {
                 implementation project(":antlr-osl-java")
             }
         }
-        jvmTest {
-            dependencies {
-                implementation kotlin('test')
-                implementation kotlin('test-junit')
-            }
-        }
 //        jsMain {
 //            dependencies {
 //                implementation kotlin('stdlib-js')

@@ -18,6 +18,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.LONG_REFERENCE_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.MAGIC_NUMBER_LE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE
+import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_FUNCTION_CALL
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE
@@ -80,6 +81,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             output.write(0x00)
         }
     }
+
     class Action private constructor(val output: OutputFlow) {
         companion object {
             suspend operator fun invoke(output: OutputFlow, init: suspend Action.() -> Unit): Action {
@@ -231,6 +233,18 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         output.write(speakerVariable.encodeToUTF8ByteArray())
         output.write(0x00)
         writeArg(dialogue)
+    }
+
+    suspend fun addFunctionCall(functionName: String, parameters: List<OSLUnion.FunctionParameterType>) {
+        output.write(OPERATION_ADD_FUNCTION_CALL)
+        output.write(functionName.encodeToUTF8ByteArray())
+        output.write(0x00)
+        output.write(parameters.size)
+        parameters.forEach { param ->
+            if (param.parameterName != null) output.write(param.parameterName.encodeToUTF8ByteArray())
+            output.write(0x00)
+            writeArg(param.parameterValue)
+        }
     }
 
     @ExperimentalStdlibApi

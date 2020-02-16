@@ -3,10 +3,11 @@ package info.spiralframework.osb.common
 import info.spiralframework.base.common.SemanticVersion
 
 interface OpenSpiralBitcodeVisitor {
-    object DEBUG: OpenSpiralBitcodeVisitor {
+    object DEBUG : OpenSpiralBitcodeVisitor {
         override suspend fun setVersion(version: SemanticVersion) = println("setVersion($version)")
         override suspend fun addDialogue(speaker: Int, dialogue: OSLUnion) = println("addDialogue($speaker, $dialogue)")
         override suspend fun addDialogue(speakerName: String, dialogue: OSLUnion) = println("addDialogue($speakerName, $dialogue)")
+        override suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) = println("addFunctionCall($functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()}))")
 
         override suspend fun addPlainOpcode(opcode: Int, arguments: IntArray) = println("addPlainOpcode($opcode, ${arguments.joinToString()})")
         override suspend fun addPlainOpcodeNamed(opcodeName: String, arguments: IntArray) = println("addPlainOpcodeNamed($opcodeName, ${arguments.joinToString()})")
@@ -17,6 +18,7 @@ interface OpenSpiralBitcodeVisitor {
             println("getData($name)")
             return OSLUnion.RawStringType("\${$name}")
         }
+
         override suspend fun setData(name: String, data: OSLUnion) = println("setData($name, $data)")
         override suspend fun closeLongReference(): String? {
             println("closeLongReference()")
@@ -27,6 +29,7 @@ interface OpenSpiralBitcodeVisitor {
             println("colourCodeFor($clt)")
             return "<CLT $clt>"
         }
+
         override suspend fun stringify(data: OSLUnion): String {
             println("stringify($data)")
             return data.toString()
@@ -38,6 +41,7 @@ interface OpenSpiralBitcodeVisitor {
     suspend fun setVersion(version: SemanticVersion)
     suspend fun addDialogue(speaker: Int, dialogue: OSLUnion)
     suspend fun addDialogue(speakerName: String, dialogue: OSLUnion)
+    suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>)
 
     suspend fun addPlainOpcode(opcode: Int, arguments: IntArray)
     suspend fun addPlainOpcodeNamed(opcodeName: String, arguments: IntArray)

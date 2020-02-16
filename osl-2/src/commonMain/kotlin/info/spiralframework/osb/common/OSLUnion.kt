@@ -80,6 +80,7 @@ sealed class OSLUnion {
             return actionName.contentHashCode()
         }
     }
+    data class FunctionParameterType(val parameterName: String?, val parameterValue: OSLUnion): OSLUnion()
 
     data class BooleanType(val boolean: Boolean): OSLUnion() {
         inline operator fun <T> invoke(operation: Boolean.() -> T): T = boolean.operation()

@@ -8,12 +8,15 @@ import info.spiralframework.formats.common.scripting.lin.CustomLinScript
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
+import kotlin.coroutines.Continuation
+import kotlin.reflect.KCallable
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSpiralBitcodeVisitor {
     val custom = CustomLinScript()
     val stack: MutableMap<String, OSLUnion> = HashMap()
+    val registry: MutableMap<String, MutableList<SpiralFunction>> = HashMap()
 
     var failOnMissingCharacter = false
 
@@ -37,6 +40,28 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
         custom.addEntry(textEntry)
         custom.addEntry(waitFrame)
         custom.addEntry(waitForInput)
+    }
+
+    override suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
+        println("$functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})")
+
+        val function = registry[functionName]
+                ?.firstOrNull { func -> func.parameterNames.size == parameters.size }
+                ?: return println("(function not found)")
+
+        val functionParams = function.parameterNames.toMutableList()
+        val passedParams: MutableMap<String, Any?> = HashMap()
+        parameters.forEach { (name, value) ->
+            val parameter = functionParams.firstOrNull { p -> p == name } ?: return@forEach
+            passedParams[parameter] = value
+            functionParams.remove(parameter)
+        }
+        parameters.forEach { (name, value) ->
+            if (name != null) return@forEach
+            passedParams[functionParams.removeAt(0)] = value
+        }
+
+        function.suspendInvoke(passedParams)
     }
 
     override suspend fun addPlainOpcode(opcode: Int, arguments: IntArray) =
@@ -94,7 +119,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
     override suspend fun closeLongReference(): String? = null
     override suspend fun stringify(data: OSLUnion): String =
             when (data) {
-                is OSLUnion.NumberType -> data.toString()
+                is OSLUnion.NumberType -> data.number.toString()
                 is OSLUnion.StringType -> data.string
                 is OSLUnion.LongReferenceType -> data.longReference.joinToString(" ") { it.toString(16).padStart(2, '0') }
                 is OSLUnion.VariableReferenceType -> getData(data.variableName)?.let { stringify(it) } ?: "null"
@@ -102,6 +127,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
                 is OSLUnion.LongParameterType -> data.longReference.joinToString(" ") { it.toString(16).padStart(2, '0') }
                 is OSLUnion.ActionType -> data.actionName.joinToString(" ") { it.toString(16).padStart(2, '0') }
                 is OSLUnion.BooleanType -> data.boolean.toString()
+                is OSLUnion.FunctionParameterType -> if (data.parameterName != null) "${data.parameterName} = ${stringify(data.parameterValue)}" else stringify(data.parameterValue)
                 OSLUnion.UndefinedType -> "undefined"
                 OSLUnion.NullType -> "null"
                 OSLUnion.NoOpType -> "NoOp"
@@ -109,6 +135,50 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
 
     override suspend fun end() {
         custom.compile(flow)
+    }
+
+    suspend fun speakerNameStub(param: Any?): Int =
+            when (val union = requireNotNull(param) as OSLUnion) {
+                is OSLUnion.StringType -> game.linCharacterIdentifiers[union.string] ?: union.string.toIntOrNull() ?: 0
+                else -> intStub(union)
+            }
+
+    suspend fun stringStub(param: Any?): String = stringify(requireNotNull(param) as OSLUnion)
+    suspend fun intStub(param: Any?): Int =
+            when (val union = requireNotNull(param) as OSLUnion) {
+                is OSLUnion.NumberType -> union.number.toInt()
+                is OSLUnion.StringType -> union.string.toIntOrNull() ?: 0
+                is OSLUnion.LongReferenceType -> union.longReference[0].toInt()
+                is OSLUnion.VariableReferenceType -> intStub(getData(union.variableName))
+                is OSLUnion.LongLabelType -> union.longReference[0].toInt()
+                is OSLUnion.LongParameterType -> union.longReference[0].toInt()
+                is OSLUnion.ActionType -> union.actionName[0].toInt()
+                is OSLUnion.BooleanType -> if (union.boolean) 1 else 0
+                is OSLUnion.FunctionParameterType -> intStub(union.parameterValue)
+                OSLUnion.UndefinedType -> 0
+                OSLUnion.NullType -> 0
+                OSLUnion.NoOpType -> 0
+            }
+
+    suspend fun speakStub(character: Any?, chapter: Any?, line: Any?, volume: Any?) = speak(speakerNameStub(character), intStub(chapter), intStub(line), intStub(volume))
+    suspend fun speak(character: Int, chapter: Int, line: Int, volume: Int) {
+        println("Voice File ID: ${game.getVoiceFileID(character, chapter, line)}")
+    }
+
+    fun register(func: SpiralFunction) {
+        val functions: MutableList<SpiralFunction>
+        if (func.name !in registry) {
+            functions = ArrayList()
+            registry[func.name] = functions
+        } else {
+            functions = registry.getValue(func.name)
+        }
+
+        functions.add(func)
+    }
+
+    init {
+        register(SpiralSuspending.Func4("speak", "character", "chapter", "line", "volume", func = this::speakStub))
     }
 }
 

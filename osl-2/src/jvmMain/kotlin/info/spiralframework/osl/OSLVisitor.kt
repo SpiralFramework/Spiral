@@ -45,7 +45,7 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
         return OSLUnion.NoOpType
     }
-    
+
     @ExperimentalStdlibApi
     override fun visitBasicDrill(ctx: OpenSpiralParser.BasicDrillContext): OSLUnion {
         val opcode = ctx.INTEGER().text.toIntVariable()
@@ -65,6 +65,20 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         }
         return OSLUnion.NoOpType
     }
+
+    override fun visitFunctionCall(ctx: OpenSpiralParser.FunctionCallContext): OSLUnion {
+        val functionName = ctx.NAME_IDENTIFIER().text
+        val parameters = ctx.functionParameter().map(this::visitFunctionParameter)
+
+        builder {
+            addFunctionCall(functionName, parameters)
+        }
+
+        return OSLUnion.NoOpType
+    }
+
+    override fun visitFunctionParameter(ctx: OpenSpiralParser.FunctionParameterContext): OSLUnion.FunctionParameterType =
+            OSLUnion.FunctionParameterType(ctx.FUNC_CALL_PARAMETER_NAME()?.text?.substringBeforeLast("=")?.trim(), visitFunctionVariableValue(ctx.functionVariableValue()))
 
     @ExperimentalStdlibApi
     override fun visitBasicDrillValue(ctx: OpenSpiralParser.BasicDrillValueContext): OSLUnion {
@@ -141,7 +155,7 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
     }
 
     @ExperimentalStdlibApi
-    override fun visitQuotedString(ctx: OpenSpiralParser.QuotedStringContext): OSLUnion.LongReferenceType {
+    override fun visitQuotedStringContent(ctx: OpenSpiralParser.QuotedStringContentContext): OSLUnion.LongReferenceType {
         val longReference = builder {
             buildLongReference {
                 val builder = StringBuilder()
@@ -210,9 +224,29 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         return OSLUnion.UndefinedType
     }
 
+    @ExperimentalStdlibApi
+    override fun visitFunctionVariableValue(ctx: OpenSpiralParser.FunctionVariableValueContext): OSLUnion {
+        ctx.FUNC_CALL_DECIMAL_NUMBER()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
+        ctx.FUNC_CALL_INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
+        ctx.FUNC_CALL_VARIABLE_REFERENCE()?.let { varRef -> return OSLUnion.VariableReferenceType(varRef.text.substring(1)) }
+//        ctx.LOCALISED_STRING()
+        ctx.funcBooleanRule()?.let(this::visitFuncBooleanRule)?.let { return it }
+        ctx.FUNC_CALL_NULL()?.let { return OSLUnion.NullType }
+
+        ctx.quotedStringContent()?.let(this::visitQuotedStringContent)?.let { return it }
+
+        return OSLUnion.UndefinedType
+    }
+
     override fun visitBooleanRule(ctx: OpenSpiralParser.BooleanRuleContext): OSLUnion {
         if (ctx.TRUE() != null) return OSLUnion.BooleanType(true)
         if (ctx.FALSE() != null) return OSLUnion.BooleanType(false)
+        return OSLUnion.UndefinedType
+    }
+
+    override fun visitFuncBooleanRule(ctx: OpenSpiralParser.FuncBooleanRuleContext): OSLUnion {
+        if (ctx.FUNC_TRUE() != null) return OSLUnion.BooleanType(true)
+        if (ctx.FUNC_FALSE() != null) return OSLUnion.BooleanType(false)
         return OSLUnion.UndefinedType
     }
 
