@@ -7,7 +7,7 @@ interface OpenSpiralBitcodeVisitor {
         override suspend fun setVersion(version: SemanticVersion) = println("setVersion($version)")
         override suspend fun addDialogue(speaker: Int, dialogue: OSLUnion) = println("addDialogue($speaker, $dialogue)")
         override suspend fun addDialogue(speakerName: String, dialogue: OSLUnion) = println("addDialogue($speakerName, $dialogue)")
-        override suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) = println("addFunctionCall($functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()}))")
+        override suspend fun functionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) = runNoOp { println("addFunctionCall($functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()}))") }
 
         override suspend fun addPlainOpcode(opcode: Int, arguments: IntArray) = println("addPlainOpcode($opcode, ${arguments.joinToString()})")
         override suspend fun addPlainOpcodeNamed(opcodeName: String, arguments: IntArray) = println("addPlainOpcodeNamed($opcodeName, ${arguments.joinToString()})")
@@ -41,7 +41,7 @@ interface OpenSpiralBitcodeVisitor {
     suspend fun setVersion(version: SemanticVersion)
     suspend fun addDialogue(speaker: Int, dialogue: OSLUnion)
     suspend fun addDialogue(speakerName: String, dialogue: OSLUnion)
-    suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>)
+    suspend fun functionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>): OSLUnion?
 
     suspend fun addPlainOpcode(opcode: Int, arguments: IntArray)
     suspend fun addPlainOpcodeNamed(opcodeName: String, arguments: IntArray)

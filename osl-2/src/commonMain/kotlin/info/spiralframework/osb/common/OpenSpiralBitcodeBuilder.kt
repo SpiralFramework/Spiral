@@ -1,13 +1,11 @@
 package info.spiralframework.osb.common
 
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
-import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
-import info.spiralframework.osb.common.OpenSpiralBitcode
 import info.spiralframework.osb.common.OpenSpiralBitcode.ACTION_END
 import info.spiralframework.osb.common.OpenSpiralBitcode.ACTION_TEXT
 import info.spiralframework.osb.common.OpenSpiralBitcode.ACTION_VARIABLE
@@ -25,19 +23,26 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE_NAMED
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_SET_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_SET_VERSION
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_BOOL
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_FUNCTION_CALL
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT16BE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT16LE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT32BE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT32LE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT8
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LABEL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_LABEL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_PARAMETER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_REFERENCE
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_PARAMETER
-import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_RAW
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_TEXT
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_VAR_REFERENCE
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.common.writeInt16LE
-import org.abimon.kornea.io.common.writeInt32LE
-import org.abimon.kornea.io.common.writeVariableInt16
+import kotlin.math.roundToInt
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
@@ -150,8 +155,8 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
                     output.write(0x00)
                 }
                 else -> {
-                    output.write(VARIABLE_RAW)
-                    output.writeVariableInt16(arg.raw)
+                    output.write(VARIABLE_INT8)
+                    output.write(arg.raw)
                 }
             }
         }
@@ -167,13 +172,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
     @ExperimentalStdlibApi
     suspend fun addOpcode(opcode: Int, arguments: Array<OSLUnion>) {
         if (arguments.all { union -> union is OSLUnion.NumberType || union is OSLUnion.BooleanType }) {
-            addOpcode(opcode, IntArray(arguments.size) { i ->
-                when (val arg = arguments[i]) {
-                    is OSLUnion.NumberType -> arg.number.toInt()
-                    is OSLUnion.BooleanType -> if (arg.boolean) 1 else 0
-                    else -> error("Invalid $arg")
-                }
-            })
+            addOpcode(opcode, collectArgs(arguments))
         } else {
             output.write(OPERATION_ADD_VARIABLE_OPCODE)
             output.write(opcode)
@@ -192,16 +191,48 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         rawArguments.suspendForEach(output::writeVariableInt16)
     }
 
+    private suspend fun collectArgs(arguments: Array<OSLUnion>): IntArray {
+        val args: MutableList<Int> = ArrayList()
+        arguments.forEach { union ->
+            when (union) {
+                is OSLUnion.BooleanType -> args.add(if (union.boolean) 1 else 0)
+                is OSLUnion.Int8NumberType -> args.add(union.number.toInt())
+                is OSLUnion.Int16LENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 0) and 0xFF)
+                    args.add((num shr 8) and 0xFF)
+                }
+                is OSLUnion.Int16BENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 8) and 0xFF)
+                    args.add((num shr 0) and 0xFF)
+                }
+                is OSLUnion.Int32LENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 0) and 0xFF)
+                    args.add((num shr 8) and 0xFF)
+                    args.add((num shr 16) and 0xFF)
+                    args.add((num shr 24) and 0xFF)
+                }
+                is OSLUnion.Int32BENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 24) and 0xFF)
+                    args.add((num shr 16) and 0xFF)
+                    args.add((num shr 8) and 0xFF)
+                    args.add((num shr 0) and 0xFF)
+                }
+                is OSLUnion.IntegerNumberType -> args.add(union.number.toInt()) //Arbitrary number; assume wrongly formatted single byte
+                is OSLUnion.DecimalNumberType -> args.add(union.number.toDouble().roundToInt()) //See above
+                else -> error("Invalid number $union")
+            }
+        }
+        return args.toIntArray()
+    }
+
     @ExperimentalStdlibApi
     suspend fun addOpcode(opcodeName: String, arguments: Array<OSLUnion>) {
         if (arguments.all { union -> union is OSLUnion.NumberType || union is OSLUnion.BooleanType }) {
-            addOpcode(opcodeName, IntArray(arguments.size) { i ->
-                when (val arg = arguments[i]) {
-                    is OSLUnion.NumberType -> arg.number.toInt()
-                    is OSLUnion.BooleanType -> if (arg.boolean) 1 else 0
-                    else -> error("Invalid $arg")
-                }
-            })
+            addOpcode(opcodeName, collectArgs(arguments))
         } else {
             output.write(OPERATION_ADD_VARIABLE_OPCODE_NAMED)
             output.write(opcodeName.encodeToUTF8ByteArray())
@@ -250,9 +281,33 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
     @ExperimentalStdlibApi
     suspend fun writeArg(arg: OSLUnion) {
         when (arg) {
-            is OSLUnion.NumberType -> {
-                output.write(VARIABLE_RAW)
+            is OSLUnion.Int8NumberType -> {
+                output.write(VARIABLE_INT8)
+                output.write(arg.number.toInt())
+            }
+            is OSLUnion.Int16LENumberType -> {
+                output.write(VARIABLE_INT16LE)
                 output.writeVariableInt16(arg.number)
+            }
+            is OSLUnion.Int16BENumberType -> {
+                output.write(VARIABLE_INT16BE)
+                output.writeVariableInt16(arg.number)
+            }
+            is OSLUnion.Int32LENumberType -> {
+                output.write(VARIABLE_INT32LE)
+                output.writeVariableInt32(arg.number)
+            }
+            is OSLUnion.Int32BENumberType -> {
+                output.write(VARIABLE_INT32BE)
+                output.writeVariableInt32(arg.number)
+            }
+            is OSLUnion.IntegerNumberType -> {
+                output.write(VARIABLE_ARBITRARY_INTEGER)
+                output.writeVariableInt64(arg.number)
+            }
+            is OSLUnion.DecimalNumberType -> {
+                output.write(VARIABLE_ARBITRARY_DECIMAL)
+                output.writeFloatLE(arg.number.toFloat()) //TODO: Switch to double? Or break this into two unions?
             }
             is OSLUnion.RawStringType -> {
                 output.write(VARIABLE_TEXT)
@@ -285,6 +340,22 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
                 //TODO: Consider if it's worthwhile condensing this down to a bit
                 output.write(VARIABLE_BOOL)
                 output.write(if (arg.boolean) 1 else 0)
+            }
+            is OSLUnion.FunctionCallType -> {
+                output.write(VARIABLE_FUNCTION_CALL)
+                output.write(arg.functionName.encodeToUTF8ByteArray())
+                output.write(0x00)
+                output.write(arg.parameters.size)
+                arg.parameters.forEach { param ->
+                    if (param.parameterName != null) output.write(param.parameterName.encodeToUTF8ByteArray())
+                    output.write(0x00)
+                    writeArg(param.parameterValue)
+                }
+            }
+            is OSLUnion.VariableReferenceType -> {
+                output.write(VARIABLE_VAR_REFERENCE)
+                output.write(arg.variableName.encodeToUTF8ByteArray())
+                output.write(0x00)
             }
             else -> throw IllegalArgumentException("Invalid value $arg")
         }

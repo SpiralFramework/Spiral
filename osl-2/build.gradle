@@ -64,6 +64,12 @@ kotlin {
                 implementation project(":antlr-osl-java")
             }
         }
+
+        all {
+            languageSettings {
+                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+            }
+        }
 //        jsMain {
 //            dependencies {
 //                implementation kotlin('stdlib-js')

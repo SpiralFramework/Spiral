@@ -1,5 +1,6 @@
 package info.spiralframework.osl
 
+import info.spiralframework.antlr.osl.LibLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
 import info.spiralframework.base.common.SemanticVersion
@@ -165,16 +166,18 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
                     when (node.symbol.type) {
                         OpenSpiralParser.ESCAPES -> {
-                            when (node.text[1]) {
+                            when (val c = node.text[1]) {
                                 'b' -> builder.append('\b')
                                 'f' -> builder.append(0x0C.toChar())
                                 'n' -> builder.append('\n')
                                 'r' -> builder.append('\r')
                                 't' -> builder.append('\t')
                                 'u' -> builder.append(node.text.substring(2).toInt(16).toChar())
+                                else -> builder.append(c)
                             }
                         }
                         OpenSpiralParser.STRING_CHARACTERS -> builder.append(node.text)
+                        OpenSpiralParser.STRING_WHITESPACE -> builder.append(node.text)
                         OpenSpiralParser.QUOTED_STRING_VARIABLE_REFERENCE -> {
                             if (builder.isNotEmpty()) {
                                 appendText(builder.toString())
@@ -182,6 +185,8 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
                             }
                             appendVariable(node.text.substring(1))
                         }
+                        OpenSpiralParser.QUOTED_STRING_LINE_BREAK -> builder.append("\n")
+                        OpenSpiralParser.QUOTED_STRING_LINE_BREAK_NO_SPACE -> builder.append("\n")
                         OpenSpiralParser.QUOTED_COLOUR_CODE -> {
                             if (builder.isNotEmpty()) {
                                 appendText(builder.toString())
@@ -212,8 +217,8 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
     @ExperimentalStdlibApi
     override fun visitVariableValue(ctx: OpenSpiralParser.VariableValueContext): OSLUnion {
-        ctx.DECIMAL_NUMBER()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
-        ctx.INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
+        ctx.DECIMAL_NUMBER()?.let { double -> return OSLUnion.DecimalNumberType(double.text.toDouble()) }
+        ctx.INTEGER()?.let { integer -> return OSLUnion.IntegerNumberType(integer.text.toLongVariable()) }
         ctx.VARIABLE_REFERENCE()?.let { varRef -> return OSLUnion.VariableReferenceType(varRef.text.substring(1)) }
 //        ctx.LOCALISED_STRING()
         ctx.booleanRule()?.let(this::visitBooleanRule)?.let { return it }
@@ -226,8 +231,8 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
 
     @ExperimentalStdlibApi
     override fun visitFunctionVariableValue(ctx: OpenSpiralParser.FunctionVariableValueContext): OSLUnion {
-        ctx.FUNC_CALL_DECIMAL_NUMBER()?.let { double -> return OSLUnion.NumberType(double.text.toDouble()) }
-        ctx.FUNC_CALL_INTEGER()?.let { integer -> return OSLUnion.NumberType(integer.text.toLongVariable()) }
+        ctx.FUNC_CALL_DECIMAL_NUMBER()?.let { double -> return OSLUnion.DecimalNumberType(double.text.toDouble()) }
+        ctx.FUNC_CALL_INTEGER()?.let { integer -> return OSLUnion.IntegerNumberType(integer.text.toLongVariable()) }
         ctx.FUNC_CALL_VARIABLE_REFERENCE()?.let { varRef -> return OSLUnion.VariableReferenceType(varRef.text.substring(1)) }
 //        ctx.LOCALISED_STRING()
         ctx.funcBooleanRule()?.let(this::visitFuncBooleanRule)?.let { return it }

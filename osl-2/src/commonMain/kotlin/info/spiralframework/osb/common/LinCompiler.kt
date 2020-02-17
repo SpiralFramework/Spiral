@@ -6,17 +6,16 @@ import info.spiralframework.formats.common.games.*
 import info.spiralframework.formats.common.get
 import info.spiralframework.formats.common.scripting.lin.CustomLinScript
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
+import info.spiralframework.formats.common.scripting.lin.dr1.Dr1VoiceLineEntry
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
-import kotlin.coroutines.Continuation
-import kotlin.reflect.KCallable
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSpiralBitcodeVisitor {
     val custom = CustomLinScript()
     val stack: MutableMap<String, OSLUnion> = HashMap()
-    val registry: MutableMap<String, MutableList<SpiralFunction>> = HashMap()
+    val registry: MutableMap<String, MutableList<SpiralFunction<OSLUnion>>> = HashMap()
 
     var failOnMissingCharacter = false
 
@@ -42,12 +41,12 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
         custom.addEntry(waitForInput)
     }
 
-    override suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
-        println("calling $functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})")
+    override suspend fun functionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>): OSLUnion? {
+//        println("calling $functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})")
 
-        val function = registry[functionName]
+        val function = registry[functionName.toUpperCase().replace("_", "")]
                 ?.firstOrNull { func -> func.parameterNames.size == parameters.size }
-                ?: return println("(function not found)")
+                ?: return null
 
         val functionParams = function.parameterNames.toMutableList()
         val passedParams: MutableMap<String, Any?> = HashMap()
@@ -61,7 +60,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
             passedParams[functionParams.removeAt(0)] = value
         }
 
-        function.suspendInvoke(passedParams)
+        return function.suspendInvoke(passedParams)
     }
 
     override suspend fun addPlainOpcode(opcode: Int, arguments: IntArray) =
@@ -75,38 +74,54 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
         custom.addEntry(opcode.entryConstructor(opcode.opcode, arguments))
     }
 
-    override suspend fun addVariableOpcode(opcode: Int, arguments: Array<OSLUnion>) {
-        val intArgs: MutableList<Int> = ArrayList()
-        arguments.forEach { arg ->
-            when (arg) {
-                is OSLUnion.NumberType -> intArgs.add(arg.number.toInt())
-                is OSLUnion.StringType -> {
-                    val id = custom.addText(arg.string)
-                    intArgs.add((id shr 8) and 0xFF)
-                    intArgs.add(id and 0xFF)
-                }
-                is OSLUnion.BooleanType -> intArgs.add(if (arg.boolean) 1 else 0)
-            }
-        }
+    override suspend fun addVariableOpcode(opcode: Int, arguments: Array<OSLUnion>) =
+            addPlainOpcode(opcode, collectArgs(arguments))
 
-        addPlainOpcode(opcode, intArgs.toIntArray())
+    override suspend fun addVariableOpcodeNamed(opcodeName: String, arguments: Array<OSLUnion>) =
+            addPlainOpcodeNamed(opcodeName, collectArgs(arguments))
+
+    private suspend fun MutableList<Int>.addUnion(union: OSLUnion) {
+        when (union) {
+            is OSLUnion.Int8NumberType -> add(union.number.toInt())
+            is OSLUnion.Int16LENumberType -> {
+                val num = union.number.toInt()
+                add((num shr 0) and 0xFF)
+                add((num shr 8) and 0xFF)
+            }
+            is OSLUnion.Int16BENumberType -> {
+                val num = union.number.toInt()
+                add((num shr 8) and 0xFF)
+                add((num shr 0) and 0xFF)
+            }
+            is OSLUnion.Int32LENumberType -> {
+                val num = union.number.toInt()
+                add((num shr 0) and 0xFF)
+                add((num shr 8) and 0xFF)
+                add((num shr 16) and 0xFF)
+                add((num shr 24) and 0xFF)
+            }
+            is OSLUnion.Int32BENumberType -> {
+                val num = union.number.toInt()
+                add((num shr 24) and 0xFF)
+                add((num shr 16) and 0xFF)
+                add((num shr 8) and 0xFF)
+                add((num shr 0) and 0xFF)
+            }
+            is OSLUnion.NumberType -> add(union.number.toInt())
+            is OSLUnion.StringType -> {
+                val id = custom.addText(union.string)
+                add((id shr 8) and 0xFF)
+                add(id and 0xFF)
+            }
+            is OSLUnion.BooleanType -> add(if (union.boolean) 1 else 0)
+            is OSLUnion.FunctionCallType -> functionCall(union.functionName, union.parameters)?.let { addUnion(it) }
+            is OSLUnion.VariableReferenceType -> getData(union.variableName)?.let { addUnion(it) }
+        }
     }
-
-    override suspend fun addVariableOpcodeNamed(opcodeName: String, arguments: Array<OSLUnion>) {
+    private suspend fun collectArgs(arguments: Array<OSLUnion>): IntArray {
         val intArgs: MutableList<Int> = ArrayList()
-        arguments.forEach { arg ->
-            when (arg) {
-                is OSLUnion.NumberType -> intArgs.add(arg.number.toInt())
-                is OSLUnion.StringType -> {
-                    val id = custom.addText(arg.string)
-                    intArgs.add((id shr 8) and 0xFF)
-                    intArgs.add(id and 0xFF)
-                }
-                is OSLUnion.BooleanType -> intArgs.add(if (arg.boolean) 1 else 0)
-            }
-        }
-
-        addPlainOpcodeNamed(opcodeName, intArgs.toIntArray())
+        arguments.forEach { intArgs.addUnion(it) }
+        return intArgs.toIntArray()
     }
 
     override suspend fun getData(name: String): OSLUnion? = stack[name]
@@ -128,6 +143,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
                 is OSLUnion.ActionType -> data.actionName.joinToString(" ") { it.toString(16).padStart(2, '0') }
                 is OSLUnion.BooleanType -> data.boolean.toString()
                 is OSLUnion.FunctionParameterType -> if (data.parameterName != null) "${data.parameterName} = ${stringify(data.parameterValue)}" else stringify(data.parameterValue)
+                is OSLUnion.FunctionCallType -> "${data.functionName}(${data.parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})"
                 OSLUnion.UndefinedType -> "undefined"
                 OSLUnion.NullType -> "null"
                 OSLUnion.NoOpType -> "NoOp"
@@ -155,34 +171,37 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
                 is OSLUnion.ActionType -> union.actionName[0].toInt()
                 is OSLUnion.BooleanType -> if (union.boolean) 1 else 0
                 is OSLUnion.FunctionParameterType -> intStub(union.parameterValue)
+                is OSLUnion.FunctionCallType -> 0
                 OSLUnion.UndefinedType -> 0
                 OSLUnion.NullType -> 0
                 OSLUnion.NoOpType -> 0
             }
 
-    suspend fun speakStub(character: Any?, chapter: Any?, line: Any?, volume: Any?) = speak(speakerNameStub(character), intStub(chapter), intStub(line), intStub(volume))
-    suspend fun speak(character: Int, chapter: Int, line: Int, volume: Int) {
-        println("Voice File ID: ${game.getVoiceFileID(character, chapter, line)}")
-    }
+    //    suspend fun speakStub(character: Any?, chapter: Any?, line: Any?, volume: Any?) = speak(speakerNameStub(character), intStub(chapter), intStub(line), intStub(volume))
+//    suspend fun speak(character: Int, chapter: Int, line: Int, volume: Int) {
+//        println("Voice File ID: ${game.getVoiceFileID(character, chapter, line)}")
+//    }
     suspend fun speakerStub(voiceID: Any?, volume: Any?) = speak(intStub(voiceID), intStub(volume))
-    suspend fun speak(voiceID: Int, volume: Int) {
-        println("Character / Chapter / ID: ${game.getVoiceLineDetails(voiceID)}")
+
+    suspend fun speak(voiceID: Int, volume: Int): OSLUnion.NoOpType = runNoOp {
+        val (character, chapter, line) = game.getVoiceLineDetails(voiceID)
+                ?: return@runNoOp println("(no voice line details for $voiceID)")
+        custom.addEntry((Dr1VoiceLineEntry(character, chapter, line, volume)))
     }
 
-    fun register(func: SpiralFunction) {
-        val functions: MutableList<SpiralFunction>
+    fun register(func: SpiralFunction<OSLUnion>) {
+        val functions: MutableList<SpiralFunction<OSLUnion>>
         if (func.name !in registry) {
             functions = ArrayList()
-            registry[func.name] = functions
+            registry[func.name.toUpperCase().replace("_", "")] = functions
         } else {
-            functions = registry.getValue(func.name)
+            functions = registry.getValue(func.name.toUpperCase().replace("_", ""))
         }
 
         functions.add(func)
     }
 
     init {
-        register(SpiralSuspending.Func4("speak", "character", "chapter", "line", "volume", func = this::speakStub))
         register(SpiralSuspending.Func2("speak", "voiceID", "volume", func = this::speakerStub))
     }
 }

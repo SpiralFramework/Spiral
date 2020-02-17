@@ -3,9 +3,9 @@ package info.spiralframework.osb.common
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
+import info.spiralframework.base.common.text.toHexString
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.readVariableInt16
 
 object OpenSpiralBitcode {
     const val MAGIC_NUMBER_LE = 0x494C534F
@@ -35,8 +35,17 @@ object OpenSpiralBitcode {
     const val VARIABLE_LONG_LABEL = 0x63
     const val VARIABLE_LONG_PARAMETER = 0x64
     const val VARIABLE_LONG_REFERENCE = 0x65
-    const val VARIABLE_BOOL = 0x6E
-    const val VARIABLE_RAW = 0x6F
+    const val VARIABLE_BOOL = 0x6D
+    const val VARIABLE_FUNCTION_CALL = 0x6E
+    const val VARIABLE_VAR_REFERENCE = 0x6F
+
+    const val VARIABLE_INT8 = 0x70
+    const val VARIABLE_INT16LE = 0x71
+    const val VARIABLE_INT16BE = 0x72
+    const val VARIABLE_INT32LE = 0x73
+    const val VARIABLE_INT32BE = 0x74
+    const val VARIABLE_ARBITRARY_INTEGER = 0x7D
+    const val VARIABLE_ARBITRARY_DECIMAL = 0x7F
 
     const val LONG_REFERENCE_TEXT = 0xA0
     const val LONG_REFERENCE_VARIABLE = 0xA1
@@ -63,7 +72,9 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                 val notEnoughData: () -> String = { localise("$PREFIX.not_enough_data") }
 
                 while (true) {
-                    when (flow.read() ?: return) {
+                    val opcode = flow.read() ?: return
+                    println(opcode.toHexString())
+                    when (opcode) {
                         OpenSpiralBitcode.OPERATION_SET_VERSION -> setVersion(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_DIALOGUE -> addDialogue(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE -> addDialogueVariable(notEnoughData)
@@ -75,6 +86,7 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                         OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE_NAMED -> addVariableOpcodeNamed(notEnoughData)
 
                         OpenSpiralBitcode.OPERATION_SET_VARIABLE -> setVariable(notEnoughData)
+                        else -> println("Unknown opcode ${opcode.toHexString()}")
                     }
                 }
             }
@@ -111,14 +123,14 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
 
     private suspend fun SpiralContext.addFunctionCall(notEnoughData: () -> String) {
         val functionName = flow.readNullTerminatedUTF8String()
-        val paramCount = requireNotNull(flow.read())
+        val paramCount = requireNotNull(flow.read(), notEnoughData)
         val parameters = Array(paramCount) {
             val paramName = flow.readNullTerminatedUTF8String().takeUnless(String::isBlank)
             val param = readArg(notEnoughData)
             OSLUnion.FunctionParameterType(paramName, param)
         }
 
-        visitor.addFunctionCall(functionName, parameters)
+        visitor.functionCall(functionName, parameters)
     }
 
     private suspend fun SpiralContext.addPlainOpcode(notEnoughData: () -> String) {
@@ -183,9 +195,8 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
         }
     }
 
-    private suspend fun SpiralContext.readArg(notEnoughData: () -> String) =
+    private suspend fun SpiralContext.readArg(notEnoughData: () -> String): OSLUnion =
             when (val variable = requireNotNull(flow.read(), notEnoughData)) {
-                OpenSpiralBitcode.VARIABLE_RAW -> OSLUnion.NumberType(requireNotNull(flow.readVariableInt16(), notEnoughData))
                 OpenSpiralBitcode.VARIABLE_TEXT -> OSLUnion.RawStringType(flow.readNullTerminatedUTF8String())
                 OpenSpiralBitcode.VARIABLE_LABEL -> OSLUnion.LabelType(flow.readNullTerminatedUTF8String())
                 OpenSpiralBitcode.VARIABLE_LONG_LABEL -> OSLUnion.LabelType(parseLongReference())
@@ -193,6 +204,28 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                 OpenSpiralBitcode.VARIABLE_LONG_PARAMETER -> OSLUnion.ParameterType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_LONG_REFERENCE -> OSLUnion.RawStringType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_BOOL -> OSLUnion.BooleanType(requireNotNull(flow.read(), notEnoughData) != 0)
+                OpenSpiralBitcode.VARIABLE_FUNCTION_CALL -> {
+                    val funcName = flow.readNullTerminatedUTF8String()
+                    val paramCount = requireNotNull(flow.read(), notEnoughData)
+                    val parameters = Array(paramCount) {
+                        val paramName = flow.readNullTerminatedUTF8String().takeUnless(String::isBlank)
+                        val param = readArg(notEnoughData)
+                        OSLUnion.FunctionParameterType(paramName, param)
+                    }
+
+                    OSLUnion.FunctionCallType(funcName, parameters)
+                }
+
+                OpenSpiralBitcode.VARIABLE_INT8 -> OSLUnion.Int8NumberType(requireNotNull(flow.read(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT16LE -> OSLUnion.Int16LENumberType(requireNotNull(flow.readVariableInt16(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT16BE -> OSLUnion.Int16BENumberType(requireNotNull(flow.readVariableInt16(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT32LE -> OSLUnion.Int32LENumberType(requireNotNull(flow.readVariableInt32(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT32BE -> OSLUnion.Int32BENumberType(requireNotNull(flow.readVariableInt32(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER -> OSLUnion.IntegerNumberType(requireNotNull(flow.readVariableInt64(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL -> OSLUnion.DecimalNumberType(requireNotNull(flow.readFloatLE(), notEnoughData))
+
+                OpenSpiralBitcode.VARIABLE_VAR_REFERENCE -> OSLUnion.VariableReferenceType(flow.readNullTerminatedUTF8String())
+
                 else -> throw IllegalArgumentException("Invalid variable: $variable")
             }
 }

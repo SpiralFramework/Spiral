@@ -106,7 +106,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     repeat(indent) { append('\t') }
                                     append(nameFor(entry))
                                     append("|\"")
-                                    append(lin.textData[entry.textID].replace("\n", " &{br} "))
+                                    append(lin.textData[entry.textID].replace("\"", "\\\"").replace("\n", " &br "))
                                     append('"')
                                 }
                             }
@@ -135,7 +135,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(variableName)
                                     }
                                     append(": \"")
-                                    append(lin.textData[op.text!!.textID].replace("\n", " &{br} "))
+                                    append(lin.textData[op.text!!.textID].replace("\"", "\\\"").replace("\n", " &br "))
                                     append('"')
 
                                     buffer.clear()
