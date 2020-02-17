@@ -159,7 +159,11 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
                 else -> intStub(union)
             }
 
-    suspend fun stringStub(param: Any?): String = stringify(requireNotNull(param) as OSLUnion)
+    suspend fun stringStub(param: Any?): String =
+        when (val union = requireNotNull(param) as OSLUnion) {
+            is OSLUnion.FunctionCallType -> stringStub(functionCall(union.functionName, union.parameters) ?: OSLUnion.UndefinedType)
+            else -> stringify(union)
+        }
     suspend fun intStub(param: Any?): Int =
             when (val union = requireNotNull(param) as OSLUnion) {
                 is OSLUnion.NumberType -> union.number.toInt()
@@ -171,7 +175,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
                 is OSLUnion.ActionType -> union.actionName[0].toInt()
                 is OSLUnion.BooleanType -> if (union.boolean) 1 else 0
                 is OSLUnion.FunctionParameterType -> intStub(union.parameterValue)
-                is OSLUnion.FunctionCallType -> 0
+                is OSLUnion.FunctionCallType -> intStub((functionCall(union.functionName, union.parameters) ?: OSLUnion.UndefinedType))
                 OSLUnion.UndefinedType -> 0
                 OSLUnion.NullType -> 0
                 OSLUnion.NoOpType -> 0
@@ -189,6 +193,12 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
         custom.addEntry((Dr1VoiceLineEntry(character, chapter, line, volume)))
     }
 
+    suspend fun fromInt16BEStub(num: Any?) = fromInt16BE(intStub(num))
+    suspend fun fromInt16BE(num: Int) = OSLUnion.Int16BENumberType(num)
+
+    suspend fun fromInt16LEStub(num: Any?) = fromInt16LE(intStub(num))
+    suspend fun fromInt16LE(num: Int) = OSLUnion.Int16LENumberType(num)
+
     fun register(func: SpiralFunction<OSLUnion>) {
         val functions: MutableList<SpiralFunction<OSLUnion>>
         if (func.name !in registry) {
@@ -203,6 +213,9 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
 
     init {
         register(SpiralSuspending.Func2("speak", "voiceID", "volume", func = this::speakerStub))
+
+        register(SpiralSuspending.Func1("int16LE", "num", func = this::fromInt16LEStub))
+        register(SpiralSuspending.Func1("int16BE", "num", func = this::fromInt16BEStub))
     }
 }
 

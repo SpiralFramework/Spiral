@@ -23,6 +23,16 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
                 runBlocking { this@invoke.block() }
     }
 
+    override fun visitScriptLine(ctx: OpenSpiralParser.ScriptLineContext): OSLUnion {
+        ctx.functionCall()?.let(this::visitFunctionCall)?.let { (functionName, parameters) ->
+            builder {
+                addFunctionCall(functionName, parameters)
+            }
+        }
+
+        return super.visitScriptLine(ctx)
+    }
+
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {
         val rawSemanticVersion = ctx.HEADER_DECLARATION()
                 .text
@@ -67,15 +77,11 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         return OSLUnion.NoOpType
     }
 
-    override fun visitFunctionCall(ctx: OpenSpiralParser.FunctionCallContext): OSLUnion {
+    override fun visitFunctionCall(ctx: OpenSpiralParser.FunctionCallContext): OSLUnion.FunctionCallType {
         val functionName = ctx.NAME_IDENTIFIER().text
         val parameters = ctx.functionParameter().map(this::visitFunctionParameter)
 
-        builder {
-            addFunctionCall(functionName, parameters)
-        }
-
-        return OSLUnion.NoOpType
+        return OSLUnion.FunctionCallType(functionName, parameters.toTypedArray())
     }
 
     override fun visitFunctionParameter(ctx: OpenSpiralParser.FunctionParameterContext): OSLUnion.FunctionParameterType =
@@ -225,6 +231,7 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
         ctx.NULL()?.let { return OSLUnion.NullType }
 
         ctx.quotedString()?.let(this::visitQuotedString)?.let { return it }
+        ctx.functionCall()?.let(this::visitFunctionCall)?.let { return it }
 
         return OSLUnion.UndefinedType
     }

@@ -2,6 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
+import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 
 inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
@@ -11,7 +12,7 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
         get() = 0x06
 
     var id: Int
-        get() = (rawArguments[0] shl 8) or rawArguments[1]
+        get() = getInt16BE(0)
         set(value) = setInt16BE(0, value)
     var arg3: Int
         get() = rawArguments[2]
@@ -31,4 +32,24 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
     var frame: Int
         get() = rawArguments[7]
         set(value) = set(7, value)
+
+    @ExperimentalUnsignedTypes
+    override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
+        with(builder) {
+            append("int16BE(")
+            append(id)
+            append("), ")
+            append(arg3)
+            append(", ")
+            append(arg4)
+            append(", ")
+            append(arg5)
+            append(", ")
+            append(arg6)
+            append(", ")
+            append(arg7)
+            append(", ")
+            append(frame)
+        }
+    }
 }

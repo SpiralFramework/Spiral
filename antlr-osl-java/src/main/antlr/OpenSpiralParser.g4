@@ -7,7 +7,7 @@ headerDeclaration: HEADER_DECLARATION;
 script: headerDeclaration ((lineSeparator scriptLine)+ | lineSeparator)? lineSeparator?;
 lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR;
 
-scriptLine: (basicDrill | basicDrillNamed | complexDrills | metaVariableAssignment | actionDeclaration | functionCall);
+scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall);
 
 metaVariableAssignment: ASSIGN_VARIABLE_NAME VARIABLE_ASSIGNMENT variableValue;
 
@@ -73,12 +73,6 @@ functionVariableValue
     | FUNC_CALL_DECIMAL_NUMBER
     | FUNC_CALL_VARIABLE_REFERENCE
     | FUNC_CALL_NULL
-    ;
-
-// This is for complex drills
-
-complexDrills
-    : dialogueDrill
     ;
 
 dialogueDrill

@@ -266,7 +266,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         writeArg(dialogue)
     }
 
-    suspend fun addFunctionCall(functionName: String, parameters: List<OSLUnion.FunctionParameterType>) {
+    suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
         output.write(OPERATION_ADD_FUNCTION_CALL)
         output.write(functionName.encodeToUTF8ByteArray())
         output.write(0x00)
