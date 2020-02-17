@@ -65,7 +65,7 @@ interface DrGame {
         val linColourCodes: Map<String, Int>
 
         fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int
-        fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>
+        fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>?
 
         fun getNameOfGameParameter(parameter: Int): String? = null
         fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = null

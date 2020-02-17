@@ -43,7 +43,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
     }
 
     override suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
-        println("$functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})")
+        println("calling $functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(value)}" else stringify(value) }.joinToString()})")
 
         val function = registry[functionName]
                 ?.firstOrNull { func -> func.parameterNames.size == parameters.size }
@@ -164,6 +164,10 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
     suspend fun speak(character: Int, chapter: Int, line: Int, volume: Int) {
         println("Voice File ID: ${game.getVoiceFileID(character, chapter, line)}")
     }
+    suspend fun speakerStub(voiceID: Any?, volume: Any?) = speak(intStub(voiceID), intStub(volume))
+    suspend fun speak(voiceID: Int, volume: Int) {
+        println("Character / Chapter / ID: ${game.getVoiceLineDetails(voiceID)}")
+    }
 
     fun register(func: SpiralFunction) {
         val functions: MutableList<SpiralFunction>
@@ -179,6 +183,7 @@ class LinCompiler(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSp
 
     init {
         register(SpiralSuspending.Func4("speak", "character", "chapter", "line", "volume", func = this::speakStub))
+        register(SpiralSuspending.Func2("speak", "voiceID", "volume", func = this::speakerStub))
     }
 }
 

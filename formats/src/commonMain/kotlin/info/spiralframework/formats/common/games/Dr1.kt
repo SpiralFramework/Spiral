@@ -264,8 +264,22 @@ open class Dr1(
         return baseIndex - minID + voiceID
     }
 
-    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>? {
+        var baseIndex = 0
+        for (character in 0 .. MAXIMUM_CHARACTER) {
+            for (chapter in 1 .. MAXIMUM_CHAPTER) {
+                val min = voiceLineArray[((character + chapter + (MAXIMUM_CHAPTER * character)) * 2) - 1]
+                val max = voiceLineArray[(character + chapter + (MAXIMUM_CHAPTER * character)) * 2]
+                if (min != 0xFFFF) {
+                    if (baseIndex < voiceID && baseIndex + max >= voiceID) {
+                        return Triple(character, chapter, (voiceID - baseIndex + min))
+                    }
+                    baseIndex += max - min + 1
+                }
+            }
+        }
+
+        return null
     }
 
     override fun getNameOfGameParameter(parameter: Int): String? = gameParameterNames[parameter]
