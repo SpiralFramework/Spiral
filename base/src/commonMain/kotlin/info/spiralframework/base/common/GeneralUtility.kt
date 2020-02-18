@@ -61,7 +61,7 @@ fun <K, V> MutableMap<K, V>.putBack(key: K, value: V): V {
 inline fun String.trimNulls(): String = trimEnd(NULL_TERMINATOR)
 
 @ExperimentalContracts
-public inline fun <T, R> freeze(receiver: T, block: (T) -> R): R? {
+public inline fun <T, R> freeze(receiver: T, block: (T) -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }

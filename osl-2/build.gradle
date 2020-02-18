@@ -62,6 +62,7 @@ kotlin {
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 
                 implementation project(":antlr-osl-java")
+                implementation "ch.qos.logback:logback-classic:$logback_version"
             }
         }
 

@@ -16,6 +16,8 @@ import kotlin.contracts.ExperimentalContracts
 sealed class TranspileOperation {
     data class Dialogue(var speakerEntry: Dr1SpeakerEntry, var voiceLineEntry: Dr1VoiceLineEntry? = null, var text: Dr1TextEntry? = null, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
     data class Text(var text: Dr1TextEntry, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
+    data class CheckFlag(val flagCheck: Dr1CheckFlagEntry, var endFlagCheck: Dr1EndFlagCheckEntry? = null, var whenTrue: Int? = null, var whenTrueData: List<LinEntry>? = null, var whenFalse: Int? = null) : TranspileOperation()
+    data class CheckCharacterOrObject(val checkCharacterEntry: Dr1CheckCharacterEntry?, val checkObjectEntry: Dr1CheckObjectEntry?): TranspileOperation()
 }
 
 @ExperimentalUnsignedTypes
@@ -91,10 +93,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
     private suspend fun transpile(entries: List<LinEntry>, indent: Int = 0) {
         val buffer: MutableList<LinEntry> = ArrayList()
         var operation: TranspileOperation? = null
+        var i = 0
+        while (i in entries.indices) {
+            val entry = entries[i++]
 
-        entries.forEach { entry ->
             if (entry is Dr1FormatEntry)
-                return@forEach
+                continue
 
             freeze(operation) { op ->
                 when (op) {
@@ -107,6 +111,26 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             is Dr1TextEntry -> {
                                 buffer.add(entry)
                                 operation = TranspileOperation.Text(entry)
+                            }
+                            is Dr1CheckFlagEntry -> {
+                                buffer.add(entry)
+                                operation = TranspileOperation.CheckFlag(entry)
+                            }
+                            is Dr1CheckCharacterEntry -> {
+                                if (entry.characterID != 255) {
+                                    buffer.add(entry)
+                                    operation = TranspileOperation.CheckCharacterOrObject(entry, null)
+                                } else {
+                                    entry.transpile(this, indent)
+                                }
+                            }
+                            is Dr1CheckObjectEntry -> {
+                                if (entry.objectID != 255) {
+                                    buffer.add(entry)
+                                    operation = TranspileOperation.CheckCharacterOrObject(null, entry)
+                                } else {
+                                    entry.transpile(this, indent)
+                                }
                             }
                             else -> entry.transpile(this, indent)
                         }
@@ -131,7 +155,6 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                             variables[variableName] = NumberValue(op.speakerEntry.characterID)
                                         }
 
-                                        repeat(indent) { append('\t') }
                                         append('$')
                                         append(variableName)
                                     }
@@ -145,7 +168,10 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             }
                             else -> {
                                 println(">:( $entry")
-                                buffer.dumpEntries()
+                                buffer.removeAt(buffer.size - 1)
+                                i--
+
+                                buffer.dumpEntries(indent)
                                 operation = null
                             }
                         }
@@ -168,12 +194,264 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             }
                             else -> {
                                 println(">:( $entry")
-                                buffer.dumpEntries()
+                                buffer.removeAt(buffer.size - 1)
+                                i--
+                                buffer.dumpEntries(indent)
                                 operation = null
                             }
                         }
                     }
+                    is TranspileOperation.CheckFlag -> {
+                        buffer.add(entry)
+
+                        when {
+                            op.endFlagCheck == null -> {
+                                if (entry is Dr1EndFlagCheckEntry) {
+                                    op.endFlagCheck = entry
+                                } else {
+                                    buffer.removeAt(buffer.size - 1)
+                                    i--
+                                    buffer.dumpEntries(indent)
+                                    operation = null
+                                }
+                            }
+                            op.endFlagCheck != null && op.whenTrue == null -> {
+                                if (entry is Dr1GoToLabelEntry) {
+                                    op.whenTrue = entry.id
+                                } else {
+                                    buffer.removeAt(buffer.size - 1)
+                                    i--
+                                    buffer.dumpEntries(indent)
+                                    operation = null
+                                }
+                            }
+                            op.whenTrue != null && op.whenFalse == null -> {
+                                if (entry is Dr1MarkLabelEntry && op.whenTrue == entry.id) {
+                                    if (buffer[buffer.size - 2] !is Dr1GoToLabelEntry) {
+                                        //No else check
+                                        output.add {
+                                            repeat(indent) { append('\t') }
+                                            append("checkFlag (")
+                                            freeze(op.flagCheck.conditions()) { condition ->
+                                                append("flagID(")
+                                                append(condition.check shr 8)
+                                                append(",")
+                                                append(condition.check and 0xFF)
+                                                append(") ")
+                                                append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
+                                                append(" ")
+                                                append(condition.value)
+
+                                                condition.extraConditions.forEach { extraCondition ->
+                                                    append(" ")
+                                                    append(Dr1CheckFlagEntry.formatInvertedLogical(extraCondition.logicalOp))
+                                                    append(" flagID(")
+                                                    append(extraCondition.check shr 8)
+                                                    append(",")
+                                                    append(extraCondition.check and 0xFF)
+                                                    append(") ")
+                                                    append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
+                                                    append(" ")
+                                                    append(extraCondition.value)
+                                                }
+                                            }
+                                            append(") {")
+                                        }
+
+                                        transpile(buffer.drop(3).dropLast(1), indent + 1)
+                                        buffer.clear()
+
+                                        output.add {
+                                            repeat(indent) { append('\t') }
+                                            append("}")
+                                        }
+
+                                        operation = null
+                                    } else {
+                                        op.whenTrueData = buffer.drop(3).dropLast(2)
+                                        op.whenFalse = (buffer[buffer.size - 2] as Dr1GoToLabelEntry).id
+                                        buffer.clear()
+                                    }
+                                }
+                            }
+                            op.whenFalse != null -> {
+                                if (entry is Dr1MarkLabelEntry && op.whenFalse == entry.id) {
+                                    output.add {
+                                        repeat(indent) { append('\t') }
+                                        append("checkFlag (")
+                                        freeze(op.flagCheck.conditions()) { condition ->
+                                            append("flagID(")
+                                            append(condition.check shr 8)
+                                            append(",")
+                                            append(condition.check and 0xFF)
+                                            append(") ")
+                                            append(Dr1CheckFlagEntry.formatEquality(condition.op))
+                                            append(" ")
+                                            append(condition.value)
+
+                                            condition.extraConditions.forEach { extraCondition ->
+                                                append(" ")
+                                                append(Dr1CheckFlagEntry.formatLogical(extraCondition.logicalOp))
+                                                append(" flagID(")
+                                                append(extraCondition.check shr 8)
+                                                append(",")
+                                                append(extraCondition.check and 0xFF)
+                                                append(") ")
+                                                append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
+                                                append(" ")
+                                                append(extraCondition.value)
+                                            }
+                                        }
+                                        append(") {")
+                                    }
+
+                                    transpile(op.whenTrueData!!, indent + 1)
+
+                                    output.add {
+                                        repeat(indent) { append('\t') }
+                                        append("} else {")
+                                    }
+
+                                    transpile(buffer.dropLast(1), indent + 1)
+                                    buffer.clear()
+
+                                    output.add {
+                                        repeat(indent) { append('\t') }
+                                        append("}")
+                                    }
+
+                                    operation = null
+                                }
+                            }
+                        }
+                    }
+                    is TranspileOperation.CheckCharacterOrObject -> {
+                        if (entry is Dr1CheckCharacterEntry || entry is Dr1CheckObjectEntry) {
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                if (op.checkCharacterEntry != null) {
+                                    append("checkCharacter (")
+                                    append(op.checkCharacterEntry.characterID)
+                                } else {
+                                    append("checkObject (")
+                                    append(op.checkObjectEntry!!.objectID)
+                                }
+                                append(") {")
+                            }
+
+                            transpile(buffer.drop(1), indent + 1)
+                            buffer.clear()
+
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("}")
+                            }
+
+                            operation = null
+                            i--
+                        } else {
+                            buffer.add(entry)
+                        }
+                    }
                 }
+
+                Unit
+            }
+        }
+
+        freeze(operation) { op ->
+            when (op) {
+                is TranspileOperation.CheckFlag -> {
+                    when {
+                        op.whenTrue != null && op.whenTrueData?.isNotEmpty() == true && buffer.isEmpty() -> {
+                            //No else check
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("checkFlag (")
+                                freeze(op.flagCheck.conditions()) { condition ->
+                                    append("flagID(")
+                                    append(condition.check shr 8)
+                                    append(",")
+                                    append(condition.check and 0xFF)
+                                    append(") ")
+                                    append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
+                                    append(" ")
+                                    append(condition.value)
+
+                                    condition.extraConditions.forEach { extraCondition ->
+                                        append(" ")
+                                        append(Dr1CheckFlagEntry.formatInvertedLogical(extraCondition.logicalOp))
+                                        append(" flagID(")
+                                        append(extraCondition.check shr 8)
+                                        append(",")
+                                        append(extraCondition.check and 0xFF)
+                                        append(") ")
+                                        append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
+                                        append(" ")
+                                        append(extraCondition.value)
+                                    }
+                                }
+                                append(") {")
+                            }
+
+                            transpile(op.whenTrueData!!, indent + 1)
+                            buffer.clear()
+
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("}")
+                            }
+
+                            operation = null
+                        }
+                        op.whenTrue != null -> {
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("checkFlag (")
+                                freeze(op.flagCheck.conditions()) { condition ->
+                                    append("flagID(")
+                                    append(condition.check shr 8)
+                                    append(",")
+                                    append(condition.check and 0xFF)
+                                    append(") ")
+                                    append(Dr1CheckFlagEntry.formatEquality(condition.op))
+                                    append(" ")
+                                    append(condition.value)
+
+                                    condition.extraConditions.forEach { extraCondition ->
+                                        append(" ")
+                                        append(Dr1CheckFlagEntry.formatLogical(extraCondition.logicalOp))
+                                        append(" flagID(")
+                                        append(extraCondition.check shr 8)
+                                        append(",")
+                                        append(extraCondition.check and 0xFF)
+                                        append(") ")
+                                        append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
+                                        append(" ")
+                                        append(extraCondition.value)
+                                    }
+                                }
+                                append(") {")
+                            }
+
+                            transpile(op.whenTrueData!!, indent + 1)
+
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("} else {")
+                            }
+
+                            transpile(buffer.drop(1), indent + 1)
+                            buffer.clear()
+
+                            output.add {
+                                repeat(indent) { append('\t') }
+                                append("}")
+                            }
+                        }
+                    }
+                }
+                else -> buffer.dumpEntries(indent)
             }
         }
     }

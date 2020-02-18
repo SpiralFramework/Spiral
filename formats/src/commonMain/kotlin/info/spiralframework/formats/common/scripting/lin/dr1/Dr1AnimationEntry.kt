@@ -6,7 +6,7 @@ import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int) : this(intArrayOf(id shr 8, id % 256, arg3, arg4, arg5, arg6, arg7, frame))
+    constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int) : this(intArrayOf(id shr 8, id and 0xFF, arg3, arg4, arg5, arg6, arg7, frame))
 
     override val opcode: Int
         get() = 0x06

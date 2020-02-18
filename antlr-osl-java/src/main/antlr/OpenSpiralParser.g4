@@ -5,11 +5,11 @@ options { tokenVocab=OpenSpiralLexer; }
 headerDeclaration: HEADER_DECLARATION;
 
 script: headerDeclaration scope;
-lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR;
+lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR+;
 
 scope: ((lineSeparator scriptLine)+ | lineSeparator)? lineSeparator?;
 
-scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck) INLINE_WHITESPACE?;
+scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck | checkFlag | checkCharacter | checkObject) INLINE_WHITESPACE?;
 
 metaVariableAssignment: ASSIGN_VARIABLE_NAME VARIABLE_ASSIGNMENT variableValue;
 
@@ -84,16 +84,71 @@ dialogueDrill
     : (VARIABLE_REFERENCE | NAME_IDENTIFIER) DIALOGUE_SEPARATOR variableValue
     ;
 
-ifCheck
+ifCheckEquality
+    : IF_CHECK_EQUALITY_NOT_EQUAL
+    | IF_CHECK_EQUALITY_EQUAL
+    | IF_CHECK_EQUALITY_LESS_THAN_EQUAL_TO
+    | IF_CHECK_EQUALITY_GREATER_THAN_EQUAL_TO
+    | IF_CHECK_EQUALITY_LESS_THAN
+    | IF_CHECK_EQUALITY_GREATER_THAN
+    ;
+
+ifCheckLogical
+    : IF_CHECK_LOGICAL_AND
+    | IF_CHECK_LOGICAL_OR
+    ;
+
+ifCheckPure
     : IF_CHECK
-        (ifCheckValue (IF_CHECK_EQUALITY) ifCheckValue)
+        (ifCheckValue ifCheckEquality ifCheckValue)
       END_IF_CHECK
 
       scope
+    ;
+
+ifCheck
+    : ifCheckPure
+
+      (ELIF ifCheckPure)*
+      (ELSE scope)?
 
       CLOSE_SCOPE
     ;
 
+ifFlagID
+    : IF_CHECK_INTEGER
+    | IF_CHECK_VARIABLE_REFERENCE
+    | ifCheckFuncCall
+    ;
+
+checkFlagCondition: (ifFlagID ifCheckEquality ifCheckValue);
+checkFlagPure
+    : CHECK_FLAG
+      checkFlagCondition (ifCheckLogical checkFlagCondition)*
+      END_IF_CHECK
+
+      scope
+    ;
+checkFlag
+    : checkFlagPure
+
+      (ELIF checkFlagPure)*
+      (ELSE scope)?
+
+      CLOSE_SCOPE
+    ;
+
+checkCharacter
+    : CHECK_CHARACTER ifCheckValue END_IF_CHECK
+        scope
+      CLOSE_SCOPE
+    ;
+
+checkObject
+    : CHECK_OBJECT ifCheckValue END_IF_CHECK
+        scope
+      CLOSE_SCOPE
+    ;
 
 ifCheckValue
     : (IF_CHECK_BEGIN_LOCALE_STRING localisedStringContent)

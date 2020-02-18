@@ -10,6 +10,7 @@ import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.lin.UnsafeLinScript
 import info.spiralframework.formats.common.scripting.wrd.UnsafeWordScript
 import info.spiralframework.formats.jvm.defaultSpiralContextWithFormats
+import info.spiralframework.osb.common.OpenSpiralBitcodeBuilder
 import info.spiralframework.osb.common.compileLinFromBitcode
 import kotlinx.coroutines.runBlocking
 import org.abimon.kornea.io.common.BinaryDataSource
@@ -72,8 +73,10 @@ object OSLProxy {
         val parser = OpenSpiralParser(tokens)
         val tree = parser.script()
         val binary = BinaryOutputFlow()
-        val visitor = OSLVisitor(binary)
-        val result = visitor.visitScript(tree)
+        val visitor = OSLVisitor()
+        val script = visitor.visitScript(tree)
+        val builder = OpenSpiralBitcodeBuilder(binary)
+        script.writeToBuilder(builder)
         val linOut = BinaryOutputFlow()
         linOut.compileLinFromBitcode(this, UnsafeDr1(), BinaryInputFlow(binary.getData()))
         val lin = UnsafeLinScript(UnsafeDr1(), BinaryDataSource(linOut.getData()))

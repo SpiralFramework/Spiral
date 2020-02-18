@@ -5,49 +5,66 @@ import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
+    companion object {
+        const val EQUALITY_NOT_EQUAL = 0
+        const val EQUALITY_EQUAL = 1
+        const val EQUALITY_LESS_THAN_EQUAL_TO = 2
+        const val EQUALITY_GREATER_THAN_EQUAL_TO = 3
+        const val EQUALITY_LESS_THAN = 4
+        const val EQUALITY_GREATER_THAN = 5
+
+        const val LOGICAL_OR = 6
+        const val LOGICAL_AND = 7
+
+        fun formatEquality(equality: Int): String = when (equality) {
+            EQUALITY_NOT_EQUAL -> "!="
+            EQUALITY_EQUAL -> "=="
+            EQUALITY_LESS_THAN_EQUAL_TO -> "<="
+            EQUALITY_GREATER_THAN_EQUAL_TO -> ">="
+            EQUALITY_LESS_THAN -> "<"
+            EQUALITY_GREATER_THAN -> ">"
+            else -> "{$equality}"
+        }
+
+        fun formatLogical(logical: Int): String = when (logical) {
+            LOGICAL_OR -> "||"
+            LOGICAL_AND -> "&&"
+            else -> "{$logical}"
+        }
+
+        fun formatInvertedEquality(equality: Int): String = when (equality) {
+            EQUALITY_NOT_EQUAL -> "=="
+            EQUALITY_EQUAL -> "!="
+            EQUALITY_LESS_THAN_EQUAL_TO -> ">"
+            EQUALITY_GREATER_THAN_EQUAL_TO -> "<"
+            EQUALITY_LESS_THAN -> ">="
+            EQUALITY_GREATER_THAN -> "<="
+            else -> "{$equality}"
+        }
+
+        fun formatInvertedLogical(logical: Int): String = when (logical) {
+            LOGICAL_OR -> "&&"
+            LOGICAL_AND -> "||"
+            else -> "{$logical}"
+        }
+    }
+
+    data class LogicalCondition(val logicalOp: Int, val check: Int, val op: Int, val value: Int)
+    data class Condition(val check: Int, val op: Int, val value: Int, val extraConditions: Array<LogicalCondition>)
+
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
 
     override val opcode: Int
         get() = 0x35
 
-    fun conditions(): String = buildString {
+    fun conditions(): Condition {
         //TODO: Figure out a way to properly represent this
-        append("if (")
-        val firstGroup = Triple("(${rawArguments[0]},${rawArguments[1]})", rawArguments[2], rawArguments[3])
-        append(firstGroup.first)
-        append(" ")
-        append(formatCondition(firstGroup.second))
-        append(" ")
-        append(firstGroup.third)
+        val extraConditions: MutableList<LogicalCondition> = ArrayList()
         for (i in 0 until (rawArguments.size - 4) / 5) {
-            val comparatorN = rawArguments[(i * 5) + 4]
-            append(" ")
-            append(formatLogical(comparatorN))
-            append(" ")
-            val groupN = Triple("(${rawArguments[(i * 5) + 5]},${rawArguments[(i * 5) + 6]})", rawArguments[(i * 5) + 7], rawArguments[(i * 5) + 8])
-            append(groupN.first)
-            append(" ")
-            append(formatCondition(groupN.second))
-            append(" ")
-            append(groupN.third)
+            extraConditions.add(LogicalCondition(get((i * 5) + 4), getInt16BE((i * 5) + 5), get((i * 5) + 7), get((i * 5) + 8)))
         }
-        append(")")
-    }
 
-    private fun formatCondition(condition: Int): String = when (condition) {
-        0 -> "!="
-        1 -> "=="
-        2 -> "<="
-        3 -> ">="
-        4 -> "<"
-        5 -> ">"
-        else -> "{$condition}"
-    }
-
-    private fun formatLogical(logical: Int): String = when (logical) {
-        6 -> "||"
-        7 -> "&&"
-        else -> "{$logical}"
+        return Condition(getInt16BE(0), get(2), get(3), extraConditions.toTypedArray())
     }
 
     @ExperimentalUnsignedTypes

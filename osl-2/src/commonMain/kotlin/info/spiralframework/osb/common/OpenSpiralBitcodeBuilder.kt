@@ -14,9 +14,11 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.LONG_REFERENCE_END
 import info.spiralframework.osb.common.OpenSpiralBitcode.LONG_REFERENCE_TEXT
 import info.spiralframework.osb.common.OpenSpiralBitcode.LONG_REFERENCE_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.MAGIC_NUMBER_LE
+import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_FLAG_CHECK
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_FUNCTION_CALL
+import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_IF_CHECK
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE
@@ -38,6 +40,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LABEL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_LABEL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_PARAMETER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_LONG_REFERENCE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_NULL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_PARAMETER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_TEXT
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_VAR_REFERENCE
@@ -45,6 +48,8 @@ import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
 import kotlin.math.roundToInt
+
+data class OpenSpiralBitcodeBuilderBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: suspend (OpenSpiralBitcodeBuilder) -> Unit)
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
@@ -292,6 +297,99 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
+
+    suspend fun addIfCheck(mainBranch: OpenSpiralBitcodeBuilderBranch, elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>, ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?) {
+        output.write(OPERATION_ADD_IF_CHECK)
+        output.write(mainBranch.otherConditions.size + 1)
+        writeArg(mainBranch.condition.checking)
+        output.write(mainBranch.condition.operation)
+        writeArg(mainBranch.condition.against)
+        mainBranch.otherConditions.forEach { (logical, condition) ->
+            output.write(logical)
+            writeArg(condition.checking)
+            output.write(condition.operation)
+            writeArg(condition.against)
+        }
+        output.write((elseIfBranches.size and 0x7F) or (if (ifFalse != null) 0x80 else 0x00))
+        BinaryOutputFlow().use { data ->
+            mainBranch.branch(OpenSpiralBitcodeBuilder(data))
+            output.writeInt32LE(data.getDataSize().toInt())
+            output.write(data.getData())
+        }
+        elseIfBranches.forEach { elseIf ->
+            output.write(elseIf.otherConditions.size + 1)
+            writeArg(elseIf.condition.checking)
+            output.write(elseIf.condition.operation)
+            writeArg(elseIf.condition.against)
+            elseIf.otherConditions.forEach { (logical, condition) ->
+                output.write(logical)
+                writeArg(condition.checking)
+                output.write(condition.operation)
+                writeArg(condition.against)
+            }
+
+            BinaryOutputFlow().use { data ->
+                elseIf.branch(OpenSpiralBitcodeBuilder(data))
+                output.writeInt32LE(data.getDataSize().toInt())
+                output.write(data.getData())
+            }
+        }
+
+        if (ifFalse != null) {
+            BinaryOutputFlow().use { data ->
+                ifFalse(OpenSpiralBitcodeBuilder(data))
+                output.writeInt32LE(data.getDataSize().toInt())
+                output.write(data.getData())
+            }
+        }
+    }
+
+    suspend fun addCheckFlag(mainBranch: OpenSpiralBitcodeBuilderBranch, elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>, ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?) {
+        output.write(OPERATION_ADD_FLAG_CHECK)
+        output.write(mainBranch.otherConditions.size + 1)
+        writeArg(mainBranch.condition.checking)
+        output.write(mainBranch.condition.operation)
+        writeArg(mainBranch.condition.against)
+        mainBranch.otherConditions.forEach { (logical, condition) ->
+            output.write(logical)
+            writeArg(condition.checking)
+            output.write(condition.operation)
+            writeArg(condition.against)
+        }
+        output.write((elseIfBranches.size and 0x7F) or (if (ifFalse != null) 0x80 else 0x00))
+        BinaryOutputFlow().use { data ->
+            mainBranch.branch(OpenSpiralBitcodeBuilder(data))
+            output.writeInt32LE(data.getDataSize().toInt())
+            output.write(data.getData())
+        }
+        elseIfBranches.forEach { elseIf ->
+            output.write(elseIf.otherConditions.size + 1)
+            writeArg(elseIf.condition.checking)
+            output.write(elseIf.condition.operation)
+            writeArg(elseIf.condition.against)
+            elseIf.otherConditions.forEach { (logical, condition) ->
+                output.write(logical)
+                writeArg(condition.checking)
+                output.write(condition.operation)
+                writeArg(condition.against)
+            }
+
+            BinaryOutputFlow().use { data ->
+                elseIf.branch(OpenSpiralBitcodeBuilder(data))
+                output.writeInt32LE(data.getDataSize().toInt())
+                output.write(data.getData())
+            }
+        }
+
+        if (ifFalse != null) {
+            BinaryOutputFlow().use { data ->
+                ifFalse(OpenSpiralBitcodeBuilder(data))
+                output.writeInt32LE(data.getDataSize().toInt())
+                output.write(data.getData())
+            }
+        }
+    }
+
     @ExperimentalStdlibApi
     suspend fun writeArg(arg: OSLUnion) {
         when (arg) {
@@ -379,6 +477,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
                 output.write(arg.variableName.encodeToUTF8ByteArray())
                 output.write(0x00)
             }
+            is OSLUnion.NullType -> output.write(VARIABLE_NULL)
             else -> throw IllegalArgumentException("Invalid value $arg")
         }
     }
