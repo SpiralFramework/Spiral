@@ -21,10 +21,12 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_FUNCTION_
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_IF_CHECK
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED
+import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_TREE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_VARIABLE_OPCODE_NAMED
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_SET_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_SET_VERSION
+import info.spiralframework.osb.common.OpenSpiralBitcode.TREE_TYPE_PRESENT_SELECTION
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_BOOL
@@ -387,6 +389,16 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
                 output.writeInt32LE(data.getDataSize().toInt())
                 output.write(data.getData())
             }
+        }
+    }
+
+    suspend fun addPresentSelection(scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
+        output.write(OPERATION_ADD_TREE)
+        output.write(TREE_TYPE_PRESENT_SELECTION)
+        BinaryOutputFlow().use { data ->
+            scope(OpenSpiralBitcodeBuilder(data))
+            output.writeInt32LE(data.getDataSize().toInt())
+            output.write(data.getData())
         }
     }
 

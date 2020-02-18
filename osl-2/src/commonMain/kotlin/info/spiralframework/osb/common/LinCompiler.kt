@@ -15,6 +15,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.EQUALITY_LESS_THAN_EQUA
 import info.spiralframework.osb.common.OpenSpiralBitcode.EQUALITY_NOT_EQUAL
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_AND
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_OR
+import info.spiralframework.osb.common.OpenSpiralBitcode.TREE_TYPE_PRESENT_SELECTION
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
@@ -106,6 +107,9 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
     override suspend fun addFlagCheck(context: SpiralContext, mainBranch: OpenSpiralBitcodeFlagBranch, elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>, elseBranch: ByteArray?, level: Int): Unit =
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
+    override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int): Unit =
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     protected suspend fun MutableList<Int>.addUnion(context: SpiralContext, union: OSLUnion) {
         when (union) {
             is OSLUnion.Int8NumberType -> add(union.number.toInt())
@@ -167,7 +171,6 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             }
             is OSLUnion.BooleanType -> {
                 add(if (union.boolean) 1 else 0)
-                add(0)
             }
             is OSLUnion.FunctionCallType -> addUnionInt8(context, functionCall(context, union.functionName, union.parameters)
                     ?: OSLUnion.NullType)
@@ -508,6 +511,20 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         custom.addEntry(Dr1MarkLabelEntry(joiningLabel))
     }
 
+    override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int) {
+        when (treeType) {
+            TREE_TYPE_PRESENT_SELECTION -> {
+                val label = requireNotNull(findLabel())
+                custom.addEntry(Dr1ChangeUIEntry(Dr1ChangeUIEntry.PRESENT_SELECTION, true))
+                custom.addEntry(Dr1GoToLabelEntry(label))
+                OpenSpiralBitcodeParser(BinaryInputFlow(scope), this, level + 1)
+                        .parse(context)
+                custom.addEntry(Dr1BranchEntry(255))
+                custom.addEntry(Dr1MarkLabelEntry(label))
+            }
+        }
+    }
+
     /**
      *     0 -> "!="
     1 -> "=="
@@ -518,41 +535,41 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
      */
     suspend fun toFlagCheckEqualityOperator(operation: Int): Int =
             when (operation) {
-                EQUALITY_EQUAL -> 1
-                EQUALITY_NOT_EQUAL -> 0
-                EQUALITY_LESS_THAN -> 4
-                EQUALITY_GREATER_THAN -> 5
-                EQUALITY_LESS_THAN_EQUAL_TO -> 2
-                EQUALITY_GREATER_THAN_EQUAL_TO -> 3
+                EQUALITY_EQUAL -> Dr1CheckFlagEntry.EQUALITY_EQUAL
+                EQUALITY_NOT_EQUAL -> Dr1CheckFlagEntry.EQUALITY_NOT_EQUAL
+                EQUALITY_LESS_THAN -> Dr1CheckFlagEntry.EQUALITY_LESS_THAN
+                EQUALITY_GREATER_THAN -> Dr1CheckFlagEntry.EQUALITY_GREATER_THAN
+                EQUALITY_LESS_THAN_EQUAL_TO -> Dr1CheckFlagEntry.EQUALITY_LESS_THAN_EQUAL_TO
+                EQUALITY_GREATER_THAN_EQUAL_TO -> Dr1CheckFlagEntry.EQUALITY_GREATER_THAN_EQUAL_TO
                 else -> 0
             }
 
     /**
      * 6 -> "||"
      * 7 -> "&&"
-    */
+     */
     suspend fun toFlagCheckLogicalOperator(operation: Int): Int =
             when (operation) {
-                LOGICAL_OR -> 6
-                LOGICAL_AND -> 7
+                LOGICAL_OR -> Dr1CheckFlagEntry.LOGICAL_OR
+                LOGICAL_AND -> Dr1CheckFlagEntry.LOGICAL_AND
                 else -> 6
             }
 
     suspend fun toInvertedFlagCheckLogicalOperator(operation: Int): Int =
             when (operation) {
-                LOGICAL_AND -> 6 //AND -> OR
-                LOGICAL_OR -> 7 //OR -> AND
+                LOGICAL_AND -> Dr1CheckFlagEntry.LOGICAL_OR //AND -> OR
+                LOGICAL_OR -> Dr1CheckFlagEntry.LOGICAL_AND //OR -> AND
                 else -> 6
             }
 
     suspend fun toInvertedFlagCheckEqualityOperator(operation: Int): Int =
             when (operation) {
-                EQUALITY_EQUAL -> 0 //Equal -> Not Equal
-                EQUALITY_NOT_EQUAL -> 1 //Not Equal -> Equal
-                EQUALITY_LESS_THAN -> 3 //Less Than -> Greater than or Equal To
-                EQUALITY_GREATER_THAN -> 2 //Greater Than -> Less Than or Equal To
-                EQUALITY_LESS_THAN_EQUAL_TO -> 5 //Less Than Equal To -> Greater Than
-                EQUALITY_GREATER_THAN_EQUAL_TO -> 4 //Greater Than Equal To -> Less Than
+                EQUALITY_EQUAL -> Dr1CheckFlagEntry.EQUALITY_NOT_EQUAL //Equal -> Not Equal
+                EQUALITY_NOT_EQUAL -> Dr1CheckFlagEntry.EQUALITY_EQUAL //Not Equal -> Equal
+                EQUALITY_LESS_THAN -> Dr1CheckFlagEntry.EQUALITY_GREATER_THAN_EQUAL_TO //Less Than -> Greater than or Equal To
+                EQUALITY_GREATER_THAN -> Dr1CheckFlagEntry.EQUALITY_LESS_THAN_EQUAL_TO //Greater Than -> Less Than or Equal To
+                EQUALITY_LESS_THAN_EQUAL_TO -> Dr1CheckFlagEntry.EQUALITY_GREATER_THAN //Less Than Equal To -> Greater Than
+                EQUALITY_GREATER_THAN_EQUAL_TO -> Dr1CheckFlagEntry.EQUALITY_LESS_THAN //Greater Than Equal To -> Less Than
                 else -> 0
             }
 
@@ -609,6 +626,20 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         custom.addEntry(Dr1ChangeUIEntry(element, 1))
     }
 
+    //    suspend fun disableFlagStub(context: SpiralContext, flagID: Any?) = enableFlag(intStub(context, flagID))
+    suspend fun disableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?) = enableFlag(intStub(context, flagGroup), intStub(context, flagID))
+
+    suspend fun disableFlag(flagGroup: Int, flagID: Int) = runNoOp {
+        custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 0))
+    }
+
+    //    suspend fun enableFlagStub(context: SpiralContext, flagID: Any?) = enableFlag(intStub(context, flagID))
+    suspend fun enableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?) = enableFlag(intStub(context, flagGroup), intStub(context, flagID))
+
+    suspend fun enableFlag(flagGroup: Int, flagID: Int) = runNoOp {
+        custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 1))
+    }
+
     suspend fun fadeInFromBlackStub(context: SpiralContext, frameCount: Any?) = fadeInFromBlack(intStub(context, frameCount))
     suspend fun fadeInFromBlack(frameCount: Int) = runNoOp {
         custom.addEntry(Dr1ScreenFadeEntry(true, Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, frameCount))
@@ -638,6 +669,11 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
 
         register(SpiralSuspending.Func1("EnableUI", "element", func = this::enableUIStub))
         register(SpiralSuspending.Func1("DisableUI", "element", func = this::disableUIStub))
+
+//        register(SpiralSuspending.Func1("EnableFlag", "flagID", func = this::enableFlagStub))
+        register(SpiralSuspending.Func2("EnableFlag", "flagGroup", "flagID", func = this::enableFlagStub))
+//        register(SpiralSuspending.Func1("DisableFlag", "flagID", func = this::enableFlagStub))
+        register(SpiralSuspending.Func2("DisableFlag", "flagGroup", "flagID", func = this::enableFlagStub))
 
         register(SpiralSuspending.Func1("FadeInFromBlack", "frameCount", func = this::fadeInFromBlackStub))
         register(SpiralSuspending.Func1("FadeOutToBlack", "frameCount", func = this::fadeOutToBlackStub))

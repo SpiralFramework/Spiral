@@ -66,21 +66,21 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
     }
 
     override fun visitFunctionCall(ctx: OpenSpiralParser.FunctionCallContext): OSLVisitorUnion.Value<OSLUnion.FunctionCallType> {
-        val functionName = ctx.NAME_IDENTIFIER().text
+        val functionName = ctx.BEGIN_FUNC_CALL().text.substringBeforeLast('(').trim()
         val parameters = visitFunctionCallParameters(ctx.functionCallParameters())
 
         return OSLVisitorUnion.Value(OSLUnion.FunctionCallType(functionName, parameters.unions.toTypedArray()))
     }
 
     override fun visitRecursiveFuncCall(ctx: OpenSpiralParser.RecursiveFuncCallContext): OSLVisitorUnion.Value<OSLUnion.FunctionCallType> {
-        val functionName = ctx.FUNC_CALL_NAME_IDENTIFIER().text
+        val functionName = ctx.FUNC_CALL_RECURSIVE().text.substringBeforeLast('(').trim()
         val parameters = visitFunctionCallParameters(ctx.functionCallParameters())
 
         return OSLVisitorUnion.Value(OSLUnion.FunctionCallType(functionName, parameters.unions.toTypedArray()))
     }
 
     override fun visitIfCheckFuncCall(ctx: OpenSpiralParser.IfCheckFuncCallContext): OSLVisitorUnion.Value<OSLUnion.FunctionCallType> {
-        val functionName = ctx.IF_CHECK_NAME_IDENTIFIER().text
+        val functionName = ctx.IF_CHECK_FUNC_CALL().text.substringBeforeLast('(').trim()
         val parameters = visitFunctionCallParameters(ctx.functionCallParameters())
 
         return OSLVisitorUnion.Value(OSLUnion.FunctionCallType(functionName, parameters.unions.toTypedArray()))
@@ -369,6 +369,15 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
 
     override fun visitCheckObject(ctx: OpenSpiralParser.CheckObjectContext): OSLVisitorUnion.CheckObject =
             OSLVisitorUnion.CheckObject(visitIfCheckValue(ctx.ifCheckValue()), visitScope(ctx.scope()))
+
+    override fun visitSelectPresent(ctx: OpenSpiralParser.SelectPresentContext): OSLVisitorUnion.SelectPresent =
+            OSLVisitorUnion.SelectPresent(visitBranchScope(ctx.branchScope()))
+
+    override fun visitBranchScope(ctx: OpenSpiralParser.BranchScopeContext): OSLVisitorUnion.Scope =
+            OSLVisitorUnion.Scope(ctx.branchScopeLine().map(this::visitBranchScopeLine))
+
+    override fun visitBranchSubscope(ctx: OpenSpiralParser.BranchSubscopeContext): OSLVisitorUnion.TreeBranch =
+            OSLVisitorUnion.TreeBranch(visitVariableValue(ctx.variableValue()), visitScope(ctx.scope()))
 
 
     fun String.toIntVariable(): Int = when {

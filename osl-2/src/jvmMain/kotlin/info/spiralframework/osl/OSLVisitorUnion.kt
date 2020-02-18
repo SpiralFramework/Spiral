@@ -62,6 +62,13 @@ sealed class OSLVisitorUnion {
                         builder.addOpcode("Check Object", arrayOf(union.objectID?.union ?: OSLUnion.NullType))
                         union.scope.writeToBuilder(builder)
                     }
+                    is SelectPresent -> {
+                        builder.addPresentSelection(union.scope::writeToBuilder)
+                    }
+                    is TreeBranch -> {
+                        builder.addOpcode("Branch", arrayOf(union.branchNum?.union ?: OSLUnion.NullType))
+                        union.scope.writeToBuilder(builder)
+                    }
                 }
             }
         }
@@ -93,6 +100,9 @@ sealed class OSLVisitorUnion {
 
     data class CheckCharacter(val characterID: Value<*>?, val scope: Scope): OSLVisitorUnion()
     data class CheckObject(val objectID: Value<*>?, val scope: Scope): OSLVisitorUnion()
+
+    data class SelectPresent(val scope: Scope): OSLVisitorUnion()
+    data class TreeBranch(val branchNum: Value<*>?, val scope: Scope): OSLVisitorUnion()
 }
 
 inline fun <T : OSLUnion> wrapUnionValue(block: () -> T): OSLVisitorUnion.Value<T> {

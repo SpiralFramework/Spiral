@@ -79,11 +79,11 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
             }
 
             val operationVariable = when (operation) {
-                OPERATOR_SET -> "operator_set"
-                OPERATOR_PLUS -> "operator_plus"
-                OPERATOR_MINUS -> "operator_minus"
-                OPERATOR_TIMES -> "operator_times"
-                OPERATOR_DIVIDE -> "operator_divide"
+                OPERATOR_SET -> "game_operator_set"
+                OPERATOR_PLUS -> "game_operator_plus"
+                OPERATOR_MINUS -> "game_operator_minus"
+                OPERATOR_TIMES -> "game_operator_times"
+                OPERATOR_DIVIDE -> "game_operator_divide"
                 else -> null
             }
 

@@ -6,6 +6,7 @@ import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
+import info.spiralframework.formats.common.scripting.lin.dr2.Dr2TextEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -150,6 +151,7 @@ open class Dr2(
     override val linSkillNames: Array<String> = emptyArray()
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
+        0x02 -> Dr2TextEntry(opcode, rawArguments)
         else -> UnknownLinEntry(opcode, rawArguments)
     }
 

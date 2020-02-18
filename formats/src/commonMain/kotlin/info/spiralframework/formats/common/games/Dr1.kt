@@ -189,6 +189,7 @@ open class Dr1(
         0x0A -> Dr1SoundEffectAEntry(opcode, rawArguments)
         0x0B -> Dr1SoundEffectBEntry(opcode, rawArguments)
         0x0C -> Dr1TruthBulletEntry(opcode, rawArguments)
+        0x0D -> Dr1ManageItemEntry(opcode, rawArguments)
         0x0F -> Dr1SetStudentTitleEntry(opcode, rawArguments)
 
         0x10 -> Dr1SetStudentReportInfoEntry(opcode, rawArguments)

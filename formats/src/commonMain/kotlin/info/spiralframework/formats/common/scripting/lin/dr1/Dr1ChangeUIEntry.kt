@@ -5,8 +5,13 @@ import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    companion object {
+        const val PRESENT_SELECTION = 19
+    }
+
     constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
     constructor(element: Int, state: Int): this(intArrayOf(element, state))
+    constructor(element: Int, enabled: Boolean): this(intArrayOf(element, if (enabled) 1 else 0))
 
     override val opcode: Int
         get() = 0x25

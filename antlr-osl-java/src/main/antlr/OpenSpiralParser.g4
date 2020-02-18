@@ -9,7 +9,7 @@ lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR+;
 
 scope: ((lineSeparator scriptLine)+ | lineSeparator)? lineSeparator?;
 
-scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck | checkFlag | checkCharacter | checkObject) INLINE_WHITESPACE?;
+scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck | checkFlag | checkCharacter | checkObject | selectPresent) INLINE_WHITESPACE?;
 
 metaVariableAssignment: ASSIGN_VARIABLE_NAME VARIABLE_ASSIGNMENT variableValue;
 
@@ -62,9 +62,9 @@ actionDeclaration
       END_ACTION
     ;
 
-functionCall: NAME_IDENTIFIER BEGIN_FUNC_CALL functionCallParameters;
-recursiveFuncCall: FUNC_CALL_NAME_IDENTIFIER FUNC_CALL_RECURSIVE functionCallParameters;
-ifCheckFuncCall: IF_CHECK_NAME_IDENTIFIER IF_CHECK_FUNC_CALL functionCallParameters;
+functionCall: BEGIN_FUNC_CALL functionCallParameters;
+recursiveFuncCall: FUNC_CALL_RECURSIVE functionCallParameters;
+ifCheckFuncCall: IF_CHECK_FUNC_CALL functionCallParameters;
 functionCallParameters: (functionParameter (FUNC_CALL_PARAM_SEPARATOR functionParameter)*?)? END_FUNC_CALL;
 
 functionParameter: FUNC_CALL_PARAMETER_NAME? functionVariableValue;
@@ -147,6 +147,22 @@ checkCharacter
 checkObject
     : CHECK_OBJECT ifCheckValue END_IF_CHECK
         scope
+      CLOSE_SCOPE
+    ;
+
+branchScope: ((lineSeparator branchScopeLine)+ | lineSeparator)? lineSeparator?;
+
+branchScopeLine: (branchSubscope) INLINE_WHITESPACE?;
+
+branchSubscope
+    : variableValue BRANCH_SCOPE
+        scope
+      CLOSE_SCOPE
+    ;
+
+selectPresent
+    : SELECT_PRESENT
+        branchScope
       CLOSE_SCOPE
     ;
 

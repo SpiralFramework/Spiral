@@ -12,12 +12,15 @@ import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.scripting.lin.transpile
 import org.abimon.kornea.io.common.flow.OutputFlow
 import kotlin.contracts.ExperimentalContracts
+import kotlin.math.min
 
 sealed class TranspileOperation {
     data class Dialogue(var speakerEntry: Dr1SpeakerEntry, var voiceLineEntry: Dr1VoiceLineEntry? = null, var text: Dr1TextEntry? = null, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
     data class Text(var text: Dr1TextEntry, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
     data class CheckFlag(val flagCheck: Dr1CheckFlagEntry, var endFlagCheck: Dr1EndFlagCheckEntry? = null, var whenTrue: Int? = null, var whenTrueData: List<LinEntry>? = null, var whenFalse: Int? = null) : TranspileOperation()
-    data class CheckCharacterOrObject(val checkCharacterEntry: Dr1CheckCharacterEntry?, val checkObjectEntry: Dr1CheckObjectEntry?): TranspileOperation()
+    data class CheckCharacterOrObject(val checkCharacterEntry: Dr1CheckCharacterEntry?, val checkObjectEntry: Dr1CheckObjectEntry?) : TranspileOperation()
+
+    data class PresentSelection(val uiEntry: Dr1ChangeUIEntry, var entryLabel: Dr1GoToLabelEntry? = null, val branchBuffer: MutableList<LinEntry> = ArrayList(), val branches: MutableMap<Int, List<LinEntry>> = HashMap()) : TranspileOperation()
 }
 
 @ExperimentalUnsignedTypes
@@ -26,16 +29,28 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
         val VARIABLE_NAME_REGEX = "([a-zA-Z0-9_]+)".toRegex()
         val ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX = "[^a-zA-Z0-9_]".toRegex()
         val VARIABLE_COMPARATOR: Comparator<String> = Comparator { a, b ->
-            if (a.length != b.length) a.length.compareTo(b.length)
-            else a.compareTo(b)
+            val aComponents = a.split('_')
+            val bComponents = b.split('_')
+
+            for (i in 0 until min(aComponents.size, bComponents.size)) {
+                if (aComponents[i] == bComponents[i])
+                    continue
+
+                val aNum = aComponents[i].toIntOrNull() ?: return@Comparator aComponents[i].compareTo(bComponents[i])
+                val bNum = bComponents[i].toIntOrNull() ?: return@Comparator aComponents[i].compareTo(bComponents[i])
+
+                return@Comparator aNum.compareTo(bNum)
+            }
+
+            return@Comparator a.compareTo(b)
         }
 
-        fun sortVariableNames(keys: Set<String>): List<String> =
+        fun sortVariableNames(keys: Set<String>): List<List<String>> =
                 keys.groupBy { name -> name.substringBefore('_') }
                         .mapValues { (_, list) -> list.sortedWith(VARIABLE_COMPARATOR) }
                         .entries
                         .sortedBy(Map.Entry<String, *>::key)
-                        .flatMap(Map.Entry<String, List<String>>::value)
+                        .map(Map.Entry<String, List<String>>::value)
     }
 
     val variables: MutableMap<String, TranspilerVariableValue> = HashMap()
@@ -49,16 +64,18 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
         } finally {
             out.println("OSL Script")
             out.write('\n'.toInt())
-            out.println {
-                sortVariableNames(variables.keys)
-                        .forEach { varName ->
-                            append("val ")
-                            append(varName)
-                            append(" = ")
-                            variables[varName]?.represent(this)
-                            appendln()
+            sortVariableNames(variables.keys)
+                    .forEach { variableGroup ->
+                        out.println {
+                            variableGroup.forEach { varName ->
+                                append("val ")
+                                append(varName)
+                                append(" = ")
+                                variables[varName]?.represent(this)
+                                appendln()
+                            }
                         }
-            }
+                    }
             output.suspendForEach(out::println)
             output.clear()
         }
@@ -128,6 +145,19 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                 if (entry.objectID != 255) {
                                     buffer.add(entry)
                                     operation = TranspileOperation.CheckCharacterOrObject(null, entry)
+                                } else {
+                                    entry.transpile(this, indent)
+                                }
+                            }
+                            is Dr1ChangeUIEntry -> {
+                                if (entry.state == 1) {
+                                    when (entry.element) {
+                                        19 -> {
+                                            buffer.add(entry)
+                                            operation = TranspileOperation.PresentSelection(entry)
+                                        }
+                                        else -> entry.transpile(this, indent)
+                                    }
                                 } else {
                                     entry.transpile(this, indent)
                                 }
@@ -240,7 +270,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                 append(") ")
                                                 append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
                                                 append(" ")
-                                                append(condition.value)
+                                                if (condition.value == 0) append("false")
+                                                else if (condition.value == 1) append("true")
+                                                else append(condition.value)
 
                                                 condition.extraConditions.forEach { extraCondition ->
                                                     append(" ")
@@ -252,7 +284,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                     append(") ")
                                                     append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
                                                     append(" ")
-                                                    append(extraCondition.value)
+                                                    if (extraCondition.value == 0) append("false")
+                                                    else if (extraCondition.value == 1) append("true")
+                                                    else append(extraCondition.value)
                                                 }
                                             }
                                             append(") {")
@@ -287,7 +321,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                             append(") ")
                                             append(Dr1CheckFlagEntry.formatEquality(condition.op))
                                             append(" ")
-                                            append(condition.value)
+                                            if (condition.value == 0) append("false")
+                                            else if (condition.value == 1) append("true")
+                                            else append(condition.value)
 
                                             condition.extraConditions.forEach { extraCondition ->
                                                 append(" ")
@@ -299,7 +335,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                 append(") ")
                                                 append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
                                                 append(" ")
-                                                append(extraCondition.value)
+                                                if (extraCondition.value == 0) append("false")
+                                                else if (extraCondition.value == 1) append("true")
+                                                else append(extraCondition.value)
                                             }
                                         }
                                         append(") {")
@@ -353,6 +391,79 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             buffer.add(entry)
                         }
                     }
+
+                    is TranspileOperation.PresentSelection -> {
+                        buffer.add(entry)
+
+                        when {
+                            op.entryLabel == null && entry is Dr1GoToLabelEntry -> op.entryLabel = entry
+                            op.entryLabel != null && entry is Dr1BranchEntry -> {
+                                if (op.branchBuffer.isNotEmpty()) {
+                                    val branchNumber = (op.branchBuffer[0] as Dr1BranchEntry).branchValue
+                                    op.branches[branchNumber] = op.branchBuffer.drop(1)
+                                    op.branchBuffer.clear()
+                                }
+
+                                op.branchBuffer.add(entry)
+                            }
+                            op.entryLabel != null && entry is Dr1MarkLabelEntry && entry.id == op.entryLabel?.id -> {
+                                output.add {
+                                    repeat(indent) { append("\t") }
+                                    append("selectPresent {")
+                                }
+
+                                op.branches.entries
+                                        .sortedBy(Map.Entry<Int, *>::key)
+                                        .forEach { (branchNum, branchBuffer) ->
+                                            output.add {
+                                                repeat(indent + 1) { append("\t") }
+
+                                                val itemName = game?.linItemNames
+                                                        ?.getOrNull(branchNum)
+                                                        ?.toLowerCase()
+                                                        ?.replace(' ', '_')
+                                                        ?.replace(ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+
+                                                if (itemName != null) {
+                                                    val itemVariable = "item_$itemName"
+                                                    if (itemVariable !in variables)
+                                                        variables[itemVariable] = NumberValue(branchNum)
+
+                                                    append('$')
+                                                    append(itemVariable)
+                                                } else {
+                                                    append(branchNum)
+                                                }
+
+                                                append(" -> {")
+                                            }
+
+                                            transpile(branchBuffer, indent + 2)
+
+                                            output.add {
+                                                repeat(indent + 1) { append("\t") }
+                                                append("}")
+                                            }
+                                        }
+
+                                output.add {
+                                    repeat(indent) { append("\t") }
+                                    append("}")
+                                }
+
+                                buffer.clear()
+                                operation = null
+                            }
+                            op.entryLabel != null && op.branchBuffer.isNotEmpty() -> op.branchBuffer.add(entry)
+                            else -> {
+                                buffer.removeAt(buffer.size - 1)
+                                i--
+
+                                buffer.dumpEntries(indent)
+                                operation = null
+                            }
+                        }
+                    }
                 }
 
                 Unit
@@ -376,7 +487,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     append(") ")
                                     append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
                                     append(" ")
-                                    append(condition.value)
+                                    if (condition.value == 0) append("false")
+                                    else if (condition.value == 1) append("true")
+                                    else append(condition.value)
 
                                     condition.extraConditions.forEach { extraCondition ->
                                         append(" ")
@@ -388,7 +501,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(") ")
                                         append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
                                         append(" ")
-                                        append(extraCondition.value)
+                                        if (extraCondition.value == 0) append("false")
+                                        else if (extraCondition.value == 1) append("true")
+                                        else append(extraCondition.value)
                                     }
                                 }
                                 append(") {")
@@ -416,7 +531,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     append(") ")
                                     append(Dr1CheckFlagEntry.formatEquality(condition.op))
                                     append(" ")
-                                    append(condition.value)
+                                    if (condition.value == 0) append("false")
+                                    else if (condition.value == 1) append("true")
+                                    else append(condition.value)
 
                                     condition.extraConditions.forEach { extraCondition ->
                                         append(" ")
@@ -428,7 +545,9 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(") ")
                                         append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
                                         append(" ")
-                                        append(extraCondition.value)
+                                        if (extraCondition.value == 0) append("false")
+                                        else if (extraCondition.value == 1) append("true")
+                                        else append(extraCondition.value)
                                     }
                                 }
                                 append(") {")
