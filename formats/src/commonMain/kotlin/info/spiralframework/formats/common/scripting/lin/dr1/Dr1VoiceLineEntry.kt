@@ -1,10 +1,11 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
+import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 
 inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(characterID: Int, chapterID: Int, voiceLineID: Int, volume: Int): this(intArrayOf(characterID, chapterID, voiceLineID, volume))
+    constructor(characterID: Int, chapterID: Int, voiceLineID: Int, volume: Int): this(intArrayOf(characterID, chapterID, (voiceLineID shl 8), (voiceLineID and 0xFF), volume))
 
     override val opcode: Int
         get() = 0x08
@@ -24,4 +25,27 @@ inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): MutableLinE
     var volume: Int
         get() = get(4)
         set(value) = set(4, value)
+
+    override fun LinTranspiler.transpile(indent: Int) {
+        addOutput {
+            repeat(indent) { append('\t') }
+            val fileID = game?.getVoiceFileID(characterID, chapterID, voiceLineID)
+            if (fileID != null) {
+                append("Speak(")
+                append(fileID)
+                append(", ")
+                append(volume)
+                append(") //")
+                append(characterID)
+                append(", ")
+                append(chapterID)
+                append(", ")
+                append(voiceLineID)
+            } else {
+                append(nameFor(this@Dr1VoiceLineEntry))
+                append('|')
+                transpileArguments(this)
+            }
+        }
+    }
 }

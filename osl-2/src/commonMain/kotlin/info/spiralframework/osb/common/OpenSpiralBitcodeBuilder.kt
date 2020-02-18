@@ -29,6 +29,8 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_BOOL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_FUNCTION_CALL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT16BE
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT16LE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT24BE
+import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT24LE
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT32BE
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT32LE
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_INT8
@@ -207,6 +209,18 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
                     args.add((num shr 8) and 0xFF)
                     args.add((num shr 0) and 0xFF)
                 }
+                is OSLUnion.Int24LENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 0) and 0xFF)
+                    args.add((num shr 8) and 0xFF)
+                    args.add((num shr 16) and 0xFF)
+                }
+                is OSLUnion.Int24BENumberType -> {
+                    val num = union.number.toInt()
+                    args.add((num shr 16) and 0xFF)
+                    args.add((num shr 8) and 0xFF)
+                    args.add((num shr 0) and 0xFF)
+                }
                 is OSLUnion.Int32LENumberType -> {
                     val num = union.number.toInt()
                     args.add((num shr 0) and 0xFF)
@@ -287,23 +301,31 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             }
             is OSLUnion.Int16LENumberType -> {
                 output.write(VARIABLE_INT16LE)
-                output.writeVariableInt16(arg.number)
+                output.writeInt16LE(arg.number)
             }
             is OSLUnion.Int16BENumberType -> {
                 output.write(VARIABLE_INT16BE)
-                output.writeVariableInt16(arg.number)
+                output.writeInt16BE(arg.number)
+            }
+            is OSLUnion.Int24LENumberType -> {
+                output.write(VARIABLE_INT24LE)
+                output.writeInt24LE(arg.number)
+            }
+            is OSLUnion.Int24BENumberType -> {
+                output.write(VARIABLE_INT24BE)
+                output.writeInt24BE(arg.number)
             }
             is OSLUnion.Int32LENumberType -> {
                 output.write(VARIABLE_INT32LE)
-                output.writeVariableInt32(arg.number)
+                output.writeInt32LE(arg.number)
             }
             is OSLUnion.Int32BENumberType -> {
                 output.write(VARIABLE_INT32BE)
-                output.writeVariableInt32(arg.number)
+                output.writeInt32BE(arg.number)
             }
             is OSLUnion.IntegerNumberType -> {
                 output.write(VARIABLE_ARBITRARY_INTEGER)
-                output.writeVariableInt64(arg.number)
+                output.writeInt64LE(arg.number)
             }
             is OSLUnion.DecimalNumberType -> {
                 output.write(VARIABLE_ARBITRARY_DECIMAL)

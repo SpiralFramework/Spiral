@@ -1,12 +1,12 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
-import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
+import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    constructor(opcode: Int, rawArguments: IntArray): this(rawArguments)
-    constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int): this(intArrayOf(id shr 8, id % 256, arg3, arg4, arg5, arg6, arg7, frame))
+    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int) : this(intArrayOf(id shr 8, id % 256, arg3, arg4, arg5, arg6, arg7, frame))
 
     override val opcode: Int
         get() = 0x06
@@ -32,6 +32,71 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
     var frame: Int
         get() = rawArguments[7]
         set(value) = set(7, value)
+
+    @ExperimentalUnsignedTypes
+    override fun LinTranspiler.transpile(indent: Int) {
+        addOutput {
+            repeat(indent) { append('\t') }
+            if (id >= 3000) {
+                if (frame == 1) {
+                    append("ShowCutin(")
+                    append(id - 3000)
+                    append(")")
+
+                    return@addOutput
+                } else if (frame == 2) {
+                    append("HideCutin(")
+                    append(id - 3000)
+                    append(")")
+
+                    return@addOutput
+                }
+            } else if (id >= 2000) {
+                val itemName = game?.linItemNames
+                        ?.getOrNull(id - 2000)
+                        ?.toLowerCase()
+                        ?.replace(' ', '_')
+                        ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+
+                if (frame == 1) {
+                    append("ShowItem(")
+                    if (itemName != null) {
+                        val itemVariable = "item_$itemName"
+                        if (itemVariable !in variables)
+                            variables[itemVariable] = NumberValue(id - 2000)
+
+                        append('$')
+                        append(itemVariable)
+                    } else {
+                        append(id)
+                    }
+                    append(")")
+
+                    return@addOutput
+                } else if (frame == 2) {
+                    append("HideItem(")
+                    if (itemName != null) {
+                        val itemVariable = "item_$itemName"
+                        if (itemVariable !in variables)
+                            variables[itemVariable] = NumberValue(id - 2000)
+
+                        append('$')
+                        append(itemVariable)
+                    } else {
+                        append(id)
+                    }
+                    append(")")
+
+                    return@addOutput
+                }
+            }
+
+            append(nameFor(this@Dr1AnimationEntry))
+            append('|')
+            transpileArguments(this)
+        }
+
+    }
 
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {

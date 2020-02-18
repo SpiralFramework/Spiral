@@ -12,6 +12,8 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
         const val OPERATOR_MINUS = 0x02
         const val OPERATOR_TIMES = 0x03
         const val OPERATOR_DIVIDE = 0x04
+
+        const val GAME_PARAMETER_WAIT_FORCE = 6
     }
 
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -39,6 +41,21 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
     var valueLower: Int
         get() = get(3)
         set(value) = set(3, value)
+
+    override fun LinTranspiler.transpile(indent: Int) {
+        addOutput {
+            repeat(indent) { append('\t') }
+            if (variable == GAME_PARAMETER_WAIT_FORCE) {
+                append("Wait(")
+                append(value)
+                append(")")
+            } else {
+                append(nameFor(this@Dr1SetGameParameterEntry))
+                append('|')
+                transpileArguments(this)
+            }
+        }
+    }
 
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {

@@ -14,7 +14,8 @@ import org.abimon.kornea.io.common.flow.OutputFlow
 import kotlin.contracts.ExperimentalContracts
 
 sealed class TranspileOperation {
-    data class Dialogue(var speakerEntry: Dr1SpeakerEntry, var text: Dr1TextEntry? = null, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
+    data class Dialogue(var speakerEntry: Dr1SpeakerEntry, var voiceLineEntry: Dr1VoiceLineEntry? = null, var text: Dr1TextEntry? = null, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
+    data class Text(var text: Dr1TextEntry, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
 }
 
 @ExperimentalUnsignedTypes
@@ -83,6 +84,8 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
         clear()
     }
 
+    fun String.sanitise(): String = replace("\"", "\\\"").replace("\n", " &br ")
+
     @ExperimentalContracts
     @ExperimentalStdlibApi
     private suspend fun transpile(entries: List<LinEntry>, indent: Int = 0) {
@@ -102,13 +105,8 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                 operation = TranspileOperation.Dialogue(entry)
                             }
                             is Dr1TextEntry -> {
-                                output.add {
-                                    repeat(indent) { append('\t') }
-                                    append(nameFor(entry))
-                                    append("|\"")
-                                    append(lin.textData[entry.textID].replace("\"", "\\\"").replace("\n", " &br "))
-                                    append('"')
-                                }
+                                buffer.add(entry)
+                                operation = TranspileOperation.Text(entry)
                             }
                             else -> entry.transpile(this, indent)
                         }
@@ -116,9 +114,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                     is TranspileOperation.Dialogue -> {
                         buffer.add(entry)
                         when {
+                            op.text == null && entry is Dr1VoiceLineEntry -> op.voiceLineEntry = entry
                             op.text == null && entry is Dr1TextEntry -> op.text = entry
                             op.text != null && entry is Dr1WaitFrameEntry -> op.waitFrame = entry
                             op.waitFrame != null && entry is Dr1WaitForInputEntry -> {
+                                op.voiceLineEntry?.transpile(this, indent)
+
                                 output.add {
                                     repeat(indent) { append('\t') }
                                     val speakerName = game?.linCharacterIDs?.get(op.speakerEntry.characterID)
@@ -135,12 +136,35 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(variableName)
                                     }
                                     append(": \"")
-                                    append(lin.textData[op.text!!.textID].replace("\"", "\\\"").replace("\n", " &br "))
+                                    append(lin.textData[op.text!!.textID].sanitise())
                                     append('"')
 
                                     buffer.clear()
                                     operation = null
                                 }
+                            }
+                            else -> {
+                                println(">:( $entry")
+                                buffer.dumpEntries()
+                                operation = null
+                            }
+                        }
+                    }
+                    is TranspileOperation.Text -> {
+                        buffer.add(entry)
+
+                        when {
+                            entry is Dr1WaitFrameEntry -> op.waitFrame = entry
+                            op.waitFrame != null && entry is Dr1WaitForInputEntry -> {
+                                output.add {
+                                    repeat(indent) { append('\t') }
+                                    append("Text(\"")
+                                    append(lin[op.text.textID].sanitise())
+                                    append("\")")
+                                }
+
+                                buffer.clear()
+                                operation = null
                             }
                             else -> {
                                 println(">:( $entry")

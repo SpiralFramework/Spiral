@@ -69,6 +69,8 @@ interface DrGame {
 
         fun getNameOfGameParameter(parameter: Int): String? = null
         fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = null
+
+        fun getNameOfUIElement(element: Int): String? = null
     }
 
     /** TODO: Figure out how to do this full stop */

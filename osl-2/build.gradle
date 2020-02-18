@@ -67,6 +67,9 @@ kotlin {
 
         all {
             languageSettings {
+                enableLanguageFeature("InlineClasses")
+                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
+                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
                 useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
             }
         }

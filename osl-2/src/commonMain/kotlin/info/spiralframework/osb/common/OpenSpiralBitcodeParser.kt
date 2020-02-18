@@ -42,8 +42,10 @@ object OpenSpiralBitcode {
     const val VARIABLE_INT8 = 0x70
     const val VARIABLE_INT16LE = 0x71
     const val VARIABLE_INT16BE = 0x72
-    const val VARIABLE_INT32LE = 0x73
-    const val VARIABLE_INT32BE = 0x74
+    const val VARIABLE_INT24LE = 0x73
+    const val VARIABLE_INT24BE = 0x74
+    const val VARIABLE_INT32LE = 0x75
+    const val VARIABLE_INT32BE = 0x76
     const val VARIABLE_ARBITRARY_INTEGER = 0x7D
     const val VARIABLE_ARBITRARY_DECIMAL = 0x7F
 
@@ -217,11 +219,13 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                 }
 
                 OpenSpiralBitcode.VARIABLE_INT8 -> OSLUnion.Int8NumberType(requireNotNull(flow.read(), notEnoughData))
-                OpenSpiralBitcode.VARIABLE_INT16LE -> OSLUnion.Int16LENumberType(requireNotNull(flow.readVariableInt16(), notEnoughData))
-                OpenSpiralBitcode.VARIABLE_INT16BE -> OSLUnion.Int16BENumberType(requireNotNull(flow.readVariableInt16(), notEnoughData))
-                OpenSpiralBitcode.VARIABLE_INT32LE -> OSLUnion.Int32LENumberType(requireNotNull(flow.readVariableInt32(), notEnoughData))
-                OpenSpiralBitcode.VARIABLE_INT32BE -> OSLUnion.Int32BENumberType(requireNotNull(flow.readVariableInt32(), notEnoughData))
-                OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER -> OSLUnion.IntegerNumberType(requireNotNull(flow.readVariableInt64(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT16LE -> OSLUnion.Int16LENumberType(requireNotNull(flow.readInt16LE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT16BE -> OSLUnion.Int16BENumberType(requireNotNull(flow.readInt16BE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT24LE -> OSLUnion.Int24LENumberType(requireNotNull(flow.readInt24LE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT24BE -> OSLUnion.Int24BENumberType(requireNotNull(flow.readInt24BE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT32LE -> OSLUnion.Int32LENumberType(requireNotNull(flow.readInt32LE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_INT32BE -> OSLUnion.Int32BENumberType(requireNotNull(flow.readInt32BE(), notEnoughData))
+                OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER -> OSLUnion.IntegerNumberType(requireNotNull(flow.readInt64LE(), notEnoughData))
                 OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL -> OSLUnion.DecimalNumberType(requireNotNull(flow.readFloatLE(), notEnoughData))
 
                 OpenSpiralBitcode.VARIABLE_VAR_REFERENCE -> OSLUnion.VariableReferenceType(flow.readNullTerminatedUTF8String())

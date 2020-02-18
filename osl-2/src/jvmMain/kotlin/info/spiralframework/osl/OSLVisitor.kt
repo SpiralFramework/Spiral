@@ -30,7 +30,9 @@ class OSLVisitor(val builder: OpenSpiralBitcodeBuilder) : OpenSpiralParserBaseVi
             }
         }
 
-        return super.visitScriptLine(ctx)
+        super.visitScriptLine(ctx)
+
+        return OSLUnion.NoOpType
     }
 
     override fun visitHeaderDeclaration(ctx: OpenSpiralParser.HeaderDeclarationContext): OSLUnion {

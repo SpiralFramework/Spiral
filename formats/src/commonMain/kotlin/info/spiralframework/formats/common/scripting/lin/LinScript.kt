@@ -101,7 +101,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
 
                         entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
                     } else if (opcode != null) {
-                        val rawArguments = ByteArray(opcode!!.argumentCount)
+                        val rawArguments = ByteArray(opcode.argumentCount)
                         requireNotNull(flow.readExact(rawArguments), notEnoughData)
 //                        arguments = IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }
 

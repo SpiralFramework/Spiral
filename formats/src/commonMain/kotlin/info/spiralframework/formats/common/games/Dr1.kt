@@ -29,6 +29,7 @@ open class Dr1(
         val voiceLineArray: IntArray,
         val gameParameterNames: Map<Int, String>,
         val gameParameterValues: Map<Int, Map<Int, String>>,
+        val uiElements: Map<Int, String>,
         customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
     companion object {
@@ -51,7 +52,8 @@ open class Dr1(
                 val pak_names: Map<String, Array<String>>,
                 val voice_lines: List<Int> = emptyList(),
                 val game_parameter_names: Map<Int, String> = emptyMap(),
-                val game_parameter_values: Map<Int, Map<Int, String>> = emptyMap()
+                val game_parameter_values: Map<Int, Map<Int, String>> = emptyMap(),
+                val ui_elements: Map<Int, String> = emptyMap()
         )
 
         @ExperimentalStdlibApi
@@ -93,6 +95,7 @@ open class Dr1(
                         gameJson.voice_lines.toIntArray(),
                         gameJson.game_parameter_names,
                         gameJson.game_parameter_values,
+                        gameJson.ui_elements,
                         customOpcodes
                 )
             }
@@ -285,6 +288,8 @@ open class Dr1(
     override fun getNameOfGameParameter(parameter: Int): String? = gameParameterNames[parameter]
 
     override fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = gameParameterValues[parameter]?.get(value)
+
+    override fun getNameOfUIElement(element: Int): String? = uiElements[element]
 
     override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes {
 

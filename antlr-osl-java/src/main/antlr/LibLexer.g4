@@ -1,5 +1,8 @@
 lexer grammar LibLexer;
 
+SINGLE_LINE_COMMENT: '//' ~[\n]+ -> skip;
+MULTI_LINE_COMMENT: '/*' .*? '*/' -> skip ; // .*? matches anything until the first */
+
 INTEGER: ('0b' BINARY_DIGITS+) | ('0o' OCTAL_DIGITS+) | ('0x' HEX_DIGITS+) | '0d'? DECIMAL_DIGITS+;
 DECIMAL_NUMBER: ('0' | ([1-9] DECIMAL_DIGITS*)) ('.' DECIMAL_DIGITS+)? ([eE] [+\-]? DECIMAL_DIGITS+)?;
 
@@ -10,7 +13,6 @@ NULL: N U L L;
 BEGIN_LOCALE_STRING: '"locale.' -> pushMode(LocaleStringMode);
 BEGIN_QUOTED_STRING: '"' -> pushMode(QuotedStringMode);
 BEGIN_ACTION: '[' -> pushMode(ActionMode);
-BEGIN_FUNC_CALL: '(' -> pushMode(FunctionCallMode);
 
 fragment BINARY_DIGITS: [0-1];
 fragment OCTAL_DIGITS: [0-7];
@@ -52,7 +54,7 @@ fragment NEW_LINE: '\r'? '\n';
 fragment OPT_WHITESPACE: [ \t\r\n]*;
 fragment OPT_INLINE_WHITESPACE: INLINE_WHITESPACE_CHARACTERS*;
 
-fragment INLINE_WHITESPACE: INLINE_WHITESPACE_CHARACTERS+;
+INLINE_WHITESPACE: INLINE_WHITESPACE_CHARACTERS+;
 
 mode QuotedStringMode;
 
@@ -99,21 +101,6 @@ ACTION_VARIABLE_REFERENCE: '$' [a-zA-Z0-9_]+;
 fragment ACTION_ESCAPE_CHARACTERS: [\\/bfnrt$}];
 
 END_ACTION: ']' -> popMode;
-
-mode FunctionCallMode;
-
-FUNC_CALL_PARAMETER_NAME: VARIABLE_NAME_IDENTIFIER OPT_INLINE_WHITESPACE '=' OPT_INLINE_WHITESPACE;
-FUNC_CALL_INTEGER: INTEGER;
-FUNC_CALL_DECIMAL_NUMBER: DECIMAL_NUMBER;
-FUNC_CALL_VARIABLE_REFERENCE: '$' VARIABLE_NAME_IDENTIFIER;
-FUNC_CALL_NULL: NULL;
-FUNC_CALL_BEGIN_LOCALE_STRING: '"locale.' -> pushMode(LocaleStringMode);
-FUNC_CALL_BEGIN_QUOTED_STRING: '"' -> pushMode(QuotedStringMode);
-FUNC_TRUE: TRUE;
-FUNC_FALSE: FALSE;
-FUNC_CALL_PARAM_SEPARATOR: OPT_INLINE_WHITESPACE ',' OPT_INLINE_WHITESPACE;
-
-END_FUNC_CALL: ')' -> popMode;
 
 //mode ActionParameterMode;
 //

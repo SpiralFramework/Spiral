@@ -5,9 +5,18 @@ import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    companion object {
+        const val FADE_IN_METHOD = 0
+        const val FADE_OUT_METHOD = 1
+
+        const val FADE_COLOUR_BLACK = 1
+        const val FADE_COLOUR_WHITE = 2
+        const val FADE_COLOUR_RED = 3
+    }
+
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
     constructor(fadeMethod: Int, colour: Int, duration: Int): this(intArrayOf(fadeMethod, colour, duration))
-    constructor(fadeIn: Boolean, colour: Int, duration: Int): this(intArrayOf(if (fadeIn) 0 else 1, colour, duration))
+    constructor(fadeIn: Boolean, colour: Int, duration: Int): this(intArrayOf(if (fadeIn) FADE_IN_METHOD else FADE_OUT_METHOD, colour, duration))
 
     override val opcode: Int
         get() = 0x22
@@ -17,8 +26,8 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
         set(value) = set(0, value)
 
     var fadeIn: Boolean
-        get() = get(0) == 0
-        set(value) = set(0, if (value) 0 else 1)
+        get() = get(0) == FADE_IN_METHOD
+        set(value) = set(0, if (value) FADE_IN_METHOD else FADE_OUT_METHOD)
 
     var colour: Int
         get() = get(1)
@@ -28,6 +37,28 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
     var duration: Int
         get() = get(2)
         set(value) = set(2, value)
+
+    @ExperimentalUnsignedTypes
+    override fun LinTranspiler.transpile(indent: Int) {
+        addOutput {
+            repeat(indent) { append('\t') }
+            if (colour == FADE_COLOUR_BLACK) {
+                if (fadeIn) {
+                    append("FadeInFromBlack(")
+                    append(duration)
+                    append(")")
+                } else {
+                    append("FadeOutToBlack(")
+                    append(duration)
+                    append(")")
+                }
+            } else {
+                append(nameFor(this@Dr1ScreenFadeEntry))
+                append('|')
+                transpileArguments(this)
+            }
+        }
+    }
 
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
@@ -46,9 +77,9 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
             }
 
             val colourVariable = when (colour) {
-                1 -> "screen_fade_colour_black"
-                2 -> "screen_fade_colour_white"
-                3 -> "screen-fade_colour_red"
+                FADE_COLOUR_BLACK -> "screen_fade_colour_black"
+                FADE_COLOUR_WHITE -> "screen_fade_colour_white"
+                FADE_COLOUR_RED -> "screen_fade_colour_red"
                 else -> null
             }
 

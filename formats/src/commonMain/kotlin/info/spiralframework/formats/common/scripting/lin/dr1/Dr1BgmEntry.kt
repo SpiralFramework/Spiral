@@ -5,6 +5,10 @@ import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    companion object {
+        const val BGM_CLEAR = 0xFF
+    }
+
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
 
     override val opcode: Int
@@ -31,6 +35,14 @@ inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry 
                 val bgmVariable = "bgm_$bgmName"
                 if (bgmVariable !in variables)
                     variables[bgmVariable] = NumberValue(bgmID)
+
+                append('$')
+                append(bgmVariable)
+                append(", ")
+            } else if (bgmID == BGM_CLEAR) {
+                val bgmVariable = "bgm_clear"
+                if (bgmVariable !in variables)
+                    variables[bgmVariable] = NumberValue(BGM_CLEAR)
 
                 append('$')
                 append(bgmVariable)

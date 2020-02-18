@@ -70,6 +70,15 @@ kotlin {
                 implementation kotlin('test-junit')
             }
         }
+
+        all {
+            languageSettings {
+                enableLanguageFeature("InlineClasses")
+                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
+                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
+                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+            }
+        }
 //        jsMain {
 //            dependencies {
 //                implementation kotlin('stdlib-js')

@@ -73,8 +73,14 @@ kotlin {
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version"
             }
         }
+
         all {
-            languageSettings.enableLanguageFeature("InlineClasses")
+            languageSettings {
+                enableLanguageFeature("InlineClasses")
+                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
+                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
+                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+            }
         }
 //        jsTest {
 //            dependencies {

@@ -1,8 +1,19 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
+import info.spiralframework.base.common.freeze
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
+import info.spiralframework.formats.common.scripting.osl.LinTranspiler
+import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    companion object {
+        const val RGB_WHITE = 0xFFFFFF
+        const val RGB_RED = 0xFF0000
+        const val RGB_GREEN = 0x00FF00
+        const val RGB_BLUE = 0x0000FF
+        const val RGB_BLACK = 0x000000
+    }
+
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
     constructor(red: Int, green: Int, blue: Int, fadeInDuration: Int, holdDuration: Int, fadeOutDuration: Int, opacity: Int) : this(intArrayOf(red, green, blue, fadeInDuration, holdDuration, fadeOutDuration, opacity))
 
@@ -22,12 +33,8 @@ inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableL
         set(value) = set(2, value)
 
     var rgb: Int
-        get() = (red and 255 shl 16) or (green and 255 shl 8) or (blue and 255 shl 0)
-        set(value) {
-            red = (value shr 16) and 0xFF
-            green = (value shr 8) and 0xFF
-            blue = (value shr 0) and 0xFF
-        }
+        get() = getInt24BE(0)
+        set(value) = setInt24BE(0, value)
 
     var fadeInDuration: Int
         get() = get(3)
@@ -44,4 +51,59 @@ inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableL
     var opacity: Int
         get() = get(6)
         set(value) = set(6, value)
+
+    @ExperimentalUnsignedTypes
+    override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
+        with(builder) {
+            freeze(rgb) { rgb ->
+                append("rgb(")
+                if (rgb == RGB_WHITE) {
+                    val rgbVariable = "rgb_colour_white"
+                    if (rgbVariable !in variables)
+                        variables[rgbVariable] = NumberValue(RGB_WHITE)
+
+                    append('$')
+                    append(rgbVariable)
+                } else if (rgb == RGB_BLACK) {
+                    val rgbVariable = "rgb_colour_black"
+                    if (rgbVariable !in variables)
+                        variables[rgbVariable] = NumberValue(RGB_BLACK)
+
+                    append('$')
+                    append(rgbVariable)
+                } else if (rgb == RGB_RED) {
+                    val rgbVariable = "rgb_colour_red"
+                    if (rgbVariable !in variables)
+                        variables[rgbVariable] = NumberValue(RGB_RED)
+
+                    append('$')
+                    append(rgbVariable)
+                } else if (rgb == RGB_GREEN) {
+                    val rgbVariable = "rgb_colour_green"
+                    if (rgbVariable !in variables)
+                        variables[rgbVariable] = NumberValue(RGB_GREEN)
+
+                    append('$')
+                    append(rgbVariable)
+                } else if (rgb == RGB_BLUE) {
+                    val rgbVariable = "rgb_colour_blue"
+                    if (rgbVariable !in variables)
+                        variables[rgbVariable] = NumberValue(RGB_BLUE)
+
+                    append('$')
+                    append(rgbVariable)
+                } else {
+                    append(rgb)
+                }
+                append("), ")
+                append(fadeInDuration)
+                append(", ")
+                append(holdDuration)
+                append(", ")
+                append(fadeOutDuration)
+                append(", ")
+                append(opacity)
+            }
+        }
+    }
 }

@@ -19,6 +19,8 @@ sealed class OSLUnion {
     data class Int8NumberType(override val number: Number): NumberType()
     data class Int16LENumberType(override val number: Number): NumberType()
     data class Int16BENumberType(override val number: Number): NumberType()
+    data class Int24LENumberType(override val number: Number): NumberType()
+    data class Int24BENumberType(override val number: Number): NumberType()
     data class Int32LENumberType(override val number: Number): NumberType()
     data class Int32BENumberType(override val number: Number): NumberType()
     data class IntegerNumberType(override val number: Number): NumberType()
@@ -123,7 +125,7 @@ sealed class OSLUnion {
     object NoOpType: OSLUnion()
 }
 
-inline fun runNoOp(block: () -> Any?): OSLUnion.NoOpType {
+inline fun runNoOp(block: () -> Unit): OSLUnion.NoOpType {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }

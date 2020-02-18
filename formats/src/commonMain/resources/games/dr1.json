@@ -6545,6 +6545,24 @@
       "2": "Mean"
     }
   },
+  "ui_elements": {
+    "1": "Speaker Name",
+    "3": "HUD",
+    "7": "HUD Disabler",
+    "8": "Class Trial HUD",
+    "9": "Sprites",
+    "12": "Save Prompt",
+    "13": "Screen Shake",
+    "14": "Map Load Animation",
+    "15": "Map Transitions",
+    "16": "Object Selection",
+    "19": "Present Selection",
+    "25": "Camera Control (Player Position)",
+    "26": "Camera Control (Object Focus)",
+    "35": "Evidence Selection",
+    "41": "MonoMono Machine",
+    "51": "Minimal HUD"
+  },
   "voice_lines": [
     65535,
     1,
