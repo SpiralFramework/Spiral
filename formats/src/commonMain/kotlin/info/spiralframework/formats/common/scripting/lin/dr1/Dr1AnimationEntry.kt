@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -63,7 +63,7 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
                     if (itemName != null) {
                         val itemVariable = "item_$itemName"
                         if (itemVariable !in variables)
-                            variables[itemVariable] = NumberValue(id - 2000)
+                            variables[itemVariable] = RawNumberValue(id - 2000)
 
                         append('$')
                         append(itemVariable)
@@ -78,7 +78,7 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
                     if (itemName != null) {
                         val itemVariable = "item_$itemName"
                         if (itemVariable !in variables)
-                            variables[itemVariable] = NumberValue(id - 2000)
+                            variables[itemVariable] = RawNumberValue(id - 2000)
 
                         append('$')
                         append(itemVariable)

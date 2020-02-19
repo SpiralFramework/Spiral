@@ -601,7 +601,7 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
 
     suspend fun speakStub(context: SpiralContext, voiceID: Any?, volume: Any?) = speak(intStub(context, voiceID), intStub(context, volume))
     suspend fun speak(voiceID: Int, volume: Int): OSLUnion.NoOpType = runNoOp {
-        val (character, chapter, line) = game.getVoiceLineDetails(voiceID)
+        val (character, chapter, line) = game.getLinVoiceLineDetails(voiceID)
                 ?: return@runNoOp println("(no voice line details for $voiceID)")
         custom.addEntry((Dr1VoiceLineEntry(character, chapter, line, volume)))
     }

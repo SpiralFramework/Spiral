@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : LinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -54,7 +54,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) =
             with(builder) {
-                var parameterName = game?.getNameOfGameParameter(rawArguments[1])
+                var parameterName = game?.getNameOfLinGameParameter(rawArguments[1])
                         ?.toLowerCase()
                         ?.replace(' ', '_')
                         ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -62,7 +62,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                 if (parameterName != null) {
                     val parameterVariable = "game_parameter_$parameterName"
                     if (parameterVariable !in variables)
-                        variables[parameterVariable] = NumberValue(rawArguments[1])
+                        variables[parameterVariable] = RawNumberValue(rawArguments[1])
 
                     append(rawArguments[0])
                     append(", $")
@@ -88,7 +88,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
 
                 if (comparisonName != null) {
                     if (comparisonName !in variables) {
-                        variables[comparisonName] = NumberValue(comparisonN)
+                        variables[comparisonName] = RawNumberValue(comparisonN)
                     }
 
                     append('$')
@@ -99,7 +99,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                     append(", ")
                 }
 
-                var valueName = game?.getNameOfGameParameterValue(rawArguments[1], (rawArguments[3] shl 8) or rawArguments[4])
+                var valueName = game?.getNameOfLinGameParameterValue(rawArguments[1], (rawArguments[3] shl 8) or rawArguments[4])
                         ?.toLowerCase()
                         ?.replace(' ', '_')
                         ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -114,9 +114,9 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                         val lowerVariable = "${valueVariable}_lower"
 
                         if (upperVariable !in variables)
-                            variables[upperVariable] = NumberValue(rawArguments[3])
+                            variables[upperVariable] = RawNumberValue(rawArguments[3])
                         if (lowerVariable !in variables)
-                            variables[lowerVariable] = NumberValue(rawArguments[4])
+                            variables[lowerVariable] = RawNumberValue(rawArguments[4])
 
                         append('$')
                         append(upperVariable)
@@ -124,7 +124,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                         append(lowerVariable)
                     } else {
                         if (valueVariable !in variables)
-                            variables[valueVariable] = NumberValue(rawArguments[4])
+                            variables[valueVariable] = RawNumberValue(rawArguments[4])
 
                         append("0, $")
                         append(valueVariable)
@@ -149,7 +149,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
 
                     if (logicalName != null) {
                         if (logicalName !in variables) {
-                            variables[logicalName] = NumberValue(logicalN)
+                            variables[logicalName] = RawNumberValue(logicalN)
                         }
 
                         append('$')
@@ -160,7 +160,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                         append(", ")
                     }
 
-                    parameterName = game?.getNameOfGameParameter(rawArguments[(i * 6) + 7])
+                    parameterName = game?.getNameOfLinGameParameter(rawArguments[(i * 6) + 7])
                             ?.toLowerCase()
                             ?.replace(' ', '_')
                             ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -168,7 +168,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                     if (parameterName != null) {
                         val parameterVariable = "game_parameter_$parameterName"
                         if (parameterVariable !in variables)
-                            variables[parameterVariable] = NumberValue(rawArguments[(i * 6) + 7])
+                            variables[parameterVariable] = RawNumberValue(rawArguments[(i * 6) + 7])
 
                         append(rawArguments[(i * 6) + 6])
                         append(", $")
@@ -194,7 +194,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
 
                     if (comparisonName != null) {
                         if (comparisonName !in variables) {
-                            variables[comparisonName] = NumberValue(comparisonN)
+                            variables[comparisonName] = RawNumberValue(comparisonN)
                         }
 
                         append('$')
@@ -205,7 +205,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                         append(", ")
                     }
 
-                    valueName = game?.getNameOfGameParameterValue(rawArguments[(i * 6) + 7], (rawArguments[(i * 6) + 9] shl 8) or rawArguments[(i * 6) + 10])
+                    valueName = game?.getNameOfLinGameParameterValue(rawArguments[(i * 6) + 7], (rawArguments[(i * 6) + 9] shl 8) or rawArguments[(i * 6) + 10])
                             ?.toLowerCase()
                             ?.replace(' ', '_')
                             ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -220,9 +220,9 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                             val lowerVariable = "${valueVariable}_lower"
 
                             if (upperVariable !in variables)
-                                variables[upperVariable] = NumberValue(rawArguments[(i * 6) + 9])
+                                variables[upperVariable] = RawNumberValue(rawArguments[(i * 6) + 9])
                             if (lowerVariable !in variables)
-                                variables[lowerVariable] = NumberValue(rawArguments[(i * 6) + 10])
+                                variables[lowerVariable] = RawNumberValue(rawArguments[(i * 6) + 10])
 
                             append('$')
                             append(upperVariable)
@@ -230,7 +230,7 @@ inline class Dr1CheckGameParameterEntry(override val rawArguments: IntArray) : L
                             append(lowerVariable)
                         } else {
                             if (valueVariable !in variables)
-                                variables[valueVariable] = NumberValue(rawArguments[(i * 6) + 10])
+                                variables[valueVariable] = RawNumberValue(rawArguments[(i * 6) + 10])
 
                             append("0, $")
                             append(valueVariable)

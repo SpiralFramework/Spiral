@@ -30,6 +30,7 @@ open class Dr1(
         val gameParameterNames: Map<Int, String>,
         val gameParameterValues: Map<Int, Map<Int, String>>,
         val uiElements: Map<Int, String>,
+        val flagNames: Map<Int, Map<Int, String>>,
         customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
     companion object {
@@ -53,7 +54,8 @@ open class Dr1(
                 val voice_lines: List<Int> = emptyList(),
                 val game_parameter_names: Map<Int, String> = emptyMap(),
                 val game_parameter_values: Map<Int, Map<Int, String>> = emptyMap(),
-                val ui_elements: Map<Int, String> = emptyMap()
+                val ui_elements: Map<Int, String> = emptyMap(),
+                val flag_names: Map<Int, Map<Int, String>> = emptyMap()
         )
 
         @ExperimentalStdlibApi
@@ -96,6 +98,7 @@ open class Dr1(
                         gameJson.game_parameter_names,
                         gameJson.game_parameter_values,
                         gameJson.ui_elements,
+                        gameJson.flag_names,
                         customOpcodes
                 )
             }
@@ -224,7 +227,7 @@ open class Dr1(
         else -> UnknownLinEntry(opcode, rawArguments)
     }
 
-    override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
+    override fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
         val chapter: Int
 
         when (originalChapter) {
@@ -268,7 +271,7 @@ open class Dr1(
         return baseIndex - minID + voiceID
     }
 
-    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>? {
+    override fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>? {
         var baseIndex = 0
         for (character in 0 .. MAXIMUM_CHARACTER) {
             for (chapter in 1 .. MAXIMUM_CHAPTER) {
@@ -286,11 +289,13 @@ open class Dr1(
         return null
     }
 
-    override fun getNameOfGameParameter(parameter: Int): String? = gameParameterNames[parameter]
+    override fun getNameOfLinGameParameter(parameter: Int): String? = gameParameterNames[parameter]
 
-    override fun getNameOfGameParameterValue(parameter: Int, value: Int): String? = gameParameterValues[parameter]?.get(value)
+    override fun getNameOfLinGameParameterValue(parameter: Int, value: Int): String? = gameParameterValues[parameter]?.get(value)
 
-    override fun getNameOfUIElement(element: Int): String? = uiElements[element]
+    override fun getNameOfLinUIElement(element: Int): String? = uiElements[element]
+
+    override fun getLinFlagName(flagGroup: Int, flagID: Int): String? = flagNames[flagGroup]?.get(flagID)
 
     override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes {
 

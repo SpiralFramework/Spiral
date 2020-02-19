@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
@@ -66,7 +66,7 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
             if (fadeMethod == 0 || fadeMethod == 1) {
                 val fadeVariable = if (fadeIn) "screen_fade_in" else "screen_fade_out"
                 if (fadeVariable !in variables)
-                    variables[fadeVariable] = NumberValue(fadeMethod)
+                    variables[fadeVariable] = RawNumberValue(fadeMethod)
 
                 append('$')
                 append(fadeVariable)
@@ -85,7 +85,7 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
 
             if (colourVariable != null) {
                 if (colourVariable !in variables)
-                    variables[colourVariable] = NumberValue(colour)
+                    variables[colourVariable] = RawNumberValue(colour)
 
                 append('$')
                 append(colourVariable)

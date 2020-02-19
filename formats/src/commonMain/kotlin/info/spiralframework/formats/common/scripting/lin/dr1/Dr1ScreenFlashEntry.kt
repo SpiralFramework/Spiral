@@ -3,7 +3,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 import info.spiralframework.base.common.freeze
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
@@ -60,35 +60,35 @@ inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableL
                 if (rgb == RGB_WHITE) {
                     val rgbVariable = "rgb_colour_white"
                     if (rgbVariable !in variables)
-                        variables[rgbVariable] = NumberValue(RGB_WHITE)
+                        variables[rgbVariable] = RawNumberValue(RGB_WHITE)
 
                     append('$')
                     append(rgbVariable)
                 } else if (rgb == RGB_BLACK) {
                     val rgbVariable = "rgb_colour_black"
                     if (rgbVariable !in variables)
-                        variables[rgbVariable] = NumberValue(RGB_BLACK)
+                        variables[rgbVariable] = RawNumberValue(RGB_BLACK)
 
                     append('$')
                     append(rgbVariable)
                 } else if (rgb == RGB_RED) {
                     val rgbVariable = "rgb_colour_red"
                     if (rgbVariable !in variables)
-                        variables[rgbVariable] = NumberValue(RGB_RED)
+                        variables[rgbVariable] = RawNumberValue(RGB_RED)
 
                     append('$')
                     append(rgbVariable)
                 } else if (rgb == RGB_GREEN) {
                     val rgbVariable = "rgb_colour_green"
                     if (rgbVariable !in variables)
-                        variables[rgbVariable] = NumberValue(RGB_GREEN)
+                        variables[rgbVariable] = RawNumberValue(RGB_GREEN)
 
                     append('$')
                     append(rgbVariable)
                 } else if (rgb == RGB_BLUE) {
                     val rgbVariable = "rgb_colour_blue"
                     if (rgbVariable !in variables)
-                        variables[rgbVariable] = NumberValue(RGB_BLUE)
+                        variables[rgbVariable] = RawNumberValue(RGB_BLUE)
 
                     append('$')
                     append(rgbVariable)

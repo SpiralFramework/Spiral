@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
     companion object {
@@ -89,7 +89,7 @@ inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
                 @Suppress("DuplicatedCode")
                 if (comparisonName != null) {
                     if (comparisonName !in variables) {
-                        variables[comparisonName] = NumberValue(comparisonN)
+                        variables[comparisonName] = RawNumberValue(comparisonN)
                     }
 
                     append('$')
@@ -117,7 +117,7 @@ inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
                     @Suppress("DuplicatedCode")
                     if (logicalName != null) {
                         if (logicalName !in variables) {
-                            variables[logicalName] = NumberValue(logicalN)
+                            variables[logicalName] = RawNumberValue(logicalN)
                         }
 
                         append('$')
@@ -147,7 +147,7 @@ inline class Dr1CheckFlagEntry(override val rawArguments: IntArray) : LinEntry {
                     @Suppress("DuplicatedCode")
                     if (comparisonName != null) {
                         if (comparisonName !in variables) {
-                            variables[comparisonName] = NumberValue(comparisonN)
+                            variables[comparisonName] = RawNumberValue(comparisonN)
                         }
 
                         append('$')

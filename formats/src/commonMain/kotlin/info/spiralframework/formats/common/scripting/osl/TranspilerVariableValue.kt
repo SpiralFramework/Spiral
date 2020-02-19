@@ -13,11 +13,26 @@ inline class StringValue(val string: String): TranspilerVariableValue {
     }
 }
 
-inline class NumberValue(val number: Number): TranspilerVariableValue {
+inline class RawNumberValue(val number: Number): TranspilerVariableValue {
     override fun represent(builder: StringBuilder) {
         builder.append(number)
     }
 }
+
+inline class Int16LEValue(val int16: Number): TranspilerVariableValue {
+    override fun represent(builder: StringBuilder) {
+        val num = int16.toInt()
+        builder.append("int16LE(${num and 0xFF}, ${num shr 8})")
+    }
+}
+
+inline class Int16BEValue(val int16: Number): TranspilerVariableValue {
+    override fun represent(builder: StringBuilder) {
+        val num = int16.toInt()
+        builder.append("int16BE(${num and 0xFF}, ${num shr 8})")
+    }
+}
+
 
 inline class BooleanValue(val boolean: Boolean): TranspilerVariableValue {
     override fun represent(builder: StringBuilder) {

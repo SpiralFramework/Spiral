@@ -182,7 +182,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     } else {
                                         val variableName = "speaker_${op.speakerEntry.characterID}"
                                         if (variableName !in variables) {
-                                            variables[variableName] = NumberValue(op.speakerEntry.characterID)
+                                            variables[variableName] = RawNumberValue(op.speakerEntry.characterID)
                                         }
 
                                         append('$')
@@ -427,7 +427,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                 if (itemName != null) {
                                                     val itemVariable = "item_$itemName"
                                                     if (itemVariable !in variables)
-                                                        variables[itemVariable] = NumberValue(branchNum)
+                                                        variables[itemVariable] = RawNumberValue(branchNum)
 
                                                     append('$')
                                                     append(itemVariable)

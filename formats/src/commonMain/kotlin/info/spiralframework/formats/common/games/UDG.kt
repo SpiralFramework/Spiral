@@ -87,11 +87,11 @@ class UDG(
         else -> UnknownLinEntry(opcode, rawArguments)
     }
 
-    override fun getVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
+    override fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
+    override fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

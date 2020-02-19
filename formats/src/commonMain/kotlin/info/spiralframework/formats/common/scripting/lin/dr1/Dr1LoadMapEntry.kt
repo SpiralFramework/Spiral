@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1LoadMapEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -35,7 +35,7 @@ inline class Dr1LoadMapEntry(override val rawArguments: IntArray) : MutableLinEn
             if (mapName != null) {
                 val mapVariable = "map_$mapName"
                 if (mapVariable !in variables)
-                    variables[mapVariable] = NumberValue(room)
+                    variables[mapVariable] = RawNumberValue(room)
 
                 append('$')
                 append(mapVariable)

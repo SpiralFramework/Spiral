@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1SpeakerEntry(override val rawArguments: IntArray): MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -25,7 +25,7 @@ inline class Dr1SpeakerEntry(override val rawArguments: IntArray): MutableLinEnt
         if (speakerName?.isNotBlank() == true) {
             val speakerVariable = "speaker_$speakerName"
             if (speakerVariable !in variables) {
-                variables[speakerVariable] = NumberValue(characterID)
+                variables[speakerVariable] = RawNumberValue(characterID)
             }
 
             builder.append('$')

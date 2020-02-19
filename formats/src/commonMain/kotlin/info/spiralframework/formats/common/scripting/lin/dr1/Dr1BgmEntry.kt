@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
@@ -34,7 +34,7 @@ inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry 
             if (bgmName != null) {
                 val bgmVariable = "bgm_$bgmName"
                 if (bgmVariable !in variables)
-                    variables[bgmVariable] = NumberValue(bgmID)
+                    variables[bgmVariable] = RawNumberValue(bgmID)
 
                 append('$')
                 append(bgmVariable)
@@ -42,7 +42,7 @@ inline class Dr1BgmEntry(override val rawArguments: IntArray) : MutableLinEntry 
             } else if (bgmID == BGM_CLEAR) {
                 val bgmVariable = "bgm_clear"
                 if (bgmVariable !in variables)
-                    variables[bgmVariable] = NumberValue(BGM_CLEAR)
+                    variables[bgmVariable] = RawNumberValue(BGM_CLEAR)
 
                 append('$')
                 append(bgmVariable)

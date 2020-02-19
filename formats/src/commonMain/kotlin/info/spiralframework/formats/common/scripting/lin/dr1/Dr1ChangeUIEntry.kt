@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
@@ -32,7 +32,7 @@ inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinE
             if (state == 0 || state == 1) {
                 if (state == 0) append("DisableUI(")
                 else append("EnableUI(")
-                val itemName = game?.getNameOfUIElement(element)
+                val itemName = game?.getNameOfLinUIElement(element)
                         ?.toLowerCase()
                         ?.replace(' ', '_')
                         ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -40,7 +40,7 @@ inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinE
                 if (itemName != null) {
                     val uiVariable = "ui_$itemName"
                     if (uiVariable !in variables)
-                        variables[uiVariable] = NumberValue(element)
+                        variables[uiVariable] = RawNumberValue(element)
 
                     append('$')
                     append(uiVariable)
@@ -58,7 +58,7 @@ inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinE
     }
 
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
-        val itemName = game?.getNameOfUIElement(element)
+        val itemName = game?.getNameOfLinUIElement(element)
                 ?.toLowerCase()
                 ?.replace(' ', '_')
                 ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -66,7 +66,7 @@ inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinE
         if (itemName != null) {
             val uiVariable = "ui_$itemName"
             if (uiVariable !in variables)
-                variables[uiVariable] = NumberValue(element)
+                variables[uiVariable] = RawNumberValue(element)
 
             builder.append('$')
             builder.append(uiVariable)

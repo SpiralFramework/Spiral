@@ -1,9 +1,8 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
-import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
+import info.spiralframework.formats.common.scripting.osl.Int16BEValue
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEntry {
     constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
@@ -37,9 +36,25 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
                 else append("EnableFlag(")
 
 //                append("flagID(")
-                append(flagGroup)
-                append(", ")
-                append(flagID)
+
+                val flagName = game?.getLinFlagName(flagGroup, flagID)
+                        ?.toLowerCase()
+                        ?.replace(' ', '_')
+                        ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+
+                if (flagName != null) {
+                    val flagVariable = "flag_$flagName"
+                    if (flagVariable !in variables)
+                        variables[flagVariable] = Int16BEValue((flagGroup shl 8) or flagID)
+
+                    append('$')
+                    append(flagVariable)
+                } else {
+                    append(flagGroup)
+                    append(", ")
+                    append(flagID)
+                }
+
 //                append(")")
 
                 append(')')
@@ -53,9 +68,24 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
 
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
 //        builder.append("flagID(")
-        builder.append(flagGroup)
-        builder.append(",")
-        builder.append(flagID)
+        val flagName = game?.getLinFlagName(flagGroup, flagID)
+                ?.toLowerCase()
+                ?.replace(' ', '_')
+                ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+
+        if (flagName != null) {
+            val flagVariable = "flag_$flagName"
+            if (flagVariable !in variables)
+                variables[flagVariable] = Int16BEValue((flagGroup shl 8) or flagID)
+
+            builder.append('$')
+            builder.append(flagVariable)
+        } else {
+            builder.append(flagGroup)
+            builder.append(", ")
+            builder.append(flagID)
+        }
+
         builder.append(", ")
 //        builder.append("),")
 

@@ -6545,6 +6545,13 @@
       "2": "Mean"
     }
   },
+  "flag_names": {
+    "0": {
+      "4": "e-Handbook",
+      "5": "Map",
+      "7": "Saving"
+    }
+  },
   "ui_elements": {
     "1": "Speaker Name",
     "3": "HUD",

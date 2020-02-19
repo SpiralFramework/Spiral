@@ -29,7 +29,7 @@ inline class Dr1VoiceLineEntry(override val rawArguments: IntArray): MutableLinE
     override fun LinTranspiler.transpile(indent: Int) {
         addOutput {
             repeat(indent) { append('\t') }
-            val fileID = game?.getVoiceFileID(characterID, chapterID, voiceLineID)
+            val fileID = game?.getLinVoiceFileID(characterID, chapterID, voiceLineID)
             if (fileID != null) {
                 append("Speak(")
                 append(fileID)

@@ -1,9 +1,8 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
-import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
@@ -60,7 +59,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
     @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         with(builder) {
-            val parameterName = game?.getNameOfGameParameter(variable)
+            val parameterName = game?.getNameOfLinGameParameter(variable)
                     ?.toLowerCase()
                     ?.replace(' ', '_')
                     ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -68,7 +67,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
             if (parameterName != null) {
                 val parameterVariable = "game_parameter_$parameterName"
                 if (parameterVariable !in variables)
-                    variables[parameterVariable] = NumberValue(variable)
+                    variables[parameterVariable] = RawNumberValue(variable)
 
                 append('$')
                 append(parameterVariable)
@@ -90,7 +89,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
             @Suppress("DuplicatedCode")
             if (operationVariable != null) {
                 if (operationVariable !in variables)
-                    variables[operationVariable] = NumberValue(operation)
+                    variables[operationVariable] = RawNumberValue(operation)
 
                 append('$')
                 append(operationVariable)
@@ -100,7 +99,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
                 append(", ")
             }
 
-            val valueName = game?.getNameOfGameParameterValue(variable, value)
+            val valueName = game?.getNameOfLinGameParameterValue(variable, value)
                     ?.toLowerCase()
                     ?.replace(' ', '_')
                     ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
@@ -115,9 +114,9 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
                     val lowerVariable = "${valueVariable}_lower"
 
                     if (upperVariable !in variables)
-                        variables[upperVariable] = NumberValue(valueUpper)
+                        variables[upperVariable] = RawNumberValue(valueUpper)
                     if (lowerVariable !in variables)
-                        variables[lowerVariable] = NumberValue(valueLower)
+                        variables[lowerVariable] = RawNumberValue(valueLower)
 
                     append('$')
                     append(upperVariable)
@@ -125,7 +124,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
                     append(lowerVariable)
                 } else {
                     if (valueVariable !in variables)
-                        variables[valueVariable] = NumberValue(value)
+                        variables[valueVariable] = RawNumberValue(value)
 
                     append("0, $")
                     append(valueVariable)

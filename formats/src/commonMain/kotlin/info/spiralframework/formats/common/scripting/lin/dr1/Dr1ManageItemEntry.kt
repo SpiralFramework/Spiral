@@ -2,7 +2,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
-import info.spiralframework.formats.common.scripting.osl.NumberValue
+import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
 inline class Dr1ManageItemEntry(override val rawArguments: IntArray): MutableLinEntry {
     companion object {
@@ -42,7 +42,7 @@ inline class Dr1ManageItemEntry(override val rawArguments: IntArray): MutableLin
             if (itemName != null) {
                 val itemVariable = "item_$itemName"
                 if (itemVariable !in variables)
-                    variables[itemVariable] = NumberValue(itemID)
+                    variables[itemVariable] = RawNumberValue(itemID)
 
                 append('$')
                 append(itemVariable)
@@ -64,7 +64,7 @@ inline class Dr1ManageItemEntry(override val rawArguments: IntArray): MutableLin
             @Suppress("DuplicatedCode")
             if (operationVariable != null) {
                 if (operationVariable !in variables)
-                    variables[operationVariable] = NumberValue(operation)
+                    variables[operationVariable] = RawNumberValue(operation)
 
                 append('$')
                 append(operationVariable)
