@@ -6,6 +6,8 @@ import info.spiralframework.formats.common.scripting.osl.NumberValue
 
 inline class Dr1ChangeUIEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {
+        const val HUD = 3
+        const val MAP_LOAD_ANIMATION = 14
         const val PRESENT_SELECTION = 19
     }
 

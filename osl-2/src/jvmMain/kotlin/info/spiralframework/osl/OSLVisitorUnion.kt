@@ -55,12 +55,15 @@ sealed class OSLVisitorUnion {
                         )
                     }
                     is CheckCharacter -> {
-                        builder.addOpcode("Check Character", arrayOf(union.characterID?.union ?: OSLUnion.NullType))
+                        builder.addOpcode("Check Character", arrayOf(union.characterID.union.parameterValue))
                         union.scope.writeToBuilder(builder)
                     }
                     is CheckObject -> {
-                        builder.addOpcode("Check Object", arrayOf(union.objectID?.union ?: OSLUnion.NullType))
+                        builder.addOpcode("Check Object", arrayOf(union.objectID.union.parameterValue))
                         union.scope.writeToBuilder(builder)
+                    }
+                    is LoadMap -> {
+                        builder.addLoadMap(arrayOf(union.mapID.union, union.state?.union, union.arg3?.union).filterNotNull(), union.scope::writeToBuilder)
                     }
                     is SelectPresent -> {
                         builder.addPresentSelection(union.scope::writeToBuilder)
@@ -98,11 +101,12 @@ sealed class OSLVisitorUnion {
     data class IfCheck(val check: CheckBranch, val elseIf: List<CheckBranch>, val elseScope: Scope?) : OSLVisitorUnion()
     data class CheckFlag(val check: CheckBranch, val elseIf: List<CheckBranch>, val elseScope: Scope?) : OSLVisitorUnion()
 
-    data class CheckCharacter(val characterID: Value<*>?, val scope: Scope): OSLVisitorUnion()
-    data class CheckObject(val objectID: Value<*>?, val scope: Scope): OSLVisitorUnion()
+    data class CheckCharacter(val characterID: Value<OSLUnion.FunctionParameterType>, val scope: Scope) : OSLVisitorUnion()
+    data class CheckObject(val objectID: Value<OSLUnion.FunctionParameterType>, val scope: Scope) : OSLVisitorUnion()
+    data class LoadMap(val mapID: Value<OSLUnion.FunctionParameterType>, val state: Value<OSLUnion.FunctionParameterType>?, val arg3: Value<OSLUnion.FunctionParameterType>?, val scope: Scope) : OSLVisitorUnion()
 
-    data class SelectPresent(val scope: Scope): OSLVisitorUnion()
-    data class TreeBranch(val branchNum: Value<*>?, val scope: Scope): OSLVisitorUnion()
+    data class SelectPresent(val scope: Scope) : OSLVisitorUnion()
+    data class TreeBranch(val branchNum: Value<*>?, val scope: Scope) : OSLVisitorUnion()
 }
 
 inline fun <T : OSLUnion> wrapUnionValue(block: () -> T): OSLVisitorUnion.Value<T> {

@@ -9,7 +9,7 @@ lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR+;
 
 scope: ((lineSeparator scriptLine)+ | lineSeparator)? lineSeparator?;
 
-scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck | checkFlag | checkCharacter | checkObject | selectPresent) INLINE_WHITESPACE?;
+scriptLine: (basicDrill | basicDrillNamed | dialogueDrill | metaVariableAssignment | actionDeclaration | functionCall | ifCheck | checkFlag | checkCharacter | checkObject | selectPresent | loadMap) INLINE_WHITESPACE?;
 
 metaVariableAssignment: ASSIGN_VARIABLE_NAME VARIABLE_ASSIGNMENT variableValue;
 
@@ -62,10 +62,28 @@ actionDeclaration
       END_ACTION
     ;
 
-functionCall: BEGIN_FUNC_CALL functionCallParameters;
-recursiveFuncCall: FUNC_CALL_RECURSIVE functionCallParameters;
-ifCheckFuncCall: IF_CHECK_FUNC_CALL functionCallParameters;
-functionCallParameters: (functionParameter (FUNC_CALL_PARAM_SEPARATOR functionParameter)*?)? END_FUNC_CALL;
+functionCall: BEGIN_FUNC_CALL functionCallParameters END_FUNC_CALL;
+recursiveFuncCall: FUNC_CALL_RECURSIVE functionCallParameters END_FUNC_CALL;
+ifCheckFuncCall: IF_CHECK_FUNC_CALL functionCallParameters END_FUNC_CALL;
+checkCharacter
+    : CHECK_CHARACTER functionParameter END_FUNC_WITH_SCOPE
+        scope
+      CLOSE_SCOPE
+    ;
+
+checkObject
+    : CHECK_OBJECT functionParameter END_FUNC_WITH_SCOPE
+        scope
+      CLOSE_SCOPE
+    ;
+
+loadMap
+    : LOAD_MAP functionParameter (FUNC_CALL_PARAM_SEPARATOR functionParameter (FUNC_CALL_PARAM_SEPARATOR functionParameter)?)? END_FUNC_WITH_SCOPE
+        scope
+      CLOSE_SCOPE
+    ;
+
+functionCallParameters: (functionParameter (FUNC_CALL_PARAM_SEPARATOR functionParameter)*?)?;
 
 functionParameter: FUNC_CALL_PARAMETER_NAME? functionVariableValue;
 
@@ -135,18 +153,6 @@ checkFlag
       (ELIF checkFlagPure)*
       (ELSE scope)?
 
-      CLOSE_SCOPE
-    ;
-
-checkCharacter
-    : CHECK_CHARACTER ifCheckValue END_IF_CHECK
-        scope
-      CLOSE_SCOPE
-    ;
-
-checkObject
-    : CHECK_OBJECT ifCheckValue END_IF_CHECK
-        scope
       CLOSE_SCOPE
     ;
 

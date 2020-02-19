@@ -21,6 +21,7 @@ object OpenSpiralBitcode {
     const val OPERATION_ADD_IF_CHECK = 0x04
     const val OPERATION_ADD_FLAG_CHECK = 0x05
     const val OPERATION_ADD_TREE = 0x06
+    const val OPERATION_ADD_LOAD_MAP = 0x07
 
     const val OPERATION_ADD_PLAIN_OPCODE = 0x70
     const val OPERATION_ADD_VARIABLE_OPCODE = 0x71
@@ -105,6 +106,7 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                         OpenSpiralBitcode.OPERATION_ADD_IF_CHECK -> addIfCheck(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_FLAG_CHECK -> addFlagCheck(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_TREE -> addTree(notEnoughData)
+                        OpenSpiralBitcode.OPERATION_ADD_LOAD_MAP -> addLoadMap(notEnoughData)
 
                         OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE -> addPlainOpcode(notEnoughData)
                         OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED -> addPlainOpcodeNamed(notEnoughData)
@@ -280,6 +282,16 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
         val scope = requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData))))
 
         visitor.addTree(this, treeType, scope, level + 1)
+    }
+
+    private suspend fun SpiralContext.addLoadMap(notEnoughData: () -> String) {
+        val mapID = readArg(notEnoughData)
+        val state = readArg(notEnoughData).orElse(OSLUnion.Int8NumberType(0))
+        val arg3 = readArg(notEnoughData).orElse(OSLUnion.Int8NumberType(0xFF))
+
+        val scope = requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData))))
+
+        visitor.addLoadMap(this, mapID, state, arg3, scope, level + 1)
     }
 
     private suspend fun SpiralContext.addPlainOpcode(notEnoughData: () -> String) {

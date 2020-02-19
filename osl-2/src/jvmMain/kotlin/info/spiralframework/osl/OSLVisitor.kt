@@ -365,13 +365,21 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
             )
 
     override fun visitCheckCharacter(ctx: OpenSpiralParser.CheckCharacterContext): OSLVisitorUnion.CheckCharacter =
-            OSLVisitorUnion.CheckCharacter(visitIfCheckValue(ctx.ifCheckValue()), visitScope(ctx.scope()))
+            OSLVisitorUnion.CheckCharacter(visitFunctionParameter(ctx.functionParameter()), visitScope(ctx.scope()))
 
     override fun visitCheckObject(ctx: OpenSpiralParser.CheckObjectContext): OSLVisitorUnion.CheckObject =
-            OSLVisitorUnion.CheckObject(visitIfCheckValue(ctx.ifCheckValue()), visitScope(ctx.scope()))
+            OSLVisitorUnion.CheckObject(visitFunctionParameter(ctx.functionParameter()), visitScope(ctx.scope()))
 
     override fun visitSelectPresent(ctx: OpenSpiralParser.SelectPresentContext): OSLVisitorUnion.SelectPresent =
             OSLVisitorUnion.SelectPresent(visitBranchScope(ctx.branchScope()))
+
+    override fun visitLoadMap(ctx: OpenSpiralParser.LoadMapContext): OSLVisitorUnion.LoadMap =
+            OSLVisitorUnion.LoadMap(
+                    visitFunctionParameter(ctx.functionParameter(0)),
+                    ctx.functionParameter(1)?.let(this::visitFunctionParameter),
+                    ctx.functionParameter(2)?.let(this::visitFunctionParameter),
+                    visitScope(ctx.scope())
+            )
 
     override fun visitBranchScope(ctx: OpenSpiralParser.BranchScopeContext): OSLVisitorUnion.Scope =
             OSLVisitorUnion.Scope(ctx.branchScopeLine().map(this::visitBranchScopeLine))

@@ -110,6 +110,9 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
     override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int): Unit =
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
+    override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int): Unit =
+            TODO("Not yet implemented")
+
     protected suspend fun MutableList<Int>.addUnion(context: SpiralContext, union: OSLUnion) {
         when (union) {
             is OSLUnion.Int8NumberType -> add(union.number.toInt())
@@ -523,6 +526,18 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
                 custom.addEntry(Dr1MarkLabelEntry(label))
             }
         }
+    }
+
+    override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int) {
+        custom.addEntry(Dr1ChangeUIEntry(6, false))
+        custom.addEntry(Dr1LoadMapEntry(intStub(context, mapID), intStub(context, state), intStub(context, mapID)))
+        OpenSpiralBitcodeParser(BinaryInputFlow(scope), this, level + 1)
+                .parse(context)
+        custom.addEntry(Dr1ChangeUIEntry(Dr1ChangeUIEntry.HUD, false))
+        custom.addEntry(Dr1ChangeUIEntry(6, true))
+        custom.addEntry(Dr1ScreenFadeEntry(fadeIn = true, colour = Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, duration = 24))
+        custom.addEntry(Dr1ChangeUIEntry(6, false))
+        custom.addEntry(Dr1ChangeUIEntry(Dr1ChangeUIEntry.MAP_LOAD_ANIMATION, true))
     }
 
     /**

@@ -11,6 +11,7 @@ interface OpenSpiralBitcodeVisitor {
         override suspend fun functionCall(context: SpiralContext, functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) = runNoOp { println("addFunctionCall($functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(context, value)}" else stringify(context, value) }.joinToString()}))") }
         override suspend fun addFlagCheck(context: SpiralContext, mainBranch: OpenSpiralBitcodeFlagBranch, elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>, elseBranch: ByteArray?, level: Int) = println("[$level] addFlagCheck($mainBranch, $elseIfBranches, $elseBranch)")
         override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int) = println("[$level] addTree($treeType, $scope)")
+        override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int) = println("[$level] loadMap($mapID, $state, $arg3, $scope)")
 
         override suspend fun addPlainOpcode(context: SpiralContext, opcode: Int, arguments: IntArray) = println("addPlainOpcode($opcode, ${arguments.joinToString()})")
         override suspend fun addPlainOpcodeNamed(context: SpiralContext, opcodeName: String, arguments: IntArray) = println("addPlainOpcodeNamed($opcodeName, ${arguments.joinToString()})")
@@ -47,6 +48,7 @@ interface OpenSpiralBitcodeVisitor {
     suspend fun functionCall(context: SpiralContext, functionName: String, parameters: Array<OSLUnion.FunctionParameterType>): OSLUnion?
     suspend fun addFlagCheck(context: SpiralContext, mainBranch: OpenSpiralBitcodeFlagBranch, elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>, elseBranch: ByteArray?, level: Int)
     suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int)
+    suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int)
 
     suspend fun addPlainOpcode(context: SpiralContext, opcode: Int, arguments: IntArray)
     suspend fun addPlainOpcodeNamed(context: SpiralContext, opcodeName: String, arguments: IntArray)

@@ -19,6 +19,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_DIALOGUE_VARIABLE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_FUNCTION_CALL
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_IF_CHECK
+import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_LOAD_MAP
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_PLAIN_OPCODE_NAMED
 import info.spiralframework.osb.common.OpenSpiralBitcode.OPERATION_ADD_TREE
@@ -395,6 +396,28 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
     suspend fun addPresentSelection(scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
         output.write(OPERATION_ADD_TREE)
         output.write(TREE_TYPE_PRESENT_SELECTION)
+        BinaryOutputFlow().use { data ->
+            scope(OpenSpiralBitcodeBuilder(data))
+            output.writeInt32LE(data.getDataSize().toInt())
+            output.write(data.getData())
+        }
+    }
+
+    suspend fun addLoadMap(params: List<OSLUnion.FunctionParameterType>, scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
+        val params = params.toMutableList()
+        output.write(OPERATION_ADD_LOAD_MAP)
+        val mapID = params.firstOrNull { param -> param.parameterName == "mapID" } ?: params.firstOrNull()
+        mapID?.let(params::remove)
+
+        val state = params.firstOrNull { param -> param.parameterName == "state" } ?: params.firstOrNull()
+        state?.let(params::remove)
+
+        val arg3 = params.firstOrNull { param -> param.parameterName == "arg3" } ?: params.firstOrNull()
+        arg3?.let(params::remove)
+
+        writeArg(mapID?.parameterValue ?: OSLUnion.NullType)
+        writeArg(state?.parameterValue ?: OSLUnion.NullType)
+        writeArg(arg3?.parameterValue ?: OSLUnion.NullType)
         BinaryOutputFlow().use { data ->
             scope(OpenSpiralBitcodeBuilder(data))
             output.writeInt32LE(data.getDataSize().toInt())
