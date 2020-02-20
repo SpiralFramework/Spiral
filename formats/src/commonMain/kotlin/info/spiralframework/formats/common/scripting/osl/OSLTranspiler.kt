@@ -54,6 +54,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
     }
 
     val variables: MutableMap<String, TranspilerVariableValue> = HashMap()
+    val variableMappings: MutableMap<Regex, String> = HashMap()
     val output: MutableList<String> = ArrayList()
 
     @ExperimentalContracts
@@ -76,7 +77,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             }
                         }
                     }
-            output.suspendForEach(out::println)
+            output.forEach { line -> out.println(variableMappings.entries.fold(line) { str, (k, v) -> str.replace(k, v) }) }
             output.clear()
         }
     }

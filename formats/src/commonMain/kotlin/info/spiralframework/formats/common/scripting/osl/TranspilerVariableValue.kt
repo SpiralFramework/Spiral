@@ -33,6 +33,12 @@ inline class Int16BEValue(val int16: Number): TranspilerVariableValue {
     }
 }
 
+inline class FlagIDValue(val flagID: Number): TranspilerVariableValue {
+    override fun represent(builder: StringBuilder) {
+        val num = flagID.toInt()
+        builder.append("flagID(${num and 0xFF}, ${num shr 8})")
+    }
+}
 
 inline class BooleanValue(val boolean: Boolean): TranspilerVariableValue {
     override fun represent(builder: StringBuilder) {

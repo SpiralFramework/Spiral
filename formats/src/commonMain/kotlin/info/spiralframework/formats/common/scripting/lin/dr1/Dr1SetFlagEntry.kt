@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
+import info.spiralframework.formats.common.scripting.osl.FlagIDValue
 import info.spiralframework.formats.common.scripting.osl.Int16BEValue
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 
@@ -35,8 +36,6 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
                 if (state == 0) append("DisableFlag(")
                 else append("EnableFlag(")
 
-//                append("flagID(")
-
                 val flagName = game?.getLinFlagName(flagGroup, flagID)
                         ?.toLowerCase()
                         ?.replace(' ', '_')
@@ -45,17 +44,17 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
                 if (flagName != null) {
                     val flagVariable = "flag_$flagName"
                     if (flagVariable !in variables)
-                        variables[flagVariable] = Int16BEValue((flagGroup shl 8) or flagID)
+                        variables[flagVariable] = FlagIDValue((flagGroup shl 8) or flagID)
 
                     append('$')
                     append(flagVariable)
                 } else {
+                    append("flagID(")
                     append(flagGroup)
                     append(", ")
                     append(flagID)
+                    append(")")
                 }
-
-//                append(")")
 
                 append(')')
             } else {
@@ -67,7 +66,6 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
     }
 
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
-//        builder.append("flagID(")
         val flagName = game?.getLinFlagName(flagGroup, flagID)
                 ?.toLowerCase()
                 ?.replace(' ', '_')
@@ -76,18 +74,18 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
         if (flagName != null) {
             val flagVariable = "flag_$flagName"
             if (flagVariable !in variables)
-                variables[flagVariable] = Int16BEValue((flagGroup shl 8) or flagID)
+                variables[flagVariable] = FlagIDValue((flagGroup shl 8) or flagID)
 
             builder.append('$')
             builder.append(flagVariable)
+            builder.append(", ")
         } else {
+            builder.append("flagID(")
             builder.append(flagGroup)
             builder.append(", ")
             builder.append(flagID)
+            builder.append("),")
         }
-
-        builder.append(", ")
-//        builder.append("),")
 
         builder.append(state)
     }

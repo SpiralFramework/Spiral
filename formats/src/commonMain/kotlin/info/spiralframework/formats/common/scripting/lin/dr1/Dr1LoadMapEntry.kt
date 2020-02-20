@@ -33,9 +33,17 @@ inline class Dr1LoadMapEntry(override val rawArguments: IntArray) : MutableLinEn
                     ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
             if (mapName != null) {
-                val mapVariable = "map_$mapName"
+                var mapVariable = "map_$mapName"
                 if (mapVariable !in variables)
                     variables[mapVariable] = RawNumberValue(room)
+                else if ((variables.getValue(mapVariable) as? RawNumberValue)?.number != room) {
+                    val old = variables.getValue(mapVariable) as RawNumberValue
+                    variables.remove(mapVariable)
+                    variables["map_${mapName}_${old.number}"] = old
+                    variableMappings["\\B\\$${mapVariable}\\b".toRegex()] = "\\\$map_${mapName}_${old.number}"
+                    mapVariable = "map_${mapName}_${room}"
+                    variables[mapVariable] = RawNumberValue(room)
+                }
 
                 append('$')
                 append(mapVariable)

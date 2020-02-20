@@ -64,24 +64,29 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
     }
 
     override suspend fun functionCall(context: SpiralContext, functionName: String, parameters: Array<OSLUnion.FunctionParameterType>): OSLUnion? {
+        val flattened = parameters.flatMap { (name, value) ->
+            if (name != null) listOf(OSLUnion.FunctionParameterType(name, value)) else value.flatten(context)
+        }
+
         with(context) {
-            trace("calling $functionName(${parameters.map { (name, value) -> if (name != null) "$name = ${stringify(this, value)}" else stringify(this, value) }.joinToString()})")
+            trace("calling $functionName(${flattened.map { value -> stringify(this, value) }.joinToString()})")
         }
 
         val function = registry[functionName.toUpperCase().replace("_", "")]
-                ?.firstOrNull { func -> func.parameterNames.size == parameters.size }
+                ?.firstOrNull { func -> func.parameterNames.size == flattened.size }
                 ?: return null
 
         val functionParams = function.parameterNames.toMutableList()
         val passedParams: MutableMap<String, Any?> = HashMap()
-        parameters.forEach { (name, value) ->
-            val parameter = functionParams.firstOrNull { p -> p == name } ?: return@forEach
-            passedParams[parameter] = value
+        flattened.forEach { union ->
+            if (union !is OSLUnion.FunctionParameterType) return@forEach
+            val parameter = functionParams.firstOrNull { p -> p == union.parameterName } ?: return@forEach
+            passedParams[parameter] = union
             functionParams.remove(parameter)
         }
-        parameters.forEach { (name, value) ->
-            if (name != null) return@forEach
-            passedParams[functionParams.removeAt(0)] = value
+
+        flattened.forEach { union ->
+            passedParams[functionParams.removeAt(0)] = union
         }
 
         return function.suspendInvoke(context, passedParams)
@@ -112,6 +117,54 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
 
     override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int): Unit =
             TODO("Not yet implemented")
+
+    protected suspend fun OSLUnion.flatten(context: SpiralContext): List<OSLUnion> {
+        val flattened: MutableList<OSLUnion> = ArrayList()
+
+        when (this) {
+            is OSLUnion.Int16LENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+            }
+            is OSLUnion.Int16BENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+            }
+            is OSLUnion.Int24LENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 16) and 0xFF))
+            }
+            is OSLUnion.Int24BENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 16) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+            }
+            is OSLUnion.Int32LENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 16) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 24) and 0xFF))
+            }
+            is OSLUnion.Int32BENumberType -> {
+                val num = number.toInt()
+                flattened.add(OSLUnion.Int8NumberType((num shr 24) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 16) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
+                flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
+            }
+            is OSLUnion.FunctionCallType -> functionCall(context, functionName, parameters)?.flatten(context)?.let { flattened.addAll(it) }
+            is OSLUnion.VariableReferenceType -> getData(context, variableName)?.flatten(context)?.let { flattened.addAll(it) }
+            else -> flattened.add(this)
+        }
+
+        return flattened
+    }
 
     protected suspend fun MutableList<Int>.addUnion(context: SpiralContext, union: OSLUnion) {
         when (union) {
