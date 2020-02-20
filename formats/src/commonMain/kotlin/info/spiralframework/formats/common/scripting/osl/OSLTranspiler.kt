@@ -258,7 +258,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                             }
                             op.whenTrue != null && op.whenFalse == null -> {
                                 if (entry is Dr1MarkLabelEntry && op.whenTrue == entry.id) {
-                                    if (buffer[buffer.size - 2] !is Dr1GoToLabelEntry) {
+                                    if (buffer[buffer.size - 2] !is Dr1GoToLabelEntry || buffer.size <= 5) {
                                         //No else check
                                         output.add {
                                             repeat(indent) { append('\t') }
