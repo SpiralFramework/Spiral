@@ -6,6 +6,7 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.decodeToString
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.readExact
 import org.abimon.kornea.io.common.readInt16LE
 import org.abimon.kornea.io.common.readIntXLE
 import org.abimon.kornea.io.common.writeInt16LE
@@ -13,10 +14,9 @@ import org.abimon.kornea.io.common.writeIntXLE
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String {
+suspend fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String? {
     val data = ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024))
-    read(data)
-    return data.decodeToString(encoding)
+    return readExact(data)?.decodeToString(encoding)
 }
 
 @ExperimentalUnsignedTypes
