@@ -52,7 +52,7 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
 
                     val files = Array(fileCount) {
                         val nameLength = requireNotNull(flow.readInt32LE(), notEnoughData)
-                        val name = flow.readString(nameLength, encoding = TextCharsets.UTF_8)
+                        val name = requireNotNull(flow.readString(nameLength, encoding = TextCharsets.UTF_8), notEnoughData)
                         val fileSize = requireNotNull(flow.readInt64LE(), notEnoughData)
                         val fileOffset = requireNotNull(flow.readInt64LE(), notEnoughData)
 
@@ -63,12 +63,12 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
 
                     val directories = Array(directoryCount) {
                         val nameLength = requireNotNull(flow.readInt32LE(), notEnoughData)
-                        val name = flow.readString(nameLength, encoding = TextCharsets.UTF_8)
+                        val name = requireNotNull(flow.readString(nameLength, encoding = TextCharsets.UTF_8), notEnoughData)
                         val subEntryCount = requireNotNull(flow.readInt32LE(), notEnoughData)
 
                         val subEntries = Array(subEntryCount) {
                             val subNameLength = requireNotNull(flow.readInt32LE())
-                            val subName = flow.readString(subNameLength, encoding = TextCharsets.UTF_8)
+                            val subName = requireNotNull(flow.readString(subNameLength, encoding = TextCharsets.UTF_8), notEnoughData)
                             val isDirectory = requireNotNull(flow.read(), notEnoughData) == 1
 
                             WadSubEntry(subName, isDirectory)

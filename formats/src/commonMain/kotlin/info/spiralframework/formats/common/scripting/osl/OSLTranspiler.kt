@@ -198,7 +198,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                 }
                             }
                             else -> {
-                                println(">:( $entry")
+//                                println(">:( $entry")
                                 buffer.removeAt(buffer.size - 1)
                                 i--
 
@@ -224,7 +224,7 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                 operation = null
                             }
                             else -> {
-                                println(">:( $entry")
+//                                println(">:( $entry")
                                 buffer.removeAt(buffer.size - 1)
                                 i--
                                 buffer.dumpEntries(indent)

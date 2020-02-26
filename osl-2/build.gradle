@@ -1,9 +1,12 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
 //apply plugin: 'antlr'
 
-mainClassName = "info.spiralframework.osl.OSLProxy"
+//mainClassName = "info.spiralframework.osl.OSLProxy"
+mainClassName = "BootstrapKt"
 
 ext {
     serialization_version = "0.12.0"
@@ -92,12 +95,16 @@ kotlin {
     }
 }
 
-shadowJar {
-    baseName = jar.baseName
-    appendix = jar.appendix
-    version = jar.version
+task shadowJar(type: ShadowJar, dependsOn: [jvmJar], overwrite: true) {
+    mergeServiceFiles()
+    from jvmJar.archiveFile
+    configurations = [project.configurations.jvmRuntimeClasspath]
+    group = "shadow"
 
-    classifier = "shadow"
+    archiveBaseName.set(jvmJar.archiveBaseName.get())
+    archiveAppendix.set(jvmJar.archiveAppendix.get())
+    archiveVersion.set(jvmJar.archiveVersion.get())
+    archiveClassifier.set("shadow")
 }
 
 //generateGrammarSource {

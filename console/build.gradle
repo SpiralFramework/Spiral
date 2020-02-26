@@ -99,6 +99,11 @@ task shadowJar(type: ShadowJar, dependsOn: [jvmJar], overwrite: true) {
     }
     
     group = "shadow"
+
+    archiveBaseName.set(jvmJar.archiveBaseName.get())
+    archiveAppendix.set(jvmJar.archiveAppendix.get())
+    archiveVersion.set(jvmJar.archiveVersion.get())
+    archiveClassifier.set("shadow")
 }
 
 //publishing {

@@ -74,7 +74,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
                         val namePadding = (nameLength + 1) alignmentNeededFor 0x10
                         val dataPadding = compressedSize alignmentNeededFor 0x10
 
-                        val name = flow.readString(nameLength, encoding = TextCharsets.UTF_8)
+                        val name = requireNotNull(flow.readString(nameLength, encoding = TextCharsets.UTF_8), notEnoughData)
                         flow.skip(namePadding.toULong() + 1u)
 
                         val position = flow.position()
