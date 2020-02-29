@@ -10,7 +10,7 @@ import org.abimon.kornea.io.common.writeInt16LE
 import org.abimon.kornea.io.common.writeInt32LE
 
 class CustomLinScript {
-    private val _textData: MutableList<String> = ArrayList()
+    val _textData: MutableList<String> = ArrayList()
     val textData: List<String>
         get() = _textData
 

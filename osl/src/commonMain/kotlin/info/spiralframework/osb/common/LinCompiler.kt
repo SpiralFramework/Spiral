@@ -51,7 +51,13 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
 
     override suspend fun addDialogue(context: SpiralContext, speaker: Int, dialogue: OSLUnion) {
         val speakerEntry = game.SpeakerEntry(speaker) ?: return
-        val textEntry = game.TextEntry(custom.addText(stringify(context, dialogue))) ?: return
+        val dialogueResult = if (dialogue is OSLUnion.FunctionCallType) functionCall(context, dialogue.functionName, dialogue.parameters)
+                ?: OSLUnion.UndefinedType else dialogue
+
+        val textEntry = game.TextEntry(if (dialogueResult is OSLUnion.NumberType)
+            dialogueResult.number.toInt()
+        else
+            custom.addText(stringStub(context, dialogueResult))) ?: return
         val waitFrame = game.WaitFrame() ?: return
         val waitForInput = game.WaitForInput() ?: return
 
@@ -73,7 +79,7 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         }
 
         val function = registry[functionName.toUpperCase().replace("_", "")]
-                ?.firstOrNull { func -> func.parameterNames.size == flattened.size }
+                ?.firstOrNull { func -> func.parameterNames.size == flattened.size || (func is SpiralSuspending.FuncX && func.variadicSupported && flattened.size >= func.parameterNames.size) }
                 ?: return null
 
         val functionParams = function.parameterNames.toMutableList()
@@ -86,7 +92,7 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         }
 
         flattened.forEach { union ->
-            passedParams[functionParams.removeAt(0)] = union
+            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0) else "index_${passedParams.size}"] = union
         }
 
         return function.suspendInvoke(context, passedParams)
@@ -723,6 +729,35 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         custom.addEntry(Dr1SetGameParameterEntry(Dr1SetGameParameterEntry.GAME_PARAMETER_WAIT_FORCE, Dr1SetGameParameterEntry.OPERATOR_SET, frameCount))
     }
 
+    suspend fun formatted(context: SpiralContext, _parameters: Map<String, Any?>): OSLUnion.Int16BENumberType {
+        val parameters = _parameters.mapKeys { (key) -> key.substringAfter("index_").toInt() }
+                .entries.sortedBy(Map.Entry<Int, *>::key)
+                .map(Map.Entry<Int, Any?>::value)
+                .toMutableList()
+
+        val string = stringStub(context, parameters.removeAt(0))
+        val index = custom._textData.size
+        custom._textData.add(string)
+
+        val params: MutableList<Int> = ArrayList()
+        params.add(index shr 8)
+        params.add(index and 0xFF)
+
+        parameters.forEach { i ->
+            params.add(0)
+            params.add(intStub(context, i) and 0xFF)
+        }
+
+        custom.addEntry(UnknownLinEntry(0x3E, params.toIntArray()))
+
+        val templateIndex = custom._textData.size
+        custom._textData.add(buildString {
+            repeat(64) { append(" ") }
+        })
+
+        return OSLUnion.Int16BENumberType(templateIndex)
+    }
+
     override fun registerDefaults() {
         super.registerDefaults()
 
@@ -747,6 +782,8 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         register(SpiralSuspending.Func1("FadeOutToBlack", "frameCount", func = this::fadeOutToBlackStub))
 
         register(SpiralSuspending.Func1("Wait", "frameCount", func = this::waitStub))
+
+        register(SpiralSuspending.FuncX("Formatted", variadicSupported = true, func = this::formatted))
     }
 }
 
