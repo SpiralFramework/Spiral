@@ -8,7 +8,7 @@ import info.spiralframework.formats.common.withFormats
 import org.abimon.kornea.io.common.*
 
 @ExperimentalUnsignedTypes
-class DataTableStructure(val entries: Array<Array<DataVariable>>, val utf8Strings: Array<String>, val utf16Strings: Array<String>) {
+class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val entries: Array<Array<DataVariable>>, val utf8Strings: Array<String>, val utf16Strings: Array<String>) {
     data class DataVariableHeader(val variableName: String, val variableType: String)
     sealed class DataVariable(variableName: String, data: Any) {
         data class UnsignedByte(val variableName: String, val data: UByte) : DataVariable(variableName, data)
@@ -105,7 +105,7 @@ class DataTableStructure(val entries: Array<Array<DataVariable>>, val utf8String
                     val utf8Strings = Array(utf8Count) { flow.readSingleByteNullTerminatedString(encoding = TextCharsets.UTF_8) }
                     val utf16Strings = Array(utf16Count) { flow.readSingleByteNullTerminatedString(encoding = TextCharsets.UTF_16) }
 
-                    return DataTableStructure(entries, utf8Strings, utf16Strings)
+                    return DataTableStructure(variableDetails, entries, utf8Strings, utf16Strings)
                 }
             }
         }

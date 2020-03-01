@@ -1,7 +1,8 @@
 package info.spiralframework.core.formats
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.formats.utils.DataSource
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.OutputFlow
 import java.io.OutputStream
 import java.util.*
 
@@ -46,7 +47,7 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      *
      * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
      */
-    fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource): FormatResult<Optional<T>>
+    suspend fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): FormatResult<Optional<T>>
         = read(context, readContext, source).map { Optional.of(it) }
 
     /**
@@ -57,7 +58,7 @@ interface ReadableSpiralFormat<T>: SpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource): FormatResult<T>
+    suspend fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): FormatResult<T>
 }
 
 /**
@@ -69,7 +70,7 @@ interface WritableSpiralFormat: SpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    fun supportsWriting(context: SpiralContext, data: Any): Boolean
+    fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean
 
     /**
      * Writes [data] to [stream] in this format
@@ -82,7 +83,7 @@ interface WritableSpiralFormat: SpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse
+    suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse
 }
 
 sealed class FormatWriteResponse {

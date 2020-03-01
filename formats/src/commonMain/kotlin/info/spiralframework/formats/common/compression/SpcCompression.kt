@@ -1,11 +1,17 @@
 package info.spiralframework.formats.common.compression
 
 import info.spiralframework.base.common.reverseBits
+import org.abimon.kornea.io.common.readInt32LE
+
+const val SPC_COMPRESSION_MAGIC_NUMBER = 0x53504343
 
 fun decompressSpcData(data: ByteArray, size: Int = 0): ByteArray {
     val output = ArrayList<Byte>(size)
     var flag = 1
     var pos = 0
+
+    if (data.readInt32LE(0) == SPC_COMPRESSION_MAGIC_NUMBER)
+        pos += 4
 
     while (pos < data.size) {
         // We use an 8-bit flag to determine whether something is raw data,

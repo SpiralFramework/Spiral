@@ -1,18 +1,16 @@
 package info.spiralframework.core.formats
 
-import info.spiralframework.formats.game.DRGame
-import info.spiralframework.formats.utils.BLANK_DATA_CONTEXT
-import info.spiralframework.formats.utils.DataContext
+import info.spiralframework.formats.common.games.DrGame
 
 interface FormatWriteContext {
     companion object {
-        operator fun invoke(name: String? = null, game: DRGame? = null, dataContext: DataContext? = null): FormatWriteContext =
-                DefaultFormatWriteContext(name, game, dataContext ?: BLANK_DATA_CONTEXT)
+        operator fun invoke(name: String? = null, game: DrGame? = null): FormatWriteContext =
+                DefaultFormatWriteContext(name, game)
     }
 
     val name: String?
-    val game: DRGame?
-    val dataContext: DataContext
+    val game: DrGame?
+//    val dataContext: DataContext
 }
 
-data class DefaultFormatWriteContext(override val name: String? = null, override val game: DRGame? = null, override val dataContext: DataContext = BLANK_DATA_CONTEXT): FormatWriteContext
+data class DefaultFormatWriteContext(override val name: String? = null, override val game: DrGame? = null): FormatWriteContext

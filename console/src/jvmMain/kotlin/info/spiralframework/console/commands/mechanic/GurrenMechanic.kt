@@ -30,8 +30,8 @@ import kotlin.reflect.jvm.jvmName
 class GurrenMechanic(override val parameterParser: ParameterParser) : CommandClass {
     companion object {
         val COMPILABLE_ARCHIVES = arrayOf<WritableSpiralFormat>(
-                CpkFormat, PakFormat, SpcFormat,
-                WadFormat, ZipFormat
+                CpkArchiveFormat, PakArchiveFormat, SpcArchiveFormat,
+                WadArchiveFormat, ZipFormat
         )
 
         val PERCENT_FORMAT = DecimalFormat("00.00")

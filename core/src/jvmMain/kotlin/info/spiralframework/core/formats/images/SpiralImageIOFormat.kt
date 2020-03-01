@@ -4,12 +4,18 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.utils.DataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.useInputFlow
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 
-open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, ReadableSpiralFormat<BufferedImage> {
+open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, ReadableSpiralFormat<BufferedImage> {
     override val name: String = names.firstOrNull() ?: this::class.java.name
     override val extension: String? = null
 
@@ -23,23 +29,25 @@ open class SpiralImageIOFormat(vararg val names: String): SpiralImageFormat, Rea
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
-        source().use { stream ->
-            val imageStream = ImageIO.createImageInputStream(stream)
-            val reader = ImageIO.getImageReaders(imageStream)
-                    .asSequence()
-                    .firstOrNull { reader -> names.any { name -> name.equals(reader.formatName, true) } }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<BufferedImage> =
+            source.useInputFlow { flow ->
+                val stream = ByteArrayInputStream(flow.readBytes())
+                val imageStream = withContext(Dispatchers.IO) { ImageIO.createImageInputStream(stream) }
+                val reader = ImageIO.getImageReaders(imageStream)
+                        .asSequence()
+                        .firstOrNull { reader -> names.any { name -> name.equals(reader.formatName, true) } }
 
-            try {
-                reader?.input = imageStream
-                val img = reader?.read(0)
+                try {
+                    reader?.input = imageStream
+                    val img = withContext(Dispatchers.IO) {
+                        reader?.read(0)
+                    }
 
-                return FormatResult(this, img, img != null, 1.0)
-            } catch (io: IOException) {
-                return FormatResult.Fail(this, 1.0, io)
-            } finally {
-                reader?.dispose()
-            }
-        }
-    }
+                    return@useInputFlow FormatResult(this, img, img != null, 1.0)
+                } catch (io: IOException) {
+                    return@useInputFlow FormatResult.Fail<BufferedImage>(this, 1.0, io)
+                } finally {
+                    reader?.dispose()
+                }
+            } ?: FormatResult.Fail(this, 1.0)
 }

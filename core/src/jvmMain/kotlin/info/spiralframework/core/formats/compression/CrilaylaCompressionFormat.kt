@@ -7,14 +7,14 @@ import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.common.compression.decompressVita
+import info.spiralframework.formats.common.compression.decompressCrilayla
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
-object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
-    override val name: String = "DrVita Compression"
+object CrilaylaCompressionFormat: ReadableSpiralFormat<DataSource<*>> {
+    override val name: String = "CRILAYLA Compression"
     override val extension: String = "cmp"
 
     /**
@@ -36,9 +36,9 @@ object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
             if (output == null) {
                 //Cache has failed; store in memory
                 cache.close()
-                return FormatResult.Success(this, BinaryDataSource(decompressVita(data)), 1.0)
+                return FormatResult.Success(this, BinaryDataSource(decompressCrilayla(data)), 1.0)
             } else {
-                output.write(decompressVita(data))
+                output.write(decompressCrilayla(data))
 
                 val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
                 result.release.add(cache)

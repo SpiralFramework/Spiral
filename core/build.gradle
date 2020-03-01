@@ -4,6 +4,7 @@ kotlin {
     jvm {
         compilations.main.kotlinOptions {
             jvmTarget = "1.8"
+            languageVersion = "1.3"
         }
 //        withJava()
     }
@@ -27,6 +28,7 @@ kotlin {
 
                 api project(":base")
                 api project(":formats")
+                api project(":osl")
             }
         }
         commonTest {

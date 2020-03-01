@@ -23,7 +23,6 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.ProgressTracker
 import info.spiralframework.base.jvm.crypto.md5Hash
 import info.spiralframework.base.jvm.crypto.verify
-import info.spiralframework.base.jvm.io.files.relativePathFrom
 import info.spiralframework.base.jvm.toFileSize
 import info.spiralframework.console.data.*
 import info.spiralframework.console.eventbus.*
@@ -38,6 +37,7 @@ import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.abimon.kornea.io.jvm.files.relativePathFrom
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.channels.FileChannel
@@ -305,7 +305,7 @@ internal constructor(var context: SpiralCockpitContext) {
     }
 
     val runningJar = File(Cockpit::class.java.protectionDomain.codeSource.location.toURI())
-    val runningDirectory = File(System.getProperty("user.dir")).absoluteFile!!
+    val runningDirectory = File(System.getProperty("user.dir")).absoluteFile
     val relativeRunningJar = runningJar relativePathFrom runningDirectory
 
     /** The mutex to use to access this classes properties */

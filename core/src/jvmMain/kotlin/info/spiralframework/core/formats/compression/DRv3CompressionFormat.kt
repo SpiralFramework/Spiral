@@ -7,14 +7,14 @@ import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.common.compression.decompressVita
+import info.spiralframework.formats.common.compression.decompressV3
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
-object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
-    override val name: String = "DrVita Compression"
+object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
+    override val name: String = "DRv3 Compression"
     override val extension: String = "cmp"
 
     /**
@@ -30,15 +30,15 @@ object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
         try {
             val data = source.useInputFlow { flow -> flow.readBytes() } ?: return FormatResult.Fail(this, 1.0)
-            val cache = context.cacheShortTerm(context, "crilayla:${data.sha256().toHexString()}")
+            val cache = context.cacheShortTerm(context, "drv3:${data.sha256().toHexString()}")
 
             val output = cache.openOutputFlow()
             if (output == null) {
                 //Cache has failed; store in memory
                 cache.close()
-                return FormatResult.Success(this, BinaryDataSource(decompressVita(data)), 1.0)
+                return FormatResult.Success(this, BinaryDataSource(decompressV3(context, data)), 1.0)
             } else {
-                output.write(decompressVita(data))
+                output.write(decompressV3(context, data))
 
                 val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
                 result.release.add(cache)

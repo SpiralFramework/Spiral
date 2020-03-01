@@ -3,6 +3,7 @@ package info.spiralframework.formats.common.scripting.osl
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.freeze
+import info.spiralframework.base.common.io.println
 import info.spiralframework.base.common.text.appendln
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.DrGame
@@ -581,20 +582,4 @@ private fun MutableList<String>.add(block: StringBuilder.() -> Unit) {
     val builder = StringBuilder()
     builder.block()
     add(builder.toString())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-private suspend fun OutputFlow.println(string: String) {
-    write(string.encodeToUTF8ByteArray())
-    write('\n'.toInt())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-private suspend fun OutputFlow.println(block: StringBuilder.() -> Unit) {
-    val builder = StringBuilder()
-    builder.block()
-    builder.appendln()
-    write(builder.toString().encodeToUTF8ByteArray())
 }

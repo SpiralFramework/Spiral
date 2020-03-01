@@ -1,18 +1,22 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.FlowOutputStream
 import info.spiralframework.core.formats.*
-import info.spiralframework.core.use
-import info.spiralframework.formats.utils.DataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import net.npe.tga.TGAReader
 import net.npe.tga.readImage
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.useInputFlow
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
-import java.io.OutputStream
 import javax.imageio.ImageIO
 
-object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
+object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
     override val name: String = "tga"
     override val extension: String = "tga"
 
@@ -28,10 +32,11 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<BufferedImage> {
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<BufferedImage> {
         with(context) {
             try {
-                source.use { stream -> return FormatResult.Success(this@TGAFormat, TGAReader.readImage(this, stream.readBytes()), 1.0) }
+                return source.useInputFlow { flow -> FormatResult.Success(this@TGAFormat, TGAReader.readImage(this, flow.readBytes()), 1.0) }
+                        ?: FormatResult.Fail(this@TGAFormat, 1.0)
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
 
@@ -53,7 +58,7 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is Image
 
     /**
      * Writes [data] to [stream] in this format
@@ -66,7 +71,7 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
         with(context) {
             if (data !is Image)
                 return FormatWriteResponse.WRONG_FORMAT
@@ -86,7 +91,11 @@ object TGAFormat: ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
             }
 
             try {
-                ImageIO.write(tga, "TGA", stream)
+                withContext(Dispatchers.IO) {
+                    FlowOutputStream.withGlobalScope(flow, false).use { out ->
+                        ImageIO.write(tga, "TGA", out)
+                    }
+                }
 
                 return FormatWriteResponse.SUCCESS
             } catch (io: IOException) {

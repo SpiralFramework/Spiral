@@ -1,10 +1,12 @@
 package info.spiralframework.core.formats
 
+import info.spiralframework.base.common.concurrent.suspendForEach
+import org.abimon.kornea.io.common.DataCloseable
 import java.io.Closeable
 import java.util.*
 import kotlin.collections.ArrayList
 
-sealed class FormatResult<T>: Closeable {
+sealed class FormatResult<T>: DataCloseable {
     companion object {
         operator fun <T> invoke(format: SpiralFormat? = null, obj: T?, isFormat: Boolean, chance: Double): FormatResult<T> {
             if (obj == null)
@@ -87,9 +89,9 @@ sealed class FormatResult<T>: Closeable {
     val safeObj: T?
         get() = if (didSucceed) obj else null
 
-    val release: MutableCollection<Closeable> = ArrayList()
+    val release: MutableCollection<DataCloseable> = ArrayList()
 
-    override fun close() { release.forEach(Closeable::close) }
+    override suspend fun close() { release.suspendForEach(DataCloseable::close) }
 
     abstract fun <R> map(transform: (T) -> R): FormatResult<R>
     abstract fun filter(predicate: (T) -> Boolean): FormatResult<T>

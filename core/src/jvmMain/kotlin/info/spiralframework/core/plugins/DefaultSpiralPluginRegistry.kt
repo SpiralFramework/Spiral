@@ -7,11 +7,11 @@ import info.spiralframework.base.common.locale.printLocale
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.crypto.sha256Hash
 import info.spiralframework.base.jvm.crypto.verify
-import info.spiralframework.base.jvm.io.files.ensureDirectoryExists
 import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.abimon.kornea.io.jvm.files.ensureDirectoryExists
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader

@@ -1,9 +1,13 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.FlowOutputStream
 import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.abimon.kornea.io.common.flow.OutputFlow
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -23,7 +27,7 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is Image
 
     /**
      * Writes [data] to [stream] in this format
@@ -36,7 +40,7 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
         with(context) {
             if (data !is Image)
                 return FormatWriteResponse.WRONG_FORMAT
@@ -56,7 +60,11 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
             }
 
             try {
-                ImageIO.write(png, "PNG", stream)
+                withContext(Dispatchers.IO) {
+                    FlowOutputStream.withGlobalScope(flow, false).use { out ->
+                        ImageIO.write(png, "PNG", out)
+                    }
+                }
 
                 return FormatWriteResponse.SUCCESS
             } catch (io: IOException) {

@@ -4,12 +4,12 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.data.DataTableV3
-import info.spiralframework.formats.utils.DataSource
+import info.spiralframework.formats.common.data.DataTableStructure
+import org.abimon.kornea.io.common.DataSource
 
-object DataTableV3Format: ReadableSpiralFormat<DataTableV3> {
+object DataTableStructureFormat: ReadableSpiralFormat<DataTableStructure> {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
-    override val name: String = "Data Table V3"
+    override val name: String = "Data Table Structure"
     /**
      * The usual extension for this format. Some formats don't have a proper extension, so this can be nullable
      */
@@ -25,8 +25,8 @@ object DataTableV3Format: ReadableSpiralFormat<DataTableV3> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<DataTableV3> {
-        val dataTable = DataTableV3(context, source) ?: return FormatResult.Fail(this, 1.0)
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataTableStructure> {
+        val dataTable = DataTableStructure(context, source) ?: return FormatResult.Fail(this, 1.0)
 
         return FormatResult.Success(this, dataTable, 0.7)
     }

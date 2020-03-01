@@ -11,8 +11,9 @@ import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
+import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.compression.*
-import info.spiralframework.formats.utils.DataSource
+import org.abimon.kornea.io.common.DataSource
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -49,9 +50,9 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
     }
 }
 
-val COMPRESSION_FORMATS = arrayOf(CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat)
+val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 
-fun SpiralContext.decompress(dataSource: DataSource): Pair<DataSource, List<CompressionFormat<*>>> {
+suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableSpiralFormat<DataSource<*>>>> {
     val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.read(source = dataSource, context = this) }
             .filter { pair -> pair.second.didSucceed }
             .minBy { pair -> pair.second.chance }

@@ -1,19 +1,18 @@
 package info.spiralframework.console.commands.shared
 
-import info.spiralframework.base.common.collections.iterator
 import info.spiralframework.base.common.collections.map
 import info.spiralframework.console.commands.data.ExtractArgs
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.core.formats.audio.AudioFormats
-import info.spiralframework.core.formats.compression.CRILAYLAFormat
+import info.spiralframework.core.formats.compression.CrilaylaCompressionFormat
 import info.spiralframework.core.formats.compression.DRVitaFormat
-import info.spiralframework.core.formats.compression.SPCCompressionFormat
-import info.spiralframework.core.formats.compression.V3CompressionFormat
+import info.spiralframework.core.formats.compression.SpcCompressionFormat
+import info.spiralframework.core.formats.compression.DRv3CompressionFormat
 import info.spiralframework.core.formats.data.DataTableV3Format
 import info.spiralframework.core.formats.images.*
-import info.spiralframework.core.formats.scripting.LinFormat
+import info.spiralframework.core.formats.scripting.LinScriptFormat
 import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
 import info.spiralframework.core.formats.text.CSVFormat
 import info.spiralframework.core.formats.video.SFLFormat
@@ -30,9 +29,9 @@ import java.util.zip.ZipFile
 object GurrenShared {
     val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<out Any>> by lazy {
         mutableListOf(
-                AWBFormat, CpkFormat, PakFormat,
+                AwbArchiveFormat, CpkArchiveFormat, PakArchiveFormat,
                 SFLFormat,
-                SpcFormat, SRDFormat, WadFormat,
+                SpcArchiveFormat, SrdArchiveFormat, WadArchiveFormat,
                 ZipFormat
         )
     }
@@ -40,12 +39,12 @@ object GurrenShared {
     val READABLE_FORMATS: MutableList<ReadableSpiralFormat<out Any>> by lazy {
         mutableListOf(
                 //FolderFormat
-                AWBFormat, CpkFormat, PakFormat, SpcFormat, SRDFormat, WadFormat, ZipFormat,
+                AwbArchiveFormat, CpkArchiveFormat, PakArchiveFormat, SpcArchiveFormat, SrdArchiveFormat, WadArchiveFormat, ZipFormat,
                 AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
-                CRILAYLAFormat, DRVitaFormat, SPCCompressionFormat, V3CompressionFormat,
+                CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat,
                 DDSImageFormat.DXT1,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
-                LinFormat, OpenSpiralLanguageFormat,
+                LinScriptFormat, OpenSpiralLanguageFormat,
                 SFLFormat,
                 DataTableV3Format
         )
@@ -53,10 +52,10 @@ object GurrenShared {
 
     val WRITABLE_FORMATS: MutableList<WritableSpiralFormat> by lazy {
         mutableListOf<WritableSpiralFormat>(
-                CpkFormat, FolderFormat, PakFormat, SpcFormat, WadFormat, ZipFormat,
+                CpkArchiveFormat, FolderFormat, PakArchiveFormat, SpcArchiveFormat, WadArchiveFormat, ZipFormat,
                 AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
                 JPEGFormat, PNGFormat, SHTXFormat, TGAFormat,
-                LinFormat, OpenSpiralLanguageFormat,
+                LinScriptFormat, OpenSpiralLanguageFormat,
                 CSVFormat
         )
     }
