@@ -378,23 +378,7 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
     override suspend fun colourCodeFor(context: SpiralContext, clt: String): String? = game.linColourCodes[clt]?.toString()
 
     override suspend fun closeLongReference(context: SpiralContext): String? = null
-    override suspend fun stringify(context: SpiralContext, data: OSLUnion): String =
-            when (data) {
-                is OSLUnion.NumberType -> data.number.toString()
-                is OSLUnion.StringType -> data.string
-                is OSLUnion.LongReferenceType -> data.longReference.joinToString(" ") { it.toString(16).padStart(2, '0') }
-                is OSLUnion.VariableReferenceType -> getData(context, data.variableName)?.let { stringify(context, it) }
-                        ?: "null"
-                is OSLUnion.LongLabelType -> data.longReference.joinToString(" ") { it.toString(16).padStart(2, '0') }
-                is OSLUnion.LongParameterType -> data.longReference.joinToString(" ") { it.toString(16).padStart(2, '0') }
-                is OSLUnion.ActionType -> data.actionName.joinToString(" ") { it.toString(16).padStart(2, '0') }
-                is OSLUnion.BooleanType -> data.boolean.toString()
-                is OSLUnion.FunctionParameterType -> if (data.parameterName != null) "${data.parameterName} = ${stringify(context, data.parameterValue)}" else stringify(context, data.parameterValue)
-                is OSLUnion.FunctionCallType -> "${data.functionName}(${data.parameters.map { (name, value) -> if (name != null) "$name = ${stringify(context, value)}" else stringify(context, value) }.joinToString()})"
-                OSLUnion.UndefinedType -> "undefined"
-                OSLUnion.NullType -> "null"
-                OSLUnion.NoOpType -> "NoOp"
-            }
+    override suspend fun stringify(context: SpiralContext, data: OSLUnion): String = stringStub(context, data)
 
     override suspend fun end(context: SpiralContext) {
         custom.compile(flow)

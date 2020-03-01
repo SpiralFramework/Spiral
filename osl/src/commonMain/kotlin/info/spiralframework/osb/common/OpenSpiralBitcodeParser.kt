@@ -53,7 +53,7 @@ object OpenSpiralBitcode {
     const val VARIABLE_INT24BE = 0x74
     const val VARIABLE_INT32LE = 0x75
     const val VARIABLE_INT32BE = 0x76
-    const val VARIABLE_ARBITRARY_INTEGER = 0x7D
+    const val VARIABLE_ARBITRARY_INTEGER = 0x7E
     const val VARIABLE_ARBITRARY_DECIMAL = 0x7F
 
     const val LONG_REFERENCE_TEXT = 0xA0
@@ -358,10 +358,10 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
 
     private suspend fun SpiralContext.readArg(notEnoughData: () -> String): OSLUnion =
             when (val variable = requireNotNull(flow.read(), notEnoughData)) {
-                OpenSpiralBitcode.VARIABLE_TEXT -> OSLUnion.RawStringType(flow.readNullTerminatedUTF8String())
                 OpenSpiralBitcode.VARIABLE_LABEL -> OSLUnion.LabelType(flow.readNullTerminatedUTF8String())
-                OpenSpiralBitcode.VARIABLE_LONG_LABEL -> OSLUnion.LabelType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_PARAMETER -> OSLUnion.ParameterType(flow.readNullTerminatedUTF8String())
+                OpenSpiralBitcode.VARIABLE_TEXT -> OSLUnion.RawStringType(flow.readNullTerminatedUTF8String())
+                OpenSpiralBitcode.VARIABLE_LONG_LABEL -> OSLUnion.LabelType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_LONG_PARAMETER -> OSLUnion.ParameterType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_LONG_REFERENCE -> OSLUnion.RawStringType(parseLongReference())
                 OpenSpiralBitcode.VARIABLE_BOOL -> OSLUnion.BooleanType(requireNotNull(flow.read(), notEnoughData) != 0)
