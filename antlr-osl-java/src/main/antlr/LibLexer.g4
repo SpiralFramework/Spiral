@@ -1,7 +1,7 @@
 lexer grammar LibLexer;
 
-SINGLE_LINE_COMMENT: '//' ~[\n]+ -> skip;
-MULTI_LINE_COMMENT: '/*' .*? '*/' -> skip ; // .*? matches anything until the first */
+SINGLE_LINE_COMMENT: '//' ~[\n]+ ('\r'?'\n')* -> skip;
+MULTI_LINE_COMMENT: '/*' .*? '*/' ('\r'?'\n')* -> skip ; // .*? matches anything until the first */
 
 INTEGER: ('0b' BINARY_DIGITS+) | ('0o' OCTAL_DIGITS+) | ('0x' HEX_DIGITS+) | '0d'? DECIMAL_DIGITS+;
 DECIMAL_NUMBER: ('0' | ([1-9] DECIMAL_DIGITS*)) ('.' DECIMAL_DIGITS+)? ([eE] [+\-]? DECIMAL_DIGITS+)?;

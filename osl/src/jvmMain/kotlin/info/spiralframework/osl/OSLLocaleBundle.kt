@@ -1,6 +1,5 @@
 package info.spiralframework.osl
 
-import info.spiralframework.antlr.osl.LocaleVisitor
 import info.spiralframework.antlr.osl.OSLLocaleLexer
 import info.spiralframework.antlr.osl.OSLLocaleParser
 import info.spiralframework.base.common.io.SpiralResourceLoader

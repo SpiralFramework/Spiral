@@ -1,10 +1,9 @@
-package info.spiralframework.antlr.osl
+package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OSLLocaleParser
 import info.spiralframework.antlr.osl.OSLLocaleParserBaseVisitor
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.LocaleBundle
-import info.spiralframework.osl.OSLLocaleBundle
 import org.antlr.v4.runtime.tree.TerminalNode
 import kotlin.reflect.KClass
 
