@@ -2,6 +2,8 @@ package info.spiralframework.osb.common
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralFunction
+import info.spiralframework.base.common.SpiralSuspending
 import info.spiralframework.formats.common.games.*
 import info.spiralframework.formats.common.get
 import info.spiralframework.formats.common.scripting.lin.CustomLinScript
@@ -87,7 +89,7 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         flattened.forEach { union ->
             if (union !is OSLUnion.FunctionParameterType) return@forEach
             val parameter = functionParams.firstOrNull { p -> p == union.parameterName } ?: return@forEach
-            passedParams[parameter] = union
+            passedParams[parameter] = union.parameterValue
             functionParams.remove(parameter)
         }
 

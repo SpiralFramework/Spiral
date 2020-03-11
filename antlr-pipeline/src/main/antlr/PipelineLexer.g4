@@ -9,12 +9,15 @@ VARIABLE_ASSIGNMENT: '=';
 VARIABLE_REFERENCE: '$' -> pushMode(Identifier);
 WRAPPED_SCRIPT_CALL: '$(' -> pushMode(ScriptCall), pushMode(Identifier);
 
-INTEGER: ('0b' BINARY_DIGITS+) | ('0o' OCTAL_DIGITS+) | ('0x' HEX_DIGITS+) | '0d'? DECIMAL_DIGITS+;
-DECIMAL_NUMBER: ('0' | ([1-9] DECIMAL_DIGITS*)) ('.' DECIMAL_DIGITS+)? ([eE] [+\-]? DECIMAL_DIGITS+)?;
+INTEGER: '-'? ('0b' BINARY_DIGITS+) | ('0o' OCTAL_DIGITS+) | ('0x' HEX_DIGITS+) | '0d'? DECIMAL_DIGITS+;
+DECIMAL_NUMBER: '-'? ('0' | ([1-9] DECIMAL_DIGITS*)) ('.' DECIMAL_DIGITS+)? ([eE] [+\-]? DECIMAL_DIGITS+)?;
 
 TRUE: T R U E;
 FALSE: F A L S E;
 NULL: N U L L;
+GLOBAL: G L O B A L;
+
+START_EXPRESSION: '(' -> pushMode(ExpressionMode);
 
 BEGIN_QUOTED_STRING: '"' -> pushMode(QuotedStringMode);
 
@@ -36,7 +39,7 @@ fragment HEX_DIGITS: [0-9a-fA-F];
 fragment INLINE_WHITESPACE_CHARACTERS: [ \t];
 fragment NAME_IDENTIFIER: NAME_START_IDENTIFIER NAME_END_IDENTIFIER*;
 fragment NAME_START_IDENTIFIER: [a-zA-Z_?];
-fragment NAME_END_IDENTIFIER: [a-zA-Z0-9_\-?]+;
+fragment NAME_END_IDENTIFIER: [a-zA-Z0-9_\-?];
 
 fragment NEW_LINE: '\r'? '\n';
 
@@ -104,6 +107,7 @@ FUNC_CALL_NULL: NULL -> type(NULL);
 FUNC_CALL_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
 FUNC_CALL_TRUE: TRUE -> type(TRUE);
 FUNC_CALL_FALSE: FALSE -> type(FALSE);
+FUNC_CALL_START_EXPRESSION: '(' -> type(START_EXPRESSION), pushMode(ExpressionMode);
 
 FUNC_CALL_IDENTIFIER: NAME_IDENTIFIER -> type(IDENTIFIER), pushMode(IdentifierEnd);
 
@@ -121,6 +125,7 @@ SCRIPT_CALL_NULL: NULL -> type(NULL);
 SCRIPT_CALL_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
 SCRIPT_CALL_TRUE: TRUE -> type(TRUE);
 SCRIPT_CALL_FALSE: FALSE -> type(FALSE);
+SCRIPT_CALL_START_EXPRESSION: '(' -> type(START_EXPRESSION), pushMode(ExpressionMode);
 
 SCRIPT_CALL_IDENTIFIER: NAME_IDENTIFIER -> type(IDENTIFIER), pushMode(IdentifierEnd);
 SCRIPT_CALL_RECURSIVE: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(ScriptCall), pushMode(Identifier);
@@ -140,3 +145,26 @@ FN_DECL_IDENTIFIER: NAME_IDENTIFIER -> type(IDENTIFIER);//, pushMode(IdentifierE
 FN_DECL_PARAM_SEPARATOR: ',';
 
 FN_DECL_SKIP_WS: INLINE_WHITESPACE_CHARACTERS+ -> skip;
+
+mode ExpressionMode;
+
+RECURSIVE_EXPRESSION: '(' -> type(START_EXPRESSION), pushMode(ExpressionMode);
+END_EXPRESSION: ')' -> popMode;
+
+EXPR_PLUS: '+';
+EXPR_MINUS: '-';
+EXPR_DIVIDE: '/';
+EXPR_MULTIPLY: '*';
+
+EXPR_INTEGER: INTEGER -> type(INTEGER);
+EXPR_DECIMAL_NUMBER: DECIMAL_NUMBER -> type(DECIMAL_NUMBER);
+EXPR_VARIABLE_REFERENCE: '$' -> type(VARIABLE_REFERENCE), pushMode(Identifier);
+EXPR_WRAPPED_SCRIPT_CALL: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(ScriptCall), pushMode(Identifier);
+EXPR_NULL: NULL -> type(NULL);
+EXPR_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
+EXPR_TRUE: TRUE -> type(TRUE);
+EXPR_FALSE: FALSE -> type(FALSE);
+
+EXPR_IDENTIFIER: NAME_IDENTIFIER -> type(IDENTIFIER), pushMode(IdentifierEnd);
+
+EXPRESSION_SKIP_WS: INLINE_WHITESPACE_CHARACTERS+ -> skip;

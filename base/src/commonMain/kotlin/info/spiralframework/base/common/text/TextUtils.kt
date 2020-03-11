@@ -8,6 +8,14 @@ fun String.toIntBaseN(): Int = when {
     else -> toInt()
 }
 
+fun String.toIntOrNullBaseN(): Int? = when {
+    startsWith("0b") -> substring(2).toIntOrNull(2)
+    startsWith("0o") -> substring(2).toIntOrNull(8)
+    startsWith("0x") -> substring(2).toIntOrNull(16)
+    startsWith("0d") -> substring(2).toIntOrNull()
+    else -> toIntOrNull()
+}
+
 fun Byte.toHexString(): String = toInt().and(0xFF).toHexString()
 fun Int.toHexString(): String = StringBuilder().also(this::toHexString).toString()
 fun StringBuilder.appendHex(num: Number) = num.toInt().toHexString(this)

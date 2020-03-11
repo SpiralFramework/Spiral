@@ -1,6 +1,4 @@
-package info.spiralframework.osb.common
-
-import info.spiralframework.base.common.SpiralContext
+package info.spiralframework.base.common
 
 abstract class SpiralFunction<T>(val name: String, val parameterNames: Array<out String>) {
     abstract suspend fun suspendInvoke(context: SpiralContext, parameters: Map<String, Any?>): T
