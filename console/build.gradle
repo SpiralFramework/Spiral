@@ -4,7 +4,7 @@ apply plugin: "application"
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-mainClassName = "info.spiralframework.console.Cockpit"
+mainClassName = "info.spiralframework.console.jvm.Cockpit"
 
 kotlin {
     jvm {

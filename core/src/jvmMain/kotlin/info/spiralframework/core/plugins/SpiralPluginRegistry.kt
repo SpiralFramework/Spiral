@@ -16,7 +16,7 @@ enum class LoadPluginResult(val success: Boolean) {
 
 interface SpiralPluginRegistry {
     interface PojoProvider {
-        fun readPojo(context: SpiralCoreContext): SpiralPluginDefinitionPojo
+        suspend fun readPojo(context: SpiralCoreContext): SpiralPluginDefinitionPojo
     }
 
     object NoOp: SpiralPluginRegistry {

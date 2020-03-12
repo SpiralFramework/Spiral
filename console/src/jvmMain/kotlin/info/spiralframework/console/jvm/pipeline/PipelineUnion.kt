@@ -298,7 +298,7 @@ sealed class PipelineUnion {
     }
 
     data class FunctionDeclaration(val functionName: String, val parameterNames: Array<String>, val global: Boolean = false, val body: ScopeType?) : PipelineUnion(), Action {
-        fun asPipelineFunction(): PipelineFunction<VariableValue?> = PipelineFunction(functionName, *parameterNames, func = this::invoke)
+        fun asPipelineFunction(): PipelineFunction<VariableValue?> = PipelineFunction(functionName, *Array(parameterNames.size) { Pair(parameterNames[it], null) }, func = this::invoke)
         suspend operator fun invoke(spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, Any?>): VariableValue? =
                 body?.run(spiralContext, pipelineContext, parameters)
 

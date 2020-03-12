@@ -54,9 +54,24 @@ fun parsePipeline(text: String): PipelineUnion.ScopeType {
 }
 
 @ExperimentalUnsignedTypes
-class PipelineFunction<T>(name: String, vararg parameterNames: String, val variadicSupported: Boolean = false, val func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, Any?>) -> T) : SpiralSuspending.Function<T>(name, parameterNames) {
-    override suspend fun suspendInvoke(context: SpiralContext, parameters: Map<String, Any?>) = func(context, parameters.getValue("pipeline_context") as PipelineContext, parameters)
-    suspend fun suspendInvoke(spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, Any?>) = func(spiralContext, pipelineContext, parameters)
+class PipelineFunction<T>(val name: String, vararg val parameters: Pair<String, PipelineUnion.VariableValue?>, val variadicSupported: Boolean = false, val func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> T) {
+    suspend fun suspendInvoke(spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) = func(spiralContext, pipelineContext, parameters)
+}
+
+class FunctionBuilder<T>(val name: String) {
+    val parameters: MutableList<Pair<String, PipelineUnion.VariableValue?>> = ArrayList()
+    var variadicSupported = false
+    lateinit var func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> T
+
+    fun addParameter(name: String, default: PipelineUnion.VariableValue? = null) {
+        parameters.add(Pair(name, default))
+    }
+
+    fun setFunction(func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> T) {
+        this.func = func
+    }
+
+    fun build() = PipelineFunction(name, *parameters.toTypedArray(), variadicSupported = variadicSupported, func = func)
 }
 
 @ExperimentalUnsignedTypes
@@ -74,8 +89,18 @@ class PipelineContext(val parent: PipelineContext?) {
         }
     }
 
-    fun register(name: String, vararg parameterNames: String, variadicSupported: Boolean = false, global: Boolean = false, func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, Any?>) -> PipelineUnion.VariableValue?) =
-            register(name, PipelineFunction(name, *parameterNames, variadicSupported = variadicSupported, func = func), global)
+
+    fun register(name: String, init: FunctionBuilder<PipelineUnion.VariableValue?>.() -> Unit) {
+        val builder = FunctionBuilder<PipelineUnion.VariableValue?>(name)
+        builder.init()
+        register(name, builder.build())
+    }
+    fun register(name: String, func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> PipelineUnion.VariableValue?, init: FunctionBuilder<PipelineUnion.VariableValue?>.() -> Unit) {
+        val builder = FunctionBuilder<PipelineUnion.VariableValue?>(name)
+        builder.setFunction(func)
+        builder.init()
+        register(name, builder.build())
+    }
 
     fun register(name: String, func: PipelineFunction<PipelineUnion.VariableValue?>, global: Boolean = false) {
         if (global && parent != null) {
@@ -106,21 +131,23 @@ class PipelineContext(val parent: PipelineContext?) {
         }
 
         val function = functionRegistry[functionName.toUpperCase().replace("_", "")]
-                ?.firstOrNull { func -> func.parameterNames.size == flattened.size || (func.variadicSupported && flattened.size >= func.parameterNames.size) }
+                ?.firstOrNull { func -> (flattened.size >= func.parameters.count { (_, default) -> default == null } && flattened.size <= func.parameters.size) || (func.variadicSupported && flattened.size >= func.parameters.size) }
                 ?: return parent?.invokeFunction(context, functionName, flattened.toTypedArray())
 
-        val functionParams = function.parameterNames.toMutableList()
-        val passedParams: MutableMap<String, Any?> = HashMap()
+        val functionParams = function.parameters.toMutableList()
+        val passedParams: MutableMap<String, PipelineUnion.VariableValue> = HashMap()
         flattened.forEach { union ->
 //            if (union !is PipelineUnion.FunctionParameterType) return@forEach
-            val parameter = functionParams.firstOrNull { p -> p == union.name } ?: return@forEach
-            passedParams[parameter] = union.parameter
+            val parameter = functionParams.firstOrNull { (p) -> p == union.name } ?: return@forEach
+            passedParams[parameter.first] = union.parameter
             functionParams.remove(parameter)
         }
 
         flattened.forEach { union ->
-            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0) else "index_${passedParams.size}"] = union.parameter
+            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0).first else "index_${passedParams.size}"] = union.parameter
         }
+
+        functionParams.forEach { (name, default) -> passedParams[name] = default ?: return@forEach }
 
         return function.suspendInvoke(context, this, passedParams)
     }
