@@ -75,28 +75,28 @@ actual class DefaultSpiralLocale : AbstractSpiralLocale() {
     }
 
     actual override fun localiseEnglish(msg: String): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str)
     }
 
     actual override fun localiseEnglish(msg: String, arg: Any): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str, arg)
     }
 
     actual override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str, arg1, arg2)
     }
 
     actual override fun localiseEnglish(msg: String, vararg args: Any): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str, *args)
     }
 
     /** Avoid spreading, or so I'd like */
     actual override fun localiseEnglishArray(msg: String, args: Array<out Any>): String {
-        val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
+        val str = englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str, *args)
     }
 }

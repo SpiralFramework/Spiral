@@ -8,14 +8,19 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.compression.decompressVita
-import org.abimon.kornea.io.common.BinaryDataSource
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useInputFlow
+import java.util.*
 
 object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "DrVita Compression"
     override val extension: String = "cmp"
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+        if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC } == true)
+            return FormatResult.Success(Optional.empty(), 1.0)
+        return FormatResult.Fail(1.0)
+    }
 
     /**
      * Attempts to read the data source as [T]
@@ -30,7 +35,7 @@ object DRVitaFormat: ReadableSpiralFormat<DataSource<*>> {
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
         try {
             val data = source.useInputFlow { flow -> flow.readBytes() } ?: return FormatResult.Fail(this, 1.0)
-            val cache = context.cacheShortTerm(context, "crilayla:${data.sha256().toHexString()}")
+            val cache = context.cacheShortTerm(context, "drvita:${data.sha256().toHexString()}")
 
             val output = cache.openOutputFlow()
             if (output == null) {

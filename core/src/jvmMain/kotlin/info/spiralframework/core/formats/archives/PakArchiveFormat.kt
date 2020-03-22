@@ -12,13 +12,28 @@ import org.abimon.kornea.io.common.copyTo
 import org.abimon.kornea.io.common.flow.OutputFlow
 import org.abimon.kornea.io.jvm.JVMInputFlow
 import java.io.InputStream
+import java.util.*
 import java.util.zip.ZipFile
+import kotlin.collections.ArrayList
 
 object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat {
     override val name: String = "Pak"
     override val extension: String = "pak"
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<PakArchive>> {
+        val fileName = readContext?.name?.substringAfterLast('/')
+        if (fileName != null && fileName.contains('.')) {
+            if (!fileName.substringAfterLast('.').equals(extension, true)) {
+                return FormatResult.Fail(0.9)
+            } else {
+                return super.identify(context, readContext, source).weight { 1.0 }
+            }
+        }
+
+        return super.identify(context, readContext, source)
+    }
 
     /**
      * Attempts to read the data source as [T]
@@ -90,7 +105,7 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
                     customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
                             BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
                 } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream).copyTo(output) }
+                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
                     customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
                             cache
                     caches.add(cache)

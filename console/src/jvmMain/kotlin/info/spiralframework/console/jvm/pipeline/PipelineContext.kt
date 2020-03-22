@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -64,8 +65,10 @@ class FunctionBuilder<T>(val name: String) {
     lateinit var func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> T
 
     fun addParameter(name: String, default: PipelineUnion.VariableValue? = null) {
-        parameters.add(Pair(name, default))
+        parameters.add(Pair(name.sanitiseFunctionIdentifier(), default))
     }
+
+    fun addFlag(name: String, default: Boolean = false) = addParameter(name, PipelineUnion.VariableValue.BooleanType(default))
 
     fun setFunction(func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> T) {
         this.func = func
@@ -95,6 +98,7 @@ class PipelineContext(val parent: PipelineContext?) {
         builder.init()
         register(name, builder.build())
     }
+
     fun register(name: String, func: suspend (spiralContext: SpiralContext, pipelineContext: PipelineContext, parameters: Map<String, PipelineUnion.VariableValue>) -> PipelineUnion.VariableValue?, init: FunctionBuilder<PipelineUnion.VariableValue?>.() -> Unit) {
         val builder = FunctionBuilder<PipelineUnion.VariableValue?>(name)
         builder.setFunction(func)
@@ -107,11 +111,11 @@ class PipelineContext(val parent: PipelineContext?) {
             parent.register(name, func, global)
         } else {
             val functions: MutableList<PipelineFunction<PipelineUnion.VariableValue?>>
-            if (name.toUpperCase().replace("_", "") !in functionRegistry) {
+            if (name.sanitiseFunctionIdentifier() !in functionRegistry) {
                 functions = ArrayList()
-                functionRegistry[name.toUpperCase().replace("_", "")] = functions
+                functionRegistry[name.sanitiseFunctionIdentifier()] = functions
             } else {
-                functions = functionRegistry.getValue(name.toUpperCase().replace("_", ""))
+                functions = functionRegistry.getValue(name.sanitiseFunctionIdentifier())
             }
 
             functions.add(func)
@@ -130,26 +134,35 @@ class PipelineContext(val parent: PipelineContext?) {
             trace("Calling $functionName(${flattened.map { value -> "${value.name}=${value.parameter.asString(context, pipelineContext)}" }.joinToString()})")
         }
 
-        val function = functionRegistry[functionName.toUpperCase().replace("_", "")]
-                ?.firstOrNull { func -> (flattened.size >= func.parameters.count { (_, default) -> default == null } && flattened.size <= func.parameters.size) || (func.variadicSupported && flattened.size >= func.parameters.size) }
+        val flatPassed = flattened.count()
+        val function = functionRegistry[functionName.sanitiseFunctionIdentifier()]
+                ?.firstOrNull { func -> (flatPassed >= func.parameters.count { (_, default) -> default == null } && flatPassed <= func.parameters.size) || (func.variadicSupported && flatPassed >= func.parameters.size) }
                 ?: return parent?.invokeFunction(context, functionName, flattened.toTypedArray())
 
         val functionParams = function.parameters.toMutableList()
         val passedParams: MutableMap<String, PipelineUnion.VariableValue> = HashMap()
-        flattened.forEach { union ->
-//            if (union !is PipelineUnion.FunctionParameterType) return@forEach
-            val parameter = functionParams.firstOrNull { (p) -> p == union.name } ?: return@forEach
+        flattened.filter { union ->
+            //            if (union !is PipelineUnion.FunctionParameterType) return@forEach
+            val parameter = functionParams.firstOrNull { (p) ->
+                p == union.name?.sanitiseFunctionIdentifier()
+            } ?: return@filter true
+
             passedParams[parameter.first] = union.parameter
             functionParams.remove(parameter)
+
+            false
+        }.forEach { union ->
+            passedParams[union.name?.sanitiseFunctionIdentifier()
+                    ?: if (functionParams.isNotEmpty()) functionParams.removeAt(0).first else "INDEX${passedParams.size}"] = union.parameter
         }
 
-        flattened.forEach { union ->
-            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0).first else "index_${passedParams.size}"] = union.parameter
-        }
-
-        functionParams.forEach { (name, default) -> passedParams[name] = default ?: return@forEach }
+        functionParams.forEach { (name, default) -> passedParams.putIfAbsent(name, default ?: return@forEach) }
 
         return function.suspendInvoke(context, this, passedParams)
+    }
+
+    init {
+        PipelineFunctions.registerAll(this)
     }
 }
 
@@ -167,3 +180,6 @@ suspend fun PipelineUnion.ScopeType.run(spiralContext: SpiralContext, parentCont
 
     return null
 }
+
+private val SEPARATOR_CHARACTERS = "[_\\- ]".toRegex()
+private fun String.sanitiseFunctionIdentifier(): String = toUpperCase().replace(SEPARATOR_CHARACTERS, "")

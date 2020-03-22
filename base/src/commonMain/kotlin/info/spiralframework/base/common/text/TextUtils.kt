@@ -23,6 +23,7 @@ fun StringBuilder.appendlnHex(num: Number) {
     num.toInt().toHexString(this)
     appendln()
 }
+
 fun Int.toHexString(builder: StringBuilder) {
     with(builder) {
         append("0x")
@@ -59,6 +60,14 @@ fun String.removeEscapes(): String =
                     append(c)
                 }
             }
+        }
+
+fun String.doublePadWindowsPaths(): String =
+        replace("\"([a-zA-Z]):((?:\\\\(?:[^\\\\/:*\"?<>|]{1,254}))+)\"".toRegex()) { result ->
+            val drive = result.groupValues[1]
+            val components = result.groupValues[2].replace("\\", "\\\\")
+
+            "\"$drive:$components\""
         }
 
 /** Appends a line separator to this Appendable. */

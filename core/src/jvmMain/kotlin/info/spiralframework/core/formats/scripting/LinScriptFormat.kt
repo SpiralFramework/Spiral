@@ -30,7 +30,7 @@ object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
         val lin = LinScript(context, (readContext?.game as? DrGame.LinScriptable) ?: DrGame.LinScriptable.Unknown, source)
                 ?: return FormatResult.Fail(this, 0.9)
         if (lin.scriptData.isEmpty())
-            return FormatResult.Success(this, Optional.of(lin), 0.55)
+            return FormatResult.Success(this, Optional.of(lin), 0.45)
         return FormatResult.Success(this, Optional.of(lin), 0.85)
     }
 

@@ -8,14 +8,19 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.compression.decompressV3
-import org.abimon.kornea.io.common.BinaryDataSource
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useInputFlow
+import java.util.*
 
 object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "DRv3 Compression"
     override val extension: String = "cmp"
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+        if (source.useInputFlow { flow -> flow.readInt32BE() == info.spiralframework.formats.common.compression.DRV3_COMP_MAGIC_NUMBER } == true)
+            return FormatResult.Success(Optional.empty(), 1.0)
+        return FormatResult.Fail(1.0)
+    }
 
     /**
      * Attempts to read the data source as [T]

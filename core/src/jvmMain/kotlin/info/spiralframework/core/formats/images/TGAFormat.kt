@@ -2,6 +2,7 @@ package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.FlowOutputStream
+import info.spiralframework.base.common.io.asOutputStream
 import info.spiralframework.core.formats.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,6 +46,10 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
                 debug("core.formats.tga.invalid", source, iae)
 
                 return FormatResult.Fail(this@TGAFormat, 1.0, iae)
+            } catch (oob: ArrayIndexOutOfBoundsException) {
+                debug("core.formats.tga.invalid", source, oob)
+
+                return FormatResult.Fail(this@TGAFormat, 1.0, oob)
             }
         }
     }
@@ -92,7 +97,7 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
 
             try {
                 withContext(Dispatchers.IO) {
-                    FlowOutputStream.withGlobalScope(flow, false).use { out ->
+                    asOutputStream(flow, false) { out ->
                         ImageIO.write(tga, "TGA", out)
                     }
                 }

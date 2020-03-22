@@ -6,7 +6,7 @@ import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.readExact
 import org.abimon.kornea.io.common.readInt32BE
 
-const val MAGIC_NUMBER = 0x24434D50 //0x504d4324
+const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
 
 const val CLN = 0x4e4c4324
 const val CL1 = 0x314c4324
@@ -18,7 +18,7 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): ByteArray {
     val flow = BinaryInputFlow(data)
 
     val magic = requireNotNull(flow.readInt32BE())
-    require(magic == MAGIC_NUMBER)
+    require(magic == DRV3_COMP_MAGIC_NUMBER)
 
     val compressedSize = requireNotNull(flow.readInt32BE())
     flow.skip(8u)

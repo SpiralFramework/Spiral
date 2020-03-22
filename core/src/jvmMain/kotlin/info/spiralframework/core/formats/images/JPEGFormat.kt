@@ -2,6 +2,7 @@ package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.FlowOutputStream
+import info.spiralframework.base.common.io.asOutputStream
 import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
@@ -60,7 +61,7 @@ object JPEGFormat : SpiralImageIOFormat("jpg", "jpeg"), WritableSpiralFormat {
 
             try {
                 withContext(Dispatchers.IO) {
-                    FlowOutputStream.withGlobalScope(flow, false).use { out ->
+                    asOutputStream(flow, false) { out ->
                         ImageIO.write(jpg, "JPG", out)
                     }
                 }

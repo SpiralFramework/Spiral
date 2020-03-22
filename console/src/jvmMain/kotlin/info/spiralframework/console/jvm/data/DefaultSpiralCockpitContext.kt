@@ -2,6 +2,7 @@ package info.spiralframework.console.jvm.data
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -10,18 +11,19 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
-import info.spiralframework.core.DefaultSpiralCoreContext
-import info.spiralframework.core.SpiralCoreConfig
-import info.spiralframework.core.SpiralCoreContext
-import info.spiralframework.core.buildForVersion
+import info.spiralframework.console.jvm.SpiralModuleConsole
+import info.spiralframework.core.*
 import info.spiralframework.core.common.SPIRAL_CORE_MODULE
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
+import info.spiralframework.core.common.SPIRAL_ENV_LANG_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_MODULES_KEY
 import info.spiralframework.core.plugins.PluginEntry
 import info.spiralframework.core.plugins.SpiralCorePlugin
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
+import info.spiralframework.formats.jvm.SpiralModuleFormats
+import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -161,12 +163,21 @@ class DefaultSpiralCockpitContext private constructor(
     }
 
     suspend fun init() {
-        moduleLoader.reload()
-        moduleLoader.iterator().forEach { module -> module.register(this) }
+        addModuleProvider(SpiralModuleBase())
+        addModuleProvider(SpiralModuleFormats())
+        addModuleProvider(SpiralModuleOSL())
+        addModuleProvider(SpiralModuleCore())
+        addModuleProvider(SpiralModuleConsole())
+
+        moduleLoader.iterator().forEach { module -> addModuleProvider(module) }
+        registerAllModules()
+
         prime(this)
 
         this.storeStaticValue(SpiralEnvironment.SPIRAL_MODULE_KEY, SPIRAL_CORE_MODULE)
         this.storeStaticValue(SPIRAL_ENV_MODULES_KEY, this.loadedModules.entries.joinToString { (moduleName, moduleVersion) -> "$moduleName v$moduleVersion" })
+
+        this.storeDynamicValue(SPIRAL_ENV_LANG_KEY) { currentLocale()?.languageString() }
 
         this.storeDynamicValue(SPIRAL_ENV_BUILD_KEY) {
             if (this !is SpiralCoreContext) {

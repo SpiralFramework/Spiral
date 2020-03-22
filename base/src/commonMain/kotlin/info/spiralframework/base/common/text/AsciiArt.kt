@@ -8,12 +8,14 @@ import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-suspend fun <T> SpiralContext.arbitraryProgressBar(
+inline fun resetLine() = print('\r')
+
+suspend inline fun <T> SpiralContext.arbitraryProgressBar(
         delay: Long = 200, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
-        loadingText: String = "ascii.arbitrary.loading",
-        loadedText: String = "ascii.arbitrary.loaded!",
+        loadingText: String? = "ascii.arbitrary.loading",
+        loadedText: String? = "ascii.arbitrary.loaded!",
         operation: () -> T
 ): T {
     val arbitrary = arbitraryProgressBar(delay, limit, start, end, space, indicator, loadingText, loadedText)
@@ -44,11 +46,11 @@ fun SpiralContext.arbitraryProgressBar(
         delay: Long = 200, limit: Int = 9,
         start: Char = '[', end: Char = ']',
         space: Char = ' ', indicator: Char = 'o',
-        loadingText: String = "ascii.arbitrary.loading",
-        loadedText: String = "ascii.arbitrary.loaded"
+        loadingText: String? = "ascii.arbitrary.loading",
+        loadedText: String? = "ascii.arbitrary.loaded"
 ): Job = GlobalScope.launch {
-    val localisedLoading = localise(loadingText).takeIf(String::isNotBlank)
-    val localisedLoaded = localise(loadedText).takeIf(String::isNotBlank)
+    val localisedLoading = loadingText?.let { localise(loadingText) }?.takeIf(String::isNotBlank)
+    val localisedLoaded = loadedText?.let { localise(loadedText) }?.takeIf(String::isNotBlank)
 
     try {
         var progress: Int = 0
@@ -79,17 +81,19 @@ fun SpiralContext.arbitraryProgressBar(
             delay(delay)
         }
     } finally {
-        print(buildString {
-            append('\r')
-            for (i in 0 until limit)
-                append(' ')
-            append("    ")
-            for (i in 0 until (localisedLoading?.length ?: 0))
-                append(' ')
-            append('\r')
-        })
+        if (localisedLoaded != null) {
+            print(buildString {
+                append('\r')
+                for (i in 0 until limit)
+                    append(' ')
+                append("    ")
+                for (i in 0 until (localisedLoading?.length ?: 0))
+                    append(' ')
+                append('\r')
+            })
 
-        localisedLoaded?.let(::println)
+            println(localisedLoaded)
+        }
     }
 }
 
@@ -99,8 +103,8 @@ open class ProgressTracker protected constructor(
         val trackLength: Int = 10,
         val start: Char = '[', val end: Char = ']',
         val trackSpace: Char = ' ', val trackFilled: Char = '#',
-        downloadingText: String = "ascii.progress.loading",
-        downloadedText: String = "ascii.progress.loaded",
+        loadingText: String = "ascii.progress.loading",
+        loadedText: String = "ascii.progress.loaded",
         val showPercentage: Boolean = true
 ) {
     companion object {
@@ -113,15 +117,15 @@ open class ProgressTracker protected constructor(
                             trackLength: Int = 10,
                             start: Char = '[', end: Char = ']',
                             trackSpace: Char = ' ', trackFilled: Char = '#',
-                            downloadingText: String = "ascii.progress.loading",
-                            downloadedText: String = "ascii.progress.loaded",
+                            loadingText: String = "ascii.progress.loading",
+                            loadedText: String = "ascii.progress.loaded",
                             showPercentage: Boolean = true): ProgressTracker {
-            return ProgressTracker(context, trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+            return ProgressTracker(context, trackLength, start, end, trackSpace, trackFilled, loadingText, loadedText, showPercentage)
         }
     }
 
-    val downloadingText: String? = context.localise(downloadingText).takeIf(String::isNotBlank)
-    val downloadedText: String? = context.localise(downloadedText).takeIf(String::isNotBlank)
+    val downloadingText: String? = context.localise(loadingText).takeIf(String::isNotBlank)
+    val downloadedText: String? = context.localise(loadedText).takeIf(String::isNotBlank)
     val percentPerTrackSpace = ceil(100.0 / trackLength.toDouble())
     val tracks = (0 until trackLength).map { filled ->
         buildString {
@@ -139,7 +143,7 @@ open class ProgressTracker protected constructor(
     }.toTypedArray()
     val blankTrack = buildString {
         append('\r')
-        for (i in 0 until (trackLength + 12 + downloadingText.length))
+        for (i in 0 until (trackLength + 12 + loadingText.length))
             append(' ')
     }
 

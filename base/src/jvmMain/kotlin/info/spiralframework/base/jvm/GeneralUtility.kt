@@ -4,6 +4,7 @@ import info.spiralframework.base.common.text.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.text.DecimalFormat
+import java.util.*
 
 val spiralModules = arrayOf(
         "antlr-json",
@@ -117,3 +118,7 @@ fun Throwable.retrieveStackTrace(): String {
 }
 
 fun MutableCollection<Int>.addAll(ints: IntArray): Boolean = addAll(ints.toTypedArray())
+
+//Out variance screws up the way Optional works
+inline fun <T> Optional<out T>.outOrElse(other: T): T = if (isPresent) get() else other
+inline fun <T> Optional<out T>.outOrElseGet(func: () -> T): T = if (isPresent) get() else func()

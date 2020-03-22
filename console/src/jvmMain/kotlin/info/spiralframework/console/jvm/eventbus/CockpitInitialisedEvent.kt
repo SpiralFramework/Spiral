@@ -7,6 +7,7 @@ import info.spiralframework.console.jvm.CockpitPilot
 import info.spiralframework.console.jvm.CockpitUpdate
 import kotlin.time.ExperimentalTime
 
+@ExperimentalStdlibApi
 open class CockpitInitialisedEvent<T: Cockpit> private constructor(open val cockpit: T): SpiralEvent {
     companion object {
         @ExperimentalTime

@@ -1,6 +1,7 @@
 package info.spiralframework.console.jvm
 
 import info.spiralframework.base.common.locale.printlnLocale
+import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.console.jvm.commands.pilot.GurrenPilot
 import info.spiralframework.console.jvm.data.SpiralCockpitContext
@@ -9,8 +10,10 @@ import info.spiralframework.console.jvm.pipeline.parsePipeline
 import info.spiralframework.console.jvm.pipeline.run
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import kotlinx.coroutines.delay
+import java.io.File
 
 @ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
 class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext) {
     override suspend fun start() {
         with(context) {
@@ -56,7 +59,8 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
                 val localScope = with { operationScope }
                 print(localScope.scopePrint)
 
-                val input = readLine() ?: break
+                val input = readLine()?.doublePadWindowsPaths()?.plus('\n') ?: break //TODO: Fix this bug; without the extra newline, our antlr grammar expects a newline, not an EOF
+
                 val pipeline = runCatching { parsePipeline(input) }
                 if (pipeline.isFailure) {
                     printlnLocale("commands.unknown")

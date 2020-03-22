@@ -1,13 +1,16 @@
 parser grammar PipelineParser;
 options { tokenVocab=PipelineLexer; }
 
-lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR+;
+lineSeparator: SEMICOLON_SEPARATOR | NL_SEPARATOR+ | EOF;
 
 file: scope EOF;
 
-scope: scriptLine (lineSeparator scriptLine | lineSeparator)*?;
+scope: scriptLine*?;
 
-scriptLine: (assignVariable | functionCall | scriptCall | functionDeclaration);
+scriptLine
+    : scriptCall
+    | (assignVariable | functionCall | functionDeclaration) lineSeparator
+    ;
 
 quotedString
     : BEGIN_QUOTED_STRING
@@ -29,11 +32,18 @@ functionVariableValue
     : variableValue
     ;
     
-scriptCall: (scriptName=IDENTIFIER) BEGIN_SCRIPT_CALL scriptCallParameters END_SCRIPT_CALL;
+scriptCall: (scriptName=IDENTIFIER) ((BEGIN_SCRIPT_CALL scriptCallParameters END_SCRIPT_CALL) | (BEGIN_SCRIPT_CALL_EMPTY));
 
 scriptCallParameters: (scriptParameter (SCRIPT_CALL_PARAM_SEPARATOR scriptParameter)*?)?;
 
-scriptParameter: (parameterName=IDENTIFIER SET_PARAMETER)? scriptVariableValue;
+scriptParameter
+    : scriptFlag
+    | scriptFlagGroup
+    | (parameterName=IDENTIFIER SET_PARAMETER)? scriptVariableValue
+    ;
+
+scriptFlag: SCRIPT_CALL_FLAG IDENTIFIER;
+scriptFlagGroup: SCRIPT_CALL_FLAG_GROUP IDENTIFIER;
 
 scriptVariableValue
     : variableValue

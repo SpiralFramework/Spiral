@@ -1,7 +1,8 @@
 package info.spiralframework.console.jvm.commands.shared
 
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.collections.iterator
+import info.spiralframework.core.formats.*
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.core.formats.audio.AudioFormats
 import info.spiralframework.core.formats.compression.CrilaylaCompressionFormat
@@ -15,6 +16,17 @@ import info.spiralframework.core.formats.images.TGAFormat
 import info.spiralframework.core.formats.scripting.LinScriptFormat
 import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
 import info.spiralframework.core.formats.text.CSVFormat
+import info.spiralframework.formats.common.archives.*
+import info.spiralframework.formats.common.archives.srd.SrdArchive
+import info.spiralframework.formats.common.games.DrGame
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.jvm.JVMDataSource
+import java.util.zip.ZipFile
+import kotlin.math.floor
+import kotlin.math.log
 
 object GurrenShared {
     val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<out Any>> by lazy {
@@ -50,75 +62,182 @@ object GurrenShared {
         )
     }
 
+    val PREDICTIVE_FORMATS: MutableList<ReadableSpiralFormat<*>> by lazy {
+        mutableListOf<ReadableSpiralFormat<*>>(
+                AwbArchiveFormat, CpkArchiveFormat, SpcArchiveFormat, WadArchiveFormat, ZipFormat,
+                AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
+                CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat,
+                JPEGFormat, PNGFormat, TGAFormat,
+                LinScriptFormat, OpenSpiralLanguageFormat,
+                DataTableStructureFormat
+        )
+    }
+
+    val CONVERTING_FORMATS: MutableMap<ReadableSpiralFormat<*>, WritableSpiralFormat> by lazy {
+        mutableMapOf<ReadableSpiralFormat<*>, WritableSpiralFormat>(
+                AwbArchiveFormat to ZipFormat, PakArchiveFormat to ZipFormat, SpcArchiveFormat to ZipFormat,
+                TGAFormat to PNGFormat,
+                LinScriptFormat to OpenSpiralLanguageFormat,
+                DataTableStructureFormat to CSVFormat
+        )
+    }
+
+    suspend fun showEnvironment(context: SpiralContext) {
+        with(context) {
+            println(
+                    retrieveEnvironment().entries
+                            .groupBy { (k) -> k.substringBeforeLast('.') }
+                            .entries
+                            .sortedBy(Map.Entry<String, *>::key)
+                            .flatMap { (_, v) -> v.sortedBy(Map.Entry<String, String>::key) }
+                            .joinToString("\n") { (k, v) ->
+                                "environment[$k]: \"${v.replace("\r", "\\r").replace("\n", "\\n")}\""
+                            }
+            )
+        }
+    }
+
 //    val DR_GAMES = arrayOf(Dr1, DR2, UDG, V3, UnknownHopesPeakGame)
 
-//    fun extractGetFilesForResult(args: ExtractArgs.Immutable, result: Any, regex: Regex): Pair<Iterator<Pair<String, InputStream>>, Long>? {
-//        val files: Iterator<Pair<String, InputStream>>
-//        val totalCount: Long
-//
-//        when (result) {
-//            is AWB -> {
-//                files = result.entries.iterator { entry -> entry.id.toString() to entry.inputStream }
-//                totalCount = result.entries.count { entry -> entry.id.toString().matches(regex) }.toLong()
-//            }
-//
-//            is CPK -> {
-//                files = if (args.leaveCompressed!!) {
-//                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-//                } else {
-//                    result.files.iterator { entry -> entry.name to entry.inputStream }
-//                }
-//                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-//            }
-//
-//            is Pak -> {
-//                files = result.files.iterator { entry -> entry.index.toString() to entry.inputStream }
-//                totalCount = result.files.count { entry -> entry.index.toString().matches(regex) }.toLong()
-//            }
-//
+    suspend fun SpiralContext.predictFileType(source: DataSource<*>, game: DrGame?, name: String?): SpiralFormat? {
+        val readContext = DefaultFormatReadContext(name, game)
+
+        return PREDICTIVE_FORMATS
+                .map { archiveFormat -> archiveFormat.identify(this, readContext, source) }
+                .filter(FormatResult<*>::didSucceed)
+                .filter { result -> result.chance >= 0.50 }
+                .sortedBy(FormatResult<*>::chance)
+                .mapNotNull(FormatResult<*>::nullableFormat)
+                .asReversed()
+                .firstOrNull()
+    }
+
+    @ExperimentalCoroutinesApi
+    @ExperimentalUnsignedTypes
+    suspend fun getFilesForArchive(spiralContext: SpiralContext, archive: Any, regex: Regex, leaveCompressed: Boolean, predictive: Boolean, game: DrGame?, archiveName: String?): Flow<Pair<String, DataSource<*>>>? {
+        when (archive) {
+            is AwbArchive -> {
+                val maxLen = floor(log(archive.files.maxBy(AwbFileEntry::id)?.id?.coerceAtLeast(1)?.toDouble()
+                        ?: 1.0, 16.0)).toInt() + 1
+                return archive.files.asFlow()
+                        .filter { entry -> entry.id.toString().matches(regex) }
+                        .map { file ->
+                            val source = archive.openSource(file)
+                            val extension: String
+                            if (predictive) {
+                                extension = spiralContext.predictFileType(source, game, null)?.extension ?: "dat"
+                            } else {
+                                extension = "dat"
+                            }
+
+                            Pair("0x${file.id.toString(16).padStart(maxLen, '0')}.$extension", source)
+                        }
+            }
+
+            is CpkArchive -> {
+                if (leaveCompressed) {
+                    return archive.files.asFlow()
+                            .filter { entry -> entry.name.matches(regex) }
+                            .map { entry -> Pair(entry.name, archive.openRawSource(spiralContext, entry)) }
+                } else {
+                    return archive.files.asFlow()
+                            .filter { entry -> entry.name.matches(regex) }
+                            .transform { entry ->
+                                val source = archive.openDecompressedSource(spiralContext, entry)
+                                if (source != null)
+                                    emit(Pair(entry.name, source))
+                            }
+                }
+            }
+
+            is PakArchive -> {
+                var fileNames: Array<String>? = null
+                if (archiveName != null && game is DrGame.PakMapped) {
+                    fileNames = game.pakNames.entries.firstOrNull { (k) -> k in archiveName }?.value
+
+                    if (fileNames == null) {
+                        val keys = game.pakNames.entries.map { (k, v) -> Pair(k.substringAfterLast('/'), v) }
+                        fileNames = keys.filter { (key) -> keys.count { (k) -> k == key } == 1 }
+                                .firstOrNull { (k) -> archiveName.endsWith(k) }
+                                ?.second
+                    }
+                }
+
+                val maxLen = floor(log(archive.files.maxBy(PakFileEntry::index)?.index?.coerceAtLeast(1)?.toDouble()
+                        ?: 1.0, 16.0)).toInt() + 1
+                return archive.files
+                        .asFlow()
+                        .filter { entry -> entry.index.toString().matches(regex) }
+                        .map { file ->
+                            val source = archive.openSource(file)
+                            val filename: String? = fileNames?.getOrNull(file.index)
+                            val extension: String
+                            if (predictive && filename == null) {
+                                extension = spiralContext.predictFileType(source, game, null)?.extension ?: "dat"
+                            } else {
+                                extension = "dat"
+                            }
+
+                            Pair(filename ?: "0x${file.index.toString(16).padStart(maxLen, '0')}.$extension", source)
+                        }
+            }
+
 //            is SFL -> {
-//                files = result.tables.iterator { entry -> entry.index.toString() to entry.inputStream }
-//                totalCount = result.tables.count { entry -> entry.index.toString().matches(regex) }.toLong()
+//                files = archive.tables.iterator { entry -> entry.index.toString() to entry.inputStream }
+//                totalCount = archive.tables.count { entry -> entry.index.toString().matches(regex) }.toLong()
 //            }
-//
-//            is SPC -> {
-//                files = if (args.leaveCompressed!!) {
-//                    result.files.iterator { entry -> entry.name to entry.rawInputStream }
-//                } else {
-//                    result.files.iterator { entry -> entry.name to entry.inputStream }
-//                }
-//                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-//            }
-//
-//            is SRD -> {
-//                val entries = result.entries.groupBy { entry -> entry.dataType }
-//                        .values.map { entries ->
-//                    entries.mapIndexed { index, entry ->
-//                        listOf(
-//                                "$index-${entry.dataType}-data.dat" to entry::dataStream,
-//                                "$index-${entry.dataType}-subdata.dat" to entry::subdataStream
-//                        )
-//                    }.flatten()
-//                }.flatten()
-//                files = entries.iterator { pair -> pair.first to pair.second() }
-//                totalCount = entries.count { pair -> pair.first.matches(regex) }.toLong()
-//            }
-//
-//            is WAD -> {
-//                files = result.files.iterator { entry -> entry.name to entry.inputStream }
-//                totalCount = result.files.count { entry -> entry.name.matches(regex) }.toLong()
-//            }
-//
-//            is ZipFile -> {
-//                files = result.entries().iterator().map { entry -> entry.name to result.getInputStream(entry) }
-//                totalCount = result.entries().asSequence().count { entry -> entry.name.matches(regex) }.toLong()
-//            }
-//
-//            else -> {
-//                return null
-//            }
-//        }
-//
-//        return files to totalCount
-//    }
+
+            is SpcArchive -> {
+                if (leaveCompressed) {
+                    return archive.files.asFlow()
+                            .filter { entry -> entry.name.matches(regex) }
+                            .map { entry -> Pair(entry.name, archive.openRawSource(spiralContext, entry)) }
+                } else {
+                    return archive.files.asFlow()
+                            .filter { entry -> entry.name.matches(regex) }
+                            .transform { entry ->
+                                val source = archive.openDecompressedSource(spiralContext, entry)
+                                if (source != null)
+                                    emit(Pair(entry.name, source))
+                            }
+                }
+            }
+
+            is SrdArchive -> {
+                return archive.entries.groupBy { entry -> entry.classifierAsString }
+                        .values
+                        .map { entries ->
+                            val maxLen = floor(log(entries.size.coerceAtLeast(1).toDouble(), 16.0)).toInt() + 1
+                            entries.mapIndexed { index, baseSrdEntry ->
+                                Pair("0x${index.toString(16).padStart(maxLen, '0')}", baseSrdEntry)
+                            }
+                        }
+                        .flatten()
+                        .asFlow()
+                        .transform { (index, entry) ->
+                            emit(Pair("${index}_${entry.classifierAsString}_data.dat", entry.openMainDataSource()))
+
+                            if (entry.subDataLength > 0uL)
+                                emit(Pair("${index}_${entry.classifierAsString}_subdata.dat", entry.openSubDataSource()))
+                        }
+            }
+
+            is WadArchive -> {
+                return archive.files.asFlow()
+                        .filter { entry -> entry.name.matches(regex) }
+                        .map { entry -> Pair(entry.name, archive.openSource(entry)) }
+            }
+
+            is ZipFile -> {
+                return archive.entries()
+                        .asIterator()
+                        .asFlow()
+                        .map { entry -> Pair(entry.name, JVMDataSource(location = entry.name, func = { archive.getInputStream(entry) })) }
+            }
+
+            else -> {
+                return null
+            }
+        }
+    }
 }

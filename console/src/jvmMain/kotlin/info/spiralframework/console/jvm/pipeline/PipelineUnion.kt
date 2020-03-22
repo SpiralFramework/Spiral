@@ -3,6 +3,9 @@ package info.spiralframework.console.jvm.pipeline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.takeIf
 import info.spiralframework.base.common.text.toIntBaseN
+import info.spiralframework.base.common.text.toIntOrNullBaseN
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
 
 @ExperimentalUnsignedTypes
 sealed class PipelineUnion {
@@ -19,6 +22,7 @@ sealed class PipelineUnion {
         abstract suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String
         abstract suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number
         abstract suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue
+        abstract suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean
 
         data class StringComponents(val components: Array<StringComponent>) : VariableValue() {
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): StringType =
@@ -38,30 +42,47 @@ sealed class PipelineUnion {
                     return str.toDouble()
                 return str.toIntBaseN()
             }
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean {
+                val str = asString(spiralContext, pipelineContext)
+                if (str.equals("true", true) || str.equals("false", true))
+                    return str.toBoolean()
+                return (str.toIntOrNullBaseN() ?: 0) != 0
+            }
         }
 
         data class StringType(val string: String) : VariableValue() {
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = string
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = if (string.contains('.')) string.toDouble() else string.toIntBaseN()
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue = this
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean {
+                val str = asString(spiralContext, pipelineContext)
+                if (str.equals("true", true) || str.equals("false", true))
+                    return str.toBoolean()
+                return (str.toIntOrNullBaseN() ?: 0) != 0
+            }
         }
 
         data class BooleanType(val boolean: Boolean) : VariableValue() {
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = boolean.toString()
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = if (boolean) 1 else 0
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue = this
+
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = boolean
         }
 
         data class IntegerType(val integer: Int) : VariableValue() {
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = integer.toString()
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = integer
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue = this
+
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = integer != 0
         }
 
         data class DecimalType(val decimal: Double) : VariableValue() {
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = decimal.toString()
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = decimal
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue = this
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = decimal.toInt() != 0
         }
 
         data class VariableReferenceType(val variableName: String) : VariableValue() {
@@ -70,6 +91,7 @@ sealed class PipelineUnion {
 
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = flatten(spiralContext, pipelineContext).asString(spiralContext, pipelineContext)
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = flatten(spiralContext, pipelineContext).asNumber(spiralContext, pipelineContext)
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = flatten(spiralContext, pipelineContext).asBoolean(spiralContext, pipelineContext)
         }
 
         data class WrappedFunctionCallType(val name: String, val parameters: Array<FunctionParameterType>) : VariableValue() {
@@ -80,6 +102,7 @@ sealed class PipelineUnion {
 
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = flatten(spiralContext, pipelineContext).asString(spiralContext, pipelineContext)
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = flatten(spiralContext, pipelineContext).asNumber(spiralContext, pipelineContext)
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = flatten(spiralContext, pipelineContext).asBoolean(spiralContext, pipelineContext)
         }
 
         data class WrappedScriptCallType(val name: String, val parameters: Array<ScriptParameterType>) : VariableValue() {
@@ -90,12 +113,60 @@ sealed class PipelineUnion {
 
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = flatten(spiralContext, pipelineContext).asString(spiralContext, pipelineContext)
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = flatten(spiralContext, pipelineContext).asNumber(spiralContext, pipelineContext)
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = flatten(spiralContext, pipelineContext).asBoolean(spiralContext, pipelineContext)
+        }
+
+        data class ArrayType<T: VariableValue>(val array: Array<T>): VariableValue() {
+            override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): ArrayType<VariableValue> =
+                    ArrayType(Array(array.size) { i -> array[i].flatten(spiralContext, pipelineContext) })
+
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean =
+                    array.isNotEmpty()
+
+            override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number =
+                    array.size
+
+            override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String =
+                    flatten(spiralContext, pipelineContext)
+                            .array
+                            .map { t -> t.asString(spiralContext, pipelineContext) }
+                            .joinToString(prefix = "arrayOf(", postfix = ")") { "\"$it\"" }
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as ArrayType<*>
+
+                if (!array.contentEquals(other.array)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                return array.contentHashCode()
+            }
+        }
+
+        data class DataSourceType<T: InputFlow>(val dataSource: DataSource<T>): VariableValue() {
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean =
+                    dataSource.canOpenInputFlow()
+
+            override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number =
+                    dataSource.dataSize?.toLong() ?: 0L
+
+            override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String =
+                    dataSource.toString()
+
+            override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue =
+                    this
         }
 
         object NullType : VariableValue() {
             override suspend fun asNumber(spiralContext: SpiralContext, pipelineContext: PipelineContext): Number = 0
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String = "null"
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue = this
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean = false
         }
 
         data class ExpressionType(val startValue: VariableValue, val ops: Array<Pair<ExpressionOperation, VariableValue>>) : VariableValue() {
@@ -104,6 +175,9 @@ sealed class PipelineUnion {
 
             override suspend fun asString(spiralContext: SpiralContext, pipelineContext: PipelineContext): String =
                     flatten(spiralContext, pipelineContext).asString(spiralContext, pipelineContext)
+
+            override suspend fun asBoolean(spiralContext: SpiralContext, pipelineContext: PipelineContext): Boolean =
+                    flatten(spiralContext, pipelineContext).asBoolean(spiralContext, pipelineContext)
 
             override suspend fun flatten(spiralContext: SpiralContext, pipelineContext: PipelineContext): VariableValue =
                     ops.fold(startValue) { first, (operation, second) -> operation.operate(spiralContext, pipelineContext, first, second) }
@@ -306,4 +380,16 @@ sealed class PipelineUnion {
             pipelineContext.register(functionName, asPipelineFunction(), global)
         }
     }
+}
+
+suspend fun PipelineUnion.VariableValue.flattenIfPresent(spiralContext: SpiralContext, pipelineContext: PipelineContext): PipelineUnion.VariableValue?
+        = flatten(spiralContext, pipelineContext).takeIfPresent()
+
+suspend fun PipelineUnion.VariableValue.asFlattenedStringIfPresent(spiralContext: SpiralContext, pipelineContext: PipelineContext): String? =
+        flatten(spiralContext, pipelineContext).takeIfPresent()?.asString(spiralContext, pipelineContext)
+
+@ExperimentalUnsignedTypes
+fun <T: PipelineUnion.VariableValue> T.takeIfPresent(): T? = when (this) {
+    is PipelineUnion.VariableValue.NullType -> null
+    else -> this
 }

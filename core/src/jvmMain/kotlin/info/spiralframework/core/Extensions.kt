@@ -11,6 +11,7 @@ import com.github.kittinunf.fuel.core.ResponseResultOf
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
+import info.spiralframework.base.jvm.outOrElseGet
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.compression.*
 import org.abimon.kornea.io.common.DataSource
@@ -53,12 +54,15 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
 val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 
 suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableSpiralFormat<DataSource<*>>>> {
-    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.read(source = dataSource, context = this) }
+    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.identify(source = dataSource, context = this) }
             .filter { pair -> pair.second.didSucceed }
             .minBy { pair -> pair.second.chance }
             ?: return dataSource to emptyList()
 
-    val (decompressed, list) = decompress(result.obj)
+    val (decompressed, list) = decompress(result.obj.outOrElseGet {
+        @Suppress("UNCHECKED_CAST")
+        (result.format as ReadableSpiralFormat<DataSource<*>>).read(source = dataSource, context = this).obj
+    })
 
     return decompressed to mutableListOf(format).apply { addAll(list) }
 }
@@ -126,7 +130,7 @@ suspend fun <T : CancellableSpiralEvent> SpiralEventBus.postCancellable(context:
 
 fun <T> T.identifySelf(): T = this
 
-fun <T: SpiralEventBus> T.installLoggingSubscriber(): T {
+fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
     register("Logging", SpiralEventPriority.HIGHEST) { event: SpiralEvent -> trace("core.eventbus.logging.event", event) }
     return this
 }

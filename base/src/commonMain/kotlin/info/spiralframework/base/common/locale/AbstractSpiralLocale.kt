@@ -28,6 +28,7 @@ interface SpiralLocale {
         override fun removeEnglishBundle(englishBundle: LocaleBundle) {}
 
         override suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale) {}
+        override fun currentLocale(): CommonLocale? = null
     }
 
     fun localise(msg: String): String
@@ -53,6 +54,8 @@ interface SpiralLocale {
     fun removeEnglishBundle(englishBundle: LocaleBundle)
 
     suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale)
+
+    fun currentLocale(): CommonLocale?
 }
 
 abstract class AbstractSpiralLocale: SpiralLocale {
@@ -102,6 +105,8 @@ abstract class AbstractSpiralLocale: SpiralLocale {
 
         this@AbstractSpiralLocale.currentLocale = locale
     }
+
+    override fun currentLocale(): CommonLocale = currentLocale
 }
 
 suspend inline fun <reified T: Any> SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String) = resourceLoader.addBundle(bundleName, T::class)

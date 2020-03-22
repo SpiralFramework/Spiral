@@ -11,11 +11,19 @@ import info.spiralframework.formats.common.compression.decompressCrilayla
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.readInt64BE
 import org.abimon.kornea.io.common.useInputFlow
+import java.util.*
 
 object CrilaylaCompressionFormat: ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "CRILAYLA Compression"
     override val extension: String = "cmp"
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+        if (source.useInputFlow { flow -> flow.readInt64BE() == info.spiralframework.formats.common.compression.CRILAYLA_MAGIC } == true)
+            return FormatResult.Success(Optional.empty(), 1.0)
+        return FormatResult.Fail(1.0)
+    }
 
     /**
      * Attempts to read the data source as [T]

@@ -12,18 +12,22 @@ import info.spiralframework.formats.common.archives.SpcFileEntry
 import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUMBER
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.games.DrGame
-import org.abimon.kornea.io.common.BinaryDataSource
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.PeekableInputFlow
 import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
+import java.util.*
 
-data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null): FormatReadContext
+data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null) : FormatReadContext
 
-object SpcCompressionFormat: ReadableSpiralFormat<DataSource<*>> {
+object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "SPC Compression"
     override val extension: String = "cmp"
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+        if (source.useInputFlow { flow -> flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER } == true || (readContext as? SpcEntryFormatReadContextdata)?.entry?.compressionFlag == SpcArchive.COMPRESSED_FLAG)
+            return FormatResult.Success(Optional.empty(), 1.0)
+        return FormatResult.Fail(1.0)
+    }
 
     /**
      * Attempts to read the data source as [T]

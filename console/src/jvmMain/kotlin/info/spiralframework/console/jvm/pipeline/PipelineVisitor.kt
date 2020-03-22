@@ -112,14 +112,25 @@ class PipelineVisitor : PipelineParserBaseVisitor<PipelineUnion?>() {
     override fun visitScriptCall(ctx: PipelineParser.ScriptCallContext): PipelineUnion.ScriptCallAction {
         val scriptName = ctx.scriptName.text
         val parameters = ctx.scriptCallParameters()
-                .scriptParameter()
-                .map(this::visitScriptParameter)
+                ?.scriptParameter()
+                ?.map(this::visitScriptParameter)
+                ?: emptyList()
 
         return PipelineUnion.ScriptCallAction(scriptName, parameters.toTypedArray())
     }
 
-    override fun visitScriptParameter(ctx: PipelineParser.ScriptParameterContext): PipelineUnion.ScriptParameterType =
-            PipelineUnion.ScriptParameterType(ctx.parameterName?.text, visitScriptVariableValue(ctx.scriptVariableValue()))
+    override fun visitScriptParameter(ctx: PipelineParser.ScriptParameterContext): PipelineUnion.ScriptParameterType {
+        ctx.scriptFlag()?.let(this::visitScriptFlag)?.let { return it }
+        ctx.scriptFlagGroup()?.let(this::visitScriptFlagGroup)?.let { return it }
+
+        return PipelineUnion.ScriptParameterType(ctx.parameterName?.text, visitScriptVariableValue(ctx.scriptVariableValue()))
+    }
+
+    override fun visitScriptFlag(ctx: PipelineParser.ScriptFlagContext): PipelineUnion.ScriptParameterType =
+            PipelineUnion.ScriptParameterType(ctx.IDENTIFIER().text, PipelineUnion.VariableValue.BooleanType(true))
+
+    override fun visitScriptFlagGroup(ctx: PipelineParser.ScriptFlagGroupContext): PipelineUnion.ScriptParameterType =
+            PipelineUnion.ScriptParameterType(ctx.IDENTIFIER().text, PipelineUnion.VariableValue.BooleanType(true))
 
     override fun visitScriptVariableValue(ctx: PipelineParser.ScriptVariableValueContext): PipelineUnion.VariableValue =
             visitVariableValue(ctx.variableValue())

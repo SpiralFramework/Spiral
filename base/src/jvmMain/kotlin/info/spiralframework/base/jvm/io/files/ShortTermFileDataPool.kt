@@ -7,7 +7,7 @@ import org.abimon.kornea.io.jvm.files.FileOutputFlow
 import java.io.File
 
 @ExperimentalUnsignedTypes
-class ShortTermFileDataPool(val file: File, val backing: FileDataPool = FileDataPool(file)) : DataPool<FileInputFlow, FileOutputFlow> by backing {
+class ShortTermFileDataPool(val file: File, override val location: String? = file.absolutePath, val backing: FileDataPool = FileDataPool(file)) : DataPool<FileInputFlow, FileOutputFlow> by backing {
     override suspend fun close() {
         super.close()
 

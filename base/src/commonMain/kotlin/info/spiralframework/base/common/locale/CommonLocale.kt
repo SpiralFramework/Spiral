@@ -31,4 +31,17 @@ data class CommonLocale(val language: String, val country: String = "", val vari
 
         val defaultLocale: CommonLocale by lazy { info.spiralframework.base.binding.defaultLocale() }
     }
+
+    fun languageString(): String = buildString {
+        append(language)
+        if (country.isNotBlank()) {
+            append('_')
+            append(country)
+        }
+
+        if (variant.isNotBlank()) {
+            append('_')
+            append(variant)
+        }
+    }
 }

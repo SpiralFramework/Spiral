@@ -24,18 +24,18 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
 
     override suspend fun SpiralContext.isCachedShortTerm(name: String): Boolean = File(shortTermDir, name).exists()
 
-    override suspend fun SpiralContext.cacheShortTerm(name: String): DataPool<out InputFlow, out OutputFlow> =
-            ShortTermFileDataPool(File(shortTermDir, name))
+    override suspend fun SpiralContext.cacheShortTerm(name: String, location: String?): DataPool<out InputFlow, out OutputFlow> =
+            ShortTermFileDataPool(File(shortTermDir, name), location)
 
     override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = File(persistentDir, name).exists()
 
-    override suspend fun SpiralContext.cachePersistent(name: String): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cachePersistent(name: String, location: String?): DataPool<out InputFlow, out OutputFlow> =
             FileDataPool(File(persistentDir, name))
 
     override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = isCachedShortTerm(name)
 
     @ExperimentalTime
-    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String?): DataPool<out InputFlow, out OutputFlow> =
             TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration)
 
     override fun prime(catalyst: SpiralContext) {

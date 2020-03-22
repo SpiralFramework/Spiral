@@ -2,6 +2,7 @@ package info.spiralframework.core
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -20,6 +21,8 @@ import info.spiralframework.core.plugins.SpiralCorePlugin
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
+import info.spiralframework.formats.jvm.SpiralModuleFormats
+import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -155,7 +158,14 @@ class DefaultSpiralCoreContext private constructor(
     }
 
     suspend fun init() {
-        moduleLoader.iterator().forEach { module -> module.register(this) }
+        addModuleProvider(SpiralModuleBase())
+        addModuleProvider(SpiralModuleFormats())
+        addModuleProvider(SpiralModuleOSL())
+        addModuleProvider(SpiralModuleCore())
+
+        moduleLoader.iterator().forEach { module -> addModuleProvider(module) }
+        registerAllModules()
+
         prime(this)
 
         this.storeStaticValue(SPIRAL_MODULE_KEY, SPIRAL_CORE_MODULE)

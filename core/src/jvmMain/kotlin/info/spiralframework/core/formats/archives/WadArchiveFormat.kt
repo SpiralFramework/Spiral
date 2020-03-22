@@ -82,7 +82,7 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
                     cache.close()
                     customWad[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
                 } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream).copyTo(output) }
+                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
                     customWad[entry.name] = cache
                     caches.add(cache)
                 }

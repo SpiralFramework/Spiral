@@ -20,7 +20,8 @@ actual class DefaultSpiralEnvironment : SpiralEnvironment {
     val environmentalVariables: MutableSet<String> = hashSetOf(
             "os.name", "os.version", "os.arch",
             "java.vendor", "java.version", "java.vendor.url",
-            "file.separator", "path.separator", "line.separator"
+            "file.separator", "path.separator", "line.separator",
+            "path"
     )
     val moduleProviders: MutableMap<String, SpiralModuleProvider> = HashMap()
     val enabledModules: MutableSet<String> = HashSet()

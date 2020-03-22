@@ -2,6 +2,7 @@ package info.spiralframework.core.formats.archives
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.FlowOutputStream
+import info.spiralframework.base.common.io.asOutputStream
 import info.spiralframework.base.common.io.readChunked
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
@@ -99,53 +100,55 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      * @return An enum for the success of the operation
      */
     override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
-        val zipOut = ZipOutputStream(FlowOutputStream.withGlobalScope(flow, false))
-
         return withContext(Dispatchers.IO) {
-            try {
-                when (data) {
-                    is ZipFile -> data.entries().iterator().forEach { entry ->
-                        zipOut.putNextEntry(entry)
-                        data.getInputStream(entry).use { zipIn -> zipIn.copyTo(zipOut) }
-                    }
+            asOutputStream(flow, false) { rawOut ->
+                val zipOut = ZipOutputStream(rawOut)
 
-                    is AwbArchive -> data.files.forEach { entry ->
-                        zipOut.putNextEntry(ZipEntry(entry.id.toString()))
-                        data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                    }
-                    is CpkArchive -> data.files.forEach { entry ->
-                        zipOut.putNextEntry(ZipEntry(entry.name))
-                        data.openDecompressedFlow(context, entry)
-                                ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                    }
-                    is PakArchive -> data.files.forEach { entry ->
-                        zipOut.putNextEntry(ZipEntry(entry.index.toString()))
-                        data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                    }
-                    is SpcArchive -> data.files.forEach { entry ->
-                        zipOut.putNextEntry(ZipEntry(entry.name))
-                        data.openDecompressedFlow(context, entry)
-                                ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                    }
-                    is SrdArchive -> data.entries.groupBy(BaseSrdEntry::classifierAsString).forEach { (_, list) ->
-                        list.forEachIndexed { index, entry ->
-                            zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-data"))
-                            entry.openMainDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                            zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-subdata"))
-                            entry.openSubDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                try {
+                    when (data) {
+                        is ZipFile -> data.entries().iterator().forEach { entry ->
+                            zipOut.putNextEntry(entry)
+                            data.getInputStream(entry).use { zipIn -> zipIn.copyTo(zipOut) }
                         }
-                    }
-                    is WadArchive -> data.files.forEach { entry ->
-                        zipOut.putNextEntry(ZipEntry(entry.name))
-                        data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
-                    }
-                    else -> return@withContext FormatWriteResponse.WRONG_FORMAT
-                }
-            } finally {
-                zipOut.finish()
-            }
 
-            return@withContext FormatWriteResponse.SUCCESS
+                        is AwbArchive -> data.files.forEach { entry ->
+                            zipOut.putNextEntry(ZipEntry(entry.id.toString()))
+                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                        }
+                        is CpkArchive -> data.files.forEach { entry ->
+                            zipOut.putNextEntry(ZipEntry(entry.name))
+                            data.openDecompressedFlow(context, entry)
+                                    ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                        }
+                        is PakArchive -> data.files.forEach { entry ->
+                            zipOut.putNextEntry(ZipEntry(entry.index.toString()))
+                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                        }
+                        is SpcArchive -> data.files.forEach { entry ->
+                            zipOut.putNextEntry(ZipEntry(entry.name))
+                            data.openDecompressedFlow(context, entry)
+                                    ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                        }
+                        is SrdArchive -> data.entries.groupBy(BaseSrdEntry::classifierAsString).forEach { (_, list) ->
+                            list.forEachIndexed { index, entry ->
+                                zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-data"))
+                                entry.openMainDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                                zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-subdata"))
+                                entry.openSubDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                            }
+                        }
+                        is WadArchive -> data.files.forEach { entry ->
+                            zipOut.putNextEntry(ZipEntry(entry.name))
+                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                        }
+                        else -> return@withContext FormatWriteResponse.WRONG_FORMAT
+                    }
+                } finally {
+                    zipOut.finish()
+                }
+
+                return@withContext FormatWriteResponse.SUCCESS
+            }
         }
     }
 }

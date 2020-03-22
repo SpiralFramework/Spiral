@@ -12,4 +12,5 @@ interface SpiralResourceLoader {
 
 //    suspend fun hasResource(name: String): Boolean?
     suspend fun loadResource(name: String, from: KClass<*> = SpiralModuleBase::class): DataSource<*>?
+//    suspend fun findResources(name: String, from: KClass<*> = SpiralModuleBase::class):
 }

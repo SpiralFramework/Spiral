@@ -6,10 +6,20 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.srd.SrdArchive
 import org.abimon.kornea.io.common.DataSource
+import java.util.*
 
 object SrdArchiveFormat: ReadableSpiralFormat<SrdArchive> {
     override val name: String = "SRD"
     override val extension: String = "srd"
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<SrdArchive>> {
+        val fileName = readContext?.name?.substringAfterLast('/')
+        if (fileName != null && fileName.contains('.') && !fileName.substringAfterLast('.').equals(extension, true)) {
+            return FormatResult.Fail(0.9)
+        }
+
+        return super.identify(context, readContext, source)
+    }
 
     /**
      * Attempts to read the data source as [T]

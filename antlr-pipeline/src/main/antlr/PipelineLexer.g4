@@ -96,13 +96,14 @@ mode IdentifierEnd;
 BEGIN_FUNCTION_CALL: '(' -> mode(FunctionCall);
 SET_PARAMETER: OPT_INLINE_WHITESPACE '=' OPT_INLINE_WHITESPACE -> popMode;
 BEGIN_SCRIPT_CALL: INLINE_WHITESPACE_CHARACTERS+ -> mode(ScriptCall);
+BEGIN_SCRIPT_CALL_EMPTY: (SEMICOLON_SEPARATOR | NL_SEPARATOR | EOF) -> popMode;
 
 mode FunctionCall;
 
 FUNC_CALL_INTEGER: INTEGER -> type(INTEGER);
 FUNC_CALL_DECIMAL_NUMBER: DECIMAL_NUMBER -> type(DECIMAL_NUMBER);
 FUNC_CALL_VARIABLE_REFERENCE: '$' -> type(VARIABLE_REFERENCE), pushMode(Identifier);
-FUNC_CALL_WRAPPED_SCRIPT_CALL: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(ScriptCall), pushMode(Identifier);
+FUNC_CALL_WRAPPED_SCRIPT_CALL: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(IdentifierEnd), pushMode(Identifier);
 FUNC_CALL_NULL: NULL -> type(NULL);
 FUNC_CALL_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
 FUNC_CALL_TRUE: TRUE -> type(TRUE);
@@ -128,11 +129,13 @@ SCRIPT_CALL_FALSE: FALSE -> type(FALSE);
 SCRIPT_CALL_START_EXPRESSION: '(' -> type(START_EXPRESSION), pushMode(ExpressionMode);
 
 SCRIPT_CALL_IDENTIFIER: NAME_IDENTIFIER -> type(IDENTIFIER), pushMode(IdentifierEnd);
-SCRIPT_CALL_RECURSIVE: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(ScriptCall), pushMode(Identifier);
+SCRIPT_CALL_RECURSIVE: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(IdentifierEnd), pushMode(Identifier);
 
 SCRIPT_CALL_PARAM_SEPARATOR: INLINE_WHITESPACE_CHARACTERS+;
+SCRIPT_CALL_FLAG: '--' -> pushMode(Identifier);
+SCRIPT_CALL_FLAG_GROUP: '-' -> pushMode(Identifier);
 
-END_SCRIPT_CALL: (NEW_LINE | EOF | ')') -> popMode;
+END_SCRIPT_CALL: (NEW_LINE | ')' | EOF) -> popMode;
 
 mode FunctionDeclaration;
 
@@ -159,7 +162,7 @@ EXPR_MULTIPLY: '*';
 EXPR_INTEGER: INTEGER -> type(INTEGER);
 EXPR_DECIMAL_NUMBER: DECIMAL_NUMBER -> type(DECIMAL_NUMBER);
 EXPR_VARIABLE_REFERENCE: '$' -> type(VARIABLE_REFERENCE), pushMode(Identifier);
-EXPR_WRAPPED_SCRIPT_CALL: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(ScriptCall), pushMode(Identifier);
+EXPR_WRAPPED_SCRIPT_CALL: '$(' -> type(WRAPPED_SCRIPT_CALL), pushMode(IdentifierEnd), pushMode(Identifier);
 EXPR_NULL: NULL -> type(NULL);
 EXPR_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
 EXPR_TRUE: TRUE -> type(TRUE);

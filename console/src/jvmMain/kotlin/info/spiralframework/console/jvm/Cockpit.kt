@@ -1,5 +1,8 @@
 package info.spiralframework.console.jvm
 
+import ch.qos.logback.classic.joran.JoranConfigurator
+import ch.qos.logback.core.joran.spi.JoranException
+import ch.qos.logback.core.util.StatusPrinter
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.isSuccessful
 import info.spiralframework.base.binding.*
@@ -24,8 +27,12 @@ import info.spiralframework.base.common.text.ProgressTracker
 import info.spiralframework.base.jvm.crypto.md5Hash
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.base.jvm.toFileSize
-import info.spiralframework.console.jvm.data.*
-import info.spiralframework.console.jvm.eventbus.*
+import info.spiralframework.console.jvm.data.DefaultSpiralCockpitContext
+import info.spiralframework.console.jvm.data.GurrenArgs
+import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.data.SpiralScope
+import info.spiralframework.console.jvm.eventbus.ScopeRequest
+import info.spiralframework.console.jvm.eventbus.ScopeResponse
 import info.spiralframework.core.*
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.plugins.DefaultSpiralPluginRegistry
@@ -37,17 +44,22 @@ import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.use
+import org.abimon.kornea.io.common.useInputFlow
 import org.abimon.kornea.io.jvm.files.relativePathFrom
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.channels.ReadableByteChannel
 import java.nio.file.StandardOpenOption
 import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
+
 
 /** The driving force behind the console interface for Spiral */
 //<SELF : Cockpit<SELF>>
@@ -60,14 +72,36 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
         @JvmStatic
         fun main(args: Array<String>) = runBlocking<Unit> {
             val locale: SpiralLocale = DefaultSpiralLocale()
-            val logger: SpiralLogger = DefaultSpiralLogger(LoggerFactory.getLogger(locale.localise("logger.parent.name")))
+            val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
+            val loggerFactory = LoggerFactory.getILoggerFactory()
+            val baseLogger: Logger
+            if (loggerFactory is ch.qos.logback.classic.LoggerContext) {
+                val loggerData = resourceLoader.loadResource("logback.xml")?.use { src -> src.openInputFlow()?.readAndClose() }
+                if (loggerData != null) {
+                    try {
+                        val configurator = JoranConfigurator()
+                        configurator.context = loggerFactory
+                        // Call context.reset() to clear any previous configuration, e.g. default
+                        // configuration. For multi-step configuration, omit calling context.reset().
+                        loggerFactory.reset()
+                        configurator.doConfigure(ByteArrayInputStream(loggerData))
+                    } catch (je: JoranException) {
+                        // StatusPrinter will handle this
+                    }
+                    StatusPrinter.printInCaseOfErrorsOrWarnings(loggerFactory)
+                }
+
+                baseLogger = loggerFactory.getLogger(locale.localise("logger.parent.name"))
+            } else {
+                baseLogger = LoggerFactory.getLogger(locale.localise("logger.parent.name"))
+            }
+            val logger: SpiralLogger = DefaultSpiralLogger(baseLogger)
             val eventLogger = LoggerFactory.getLogger(locale.localise("logger.eventbus.name"))
             val config: SpiralConfig = DefaultSpiralConfig()
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                     .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
-            val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
             val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
 
             val serialisation = DefaultSpiralSerialisation()
@@ -294,6 +328,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
         }
 
         @ExperimentalTime
+        @ExperimentalStdlibApi
         operator fun invoke(context: SpiralCockpitContext): Cockpit {
             return if (context.args.isTool) {
                 CockpitMechanic(context)

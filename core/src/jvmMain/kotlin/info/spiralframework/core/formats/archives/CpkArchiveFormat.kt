@@ -82,7 +82,7 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
                     cache.close()
                     customCpk[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
                 } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream).copyTo(output) }
+                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
                     customCpk[entry.name] = cache
                     caches.add(cache)
                 }
