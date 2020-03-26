@@ -59,6 +59,8 @@ object BstProcessor {
 
     const val MAGIC_NUMBER_V3_DATA_TABLE = 0x30 //33 54 44 2E
 
+    const val MAGIC_NUMBER_UTF8 = 0xF0
+
     const val MAGIC_NUMBER_RAW_INT8 = 0xFC
     const val MAGIC_NUMBER_RAW_INT16 = 0xFD
     const val MAGIC_NUMBER_RAW_INT32 = 0xFE
@@ -136,6 +138,7 @@ object BstProcessor {
 
             MAGIC_NUMBER_V3_DATA_TABLE -> output.writeInt32LE(0x2E445433)
 
+            MAGIC_NUMBER_UTF8 -> output.writeInt32LE(0x38465455)
             MAGIC_NUMBER_RAW_INT8 -> output.write(bst.read() ?: return)
             MAGIC_NUMBER_RAW_INT16 -> output.writeInt16LE(bst.readInt16LE() ?: return)
             MAGIC_NUMBER_RAW_INT32 -> output.writeInt32LE(bst.readInt32LE() ?: return)

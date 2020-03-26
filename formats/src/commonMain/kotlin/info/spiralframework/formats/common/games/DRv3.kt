@@ -12,8 +12,8 @@ import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.list
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 

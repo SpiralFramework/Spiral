@@ -1,4 +1,4 @@
-package info.spiralframework.gui
+package info.spiralframework.gui.jvm
 
 import javafx.application.Application
 import javafx.stage.Stage
@@ -7,7 +7,7 @@ class Lagann: Application() {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            Application.launch(Lagann::class.java, *args)
+            launch(Lagann::class.java, *args)
         }
     }
 
@@ -27,7 +27,7 @@ class Lagann: Application() {
      * Applications may create other stages, if needed, but they will not be
      * primary stages and will not be embedded in the browser.
      */
-    override fun start(primaryStage: Stage?) {
+    override fun start(primaryStage: Stage) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

@@ -3,11 +3,12 @@ package info.spiralframework.base.common
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.Url
+import io.ktor.http.fullPath
 import org.abimon.kornea.io.common.*
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
-class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<ByteReadChannelInputFlow> {
+class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1, override val location: String? = url.fullPath): DataSource<ByteReadChannelInputFlow> {
     private val client = HttpClient()
 
     override var dataSize: ULong? = null
@@ -20,9 +21,9 @@ class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1): DataSource<B
 
     override val reproducibility: DataSourceReproducibility = DataSourceReproducibility(isUnreliable = true)
 
-    override suspend fun openInputFlow(): ByteReadChannelInputFlow? {
+    override suspend fun openNamedInputFlow(location: String?): ByteReadChannelInputFlow? {
         if (canOpenInputFlow()) {
-            val stream = ByteReadChannelInputFlow(client.get(url))
+            val stream = ByteReadChannelInputFlow(client.get(url), location ?: this.location)
             stream.addCloseHandler(this::instanceClosed)
             openInstances.add(stream)
             return stream

@@ -10,7 +10,7 @@ import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.list
+import kotlinx.serialization.builtins.list
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 

@@ -87,6 +87,11 @@ class BstBuilder(val out: OutputFlow) {
             out.write(BstProcessor.MAGIC_NUMBER_V3_DATA_TABLE)
         }
 
+        suspend fun utf8() {
+            out.write(BstProcessor.OPCODE_ADD_MAGIC_NUMBER)
+            out.write(BstProcessor.MAGIC_NUMBER_UTF8)
+        }
+
         suspend fun rawInt8(int8: Number) {
             out.write(BstProcessor.OPCODE_ADD_MAGIC_NUMBER)
             out.write(BstProcessor.MAGIC_NUMBER_RAW_INT8)

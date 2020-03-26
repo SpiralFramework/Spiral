@@ -16,6 +16,8 @@ import info.spiralframework.core.formats.images.TGAFormat
 import info.spiralframework.core.formats.scripting.LinScriptFormat
 import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
 import info.spiralframework.core.formats.text.CSVFormat
+import info.spiralframework.core.formats.text.UTF16TextFormat
+import info.spiralframework.core.formats.text.UTF8TextFormat
 import info.spiralframework.formats.common.archives.*
 import info.spiralframework.formats.common.archives.srd.SrdArchive
 import info.spiralframework.formats.common.games.DrGame
@@ -68,7 +70,7 @@ object GurrenShared {
                 AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
                 CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat,
                 JPEGFormat, PNGFormat, TGAFormat,
-                LinScriptFormat, OpenSpiralLanguageFormat,
+                LinScriptFormat, OpenSpiralLanguageFormat, UTF16TextFormat, UTF8TextFormat,
                 DataTableStructureFormat
         )
     }

@@ -1,13 +1,16 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
+apply plugin: 'org.openjfx.javafxplugin'
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 mainClassName = ""
 
 kotlin {
     jvm {
         compilations.main.kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "1.11"
         }
     }
 //    js {
@@ -26,7 +29,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.0-RC'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.5-1.4-M1'
 
                 api project(":core")
             }
@@ -40,7 +43,7 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-RC'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5-1.4-M1'
             }
         }
         jvmTest {
@@ -76,12 +79,39 @@ kotlin {
     }
 }
 
+javafx {
+    version = '11'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+    configuration = 'jvmImplementation'
+}
+
 shadowJar {
     baseName = jar.baseName
     appendix = jar.appendix
     version = jar.version
 
     classifier = "shadow"
+}
+
+jvmJar {
+    archiveBaseName.set("spiral-$project.name")
+    archiveVersion.set(project_version)
+}
+
+task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
+    mergeServiceFiles()
+    from jvmJar.archiveFile
+    configurations = [project.configurations.jvmRuntimeClasspath]
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+
+    group = "shadow"
+
+    archiveBaseName.set(jvmJar.archiveBaseName.get())
+    archiveAppendix.set(jvmJar.archiveAppendix.getOrNull())
+    archiveVersion.set(jvmJar.archiveVersion.get())
+    archiveClassifier.set("shadow")
 }
 
 //publishing {

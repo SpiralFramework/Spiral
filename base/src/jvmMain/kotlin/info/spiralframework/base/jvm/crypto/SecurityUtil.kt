@@ -19,12 +19,15 @@ import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.collections.HashMap
+import kotlin.streams.toList
+
 
 /** ***Do not use for things like passwords*** */
 fun ByteArray.hash(algorithm: String): String {
     val md = MessageDigest.getInstance(algorithm)
     val hashBytes = md.digest(this)
-    return String.format("%032x", BigInteger(1, hashBytes))
+    return String.format("%0${hashBytes.size shl 1}x", BigInteger(1, hashBytes))
 }
 /** ***Do not use for things like passwords*** */
 fun ByteArray.md2Hash(): String = hash("MD2")
@@ -40,6 +43,26 @@ fun ByteArray.sha256Hash(): String = hash("SHA-256")
 fun ByteArray.sha384Hash(): String = hash("SHA-384")
 /** ***Do not use for things like passwords*** */
 fun ByteArray.sha512Hash(): String = hash("SHA-512")
+
+/** ***Do not use for things like passwords*** */
+fun ByteArray.hashBytes(algorithm: String): ByteArray {
+    val md = MessageDigest.getInstance(algorithm)
+    return md.digest(this)
+}
+/** ***Do not use for things like passwords*** */
+fun ByteArray.md2HashBytes() = hashBytes("MD2")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.md5HashBytes() = hashBytes("MD5")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.sha1HashBytes() = hashBytes("SHA-1")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.sha224HashBytes() = hashBytes("SHA-224")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.sha256HashBytes() = hashBytes("SHA-256")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.sha384HashBytes() = hashBytes("SHA-384")
+/** ***Do not use for things like passwords*** */
+fun ByteArray.sha512HashBytes() = hashBytes("SHA-512")
 
 /** **Do not use for things like passwords, or situations where the data needs to be blanked out** */
 fun String.md2Hash(): String = toByteArray(Charsets.UTF_8).md2Hash()
@@ -61,7 +84,7 @@ fun InputStream.hash(algorithm: String): String {
     val md = MessageDigest.getInstance(algorithm)
     readChunked { md.update(it) }
     val hashBytes = md.digest()
-    return String.format("%032x", BigInteger(1, hashBytes))
+    return String.format("%0${hashBytes.size shl 1}x", BigInteger(1, hashBytes))
 }
 /** ***Do not use for things like passwords*** */
 fun InputStream.md2Hash(): String = hash("MD2")
@@ -95,7 +118,7 @@ fun ReadableByteChannel.hash(algorithm: String): String {
     }
 
     val hashBytes = md.digest()
-    return String.format("%032x", BigInteger(1, hashBytes))
+    return String.format("%0${hashBytes.size shl 1}x", BigInteger(1, hashBytes))
 }
 /** ***Do not use for things like passwords*** */
 fun ReadableByteChannel.md2Hash(): String = hash("MD2")
@@ -124,7 +147,7 @@ suspend fun InputFlow.hash(algorithm: String): String {
     }
 
     val hashBytes = md.digest()
-    return String.format("%032x", BigInteger(1, hashBytes))
+    return String.format("%0${hashBytes.size shl 1}x", BigInteger(1, hashBytes))
 }
 /** ***Do not use for things like passwords*** */
 @ExperimentalUnsignedTypes
@@ -311,3 +334,20 @@ fun RSAPublicKeySpec(data: ByteArray): KeySpec
         = X509EncodedKeySpec(data)
 
 fun String.matchesSha256(data: ByteArray): Boolean = data.sha256Hash().equals(this, true)
+
+val LAZY_HEX_DECODER: Map<Int, Byte> by lazy {
+    val alphabet = "0123456789abcdef".chars().toList()
+    val decoder: HashMap<Int, Byte> = HashMap()
+
+    var value: Byte = 0
+    alphabet.forEach { x ->
+        alphabet.forEach { y ->
+            decoder[x or y.shl(8)] = value++
+        }
+    }
+
+    decoder
+}
+
+fun ByteArray.asHexEncodedString(): String = String.format("%0${size shl 1}x", BigInteger(1, this))
+fun String.decodeHex(): ByteArray = ByteArray(length / 2) { i -> LAZY_HEX_DECODER.getValue(this[i*2].toInt() or this[i*2+1].toInt().shl(8)) }

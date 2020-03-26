@@ -7,7 +7,7 @@ import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readResultIsValid
 
 @ExperimentalUnsignedTypes
-class ByteReadChannelInputFlow(val channel: ByteReadChannel) : InputFlow {
+class ByteReadChannelInputFlow(val channel: ByteReadChannel, override val location: String? = null) : InputFlow {
     override val closeHandlers: MutableList<DataCloseableEventHandler> = ArrayList()
 
     private var position: ULong = 0uL
