@@ -69,8 +69,8 @@ public suspend fun InputFlow.readChunked(bufferSize: Int = DEFAULT_BUFFER_SIZE, 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLen: Boolean = false): String? {
-    val data = ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024))
-    return readExact(data)?.decodeToString(encoding)
+    val data = readExact(ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024)))
+    return data?.decodeToString(encoding)
 }
 
 @ExperimentalUnsignedTypes

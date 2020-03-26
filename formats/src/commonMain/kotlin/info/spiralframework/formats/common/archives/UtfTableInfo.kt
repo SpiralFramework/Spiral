@@ -82,7 +82,7 @@ data class UtfTableInfo(
                     val rowCount = requireNotNull(flow.readUInt32BE(), notEnoughData)
 
                     val stringTable = flow.fauxSeekFromStart((8u + stringTableOffset).toULong(), dataSource) { stringFlow ->
-                        stringFlow.readString((dataOffset - stringTableOffset).toInt() + 1, encoding = TextCharsets.UTF_8)
+                        stringFlow.readString((dataOffset - stringTableOffset).toInt(), encoding = TextCharsets.UTF_8)
                     }
                     requireNotNull(stringTable, notEnoughData)
 

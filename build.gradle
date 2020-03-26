@@ -26,7 +26,7 @@ allprojects {
 
     group = artifact_group
     version = project_version
-    sourceCompatibility = 1.8
+    sourceCompatibility = 11
 
     configurations {
         compileInclude
