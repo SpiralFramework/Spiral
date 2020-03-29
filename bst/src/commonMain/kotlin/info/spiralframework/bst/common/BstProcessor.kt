@@ -24,7 +24,8 @@ object BstProcessor {
 
     const val FILE_TYPE_PAK = 0x00
     const val FILE_TYPE_SPC = 0x01
-    const val FILE_TYPE_LIN = 0x02
+
+    //    const val FILE_TYPE_LIN = 0x02
     const val FILE_TYPE_WRD = 0x03
     const val FILE_TYPE_SRD = 0x04
     const val FILE_TYPE_SRDI = 0x05
@@ -34,14 +35,15 @@ object BstProcessor {
     const val FILE_TYPE_DR1_CLIMAX_EP = 0x11
     const val FILE_TYPE_DR1_ANAGRAM = 0x12
     const val FILE_TYPE_DR1_NONSTOP = 0x13
-    const val FILE_TYPE_ROOMOBJECT = 0x14
+    const val FILE_TYPE_DR1_ROOMOBJECT = 0x14
+    const val FILE_TYPE_DR1_LIN = 0x15
 
     const val FILE_TYPE_V3_DATA_TABLE = 0x30
 
     const val FILE_TYPE_RAW = 0xFF
 
     const val MAGIC_NUMBER_PAK = 0x00 //4B 41 50 2E
-    const val MAGIC_NUMBER_LIN = 0x01 //4E 49 4C 2E
+    const val MAGIC_NUMBER_UNK_LIN = 0x01 //4E 49 4C 2E
     const val MAGIC_NUMBER_WRD = 0x02 //44 52 57 2E
     const val MAGIC_NUMBER_SRD = 0x03 //44 52 53 2E
     const val MAGIC_NUMBER_SRDI = 0x04 //49 44 52 53
@@ -56,8 +58,13 @@ object BstProcessor {
     const val MAGIC_NUMBER_DR1_ANAGRAM = 0x12 //31 47 48 2E
     const val MAGIC_NUMBER_DR1_NONSTOP = 0x13 //31 44 4E 2E
     const val MAGIC_NUMBER_DR1_ROOMOBJECT = 0x14 //31 4F 52 2E
+    const val MAGIC_NUMBER_DR1_LIN = 0x15 //4E 49 4C 31
+
+    const val MAGIC_NUMBER_DR2_LIN = 0x25 //4E 49 4C 32
 
     const val MAGIC_NUMBER_V3_DATA_TABLE = 0x30 //33 54 44 2E
+
+    const val MAGIC_NUMBER_UDG_LIN = 0xA5 //4E 49 4C AE
 
     const val MAGIC_NUMBER_UTF8 = 0xF0
 
@@ -120,7 +127,7 @@ object BstProcessor {
     suspend fun SpiralContext.processAddMagicNumber(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (bst.read() ?: return) {
             MAGIC_NUMBER_PAK -> output.writeInt32LE(PakArchive.MAGIC_NUMBER_LE)
-            MAGIC_NUMBER_LIN -> output.writeInt32LE(0x2E4C494E)
+            MAGIC_NUMBER_UNK_LIN -> output.writeInt32LE(0x2E4C494E)
             MAGIC_NUMBER_WRD -> output.writeInt32LE(0x2E575244)
             MAGIC_NUMBER_SRD -> output.writeInt32LE(0x2E535244)
             MAGIC_NUMBER_SRDI -> output.writeInt32LE(0x53524449)
@@ -135,8 +142,13 @@ object BstProcessor {
             MAGIC_NUMBER_DR1_CLIMAX_EP -> output.writeInt32LE(0x2E434531)
             MAGIC_NUMBER_DR1_ANAGRAM -> output.writeInt32LE(0x2E484731)
             MAGIC_NUMBER_DR1_ROOMOBJECT -> output.writeInt32LE(0x2E524F31)
+            MAGIC_NUMBER_DR1_LIN -> output.writeInt32LE(0x314C494E)
+
+            MAGIC_NUMBER_DR2_LIN -> output.writeInt32LE(0x324C494E)
 
             MAGIC_NUMBER_V3_DATA_TABLE -> output.writeInt32LE(0x2E445433)
+
+            MAGIC_NUMBER_UDG_LIN -> output.writeInt32LE(0xAE4C494E)
 
             MAGIC_NUMBER_UTF8 -> output.writeInt32LE(0x38465455)
             MAGIC_NUMBER_RAW_INT8 -> output.write(bst.read() ?: return)

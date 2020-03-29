@@ -171,6 +171,33 @@ suspend fun InputFlow.sha384Hash(): String = hash("SHA-384")
 @ExperimentalUnsignedTypes
 suspend fun InputFlow.sha512Hash(): String = hash("SHA-512")
 
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.hashBytes(algorithm: String): ByteArray {
+    val md = MessageDigest.getInstance(algorithm)
+    val buffer = ByteArray(8192)
+
+    while (true) {
+        val read = read(buffer) ?: break
+        md.update(buffer, 0, read)
+    }
+
+    return md.digest()
+}
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.md2HashBytes() = hashBytes("MD2")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.md5HashBytes() = hashBytes("MD5")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.sha1HashBytes() = hashBytes("SHA-1")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.sha224HashBytes() = hashBytes("SHA-224")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.sha256HashBytes() = hashBytes("SHA-256")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.sha384HashBytes() = hashBytes("SHA-384")
+/** ***Do not use for things like passwords*** */
+suspend fun InputFlow.sha512HashBytes() = hashBytes("SHA-512")
+
 fun CharArray.toByteArray(): ByteArray {
     val byteBuffer = Charset.forName("UTF-8").encode(CharBuffer.wrap(this))
     val byteArray = ByteArray(byteBuffer.remaining())

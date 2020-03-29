@@ -29,7 +29,7 @@ class BstBuilder(val out: OutputFlow) {
 
         suspend fun lin() {
             out.write(BstProcessor.OPCODE_ADD_MAGIC_NUMBER)
-            out.write(BstProcessor.MAGIC_NUMBER_LIN)
+            out.write(BstProcessor.MAGIC_NUMBER_UNK_LIN)
         }
 
         suspend fun wrd() {
