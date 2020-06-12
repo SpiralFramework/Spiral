@@ -3,13 +3,21 @@ package info.spiralframework.core.formats.archives
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.FlowOutputStream
 import info.spiralframework.base.common.io.asOutputStream
+import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.io.readChunked
+import info.spiralframework.base.common.useAndFlatMap
+import info.spiralframework.base.common.useAndMap
+import info.spiralframework.base.jvm.crypto.sha512Hash
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
 import info.spiralframework.formats.common.archives.srd.BaseSrdEntry
 import info.spiralframework.formats.common.archives.srd.SrdArchive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.doOnSuccess
+import org.abimon.kornea.erorrs.common.flatMap
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.addCloseHandler
 import org.abimon.kornea.io.common.copyToOutputFlow
@@ -17,6 +25,7 @@ import org.abimon.kornea.io.common.flow.OutputFlow
 import org.abimon.kornea.io.common.use
 import org.abimon.kornea.io.jvm.JVMOutputFlow
 import org.abimon.kornea.io.jvm.files.FileDataSource
+import org.abimon.kornea.io.jvm.files.FileOutputFlow
 import java.io.*
 import java.util.*
 import java.util.zip.ZipEntry
@@ -44,35 +53,34 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
                     FormatResult.Success(this@ZipFormat, ZipFile(source.backing), 1.0)
                 }
             } catch (io: IOException) {
-                return FormatResult.Fail(this, 1.0, io)
+                return FormatResult.Fail(this, 1.0, KorneaResult.Thrown(io))
             }
         } else {
             var zip: ZipFile? = null
             var ioException: IOException? = null
+
             val tmpFile = withContext(Dispatchers.IO) { File.createTempFile(UUID.randomUUID().toString(), ".dat") }
             tmpFile.deleteOnExit()
 
-            withContext(Dispatchers.IO) {
-                try {
-                    source.openInputFlow()?.use { flow ->
-                        withContext(Dispatchers.IO) {
-                            JVMOutputFlow(FileOutputStream(tmpFile)).use(flow::copyToOutputFlow)
-                            zip = ZipFile(tmpFile)
-                        }
-
-                        source.addCloseHandler { tmpFile.delete() }
+            try {
+                source.openInputFlow().doOnSuccess { flow ->
+                    withContext(Dispatchers.IO) {
+                        FileOutputFlow(tmpFile).use { flow.copyToOutputFlow(it) }
+                        zip = ZipFile(tmpFile)
                     }
-                } catch (io: IOException) {
-                    tmpFile.delete()
-                    ioException = io
+
+                    source.addCloseHandler { withContext(Dispatchers.IO) { tmpFile.delete() } }
                 }
+            } catch (io: IOException) {
+                withContext(Dispatchers.IO) { tmpFile.delete() }
+                ioException = io
             }
 
             if (zip != null) {
                 return FormatResult.Success(this, zip!!, 1.0)
             } else {
                 tmpFile.delete()
-                return FormatResult.Fail(this, 1.0, ioException)
+                return FormatResult.Fail(this, 1.0, KorneaResult.Thrown(ioException))
             }
         }
     }
@@ -113,33 +121,33 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
 
                         is AwbArchive -> data.files.forEach { entry ->
                             zipOut.putNextEntry(ZipEntry(entry.id.toString()))
-                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                            data.openFlow(entry).doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                         }
                         is CpkArchive -> data.files.forEach { entry ->
                             zipOut.putNextEntry(ZipEntry(entry.name))
                             data.openDecompressedFlow(context, entry)
-                                    ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                                    .doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                         }
                         is PakArchive -> data.files.forEach { entry ->
                             zipOut.putNextEntry(ZipEntry(entry.index.toString()))
-                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                            data.openFlow(entry).doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                         }
                         is SpcArchive -> data.files.forEach { entry ->
                             zipOut.putNextEntry(ZipEntry(entry.name))
                             data.openDecompressedFlow(context, entry)
-                                    ?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                                    .doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                         }
                         is SrdArchive -> data.entries.groupBy(BaseSrdEntry::classifierAsString).forEach { (_, list) ->
                             list.forEachIndexed { index, entry ->
                                 zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-data"))
-                                entry.openMainDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                                entry.openMainDataFlow().doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                                 zipOut.putNextEntry(ZipEntry("${entry.classifierAsString}-$index-subdata"))
-                                entry.openSubDataFlow()?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                                entry.openSubDataFlow().doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                             }
                         }
                         is WadArchive -> data.files.forEach { entry ->
                             zipOut.putNextEntry(ZipEntry(entry.name))
-                            data.openFlow(entry)?.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) }
+                            data.openFlow(entry).doOnSuccess { it.readChunked { buffer, offset, length -> zipOut.write(buffer, offset, length) } }
                         }
                         else -> return@withContext FormatWriteResponse.WRONG_FORMAT
                     }

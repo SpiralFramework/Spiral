@@ -38,7 +38,7 @@ class CustomPakArchive {
 
         for (index in 0 until range) {
             val dataSource = _files[index] ?: continue
-            dataSource.useInputFlow(output::copyFrom)
+            dataSource.useInputFlow { output.copyFrom(it) }
         }
     }
 

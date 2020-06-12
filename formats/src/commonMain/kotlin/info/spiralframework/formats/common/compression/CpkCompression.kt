@@ -1,27 +1,33 @@
 package info.spiralframework.formats.common.compression
 
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.korneaNotEnoughData
 import org.abimon.kornea.io.common.ReversedBitPoolInput
 import org.abimon.kornea.io.common.readInt64BE
 import org.abimon.kornea.io.common.readUInt32LE
 
 const val CRILAYLA_MAGIC = 0x4352494C41594C41
 
+const val CRILAYLA_INVALID_MAGIC_NUMBER = 0xE000
+
 @ExperimentalUnsignedTypes
-fun decompressCrilayla(data: ByteArray): ByteArray {
+fun decompressCrilayla(data: ByteArray): KorneaResult<ByteArray> {
     var pos = 0
-    val magic = requireNotNull(data.readInt64BE(pos))
-    require(magic == CRILAYLA_MAGIC) { "Magic number 0x${magic.toString(16)} is invalid" }
+    val magic = data.readInt64BE(pos) ?: return korneaNotEnoughData()
+    if (magic != CRILAYLA_MAGIC) {
+        return KorneaResult.Error(CRILAYLA_INVALID_MAGIC_NUMBER, "Magic number 0x${magic.toString(16)} is invalid")
+    }
     pos += 8
 
-    val rawSize = requireNotNull(data.readUInt32LE(pos)).toInt()
+    val rawSize = data.readUInt32LE(pos)?.toInt() ?: return korneaNotEnoughData()
     pos += 4
-    val compressedSize = requireNotNull(data.readUInt32LE(pos)).toInt()
+    val compressedSize = data.readUInt32LE(pos)?.toInt() ?: return korneaNotEnoughData()
     pos += 4
 
     val output: MutableList<Byte> = ArrayList(data.slice(pos + compressedSize until pos + compressedSize + 0x100))
     output.addAll(deflateCrilayla(data.sliceArray(pos until pos + compressedSize), rawSize, compressedSize))
 
-    return output.toByteArray()
+    return KorneaResult.Success(output.toByteArray())
 }
 
 const val CRILAYLA_MINIMAL_REFLEN = 3

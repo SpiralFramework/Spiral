@@ -17,7 +17,9 @@ fun String.toIntOrNullBaseN(): Int? = when {
 }
 
 fun Byte.toHexString(): String = toInt().and(0xFF).toHexString()
+fun Short.toHexString(): String = toInt().and(0xFF).toHexString()
 fun Int.toHexString(): String = StringBuilder().also(this::toHexString).toString()
+fun Long.toHexString(): String = StringBuilder().also(this::toHexString).toString()
 fun StringBuilder.appendHex(num: Number) = num.toInt().toHexString(this)
 fun StringBuilder.appendlnHex(num: Number) {
     num.toInt().toHexString(this)
@@ -25,6 +27,16 @@ fun StringBuilder.appendlnHex(num: Number) {
 }
 
 fun Int.toHexString(builder: StringBuilder) {
+    with(builder) {
+        append("0x")
+        val hex = toString(16).toUpperCase()
+        for (i in 0 until hex.length % 2)
+            append('0')
+        append(hex)
+    }
+}
+
+fun Long.toHexString(builder: StringBuilder) {
     with(builder) {
         append("0x")
         val hex = toString(16).toUpperCase()

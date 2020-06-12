@@ -2,9 +2,13 @@ package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.properties.oneTimeMutable
 import info.spiralframework.base.common.properties.setValue
+import info.spiralframework.base.common.useAndFlatMap
+import info.spiralframework.base.common.useAndMap
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
@@ -30,21 +34,21 @@ data class MeshSrdEntry(
     var materialName: String by oneTimeMutable()
 
     @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup() {
+    override suspend fun SpiralContext.setup(): KorneaResult<MeshSrdEntry> {
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            dataSource.openInputFlow()?.use { setup(it) }
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
         else {
-            setup(BinaryInputFlow(dataSource.openInputFlow()?.use { it.readBytes() } ?: return))
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow) {
-        val unk = flow.readInt32LE()
+    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<MeshSrdEntry> {
+        val unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        val meshNameOffset = requireNotNull(flow.readInt16LE())
-        val materialNameOffset = requireNotNull(flow.readInt16LE())
+        val meshNameOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        val materialNameOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         bookmark(flow) {
             flow.seek(meshNameOffset.toLong(), InputFlow.FROM_BEGINNING)
@@ -53,5 +57,7 @@ data class MeshSrdEntry(
             flow.seek(materialNameOffset.toLong(), InputFlow.FROM_BEGINNING)
             materialName = flow.readNullTerminatedUTF8String()
         }
+
+        return KorneaResult.Success(this@MeshSrdEntry)
     }
 }

@@ -2,7 +2,7 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
 ext {
-    serialization_version = "0.20.0-1.4-M1"
+    serialization_version = "0.20.0"
 }
 
 repositories {

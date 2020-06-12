@@ -1,13 +1,18 @@
 package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.properties.oneTimeMutable
 import info.spiralframework.base.common.properties.setValue
+import info.spiralframework.base.common.useAndFlatMap
+import info.spiralframework.base.common.useAndMap
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.readInt16LE
 import org.abimon.kornea.io.common.readInt32LE
 import org.abimon.kornea.io.common.use
@@ -39,29 +44,31 @@ data class TextureSrdEntry(
     var paletteID: Int by oneTimeMutable()
     
     @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup() {
-        rsiEntry = RSISrdEntry.unsafe(this, openSubDataSource())
+    override suspend fun SpiralContext.setup(): KorneaResult<TextureSrdEntry> {
+        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            requireNotNull(dataSource.openInputFlow()).use { setup(it) }
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
         else {
-            setup(BinaryInputFlow(requireNotNull(dataSource.openInputFlow()).readAndClose()))
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow) {
-        requireNotNull(flow.seek(0, InputFlow.FROM_BEGINNING))
+    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<TextureSrdEntry> {
+        flow.seek(0, InputFlow.FROM_BEGINNING) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        unk1 = requireNotNull(flow.readInt32LE())
-        swizzle = requireNotNull(flow.readInt16LE())
-        displayWidth = requireNotNull(flow.readInt16LE())
-        displayHeight = requireNotNull(flow.readInt16LE())
-        scanline = requireNotNull(flow.readInt16LE())
-        format = requireNotNull(flow.read()) and 0xFF
-        unk2 = requireNotNull(flow.read()) and 0xFF
-        palette = requireNotNull(flow.read()) and 0xFF
-        paletteID = requireNotNull(flow.read()) and 0xFF
+        unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        swizzle = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        displayWidth = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        displayHeight = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        scanline = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        format = flow.read()?.and(0xFF) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        unk2 = flow.read()?.and(0xFF) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        palette = flow.read()?.and(0xFF) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        paletteID = flow.read()?.and(0xFF) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+        return KorneaResult.Success(this@TextureSrdEntry)
     }
 }

@@ -5,6 +5,10 @@ import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
+import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.erorrs.common.doOnSuccess
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataPool
 import org.abimon.kornea.io.common.DataSource
@@ -30,14 +34,12 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SpcArchive> {
-        val spc = SpcArchive(context, source) ?: return FormatResult.Fail(this, 1.0)
-
-        if (spc.files.size == 1)
-            return FormatResult.Success(this, spc, 0.75)
-
-        return FormatResult(this, spc, spc.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
-    }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SpcArchive> =
+            SpcArchive(context, source)
+                    .map { spc ->
+                        if (spc.files.size == 1) FormatResult.Success(this, spc, 0.75)
+                        else FormatResult(this, spc, spc.files.isNotEmpty(), 1.0)
+                    }.getOrElse(FormatResult.Fail(this, 1.0))
 
     /**
      * Does this format support writing [data]?
@@ -73,22 +75,21 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
             }
             is PakArchive -> data.files.forEach { entry -> customSpc[entry.index.toString()] = data.openSource(entry) }
             is SpcArchive -> data.files.forEach { entry ->
-                customSpc[entry.name] = data.openDecompressedSource(context, entry) ?: return@forEach
+                data.openDecompressedSource(context, entry).doOnSuccess { customSpc[entry.name] = it }
             }
             is WadArchive -> data.files.forEach { entry -> customSpc[entry.name] = data.openSource(entry) }
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 val cache = context.cacheShortTerm(context, "zip:${entry.name}")
 
-                val output = cache.openOutputFlow()
-                if (output == null) {
-                    //Cache has failed; store in memory
-                    cache.close()
-                    customSpc[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                    customSpc[entry.name] = cache
-                    caches.add(cache)
-                }
+                cache.openOutputFlow()
+                        .map { output ->
+                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+                            customSpc[entry.name] = cache
+                            caches.add(cache)
+                        }.doOnFailure {
+                            cache.close()
+                            customSpc[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+                        }
             }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }

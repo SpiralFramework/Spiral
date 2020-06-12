@@ -1,20 +1,27 @@
 package info.spiralframework.formats.common.compression
 
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.korneaNotEnoughData
 import org.abimon.kornea.io.common.readUInt32LE
 
 const val DR_VITA_MAGIC = 0xA755AAFCu
 const val DR_VITA_GX3_MAGIC = 0x335847
 
+const val DR_VITA_INVALID_MAGIC_NUMBER = 0xE001
+
 @ExperimentalUnsignedTypes
-fun decompressVita(data: ByteArray): ByteArray {
+fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
     var pos = 0
-    val magic = requireNotNull(data.readUInt32LE(pos))
-    require(magic == DR_VITA_MAGIC) { "Magic number 0x${magic.toString(16)} is invalid" }
+    val magic = data.readUInt32LE(pos) ?: return korneaNotEnoughData()
+    if(magic != DR_VITA_MAGIC) {
+        return KorneaResult.Error(DR_VITA_INVALID_MAGIC_NUMBER, "Magic number 0x${magic.toString(16)} is invalid")
+    }
+
     pos += 4
 
-    val rawSize = requireNotNull(data.readUInt32LE(pos))
+    val rawSize = data.readUInt32LE(pos) ?: return korneaNotEnoughData()
     pos += 4
-    val compressedSize = requireNotNull(data.readUInt32LE(pos)?.toLong())
+    val compressedSize = data.readUInt32LE(pos)?.toLong() ?: return korneaNotEnoughData()
     pos += 4
 
     var previousOffset = 1
@@ -78,5 +85,5 @@ fun decompressVita(data: ByteArray): ByteArray {
 
 //    require(output.size == rawSize.toInt())
 
-    return output.toByteArray()
+    return KorneaResult.Success(output.toByteArray())
 }

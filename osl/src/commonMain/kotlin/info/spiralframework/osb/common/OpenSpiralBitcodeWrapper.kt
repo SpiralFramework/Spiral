@@ -1,7 +1,13 @@
 package info.spiralframework.osb.common
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.readInt32LE
 import org.abimon.kornea.io.common.use
@@ -9,26 +15,17 @@ import org.abimon.kornea.io.common.use
 class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
     companion object {
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): OpenSpiralBitcodeWrapper? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.lin.invalid", dataSource, iae) }
-
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): OpenSpiralBitcodeWrapper {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<OpenSpiralBitcodeWrapper> {
             withFormats(context) {
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val magic = requireNotNull(flow.readInt32LE()) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.not_enough_data") }
-                    require(magic == OpenSpiralBitcode.MAGIC_NUMBER_LE) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.invalid_magic") }
+                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(OpenSpiralBitcodeParser.NOT_ENOUGH_DATA_KEY)
+                    if (magic != OpenSpiralBitcode.MAGIC_NUMBER_LE) {
+                        return KorneaResult.Error(OpenSpiralBitcodeParser.INVALID_MAGIC, localise(OpenSpiralBitcodeParser.INVALID_MAGIC_KEY, magic.toHexString()))
+                    }
 
-                    return OpenSpiralBitcodeWrapper(dataSource)
+                    return KorneaResult.Success(OpenSpiralBitcodeWrapper(dataSource))
                 }
             }
         }
@@ -36,6 +33,6 @@ class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
 
     @ExperimentalStdlibApi
     @ExperimentalUnsignedTypes
-    suspend fun <T : OpenSpiralBitcodeVisitor> parseBitcode(context: SpiralContext, visitor: T): T? =
-            source.openInputFlow()?.use { flow -> flow.parseOpenSpiralBitcode(context, visitor) }
+    suspend inline fun <reified T : OpenSpiralBitcodeVisitor> parseBitcode(context: SpiralContext, visitor: T): KorneaResult<T> =
+            source.openInputFlow().map { flow -> flow.parseOpenSpiralBitcode(context, visitor) }
 }

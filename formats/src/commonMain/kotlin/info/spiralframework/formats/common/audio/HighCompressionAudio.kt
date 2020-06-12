@@ -2,20 +2,59 @@ package info.spiralframework.formats.common.audio
 
 import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.*
+import org.abimon.kornea.io.common.flow.InputFlow
 import kotlin.experimental.or
 import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 data class HighCompressionAudio(val version: SemanticVersion, val audioChannels: Array<HcaAudioChannel>, val hfrGroupCount: Int, val headerSize: Int, val sampleRate: Int, val channelCount: Int, val blockSize: Int, val blockCount: Int, val encoderDelay: Int, val encoderPadding: Int, val loopEnabled: Boolean, val loopStartBlock: Int?, val loopEndBlock: Int?, val loopStartDelay: Int?, val loopEndPadding: Int?, val samplesPerBlock: Int, val audioInfo: HcaAudioInfo, val athInfo: HcaAbsoluteThresholdHearingInfo?, val cipherInfo: HcaCipherInfo?, val comment: String?, val encryptionEnabled: Boolean, val dataSource: DataSource<*>) {
     companion object {
+        const val INVALID_MAGIC = 0x0000
+        const val INVALID_HEADER_SIZE = 0x0001
+        const val INVALID_CHECKSUM = 0x0002
+
+        const val INVALID_FORMAT_MAGIC = 0x0010
+        const val INVALID_CHANNEL_COUNT = 0x0011
+        const val INVALID_SAMPLE_RATE = 0x0012
+        const val INVALID_FRAME_COUNT = 0x0013
+        const val INVALID_POSITION = 0x0014
+
+        const val INVALID_INFO_MAGIC = 0x0020
+
+        const val INVALID_LOOP_FRAMES = 0x0030
+
+        const val INVALID_CIPHER_TYPE = 0x0040
+
+        const val NOT_ENOUGH_DATA_KEY = "formats.hca.not_enough_data"
+        const val INVALID_MAGIC_KEY = "formats.hca.invalid_magic"
+        const val INVALID_HEADER_SIZE_KEY = "formats.hca.invalid_header_size"
+        const val INVALID_CHECKSUM_KEY = "formats.hca.invalid_checksum"
+
+        const val INVALID_FORMAT_MAGIC_KEY = "formats.hca.invalid_format_magic"
+        const val INVALID_CHANNEL_COUNT_KEY = "formats.hca.invalid_channel_count"
+        const val INVALID_SAMPLE_RATE_KEY = "formats.hca.invalid_sample_rate"
+        const val INVALID_FRAME_COUNT_KEY = "formats.hca.invalid_frame_count"
+        const val INVALID_POSITION_KEY = "formats.hca.invalid_position"
+
+        const val INVALID_INFO_MAGIC_KEY = "formats.hca.invalid_info_magic"
+
+        const val INVALID_LOOP_FRAMES_KEY = "formats.hca.invalid_loop_frames"
+
+        const val INVALID_CIPHER_TYPE_KEY = "formats.hca.invalid_cipher_type"
+
         /** HCA. */
         const val MAGIC_NUMBER_BE = 0x48434100
+
         /** 'fmt.' */
         const val FORMAT_MAGIC_NUMBER_BE = 0x666D7400
+
         /** 'comp' */
         const val COMPRESSION_MAGIC_NUMBER_BE = 0x636F6D70
+
         /** 'dec.' */
         const val DECODE_MAGIC_NUMBER_BE = 0x64656300
 
@@ -360,136 +399,159 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         ).map(Long::toInt).map(Float.Companion::fromBits).toFloatArray()
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): HighCompressionAudio? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.pak.invalid", dataSource, iae) }
-
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): HighCompressionAudio {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.hca.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
                     val minHeader = ByteArray(8)
-                    require(flow.read(minHeader) == 8, notEnoughData)
+                    if (flow.read(minHeader) != 8) return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val magic = requireNotNull(minHeader.readInt32BE(0), notEnoughData) and HCA_MASK
-                    require(magic == MAGIC_NUMBER_BE) { localise("formats.hca.invalid_magic", "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_BE.toString(16)}") }
+                    val magic = minHeader.readInt32BE(0)?.and(HCA_MASK)
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (magic != MAGIC_NUMBER_BE) {
+                        return KorneaResult.Error(INVALID_MAGIC, localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_BE.toString(16)}"))
+                    }
 
                     val major = minHeader[4].toInt() and 0xFF
                     val minor = minHeader[5].toInt() and 0xFF
-                    val headerSize = requireNotNull(minHeader.readInt16BE(6), notEnoughData)
-                    require(headerSize > 0) { localise("formats.hca.invalid_header") }
+                    val headerSize = minHeader.readInt16BE(6) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (headerSize <= 0) {
+                        return KorneaResult.Error(INVALID_HEADER_SIZE, localise(INVALID_HEADER_SIZE_KEY, headerSize))
+                    }
 
                     val header = ByteArray(headerSize)
                     minHeader.copyInto(header, 0, 0, 8)
-                    require(flow.read(header, 8, headerSize - 8) == (headerSize - 8), notEnoughData)
+                    if (flow.read(header, 8, headerSize - 8) != (headerSize - 8))
+                        return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-//                    println("v$major.$minor / $headerSize")
+                    trace("HCA v$major.$minor / $headerSize")
 
                     //Calculate Checksum
                     val checksum = calculateCRC16(header)
-                    require(checksum == 0) { localise("formats.hca.invalid_checksum", checksum) }
+                    if (checksum != 0) {
+                        return KorneaResult.Error(INVALID_CHECKSUM, localise(INVALID_CHECKSUM_KEY, checksum))
+                    }
 
                     var pos = 8
-                    val formatMagic = requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK
-                    require(formatMagic == FORMAT_MAGIC_NUMBER_BE) { localise("formats.hca.invalid_format_magic", "0x${formatMagic.toString(16)}", "0x${FORMAT_MAGIC_NUMBER_BE.toString(16)}") }
+                    val formatMagic = header.readInt32BE(pos)?.and(HCA_MASK)
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (formatMagic != FORMAT_MAGIC_NUMBER_BE) {
+                        return KorneaResult.Error(INVALID_FORMAT_MAGIC, localise(INVALID_FORMAT_MAGIC_KEY, "0x${formatMagic.toString(16)}", "0x${FORMAT_MAGIC_NUMBER_BE.toString(16)}"))
+                    }
                     pos += 4
 
-                    val channels = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                    val channels = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 1
-                    require(channels in 1 .. 16) { localise("formats.hca.invalid_channel_count", channels) }
+                    if (channels !in 1 .. 16) {
+                        return KorneaResult.Error(INVALID_CHANNEL_COUNT, localise(INVALID_CHANNEL_COUNT_KEY, channels))
+                    }
 
                     /* encoder max seems 48000 */
-                    val sampleRate = requireNotNull(header.readInt24BE(pos), notEnoughData)
+                    val sampleRate = header.readInt24BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 3
-                    require(sampleRate in 1 .. 0x7FFFFF) { localise("formats.hca.invalid_sample_rate", sampleRate) }
+                    if (sampleRate !in 1 .. 0x7FFFFF) {
+                        return KorneaResult.Error(INVALID_SAMPLE_RATE, localise(INVALID_SAMPLE_RATE_KEY, sampleRate))
+                    }
 
-                    val frameCount = requireNotNull(header.readInt32BE(pos), notEnoughData)
+                    val frameCount = header.readInt32BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 4
-                    require(frameCount > 0) { localise("formats.hca.invalid_frame_count", frameCount) }
+                    if (frameCount <= 0) {
+                        return KorneaResult.Error(INVALID_FRAME_COUNT, localise(INVALID_FRAME_COUNT_KEY, frameCount))
+                    }
 
-                    val encoderDelay = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                    val encoderDelay = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 2
 
-                    val encoderPadding = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                    val encoderPadding = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 2
 
 
 //                    println("$channels / $sampleRate / $frameCount / $encoderDelay / $encoderPadding")
 
-                    val versionMagic = requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK
+                    val versionMagic = header.readInt32BE(pos)?.and(HCA_MASK)
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     pos += 4
 
                     val audioInfo: HcaAudioInfo
                     if (versionMagic == COMPRESSION_MAGIC_NUMBER_BE) {
                         /** compression (v2.0) */
-                        val frameSize = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val frameSize = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        val minResolution = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val minResolution = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val maxResolution = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val maxResolution = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val trackCount = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val trackCount = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val channelConfig = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val channelConfig = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val totalBandCount = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val totalBandCount = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val baseBandCount = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val baseBandCount = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val stereoBandCount = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val stereoBandCount = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val bandsPerHfrGroup = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val bandsPerHfrGroup = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val reserved1 = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val reserved1 = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val reserved2 = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val reserved2 = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
                         audioInfo = HcaAudioInfo(frameSize, minResolution, maxResolution, trackCount, channelConfig, totalBandCount, baseBandCount, stereoBandCount, bandsPerHfrGroup, reserved1, reserved2)
                     } else if (versionMagic == DECODE_MAGIC_NUMBER_BE) {
                         /** decode (v1.x) */
 
-                        val frameSize = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val frameSize = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        val minResolution = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val minResolution = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val maxResolution = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val maxResolution = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val totalBandCount = (requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF) + 1
+                        val totalBandCount = header.getOrNull(pos)?.toInt()?.and(0xFF)?.plus(1)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val baseBandCountRead = (requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF) + 1
+                        val baseBandCountRead = header.getOrNull(pos)?.toInt()?.and(0xFF)?.plus(1)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
-                        val trackCountAndChannelConfig = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val trackCountAndChannelConfig = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
                         val trackCount = (trackCountAndChannelConfig shl 4) and 0xF
                         val channelConfig = trackCountAndChannelConfig and 0xF
                         pos += 1
 
-                        val stereoType = requireNotNull(header.getOrNull(pos), notEnoughData).toInt() and 0xFF
+                        val stereoType = header.getOrNull(pos)?.toInt()?.and(0xFF)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
                         val baseBandCount = if (stereoType == 0) totalBandCount else baseBandCountRead
@@ -499,17 +561,17 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
 
                         audioInfo = HcaAudioInfo(frameSize, minResolution, maxResolution, trackCount, channelConfig, totalBandCount, baseBandCount, stereoBandCount, bandsPerHfrGroup)
                     } else {
-                        throw IllegalArgumentException(localise("formats.hca.invalid_info_magic", "0x${formatMagic.toString(16)}", "0x${COMPRESSION_MAGIC_NUMBER_BE.toString(16)}", "0x${DECODE_MAGIC_NUMBER_BE.toString(16)}"))
+                        return KorneaResult.Error(INVALID_INFO_MAGIC, localise(INVALID_INFO_MAGIC_KEY, "0x${formatMagic.toString(16)}", "0x${COMPRESSION_MAGIC_NUMBER_BE.toString(16)}", "0x${DECODE_MAGIC_NUMBER_BE.toString(16)}"))
                     }
 
                     val vbrInfo: HcaVariableRateInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == VBR_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == VBR_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        val maxFrameSize = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val maxFrameSize = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        val noiseLevel = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val noiseLevel = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
                         require(audioInfo.frameSize == 0 && maxFrameSize in 9 .. 0x1FF)
@@ -519,10 +581,11 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                     }
 
                     val athInfo: HcaAbsoluteThresholdHearingInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == ATH_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == ATH_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        athInfo = HcaAbsoluteThresholdHearingInfo(requireNotNull(header.readInt16BE(pos), notEnoughData))
+                        athInfo = HcaAbsoluteThresholdHearingInfo(header.readInt16BE(pos)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
                         pos += 2
                     } else if (major == 2) {
                         athInfo = null
@@ -531,22 +594,24 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                     }
 
                     val loopInfo: HcaLoopInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == LOOP_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == LOOP_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        val startFrame = requireNotNull(header.readInt32BE(pos), notEnoughData)
+                        val startFrame = header.readInt32BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 4
 
-                        val endFrame = requireNotNull(header.readInt32BE(pos), notEnoughData)
+                        val endFrame = header.readInt32BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 4
 
-                        val startDelay = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val startDelay = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        val endPadding = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val endPadding = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        require(startFrame in 0 .. endFrame && endFrame < frameCount)
+                        if (startFrame !in 0 .. endFrame || endFrame > frameCount) {
+                            return KorneaResult.Error(INVALID_LOOP_FRAMES, localise(INVALID_LOOP_FRAMES_KEY, startFrame, endFrame, frameCount))
+                        }
 
                         loopInfo = HcaLoopInfo(startFrame, endFrame, startDelay, endPadding)
                     } else {
@@ -554,13 +619,15 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                     }
 
                     val cipherInfo: HcaCipherInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == CIPHER_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == CIPHER_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        val type = requireNotNull(header.readInt16BE(pos), notEnoughData)
+                        val type = header.readInt16BE(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 2
 
-                        require(type == 0 || type == 1 || type == 56)
+                        if (type != 0 && type != 1 && type != 56) {
+                            return KorneaResult.Error(INVALID_CIPHER_TYPE, localise(INVALID_CIPHER_TYPE_KEY, type))
+                        }
 
                         cipherInfo = HcaCipherInfo(type)
                     } else {
@@ -568,20 +635,21 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                     }
 
                     val rvaInfo: HcaRelativeVolumeAdjustmentInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == RVA_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == RVA_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        rvaInfo = HcaRelativeVolumeAdjustmentInfo(requireNotNull(header.readFloat32BE(pos), notEnoughData))
+                        rvaInfo = HcaRelativeVolumeAdjustmentInfo(header.readFloat32BE(pos)
+                                ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
                         pos += 4
                     } else {
                         rvaInfo = null
                     }
 
                     val comment: HcaCommentInfo?
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == COMMENT_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == COMMENT_MAGIC_NUMBER_BE) {
                         pos += 4
 
-                        val length = requireNotNull(header.getOrNull(pos), notEnoughData)
+                        val length = header.getOrNull(pos) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         pos += 1
 
                         comment = HcaCommentInfo(header.sliceArray(pos until pos + length).decodeToString())
@@ -589,11 +657,13 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                         comment = null
                     }
 
-                    if (requireNotNull(header.readInt32BE(pos), notEnoughData) and HCA_MASK == PADDING_MAGIC_NUMBER_BE) {
+                    if (header.readInt32BE(pos)?.and(HCA_MASK) == PADDING_MAGIC_NUMBER_BE) {
                         pos = headerSize - 2
                     }
 
-                    require(pos + 2 == headerSize) { localise("formats.hca.invalid_position", pos, headerSize) }
+                    if (pos + 2 != headerSize) {
+                        return KorneaResult.Error(INVALID_POSITION, localise(INVALID_POSITION_KEY, pos, headerSize))
+                    }
                     /* actual max seems 0x155*channels */
                     require(audioInfo.frameSize in 0x08 .. 0xFFFF)
                     require(audioInfo.minResolution == 1 && audioInfo.maxResolution == 15)
@@ -693,7 +763,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                         )
                     }
 
-                    return HighCompressionAudio(
+                    return KorneaResult.Success(HighCompressionAudio(
                             SemanticVersion(major, minor),
                             audioChannels,
                             hfrGroupCount,
@@ -716,7 +786,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                             comment?.comment,
                             cipherInfo?.type == 56,
                             dataSource
-                    )
+                    ))
                 }
             }
         }
@@ -864,46 +934,47 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         }
     }
 
-    suspend fun SpiralContext.readFrame(index: Int): List<Short>? {
+    suspend fun SpiralContext.readFrame(index: Int): KorneaResult<List<Short>> {
         val offset = headerSize + (blockSize * index)
         if (index >= blockCount) {
-            return null
+            return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         }
 
-        val flow = dataSource.openInputFlow() ?: return null
-        use(flow) {
-            flow.skip(offset.toULong())
-            val rawData = ByteArray(blockSize)
-            require(flow.read(rawData) == blockSize)
-            return decodeBlock(rawData)
-        }
-    }
-
-    suspend fun SpiralContext.readAudioSamples(): List<Short>? {
-        val flow = dataSource.openInputFlow() ?: return null
-        use(flow) {
-            flow.skip(headerSize.toULong())
-            val rawData = ByteArray(blockSize)
-            val samples: MutableList<Short> = ArrayList(blockCount * samplesPerBlock)
-            for (i in 0 until blockCount) {
+        return dataSource.openInputFlow().flatMap { flow ->
+            use(flow) {
+                flow.skip(offset.toULong())
+                val rawData = ByteArray(blockSize)
                 require(flow.read(rawData) == blockSize)
-                decodeBlock(rawData)?.let(samples::addAll) ?: break
+                decodeBlock(rawData)
             }
-
-            return samples
         }
     }
 
-    suspend fun SpiralContext.decodeBlock(block: ByteArray): List<Short>? {
+    suspend fun SpiralContext.readAudioSamples(): KorneaResult<List<Short>> =
+        dataSource.openInputFlow().flatMap { flow ->
+            use(flow) {
+                flow.skip(headerSize.toULong())
+                val rawData = ByteArray(blockSize)
+                val samples: MutableList<Short> = ArrayList(blockCount * samplesPerBlock)
+                for (i in 0 until blockCount) {
+                    if (flow.read(rawData) != blockSize) return@flatMap localisedNotEnoughData<List<Short>>(NOT_ENOUGH_DATA_KEY)
+                    samples.addAll(decodeBlock(rawData).doOnFailure { return@flatMap it })
+                }
+
+                return@flatMap KorneaResult.Success(samples as List<Short>)
+            }
+        }
+
+    suspend fun SpiralContext.decodeBlock(block: ByteArray): KorneaResult<List<Short>> {
         val checksum = calculateCRC16(block)
         require(checksum == 0)
         require(block.readInt16BE(0) == 0xFFFF)
 //        require(!encryptionEnabled)
 
-        val athBaseCurve = requireNotNull(athInit(athInfo?.type ?: 0, sampleRate))
-        val cipherTable = requireNotNull(cipherInit(cipherInfo?.type ?: 0))
+        val athBaseCurve = athInit(athInfo?.type ?: 0, sampleRate) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        val cipherTable = cipherInit(cipherInfo?.type ?: 0) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        for (i in 0 until block.size) {
+        for (i in block.indices) {
             block[i] = cipherTable[block[i].toInt() and 0xFF]
         }
 
@@ -1204,7 +1275,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
             }
         }
 
-        return samples
+        return KorneaResult.Success(samples)
     }
 }
 
@@ -1217,6 +1288,7 @@ suspend fun HighCompressionAudio.readAudioSamples(context: SpiralContext) = cont
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.HighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio(this, dataSource)
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun SpiralContext.UnsafeHighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio.unsafe(this, dataSource)
+suspend fun SpiralContext.UnsafeHighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio(this, dataSource).get()

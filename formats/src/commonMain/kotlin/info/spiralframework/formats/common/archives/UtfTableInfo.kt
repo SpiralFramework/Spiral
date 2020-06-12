@@ -4,7 +4,10 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.erorrs.common.KorneaResult.Success
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.fauxSeekFromStart
@@ -30,6 +33,14 @@ data class UtfTableInfo(
     companion object {
         const val UTF_MAGIC_NUMBER_LE = 0x46545540
 
+        const val INVALID_UTF_MAGIC_NUMBER = 0x0000
+        const val UNKNOWN_COLUMN_CONSTANT = 0x0001
+        const val UNKNOWN_STORAGE_CLASS = 0x0002
+        const val NO_COLUMN_WITH_NAME = 0x0010
+
+        const val NOT_ENOUGH_DATA_KEY = "formats.utf_table.not_enough_data"
+        const val NO_COLUMN_WITH_NAME_KEY = "formats.utf_table.no_column_with_name"
+
         const val COLUMN_STORAGE_MASK = 0xF0
         const val COLUMN_STORAGE_PERROW = 0x50
         const val COLUMN_STORAGE_CONSTANT = 0x30
@@ -48,50 +59,44 @@ data class UtfTableInfo(
         const val COLUMN_TYPE_1BYTE = 0x00
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): UtfTableInfo? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.utf_table.invalid", dataSource, iae) }
-
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): UtfTableInfo {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<UtfTableInfo> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.utf_table.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val magic = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    require(magic == UTF_MAGIC_NUMBER_LE) { localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}", "0x${flow.offsetPosition().minus(4u).toString(16)}") }
+                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (magic != UTF_MAGIC_NUMBER_LE) {
+                        return KorneaResult.Error(
+                                INVALID_UTF_MAGIC_NUMBER,
+                                localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}", "0x${flow.offsetPosition().minus(4u).toString(16)}")
+                        )
+                    }
 
-                    val tableSize = requireNotNull(flow.readUInt32BE(), notEnoughData)
+                    val tableSize = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val schemaOffset = 0x20u
-                    val rowsOffset = requireNotNull(flow.readUInt32BE(), notEnoughData)
-                    val stringTableOffset = requireNotNull(flow.readUInt32BE(), notEnoughData)
-                    val dataOffset = requireNotNull(flow.readUInt32BE(), notEnoughData)
+                    val rowsOffset = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val stringTableOffset = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val dataOffset = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val tableNameOffset = requireNotNull(flow.readInt32BE(), notEnoughData)
+                    val tableNameOffset = flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val columnCount = requireNotNull(flow.readInt16BE(), notEnoughData)
-                    val rowWidth = requireNotNull(flow.readInt16BE(), notEnoughData)
-                    val rowCount = requireNotNull(flow.readUInt32BE(), notEnoughData)
+                    val columnCount = flow.readInt16BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val rowWidth = flow.readInt16BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val rowCount = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val stringTable = flow.fauxSeekFromStart((8u + stringTableOffset).toULong(), dataSource) { stringFlow ->
                         stringFlow.readString((dataOffset - stringTableOffset).toInt(), encoding = TextCharsets.UTF_8)
-                    }
-                    requireNotNull(stringTable, notEnoughData)
+                    }.doOnFailure {
+                        return it.cast()
+                    } ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val tableName = stringTable.substring(tableNameOffset).substringBefore(NULL_TERMINATOR)
 
                     var rowPosition = 0
                     val schema = Array(columnCount) {
-                        val columnType = requireNotNull(flow.read(), notEnoughData)
-                        val columnName = stringTable.substring(requireNotNull(flow.readInt32BE(), notEnoughData))
+                        val columnType = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        val columnName = stringTable
+                                .substring(flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
                                 .substringBefore(NULL_TERMINATOR)
 
                         val columnWidth: Int
@@ -110,10 +115,7 @@ data class UtfTableInfo(
                                 COLUMN_TYPE_2BYTE2 -> 2
                                 COLUMN_TYPE_1BYTE -> 1
                                 COLUMN_TYPE_1BYTE2 -> 1
-                                else -> {
-                                    debug("formats.cpk.unknown_column_constant", columnType)
-                                    0
-                                }
+                                else -> return KorneaResult.Error(UNKNOWN_COLUMN_CONSTANT, localise("formats.utf_table.unknown_column_constant", columnType))
                             }
                         }
 
@@ -129,7 +131,7 @@ data class UtfTableInfo(
                         info
                     }
 
-                    return UtfTableInfo(tableName, tableSize, schemaOffset, rowsOffset, stringTable, stringTableOffset, dataOffset, columnCount, rowWidth, rowCount, schema, dataSource)
+                    return Success(UtfTableInfo(tableName, tableSize, schemaOffset, rowsOffset, stringTable, stringTableOffset, dataOffset, columnCount, rowWidth, rowCount, schema, dataSource))
                 }
             }
         }
@@ -140,18 +142,7 @@ data class UtfTableInfo(
     operator fun get(name: String): UtfColumnInfo? = schema.firstOrNull { column -> column.name == name }
 
     @ExperimentalStdlibApi
-    suspend fun SpiralContext.readRowData(rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*>? {
-        try {
-            return readRowDataUnsafe(rowIndex, columnInfo)
-        } catch (iae: IllegalArgumentException) {
-            debug("formats.utf_table.invalid_row", dataSource, rowIndex, columnInfo.name, iae)
-
-            return null
-        }
-    }
-
-    @ExperimentalStdlibApi
-    suspend fun SpiralContext.readRowDataUnsafe(rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*> {
+    suspend fun SpiralContext.readRowData(rowIndex: Int, columnInfo: UtfColumnInfo): KorneaResult<UtfRowData<*>> {
         val rowDataOffset: Int
 
         when (val storageClass = columnInfo.type and COLUMN_STORAGE_MASK) {
@@ -163,54 +154,54 @@ data class UtfTableInfo(
                         ?: 8 + rowsOffset.toInt() + (rowIndex * rowWidth) + columnInfo.rowPosition
             }
             COLUMN_STORAGE_ZERO -> return when (val columnType = columnInfo.type and COLUMN_TYPE_MASK) {
-                COLUMN_TYPE_STRING -> UtfRowData.TypeString(columnInfo.name, rowIndex, stringFromTable(0))
-                COLUMN_TYPE_DATA -> UtfRowData.TypeData(columnInfo.name, rowIndex, byteArrayOf())
-                COLUMN_TYPE_8BYTE -> UtfRowData.TypeLong(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_4BYTE2 -> UtfRowData.TypeInt2(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_4BYTE -> UtfRowData.TypeInt(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_2BYTE2 -> UtfRowData.TypeShort2(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_2BYTE -> UtfRowData.TypeShort(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_FLOAT -> UtfRowData.TypeFloat(columnInfo.name, rowIndex, 0f)
-                COLUMN_TYPE_1BYTE2 -> UtfRowData.TypeByte2(columnInfo.name, rowIndex, 0)
-                COLUMN_TYPE_1BYTE -> UtfRowData.TypeByte(columnInfo.name, rowIndex, 0)
-                else -> throw IllegalArgumentException(localise("formats.cpk.unknown_column_constant", columnType))
+                COLUMN_TYPE_STRING -> Success(UtfRowData.TypeString(columnInfo.name, rowIndex, stringFromTable(0)))
+                COLUMN_TYPE_DATA -> Success(UtfRowData.TypeData(columnInfo.name, rowIndex, byteArrayOf()))
+                COLUMN_TYPE_8BYTE -> Success(UtfRowData.TypeLong(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_4BYTE2 -> Success(UtfRowData.TypeInt2(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_4BYTE -> Success(UtfRowData.TypeInt(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_2BYTE2 -> Success(UtfRowData.TypeShort2(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_2BYTE -> Success(UtfRowData.TypeShort(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_FLOAT -> Success(UtfRowData.TypeFloat(columnInfo.name, rowIndex, 0f))
+                COLUMN_TYPE_1BYTE2 -> Success(UtfRowData.TypeByte2(columnInfo.name, rowIndex, 0))
+                COLUMN_TYPE_1BYTE -> Success(UtfRowData.TypeByte(columnInfo.name, rowIndex, 0))
+                else -> KorneaResult.Error(UNKNOWN_COLUMN_CONSTANT, localise("formats.cpk.unknown_column_constant", columnType))
             }
-            else -> throw IllegalArgumentException(localise("formats.cpk.unknown_storage_class", storageClass))
+            else -> return KorneaResult.Error(UNKNOWN_STORAGE_CLASS, localise("formats.cpk.unknown_storage_class", storageClass))
         }
 
-        val flow = requireNotNull(dataSource.openInputFlow())
+        val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
         use(flow) {
             flow.skip(rowDataOffset.toULong())
 
             return when (val columnType = columnInfo.type and COLUMN_TYPE_MASK) {
                 COLUMN_TYPE_STRING -> {
-                    val readOffset = requireNotNull(flow.readInt32BE())
+                    val readOffset = flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val offset = readOffset.toULong() + stringOffset + 8u
-                    val string = requireNotNull(flow.fauxSeekFromStart(offset, dataSource, InputFlow::readNullTerminatedUTF8String))
-                    require(string == stringFromTable(readOffset)) { "This one won't do; '$string' vs '${stringFromTable(readOffset)}'" }
-                    UtfRowData.TypeString(columnInfo.name, rowIndex, string)
+                    flow.fauxSeekFromStart(offset, dataSource) { flow -> flow.readNullTerminatedUTF8String() }
+                            .filterTo { string -> if (string != stringFromTable(readOffset)) KorneaResult.Error(-1, "Mismatching strings: [$string] vs [${stringFromTable(readOffset)}]") else null }
+                            .map { string -> UtfRowData.TypeString(columnInfo.name, rowIndex, string) }
                 }
                 COLUMN_TYPE_DATA -> {
                     val location = requireNotNull(flow.readInt32BE()).toULong() + dataOffset + 8u
                     val size = requireNotNull(flow.readInt32BE())
 
-                    val data = requireNotNull(flow.fauxSeekFromStart(location, dataSource) { dataFlow ->
+                    flow.fauxSeekFromStart(location, dataSource) { dataFlow ->
                         val data = ByteArray(size)
 
                         require(dataFlow.read(data) == size)
                         data
-                    })
-
-                    UtfRowData.TypeData(columnInfo.name, rowIndex, data)
+                    }.map { data ->
+                        UtfRowData.TypeData(columnInfo.name, rowIndex, data)
+                    }
                 }
-                COLUMN_TYPE_8BYTE -> UtfRowData.TypeLong(columnInfo.name, rowIndex, requireNotNull(flow.readInt64BE()))
-                COLUMN_TYPE_4BYTE2 -> UtfRowData.TypeInt2(columnInfo.name, rowIndex, requireNotNull(flow.readUInt32BE()).toLong())
-                COLUMN_TYPE_4BYTE -> UtfRowData.TypeInt(columnInfo.name, rowIndex, requireNotNull(flow.readInt32BE()))
-                COLUMN_TYPE_2BYTE2 -> UtfRowData.TypeShort2(columnInfo.name, rowIndex, requireNotNull(flow.readUInt16BE()))
-                COLUMN_TYPE_2BYTE -> UtfRowData.TypeShort(columnInfo.name, rowIndex, requireNotNull(flow.readInt16BE()))
-                COLUMN_TYPE_FLOAT -> UtfRowData.TypeFloat(columnInfo.name, rowIndex, requireNotNull(flow.readFloatBE()))
-                COLUMN_TYPE_1BYTE2 -> UtfRowData.TypeByte2(columnInfo.name, rowIndex, requireNotNull(flow.read()))
-                COLUMN_TYPE_1BYTE -> UtfRowData.TypeByte(columnInfo.name, rowIndex, requireNotNull(flow.read()))
+                COLUMN_TYPE_8BYTE -> Success(UtfRowData.TypeLong(columnInfo.name, rowIndex, requireNotNull(flow.readInt64BE())))
+                COLUMN_TYPE_4BYTE2 -> Success(UtfRowData.TypeInt2(columnInfo.name, rowIndex, requireNotNull(flow.readUInt32BE()).toLong()))
+                COLUMN_TYPE_4BYTE -> Success(UtfRowData.TypeInt(columnInfo.name, rowIndex, requireNotNull(flow.readInt32BE())))
+                COLUMN_TYPE_2BYTE2 -> Success(UtfRowData.TypeShort2(columnInfo.name, rowIndex, requireNotNull(flow.readUInt16BE())))
+                COLUMN_TYPE_2BYTE -> Success(UtfRowData.TypeShort(columnInfo.name, rowIndex, requireNotNull(flow.readInt16BE())))
+                COLUMN_TYPE_FLOAT -> Success(UtfRowData.TypeFloat(columnInfo.name, rowIndex, requireNotNull(flow.readFloatBE())))
+                COLUMN_TYPE_1BYTE2 -> Success(UtfRowData.TypeByte2(columnInfo.name, rowIndex, requireNotNull(flow.read())))
+                COLUMN_TYPE_1BYTE -> Success(UtfRowData.TypeByte(columnInfo.name, rowIndex, requireNotNull(flow.read())))
                 else -> throw IllegalArgumentException(localise("formats.cpk.unknown_column_constant", columnType))
             }
         }
@@ -220,6 +211,7 @@ data class UtfTableInfo(
 @ExperimentalUnsignedTypes
 class UtfTableSchemaBuilder {
     var name: String = ""
+
     @ExperimentalUnsignedTypes
     var size: UInt = 1u
     var schemaOffset: UInt = 0u
@@ -245,20 +237,40 @@ fun utfTableSchema(init: UtfTableSchemaBuilder.() -> Unit): UtfTableSchema {
     return builder.build()
 }
 
-fun UtfTableInfo.getColumn(name: String): UtfColumnInfo = schema.first { utfColumnInfo -> utfColumnInfo.name == name }
+fun UtfTableInfo.getColumnUnsafe(name: String): UtfColumnInfo = schema.first { utfColumnInfo -> utfColumnInfo.name == name }
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*>? = context.readRowData(rowIndex, columnInfo)
+suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): KorneaResult<UtfRowData<*>> = context.readRowData(rowIndex, columnInfo)
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*> = context.readRowDataUnsafe(rowIndex, columnInfo)
+suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnInfo: UtfColumnInfo): UtfRowData<*> = context.readRowData(rowIndex, columnInfo).get()
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnName: String): UtfRowData<*>? = get(columnName)?.let { columnInfo -> context.readRowData(rowIndex, columnInfo) }
+suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnName: String): KorneaResult<UtfRowData<*>> {
+    val columnInfo = get(columnName)
+            ?: return KorneaResult.Error(UtfTableInfo.NO_COLUMN_WITH_NAME, UtfTableInfo.NO_COLUMN_WITH_NAME_KEY)
+    return context.readRowData(rowIndex, columnInfo)
+}
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnName: String): UtfRowData<*> = context.readRowDataUnsafe(rowIndex, getColumn(columnName))
+suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int, columnName: String): UtfRowData<*> = context.readRowData(rowIndex, getColumnUnsafe(columnName)).get()
+
+@ExperimentalStdlibApi
+suspend fun UtfTableInfo.dumpTable(context: SpiralContext, indentLevel: Int = 0) {
+    val indents = buildString { repeat(indentLevel) { append("\t") } }
+    println("$indents==[${name}]==")
+    schema.forEach { column ->
+        val data = readRowDataUnsafe(context, 0, column)
+        if (data is UtfRowData.TypeData) {
+//                    println("Data: ${data.data.joinToString(" ") { it.toInt().and(0xFF).toString(16).padStart(2, '0').toUpperCase() }}")
+            UtfTableInfo(context, BinaryDataSource(data.data)).get().dumpTable(context, indentLevel + 1)
+        } else {
+            println("$indents${column.name}: $data")
+        }
+    }
+    println("$indents==[/${name}]==")
+}

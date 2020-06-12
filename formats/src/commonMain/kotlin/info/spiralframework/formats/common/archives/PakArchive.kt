@@ -1,9 +1,16 @@
 package info.spiralframework.formats.common.archives
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.alignedTo
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.OffsetInputFlow
 import org.abimon.kornea.io.common.flow.SinkOffsetInputFlow
 import org.abimon.kornea.io.common.flow.WindowedInputFlow
 
@@ -12,38 +19,48 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
     companion object {
         const val MAGIC_NUMBER_LE = 0x2E50414B
 
+        const val INVALID_FILE_COUNT = 0x0000
+        const val FILE_OFFSET_TOO_LOW = 0x0001
+        const val INVALID_FILE_SIZE = 0x0002
+        const val INVALID_FILE_OFFSET = 0x0003
+
+        const val NOT_ENOUGH_DATA_KEY = "formats.pak.not_enough_data"
+        const val INVALID_FILE_COUNT_KEY = "formats.pak.invalid_file_count"
+        const val FILE_OFFSET_TOO_LOW_KEY = "formats.pak.offset_too_low"
+        const val INVALID_FILE_SIZE_KEY = "formats.pak.invalid_file_size"
+        const val INVALID_FILE_OFFSET_KEY = "formats.pak.invalid_file_offset"
+
         const val DEFAULT_MIN_FILE_COUNT = 1
         const val DEFAULT_MAX_FILE_COUNT = 1000
         const val DEFAULT_MIN_FILE_SIZE = 0
         const val DEFAULT_MAX_FILE_SIZE = 64_000_000 //64 MB
+        const val DEFAULT_STRICT_OFFSETS = false
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE): PakArchive? {
-            try {
-                return unsafe(context, dataSource, minFileCount, maxFileCount, minFileSize, maxFileSize)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.pak.invalid", dataSource, iae) }
-
-                return null
-            }
-        }
-
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE): PakArchive {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE, strictOffsets: Boolean = DEFAULT_STRICT_OFFSETS): KorneaResult<PakArchive> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.pak.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val possibleMagicNumber = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val fileCount = if(possibleMagicNumber == MAGIC_NUMBER_LE) requireNotNull(flow.readInt32LE(), notEnoughData) else possibleMagicNumber
-                    require(fileCount in minFileCount..maxFileCount) { localise("formats.pak.invalid_file_count", fileCount, minFileCount, maxFileCount) }
+                    val possibleMagicNumber = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val fileCount =
+                            if (possibleMagicNumber == MAGIC_NUMBER_LE)
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            else
+                                possibleMagicNumber
+                    if (fileCount !in minFileCount .. maxFileCount) {
+                        return KorneaResult.Error(INVALID_FILE_COUNT, localise(INVALID_FILE_COUNT_KEY, fileCount, minFileCount, maxFileCount))
+                    }
 
                     val entryOffsets = IntArray(fileCount) { index ->
-                        val offset = requireNotNull(flow.readInt32LE())
-                        require(offset >= 0) { localise("formats.pak.offset_too_low", index, offset) }
+                        val offset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        if (offset < 0) {
+                            return KorneaResult.Error(FILE_OFFSET_TOO_LOW, localise(FILE_OFFSET_TOO_LOW_KEY, index, offset))
+                        }
 
                         offset
                     }
+
+                    var lastOffset = entryOffsets[0]
 
                     val files = Array(fileCount) { index ->
                         val offset = entryOffsets[index]
@@ -51,14 +68,24 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
                         if (index == fileCount - 1) {
                             size = -1
                         } else {
+                            if (strictOffsets && offset != 0) {
+                                if (offset < lastOffset) {
+                                    return KorneaResult.Error(INVALID_FILE_OFFSET, localise(INVALID_FILE_OFFSET_KEY, index, offset, lastOffset))
+                                }
+
+                                lastOffset = offset
+                            }
+
                             size = entryOffsets[index + 1] - offset
-                            require(size in minFileSize..maxFileSize) { localise("formats.pak.invalid_file_size", index, size, minFileSize, maxFileSize) }
+                            if (size !in minFileSize .. maxFileSize) {
+                                return KorneaResult.Error(INVALID_FILE_SIZE, localise(INVALID_FILE_SIZE_KEY, index, size, minFileSize, maxFileSize))
+                            }
                         }
 
                         PakFileEntry(index, size, offset)
                     }
 
-                    return PakArchive(files, dataSource)
+                    return KorneaResult.Success(PakArchive(files, dataSource))
                 }
             }
         }
@@ -67,16 +94,17 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
     operator fun get(index: Int): PakFileEntry = files[index]
 
     suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
-    suspend fun openFlow(file: PakFileEntry): InputFlow? {
-        val parent = dataSource.openInputFlow() ?: return null
-        return if (file.size == -1)
-            SinkOffsetInputFlow(parent, file.offset.toULong())
-        else
-            WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
-    }
+    suspend fun openFlow(file: PakFileEntry): KorneaResult<OffsetInputFlow> =
+            dataSource.openInputFlow().map { parent ->
+                if (file.size == -1)
+                    SinkOffsetInputFlow(parent, file.offset.toULong())
+                else
+                    WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
+            }
 }
 
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.PakArchive(dataSource: DataSource<*>) = PakArchive(this, dataSource)
+
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafePakArchive(dataSource: DataSource<*>) = PakArchive.unsafe(this, dataSource)
+suspend fun SpiralContext.UnsafePakArchive(dataSource: DataSource<*>) = PakArchive(this, dataSource).get()

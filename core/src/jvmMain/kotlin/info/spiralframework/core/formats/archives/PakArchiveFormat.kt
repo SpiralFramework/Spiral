@@ -5,6 +5,10 @@ import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
+import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.erorrs.common.doOnSuccess
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataPool
 import org.abimon.kornea.io.common.DataSource
@@ -45,14 +49,13 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<PakArchive> {
-        val pak = PakArchive(context = context, dataSource = source) ?: return FormatResult.Fail(this, 1.0)
-
-        if (pak.files.size == 1)
-            return FormatResult.Success(this, pak, 0.75)
-
-        return FormatResult(this, pak, pak.files.isNotEmpty(), 0.8) //Not positive on this one chief but we're going with it
-    }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<PakArchive> =
+            PakArchive(context, source)
+                    .map { pak ->
+                        if (pak.files.size == 1) FormatResult.Success(this, pak, 0.75)
+                        else FormatResult(this, pak, pak.files.isNotEmpty(), 0.8)
+                    }
+                    .getOrElse(FormatResult.Fail(this, 1.0))
 
     /**
      * Does this format support writing [data]?
@@ -83,13 +86,15 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
         when (data) {
             is AwbArchive -> data.files.forEach { entry -> customPak[entry.id] = data.openSource(entry) }
             is CpkArchive -> data.files.forEach { entry ->
-                customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
-                        data.openDecompressedSource(context, entry) ?: return@forEach
+                data.openDecompressedSource(context, entry).doOnSuccess {
+                    customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] = it
+                }
             }
             is PakArchive -> data.files.forEach { entry -> customPak[entry.index] = data.openSource(entry) }
             is SpcArchive -> data.files.forEach { entry ->
-                customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
-                        data.openDecompressedSource(context, entry) ?: return@forEach
+                data.openDecompressedSource(context, entry).doOnSuccess {
+                    customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] = it
+                }
             }
             is WadArchive -> data.files.forEach { entry ->
                 customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
@@ -97,19 +102,17 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
             }
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 val cache = context.cacheShortTerm(context, "zip:${entry.name}")
+                val index = entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()
 
-                val output = cache.openOutputFlow()
-                if (output == null) {
-                    //Cache has failed; store in memory
-                    cache.close()
-                    customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
-                            BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                    customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
-                            cache
-                    caches.add(cache)
-                }
+                cache.openOutputFlow()
+                        .map { output ->
+                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+                            customPak[index] = cache
+                            caches.add(cache)
+                        }.doOnFailure {
+                            cache.close()
+                            customPak[index] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+                        }
             }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }

@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -9,8 +10,10 @@ import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr2.Dr2TextEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.builtins.list
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
@@ -29,32 +32,22 @@ open class Dr2(
         @Serializable
         data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
 
+        @UnstableDefault
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext): Dr2? {
-            try {
-                return unsafe(context)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.game.invalid", iae) }
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext): Dr2 {
+        suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr2> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr2.json"))
-                val gameSource = requireNotNull(loadResource("games/dr2.json", Dr2::class))
-                val gameJson = Json.parse(Dr2GameJson.serializer(), requireNotNull(gameSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
+                val gameString = loadResource("games/dr2.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .doOnFailure { return it.cast() }
+                val gameJson = Json.parse(Dr2GameJson.serializer(), gameString)
 
-                val customOpcodeSource = loadResource("opcodes/dr2.json", Dr2::class)
-                val customOpcodes: List<JsonOpcode>
-                if (customOpcodeSource != null) {
-                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-                } else {
-                    customOpcodes = emptyList()
-                }
+                val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr2.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .getOrElse(emptyList())
 
-                return Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes)
+                return KorneaResult.Success(Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes))
             }
         }
     }
@@ -163,14 +156,16 @@ open class Dr2(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes {  }
+    override val linNonstopOpcodeNames: OpcodeMap<IntArray, String> = buildScriptOpcodes { }
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
+@UnstableDefault
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr2(): Dr2? = Dr2(this)
+suspend fun SpiralContext.Dr2() = Dr2(this)
 
+@UnstableDefault
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr2(): Dr2 = Dr2.unsafe(this)
+suspend fun SpiralContext.UnsafeDr2(): Dr2 = Dr2(this).get()

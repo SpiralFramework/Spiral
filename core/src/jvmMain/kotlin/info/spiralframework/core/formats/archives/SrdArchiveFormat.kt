@@ -5,6 +5,8 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.srd.SrdArchive
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.DataSource
 import java.util.*
 
@@ -31,12 +33,11 @@ object SrdArchiveFormat: ReadableSpiralFormat<SrdArchive> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SrdArchive> {
-        val srd = SrdArchive(context, source) ?: return FormatResult.Fail(this, 1.0)
-
-        //TODO: Bump up the 'chance' for these results after proper fail states are used
-        if (srd.entries.size == 1)
-            return FormatResult.Success(this, srd, 0.4)
-        return FormatResult(this, srd, srd.entries.isNotEmpty(), 0.5) //Not positive on this one chief but we're going with it
-    }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SrdArchive> =
+            SrdArchive(context, source)
+                    .map { srd ->
+                        //TODO: Bump up the 'chance' for these results after proper fail states are used
+                        if (srd.entries.size == 1) FormatResult.Success(this, srd, 0.4)
+                        else FormatResult(this, srd, srd.entries.isNotEmpty(), 0.5)
+                    }.getOrElse(FormatResult.Fail(this, 1.0))
 }

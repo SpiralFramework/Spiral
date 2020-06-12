@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -9,8 +10,12 @@ import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.builtins.list
+import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
@@ -58,48 +63,40 @@ open class Dr1(
                 val flag_names: Map<Int, Map<Int, String>> = emptyMap()
         )
 
+        @UnstableDefault
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext): Dr1? {
-            try {
-                return unsafe(context)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.game.invalid", iae) }
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext): Dr1 {
+        suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr1> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr1.json"))
-                val gameSource = requireNotNull(loadResource("games/dr1.json", Dr1::class))
-                val gameJson = Json.parse(Dr1GameJson.serializer(), requireNotNull(gameSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
+                val gameString = loadResource("games/dr1.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .doOnFailure { return it.cast() }
+                val gameJson = Json.parse(Dr1GameJson.serializer(), gameString)
 
-                val customOpcodeSource = loadResource("opcodes/dr1.json", Dr1::class)
-                val customOpcodes: List<JsonOpcode>
-                if (customOpcodeSource != null) {
-                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-                } else {
-                    customOpcodes = emptyList()
-                }
+                val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr1.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .getOrElse(emptyList())
 
-                return Dr1(
-                        gameJson.character_ids,
-                        gameJson.character_identifiers,
-                        gameJson.colour_codes,
-                        gameJson.item_names,
-                        gameJson.bgm_names,
-                        gameJson.evidence_names,
-                        gameJson.skill_names,
-                        gameJson.map_names,
-                        gameJson.movie_names,
-                        gameJson.pak_names,
-                        gameJson.voice_lines.toIntArray(),
-                        gameJson.game_parameter_names,
-                        gameJson.game_parameter_values,
-                        gameJson.ui_elements,
-                        gameJson.flag_names,
-                        customOpcodes
+                return KorneaResult.Success(
+                        Dr1(
+                                gameJson.character_ids,
+                                gameJson.character_identifiers,
+                                gameJson.colour_codes,
+                                gameJson.item_names,
+                                gameJson.bgm_names,
+                                gameJson.evidence_names,
+                                gameJson.skill_names,
+                                gameJson.map_names,
+                                gameJson.movie_names,
+                                gameJson.pak_names,
+                                gameJson.voice_lines.toIntArray(),
+                                gameJson.game_parameter_names,
+                                gameJson.game_parameter_values,
+                                gameJson.ui_elements,
+                                gameJson.flag_names,
+                                customOpcodes
+                        )
                 )
             }
         }
@@ -304,10 +301,12 @@ open class Dr1(
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
+@UnstableDefault
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr1(): Dr1? = Dr1(this)
+suspend fun SpiralContext.Dr1() = Dr1(this)
 
+@UnstableDefault
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1.unsafe(this)
+suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1(this).get()

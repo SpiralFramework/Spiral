@@ -2,6 +2,7 @@ package info.spiralframework.base.jvm
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.jvm.JVMInputFlow
 import java.net.URL
@@ -21,14 +22,19 @@ class URLDataSource(val url: URL, val maxInstanceCount: Int = -1, override val l
     override val reproducibility: DataSourceReproducibility =
             DataSourceReproducibility(isUnreliable = true)
 
-    override suspend fun openNamedInputFlow(location: String?): JVMInputFlow? {
-        if (canOpenInputFlow()) {
-            val stream = withContext(Dispatchers.IO) { JVMInputFlow(url.openStream(), location ?: this@URLDataSource.location) }
-            stream.addCloseHandler(this::instanceClosed)
-            openInstances.add(stream)
-            return stream
-        } else {
-            return null
+    override suspend fun openNamedInputFlow(location: String?): KorneaResult<JVMInputFlow> {
+        when {
+            closed -> return KorneaResult.Error(DataSource.ERRORS_SOURCE_CLOSED, "Instance closed")
+            canOpenInputFlow() -> {
+                val stream = withContext(Dispatchers.IO) { JVMInputFlow(url.openStream(), location ?: this@URLDataSource.location) }
+                stream.addCloseHandler(this::instanceClosed)
+                openInstances.add(stream)
+                return KorneaResult.Success(stream)
+            }
+            else -> return KorneaResult.Error(
+                    DataSource.ERRORS_TOO_MANY_SOURCES_OPEN,
+                    "Too many instances open (${openInstances.size}/${maxInstanceCount})"
+            )
         }
     }
 

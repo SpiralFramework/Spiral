@@ -2,6 +2,7 @@ package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.*
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.OutputFlow
 import java.io.File
@@ -14,7 +15,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
         try {
             return super.identify(context, readContext, source)
         } catch (ise: IllegalStateException) {
-            return FormatResult.Fail(this, 1.0, ise)
+            return FormatResult.Fail(this, 1.0, KorneaResult.Thrown(ise))
         }
     }
 

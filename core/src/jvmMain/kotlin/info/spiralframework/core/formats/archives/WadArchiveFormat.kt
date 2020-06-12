@@ -5,6 +5,10 @@ import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
+import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.erorrs.common.doOnSuccess
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataPool
 import org.abimon.kornea.io.common.DataSource
@@ -28,14 +32,12 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<WadArchive> {
-        val wad = WadArchive(context, source) ?: return FormatResult.Fail(this, 1.0)
-
-        if (wad.files.size == 1)
-            return FormatResult.Success(this, wad,0.75)
-
-        return FormatResult(this, wad, wad.files.isNotEmpty(), 1.0) //Not positive on this one chief but we're going with it
-    }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<WadArchive> =
+            WadArchive(context, source)
+                    .map { wad ->
+                        if (wad.files.size == 1) FormatResult.Success(this, wad, 0.75)
+                        else FormatResult(this, wad, wad.files.isNotEmpty(), 1.0)
+                    }.getOrElse(FormatResult.Fail(this, 1.0))
 
     /**
      * Does this format support writing [data]?
@@ -66,26 +68,25 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
         when (data) {
             is AwbArchive -> data.files.forEach { entry -> customWad[entry.id.toString()] = data.openSource(entry) }
             is CpkArchive -> data.files.forEach { entry ->
-                customWad[entry.name] = data.openDecompressedSource(context, entry) ?: return@forEach
+                data.openDecompressedSource(context, entry).doOnSuccess { customWad[entry.name] = it }
             }
             is PakArchive -> data.files.forEach { entry -> customWad[entry.index.toString()] = data.openSource(entry) }
             is SpcArchive -> data.files.forEach { entry ->
-                customWad[entry.name] = data.openDecompressedSource(context, entry) ?: return@forEach
+                data.openDecompressedSource(context, entry).doOnSuccess { customWad[entry.name] = it }
             }
             is WadArchive -> data.files.forEach { entry -> customWad[entry.name] = data.openSource(entry) }
             is ZipFile -> data.entries().iterator().forEach { entry ->
                 val cache = context.cacheShortTerm(context, "zip:${entry.name}")
 
-                val output = cache.openOutputFlow()
-                if (output == null) {
-                    //Cache has failed; store in memory
-                    cache.close()
-                    customWad[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                } else {
-                    data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                    customWad[entry.name] = cache
-                    caches.add(cache)
-                }
+                cache.openOutputFlow()
+                        .map { output ->
+                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+                            customWad[entry.name] = cache
+                            caches.add(cache)
+                        }.doOnFailure {
+                            cache.close()
+                            customWad[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+                        }
             }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }

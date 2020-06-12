@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -12,8 +13,10 @@ import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
@@ -29,40 +32,22 @@ open class DRv3(
         @Serializable
         data class DRv3GameJson(val character_names: Map<String, String>, val character_identifiers: Map<String, String>, val colour_codes: Map<String, String>, val item_names: Array<String>)
 
+        @UnstableDefault
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext): DRv3? {
-            try {
-                return unsafe(context)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.game.invalid", iae) }
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext): DRv3 {
+        suspend operator fun invoke(context: SpiralContext): KorneaResult<DRv3> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/drv3.json"))
-                val gameSource = requireNotNull(loadResource("games/drv3.json", Dr2::class))
-                val gameJson = Json.parse(DRv3GameJson.serializer(), requireNotNull(gameSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
+                val gameString = loadResource("games/drv3.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .doOnFailure { return it.cast() }
+                val gameJson = Json.parse(DRv3GameJson.serializer(), gameString)
 
-                val customOpcodeSource = loadResource("opcodes/drv3.json", Dr1::class)
-                val customOpcodes: List<JsonOpcode>
-                if (customOpcodeSource != null) {
-                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-                } else {
-                    customOpcodes = emptyList()
-                }
+                val customOpcodes: List<JsonOpcode> = loadResource("opcodes/drv3.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .getOrElse(emptyList())
 
-//                val customOpcodeSource = loadResource("opcodes/dr2.json", Dr2::class)
-//                val customOpcodes: List<JsonOpcode>
-//                if (customOpcodeSource != null) {
-//                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-//                } else {
-//                    customOpcodes = emptyList()
-//                }
-
-                return DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes)
+                return KorneaResult.Success(DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
             }
         }
     }
@@ -238,9 +223,11 @@ open class DRv3(
     }
 }
 
+@UnstableDefault
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.DRv3() = DRv3(this)
+@UnstableDefault
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun SpiralContext.UnsafeDRv3() = DRv3.unsafe(this)
+suspend fun SpiralContext.UnsafeDRv3() = DRv3(this).get()

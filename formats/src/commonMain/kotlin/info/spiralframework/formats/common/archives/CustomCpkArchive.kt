@@ -3,6 +3,7 @@ package info.spiralframework.formats.common.archives
 import info.spiralframework.base.binding.now
 import info.spiralframework.base.common.*
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.doOnFailure
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.OutputFlow
 
@@ -301,7 +302,7 @@ open class CustomCpkArchive {
             //Write Data
             filenames.forEach { name ->
                 val source = _files.getValue(name)
-                val copied = source.useInputFlow(output::copyFrom) ?: return@forEach debug("Skipping {0}", name)
+                val copied = source.useInputFlow { output.copyFrom(it) }.doOnFailure { return@forEach debug("Skipping {0}", name) }
                 if (copied != source.dataSize?.toLong())
                     warn("CPK: Was told to copy {0} bytes; copied {1} instead", source.dataSize.toString(), copied)
                 else

@@ -3,8 +3,12 @@ package info.spiralframework.formats.common.text
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.erorrs.common.doOnFailure
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.fauxSeekFromStart
 import org.abimon.kornea.io.common.readInt32LE
@@ -35,77 +39,89 @@ abstract class STXContainer {
         const val MAGIC_NUMBER_LE = 0x54585453
         const val PREFIX = "formats.stx"
 
+        const val INVALID_MAGIC = 0x0000
+        const val INVALID_STRING_COUNT = 0x0001
+
+        const val NOT_ENOUGH_DATA_KEY = "$PREFIX.not_enough_data"
+        const val INVALID_MAGIC_KEY = "$PREFIX.invalid_magic"
+        const val NEW_UNK_VALUE_KEY = "$PREFIX.new_unk_value"
+        const val NEW_UNK2_VALUE_KEY = "$PREFIX.new_unk2_value"
+        const val INVALID_STRING_COUNT_KEY = "$PREFIX.invalid_string_count"
+        const val MAPPED_STRINGS_KEY = "$PREFIX.mapped_strings"
+
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): STXContainer? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("$PREFIX.invalid", dataSource, iae) }
-
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): STXContainer = withFormats(context) {
-            val notEnoughData: () -> Any = { localise("$PREFIX.not_enough_data") }
-
-            val flow = requireNotNull(dataSource.openInputFlow(), notEnoughData)
-            use(flow) {
-                val magic = requireNotNull(flow.readInt32LE(), notEnoughData)
-                require(magic == MAGIC_NUMBER_LE) { localise("$PREFIX.invalid_magic", magic.toHexString(), MAGIC_NUMBER_LE.toHexString()) }
-
-                val language = Language(requireNotNull(flow.readInt32LE(), notEnoughData))
-
-                val unk = requireNotNull(flow.readInt32LE(), notEnoughData)
-                if (unk != 1)
-                    debug("$PREFIX.new_unk_value", unk)
-
-                val tableOffset = requireNotNull(flow.readInt32LE(), notEnoughData)
-
-                val unk2 = requireNotNull(flow.readInt32LE(), notEnoughData)
-                if (unk2 != 8)
-                    debug("$PREFIX.new_unk2_value", unk2)
-
-                val count = requireNotNull(flow.readInt32LE(), notEnoughData)
-                if (count == 0)
-                    return@use EmptySTXContainer(language)
-                require(count > 0) { localise("$PREFIX.invalid_string_count", count) }
-
-                val stringOffsets = flow.fauxSeekFromStart(tableOffset.toULong(), dataSource) { tableFlow ->
-                    Array(count) {
-                        return@Array StringOffset(
-                                requireNotNull(flow.readInt32LE(), notEnoughData), //String ID
-                                requireNotNull(flow.readInt32LE(), notEnoughData)  //String Offset
-                        )
-                    }
-                }
-                requireNotNull(stringOffsets, notEnoughData)
-                val maxStringID = requireNotNull(stringOffsets.max()).stringID
-
-                if (maxStringID >= count) {
-                    //We need to use a map
-                    debug("$PREFIX.mapped_strings", maxStringID)
-
-                    val strings: MutableMap<Int, String> = HashMap()
-
-                    stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
-                        requireNotNull(flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
-                            strings[stringID] = stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
-                        })
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<STXContainer> {
+            withFormats(context) {
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                use(flow) {
+                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (magic != MAGIC_NUMBER_LE) {
+                        return KorneaResult.Error(INVALID_MAGIC, localise(INVALID_MAGIC_KEY, magic.toHexString(), MAGIC_NUMBER_LE.toHexString()))
                     }
 
-                    return@use MapBackedSTXContainer(language, strings)
-                } else {
-                    val strings = arrayOfNulls<String>(count)
+                    val languageID = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val language = Language(languageID)
 
-                    stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
-                        requireNotNull(flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
-                            strings[stringID] = stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
-                        })
+                    val unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (unk != 1)
+                        debug(NEW_UNK_VALUE_KEY, unk)
+
+                    val tableOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+                    val unk2 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (unk2 != 8)
+                        debug(NEW_UNK2_VALUE_KEY, unk2)
+
+                    val count = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (count == 0)
+                        return KorneaResult.Success(EmptySTXContainer(language))
+
+                    if (count <= 0) {
+                        return KorneaResult.Error(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, count))
                     }
 
-                    return@use ArrayBackedSTXContainer(language, strings.requireNoNulls())
+                    val stringOffsets: Array<StringOffset> = flow.fauxSeekFromStart(tableOffset.toULong(), dataSource) { tableFlow ->
+                        Array(count) {
+                            //NOTE: These variables cannot be inlined without crashing the Kotlin compiler.
+                            val id = tableFlow.readInt32LE()
+                                    ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String ID
+                            val offset = tableFlow.readInt32LE()
+                                    ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String Offset
+
+                            StringOffset(id, offset)
+                        }
+                    }.doOnFailure { return it.cast() }
+
+                    val maxStringID = stringOffsets.max()?.stringID ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+                    if (maxStringID >= count) {
+                        //We need to use a map
+                        debug(MAPPED_STRINGS_KEY, maxStringID)
+
+                        val strings: MutableMap<Int, String> = HashMap()
+
+                        stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
+                            val string = flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
+                                stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
+                            }.doOnFailure { return it.cast() }
+
+                            strings[stringID] = string
+                        }
+
+                        return KorneaResult.Success(MapBackedSTXContainer(language, strings))
+                    } else {
+                        val strings = arrayOfNulls<String>(count)
+
+                        stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
+                            val string = flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
+                                stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
+                            }.doOnFailure { return it.cast() }
+
+                            strings[stringID] = string
+                        }
+
+                        return KorneaResult.Success(ArrayBackedSTXContainer(language, strings.requireNoNulls()))
+                    }
                 }
             }
         }
@@ -116,16 +132,19 @@ abstract class STXContainer {
         override fun get(index: Int): String = throw IndexOutOfBoundsException()
         override fun strings(): Array<String?> = emptyArray()
     }
+
     class MapBackedSTXContainer(override val language: Language, private val backing: Map<Int, String>) : STXContainer() {
         override val count: Int = backing.size
 
         override fun get(index: Int): String = backing.getValue(index)
         override fun strings(): Array<String?> = Array(count, backing::get)
     }
+
     class ArrayBackedSTXContainer(override val language: Language, private val backing: Array<String>) : STXContainer() {
         override val count: Int = backing.size
 
         override fun get(index: Int): String = backing[index]
+
         @Suppress("UNCHECKED_CAST")
         override fun strings(): Array<String?> = backing.copyOf() as Array<String?>
     }
@@ -141,6 +160,7 @@ abstract class STXContainer {
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.STXContainer(dataSource: DataSource<*>) = STXContainer(this, dataSource)
+
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeSTXContainer(dataSource: DataSource<*>) = STXContainer.unsafe(this, dataSource)
+suspend fun SpiralContext.UnsafeSTXContainer(dataSource: DataSource<*>) = STXContainer(this, dataSource).get()

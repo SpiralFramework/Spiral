@@ -49,6 +49,9 @@ object SpiralSuspending {
     class Func4<T>(name: String, vararg parameterNames: String, val func: suspend (context: SpiralContext, Any?, Any?, Any?, Any?) -> T): Function<T>(name, parameterNames) {
         override suspend fun suspendInvoke(context: SpiralContext, parameters: Map<String, Any?>) = func(context, parameters[this, 0], parameters[this, 1], parameters[this, 2], parameters[this, 3])
     }
+    class Func5<T>(name: String, vararg parameterNames: String, val func: suspend (context: SpiralContext, Any?, Any?, Any?, Any?, Any?) -> T): Function<T>(name, parameterNames) {
+        override suspend fun suspendInvoke(context: SpiralContext, parameters: Map<String, Any?>) = func(context, parameters[this, 0], parameters[this, 1], parameters[this, 2], parameters[this, 3], parameters[this, 4])
+    }
 
     class FuncX<T>(name: String, vararg parameterNames: String, val variadicSupported: Boolean = false, val func: suspend (context: SpiralContext, parameters: Map<String, Any?>) -> T): Function<T>(name, parameterNames) {
         override suspend fun suspendInvoke(context: SpiralContext, parameters: Map<String, Any?>) = func(context, parameters)

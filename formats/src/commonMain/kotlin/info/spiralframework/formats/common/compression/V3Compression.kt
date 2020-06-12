@@ -1,6 +1,10 @@
 package info.spiralframework.formats.common.compression
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.korneaNotEnoughData
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.readExact
@@ -8,35 +12,42 @@ import org.abimon.kornea.io.common.readInt32BE
 
 const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
 
+const val INVALID_DRV3_MAGIC_NUMBER = 0xE003
+const val INVALID_DRV3_SHIFT_MODE = 0xE004
+
+const val DRV3_NOT_ENOUGH_DATA = "formats.drv3_compression.not_enough_data"
+const val INVALID_DRV3_MAGIC_NUMBER_KEY = "formats.drv3_compression.invalid_magic"
+const val INVALID_DRV3_SHIFT_MODE_KEY = "formats.drv3_compression.invalid_shift"
+
 const val CLN = 0x4e4c4324
 const val CL1 = 0x314c4324
 const val CL2 = 0x324c4324
 const val CR0 = 0x30524324
 
 @ExperimentalUnsignedTypes
-suspend fun decompressV3(context: SpiralContext, data: ByteArray): ByteArray {
+suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<ByteArray> {
     val flow = BinaryInputFlow(data)
 
-    val magic = requireNotNull(flow.readInt32BE())
-    require(magic == DRV3_COMP_MAGIC_NUMBER)
+    val magic = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
+    if (magic != DRV3_COMP_MAGIC_NUMBER) return KorneaResult.Error(INVALID_DRV3_MAGIC_NUMBER, context.localise(INVALID_DRV3_MAGIC_NUMBER_KEY, magic.toHexString()))
 
-    val compressedSize = requireNotNull(flow.readInt32BE())
+    val compressedSize = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
     flow.skip(8u)
 
-    val decompressedSize = requireNotNull(flow.readInt32BE())
-    val compressedSizeTwo = requireNotNull(flow.readInt32BE())
+    val decompressedSize = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
+    val compressedSizeTwo = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
     flow.skip(4u)
 
-    val unk = requireNotNull(flow.readInt32BE())
+    val unk = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
     val output = BinaryOutputFlow()
 
     while (flow.available() > 0u) {
-        val mode = requireNotNull(flow.readInt32BE())
+        val mode = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
 
-        require(mode == CLN || mode == CL1 || mode == CL2 && mode == CR0)
+        if (mode != CLN && mode != CL1 && mode != CL2 && mode != CR0) return KorneaResult.Error(INVALID_DRV3_SHIFT_MODE, context.localise(INVALID_DRV3_SHIFT_MODE_KEY, mode.toHexString()))
 
-        val chunkDecompressedSize = requireNotNull(flow.readInt32BE())
-        val chunkCompressedSize = requireNotNull(flow.readInt32BE())
+        val chunkDecompressedSize = flow.readInt32BE() ?: return korneaNotEnoughData()
+        val chunkCompressedSize = flow.readInt32BE() ?: return korneaNotEnoughData()
 
         flow.skip(4u)
 
@@ -50,11 +61,11 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): ByteArray {
         }
     }
 
-    return output.getData()
+    return KorneaResult.Success(output.getData())
 }
 
 @ExperimentalUnsignedTypes
-fun deflateChunkV3(context: SpiralContext, chunk: ByteArray, mode: Int): ByteArray {
+private fun deflateChunkV3(context: SpiralContext, chunk: ByteArray, mode: Int): ByteArray {
     with(context) {
         val output: MutableList<Byte> = ArrayList()
 
@@ -65,7 +76,7 @@ fun deflateChunkV3(context: SpiralContext, chunk: ByteArray, mode: Int): ByteArr
             CLN -> 8
             CL1 -> 7
             CL2 -> 6
-            else -> throw IllegalArgumentException(localise("formats.v3_compression.invalid_mode", mode))
+            else -> throw IllegalStateException()
         }
 
         val mask = (1 shl shift) - 1

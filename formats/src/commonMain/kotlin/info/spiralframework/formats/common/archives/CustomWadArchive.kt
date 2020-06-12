@@ -87,7 +87,7 @@ open class CustomWadArchive {
         }
 
         fileNames.forEachIndexed { _, name ->
-            _files.getValue(name).useInputFlow(output::copyFrom)
+            _files.getValue(name).useInputFlow { output.copyFrom(it) }
         }
     }
 }

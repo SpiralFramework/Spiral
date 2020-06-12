@@ -2,6 +2,8 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.io.SpiralResourceLoader
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.korneaNotFound
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.jvm.JVMDataSource
 import org.abimon.kornea.io.jvm.files.FileDataSource
@@ -30,27 +32,27 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
         )
     }
 
-    override suspend fun loadResource(name: String, from: KClass<*>): DataSource<*>? {
+    override suspend fun loadResource(name: String, from: KClass<*>): KorneaResult<DataSource<*>> {
         val classLoader = from.java.classLoader
 
         val file = File(name)
         if (file.exists())
-            return FileDataSource(file)
+            return KorneaResult.Success(FileDataSource(file))
         var classLoaderResource = classLoader.getResource(name)
         if (classLoaderResource != null)
-            return JVMDataSource(classLoaderResource::openStream)
+            return KorneaResult.Success(JVMDataSource(classLoaderResource::openStream))
         for (module in spiralModules) {
             for (platform in platformModules) {
                 val resourceFolderFile = File("$module/src/$platform/resources/$name")
                 if (resourceFolderFile.exists())
-                    return FileDataSource(resourceFolderFile)
+                    return KorneaResult.Success(FileDataSource(resourceFolderFile))
             }
         }
 
         classLoaderResource = SpiralModuleBase::class.java.classLoader.getResource(name)
         if (classLoaderResource != null)
-            return JVMDataSource(classLoaderResource::openStream)
+            return KorneaResult.Success(JVMDataSource(classLoaderResource::openStream))
 
-        return null
+        return korneaNotFound("Could not find a resource for name $name")
     }
 }

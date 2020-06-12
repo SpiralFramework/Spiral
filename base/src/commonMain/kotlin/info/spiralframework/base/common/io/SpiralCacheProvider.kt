@@ -3,6 +3,9 @@ package info.spiralframework.base.common.io
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.putBack
+import org.abimon.kornea.erorrs.common.flatMap
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
@@ -109,10 +112,12 @@ suspend fun SpiralPersistentCacheProvider.cachePersistent(context: SpiralContext
 @ExperimentalTime
 suspend fun SpiralTimedCacheProvider.cacheFor(context: SpiralContext, name: String, duration: Duration, location: String? = null): DataPool<out InputFlow, out OutputFlow> = context.cacheFor(name, duration, location)
 
-suspend fun DataSource<*>.cache(context: SpiralContext): DataSource<*> {
+@Suppress("USELESS_CAST")
+suspend fun <T: InputFlow> DataSource<T>.cache(context: SpiralContext): DataSource<*> {
     val cache = context.cacheShortTerm(context, this.location ?: this.toString(), this.location)
-    return cache.openOutputFlow()?.use { out ->
-        this.useInputFlow(out::copyFrom) ?: return@use this
-        cache
-    } ?: this
+
+    return cache.openOutputFlow()
+            .flatMap { out -> this.useInputFlow { flow -> flow.copyTo(out) } }
+            .map { cache as DataSource<*> }
+            .getOrElse(this)
 }

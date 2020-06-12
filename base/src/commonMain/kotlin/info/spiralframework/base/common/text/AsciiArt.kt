@@ -170,16 +170,16 @@ open class ProgressTracker protected constructor(
     }
 }
 
-fun <T> SpiralContext.ProgressTracker(
+inline fun <T> SpiralContext.trackProgress(
         trackLength: Int = 20,
         start: Char = '[', end: Char = ']',
         trackSpace: Char = ' ', trackFilled: Char = '#',
-        downloadingText: String = "ascii.progress.loading",
-        downloadedText: String = "ascii.progress.loaded",
+        loadingText: String = "ascii.progress.loading",
+        loadedText: String = "ascii.progress.loaded",
         showPercentage: Boolean = true,
         op: ProgressTracker.() -> T
 ): T {
-    val tracker = ProgressTracker(this, trackLength, start, end, trackSpace, trackFilled, downloadingText, downloadedText, showPercentage)
+    val tracker = ProgressTracker(this, trackLength, start, end, trackSpace, trackFilled, loadingText, loadedText, showPercentage)
     try {
         return tracker.op()
     } finally {

@@ -1,7 +1,11 @@
 package info.spiralframework.formats.common.scripting.exe
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 
@@ -40,26 +44,19 @@ sealed class PEOptionalHeader {
         const val PE32_MAGIC_NUMBER_LE = 0x10B
         const val PE64_MAGIC_NUMBER_LE = 0x20B
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): PEOptionalHeader? = dataSource.useInputFlow { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): PEOptionalHeader? {
-            try {
-                return unsafe(context, flow)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.exe.pe_opt_64.invalid", flow, iae) }
+        const val INVALID_SIGNATURE = 0x0000
+        const val INVALID_SIGNATURE_KEY = "formats.exe.pe_opt.invalid_signature"
 
-                return null
-            }
-        }
-
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): PEOptionalHeader = requireNotNull(dataSource.useInputFlow { flow -> unsafe(context, flow) })
-        suspend fun unsafe(context: SpiralContext, flow: InputFlow): PEOptionalHeader {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PEOptionalHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PEOptionalHeader> {
             withFormats(context) {
-                val signature = requireNotNull(flow.readInt16LE()) { localise("formats.exe.pe_opt.not_enough_data") }
+                val signature = flow.readInt16LE()
+                        ?: return localisedNotEnoughData("formats.exe.pe_opt.not_enough_data")
 
                 when (signature) {
-                    PE32_MAGIC_NUMBER_LE -> return PE32.unsafe(this, flow)
-                    PE64_MAGIC_NUMBER_LE -> return PE64.unsafe(this, flow)
-                    else -> throw IllegalArgumentException(localise("formats.exe.pe_opt.invalid_signature", signature))
+                    PE32_MAGIC_NUMBER_LE -> return PE32(this, flow).cast()
+                    PE64_MAGIC_NUMBER_LE -> return PE64(this, flow).cast()
+                    else -> throw IllegalArgumentException(localise(INVALID_SIGNATURE_KEY, signature))
                 }
             }
         }
@@ -96,58 +93,51 @@ sealed class PEOptionalHeader {
             val loaderFlags: Int,
             val numberOfRvaAndSizes: Int,
             val dataDirectory: Array<DataDirectory>
-    ): PEOptionalHeader() {
+    ) : PEOptionalHeader() {
         companion object {
-            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): PE32? = dataSource.useInputFlow { flow -> invoke(context, flow) }
-            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): PE32? {
-                try {
-                    return unsafe(context, flow)
-                } catch (iae: IllegalArgumentException) {
-                    withFormats(context) { debug("formats.exe.pe_opt_32.invalid", flow, iae) }
+            const val NOT_ENOUGH_DATA_KEY = "formats.exe.pe_opt_32.not_enough_data"
 
-                    return null
-                }
-            }
-
-            suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): PE32 = requireNotNull(dataSource.useInputFlow { flow -> unsafe(context, flow) })
-            suspend fun unsafe(context: SpiralContext, flow: InputFlow): PE32 {
+            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE32> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE32> {
                 withFormats(context) {
-                    val notEnoughData: () -> Any = { localise("formats.exe.pe_opt_32.not_enough_data") }
-
-                    val majorLinkerVersion = requireNotNull(flow.read(), notEnoughData)
-                    val minorLinkerVersion = requireNotNull(flow.read(), notEnoughData)
-                    val sizeOfCode = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfInitialisedData = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfUninitialisedData = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val addressOfEntryPoint = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val baseOfCode = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val baseOfData = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val imageBase = requireNotNull(flow.readInt32BE(), notEnoughData)
-                    val sectionAlignment = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val fileAlignment = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val majorOSVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorOSVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val majorImageVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorImageVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val majorSubsystemVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorSubsystemVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val win32VersionValue = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfImage = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfHeaders = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val checksum = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val subsystem = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val dllCharacteristics = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val sizeOfStackReserve = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfStackCommit = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfHeapReserve = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfHeapCommit = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val loaderFlags = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val numberOfRvaAndSizes = requireNotNull(flow.readInt32LE(), notEnoughData)
+                    val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfInitialisedData = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfUninitialisedData = flow.readInt32LE()
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val addressOfEntryPoint = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val baseOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val baseOfData = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val imageBase = flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionAlignment = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val fileAlignment = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorOSVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorOSVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorImageVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorImageVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorSubsystemVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorSubsystemVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val win32VersionValue = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfImage = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeaders = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val checksum = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val subsystem = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val dllCharacteristics = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfStackReserve = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfStackCommit = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeapReserve = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeapCommit = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val loaderFlags = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val numberOfRvaAndSizes = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val dataDirectory = Array(numberOfRvaAndSizes) {
-                        DataDirectory(requireNotNull(flow.readInt32LE(), notEnoughData), requireNotNull(flow.readInt32LE(), notEnoughData))
+                        DataDirectory(
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        )
                     }
 
-                    return PE32(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, baseOfData, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory)
+                    return KorneaResult.Success(PE32(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, baseOfData, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
                 }
             }
         }
@@ -255,57 +245,51 @@ sealed class PEOptionalHeader {
             val loaderFlags: Int,
             val numberOfRvaAndSizes: Int,
             val dataDirectory: Array<DataDirectory>
-    ): PEOptionalHeader() {
+    ) : PEOptionalHeader() {
         companion object {
-            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): PE64? = dataSource.useInputFlow { flow -> invoke(context, flow) }
-            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): PE64? {
-                try {
-                    return unsafe(context, flow)
-                } catch (iae: IllegalArgumentException) {
-                    withFormats(context) { debug("formats.exe.pe_opt_64.invalid", flow, iae) }
+            const val NOT_ENOUGH_DATA_KEY = "formats.exe.pe_opt_64.not_enough_data"
 
-                    return null
-                }
-            }
-
-            suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): PE64 = requireNotNull(dataSource.useInputFlow { flow -> unsafe(context, flow) })
-            suspend fun unsafe(context: SpiralContext, flow: InputFlow): PE64 {
+            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE64> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE64> {
                 withFormats(context) {
-                    val notEnoughData: () -> Any = { localise("formats.exe.pe_opt_64.not_enough_data") }
-
-                    val majorLinkerVersion = requireNotNull(flow.read(), notEnoughData)
-                    val minorLinkerVersion = requireNotNull(flow.read(), notEnoughData)
-                    val sizeOfCode = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfInitialisedData = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfUninitialisedData = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val addressOfEntryPoint = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val baseOfCode = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val imageBase = requireNotNull(flow.readInt64BE(), notEnoughData)
-                    val sectionAlignment = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val fileAlignment = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val majorOSVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorOSVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val majorImageVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorImageVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val majorSubsystemVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val minorSubsystemVersion = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val win32VersionValue = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfImage = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val sizeOfHeaders = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val checksum = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val subsystem = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val dllCharacteristics = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val sizeOfStackReserve = requireNotNull(flow.readInt64LE(), notEnoughData)
-                    val sizeOfStackCommit = requireNotNull(flow.readInt64LE(), notEnoughData)
-                    val sizeOfHeapReserve = requireNotNull(flow.readInt64LE(), notEnoughData)
-                    val sizeOfHeapCommit = requireNotNull(flow.readInt64LE(), notEnoughData)
-                    val loaderFlags = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    val numberOfRvaAndSizes = requireNotNull(flow.readInt32LE(), notEnoughData)
+                    val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfInitialisedData = flow.readInt32LE()
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfUninitialisedData = flow.readInt32LE()
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val addressOfEntryPoint = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val baseOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val imageBase = flow.readInt64BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionAlignment = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val fileAlignment = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorOSVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorOSVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorImageVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorImageVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val majorSubsystemVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val minorSubsystemVersion = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val win32VersionValue = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfImage = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeaders = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val checksum = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val subsystem = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val dllCharacteristics = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfStackReserve = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfStackCommit = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeapReserve = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sizeOfHeapCommit = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val loaderFlags = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val numberOfRvaAndSizes = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val dataDirectory = Array(numberOfRvaAndSizes) {
-                        DataDirectory(requireNotNull(flow.readInt32LE(), notEnoughData), requireNotNull(flow.readInt32LE(), notEnoughData))
+                        DataDirectory(
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        )
                     }
 
-                    return PE64(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory)
+                    return KorneaResult.Success(PE64(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
                 }
             }
         }

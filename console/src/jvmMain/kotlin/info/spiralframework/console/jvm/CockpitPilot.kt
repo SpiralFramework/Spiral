@@ -11,6 +11,7 @@ import info.spiralframework.console.jvm.pipeline.run
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import kotlinx.coroutines.delay
 import java.io.File
+import java.lang.StringBuilder
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
@@ -54,16 +55,36 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
 
             GurrenPilot.register(context, globalContext)
 
-            while (GurrenPilot.keepLooping.get()) {
+            loop@while (GurrenPilot.keepLooping.get()) {
                 delay(50)
                 val localScope = with { operationScope }
                 print(localScope.scopePrint)
 
-                val input = readLine()?.doublePadWindowsPaths()?.plus('\n') ?: break //TODO: Fix this bug; without the extra newline, our antlr grammar expects a newline, not an EOF
+                val rawInput = readLine()
+                val input: String
+
+                if (rawInput == "script()") {
+                    print(">>> ")
+
+                    var newLineCount = 0
+                    val buffer = StringBuilder()
+
+                    while (newLineCount < 1) {
+                        val line = readLine() ?: break@loop
+                        if (line.isBlank()) newLineCount++
+                        else buffer.appendln(line.doublePadWindowsPaths())
+                    }
+
+                    input = buffer.toString()
+                } else {
+                    //TODO: Fix this bug; without the extra newline, our antlr grammar expects a newline, not an EOF
+                    input = rawInput?.doublePadWindowsPaths()?.plus('\n') ?: break
+                }
 
                 val pipeline = runCatching { parsePipeline(input) }
                 if (pipeline.isFailure) {
                     printlnLocale("commands.unknown")
+                    debug("ANTLR Parsing Error", pipeline.exceptionOrNull() ?: "(unknown)")
                 } else {
                     val scope = pipeline.getOrThrow()
                     scope.run(context, globalContext)

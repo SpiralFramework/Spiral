@@ -1,7 +1,11 @@
 package info.spiralframework.formats.common.scripting.exe
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
+import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.readInt16LE
@@ -76,32 +80,24 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
         /** The bytes of the word are reversed (obsolete) */
         const val IMAGE_FILE_BYTES_REVERSED_HI = 0x8000
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): COFFHeader? = dataSource.useInputFlow { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): COFFHeader? {
-            try {
-                return unsafe(context, flow)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.exe.coff.invalid", flow, iae) }
+        const val NO_MACHINE = 0x0000
 
-                return null
-            }
-        }
+        const val NOT_ENOUGH_DATA_KEY = "formats.exe.coff.not_enough_data"
+        const val NO_MACHINE_KEY = "formats.exe.coff.no_machine"
 
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): COFFHeader = requireNotNull(dataSource.useInputFlow { flow -> unsafe(context, flow) })
-        suspend fun unsafe(context: SpiralContext, flow: InputFlow): COFFHeader {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<COFFHeader> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.exe.coff.not_enough_data") }
+                val machineHexValue = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.Error(NO_MACHINE, localise(NO_MACHINE_KEY, machineHexValue.toHexString()))
+                val numberOfSections = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val timeDateStamp = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val pointerToSymbolTable = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val numberOfSymbols = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val sizeOfOptionalHeader = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val characteristics = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                val machineHexValue = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val machine = requireNotNull(MachineType.valueOf(machineHexValue)) { localise("formats.exe.coff.no_machine", machineHexValue) }
-                val numberOfSections = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val timeDateStamp = requireNotNull(flow.readInt32LE(), notEnoughData)
-                val pointerToSymbolTable = requireNotNull(flow.readInt32LE(), notEnoughData)
-                val numberOfSymbols = requireNotNull(flow.readInt32LE(), notEnoughData)
-                val sizeOfOptionalHeader = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val characteristics = requireNotNull(flow.readInt16LE(), notEnoughData)
-
-                return COFFHeader(machine, numberOfSections, timeDateStamp, pointerToSymbolTable, numberOfSymbols, sizeOfOptionalHeader, characteristics)
+                return KorneaResult.Success(COFFHeader(machine, numberOfSections, timeDateStamp, pointerToSymbolTable, numberOfSymbols, sizeOfOptionalHeader, characteristics))
             }
         }
     }

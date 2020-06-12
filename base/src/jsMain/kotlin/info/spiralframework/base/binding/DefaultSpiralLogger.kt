@@ -94,28 +94,6 @@ actual class DefaultSpiralLocale actual constructor() : AbstractSpiralLocale() {
         }
         return str
     }
-
-    actual override fun localiseEnglish(msg: String): String =
-            stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
-
-    actual override fun localiseEnglish(msg: String, arg: Any): String {
-        val str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
-        return str.replace("{0}", arg.toString())
-    }
-
-    actual override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String {
-        val str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
-        return str.replace("{0}", arg1.toString()).replace("{1}", arg2.toString())
-    }
-
-    actual override fun localiseEnglish(msg: String, vararg args: Any): String = localiseEnglishArray(msg, args)
-    actual override fun localiseEnglishArray(msg: String, args: Array<out Any>): String {
-        var str = stripJavaQuirks(englishBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
-        for (i in args.indices) {
-            str = str.replace("{$i}", args[i].toString())
-        }
-        return str
-    }
 }
 
 internal actual fun defaultLocale(): CommonLocale {

@@ -1,7 +1,11 @@
 package info.spiralframework.formats.common.scripting.exe
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
+import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.readInt16LE
@@ -32,45 +36,41 @@ data class DosHeader(
     companion object {
         val MAGIC_NUMBER_LE = 0x5A4D
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): DosHeader? = dataSource.useInputFlow { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): DosHeader? {
-            try {
-                return unsafe(context, flow)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.exe.dos.invalid", flow, iae) }
+        const val INVALID_SIGNATURE = 0x0000
 
-                return null
-            }
-        }
+        const val NOT_ENOUGH_DATA_KEY = "formats.exe.dos.not_enough_data"
+        const val INVALID_SIGNATURE_KEY = "formats.exe.dos.invalid_signature"
 
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): DosHeader = requireNotNull(dataSource.useInputFlow { flow -> unsafe(context, flow) })
-        suspend fun unsafe(context: SpiralContext, flow: InputFlow): DosHeader {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DosHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<DosHeader> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.exe.dos.not_enough_data") }
+                val mzSignature = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                if (mzSignature != MAGIC_NUMBER_LE) {
+                    return KorneaResult.Error(INVALID_SIGNATURE, localise(INVALID_SIGNATURE_KEY, mzSignature.toHexString(), MAGIC_NUMBER_LE.toHexString()))
+                }
 
-                val mzSignature = requireNotNull(flow.readInt16LE(), notEnoughData)
-                require(mzSignature == MAGIC_NUMBER_LE) { localise("formats.exe.dos.invalid_signature", mzSignature, MAGIC_NUMBER_LE) }
+                val usedBytesInTheLastPage = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val fileSizeInPages = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val numberOfRelocationItems = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val headerSizeInParagraphs = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val minimumExtraParagraphs = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val maximumExtraParagraphs = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val initialRelativeSS = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val initialSP = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val checksum = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val initialIP = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val initialRelativeCS = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val addressOfRelationTable = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val overlayNumber = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val reserved = IntArray(4) { flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) }
+                val oemID = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val oemInfo = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val reserved2 = IntArray(10) {
+                    flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                }
+                val addressOfNewExeHeader = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                val usedBytesInTheLastPage = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val fileSizeInPages = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val numberOfRelocationItems = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val headerSizeInParagraphs = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val minimumExtraParagraphs = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val maximumExtraParagraphs = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val initialRelativeSS = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val initialSP = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val checksum = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val initialIP = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val initialRelativeCS = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val addressOfRelationTable = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val overlayNumber = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val reserved = IntArray(4) { requireNotNull(flow.readInt16LE(), notEnoughData) }
-                val oemID = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val oemInfo = requireNotNull(flow.readInt16LE(), notEnoughData)
-                val reserved2 = IntArray(10) { requireNotNull(flow.readInt16LE(), notEnoughData) }
-                val addressOfNewExeHeader = requireNotNull(flow.readInt32LE(), notEnoughData)
-
-                return DosHeader(usedBytesInTheLastPage, fileSizeInPages, numberOfRelocationItems, headerSizeInParagraphs, minimumExtraParagraphs, maximumExtraParagraphs, initialRelativeSS, initialSP, checksum, initialIP, initialRelativeCS, addressOfRelationTable, overlayNumber, reserved, oemID, oemInfo, reserved2, addressOfNewExeHeader)
+                return KorneaResult.Success(DosHeader(usedBytesInTheLastPage, fileSizeInPages, numberOfRelocationItems, headerSizeInParagraphs, minimumExtraParagraphs, maximumExtraParagraphs, initialRelativeSS, initialSP, checksum, initialIP, initialRelativeCS, addressOfRelationTable, overlayNumber, reserved, oemID, oemInfo, reserved2, addressOfNewExeHeader))
             }
         }
     }

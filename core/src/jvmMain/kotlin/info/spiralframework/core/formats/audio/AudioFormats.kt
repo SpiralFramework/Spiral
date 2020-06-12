@@ -1,8 +1,11 @@
 package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.useAndMap
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
+import org.abimon.kornea.erorrs.common.getOrElse
+import org.abimon.kornea.erorrs.common.map
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.readInt32LE
 import org.abimon.kornea.io.common.useInputFlow
@@ -16,7 +19,7 @@ object AudioFormats {
 
     val DEFAULT_WAV = object: SpiralAudioFormat("wav", "wav") {
         override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<File>> {
-            if (source.useInputFlow { flow -> flow.readInt32LE() == WAV_MAGIC_NUMBER } == true) {
+            if (source.useInputFlow { flow -> flow.readInt32LE() == WAV_MAGIC_NUMBER }.getOrElse(false)) {
                 return FormatResult.Success(Optional.empty(), 1.0)
             }
 
@@ -25,7 +28,7 @@ object AudioFormats {
     }
     val DEFAULT_OGG = object: SpiralAudioFormat("ogg", "ogg") {
         override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<File>> {
-            if (source.useInputFlow { flow -> flow.readInt32LE() == OGG_MAGIC_NUMBER } == true) {
+            if (source.useInputFlow { flow -> flow.readInt32LE() == OGG_MAGIC_NUMBER }.getOrElse(false)) {
                 return FormatResult.Success(Optional.empty(), 1.0)
             }
 
@@ -34,7 +37,7 @@ object AudioFormats {
     }
     val DEFAULT_MP3 = object: SpiralAudioFormat("mp3", "mp3") {
         override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<File>> {
-            if (source.useInputFlow { flow -> flow.readInt32LE() == ID3_MAGIC_NUMBER } == true) {
+            if (source.useInputFlow { flow -> flow.readInt32LE() == ID3_MAGIC_NUMBER }.getOrElse(false)) {
                 return FormatResult.Success(Optional.empty(), 0.8)
             }
 

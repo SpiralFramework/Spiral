@@ -1,9 +1,9 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
 //apply plugin: 'antlr'
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 //mainClassName = "info.spiralframework.osl.OSLProxy"
 mainClassName = "BootstrapKt"
@@ -93,11 +93,20 @@ kotlin {
     }
 }
 
+jvmJar {
+    archiveBaseName.set("spiral-$project.name")
+    archiveVersion.set(project_version)
+}
+
 task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
     mergeServiceFiles()
     from jvmJar.archiveFile
     configurations = [project.configurations.jvmRuntimeClasspath]
     group = "shadow"
+
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
 
     archiveBaseName.set(jvmJar.archiveBaseName.get())
     archiveAppendix.set(jvmJar.archiveAppendix.get())

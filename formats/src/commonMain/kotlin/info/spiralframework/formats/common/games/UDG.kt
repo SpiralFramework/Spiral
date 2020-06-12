@@ -2,6 +2,7 @@ package info.spiralframework.formats.common.games
 
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -9,8 +10,10 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.builtins.list
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
 
@@ -26,32 +29,22 @@ class UDG(
         @Serializable
         data class UDGGameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>)
 
+        @UnstableDefault
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext): UDG? {
-            try {
-                return unsafe(context)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.game.invalid", iae) }
-                return null
-            }
-        }
-
-        @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext): UDG {
+        suspend operator fun invoke(context: SpiralContext): KorneaResult<UDG> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/udg.json"))
-                val gameSource = requireNotNull(loadResource("games/udg.json", UDG::class))
-                val gameJson = Json.parse(UDGGameJson.serializer(), requireNotNull(gameSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
+                val gameString = loadResource("games/udg.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .doOnFailure { return it.cast() }
+                val gameJson = Json.parse(UDGGameJson.serializer(), gameString)
 
-                val customOpcodeSource = loadResource("opcodes/udg.json", UDG::class)
-                val customOpcodes: List<JsonOpcode>
-                if (customOpcodeSource != null) {
-                    customOpcodes = Json.parse(JsonOpcode.serializer().list, requireNotNull(customOpcodeSource.useInputFlow { flow -> flow.readBytes() }).decodeToString())
-                } else {
-                    customOpcodes = emptyList()
-                }
+                val customOpcodes: List<JsonOpcode> = loadResource("opcodes/udg.json", Dr1::class)
+                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .getOrElse(emptyList())
 
-                return UDG(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes)
+                return KorneaResult.Success(UDG(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
             }
         }
     }
@@ -96,9 +89,11 @@ class UDG(
     }
 }
 
+@UnstableDefault
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.UDG() = UDG(this)
+@UnstableDefault
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun SpiralContext.UnsafeUDG() = UDG.unsafe(this)
+suspend fun SpiralContext.UnsafeUDG() = UDG(this).get()

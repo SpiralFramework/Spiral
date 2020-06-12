@@ -6,7 +6,11 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
+import info.spiralframework.base.common.useAndFlatMap
+import info.spiralframework.base.common.useAndMap
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.use
 import org.abimon.kornea.io.common.useInputFlow
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
@@ -19,10 +23,10 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
     companion object {
         suspend inline fun <reified T: Any> loadBundle(resourceLoader: SpiralResourceLoader, baseName: String, locale: CommonLocale = CommonLocale.defaultLocale) = loadBundle(resourceLoader, baseName, locale, T::class)
         @ExperimentalUnsignedTypes
-        suspend fun loadBundle(resourceLoader: SpiralResourceLoader, baseName: String, locale: CommonLocale = CommonLocale.defaultLocale, from: KClass<*>): LocaleBundle? {
+        suspend fun loadBundle(resourceLoader: SpiralResourceLoader, baseName: String, locale: CommonLocale = CommonLocale.defaultLocale, from: KClass<*>): KorneaResult<LocaleBundle> {
             val superBundle = loadBundleByName(resourceLoader, baseName, locale, null, from)
-            val langBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}", locale, superBundle, from)
-            val localeBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}_${locale.country}", locale, langBundle ?: superBundle, from)
+            val langBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}", locale, superBundle.getOrNull(), from)
+            val localeBundle = loadBundleByName(resourceLoader, "${baseName}_${locale.language}_${locale.country}", locale, langBundle.orElse(superBundle).getOrNull(), from)
 
 //            superBundle?.name = baseName
 //            langBundle?.name = baseName
@@ -34,33 +38,39 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
 //            langBundle?.parent = superBundle
 //            localeBundle?.parent = langBundle ?: superBundle
 
-            return localeBundle ?: langBundle ?: superBundle
+            return localeBundle.orElse(langBundle).orElse(superBundle)
         }
 
         @ExperimentalUnsignedTypes
-        suspend fun loadBundleByName(resourceLoader: SpiralResourceLoader, fullName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): LocaleBundle? {
-            resourceLoader.loadResource("$fullName.properties", from)?.useInputFlow { flow ->
-                val input = CharStreams.fromString(buildString {
-                    appendln(String(flow.readAndClose(), Charsets.UTF_8))
-                })
-                val lexer = OSLLocaleLexer(input)
-                val tokens = CommonTokenStream(lexer)
-                val parser = OSLLocaleParser(tokens)
-                parser.removeErrorListeners()
-                parser.errorHandler = BailErrorStrategy()
-                try {
-                    val tree = parser.locale()
-                    val visitor = LocaleVisitor()
-                    visitor.visit(tree)
-                    return@useInputFlow visitor.createLocaleBundle(fullName, locale, parent, from)
-                } catch (pce: ParseCancellationException) {}
+        suspend fun loadBundleByName(resourceLoader: SpiralResourceLoader, fullName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): KorneaResult<LocaleBundle> {
+            resourceLoader.loadResource("$fullName.properties", from).doOnSuccess { ds ->
+                use(ds) {
+                    ds.openInputFlow().doOnSuccess { flow ->
+                        val input = CharStreams.fromString(buildString {
+                            appendln(String(flow.readAndClose(), Charsets.UTF_8))
+                        })
+                        val lexer = OSLLocaleLexer(input)
+                        val tokens = CommonTokenStream(lexer)
+                        val parser = OSLLocaleParser(tokens)
+                        parser.removeErrorListeners()
+                        parser.errorHandler = BailErrorStrategy()
+                        try {
+                            val tree = parser.locale()
+                            val visitor = LocaleVisitor()
+                            visitor.visit(tree)
+                            return KorneaResult.Success(visitor.createLocaleBundle(fullName, locale, parent, from))
+                        } catch (pce: ParseCancellationException) {
+                        }
+                    }
+                }
             }
+
             try {
-                return CommonLocaleBundle.load(resourceLoader, fullName, locale, from)
+                return CommonLocaleBundle.load(resourceLoader, fullName, locale, from).cast()
             } catch (mre: MissingResourceException) {
-                return null
+                return KorneaResult.Thrown(mre)
             }
         }
     }
-    override suspend fun SpiralResourceLoader.loadWithLocale(locale: CommonLocale): LocaleBundle? = loadBundle(this, bundleName, locale, from)
+    override suspend fun SpiralResourceLoader.loadWithLocale(locale: CommonLocale): KorneaResult<out LocaleBundle> = loadBundle(this, bundleName, locale, from)
 }

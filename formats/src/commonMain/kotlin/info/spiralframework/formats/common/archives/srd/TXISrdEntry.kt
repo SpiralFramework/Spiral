@@ -2,9 +2,13 @@ package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.properties.oneTimeMutable
 import info.spiralframework.base.common.properties.setValue
+import info.spiralframework.base.common.useAndFlatMap
+import info.spiralframework.base.common.useAndMap
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
@@ -33,31 +37,33 @@ data class TXISrdEntry(
         get() = rsiEntry.name
 
     @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup() {
-        rsiEntry = RSISrdEntry.unsafe(this, openSubDataSource())
+    override suspend fun SpiralContext.setup(): KorneaResult<TXISrdEntry> {
+        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            requireNotNull(dataSource.openInputFlow()).use { setup(it) }
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
         else {
-            setup(BinaryInputFlow(requireNotNull(dataSource.openInputFlow()).use { it.readBytes() }))
+            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow) {
-        requireNotNull(flow.seek(0, InputFlow.FROM_BEGINNING))
+    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<TXISrdEntry> {
+        flow.seek(0, InputFlow.FROM_BEGINNING) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        val textureCount = requireNotNull(flow.readInt32LE())
-        val textureNameOffset = requireNotNull(flow.readInt32LE())
+        val textureCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        val textureNameOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         flow.seek(textureNameOffset.toLong(), InputFlow.FROM_BEGINNING)
         textureNames = Array(textureCount) {
-            val nameOffset = requireNotNull(flow.readInt32LE())
+            val nameOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
             bookmark(flow) {
                 flow.seek(nameOffset.toLong(), InputFlow.FROM_BEGINNING)
                 flow.readNullTerminatedUTF8String()
             }
         }
+
+        return KorneaResult.Success(this@TXISrdEntry)
     }
 }

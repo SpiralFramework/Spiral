@@ -48,12 +48,6 @@ expect class DefaultSpiralLocale(): AbstractSpiralLocale {
     override fun localise(msg: String, arg1: Any, arg2: Any): String
     override fun localise(msg: String, vararg args: Any): String
     override fun localiseArray(msg: String, args: Array<out Any>): String
-
-    override fun localiseEnglish(msg: String): String
-    override fun localiseEnglish(msg: String, arg: Any): String
-    override fun localiseEnglish(msg: String, arg1: Any, arg2: Any): String
-    override fun localiseEnglish(msg: String, vararg args: Any): String
-    override fun localiseEnglishArray(msg: String, args: Array<out Any>): String
 }
 
 //expect fun localise(msg: String): String

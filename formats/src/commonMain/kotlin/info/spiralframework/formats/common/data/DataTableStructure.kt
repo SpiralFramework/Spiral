@@ -4,7 +4,11 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.io.*
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.erorrs.common.doOnFailure
 import org.abimon.kornea.io.common.*
 
 @ExperimentalUnsignedTypes
@@ -35,33 +39,37 @@ class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val ent
     }
 
     companion object {
-        @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): DataTableStructure? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.data_table.invalid", dataSource, iae) }
+        const val INVALID_STRUCTURE_COUNT = 0x0000
+        const val INVALID_STRUCTURE_SIZE = 0x0001
+        const val INVALID_VARIABLE_COUNT = 0x0002
+        const val UNKNOWN_VARIABLE_TYPE = 0x0003
 
-                return null
-            }
-        }
+        const val NOT_ENOUGH_DATA_KEY = "formats.data_table.not_enough_data"
+        const val INVALID_STRUCTURE_COUNT_KEY = "formats.data_table.invalid_structure_count"
+        const val INVALID_STRUCTURE_SIZE_KEY = "formats.data_table.invalid_structure_size"
+        const val INVALID_VARIABLE_COUNT_KEY = "formats.data_table.invalid_variable_count"
+        const val UNKNOWN_VARIABLE_TYPE_KEY = "formats.data_table.unknown_variable_type"
 
         @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): DataTableStructure {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DataTableStructure> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.data_table.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val structureCount = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    require(structureCount in 1..1023) { localise("formats.data_table.invalid_structure_count", structureCount, 1, 1023) }
+                    val structureCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (structureCount !in 1 .. 1023) {
+                        return KorneaResult.Error(INVALID_STRUCTURE_COUNT, localise(INVALID_STRUCTURE_COUNT_KEY, structureCount, 1, 1023))
+                    }
 
-                    val structureSize = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    require(structureSize in 1..1023) { localise("formats.data_table.invalid_structure_size", structureSize, 1, 1023) }
+                    val structureSize = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (structureSize !in 1 .. 1023) {
+                        return KorneaResult.Error(INVALID_STRUCTURE_SIZE, localise(INVALID_STRUCTURE_SIZE_KEY, structureSize, 1, 1023))
+                    }
 
-                    val variableCount = requireNotNull(flow.readInt32LE(), notEnoughData)
-                    require(variableCount in 1..1023) { localise("formats.data_table.invalid_variable_count", variableCount, 1, 1023) }
+                    val variableCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    if (variableCount !in 1 .. 1023) {
+                        return KorneaResult.Error(INVALID_VARIABLE_COUNT, localise(INVALID_VARIABLE_COUNT_KEY, variableCount, 1, 1023))
+                    }
 
                     val variableDetails = Array(variableCount) {
                         val variableName = flow.readNullTerminatedUTF8String()
@@ -70,42 +78,103 @@ class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val ent
 
                         DataVariableHeader(variableName, variableType)
                     }
-                    
+
                     flow.skip(flow.position().alignmentNeededFor(0x10).toULong())
-                    
+
                     val entries = Array(structureCount) {
                         variableDetails.map { (variableName, variableType) ->
                             when (variableType.toLowerCase()) {
-                                "u8" -> DataVariable.UnsignedByte(variableName, requireNotNull(flow.read(), notEnoughData).toUByte())
-                                "u16" -> DataVariable.UnsignedShort(variableName, requireNotNull(flow.readInt16LE(), notEnoughData).toUShort())
-                                "u32" -> DataVariable.UnsignedInt(variableName, requireNotNull(flow.readUInt32LE(), notEnoughData))
-                                "u64" -> DataVariable.UnsignedLong(variableName, requireNotNull(flow.readUInt64LE(), notEnoughData))
+                                //NOTE: These variables cannot be inlined without crashing the Kotlin compiler.
 
-                                "s8" -> DataVariable.SignedByte(variableName, requireNotNull(flow.read(), notEnoughData).toByte())
-                                "s16" -> DataVariable.SignedShort(variableName, requireNotNull(flow.readInt16LE(), notEnoughData).toShort())
-                                "s32" -> DataVariable.SignedInt(variableName, requireNotNull(flow.readInt32LE(), notEnoughData))
-                                "s64" -> DataVariable.SignedLong(variableName, requireNotNull(flow.readInt64LE(), notEnoughData))
+                                "u8" -> {
+                                    val data = flow.read()?.toUByte()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.UnsignedByte(variableName, data)
+                                }
+                                "u16" -> {
+                                    val data = flow.readInt16LE()?.toUShort()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.UnsignedShort(variableName, data)
+                                }
+                                "u32" -> {
+                                    val data = flow.readUInt32LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.UnsignedInt(variableName, data)
+                                }
+                                "u64" -> {
+                                    val data = flow.readUInt64LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.UnsignedLong(variableName, data)
+                                }
 
-                                "f32" -> DataVariable.Float32(variableName, requireNotNull(flow.readFloat32LE(), notEnoughData))
-                                "f64" -> DataVariable.Float64(variableName, requireNotNull(flow.readFloat64LE(), notEnoughData))
+                                "s8" -> {
+                                    val data = flow.read()?.toByte()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.SignedByte(variableName, data)
+                                }
+                                "s16" -> {
+                                    val data = flow.readInt16LE()?.toShort()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.SignedShort(variableName, data)
+                                }
+                                "s32" -> {
+                                    val data = flow.readInt32LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.SignedInt(variableName, data)
+                                }
+                                "s64" -> {
+                                    val data = flow.readInt64LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                                "label" -> DataVariable.Label(variableName, requireNotNull(flow.readInt16LE(), notEnoughData))
-                                "refer" -> DataVariable.Refer(variableName, requireNotNull(flow.readInt16LE(), notEnoughData))
-                                "ascii" -> DataVariable.Ascii(variableName, requireNotNull(flow.readInt16LE(), notEnoughData))
-                                "utf16" -> DataVariable.UTF16(variableName, requireNotNull(flow.readInt16LE(), notEnoughData))
+                                    DataVariable.SignedLong(variableName, data)
+                                }
 
-                                else -> throw IllegalArgumentException("")
+                                "f32" -> {
+                                    val data = flow.readFloat32LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.Float32(variableName, data)
+                                }
+                                "f64" -> {
+                                    val data = flow.readFloat64LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.Float64(variableName, data)
+                                }
+
+                                "label" -> {
+                                    val data = flow.readInt16LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.Label(variableName, data)
+                                }
+                                "refer" -> {
+                                    val data = flow.readInt16LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                    DataVariable.Refer(variableName, data)
+                                }
+                                "ascii" -> {
+                                    val data = flow.readInt16LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+                                    DataVariable.Ascii(variableName, data)
+                                }
+                                "utf16" -> {
+                                    val data = flow.readInt16LE()
+                                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+                                    DataVariable.UTF16(variableName, data)
+                                }
+
+                                else -> return KorneaResult.Error(UNKNOWN_VARIABLE_TYPE, localise(UNKNOWN_VARIABLE_TYPE_KEY, variableType))
                             }
                         }.toTypedArray()
                     }
 
-                    val utf8Count = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val utf16Count = requireNotNull(flow.readInt16LE(), notEnoughData)
+                    val utf8Count = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val utf16Count = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val utf8Strings = Array(utf8Count) { flow.readSingleByteNullTerminatedString(encoding = TextCharsets.UTF_8) }
-                    val utf16Strings = Array(utf16Count) { flow.readSingleByteNullTerminatedString(encoding = TextCharsets.UTF_16) }
+                    val utf16Strings = Array(utf16Count) { flow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16) }
 
-                    return DataTableStructure(variableDetails, entries, utf8Strings, utf16Strings)
+                    return KorneaResult.Success(DataTableStructure(variableDetails, entries, utf8Strings, utf16Strings))
                 }
             }
         }
@@ -115,6 +184,7 @@ class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val ent
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.DataTableStructure(dataSource: DataSource<*>) = DataTableStructure(this, dataSource)
+
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDataTableStructure(dataSource: DataSource<*>) = DataTableStructure.unsafe(this, dataSource)
+suspend fun SpiralContext.UnsafeDataTableStructure(dataSource: DataSource<*>) = DataTableStructure(this, dataSource).get()

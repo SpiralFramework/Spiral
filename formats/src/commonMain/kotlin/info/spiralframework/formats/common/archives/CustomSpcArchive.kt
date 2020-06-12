@@ -68,7 +68,7 @@ open class CustomSpcArchive {
             output.write(0x00)
 
             output.write(ByteArray(((entryNameBytes.size + 1) alignmentNeededFor 0x10)))
-            entry.dataSource.useInputFlow(output::copyFrom)
+            entry.dataSource.useInputFlow { output.copyFrom(it) }
             output.write(ByteArray(entry.compressedSize alignmentNeededFor 0x10))
         }
     }

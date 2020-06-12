@@ -1,6 +1,7 @@
 package info.spiralframework.core.formats
 
 import info.spiralframework.base.common.concurrent.suspendForEach
+import org.abimon.kornea.erorrs.common.KorneaResult
 import org.abimon.kornea.io.common.DataCloseable
 import java.io.Closeable
 import java.util.*
@@ -58,8 +59,8 @@ sealed class FormatResult<T>: DataCloseable {
         }
         override fun weight(predicate: (T) -> Double): FormatResult<T> = Success(format, obj, predicate(obj))
     }
-    class Fail<T>(override val chance: Double, val reason: Throwable? = null): FormatResult<T>() {
-        constructor(format: SpiralFormat?, chance: Double, reason: Throwable? = null): this(chance, reason) {
+    class Fail<T>(override val chance: Double, val reason: KorneaResult<*>? = null): FormatResult<T>() {
+        constructor(format: SpiralFormat?, chance: Double, reason: KorneaResult<*>? = null): this(chance, reason) {
             this.nullableFormat = format
         }
 

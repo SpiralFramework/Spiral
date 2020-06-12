@@ -2,12 +2,16 @@ package info.spiralframework.formats.common.scripting.lin
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.fauxSeekFromStartFlatMap
 import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.Dr1
 import info.spiralframework.formats.common.games.Dr2
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.games.UDG
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.*
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.*
 import org.abimon.kornea.io.common.peekInt16BE
@@ -24,29 +28,33 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
         const val MAGIC_NUMBER_DR2 = 0x32
         const val MAGIC_NUMBER_UDG = 0xAE
 
-        @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): LinScript? {
-            try {
-                return unsafe(context, game, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.lin.invalid", dataSource, iae) }
+        const val WRONG_BLOCK_COUNT = 0x0000
+        const val INVALID_STRING_COUNT = 0x0010
+        const val INVALID_STRING_OFFSET = 0x0011
 
-                return null
-            }
-        }
+        const val NOT_ENOUGH_DATA_KEY = "formats.lin.not_enough_data"
+        const val WRONG_BLOCK_COUNT_KEY = "formats.lin.wrong_block_count"
+        const val MISMATCHING_GAME_KEY = "formats.lin.mismatching_game"
+        const val INVALID_STRING_COUNT_KEY = "formats.lin.invalid_string_count"
+        const val INVALID_STRING_OFFSET_KEY = "formats.lin.invalid_string_offset"
 
         @ExperimentalStdlibApi
-        suspend fun unsafe(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): LinScript {
+        suspend operator fun invoke(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): KorneaResult<LinScript> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.lin.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val possibleMagicNumber = requireNotNull(flow.readInt32LE(), notEnoughData)
+                    val possibleMagicNumber = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val linBlockCount = if (possibleMagicNumber and MAGIC_NUMBER_MASK_LE == MAGIC_NUMBER_LE) requireNotNull(flow.readInt32LE(), notEnoughData) else possibleMagicNumber
-                    require(linBlockCount in 1..2) { localise("formats.lin.wrong_block_count", linBlockCount) }
+                    val linBlockCount =
+                            if (possibleMagicNumber and MAGIC_NUMBER_MASK_LE == MAGIC_NUMBER_LE)
+                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            else
+                                possibleMagicNumber
+
+                    if (linBlockCount !in 1 .. 2) {
+                        return KorneaResult.Error(WRONG_BLOCK_COUNT, localise(WRONG_BLOCK_COUNT_KEY, linBlockCount))
+                    }
 
 //                    val game: DrGame.LinScriptable? = game?.takeUnless { game -> game == DrGame.LinScriptable.Unknown } ?: when (possibleMagicNumber and MAGIC_NUMBER_GAME_MASK) {
 //                        MAGIC_NUMBER_DR1 -> Dr1() ?: game
@@ -56,23 +64,26 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
 //                    }
 
                     when (possibleMagicNumber and MAGIC_NUMBER_GAME_MASK) {
-                        MAGIC_NUMBER_DR1 -> if (game != null && game !is Dr1) warn("formats.lin.mismatching_game", (game as? DrGame)?.identifier ?: game, "Dr1")
-                        MAGIC_NUMBER_DR2 -> if (game != null && game !is Dr2) warn("formats.lin.mismatching_game", (game as? DrGame)?.identifier ?: game, "Dr2")
-                        MAGIC_NUMBER_UDG -> if (game != null && game !is UDG) warn("formats.lin.mismatching_game", (game as? DrGame)?.identifier ?: game, "UDG")
+                        MAGIC_NUMBER_DR1 -> if (game != null && game !is Dr1)
+                            warn(MISMATCHING_GAME_KEY, (game as? DrGame)?.identifier ?: game, "Dr1")
+                        MAGIC_NUMBER_DR2 -> if (game != null && game !is Dr2)
+                            warn(MISMATCHING_GAME_KEY, (game as? DrGame)?.identifier ?: game, "Dr2")
+                        MAGIC_NUMBER_UDG -> if (game != null && game !is UDG)
+                            warn(MISMATCHING_GAME_KEY, (game as? DrGame)?.identifier ?: game, "UDG")
                     }
 
                     val game: DrGame.LinScriptable? = if (game == null) {
                         when (possibleMagicNumber and MAGIC_NUMBER_GAME_MASK) {
-                            MAGIC_NUMBER_DR1 -> Dr1()
-                            MAGIC_NUMBER_DR2 -> Dr2()
-                            MAGIC_NUMBER_UDG -> UDG()
+                            MAGIC_NUMBER_DR1 -> Dr1().getOrNull()
+                            MAGIC_NUMBER_DR2 -> Dr2().getOrNull()
+                            MAGIC_NUMBER_UDG -> UDG().getOrNull()
                             else -> null
                         }
                     } else if (game == DrGame.LinScriptable.Unknown) {
                         when (possibleMagicNumber and MAGIC_NUMBER_GAME_MASK) {
-                            MAGIC_NUMBER_DR1 -> Dr1() ?: game
-                            MAGIC_NUMBER_DR2 -> Dr2() ?: game
-                            MAGIC_NUMBER_UDG -> UDG() ?: game
+                            MAGIC_NUMBER_DR1 -> Dr1().getOrNull() ?: game
+                            MAGIC_NUMBER_DR2 -> Dr2().getOrNull() ?: game
+                            MAGIC_NUMBER_UDG -> UDG().getOrNull() ?: game
                             else -> game
                         }
                     } else {
@@ -81,23 +92,31 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
 
                     requireNotNull(game) { localise("formats.lin.no_game_provided") }
 
-                    val linBlocks = IntArray(linBlockCount + 1) { requireNotNull(flow.readInt32LE(), notEnoughData) }
-                    val scriptData = requireNotNull(flow.fauxSeekFromStart(linBlocks[0].toULong(), dataSource) { scriptDataFlow ->
+                    val linBlocks = IntArray(linBlockCount + 1) {
+                        flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    }
+                    val scriptData = flow.fauxSeekFromStartFlatMap(linBlocks[0].toULong(), dataSource) { scriptDataFlow ->
                         readScriptData(this, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, (linBlocks[1] - linBlocks[0]).toULong())))
-                    })
+                    }.doOnFailure { return it.cast() }
 
-                    val textData = if (linBlockCount == 1) emptyArray() else requireNotNull(flow.fauxSeekFromStart(linBlocks[1].toULong(), dataSource) { textDataFlow ->
-                        readTextData(this, textDataFlow, linBlocks[1])
-                    })
+                    val textData = when (linBlockCount) {
+                        1 -> emptyArray()
+                        else -> {
+                            flow.fauxSeekFromStartFlatMap(linBlocks[1].toULong(), dataSource) { textDataFlow ->
+                                readTextData(this, textDataFlow, linBlocks[1])
+                            }.doOnFailure { error ->
+                                return error.cast()
+                            }
+                        }
+                    }
 
-                    return LinScript(scriptData, textData, game)
+                    return KorneaResult.Success(LinScript(scriptData, textData, game))
                 }
             }
         }
 
-        suspend fun readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: PeekableInputFlow): Array<LinEntry> {
+        suspend fun readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: PeekableInputFlow): KorneaResult<Array<LinEntry>> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.lin.not_enough_data") }
                 val entries: MutableList<LinEntry> = ArrayList()
 
                 while (true) {
@@ -115,15 +134,15 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                         val endFlagCheck = 0x7000 or flagCheckDetails.endFlagCheckOpcode
                         val flagGroup = ByteArray(flagCheckDetails.flagGroupLength)
                         val rawArguments: MutableList<Int> = ArrayList()
-                        requireNotNull(flow.readExact(flagGroup), notEnoughData)
+                        flow.readExact(flagGroup) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         flagGroup.forEach { rawArguments.add(it.toInt() and 0xFF) }
 
                         while (true) {
                             if ((flow.peekInt16BE() ?: break) == endFlagCheck)
                                 break
 
-                            rawArguments.add(requireNotNull(flow.read(), notEnoughData))
-                            requireNotNull(flow.readExact(flagGroup), notEnoughData)
+                            rawArguments.add(flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
+                            flow.readExact(flagGroup) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                             flagGroup.forEach { rawArguments.add(it.toInt() and 0xFF) }
                         }
 
@@ -136,14 +155,14 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                             if ((flow.peek() ?: break) == 0x70)
                                 break
 
-                            rawArguments.add(requireNotNull(flow.read(), notEnoughData))
+                            rawArguments.add(flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
                         }
 //                        arguments = rawArguments.toIntArray()
 
                         entries.add(opcode.entryConstructor(opcode.opcode, rawArguments.toIntArray()))
                     } else if (opcode != null) {
                         val rawArguments = ByteArray(opcode.argumentCount)
-                        requireNotNull(flow.readExact(rawArguments), notEnoughData)
+                        flow.readExact(rawArguments) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 //                        arguments = IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }
 
                         entries.add(opcode.entryConstructor(opcode.opcode, IntArray(rawArguments.size) { rawArguments[it].toInt() and 0xFF }))
@@ -153,7 +172,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                             if ((flow.peek() ?: break) == 0x70)
                                 break
 
-                            rawArguments.add(requireNotNull(flow.read(), notEnoughData))
+                            rawArguments.add(flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
                         }
 //                        arguments = rawArguments.toIntArray()
 
@@ -161,20 +180,21 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                     }
                 }
 
-                return entries.toTypedArray()
+                return KorneaResult.Success(entries.toTypedArray())
             }
         }
 
         @ExperimentalStdlibApi
-        suspend fun readTextData(context: SpiralContext, flow: InputFlow, textOffset: Int): Array<String> {
+        suspend fun readTextData(context: SpiralContext, flow: InputFlow, textOffset: Int): KorneaResult<Array<String>> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.lin.not_enough_data") }
-
-                val stringCount = requireNotNull(flow.readInt32LE(), notEnoughData)
+                val stringCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (stringCount <= 0)
-                    return emptyArray()
+                    return KorneaResult.Error(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, stringCount))
 
-                val offsets = Array(stringCount) { it to (requireNotNull(flow.readInt32LE(), notEnoughData).toLong() + textOffset) }.sortedBy(Pair<Int, Long>::second)
+                val offsets = Array(stringCount) { index ->
+                    Pair(index, flow.readInt32LE()?.toLong()?.plus(textOffset)
+                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
+                }.sortedBy(Pair<Int, Long>::second)
                 val strings = arrayOfNulls<String>(stringCount)
 
                 if (offsets[0].second >= flow.position().toInt()) {
@@ -183,10 +203,10 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                         strings[i] = flow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16)
                     }
                 } else {
-                    println(":/")
+                    return KorneaResult.Error(INVALID_STRING_OFFSET, localise(INVALID_STRING_OFFSET_KEY, offsets[0].second.toHexString(), flow.position().toLong().toHexString()))
                 }
 
-                return strings.requireNoNulls()
+                return KorneaResult.Success(strings.requireNoNulls())
             }
         }
     }
@@ -197,6 +217,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.LinScript(game: DrGame.LinScriptable, dataSource: DataSource<*>) = LinScript(this, game, dataSource)
+
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeLinScript(game: DrGame.LinScriptable, dataSource: DataSource<*>) = LinScript.unsafe(this, game, dataSource)
+suspend fun SpiralContext.UnsafeLinScript(game: DrGame.LinScriptable, dataSource: DataSource<*>) = LinScript(this, game, dataSource).get()

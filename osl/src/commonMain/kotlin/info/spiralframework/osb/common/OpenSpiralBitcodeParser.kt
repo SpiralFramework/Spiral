@@ -87,6 +87,10 @@ data class OpenSpiralBitcodeFlagCondition(val checking: OSLUnion, val operation:
 class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcodeVisitor, val level: Int) {
     companion object {
         const val PREFIX = "osl.bitcode.parser"
+        const val INVALID_MAGIC = 0x0000
+
+        const val NOT_ENOUGH_DATA_KEY = "$PREFIX.not_enough_data"
+        const val INVALID_MAGIC_KEY = "$PREFIX.invalid_magic"
     }
 
     @ExperimentalUnsignedTypes

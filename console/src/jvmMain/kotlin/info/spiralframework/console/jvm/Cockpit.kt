@@ -23,7 +23,7 @@ import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printLocale
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.logging.SpiralLogger
-import info.spiralframework.base.common.text.ProgressTracker
+import info.spiralframework.base.common.text.trackProgress
 import info.spiralframework.base.jvm.crypto.md5Hash
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.base.jvm.toFileSize
@@ -44,10 +44,8 @@ import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readAndClose
 import org.abimon.kornea.io.common.use
-import org.abimon.kornea.io.common.useInputFlow
 import org.abimon.kornea.io.jvm.files.relativePathFrom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -163,7 +161,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                                 }
 
                                 if (signatureData != null || shouldDownloadUnsigned) {
-                                    val (_, response) = ProgressTracker(downloadingText = "gurren.update.downloading", downloadedText = "") {
+                                    val (_, response) = trackProgress(loadingText = "gurren.update.downloading", loadedText = "") {
                                         Fuel.download(updateUrl).fileDestination { _, _ -> updateFile }
                                                 .progress(this::trackDownload)
                                                 .userAgent().response()

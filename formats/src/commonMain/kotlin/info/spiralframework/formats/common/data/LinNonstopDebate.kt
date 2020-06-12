@@ -1,7 +1,11 @@
 package info.spiralframework.formats.common.data
 
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
+import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.erorrs.common.doOnFailure
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.readExact
 import org.abimon.kornea.io.common.readInt16LE
@@ -11,34 +15,24 @@ import kotlin.math.roundToInt
 @ExperimentalUnsignedTypes
 class LinNonstopDebate(val baseTimeLimit: Int, val sections: Array<LinNonstopDebateSection>) {
     companion object {
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): LinNonstopDebate? {
-            try {
-                return unsafe(context, dataSource)
-            } catch (iae: IllegalArgumentException) {
-                withFormats(context) { debug("formats.hpa_nonstop_debate.invalid", dataSource, iae) }
+        const val NOT_ENOUGH_DATA_KEY = "formats.nonstop_debate.lin.not_enough_data"
 
-                return null
-            }
-        }
-
-        suspend fun unsafe(context: SpiralContext, dataSource: DataSource<*>): LinNonstopDebate {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<LinNonstopDebate> {
             withFormats(context) {
-                val notEnoughData: () -> Any = { localise("formats.hpa_nonstop_debate.not_enough_data") }
-
-                val flow = requireNotNull(dataSource.openInputFlow())
+                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
 
                 use(flow) {
-                    val timeLimit = requireNotNull(flow.readInt16LE(), notEnoughData)
-                    val sectionCount = requireNotNull(flow.readInt16LE(), notEnoughData)
+                    val timeLimit = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionCount = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val sectionBuffer = ByteArray(60)
 
                     val sections = Array(sectionCount) {
-                        requireNotNull(flow.readExact(sectionBuffer), notEnoughData)
+                        flow.readExact(sectionBuffer) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         LinNonstopDebateSection.fromData(sectionBuffer)
                     }
 
-                    return LinNonstopDebate(timeLimit, sections)
+                    return KorneaResult.Success(LinNonstopDebate(timeLimit, sections))
                 }
             }
         }
@@ -57,4 +51,4 @@ class LinNonstopDebate(val baseTimeLimit: Int, val sections: Array<LinNonstopDeb
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.HopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate(this, dataSource)
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeHopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate.unsafe(this, dataSource)
+suspend fun SpiralContext.UnsafeHopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate(this, dataSource).get()
