@@ -11,7 +11,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.5-1.4-M1'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7-1.4-M2'
 
                 api project(":spiral-base")
                 api project(":spiral-formats")
@@ -27,7 +27,6 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5-1.4-M1'
 
                 api "com.fasterxml.jackson.core:jackson-core:$jackson_version"
                 api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
