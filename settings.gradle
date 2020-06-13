@@ -8,6 +8,8 @@ pluginManagement {
 
 enableFeaturePreview("GRADLE_METADATA")
 
+rootProject.name = 'spiral'
+
 include ':antlr-json'
 include ':antlr-osl-java'
 include ':antlr-pipeline'
@@ -21,3 +23,5 @@ include ':harmony'
 include ':formats'
 include ':osl'
 include ':updater'
+
+rootProject.children.each { child -> child.name = "spiral-${child.name}"}

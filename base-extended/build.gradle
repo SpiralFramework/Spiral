@@ -38,7 +38,7 @@ kotlin {
 
 //                api "com.soywiz.korlibs.korio:korio:1.7.1"
 
-                implementation project(":base")
+                implementation project(":spiral-base")
             }
         }
         commonTest {

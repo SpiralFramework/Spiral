@@ -9,7 +9,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 mainClassName = "BootstrapKt"
 
 ext {
-    serialization_version = "0.20.0-1.4-M1"
+    serialization_version = "0.20.0-1.4-M2"
 }
 
 kotlin {
@@ -36,11 +36,11 @@ kotlin {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.5-1.4-M1'
-                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7-1.4-M2'
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 
-                api project(":base")
-                api project(":formats")
+                implementation project(":spiral-base")
+                api project(":spiral-formats")
 //                api project(":osl-json")
             }
         }
@@ -59,10 +59,8 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
-                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5-1.4-M1'
-                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 
-                implementation project(":antlr-osl-java")
+                implementation project(":spiral-antlr-osl-java")
                 implementation "ch.qos.logback:logback-classic:$logback_version"
             }
         }
