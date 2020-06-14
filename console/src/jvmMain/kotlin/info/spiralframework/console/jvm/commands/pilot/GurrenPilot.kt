@@ -30,18 +30,16 @@ import info.spiralframework.formats.common.games.UnsafeDr1
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.img.DXT1PixelData
 import org.abimon.kornea.img.bc7.BC7PixelData
 import org.abimon.kornea.img.createPngImage
 import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.BinaryInputFlow
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.InputFlow.Companion.FROM_BEGINNING
-import org.abimon.kornea.io.common.flow.WindowedInputFlow
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.jvm.files.FileDataSource
-import org.abimon.kornea.io.jvm.files.FileOutputFlow
+import org.abimon.kornea.io.common.flow.*
+import org.abimon.kornea.io.jvm.files.AsyncFileDataSource
+import org.abimon.kornea.io.jvm.files.AsyncFileOutputFlow
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -61,7 +59,16 @@ object GurrenPilot : CommandRegistrar {
 
     val helpCommands: MutableSet<String> = HashSet()
 
-    suspend fun SpiralContext.extractFilesStub(pipelineContext: PipelineContext, filePath: PipelineUnion.VariableValue?, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean) {
+    suspend fun SpiralContext.extractFilesStub(
+        pipelineContext: PipelineContext,
+        filePath: PipelineUnion.VariableValue?,
+        destDir: String?,
+        filter: String,
+        leaveCompressed: Boolean,
+        extractSubfiles: Boolean,
+        predictive: Boolean,
+        convert: Boolean
+    ) {
         if (filePath is PipelineUnion.VariableValue.ArrayType<*>) {
             filePath.array.forEach { subPath ->
                 if (subPath is PipelineUnion.VariableValue.DataSourceType<*>) {
@@ -95,7 +102,7 @@ object GurrenPilot : CommandRegistrar {
             printlnLocale("commands.pilot.extract_files.err_path_is_directory", filePath)
             return
         } else if (file.isFile) {
-            return FileDataSource(file).use { ds -> extractFiles(ds, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert) }
+            return AsyncFileDataSource(file).use { ds -> extractFiles(ds, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert) }
         } else {
             printlnLocale("commands.pilot.extract_files.err_path_not_file_or_directory", filePath)
             return
@@ -125,10 +132,10 @@ object GurrenPilot : CommandRegistrar {
         val readContext = DefaultFormatReadContext(decompressedDataSource.location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, game)
         val result = arbitraryProgressBar(loadingText = "commands.pilot.extract_files.analysing_archive", loadedText = null) {
             GurrenShared.EXTRACTABLE_ARCHIVES.map { archive -> archive.identify(this, readContext, decompressedDataSource) }
-                    .filter(FormatResult<*>::didSucceed)
-                    .sortedBy(FormatResult<*>::chance)
-                    .asReversed()
-                    .firstOrNull()
+                .filter(FormatResult<*>::didSucceed)
+                .sortedBy(FormatResult<*>::chance)
+                .asReversed()
+                .firstOrNull()
         }
 
         if (result == null) {
@@ -152,11 +159,23 @@ object GurrenPilot : CommandRegistrar {
         println()
     }
 
-    suspend fun SpiralContext.extractFilesFromArchive(archiveDataSource: DataSource<*>, archive: Any, archiveName: String? = null, destination: File, filter: Regex, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean) {
+    suspend fun SpiralContext.extractFilesFromArchive(
+        archiveDataSource: DataSource<*>,
+        archive: Any,
+        archiveName: String? = null,
+        destination: File,
+        filter: Regex,
+        leaveCompressed: Boolean,
+        extractSubfiles: Boolean,
+        predictive: Boolean,
+        convert: Boolean
+    ) {
         @Suppress("RedundantIf")
         //This causes an AssertionError if the if else statement is removed
-        val files = GurrenShared.getFilesForArchive(this, archive, filter, if (leaveCompressed) true else false, if (predictive) true else false, game
-                ?: UnsafeDr1(), archiveName)
+        val files = GurrenShared.getFilesForArchive(
+            this, archive, filter, if (leaveCompressed) true else false, if (predictive) true else false, game
+                                                                                                          ?: UnsafeDr1(), archiveName
+        )
         if (files == null) {
             resetLine()
             printLocale("commands.pilot.extract_files.empty_archive")
@@ -173,106 +192,108 @@ object GurrenPilot : CommandRegistrar {
                 resetLine()
                 printLocale("commands.pilot.extract_files.finished")
             }.collect { (name, source) ->
-                use(source) {
-                    val flow = source.openInputFlow()
-                    if (flow != null) {
-                        use(flow) {
-                            val output = File(destination, name)
-                            output.parentFile.mkdirs()
+                closeAfter(source) {
+                    source.openInputFlow()
+                        .doOnSuccess { flow ->
+                            closeAfter(flow) {
+                                val output = File(destination, name)
+                                output.parentFile.mkdirs()
 
-                            FileOutputFlow(output).use(flow::copyToOutputFlow)
+                                AsyncFileOutputFlow(output).use { async -> flow.copyTo(async) }
 
-                            if (extractSubfiles) {
-                                val didSubOutput = FileDataSource(output).use subUse@{ subfileDataSource ->
-                                    val readContext = DefaultFormatReadContext(name, game)
-                                    val result = arbitraryProgressBar(loadingText = "commands.pilot.extract_files.analysing_sub_archive", loadedText = null) {
-                                        GurrenShared.READABLE_FORMATS.sortedBy { format ->
-                                                    (format.extension ?: "").compareTo(name.substringAfter('.'))
-                                                }
+                                if (extractSubfiles) {
+                                    val didSubOutput = AsyncFileDataSource(output).use subUse@{ subfileDataSource ->
+                                        val readContext = DefaultFormatReadContext(name, game)
+                                        val result = arbitraryProgressBar(loadingText = "commands.pilot.extract_files.analysing_sub_archive", loadedText = null) {
+                                            GurrenShared.READABLE_FORMATS.sortedBy { format ->
+                                                (format.extension ?: "").compareTo(name.substringAfter('.'))
+                                            }
                                                 .map { archiveFormat -> archiveFormat.identify(this, readContext, subfileDataSource) }
                                                 .filter(FormatResult<*>::didSucceed)
                                                 .sortedBy(FormatResult<*>::chance)
                                                 .asReversed()
                                                 .firstOrNull()
-                                    }
-
-                                    if (result != null && result.format in GurrenShared.EXTRACTABLE_ARCHIVES) {
-                                        val subArchive: Any = result.obj.outOrElseGet {
-                                            @Suppress("UNCHECKED_CAST")
-                                            (result.format as ReadableSpiralFormat<out Any>).read(this, readContext, subfileDataSource).obj
                                         }
 
-                                        val subOutput = File(destination, name.substringBeforeLast('.'))
-                                        extractFilesFromArchive(subfileDataSource, subArchive, name, subOutput, filter, leaveCompressed, extractSubfiles, predictive, convert)
+                                        if (result != null && result.format in GurrenShared.EXTRACTABLE_ARCHIVES) {
+                                            val subArchive: Any = result.obj.outOrElseGet {
+                                                @Suppress("UNCHECKED_CAST")
+                                                (result.format as ReadableSpiralFormat<out Any>).read(this, readContext, subfileDataSource).obj
+                                            }
 
-                                        return@subUse true
+                                            val subOutput = File(destination, name.substringBeforeLast('.'))
+                                            extractFilesFromArchive(subfileDataSource, subArchive, name, subOutput, filter, leaveCompressed, extractSubfiles, predictive, convert)
+
+                                            return@subUse true
+                                        }
+
+                                        false
                                     }
 
-                                    false
+                                    if (didSubOutput) output.delete()
                                 }
 
-                                if (didSubOutput) output.delete()
-                            }
-
-                            if (convert && output.exists()) {
-                                val didSubOutput = FileDataSource(output).use subUse@{ subfileDataSource ->
-                                    val readContext = DefaultFormatReadContext(name, game)
-                                    val result = arbitraryProgressBar(loadingText = "commands.pilot.extract_files.analysing_sub_file", loadedText = null) {
-                                        GurrenShared.CONVERTING_FORMATS.keys.sortedBy { format ->
-                                                    (format.extension ?: "").compareTo(name.substringAfter('.'))
-                                                }
+                                if (convert && output.exists()) {
+                                    val didSubOutput = AsyncFileDataSource(output).use subUse@{ subfileDataSource ->
+                                        val readContext = DefaultFormatReadContext(name, game)
+                                        val result = arbitraryProgressBar(loadingText = "commands.pilot.extract_files.analysing_sub_file", loadedText = null) {
+                                            GurrenShared.CONVERTING_FORMATS.keys.sortedBy { format ->
+                                                (format.extension ?: "").compareTo(name.substringAfter('.'))
+                                            }
                                                 .map { archiveFormat -> archiveFormat.identify(this, readContext, subfileDataSource) }
                                                 .filter(FormatResult<*>::didSucceed)
                                                 .filter { result -> result.chance >= 0.90 }
                                                 .sortedBy(FormatResult<*>::chance)
                                                 .asReversed()
                                                 .firstOrNull()
-                                    }
-
-                                    if (result?.nullableFormat != null) {
-                                        @Suppress("UNCHECKED_CAST")
-                                        val readFormat = (result.format as ReadableSpiralFormat<out Any>)
-                                        val subfile: Any = requireNotNull(result.obj.outOrElseGet {
-                                            readFormat.read(this, readContext, subfileDataSource).obj
-                                        })
-
-                                        val writeContext = DefaultFormatWriteContext(name, game)
-                                        val writeFormat = GurrenShared.CONVERTING_FORMATS.getValue(readFormat)
-
-                                        if (writeFormat.supportsWriting(this, writeContext, subfile)) {
-                                            val existingExtension = name.substringAfterLast('.')
-                                            val newOutput = File(destination,
-                                                    if (existingExtension.equals(readFormat.extension, true) || existingExtension == "dat")
-                                                        name.replaceAfterLast('.', writeFormat.extension
-                                                                ?: writeFormat.name)
-                                                    else
-                                                        buildString {
-                                                            append(name)
-                                                            append('.')
-                                                            append(writeFormat.extension ?: writeFormat.name)
-                                                        }
-                                            )
-
-                                            val writeResult = FileOutputFlow(newOutput).use { out -> writeFormat.write(this, writeContext, subfile, out) }
-
-                                            if (writeResult == FormatWriteResponse.SUCCESS) {
-                                                return@subUse true
-                                            } else {
-                                                newOutput.delete()
-                                                return@subUse false
-                                            }
-                                        } else {
-                                            debug("Weird error; $writeFormat does not support writing $subfile")
                                         }
+
+                                        if (result?.nullableFormat != null) {
+                                            @Suppress("UNCHECKED_CAST")
+                                            val readFormat = (result.format as ReadableSpiralFormat<out Any>)
+                                            val subfile: Any = requireNotNull(result.obj.outOrElseGet {
+                                                readFormat.read(this, readContext, subfileDataSource).obj
+                                            })
+
+                                            val writeContext = DefaultFormatWriteContext(name, game)
+                                            val writeFormat = GurrenShared.CONVERTING_FORMATS.getValue(readFormat)
+
+                                            if (writeFormat.supportsWriting(this, writeContext, subfile)) {
+                                                val existingExtension = name.substringAfterLast('.')
+                                                val newOutput = File(destination,
+                                                                     if (existingExtension.equals(readFormat.extension, true) || existingExtension == "dat")
+                                                                         name.replaceAfterLast(
+                                                                             '.', writeFormat.extension
+                                                                                  ?: writeFormat.name
+                                                                         )
+                                                                     else
+                                                                         buildString {
+                                                                             append(name)
+                                                                             append('.')
+                                                                             append(writeFormat.extension ?: writeFormat.name)
+                                                                         }
+                                                )
+
+                                                val writeResult = AsyncFileOutputFlow(newOutput).use { out -> writeFormat.write(this, writeContext, subfile, out) }
+
+                                                if (writeResult == FormatWriteResponse.SUCCESS) {
+                                                    return@subUse true
+                                                } else {
+                                                    newOutput.delete()
+                                                    return@subUse false
+                                                }
+                                            } else {
+                                                debug("Weird error; $writeFormat does not support writing $subfile")
+                                            }
+                                        }
+
+                                        false
                                     }
 
-                                    false
+                                    if (didSubOutput) output.delete()
                                 }
-
-                                if (didSubOutput) output.delete()
                             }
                         }
-                    }
                 }
 
                 progressTracker.trackDownload(copied++, fileCount)
@@ -287,8 +308,8 @@ object GurrenPilot : CommandRegistrar {
     suspend fun SpiralContext.extractModels(pipelineContext: PipelineContext, sourceSpc: PipelineUnion.VariableValue): PipelineUnion.VariableValue? {
         if (sourceSpc is PipelineUnion.VariableValue.ArrayType<*>) {
             return PipelineUnion.VariableValue.ArrayType(
-                    sourceSpc.array.mapNotNull { entry -> extractModels(pipelineContext, entry) }
-                            .toTypedArray()
+                sourceSpc.array.mapNotNull { entry -> extractModels(pipelineContext, entry) }
+                    .toTypedArray()
             )
         } else {
             return extractModels(sourceSpc.asString(this, pipelineContext))
@@ -296,39 +317,43 @@ object GurrenPilot : CommandRegistrar {
     }
 
     suspend fun SpiralContext.extractModels(path: String): PipelineUnion.VariableValue? {
-        val fileDataSource = FileDataSource(File(path))
+        val fileDataSource = AsyncFileDataSource(File(path))
         val flipUVs = true
         val invertXAxis = true
         try {
             val spc = SpcArchive(fileDataSource)
-
-            if (spc == null) {
-                println("Invalid spc archive")
-                return null
-            }
+                .getOrBreak {
+                    println("Invalid spc archive")
+                    return null
+                }
 
             println("Identifying models...")
 
             val modelNames = spc.files.map { entry -> entry.name.substringBeforeLast('.') }
-                    .distinct()
-                    .mapNotNull { name ->
-                        val srdEntry = spc["$name.srd"] ?: return@mapNotNull null
-                        val srdiEntry = spc["$name.srdi"] ?: return@mapNotNull null
+                .distinct()
+                .mapNotNull { name ->
+                    val srdEntry = spc["$name.srd"] ?: return@mapNotNull null
+                    val srdiEntry = spc["$name.srdi"] ?: return@mapNotNull null
 
-                        Pair(srdEntry, srdiEntry)
-                    }
+                    Pair(srdEntry, srdiEntry)
+                }
 
             println("Found: ${modelNames.joinToString { (srdEntry) -> srdEntry.name.substringBeforeLast('.') }}")
 
             modelNames.forEach { (srdEntry, srdiEntry) ->
                 println("Extracting ${srdEntry.name.substringBeforeLast('.')}")
-                val srdFile = UnsafeSrdArchive(requireNotNull(spc.openDecompressedSource(this, srdEntry)))
+                val srdFile = spc.openDecompressedSource(this, srdEntry)
+                    .useAndFlatMap { src -> SrdArchive(src) }
+                    .get()
+
                 val vertexMeshEntries = srdFile.entries.filterIsInstance<VTXSrdEntry>()
                 val meshEntries = srdFile.entries.filterIsInstance<MeshSrdEntry>()
                 val materialEntries = srdFile.entries.filterIsInstance<MaterialsSrdEntry>()
                 val textureInfoEntries = srdFile.entries.filterIsInstance<TXISrdEntry>()
 
-                val srdiSource = requireNotNull(spc.openDecompressedSource(this, srdiEntry))
+                val srdiSource = spc.openDecompressedSource(this, srdiEntry)
+                    .filterToInstance<DataSource<SeekableInputFlow>>()
+                    .get()
 
                 val meshes = trackProgress(loadingText = "Reading mesh...") {
                     vertexMeshEntries.mapIndexed { index, vtx ->
@@ -338,7 +363,7 @@ object GurrenPilot : CommandRegistrar {
                         val faces: MutableList<TriFace> = ArrayList()
 
                         srdiSource.useInputFlow { srdiFlow ->
-                            srdiFlow.seek(vtx.faceBlock.start.toLong(), FROM_BEGINNING)
+                            srdiFlow.seek(vtx.faceBlock.start.toLong(), EnumSeekMode.FROM_BEGINNING)
 
                             for (i in 0 until vtx.faceBlock.length / 6) {
                                 val a = requireNotNull(srdiFlow.readInt16LE())
@@ -350,7 +375,7 @@ object GurrenPilot : CommandRegistrar {
                         }
 
                         srdiSource.useInputFlow { srdiFlow ->
-                            srdiFlow.seek(vtx.vertexBlock.start.toLong() + vtx.vertexSizeData[0].offset, FROM_BEGINNING)
+                            srdiFlow.seek(vtx.vertexBlock.start.toLong() + vtx.vertexSizeData[0].offset, EnumSeekMode.FROM_BEGINNING)
 
                             for (i in 0 until vtx.vertexCount) {
                                 val x = requireNotNull(srdiFlow.readFloatLE())
@@ -378,7 +403,7 @@ object GurrenPilot : CommandRegistrar {
 
                         if (vtx.vertexSizeData.size > 2) {
                             srdiSource.useInputFlow { srdiFlow ->
-                                srdiFlow.seek(vtx.vertexBlock.start.toLong() + vtx.vertexSizeData[2].offset, FROM_BEGINNING)
+                                srdiFlow.seek(vtx.vertexBlock.start.toLong() + vtx.vertexSizeData[2].offset, EnumSeekMode.FROM_BEGINNING)
 
                                 for (i in 0 until vtx.vertexCount) {
                                     val u = requireNotNull(srdiFlow.readFloatLE())
@@ -416,30 +441,30 @@ object GurrenPilot : CommandRegistrar {
                     val vertices: List<Vertex> = if (invertXAxis) mesh.vertices.map { (x, y, z) -> Vertex(x * -1, y, z) } else mesh.vertices.toList()
                     val uvs: List<UV> = if (flipUVs) mesh.uvs.map { (u, v) -> UV(u, 1.0f - v) } else mesh.uvs.toList()
                     val normals: List<Vertex> = if (invertXAxis) mesh.normals?.map { (x, y, z) -> Vertex(x * -1, y, z) }
-                            ?: emptyList() else mesh.normals?.toList() ?: emptyList()
+                                                                 ?: emptyList() else mesh.normals?.toList() ?: emptyList()
 
                     val verticeSource = ColladaSourcePojo(
-                            "vertices_source_mesh_${index}", "vertices_array_${mesh.name ?: "mesh_$index"}",
-                            ColladaFloatArrayPojo("vertices_array_mesh_${index}", vertices.flatMap(Vertex::toList).toFloatArray()),
-                            ColladaTechniqueCommonPojo.vertexAccessorFor(vertices.size, "#vertices_array_mesh_${index}")
+                        "vertices_source_mesh_${index}", "vertices_array_${mesh.name ?: "mesh_$index"}",
+                        ColladaFloatArrayPojo("vertices_array_mesh_${index}", vertices.flatMap(Vertex::toList).toFloatArray()),
+                        ColladaTechniqueCommonPojo.vertexAccessorFor(vertices.size, "#vertices_array_mesh_${index}")
                     )
 
                     val textureSource = ColladaSourcePojo(
-                            "uv_source_mesh_${index}", "uv_array_${mesh.name ?: "mesh_$index"}",
-                            ColladaFloatArrayPojo("uv_array_mesh_${index}", uvs.flatMap(UV::toList).toFloatArray()),
-                            ColladaTechniqueCommonPojo.uvAccessorFor(uvs.size, "#uv_array_mesh_${index}")
+                        "uv_source_mesh_${index}", "uv_array_${mesh.name ?: "mesh_$index"}",
+                        ColladaFloatArrayPojo("uv_array_mesh_${index}", uvs.flatMap(UV::toList).toFloatArray()),
+                        ColladaTechniqueCommonPojo.uvAccessorFor(uvs.size, "#uv_array_mesh_${index}")
                     )
 
                     val normalSource = ColladaSourcePojo(
-                            "normals_source_mesh_${index}", "normals_array_${mesh.name ?: "mesh_$index"}",
-                            ColladaFloatArrayPojo("normals_array_mesh_${index}", normals.flatMap(Vertex::toList).toFloatArray()),
-                            ColladaTechniqueCommonPojo.vertexAccessorFor(normals.size, "#normals_array_mesh_${index}")
+                        "normals_source_mesh_${index}", "normals_array_${mesh.name ?: "mesh_$index"}",
+                        ColladaFloatArrayPojo("normals_array_mesh_${index}", normals.flatMap(Vertex::toList).toFloatArray()),
+                        ColladaTechniqueCommonPojo.vertexAccessorFor(normals.size, "#normals_array_mesh_${index}")
                     )
 
                     val verticesPojo = ColladaVerticesPojo(
-                            "vertices_mesh_${index}",
-                            "vertices_${mesh.name ?: "mesh_$index"}",
-                            listOf(ColladaInputUnsharedPojo("POSITION", "#vertices_source_mesh_${index}"))
+                        "vertices_mesh_${index}",
+                        "vertices_${mesh.name ?: "mesh_$index"}",
+                        listOf(ColladaInputUnsharedPojo("POSITION", "#vertices_source_mesh_${index}"))
                     )
 
                     val triangles: ColladaTrianglesPojo
@@ -447,85 +472,97 @@ object GurrenPilot : CommandRegistrar {
                     if (mesh.faces.all { (a, b, c) -> a in uvs.indices && b in uvs.indices && c in uvs.indices }) {
                         if (mesh.faces.all { (a, b, c) -> a in normals.indices && b in normals.indices && c in normals.indices }) {
                             triangles = ColladaTrianglesPojo(
-                                    listOf(
-                                            ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
-                                            ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1),
-                                            ColladaInputSharedPojo("NORMAL", "#normals_source_mesh_${index}", 2)
-                                    ),
-                                    mesh.faces.flatMap { (a, b, c) -> listOf(a, a, a, b, b, b, c, c, c) }.toIntArray(),
-                                    mesh.materialName
+                                listOf(
+                                    ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
+                                    ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1),
+                                    ColladaInputSharedPojo("NORMAL", "#normals_source_mesh_${index}", 2)
+                                ),
+                                mesh.faces.flatMap { (a, b, c) -> listOf(a, a, a, b, b, b, c, c, c) }.toIntArray(),
+                                mesh.materialName
                             )
                         } else {
                             triangles = ColladaTrianglesPojo(
-                                    listOf(
-                                            ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
-                                            ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1)
-                                    ),
-                                    mesh.faces.flatMap { (a, b, c) -> listOf(a, a, b, b, c, c) }.toIntArray(),
-                                    mesh.materialName
+                                listOf(
+                                    ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0),
+                                    ColladaInputSharedPojo("TEXCOORD", "#uv_source_mesh_${index}", 1)
+                                ),
+                                mesh.faces.flatMap { (a, b, c) -> listOf(a, a, b, b, c, c) }.toIntArray(),
+                                mesh.materialName
                             )
                         }
                     } else {
                         triangles = ColladaTrianglesPojo(
-                                listOf(ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0)),
-                                mesh.faces.flatMap(TriFace::toList).toIntArray(),
-                                mesh.materialName
+                            listOf(ColladaInputSharedPojo("VERTEX", "#vertices_mesh_${index}", 0)),
+                            mesh.faces.flatMap(TriFace::toList).toIntArray(),
+                            mesh.materialName
                         )
                     }
 
-                    return@mapIndexed ColladaGeometryPojo(id = "mesh_$index", name = mesh.name
-                            ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource, textureSource, normalSource), verticesPojo, listOf(triangles)))
+                    return@mapIndexed ColladaGeometryPojo(
+                        id = "mesh_$index", name = mesh.name
+                                                   ?: "mesh_$index", mesh = ColladaMeshPojo(listOf(verticeSource, textureSource, normalSource), verticesPojo, listOf(triangles))
+                    )
                 }
 
                 val collada = ColladaPojo(
-                        asset = ColladaAssetPojo(contributor = ColladaContributorPojo(authoring_tool = "Spiral Framework", comments = "Autogenerated from ${srdiEntry.name.substringBeforeLast('.')}"), up_axis = ColladaUpAxis.Y_UP),
-                        library_geometries = ColladaLibraryGeometriesPojo(geometry = colladaMeshes),
-                        library_visual_scenes = ColladaLibraryVisualScenesPojo(visual_scene = listOf(ColladaVisualScenePojo(id = "Scene", node = colladaMeshes.mapIndexed { index, mesh ->
-                            return@mapIndexed ColladaNodePojo(type = "NODE", instance_geometry = listOf(ColladaInstanceGeometryPojo(url = "#${mesh.id}", bind_material = ColladaBindMaterialPojo.bindMaterialFor(meshes[index].materialName, "material_${meshes[index].materialName}"))))
-                        }))),
-                        library_images = ColladaLibraryImagesPojo(textureInfoEntries.map { txi ->
-                            ColladaImagePojo(id = txi.fileID, init_from = ColladaInitFromPojo(txi.textureNames[0]))
-                        }),
-
-                        library_effects = ColladaLibraryEffectsPojo(effect = materialEntries.filter { mat -> mat.materials.isNotEmpty() }.map { mat ->
-                            ColladaEffectPojo(
-                                    id = "material_${mat.rsiEntry.name}-effect",
-                                    profile_COMMON = listOf(ColladaProfileCommonPojo(
-                                            newparam = listOf(
-                                                    ColladaNewParamPojo(
-                                                            sid = "effect_${mat.rsiEntry.name}-surface",
-                                                            surface = ColladaSurfacePojo(ColladaFxSurfaceType.TWO_D, init_from = ColladaInitFromPojo(mat.materials.entries.maxBy(Map.Entry<String, String>::key)!!.value))
-                                                    ),
-                                                    ColladaNewParamPojo(
-                                                            sid = "effect_${mat.rsiEntry.name}-sampler",
-                                                            sampler2D = ColladaSampler2DPojo("effect_${mat.rsiEntry.name}-surface")
-                                                    )
-                                            ),
-                                            technique = ColladaTechniqueFxPojo(
-                                                    sid = "technique_${mat.rsiEntry.name}",
-                                                    phong = ColladaPhongPojo(
-                                                            emission = ColladaCommonColorOrTextureTypePojo(Color(0f, 0f, 0f, 1f)),
-                                                            ambient = ColladaCommonColorOrTextureTypePojo(Color(0f, 0f, 0f, 1f)),
-                                                            diffuse = ColladaCommonFloatOrParamTypePojo(texture = ColladaTexturePojo("effect_${mat.rsiEntry.name}-sampler")),
-                                                            specular = ColladaCommonColorOrTextureTypePojo(Color(0.5f, 0.5f, 0.5f, 1f)),
-                                                            shininess = ColladaCommonFloatOrParamTypePojo(float = 50f),
-                                                            index_of_refraction = ColladaCommonFloatOrParamTypePojo(float = 1f)
-                                                    )
-                                            )
-                                    ))
+                    asset = ColladaAssetPojo(contributor = ColladaContributorPojo(authoring_tool = "Spiral Framework", comments = "Autogenerated from ${srdiEntry.name.substringBeforeLast('.')}"), up_axis = ColladaUpAxis.Y_UP),
+                    library_geometries = ColladaLibraryGeometriesPojo(geometry = colladaMeshes),
+                    library_visual_scenes = ColladaLibraryVisualScenesPojo(visual_scene = listOf(ColladaVisualScenePojo(id = "Scene", node = colladaMeshes.mapIndexed { index, mesh ->
+                        return@mapIndexed ColladaNodePojo(
+                            type = "NODE",
+                            instance_geometry = listOf(
+                                ColladaInstanceGeometryPojo(
+                                    url = "#${mesh.id}",
+                                    bind_material = ColladaBindMaterialPojo.bindMaterialFor(meshes[index].materialName, "material_${meshes[index].materialName}")
+                                )
                             )
-                        }),
-
-                        library_materials = ColladaLibraryMaterialsPojo(material = materialEntries.map { mat ->
-                            ColladaMaterialPojo(
-                                    id = "material_${mat.rsiEntry.name}",
-                                    instance_effect = ColladaInstanceEffectPojo(sid = "material_${mat.rsiEntry.name}-instance_effect", url = "#material_${mat.rsiEntry.name}-effect")
-                            )
-                        }),
-
-                        scene = ColladaScenePojo(
-                                instance_visual_scene = ColladaInstanceVisualScenePojo(url = "#Scene")
                         )
+                    }))),
+                    library_images = ColladaLibraryImagesPojo(textureInfoEntries.map { txi ->
+                        ColladaImagePojo(id = txi.fileID, init_from = ColladaInitFromPojo(txi.textureNames[0]))
+                    }),
+
+                    library_effects = ColladaLibraryEffectsPojo(effect = materialEntries.filter { mat -> mat.materials.isNotEmpty() }.map { mat ->
+                        ColladaEffectPojo(
+                            id = "material_${mat.rsiEntry.name}-effect",
+                            profile_COMMON = listOf(
+                                ColladaProfileCommonPojo(
+                                    newparam = listOf(
+                                        ColladaNewParamPojo(
+                                            sid = "effect_${mat.rsiEntry.name}-surface",
+                                            surface = ColladaSurfacePojo(ColladaFxSurfaceType.TWO_D, init_from = ColladaInitFromPojo(mat.materials.entries.maxBy(Map.Entry<String, String>::key)!!.value))
+                                        ),
+                                        ColladaNewParamPojo(
+                                            sid = "effect_${mat.rsiEntry.name}-sampler",
+                                            sampler2D = ColladaSampler2DPojo("effect_${mat.rsiEntry.name}-surface")
+                                        )
+                                    ),
+                                    technique = ColladaTechniqueFxPojo(
+                                        sid = "technique_${mat.rsiEntry.name}",
+                                        phong = ColladaPhongPojo(
+                                            emission = ColladaCommonColorOrTextureTypePojo(Color(0f, 0f, 0f, 1f)),
+                                            ambient = ColladaCommonColorOrTextureTypePojo(Color(0f, 0f, 0f, 1f)),
+                                            diffuse = ColladaCommonFloatOrParamTypePojo(texture = ColladaTexturePojo("effect_${mat.rsiEntry.name}-sampler")),
+                                            specular = ColladaCommonColorOrTextureTypePojo(Color(0.5f, 0.5f, 0.5f, 1f)),
+                                            shininess = ColladaCommonFloatOrParamTypePojo(float = 50f),
+                                            index_of_refraction = ColladaCommonFloatOrParamTypePojo(float = 1f)
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    }),
+
+                    library_materials = ColladaLibraryMaterialsPojo(material = materialEntries.map { mat ->
+                        ColladaMaterialPojo(
+                            id = "material_${mat.rsiEntry.name}",
+                            instance_effect = ColladaInstanceEffectPojo(sid = "material_${mat.rsiEntry.name}-instance_effect", url = "#material_${mat.rsiEntry.name}-effect")
+                        )
+                    }),
+
+                    scene = ColladaScenePojo(
+                        instance_visual_scene = ColladaInstanceVisualScenePojo(url = "#Scene")
+                    )
                 )
 
                 val outputDir = File(File(path.substringBeforeLast('.')), srdEntry.name.substringBeforeLast('.'))
@@ -542,8 +579,8 @@ object GurrenPilot : CommandRegistrar {
     suspend fun SpiralContext.extractTextures(pipelineContext: PipelineContext, sourceSpc: PipelineUnion.VariableValue): PipelineUnion.VariableValue? {
         if (sourceSpc is PipelineUnion.VariableValue.ArrayType<*>) {
             return PipelineUnion.VariableValue.ArrayType(
-                    sourceSpc.array.mapNotNull { entry -> extractTextures(pipelineContext, entry) }
-                            .toTypedArray()
+                sourceSpc.array.mapNotNull { entry -> extractTextures(pipelineContext, entry) }
+                    .toTypedArray()
             )
         } else {
             return extractTextures(sourceSpc.asString(this, pipelineContext))
@@ -551,39 +588,41 @@ object GurrenPilot : CommandRegistrar {
     }
 
     suspend fun SpiralContext.extractTextures(path: String): PipelineUnion.VariableValue? {
-        val fileDataSource = FileDataSource(File(path))
+        val fileDataSource = AsyncFileDataSource(File(path))
         try {
             val spc = SpcArchive(fileDataSource)
-
-            if (spc == null) {
-                println("Invalid spc archive")
-                return null
-            }
+                .getOrBreak {
+                    println("Invalid spc archive")
+                    return null
+                }
 
             println("Identifying texture sources...")
 
             val textureSourceNames = spc.files.map { entry -> entry.name.substringBeforeLast('.') }
-                    .distinct()
-                    .mapNotNull { name ->
-                        val srdEntry = spc["$name.srd"] ?: return@mapNotNull null
-                        val srdvEntry = spc["$name.srdv"] ?: return@mapNotNull null
+                .distinct()
+                .mapNotNull { name ->
+                    val srdEntry = spc["$name.srd"] ?: return@mapNotNull null
+                    val srdvEntry = spc["$name.srdv"] ?: return@mapNotNull null
 
-                        Pair(srdEntry, srdvEntry)
-                    }
+                    Pair(srdEntry, srdvEntry)
+                }
 
             println("Found: ${textureSourceNames.joinToString { (srdEntry) -> srdEntry.name.substringBeforeLast('.') }}")
 
             textureSourceNames.forEach { (srdEntry, srdvEntry) ->
-                val srdFile = UnsafeSrdArchive(requireNotNull(spc.openDecompressedSource(this, srdEntry)))
+                val srdFile = spc.openDecompressedSource(this, srdEntry)
+                    .flatMap { src -> SrdArchive(src) }
+                    .get()
+
                 val textureEntries = srdFile.entries.filterIsInstance<TextureSrdEntry>()
 
-                val srdvSource = requireNotNull(spc.openDecompressedSource(this, srdvEntry))
+                val srdvSource = spc.openDecompressedSource(this, srdvEntry).get()
 
                 val outputDir = File(File(path.substringBeforeLast('.')), srdEntry.name.substringBeforeLast('.'))
                 outputDir.mkdirs()
 
                 textureEntries.forEach { textureEntry ->
-                    val texture = srdvSource.useInputFlow { srdvFlow ->
+                    srdvSource.useInputFlow { srdvFlow ->
                         val textureFlow = WindowedInputFlow(srdvFlow, textureEntry.rsiEntry.resources[0].start.toULong(), textureEntry.rsiEntry.resources[0].length.toULong())
 
                         val swizzled = textureEntry.swizzle and 1 != 1
@@ -668,9 +707,7 @@ object GurrenPilot : CommandRegistrar {
                         } else {
                             return@useInputFlow null
                         }
-                    }
-
-                    if (texture != null) {
+                    }.doOnSuccess { texture ->
                         withContext(Dispatchers.IO) {
                             ImageIO.write(texture, "PNG", File(outputDir, textureEntry.rsiEntry.name))
                         }
@@ -697,14 +734,14 @@ object GurrenPilot : CommandRegistrar {
 
                 setFunction { spiralContext, pipelineContext, parameters ->
                     spiralContext.extractFilesStub(
-                            pipelineContext,
-                            parameters["FILEPATH"]?.flattenIfPresent(spiralContext, pipelineContext),
-                            parameters["DESTDIR"]?.asFlattenedStringIfPresent(spiralContext, pipelineContext),
-                            parameters["FILTER"]?.asString(spiralContext, pipelineContext) ?: ".+",
-                            parameters["LEAVECOMPRESSED"]?.asBoolean(spiralContext, pipelineContext) ?: false,
-                            parameters["EXTRACTSUBFILES"]?.asBoolean(spiralContext, pipelineContext) ?: false,
-                            parameters["PREDICTIVE"]?.asBoolean(spiralContext, pipelineContext) ?: false,
-                            parameters["CONVERT"]?.asBoolean(spiralContext, pipelineContext) ?: false
+                        pipelineContext,
+                        parameters["FILEPATH"]?.flattenIfPresent(spiralContext, pipelineContext),
+                        parameters["DESTDIR"]?.asFlattenedStringIfPresent(spiralContext, pipelineContext),
+                        parameters["FILTER"]?.asString(spiralContext, pipelineContext) ?: ".+",
+                        parameters["LEAVECOMPRESSED"]?.asBoolean(spiralContext, pipelineContext) ?: false,
+                        parameters["EXTRACTSUBFILES"]?.asBoolean(spiralContext, pipelineContext) ?: false,
+                        parameters["PREDICTIVE"]?.asBoolean(spiralContext, pipelineContext) ?: false,
+                        parameters["CONVERT"]?.asBoolean(spiralContext, pipelineContext) ?: false
                     )
 
                     null
@@ -726,9 +763,9 @@ object GurrenPilot : CommandRegistrar {
                     var destDir = parameters["DESTDIR"]?.asFlattenedStringIfPresent(spiralContext, pipelineContext)
                     val filter = parameters["FILTER"]?.asString(spiralContext, pipelineContext) ?: ".+"
                     val leaveCompressed = parameters["LEAVECOMPRESSED"]?.asBoolean(spiralContext, pipelineContext)
-                            ?: false
+                                          ?: false
                     val extractSubfiles = parameters["EXTRACTSUBFILES"]?.asBoolean(spiralContext, pipelineContext)
-                            ?: false
+                                          ?: false
                     val predictive = parameters["PREDICTIVE"]?.asBoolean(spiralContext, pipelineContext) ?: false
                     val convert = parameters["CONVERT"]?.asBoolean(spiralContext, pipelineContext) ?: false
 
@@ -753,7 +790,7 @@ object GurrenPilot : CommandRegistrar {
 
                 setFunction { spiralContext, pipelineContext, parameters ->
                     val spcPath = parameters["SPCPATH"]?.flattenIfPresent(spiralContext, pipelineContext)
-                            ?: return@setFunction null
+                                  ?: return@setFunction null
 
                     spiralContext.extractModels(pipelineContext, spcPath)
                 }
@@ -764,7 +801,7 @@ object GurrenPilot : CommandRegistrar {
 
                 setFunction { spiralContext, pipelineContext, parameters ->
                     val spcPath = parameters["SPCPATH"]?.flattenIfPresent(spiralContext, pipelineContext)
-                            ?: return@setFunction null
+                                  ?: return@setFunction null
 
                     spiralContext.extractTextures(pipelineContext, spcPath)
                 }

@@ -2,15 +2,14 @@ package info.spiralframework.formats.common.scripting.wrd
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.fauxSeekFromStartFlatMap
 import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
-import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
+import org.abimon.kornea.errors.common.getOrBreak
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.*
 
@@ -22,62 +21,62 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         const val NOT_ENOUGH_DATA_KEY = "formats.wrd.not_enough_data"
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, game: DrGame.WordScriptable, dataSource: DataSource<*>): KorneaResult<WordScript> {
+        suspend operator fun invoke(context: SpiralContext, game: DrGame.WordScriptable, dataSource: DataSource<*>): KorneaResult<WordScript> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
 
-                use(flow) {
-                    val possibleMagicNumber = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val stringCount =
                             if (possibleMagicNumber == MAGIC_NUMBER_LE)
-                                flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                             else
                                 possibleMagicNumber and 0xFFFF
                     val labelCount =
                             if (possibleMagicNumber == MAGIC_NUMBER_LE)
-                                flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                                flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                             else
                                 (possibleMagicNumber shr 16) and 0xFFFF
-                    val parameterCount = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val localBranchCount = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val parameterCount = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val localBranchCount = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val padding = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val localBranchOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val padding = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val localBranchOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val sectionOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val labelOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val parameterOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val stringOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val labelOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val parameterOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val stringOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val labels = flow.fauxSeekFromStartFlatMap(labelOffset.toULong(), dataSource) { labelFlow ->
+                    val labels = flow.fauxSeekFromStartForResult(labelOffset.toULong(), dataSource) { labelFlow ->
                         readParameterStrings(labelFlow, labelCount)
-                    }.doOnFailure { return it.cast() }
+                    }.getOrBreak { return@closeAfter it.cast() }
 
-                    val parameters = flow.fauxSeekFromStartFlatMap(parameterOffset.toULong(), dataSource) { parameterFlow ->
+                    val parameters = flow.fauxSeekFromStartForResult(parameterOffset.toULong(), dataSource) { parameterFlow ->
                         readParameterStrings(parameterFlow, parameterCount)
-                    }.doOnFailure { return it.cast() }
+                    }.getOrBreak { return@closeAfter it.cast() }
 
                     val strings = when {
-                        stringOffset > 0 -> flow.fauxSeekFromStartFlatMap(stringOffset.toULong(), dataSource) { stringFlow ->
+                        stringOffset > 0 -> flow.fauxSeekFromStartForResult(stringOffset.toULong(), dataSource) { stringFlow ->
                             readStrings(stringFlow, stringCount)
-                        }.doOnFailure { return it.cast() }
+                        }.getOrBreak { return@closeAfter it.cast() }
                         else -> null
                     }
 
-                    val localBranchNumbers = flow.fauxSeekFromStart(localBranchOffset.toULong(), dataSource) { localBranchFlow ->
-                        Array(localBranchCount) {
-                            val first = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                            val second = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val localBranchNumbers = flow.fauxSeekFromStartForResult(localBranchOffset.toULong(), dataSource) { localBranchFlow ->
+                        KorneaResult.success(Array(localBranchCount) {
+                            val first = flow.readInt16LE() ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            val second = flow.readInt16LE() ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                             Pair(first, second)
-                        }
-                    }.doOnFailure { return it.cast() }
+                        })
+                    }.getOrBreak { return@closeAfter it.cast() }
 
-                    val sectionOffsets = flow.fauxSeekFromStart(sectionOffset.toULong(), dataSource) { sectionFlow ->
-                        IntArray(labelCount) {
-                            sectionFlow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                        }
-                    }.doOnFailure { return it.cast() }
+                    val sectionOffsets = flow.fauxSeekFromStartForResult(sectionOffset.toULong(), dataSource) { sectionFlow ->
+                        KorneaResult.success(IntArray(labelCount) {
+                            sectionFlow.readInt16LE() ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        })
+                    }.getOrBreak { return@closeAfter it.cast() }
 
                     val scriptDataBlocks = Array(labelCount) { index ->
                         val size: Int
@@ -90,19 +89,18 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         require(size >= 0) { localise("formats.wrd.bad_size", index, size) }
                         require(sectionOffsets[index] > 0) { localise("formats.wrd.bad_offset", index, sectionOffsets[index]) }
 
-                        flow.fauxSeekFromStartFlatMap(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
+                        flow.fauxSeekFromStartForResult(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
                             readScriptData(labels, parameters, strings, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
-                        }.doOnFailure { return it.cast() }
+                        }.getOrBreak { return@closeAfter it.cast() }
                     }
 
-                    return KorneaResult.Success(WordScript(labels, parameters, strings, localBranchNumbers, scriptDataBlocks))
+                    return@closeAfter KorneaResult.success(WordScript(labels, parameters, strings, localBranchNumbers, scriptDataBlocks))
                 }
             }
-        }
 
         @ExperimentalStdlibApi
         suspend fun SpiralContext.readParameterStrings(flow: InputFlow, count: Int): KorneaResult<Array<String>> {
-            return KorneaResult.Success(Array(count) {
+            return KorneaResult.success(Array(count) {
                 val length = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 flow.readSingleByteNullTerminatedString(length + 1, TextCharsets.UTF_8)
             })
@@ -110,7 +108,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
 
         @ExperimentalStdlibApi
         suspend fun SpiralContext.readStrings(flow: InputFlow, count: Int): KorneaResult<Array<String>> {
-            return KorneaResult.Success(Array(count) {
+            return KorneaResult.success(Array(count) {
                 var length = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (length > 0x7F) {
                     /**
@@ -195,7 +193,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                     }
                 }
 
-                return KorneaResult.Success(entries.toTypedArray())
+                return KorneaResult.success(entries.toTypedArray())
             }
         }
     }

@@ -1,17 +1,18 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.FlowOutputStream
-import info.spiralframework.base.common.io.asOutputStream
 import info.spiralframework.core.formats.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.npe.tga.TGAReader
 import net.npe.tga.readImage
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.getOrElseTransform
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.OutputFlow
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.useInputFlow
+import org.abimon.kornea.io.jvm.asOutputStream
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -37,19 +38,19 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
         with(context) {
             try {
                 return source.useInputFlow { flow -> FormatResult.Success(this@TGAFormat, TGAReader.readImage(this, flow.readBytes()), 1.0) }
-                        ?: FormatResult.Fail(this@TGAFormat, 1.0)
+                           .getOrElseTransform { FormatResult.Fail(this@TGAFormat, 1.0, it) }
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, io)
+                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(io))
             } catch (iae: IllegalArgumentException) {
                 debug("core.formats.tga.invalid", source, iae)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, iae)
+                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(iae))
             } catch (oob: ArrayIndexOutOfBoundsException) {
                 debug("core.formats.tga.invalid", source, oob)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, oob)
+                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(oob))
             }
         }
     }

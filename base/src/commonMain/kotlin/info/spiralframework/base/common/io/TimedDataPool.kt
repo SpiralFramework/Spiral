@@ -18,9 +18,10 @@ class TimedDataPool<I: InputFlow, O: OutputFlow>(val backing: DataPool<I, O>, cl
     }
 
     override suspend fun close() {
-        super.close()
-
-        closingJob.cancel()
+        if (!isClosed) {
+            backing.close()
+            closingJob.cancel()
+        }
     }
 
     fun extend(closeAfter: Duration, scope: CoroutineScope = GlobalScope, context: CoroutineContext) {

@@ -2,10 +2,9 @@ package info.spiralframework.formats.common.scripting.exe
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 
@@ -47,7 +46,7 @@ sealed class PEOptionalHeader {
         const val INVALID_SIGNATURE = 0x0000
         const val INVALID_SIGNATURE_KEY = "formats.exe.pe_opt.invalid_signature"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PEOptionalHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PEOptionalHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PEOptionalHeader> {
             withFormats(context) {
                 val signature = flow.readInt16LE()
@@ -137,7 +136,7 @@ sealed class PEOptionalHeader {
                         )
                     }
 
-                    return KorneaResult.Success(PE32(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, baseOfData, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
+                    return KorneaResult.success(PE32(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, baseOfData, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
                 }
             }
         }
@@ -289,7 +288,7 @@ sealed class PEOptionalHeader {
                         )
                     }
 
-                    return KorneaResult.Success(PE64(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
+                    return KorneaResult.success(PE64(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
                 }
             }
         }

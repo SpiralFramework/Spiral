@@ -3,14 +3,10 @@ package info.spiralframework.formats.common.data
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readFloatLE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, val y: Float, val z: Float, val width: Float, val height: Float, val perspective: Float, val unk4: Int) {
@@ -35,7 +31,7 @@ class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, 
 
                 val unk4 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.Success(Dr1RoomObject(unk1, id, modelID, x, y, z, width, height, perspective, unk4))
+                return KorneaResult.success(Dr1RoomObject(unk1, id, modelID, x, y, z, width, height, perspective, unk4))
             }
         }
     }

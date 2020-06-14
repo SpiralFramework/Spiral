@@ -1,7 +1,6 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -16,17 +15,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.useAndFlatMap
+import org.abimon.kornea.io.common.useAndMap
+import org.abimon.kornea.io.common.useAndMapInputFlow
 import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 open class DRv3(
-        override val wrdCharacterNames: Map<String, String>,
-        override val wrdCharacterIdentifiers: Map<String, String>,
-        override val wrdColourCodes: Map<String, String>,
-        override val wrdItemNames: Array<String>,
-        customOpcodes: List<JsonOpcode>
+    override val wrdCharacterNames: Map<String, String>,
+    override val wrdCharacterIdentifiers: Map<String, String>,
+    override val wrdColourCodes: Map<String, String>,
+    override val wrdItemNames: Array<String>,
+    customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.WordScriptable, DrGame.ScriptOpcodeFactory<Array<WordScriptValue>, WrdEntry> {
     companion object {
         @Serializable
@@ -38,16 +40,17 @@ open class DRv3(
             withFormats(context) {
                 //                if (isCachedShortTerm("games/drv3.json"))
                 val gameString = loadResource("games/drv3.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
-                        .doOnFailure { return it.cast() }
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .getOrBreak { return it.cast() }
+
                 val gameJson = Json.parse(DRv3GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/drv3.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
-                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
-                        .getOrElse(emptyList())
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                    .getOrElse(emptyList())
 
-                return KorneaResult.Success(DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
+                return KorneaResult.success(DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
             }
         }
     }
@@ -140,82 +143,82 @@ open class DRv3(
         //Regex to parse Captain's table:
         //\{(0x[0-9A-F]{2}), ".{0,3}=?", \{\}, \{([0-3]?(?: ?, ?[0-3])*)\}\},?
         //this[$1] = intArrayOf($2)
-        opcode(0x00, types = *intArrayOf(0, 0))              // Set Flag
+        opcode(0x00, types = intArrayOf(0, 0))              // Set Flag
         opcode(0x01) { EnumWordScriptCommand.PARAMETER }     // If Flag
-        opcode(0x02, types = *intArrayOf(0, 0, 0))           // Wake? Work? (Seems to be used to configure game engine parameters)
+        opcode(0x02, types = intArrayOf(0, 0, 0))           // Wake? Work? (Seems to be used to configure game engine parameters)
         opcode(0x03) { EnumWordScriptCommand.PARAMETER }     // If WAK
-        opcode(0x04, types = *intArrayOf(0))                 // Begin switch statement
-        opcode(0x05, types = *intArrayOf(1))                 // Switch Case
-        opcode(0x06, types = *intArrayOf(0, 0, 0))           // Map Flag?
-        opcode(0x07, types = *intArrayOf())
-        opcode(0x08, types = *intArrayOf(0, 0, 0, 0))        // Set Modifier (Also used to configure game engine parameters)
-        opcode(0x09, types = *intArrayOf(0))                 // Human? Seems to be used to initialize "interactable" objects in a map?
-        opcode(0x0A, types = *intArrayOf(0))                 // Check?
-        opcode(0x0B, types = *intArrayOf(0, 0))              // Kotodama?
-        opcode(0x0C, types = *intArrayOf())                  // Clear?
-        opcode(0x0D, types = *intArrayOf())                  // Return? There's another command later which is definitely return, though...
-        opcode(0x0E, types = *intArrayOf(0, 0, 0, 0, 0))     // Kinematics (camera movement)
-        opcode(0x0F, types = *intArrayOf())                  // Camera Parameters?
-        opcode(0x10, types = *intArrayOf(0, 0))              // Load Script File & jump to label
-        opcode(0x11, types = *intArrayOf())                  // End of script or switch case
-        opcode(0x12, types = *intArrayOf(0, 0))              // Jump to subroutine
-        opcode(0x13, types = *intArrayOf())                  // Return (called inside subroutine)
-        opcode(0x14, types = *intArrayOf(3))                 // Label number
-        opcode(0x15, types = *intArrayOf(0))                 // Jump to label
-        opcode(0x16, types = *intArrayOf(0, 0))              // Movie
-        opcode(0x17, types = *intArrayOf(0, 0, 0, 0))        // Flash
-        opcode(0x18, types = *intArrayOf(0, 0, 0, 0, 0, 0))  // Flash Modifier?
-        opcode(0x19, types = *intArrayOf(0, 0))              // Play voice clip
-        opcode(0x1A, types = *intArrayOf(0, 0, 0))           // Play BGM
-        opcode(0x1B, types = *intArrayOf(0, 0))              // Play sound effect
-        opcode(0x1C, types = *intArrayOf(0, 0))              // Play jingle
-        opcode(0x1D, types = *intArrayOf(0))                 // Set active character ID (current person speaking)
-        opcode(0x1E, types = *intArrayOf(0, 0, 0))           // Camera Vibration
-        opcode(0x1F, types = *intArrayOf(0, 0, 0))           // Fade Screen
-        opcode(0x20, types = *intArrayOf())
-        opcode(0x21, types = *intArrayOf(0, 1, 0))           // Lighting Parameters
-        opcode(0x22, types = *intArrayOf(0, 0, 0, 0, 0))     // Character Parameters
-        opcode(0x23, types = *intArrayOf(0, 0, 0, 0))        // Background Parameters
-        opcode(0x24, types = *intArrayOf(0, 0))              // Cutin (display image for things like Truth Bullets, etc.)
-        opcode(0x25, types = *intArrayOf(0, 0, 0, 0, 0))     // Character Vibration?
-        opcode(0x26, types = *intArrayOf())
-        opcode(0x27, types = *intArrayOf(0, 0, 0))           // Load Map
-        opcode(0x28, types = *intArrayOf(0, 0, 0))           // Load Object
-        opcode(0x29, types = *intArrayOf(0, 0, 0, 0, 0, 0, 0, 0))
-        opcode(0x2A, types = *intArrayOf(0, 0, 0, 0, 0, 0, 0))     // Cross Fade
-        opcode(0x2B, types = *intArrayOf(0, 0, 0, 0, 0))     // Camera command
-        opcode(0x2C, types = *intArrayOf(0))                 // Game/UI Mode
-        opcode(0x2D, types = *intArrayOf(0, 0, 0))
-        opcode(0x2E, types = *intArrayOf(0, 0))              // Enable/disable "key" items for unlocking areas
-        opcode(0x2F, types = *intArrayOf(0, 0, 0, 0))        // Window parameters
-        opcode(0x30, types = *intArrayOf())
-        opcode(0x31, types = *intArrayOf())
-        opcode(0x32, types = *intArrayOf(0, 0, 0, 0, 0))     // Post-Processing
-        opcode(0x33, types = *intArrayOf(0, 1, 1, 1, 1))     // Kinematics Numeric parameters?
-        opcode(0x34, types = *intArrayOf(1, 1))              // Set Font
-        opcode(0x35, types = *intArrayOf(0, 0, 0, 0, 0))     // Load Background Object
-        opcode(0x36, types = *intArrayOf())                  // Add next text to log (only used in class trials during nonstop debates)
-        opcode(0x37, types = *intArrayOf(0))                 // Used only in Class Trial? Always set to "non"?
-        opcode(0x38, types = *intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        opcode(0x39, types = *intArrayOf(0, 0, 0, 0))        // Stand Position (Class Trial) (posX, posY, speed) (can be negative and floats)
-        opcode(0x3A, types = *intArrayOf(0))                 // Class Trial Chapter? Pre-trial intermission?
-        opcode(0x3B, types = *intArrayOf(0))                 // Give EXP
-        opcode(0x3C, types = *intArrayOf(0))                 // Used only in Class Trial? Usually set to "non"?
-        opcode(0x3D, types = *intArrayOf(0, 0, 0))           // Move object to its designated position?
-        opcode(0x3E, types = *intArrayOf(0, 0, 0, 0, 0))     // Object/Exisal position
-        opcode(0x3F, types = *intArrayOf(0, 0, 0, 0))           // Display a Program World character portrait
-        opcode(0x40, types = *intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))  // Exisal AI
-        opcode(0x41, types = *intArrayOf(0, 0, 0))           // Set object collision
-        opcode(0x42, types = *intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0)) // Camera Follow Path? Seems to make the camera move in some way
-        opcode(0x43, types = *intArrayOf(0))                // Text modifier command
-        opcode(0x44, types = *intArrayOf())
-        opcode(0x45, types = *intArrayOf(0))                // Gamepad button symbol
-        opcode(0x46, types = *intArrayOf(2))                 // Display text string
-        opcode(0x47, types = *intArrayOf())                  // Wait for button press
-        opcode(0x48, types = *intArrayOf())
-        opcode(0x49, types = *intArrayOf())                  // Check End (Used after IFF and IFW commands)
-        opcode(0x4A, types = *intArrayOf(1))                 // Local Branch Number (for branching case statements)
-        opcode(0x4B, types = *intArrayOf(1))                  // Jump to Local Branch (for branching case statements)
+        opcode(0x04, types = intArrayOf(0))                 // Begin switch statement
+        opcode(0x05, types = intArrayOf(1))                 // Switch Case
+        opcode(0x06, types = intArrayOf(0, 0, 0))           // Map Flag?
+        opcode(0x07, types = intArrayOf())
+        opcode(0x08, types = intArrayOf(0, 0, 0, 0))        // Set Modifier (Also used to configure game engine parameters)
+        opcode(0x09, types = intArrayOf(0))                 // Human? Seems to be used to initialize "interactable" objects in a map?
+        opcode(0x0A, types = intArrayOf(0))                 // Check?
+        opcode(0x0B, types = intArrayOf(0, 0))              // Kotodama?
+        opcode(0x0C, types = intArrayOf())                  // Clear?
+        opcode(0x0D, types = intArrayOf())                  // Return? There's another command later which is definitely return, though...
+        opcode(0x0E, types = intArrayOf(0, 0, 0, 0, 0))     // Kinematics (camera movement)
+        opcode(0x0F, types = intArrayOf())                  // Camera Parameters?
+        opcode(0x10, types = intArrayOf(0, 0))              // Load Script File & jump to label
+        opcode(0x11, types = intArrayOf())                  // End of script or switch case
+        opcode(0x12, types = intArrayOf(0, 0))              // Jump to subroutine
+        opcode(0x13, types = intArrayOf())                  // Return (called inside subroutine)
+        opcode(0x14, types = intArrayOf(3))                 // Label number
+        opcode(0x15, types = intArrayOf(0))                 // Jump to label
+        opcode(0x16, types = intArrayOf(0, 0))              // Movie
+        opcode(0x17, types = intArrayOf(0, 0, 0, 0))        // Flash
+        opcode(0x18, types = intArrayOf(0, 0, 0, 0, 0, 0))  // Flash Modifier?
+        opcode(0x19, types = intArrayOf(0, 0))              // Play voice clip
+        opcode(0x1A, types = intArrayOf(0, 0, 0))           // Play BGM
+        opcode(0x1B, types = intArrayOf(0, 0))              // Play sound effect
+        opcode(0x1C, types = intArrayOf(0, 0))              // Play jingle
+        opcode(0x1D, types = intArrayOf(0))                 // Set active character ID (current person speaking)
+        opcode(0x1E, types = intArrayOf(0, 0, 0))           // Camera Vibration
+        opcode(0x1F, types = intArrayOf(0, 0, 0))           // Fade Screen
+        opcode(0x20, types = intArrayOf())
+        opcode(0x21, types = intArrayOf(0, 1, 0))           // Lighting Parameters
+        opcode(0x22, types = intArrayOf(0, 0, 0, 0, 0))     // Character Parameters
+        opcode(0x23, types = intArrayOf(0, 0, 0, 0))        // Background Parameters
+        opcode(0x24, types = intArrayOf(0, 0))              // Cutin (display image for things like Truth Bullets, etc.)
+        opcode(0x25, types = intArrayOf(0, 0, 0, 0, 0))     // Character Vibration?
+        opcode(0x26, types = intArrayOf())
+        opcode(0x27, types = intArrayOf(0, 0, 0))           // Load Map
+        opcode(0x28, types = intArrayOf(0, 0, 0))           // Load Object
+        opcode(0x29, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0))
+        opcode(0x2A, types = intArrayOf(0, 0, 0, 0, 0, 0, 0))     // Cross Fade
+        opcode(0x2B, types = intArrayOf(0, 0, 0, 0, 0))     // Camera command
+        opcode(0x2C, types = intArrayOf(0))                 // Game/UI Mode
+        opcode(0x2D, types = intArrayOf(0, 0, 0))
+        opcode(0x2E, types = intArrayOf(0, 0))              // Enable/disable "key" items for unlocking areas
+        opcode(0x2F, types = intArrayOf(0, 0, 0, 0))        // Window parameters
+        opcode(0x30, types = intArrayOf())
+        opcode(0x31, types = intArrayOf())
+        opcode(0x32, types = intArrayOf(0, 0, 0, 0, 0))     // Post-Processing
+        opcode(0x33, types = intArrayOf(0, 1, 1, 1, 1))     // Kinematics Numeric parameters?
+        opcode(0x34, types = intArrayOf(1, 1))              // Set Font
+        opcode(0x35, types = intArrayOf(0, 0, 0, 0, 0))     // Load Background Object
+        opcode(0x36, types = intArrayOf())                  // Add next text to log (only used in class trials during nonstop debates)
+        opcode(0x37, types = intArrayOf(0))                 // Used only in Class Trial? Always set to "non"?
+        opcode(0x38, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        opcode(0x39, types = intArrayOf(0, 0, 0, 0))        // Stand Position (Class Trial) (posX, posY, speed) (can be negative and floats)
+        opcode(0x3A, types = intArrayOf(0))                 // Class Trial Chapter? Pre-trial intermission?
+        opcode(0x3B, types = intArrayOf(0))                 // Give EXP
+        opcode(0x3C, types = intArrayOf(0))                 // Used only in Class Trial? Usually set to "non"?
+        opcode(0x3D, types = intArrayOf(0, 0, 0))           // Move object to its designated position?
+        opcode(0x3E, types = intArrayOf(0, 0, 0, 0, 0))     // Object/Exisal position
+        opcode(0x3F, types = intArrayOf(0, 0, 0, 0))           // Display a Program World character portrait
+        opcode(0x40, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))  // Exisal AI
+        opcode(0x41, types = intArrayOf(0, 0, 0))           // Set object collision
+        opcode(0x42, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0)) // Camera Follow Path? Seems to make the camera move in some way
+        opcode(0x43, types = intArrayOf(0))                // Text modifier command
+        opcode(0x44, types = intArrayOf())
+        opcode(0x45, types = intArrayOf(0))                // Gamepad button symbol
+        opcode(0x46, types = intArrayOf(2))                 // Display text string
+        opcode(0x47, types = intArrayOf())                  // Wait for button press
+        opcode(0x48, types = intArrayOf())
+        opcode(0x49, types = intArrayOf())                  // Check End (Used after IFF and IFW commands)
+        opcode(0x4A, types = intArrayOf(1))                 // Local Branch Number (for branching case statements)
+        opcode(0x4B, types = intArrayOf(1))                  // Jump to Local Branch (for branching case statements)
     }
 
     override fun entryFor(opcode: Int, rawArguments: Array<WordScriptValue>): WrdEntry = when (opcode) {
@@ -227,6 +230,7 @@ open class DRv3(
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun SpiralContext.DRv3() = DRv3(this)
+
 @UnstableDefault
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi

@@ -1,6 +1,5 @@
 package info.spiralframework.core
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.SpiralModuleProvider
@@ -25,6 +24,7 @@ import info.spiralframework.formats.jvm.SpiralModuleFormats
 import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.kornea.toolkit.common.SemanticVersion
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile

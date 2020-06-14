@@ -6,10 +6,9 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedString
 import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.flatMap
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.flatMap
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 
@@ -43,7 +42,7 @@ class Dr1LocalisationBin private constructor(val stringIDs: Array<String>, val l
                     Language(languageIndex, languageName, languageID, localisations)
                 }
 
-                return KorneaResult.Success(Dr1LocalisationBin(languages.first { lang -> lang.languageID == 0x00 }.localisations, languages.map { lang -> lang.languageName to lang }.toMap()))
+                return KorneaResult.success(Dr1LocalisationBin(languages.first { lang -> lang.languageID == 0x00 }.localisations, languages.map { lang -> lang.languageName to lang }.toMap()))
             }
         }
     }

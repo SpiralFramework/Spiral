@@ -3,14 +3,10 @@ package info.spiralframework.formats.common.scripting.exe
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val timeDateStamp: Int, val pointerToSymbolTable: Int, val numberOfSymbols: Int, val sizeOfOptionalHeader: Int, val characteristics: Int) {
@@ -85,11 +81,11 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
         const val NOT_ENOUGH_DATA_KEY = "formats.exe.coff.not_enough_data"
         const val NO_MACHINE_KEY = "formats.exe.coff.no_machine"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<COFFHeader> {
             withFormats(context) {
                 val machineHexValue = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.Error(NO_MACHINE, localise(NO_MACHINE_KEY, machineHexValue.toHexString()))
+                val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.errorAsIllegalArgument(NO_MACHINE, localise(NO_MACHINE_KEY, machineHexValue.toHexString()))
                 val numberOfSections = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val timeDateStamp = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val pointerToSymbolTable = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -97,7 +93,7 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
                 val sizeOfOptionalHeader = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val characteristics = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.Success(COFFHeader(machine, numberOfSections, timeDateStamp, pointerToSymbolTable, numberOfSymbols, sizeOfOptionalHeader, characteristics))
+                return KorneaResult.success(COFFHeader(machine, numberOfSections, timeDateStamp, pointerToSymbolTable, numberOfSymbols, sizeOfOptionalHeader, characteristics))
             }
         }
     }

@@ -7,6 +7,7 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import org.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnvironment, SpiralEventBus, SpiralCacheProvider, SpiralResourceLoader {

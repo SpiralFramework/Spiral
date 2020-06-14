@@ -6,13 +6,11 @@ import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
-import org.abimon.kornea.erorrs.common.doOnFailure
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
+import org.abimon.kornea.errors.common.getOrBreak
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.fauxSeekFromStart
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 abstract class STXContainer {
@@ -50,49 +48,49 @@ abstract class STXContainer {
         const val MAPPED_STRINGS_KEY = "$PREFIX.mapped_strings"
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<STXContainer> {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<STXContainer> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
-                use(flow) {
-                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                closeAfter(flow) {
+                    val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (magic != MAGIC_NUMBER_LE) {
-                        return KorneaResult.Error(INVALID_MAGIC, localise(INVALID_MAGIC_KEY, magic.toHexString(), MAGIC_NUMBER_LE.toHexString()))
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_MAGIC, localise(INVALID_MAGIC_KEY, magic.toHexString(), MAGIC_NUMBER_LE.toHexString()))
                     }
 
-                    val languageID = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val languageID = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val language = Language(languageID)
 
-                    val unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (unk != 1)
                         debug(NEW_UNK_VALUE_KEY, unk)
 
-                    val tableOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val tableOffset = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val unk2 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk2 = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (unk2 != 8)
                         debug(NEW_UNK2_VALUE_KEY, unk2)
 
-                    val count = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val count = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (count == 0)
-                        return KorneaResult.Success(EmptySTXContainer(language))
+                        return@closeAfter KorneaResult.success(EmptySTXContainer(language))
 
                     if (count <= 0) {
-                        return KorneaResult.Error(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, count))
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, count))
                     }
 
-                    val stringOffsets: Array<StringOffset> = flow.fauxSeekFromStart(tableOffset.toULong(), dataSource) { tableFlow ->
-                        Array(count) {
+                    val stringOffsets: Array<StringOffset> = flow.fauxSeekFromStartForResult(tableOffset.toULong(), dataSource) { tableFlow ->
+                        KorneaResult.success(Array(count) {
                             //NOTE: These variables cannot be inlined without crashing the Kotlin compiler.
                             val id = tableFlow.readInt32LE()
-                                    ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String ID
+                                    ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String ID
                             val offset = tableFlow.readInt32LE()
-                                    ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String Offset
+                                    ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //String Offset
 
                             StringOffset(id, offset)
-                        }
-                    }.doOnFailure { return it.cast() }
+                        })
+                    }.getOrBreak { return@closeAfter it.cast() }
 
-                    val maxStringID = stringOffsets.max()?.stringID ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val maxStringID = stringOffsets.max()?.stringID ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     if (maxStringID >= count) {
                         //We need to use a map
@@ -103,28 +101,27 @@ abstract class STXContainer {
                         stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
                             val string = flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
                                 stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
-                            }.doOnFailure { return it.cast() }
+                            }.getOrBreak { return@closeAfter it.cast() }
 
                             strings[stringID] = string
                         }
 
-                        return KorneaResult.Success(MapBackedSTXContainer(language, strings))
+                        return@closeAfter KorneaResult.success(MapBackedSTXContainer(language, strings))
                     } else {
                         val strings = arrayOfNulls<String>(count)
 
                         stringOffsets.sortedBy(StringOffset::stringOffset).forEach { (stringID, stringOffset) ->
                             val string = flow.fauxSeekFromStart(stringOffset.toULong(), dataSource) { stringFlow ->
                                 stringFlow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16LE)
-                            }.doOnFailure { return it.cast() }
+                            }.getOrBreak { return@closeAfter it.cast() }
 
                             strings[stringID] = string
                         }
 
-                        return KorneaResult.Success(ArrayBackedSTXContainer(language, strings.requireNoNulls()))
+                        return@closeAfter KorneaResult.success(ArrayBackedSTXContainer(language, strings.requireNoNulls()))
                     }
                 }
             }
-        }
     }
 
     data class EmptySTXContainer(override val language: Language) : STXContainer() {

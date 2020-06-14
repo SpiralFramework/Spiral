@@ -89,6 +89,8 @@ interface WritableSpiralFormat: SpiralFormat {
 sealed class FormatWriteResponse {
     object SUCCESS: FormatWriteResponse()
     object WRONG_FORMAT: FormatWriteResponse()
+
+    //TODO: Replace this with a result
     class FAIL(val reason: Throwable): FormatWriteResponse() {
         constructor(context: SpiralContext): this(Throwable(context.localise("gurren.errors.no_reason")))
     }

@@ -2,11 +2,12 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.korneaNotFound
+import org.abimon.kornea.annotations.ExperimentalKorneaIO
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.korneaNotFound
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.jvm.JVMDataSource
-import org.abimon.kornea.io.jvm.files.FileDataSource
+import org.abimon.kornea.io.jvm.files.AsyncFileDataSource
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -32,26 +33,29 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
         )
     }
 
+    @ExperimentalKorneaIO
     override suspend fun loadResource(name: String, from: KClass<*>): KorneaResult<DataSource<*>> {
         val classLoader = from.java.classLoader
 
         val file = File(name)
         if (file.exists())
-            return KorneaResult.Success(FileDataSource(file))
+            return KorneaResult.success(AsyncFileDataSource(file))
+
         var classLoaderResource = classLoader.getResource(name)
         if (classLoaderResource != null)
-            return KorneaResult.Success(JVMDataSource(classLoaderResource::openStream))
+            return KorneaResult.success(JVMDataSource(classLoaderResource::openStream, null))
+
         for (module in spiralModules) {
             for (platform in platformModules) {
                 val resourceFolderFile = File("$module/src/$platform/resources/$name")
                 if (resourceFolderFile.exists())
-                    return KorneaResult.Success(FileDataSource(resourceFolderFile))
+                    return KorneaResult.success(AsyncFileDataSource(resourceFolderFile))
             }
         }
 
         classLoaderResource = SpiralModuleBase::class.java.classLoader.getResource(name)
         if (classLoaderResource != null)
-            return KorneaResult.Success(JVMDataSource(classLoaderResource::openStream))
+            return KorneaResult.success(JVMDataSource(classLoaderResource::openStream, null))
 
         return korneaNotFound("Could not find a resource for name $name")
     }

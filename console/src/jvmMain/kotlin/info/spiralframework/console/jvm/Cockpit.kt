@@ -44,8 +44,11 @@ import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.abimon.kornea.errors.common.doOnSuccess
 import org.abimon.kornea.io.common.flow.readAndClose
+import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.use
+import org.abimon.kornea.io.common.useAndMapInputFlow
 import org.abimon.kornea.io.jvm.files.relativePathFrom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -74,20 +77,21 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val loggerFactory = LoggerFactory.getILoggerFactory()
             val baseLogger: Logger
             if (loggerFactory is ch.qos.logback.classic.LoggerContext) {
-                val loggerData = resourceLoader.loadResource("logback.xml")?.use { src -> src.openInputFlow()?.readAndClose() }
-                if (loggerData != null) {
-                    try {
-                        val configurator = JoranConfigurator()
-                        configurator.context = loggerFactory
-                        // Call context.reset() to clear any previous configuration, e.g. default
-                        // configuration. For multi-step configuration, omit calling context.reset().
-                        loggerFactory.reset()
-                        configurator.doConfigure(ByteArrayInputStream(loggerData))
-                    } catch (je: JoranException) {
-                        // StatusPrinter will handle this
+                resourceLoader.loadResource("logback.xml")
+                    .useAndMapInputFlow { flow -> flow.readBytes() }
+                    .doOnSuccess { loggerData ->
+                        try {
+                            val configurator = JoranConfigurator()
+                            configurator.context = loggerFactory
+                            // Call context.reset() to clear any previous configuration, e.g. default
+                            // configuration. For multi-step configuration, omit calling context.reset().
+                            loggerFactory.reset()
+                            configurator.doConfigure(ByteArrayInputStream(loggerData))
+                        } catch (je: JoranException) {
+                            // StatusPrinter will handle this
+                        }
+                        StatusPrinter.printInCaseOfErrorsOrWarnings(loggerFactory)
                     }
-                    StatusPrinter.printInCaseOfErrorsOrWarnings(loggerFactory)
-                }
 
                 baseLogger = loggerFactory.getLogger(locale.localise("logger.parent.name"))
             } else {

@@ -1,7 +1,7 @@
 package info.spiralframework.formats.common.compression
 
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.korneaNotEnoughData
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.korneaNotEnoughData
 import org.abimon.kornea.io.common.readUInt32LE
 
 const val DR_VITA_MAGIC = 0xA755AAFCu
@@ -14,7 +14,7 @@ fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
     var pos = 0
     val magic = data.readUInt32LE(pos) ?: return korneaNotEnoughData()
     if(magic != DR_VITA_MAGIC) {
-        return KorneaResult.Error(DR_VITA_INVALID_MAGIC_NUMBER, "Magic number 0x${magic.toString(16)} is invalid")
+        return KorneaResult.errorAsIllegalArgument(DR_VITA_INVALID_MAGIC_NUMBER, "Magic number 0x${magic.toString(16)} is invalid")
     }
 
     pos += 4
@@ -85,5 +85,5 @@ fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
 
 //    require(output.size == rawSize.toInt())
 
-    return KorneaResult.Success(output.toByteArray())
+    return KorneaResult.success(output.toByteArray())
 }

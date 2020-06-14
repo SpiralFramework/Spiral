@@ -5,6 +5,7 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
+import org.abimon.kornea.errors.common.getOrBreak
 import org.abimon.kornea.io.common.DataSource
 
 object DataTableStructureFormat: ReadableSpiralFormat<DataTableStructure> {
@@ -26,7 +27,7 @@ object DataTableStructureFormat: ReadableSpiralFormat<DataTableStructure> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataTableStructure> {
-        val dataTable = DataTableStructure(context, source) ?: return FormatResult.Fail(this, 1.0)
+        val dataTable = DataTableStructure(context, source).getOrBreak { return FormatResult.Fail(this, 1.0, it) }
 
         return FormatResult.Success(this, dataTable, 0.7)
     }

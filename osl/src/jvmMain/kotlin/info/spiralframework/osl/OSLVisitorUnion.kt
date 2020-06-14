@@ -1,10 +1,10 @@
 package info.spiralframework.osl
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osb.common.OpenSpiralBitcodeBuilder
 import info.spiralframework.osb.common.OpenSpiralBitcodeBuilderBranch
 import info.spiralframework.osb.common.OpenSpiralBitcodeFlagCondition
+import org.kornea.toolkit.common.SemanticVersion
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 

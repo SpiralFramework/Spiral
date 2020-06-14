@@ -1,14 +1,13 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.FlowOutputStream
-import info.spiralframework.base.common.io.asOutputStream
 import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.abimon.kornea.io.common.flow.OutputFlow
+import org.abimon.kornea.io.jvm.asOutputStream
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException

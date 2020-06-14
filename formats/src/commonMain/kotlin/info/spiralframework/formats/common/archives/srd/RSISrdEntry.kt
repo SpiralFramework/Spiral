@@ -3,18 +3,13 @@ package info.spiralframework.formats.common.archives.srd
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.properties.getValue
-import info.spiralframework.base.common.properties.oneTimeMutable
-import info.spiralframework.base.common.properties.setValue
-import info.spiralframework.base.common.useAndFlatMap
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.filterToInstance
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.filterToInstance
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
-import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.SeekableInputFlow
 import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readInt32LE
+import org.kornea.toolkit.common.oneTimeMutableInline
 
 @ExperimentalUnsignedTypes
 /** ResourceInfoEntry? */
@@ -34,31 +29,31 @@ data class RSISrdEntry(
     data class ResourceIndex(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
     data class LabelledResourceIndex(val name: Int, val start: Int, val length: Int, val unk2: Int)
 
-    var unk1: Int by oneTimeMutable()
-    var unk2: Int by oneTimeMutable()
-    var unk3: Int by oneTimeMutable()
-    var resourceCount: Int by oneTimeMutable()
-    var unk4: Int by oneTimeMutable()
-    var unk5: Int by oneTimeMutable()
-    var unk6: Int by oneTimeMutable()
-    var unk7: Int by oneTimeMutable()
+    var unk1: Int by oneTimeMutableInline()
+    var unk2: Int by oneTimeMutableInline()
+    var unk3: Int by oneTimeMutableInline()
+    var resourceCount: Int by oneTimeMutableInline()
+    var unk4: Int by oneTimeMutableInline()
+    var unk5: Int by oneTimeMutableInline()
+    var unk6: Int by oneTimeMutableInline()
+    var unk7: Int by oneTimeMutableInline()
 
-    var resources: Array<ResourceIndex> by oneTimeMutable()
-    var name: String by oneTimeMutable()
+    var resources: Array<ResourceIndex> by oneTimeMutableInline()
+    var name: String by oneTimeMutableInline()
 
     @ExperimentalStdlibApi
     override suspend fun SpiralContext.setup(): KorneaResult<RSISrdEntry> {
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
+            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useAndFlatMap { flow -> setup(flow) }
         else {
             return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<RSISrdEntry> {
-        flow.seek(0, InputFlow.FROM_BEGINNING) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+    private suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<RSISrdEntry> {
+        flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk2 = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -80,9 +75,9 @@ data class RSISrdEntry(
             )
         }
 
-        flow.seek(nameOffset.toLong(), InputFlow.FROM_BEGINNING)
+        flow.seek(nameOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
         name = flow.readNullTerminatedUTF8String()
 
-        return KorneaResult.Success(this@RSISrdEntry)
+        return KorneaResult.success(this@RSISrdEntry)
     }
 }

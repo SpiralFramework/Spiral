@@ -1,8 +1,9 @@
 package info.spiralframework.base.common.locale
 
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.closeAfter
 import org.abimon.kornea.io.common.loadProperties
 import org.abimon.kornea.io.common.use
 import kotlin.reflect.KClass
@@ -24,7 +25,7 @@ class CommonLocaleBundle(override val bundleName: String, override val locale: C
                 val variantSource = loadResource("${bundleName}_${locale.language}_${locale.variant}.properties", context)
 
                 if (parentSource !is KorneaResult.Success && languageSource !is KorneaResult.Success && countrySource !is KorneaResult.Success && variantSource !is KorneaResult.Success)
-                    return KorneaResult.Error(ERROR_NO_LANG_FILES_FOUND, "")
+                    return KorneaResult.errorAsIllegalArgument(ERROR_NO_LANG_FILES_FOUND, "")
 
                 val parentBundle = parentSource.flatMap { ds -> load(bundleName, CommonLocale.ROOT, ds, null, context) }
                 val languageBundle = languageSource.flatMap { ds -> load(bundleName, CommonLocale(locale.language, "", ""), ds, parentBundle.getOrNull(), context) }
@@ -44,11 +45,11 @@ class CommonLocaleBundle(override val bundleName: String, override val locale: C
         suspend fun load(bundleName: String, locale: CommonLocale, dataSource: DataSource<*>, parent: LocaleBundle?, context: KClass<*>): KorneaResult<CommonLocaleBundle> =
                 dataSource.openInputFlow()
                         .flatMap { flow ->
-                            use(flow) {
+                            closeAfter(flow) {
                                 val properties: MutableMap<String, String> = HashMap()
                                 parent?.let(properties::putAll)
                                 properties.putAll(flow.loadProperties())
-                                KorneaResult.Success(CommonLocaleBundle(bundleName, locale, properties, context))
+                                KorneaResult.success(CommonLocaleBundle(bundleName, locale, properties, context))
                             }
                         }
     }

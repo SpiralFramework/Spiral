@@ -1,12 +1,16 @@
 package info.spiralframework.formats.common.compression
 
 import info.spiralframework.base.common.reverseBits
-import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.errors.common.KorneaResult
 import org.abimon.kornea.io.common.readInt32LE
 
 const val SPC_COMPRESSION_MAGIC_NUMBER = 0x53504343
 
-fun decompressSpcData(data: ByteArray, size: Int = 0): ByteArray {
+const val INVALID_SPC_COMPRESSION_MAGIC_NUMBER = 0xE005
+
+const val SPC_COMPRESSION_NOT_ENOUGH_DATA = "formats.compression.spc.not_enough_data"
+
+fun decompressSpcData(data: ByteArray, size: Int = 0): KorneaResult<ByteArray> {
     val output = ArrayList<Byte>(size)
     var flag = 1
     var pos = 0
@@ -51,5 +55,5 @@ fun decompressSpcData(data: ByteArray, size: Int = 0): ByteArray {
         flag = flag shr 1
     }
 
-    return output.toByteArray()
+    return KorneaResult.success(output.toByteArray ())
 }

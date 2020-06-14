@@ -3,10 +3,11 @@ package info.spiralframework.formats.common.data
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
-import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
+import org.abimon.kornea.errors.common.getOrBreak
 import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.closeAfter
 import org.abimon.kornea.io.common.flow.readExact
 import org.abimon.kornea.io.common.readInt16LE
 import org.abimon.kornea.io.common.use
@@ -17,31 +18,30 @@ class DRv3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, va
     companion object {
         const val NOT_ENOUGH_DATA_KEY = "formats.nonstop_debate.drv3.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DRv3NonstopDebate> {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DRv3NonstopDebate> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                val flow = dataSource.openInputFlow().getOrBreak { return it.cast() }
 
-                use(flow) {
-                    val timeLimit = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val sectionCount = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val timeLimit = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionCount = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val unk1 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val unk2 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val unk3 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val unk4 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk1 = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk2 = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk3 = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk4 = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val sectionBuffer = ByteArray(404) //Yes, this is the actual count
 
                     val sections = Array(sectionCount) {
                         println(flow.position())
-                        flow.readExact(sectionBuffer) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        flow.readExact(sectionBuffer) ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         DRv3NonstopDebateSection.fromData(sectionBuffer)
                     }
 
-                    return KorneaResult.Success(DRv3NonstopDebate(timeLimit, unk1, unk2, unk3, unk4, sections))
+                    return@closeAfter KorneaResult.success(DRv3NonstopDebate(timeLimit, unk1, unk2, unk3, unk4, sections))
                 }
             }
-        }
     }
 
     /** 2 * timeLimit */

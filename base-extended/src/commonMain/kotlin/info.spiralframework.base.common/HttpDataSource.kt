@@ -4,10 +4,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.Url
 import io.ktor.http.fullPath
-import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.errors.common.KorneaResult
 import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.DataSource.Companion.ERRORS_SOURCE_CLOSED
-import org.abimon.kornea.io.common.DataSource.Companion.ERRORS_TOO_MANY_SOURCES_OPEN
+import org.abimon.kornea.io.common.DataSource.Companion.korneaSourceClosed
+import org.abimon.kornea.io.common.DataSource.Companion.korneaSourceUnknown
+import org.abimon.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
 import kotlin.math.max
 
 @ExperimentalUnsignedTypes
@@ -26,17 +27,15 @@ class HttpDataSource(val url: Url, val maxInstanceCount: Int = -1, override val 
 
     override suspend fun openNamedInputFlow(location: String?): KorneaResult<ByteReadChannelInputFlow> {
         when {
-            closed -> return KorneaResult.Error(ERRORS_SOURCE_CLOSED, "Instance closed")
+            closed -> return korneaSourceClosed()
+            openInstances.size == maxInstanceCount -> return korneaTooManySourcesOpen(maxInstanceCount)
             canOpenInputFlow() -> {
                 val flow = ByteReadChannelInputFlow(client.get(url), location ?: this.location)
                 flow.addCloseHandler(this::instanceClosed)
                 openInstances.add(flow)
-                return KorneaResult.Success(flow)
+                return KorneaResult.success(flow)
             }
-            else -> return KorneaResult.Error(
-                    ERRORS_TOO_MANY_SOURCES_OPEN,
-                    "Too many instances open (${openInstances.size}/${maxInstanceCount})"
-            )
+            else -> return korneaSourceUnknown()
         }
     }
 

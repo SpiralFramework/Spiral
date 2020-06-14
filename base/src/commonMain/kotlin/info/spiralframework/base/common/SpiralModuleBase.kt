@@ -1,6 +1,7 @@
 package info.spiralframework.base.common
 
 import info.spiralframework.base.common.locale.loadBundle
+import org.kornea.toolkit.common.SemanticVersion
 
 class SpiralModuleBase: SpiralModuleProvider {
     override val moduleName: String = "spiral-base"

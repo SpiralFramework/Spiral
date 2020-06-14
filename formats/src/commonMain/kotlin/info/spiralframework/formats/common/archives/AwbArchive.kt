@@ -4,7 +4,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.WindowedInputFlow
@@ -20,28 +20,28 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
         const val NOT_ENOUGH_DATA_KEY = "formats.awb.not_enough_data"
         const val INVALID_MAGIC_KEY = "formats.awb.invalid_magic"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<AwbArchive> {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<AwbArchive> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
 
-                use(flow) {
-                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (magic != MAGIC_NUMBER_LE) {
-                        return KorneaResult.Error(INVALID_MAGIC_NUMBER, localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_LE.toString(16)}"))
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_MAGIC_NUMBER, localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_LE.toString(16)}"))
                     }
 
-                    val unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unk1 = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                    val numEntries = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val align = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val numEntries = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val align = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val awbFileIDs = IntArray(numEntries) {
-                        flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     }
-                    val headerEnd = flow.readUInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val headerEnd = flow.readUInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val awbFileEnds = UIntArray(numEntries) {
-                        flow.readUInt32LE() ?: return korneaNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        flow.readUInt32LE() ?: return@closeAfter korneaNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     }
 
                     var start: UInt
@@ -55,11 +55,10 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
                         AwbFileEntry(awbFileIDs[index], start, end - start)
                     }
 
-                    return KorneaResult.Success(AwbArchive(unk1, entries, dataSource))
+                    return@closeAfter KorneaResult.success(AwbArchive(unk1, entries, dataSource))
                 }
             }
         }
-    }
 
     suspend fun openSource(file: AwbFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
     suspend fun openFlow(file: AwbFileEntry): KorneaResult<InputFlow> =

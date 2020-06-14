@@ -1,7 +1,6 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -13,10 +12,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.builtins.list
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readBytes
+import org.abimon.kornea.io.common.useAndMapInputFlow
 import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
@@ -69,16 +69,16 @@ open class Dr1(
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr1.json"))
                 val gameString = loadResource("games/dr1.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
-                        .doOnFailure { return it.cast() }
+                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                        .getOrBreak { return it.cast() }
                 val gameJson = Json.parse(Dr1GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr1.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                         .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
                         .getOrElse(emptyList())
 
-                return KorneaResult.Success(
+                return KorneaResult.success(
                         Dr1(
                                 gameJson.character_ids,
                                 gameJson.character_identifiers,

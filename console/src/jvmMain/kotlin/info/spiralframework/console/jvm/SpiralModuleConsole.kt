@@ -1,10 +1,10 @@
 package info.spiralframework.console.jvm
 
 import info.spiralframework.base.common.SPIRAL_VERSION
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.locale.loadBundle
+import org.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 class SpiralModuleConsole: SpiralModuleProvider {

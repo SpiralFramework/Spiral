@@ -6,6 +6,9 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.getOrBreak
+import org.abimon.kornea.errors.common.getOrElseTransform
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.readBytes
@@ -45,9 +48,9 @@ open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, Re
 
                     return@useInputFlow FormatResult(this, img, img != null, 1.0)
                 } catch (io: IOException) {
-                    return@useInputFlow FormatResult.Fail<BufferedImage>(this, 1.0, io)
+                    return@useInputFlow FormatResult.Fail<BufferedImage>(this, 1.0, KorneaResult.WithException.of(io))
                 } finally {
                     reader?.dispose()
                 }
-            } ?: FormatResult.Fail(this, 1.0)
+            }.getOrElseTransform { FormatResult.Fail(this, 1.0, it) }
 }

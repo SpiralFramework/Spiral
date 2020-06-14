@@ -1,7 +1,7 @@
 package info.spiralframework.base.common.locale
 
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.errors.common.KorneaResult
 
 interface LocaleBundle: Map<String, String> {
     val bundleName: String

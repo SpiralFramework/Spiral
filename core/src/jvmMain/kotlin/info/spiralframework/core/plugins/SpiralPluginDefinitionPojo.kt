@@ -1,24 +1,24 @@
 package info.spiralframework.core.plugins
 
-import info.spiralframework.base.common.SemanticVersion
+import org.kornea.toolkit.common.SemanticVersion
 
 data class SpiralPluginDefinitionPojo(
-        val name: String,
-        val uid: String,
+    val name: String,
+    val uid: String,
 
-        val description: String?,
+    val description: String?,
 
-        val authors: Array<String>?,
-        val supportedModules: Array<String>?,
-        val requiredModules: Array<String>?,
-        val contentWarnings: Array<String>?,
+    val authors: Array<String>?,
+    val supportedModules: Array<String>?,
+    val requiredModules: Array<String>?,
+    val contentWarnings: Array<String>?,
 
-        val version: String?,
-        val semanticVersion: SemanticVersion,
+    val version: String?,
+    val semanticVersion: SemanticVersion,
 
-        val pluginClass: String,
+    val pluginClass: String,
 
-        val pluginFileName: String?
+    val pluginFileName: String?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

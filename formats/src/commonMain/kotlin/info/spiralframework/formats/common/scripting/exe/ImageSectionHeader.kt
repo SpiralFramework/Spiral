@@ -4,14 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readAsciiString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.trimNulls
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtualAddress: Int, val sizeOfRawData: Int, val pointerToRawData: Int, val pointerToRelocations: Int, val pointerToLineNumbers: Int, val numberOfRelocations: Int, val numberOfLineNumbers: Int, val characteristics: Int) {
@@ -54,7 +50,7 @@ data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtua
 
         const val NOT_ENOUGH_DATA_KEY = "formats.exe.image_section.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<ImageSectionHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<ImageSectionHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<ImageSectionHeader> {
             withFormats(context) {
                 val name = flow.readAsciiString(8)?.trim() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -69,7 +65,7 @@ data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtua
                 val numberOfLineNumbers = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val characteristics = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.Success(ImageSectionHeader(name, virtualSize, virtualAddress, sizeOfRawData, pointerToRawData, pointerToRelocations, pointerToLineNumbers, numberOfRelocations, numberOfLineNumbers, characteristics))
+                return KorneaResult.success(ImageSectionHeader(name, virtualSize, virtualAddress, sizeOfRawData, pointerToRawData, pointerToRelocations, pointerToLineNumbers, numberOfRelocations, numberOfLineNumbers, characteristics))
             }
         }
     }

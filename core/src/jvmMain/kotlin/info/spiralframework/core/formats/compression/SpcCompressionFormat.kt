@@ -11,7 +11,9 @@ import info.spiralframework.formats.common.archives.SpcArchive
 import info.spiralframework.formats.common.archives.SpcFileEntry
 import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUMBER
 import info.spiralframework.formats.common.compression.decompressSpcData
+import info.spiralframework.formats.common.compression.decompressVita
 import info.spiralframework.formats.common.games.DrGame
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.PeekableInputFlow
 import org.abimon.kornea.io.common.flow.readBytes
@@ -20,11 +22,17 @@ import java.util.*
 data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null) : FormatReadContext
 
 object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
+    const val NOT_SPC_DATA = 0x1000
+    const val NOT_COMPRESSED = 0x1001
+
+    const val NOT_SPC_DATA_KEY = "formats.compression.spc.not_spc_data"
+    const val NOT_COMPRESSED_KEY = "formats.compression.spc.not_compressed"
+
     override val name: String = "SPC Compression"
     override val extension: String = "cmp"
 
     override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
-        if (source.useInputFlow { flow -> flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER } == true || (readContext as? SpcEntryFormatReadContextdata)?.entry?.compressionFlag == SpcArchive.COMPRESSED_FLAG)
+        if (source.useInputFlow { flow -> flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER }.getOrElse(false) || (readContext as? SpcEntryFormatReadContextdata)?.entry?.compressionFlag == SpcArchive.COMPRESSED_FLAG)
             return FormatResult.Success(Optional.empty(), 1.0)
         return FormatResult.Fail(1.0)
     }
@@ -40,34 +48,40 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
-        try {
-            val data = source.useInputFlow { flow ->
-                val entry = (readContext as? SpcEntryFormatReadContextdata)?.entry
+        val data = source.useInputFlow { flow ->
+            val entry = (readContext as? SpcEntryFormatReadContextdata)?.entry
 
-                if (entry == null) {
-                    require(flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER)
-                } else if (entry.compressionFlag != SpcArchive.COMPRESSED_FLAG) {
-                    return@useInputFlow null
-                }
-
-                flow.readBytes()
-            } ?: return FormatResult.Fail(this, 1.0)
-            val cache = context.cacheShortTerm(context, "spc:${data.sha256().toHexString()}")
-
-            val output = cache.openOutputFlow()
-            if (output == null) {
-                //Cache has failed; store in memory
-                cache.close()
-                return FormatResult.Success(this, BinaryDataSource(decompressSpcData(data)), 1.0)
-            } else {
-                output.write(decompressSpcData(data))
-
-                val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
-                result.release.add(cache)
-                return result
+            if (entry == null) {
+                if (flow.readInt32LE() != SPC_COMPRESSION_MAGIC_NUMBER)
+                    return@useInputFlow KorneaResult.errorAsIllegalArgument<ByteArray>(NOT_SPC_DATA, context.localise(NOT_SPC_DATA_KEY))
+            } else if (entry.compressionFlag != SpcArchive.COMPRESSED_FLAG) {
+                return@useInputFlow KorneaResult.errorAsIllegalArgument<ByteArray>(NOT_COMPRESSED, context.localise(NOT_COMPRESSED_KEY))
             }
-        } catch (iae: IllegalArgumentException) {
-            return FormatResult.Fail(this, 1.0, iae)
-        }
+
+            KorneaResult.success(flow.readBytes())
+        }.flatten().getOrBreak { return FormatResult.Fail(this, 1.0, it) }
+
+        val cache = context.cacheShortTerm(context, "spc:${data.sha256().toHexString()}")
+
+        return cache.openOutputFlow()
+            .flatMap { output ->
+                @Suppress("DEPRECATION")
+                decompressSpcData(data).map { data ->
+                    output.write(data)
+                    val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
+                    result.release.add(cache)
+
+                    result
+                }.doOnFailure {
+                    cache.close()
+                    output.close()
+                }
+            }.getOrElseRun {
+                cache.close()
+
+                decompressSpcData(data)
+                    .map<ByteArray, FormatResult<DataSource<*>>> { decompressed -> FormatResult.Success(this, BinaryDataSource(decompressed), 1.0) }
+                    .getOrElseTransform { failure -> FormatResult.Fail(this, 1.0, failure) }
+            }
     }
 }

@@ -1,6 +1,5 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.SpiralModuleProvider
@@ -11,6 +10,7 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import org.kornea.toolkit.common.SemanticVersion
 import java.util.*
 
 @ExperimentalUnsignedTypes

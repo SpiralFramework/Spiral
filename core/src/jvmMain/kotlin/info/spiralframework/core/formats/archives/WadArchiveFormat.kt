@@ -5,10 +5,7 @@ import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
-import org.abimon.kornea.erorrs.common.doOnFailure
-import org.abimon.kornea.erorrs.common.doOnSuccess
-import org.abimon.kornea.erorrs.common.getOrElse
-import org.abimon.kornea.erorrs.common.map
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.BinaryDataSource
 import org.abimon.kornea.io.common.DataPool
 import org.abimon.kornea.io.common.DataSource

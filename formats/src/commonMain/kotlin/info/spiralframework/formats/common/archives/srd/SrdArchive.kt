@@ -3,9 +3,9 @@ package info.spiralframework.formats.common.archives.srd
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KORNEA_ERROR_NOT_ENOUGH_DATA
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.doOnFailure
+import org.abimon.kornea.errors.common.KORNEA_ERROR_NOT_ENOUGH_DATA
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.getOrBreak
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.OffsetDataSource
 
@@ -27,10 +27,10 @@ class SrdArchive(val entries: Array<BaseSrdEntry>) {
                     while (true) {
                         val offsetDataSource = OffsetDataSource(dataSource, pos, closeParent = false)
                         val entry = BaseSrdEntry(this, offsetDataSource)
-                                .doOnFailure { error ->
-                                    if (error is KorneaResult.Error<*, *> && error.errorCode == KORNEA_ERROR_NOT_ENOUGH_DATA) return@loop
+                                .getOrBreak { error ->
+                                    if (error is KorneaResult.WithErrorCode && error.errorCode == KORNEA_ERROR_NOT_ENOUGH_DATA) return@loop
 
-                                    return KorneaResult.Error(INVALID_ENTRY, localise(INVALID_ENTRY_KEY), error)
+                                    return KorneaResult.errorAsIllegalArgument(INVALID_ENTRY, localise(INVALID_ENTRY_KEY), error)
                                 }
 
                         pos += 16uL + entry.mainDataLength + entry.mainDataLength.alignmentNeededFor(0x10).toUInt() + entry.subDataLength + entry.subDataLength.alignmentNeededFor(0x10).toUInt()
@@ -39,10 +39,10 @@ class SrdArchive(val entries: Array<BaseSrdEntry>) {
                 }
 
                 if(entries.isEmpty()) {
-                    return KorneaResult.Error(NO_ENTRIES, localise(NO_ENTRIES_KEY))
+                    return KorneaResult.errorAsIllegalArgument(NO_ENTRIES, localise(NO_ENTRIES_KEY))
                 }
 
-                return KorneaResult.Success(SrdArchive(entries.toTypedArray()))
+                return KorneaResult.success(SrdArchive(entries.toTypedArray()))
             }
         }
 

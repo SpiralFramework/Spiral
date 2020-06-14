@@ -21,9 +21,9 @@ import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.BufferedOutputFlow
 import org.abimon.kornea.io.common.use
-import org.abimon.kornea.io.jvm.files.FileDataSource
-import org.abimon.kornea.io.jvm.files.FileInputFlow
-import org.abimon.kornea.io.jvm.files.FileOutputFlow
+import org.abimon.kornea.io.jvm.files.AsyncFileDataSource
+import org.abimon.kornea.io.jvm.files.AsyncFileInputFlow
+import org.abimon.kornea.io.jvm.files.AsyncFileOutputFlow
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
@@ -42,9 +42,9 @@ object OSLProxy {
                 val game = if (args.any { str -> str == "--dr2" }) dr2 else dr1
 
                 suspend fun transpile(base: File, filename: String) {
-                    val linFileSource = FileDataSource(File(base, "$filename.lin"))
+                    val linFileSource = AsyncFileDataSource(File(base, "$filename.lin"))
                     val lin = UnsafeLinScript(dr1, linFileSource)
-                    val out = FileOutputFlow(File(base, "$filename.osl"))
+                    val out = AsyncFileOutputFlow(File(base, "$filename.osl"))
 
                     val transpiler = LinTranspiler(lin)
                     transpiler.transpile(out)
@@ -56,14 +56,14 @@ object OSLProxy {
                     val tokens = CommonTokenStream(lexer)
                     val parser = OpenSpiralParser(tokens)
                     val tree = parser.script()
-                    BufferedOutputFlow(FileOutputFlow(File(base, "$filename.osb"))).use { binary ->
+                    BufferedOutputFlow(AsyncFileOutputFlow(File(base, "$filename.osb"))).use { binary ->
                         val visitor = OSLVisitor()
                         val script = visitor.visitScript(tree)
                         val builder = OpenSpiralBitcodeBuilder(binary)
                         script.writeToBuilder(builder)
                     }
-                    val linOut = FileOutputFlow(File(base, "$filename.lin"))
-                    linOut.compileLinFromBitcode(this, UnsafeDr1(), FileInputFlow(File(base, "$filename.osb")))
+                    val linOut = AsyncFileOutputFlow(File(base, "$filename.lin"))
+                    linOut.compileLinFromBitcode(this, UnsafeDr1(), AsyncFileInputFlow(File(base, "$filename.osb")))
                 }
 
                 var i = 0
@@ -98,7 +98,7 @@ object OSLProxy {
     @ExperimentalStdlibApi
     suspend fun SpiralContext.convertToOsl(path: String) {
         val drv3 = UnsafeDRv3()
-        val loadedWrd = UnsafeWordScript(drv3, FileDataSource(File(path)))
+        val loadedWrd = UnsafeWordScript(drv3, AsyncFileDataSource(File(path)))
         val out = PrintStream(path.replaceAfterLast('.', "osl"))
         out.println("OSL Script")
         out.println()

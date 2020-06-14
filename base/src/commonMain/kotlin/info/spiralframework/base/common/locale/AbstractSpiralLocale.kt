@@ -2,7 +2,7 @@ package info.spiralframework.base.common.locale
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import kotlin.reflect.KClass
 
 interface SpiralLocale {
@@ -53,7 +53,7 @@ abstract class AbstractSpiralLocale: SpiralLocale {
     override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle> {
         val bundle = CommonLocaleBundle.load(this, bundleName, currentLocale, context)
         if (bundle is KorneaResult.Success) {
-            _localisationBundles.add(bundle.value)
+            _localisationBundles.add(bundle.get())
         }
 
         return bundle.cast()
@@ -87,5 +87,5 @@ suspend inline fun <reified T: Any, B> B.loadTestBundle(bundleName: String) wher
 suspend fun SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>) = resourceLoader.addBundle(bundleName, context)
 suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, locale: CommonLocale) = resourceLoader.changeLocale(locale)
 
-inline fun <reified T> SpiralLocale.localisedNotEnoughData(message: String): KorneaResult.Error<T, Unit> =
-        KorneaResult.Error(KORNEA_ERROR_NOT_ENOUGH_DATA, localise(message))
+inline fun <reified T> SpiralLocale.localisedNotEnoughData(message: String): KorneaResult<T> =
+        KorneaResult.errorAsIllegalState(KORNEA_ERROR_NOT_ENOUGH_DATA, localise(message))

@@ -2,13 +2,13 @@ package info.spiralframework.osl
 
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
-import info.spiralframework.base.common.SemanticVersion
-import info.spiralframework.base.common.freeze
 import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osb.common.OpenSpiralBitcode
 import info.spiralframework.osb.common.buildLongReference
 import kotlinx.coroutines.runBlocking
 import org.antlr.v4.runtime.tree.TerminalNode
+import org.kornea.toolkit.common.SemanticVersion
+import org.kornea.toolkit.common.freeze
 import java.lang.IllegalStateException
 
 @ExperimentalStdlibApi

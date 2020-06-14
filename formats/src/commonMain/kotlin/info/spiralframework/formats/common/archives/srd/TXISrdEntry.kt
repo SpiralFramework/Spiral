@@ -3,19 +3,17 @@ package info.spiralframework.formats.common.archives.srd
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.properties.getValue
-import info.spiralframework.base.common.properties.oneTimeMutable
-import info.spiralframework.base.common.properties.setValue
-import info.spiralframework.base.common.useAndFlatMap
-import info.spiralframework.base.common.useAndMap
-import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.filterToInstance
 import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.io.common.EnumSeekMode
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
-import org.abimon.kornea.io.common.flow.InputFlow
+import org.abimon.kornea.io.common.flow.SeekableInputFlow
 import org.abimon.kornea.io.common.flow.bookmark
 import org.abimon.kornea.io.common.flow.readBytes
 import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.use
+import org.abimon.kornea.io.common.useAndFlatMap
+import org.kornea.toolkit.common.oneTimeMutableInline
 
 @ExperimentalUnsignedTypes
 /** Texture Information? */
@@ -30,8 +28,8 @@ data class TXISrdEntry(
         const val MAGIC_NUMBER_BE = 0x24545849
     }
 
-    var textureNames: Array<String> by oneTimeMutable()
-    var rsiEntry: RSISrdEntry by oneTimeMutable()
+    var textureNames: Array<String> by oneTimeMutableInline()
+    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
 
     val fileID: String
         get() = rsiEntry.name
@@ -42,28 +40,28 @@ data class TXISrdEntry(
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
+            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useAndFlatMap { flow -> setup(flow) }
         else {
             return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<TXISrdEntry> {
-        flow.seek(0, InputFlow.FROM_BEGINNING) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+    private suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<TXISrdEntry> {
+        flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         val textureCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         val textureNameOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        flow.seek(textureNameOffset.toLong(), InputFlow.FROM_BEGINNING)
+        flow.seek(textureNameOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
         textureNames = Array(textureCount) {
             val nameOffset = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
             bookmark(flow) {
-                flow.seek(nameOffset.toLong(), InputFlow.FROM_BEGINNING)
+                flow.seek(nameOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
                 flow.readNullTerminatedUTF8String()
             }
         }
 
-        return KorneaResult.Success(this@TXISrdEntry)
+        return KorneaResult.success(this@TXISrdEntry)
     }
 }

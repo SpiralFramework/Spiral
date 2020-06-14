@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
-import info.spiralframework.base.common.SemanticVersion
+import org.kornea.toolkit.common.SemanticVersion
 
 object SemanticVersionSerialisation {
     object SERIALISER : JsonSerializer<SemanticVersion>() {

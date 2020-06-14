@@ -1,7 +1,6 @@
 package info.spiralframework.formats.common.games
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.useAndMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
@@ -11,11 +10,11 @@ import info.spiralframework.formats.common.scripting.lin.dr2.Dr2TextEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.builtins.list
-import org.abimon.kornea.erorrs.common.*
+import kotlinx.serialization.json.Json
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useInputFlow
+import org.abimon.kornea.io.common.useAndMapInputFlow
 
 @ExperimentalUnsignedTypes
 open class Dr2(
@@ -38,16 +37,16 @@ open class Dr2(
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr2.json"))
                 val gameString = loadResource("games/dr2.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
-                        .doOnFailure { return it.cast() }
+                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                        .getOrBreak { return it.asType() }
                 val gameJson = Json.parse(Dr2GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr2.json", Dr1::class)
-                        .flatMap { source -> source.openInputFlow().useAndMap { flow -> flow.readBytes().decodeToString() } }
+                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                         .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
                         .getOrElse(emptyList())
 
-                return KorneaResult.Success(Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes))
+                return KorneaResult.success(Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes))
             }
         }
     }

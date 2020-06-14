@@ -1,13 +1,13 @@
 package info.spiralframework.bst.common
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.byteArrayOfHex
 import info.spiralframework.formats.common.archives.*
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
+import org.kornea.toolkit.common.byteArrayOfHex
 
 @ExperimentalStdlibApi
 object BstProcessor {
@@ -109,18 +109,18 @@ object BstProcessor {
     suspend fun SpiralContext.processParseFileAs(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?): KorneaResult<Any> {
         when (bst.read() ?: return korneaNotEnoughData()) {
             FILE_TYPE_PAK -> {
-                val basePak = PakArchive(this, source).doOnFailure { return it.cast() }
+                val basePak = PakArchive(this, source).getOrBreak { return it.cast() }
                 val customPak = CustomPakArchive()
                 basePak.files.forEach { entry -> customPak[entry.index] = basePak.openSource(entry) }
-                return KorneaResult.Success(customPak)
+                return KorneaResult.success(customPak)
             }
             FILE_TYPE_SPC -> {
-                val baseSpc = SpcArchive(this, source).doOnFailure { return it.cast() }
+                val baseSpc = SpcArchive(this, source).getOrBreak { return it.cast() }
                 val customSpc = CustomPatchSpcArchive(baseSpc)
                 customSpc.addAllBaseFiles(this)
-                return KorneaResult.Success(customSpc)
+                return KorneaResult.success(customSpc)
             }
-            else -> return KorneaResult.Empty()
+            else -> return KorneaResult.empty()
         }
     }
 

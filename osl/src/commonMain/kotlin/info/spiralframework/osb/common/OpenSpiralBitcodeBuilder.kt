@@ -1,7 +1,6 @@
 package info.spiralframework.osb.common
 
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
@@ -50,6 +49,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_VAR_REFERENCE
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
+import org.kornea.toolkit.common.SemanticVersion
 import kotlin.math.roundToInt
 
 data class OpenSpiralBitcodeBuilderBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: suspend (OpenSpiralBitcodeBuilder) -> Unit)

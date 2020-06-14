@@ -4,14 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readAsciiString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.trimNulls
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.readInt64LE
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 class Dr1SaveFile {
@@ -29,7 +25,7 @@ class Dr1SaveFile {
             withFormats(context) {
                 val magic = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (magic != MAGIC_NUMBER) {
-                    return KorneaResult.Error(INVALID_MAGIC_NUMBER, localise(INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16).padStart(16, '0')}"))
+                    return KorneaResult.errorAsIllegalArgument(INVALID_MAGIC_NUMBER, localise(INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16).padStart(16, '0')}"))
                 }
 
                 val fileNumber = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY) //.convertASCIIToInt()
@@ -45,7 +41,7 @@ class Dr1SaveFile {
 
                 val lastPlayedString = flow.readAsciiString(32)?.trimNulls() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.Success(Dr1SaveFile())
+                return KorneaResult.success(Dr1SaveFile())
             }
         }
     }

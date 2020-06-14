@@ -3,8 +3,8 @@ package info.spiralframework.formats.common.compression
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.korneaNotEnoughData
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.korneaNotEnoughData
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.BinaryOutputFlow
 import org.abimon.kornea.io.common.flow.readExact
@@ -15,9 +15,9 @@ const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
 const val INVALID_DRV3_MAGIC_NUMBER = 0xE003
 const val INVALID_DRV3_SHIFT_MODE = 0xE004
 
-const val DRV3_NOT_ENOUGH_DATA = "formats.drv3_compression.not_enough_data"
-const val INVALID_DRV3_MAGIC_NUMBER_KEY = "formats.drv3_compression.invalid_magic"
-const val INVALID_DRV3_SHIFT_MODE_KEY = "formats.drv3_compression.invalid_shift"
+const val DRV3_NOT_ENOUGH_DATA = "formats.compression.drv3.not_enough_data"
+const val INVALID_DRV3_MAGIC_NUMBER_KEY = "formats.compression.drv3.invalid_magic"
+const val INVALID_DRV3_SHIFT_MODE_KEY = "formats.compression.drv3.invalid_shift"
 
 const val CLN = 0x4e4c4324
 const val CL1 = 0x314c4324
@@ -29,7 +29,7 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<
     val flow = BinaryInputFlow(data)
 
     val magic = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
-    if (magic != DRV3_COMP_MAGIC_NUMBER) return KorneaResult.Error(INVALID_DRV3_MAGIC_NUMBER, context.localise(INVALID_DRV3_MAGIC_NUMBER_KEY, magic.toHexString()))
+    if (magic != DRV3_COMP_MAGIC_NUMBER) return KorneaResult.errorAsIllegalArgument(INVALID_DRV3_MAGIC_NUMBER, context.localise(INVALID_DRV3_MAGIC_NUMBER_KEY, magic.toHexString()))
 
     val compressedSize = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
     flow.skip(8u)
@@ -44,7 +44,7 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<
     while (flow.available() > 0u) {
         val mode = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
 
-        if (mode != CLN && mode != CL1 && mode != CL2 && mode != CR0) return KorneaResult.Error(INVALID_DRV3_SHIFT_MODE, context.localise(INVALID_DRV3_SHIFT_MODE_KEY, mode.toHexString()))
+        if (mode != CLN && mode != CL1 && mode != CL2 && mode != CR0) return KorneaResult.errorAsIllegalArgument(INVALID_DRV3_SHIFT_MODE, context.localise(INVALID_DRV3_SHIFT_MODE_KEY, mode.toHexString()))
 
         val chunkDecompressedSize = flow.readInt32BE() ?: return korneaNotEnoughData()
         val chunkCompressedSize = flow.readInt32BE() ?: return korneaNotEnoughData()
@@ -61,7 +61,7 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<
         }
     }
 
-    return KorneaResult.Success(output.getData())
+    return KorneaResult.success(output.getData())
 }
 
 @ExperimentalUnsignedTypes

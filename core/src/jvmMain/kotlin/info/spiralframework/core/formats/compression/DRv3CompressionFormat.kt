@@ -7,7 +7,9 @@ import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.compression.decompressV3
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.readBytes
 import java.util.*
@@ -17,7 +19,7 @@ object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
     override val extension: String = "cmp"
 
     override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
-        if (source.useInputFlow { flow -> flow.readInt32BE() == info.spiralframework.formats.common.compression.DRV3_COMP_MAGIC_NUMBER } == true)
+        if (source.useInputFlow { flow -> flow.readInt32BE() == info.spiralframework.formats.common.compression.DRV3_COMP_MAGIC_NUMBER }.getOrElse(false))
             return FormatResult.Success(Optional.empty(), 1.0)
         return FormatResult.Fail(1.0)
     }
@@ -33,24 +35,28 @@ object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
-        try {
-            val data = source.useInputFlow { flow -> flow.readBytes() } ?: return FormatResult.Fail(this, 1.0)
+            val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return FormatResult.Fail(this, 1.0, it) }
             val cache = context.cacheShortTerm(context, "drv3:${data.sha256().toHexString()}")
 
-            val output = cache.openOutputFlow()
-            if (output == null) {
-                //Cache has failed; store in memory
-                cache.close()
-                return FormatResult.Success(this, BinaryDataSource(decompressV3(context, data)), 1.0)
-            } else {
-                output.write(decompressV3(context, data))
+        return cache.openOutputFlow()
+            .flatMap { output ->
+                @Suppress("DEPRECATION")
+                decompressV3(context, data).map { data ->
+                    output.write(data)
 
-                val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
-                result.release.add(cache)
-                return result
+                    val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
+                    result.release.add(cache)
+                    result
+                }.doOnFailure {
+                    cache.close()
+                    output.close()
+                }
+            }.getOrElseRun {
+                cache.close()
+
+                decompressV3(context, data)
+                    .map<ByteArray, FormatResult<DataSource<*>>> { decompressed -> FormatResult.Success(this, BinaryDataSource(decompressed), 1.0) }
+                    .getOrElseTransform { failure -> FormatResult.Fail(this, 1.0, failure) }
             }
-        } catch (iae: IllegalArgumentException) {
-            return FormatResult.Fail(this, 1.0, iae)
-        }
     }
 }

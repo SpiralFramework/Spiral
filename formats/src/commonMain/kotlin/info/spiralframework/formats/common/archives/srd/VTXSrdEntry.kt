@@ -2,19 +2,13 @@ package info.spiralframework.formats.common.archives.srd
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.properties.getValue
-import info.spiralframework.base.common.properties.oneTimeMutable
-import info.spiralframework.base.common.properties.setValue
-import info.spiralframework.base.common.useAndFlatMap
-import info.spiralframework.base.common.useAndMap
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
-import org.abimon.kornea.erorrs.common.doOnFailure
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
+import org.abimon.kornea.errors.common.getOrBreak
+import org.abimon.kornea.errors.common.filterToInstance
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.*
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.use
+import org.kornea.toolkit.common.oneTimeMutableInline
 
 typealias VertexBlock = RSISrdEntry.ResourceIndex
 typealias IndexBlock = RSISrdEntry.ResourceIndex
@@ -35,37 +29,37 @@ data class VTXSrdEntry(
 
     data class VertexSizePair(val offset: Int, val size: Int)
 
-    var rsiEntry: RSISrdEntry by oneTimeMutable()
+    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
     val vertexBlock: VertexBlock
         get() = rsiEntry.resources[0]
     val faceBlock: FaceBlock
         get() = rsiEntry.resources[1]
 
-    var unk1: Int by oneTimeMutable()
-    var unk2: Int by oneTimeMutable()
-    var unk3: Int by oneTimeMutable()
+    var unk1: Int by oneTimeMutableInline()
+    var unk2: Int by oneTimeMutableInline()
+    var unk3: Int by oneTimeMutableInline()
 
-    var vertexCount: Int by oneTimeMutable()
+    var vertexCount: Int by oneTimeMutableInline()
 
-    var unkA: Int by oneTimeMutable()
-    var unkB: Int by oneTimeMutable()
-    var unkC: Int by oneTimeMutable()
-    var vertxSizeDataCount: Int by oneTimeMutable()
+    var unkA: Int by oneTimeMutableInline()
+    var unkB: Int by oneTimeMutableInline()
+    var unkC: Int by oneTimeMutableInline()
+    var vertxSizeDataCount: Int by oneTimeMutableInline()
 
-    var unknownOffset: Int by oneTimeMutable()
-    var vertexSizeDataOffset: Int by oneTimeMutable()
-    var floatListOffset: Int by oneTimeMutable()
-    var bindBoneListOffset: Int by oneTimeMutable()
-    var unk6: Int by oneTimeMutable()
-    var unk7: Int by oneTimeMutable()
+    var unknownOffset: Int by oneTimeMutableInline()
+    var vertexSizeDataOffset: Int by oneTimeMutableInline()
+    var floatListOffset: Int by oneTimeMutableInline()
+    var bindBoneListOffset: Int by oneTimeMutableInline()
+    var unk6: Int by oneTimeMutableInline()
+    var unk7: Int by oneTimeMutableInline()
 
-    var shortList: IntArray by oneTimeMutable()
-    var floatList: FloatArray by oneTimeMutable()
-    var bindBoneListStringOffsets: IntArray by oneTimeMutable()
+    var shortList: IntArray by oneTimeMutableInline()
+    var floatList: FloatArray by oneTimeMutableInline()
+    var bindBoneListStringOffsets: IntArray by oneTimeMutableInline()
 
-    var vertexSizeData: Array<VertexSizePair> by oneTimeMutable()
+    var vertexSizeData: Array<VertexSizePair> by oneTimeMutableInline()
 
-    var bindBoneRoot: Int by oneTimeMutable()
+    var bindBoneRoot: Int by oneTimeMutableInline()
 
     @ExperimentalStdlibApi
     override suspend fun SpiralContext.setup(): KorneaResult<VTXSrdEntry> {
@@ -73,15 +67,15 @@ data class VTXSrdEntry(
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(flow) }
+            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useAndFlatMap { flow -> setup(flow) }
         else {
             return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: InputFlow): KorneaResult<VTXSrdEntry> {
-        flow.seek(0, InputFlow.FROM_BEGINNING) ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+    private suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<VTXSrdEntry> {
+        flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk2 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -109,7 +103,7 @@ data class VTXSrdEntry(
             Array(vertxSizeDataCount) {
                 VertexSizePair(requireNotNull(vertexFlow.readInt32LE()), requireNotNull(vertexFlow.readInt32LE()))
             }
-        }.doOnFailure { error ->
+        }.getOrBreak { error ->
             return error.cast()
         }
 
@@ -128,7 +122,7 @@ data class VTXSrdEntry(
 
         floatList = flow.fauxSeekFromStart(floatListOffset.toULong(), dataSource) { floatFlow ->
             FloatArray(unk1) { requireNotNull(floatFlow.readHalfFloatLE()) }
-        }.doOnFailure { error ->
+        }.getOrBreak { error ->
             return error.cast()
         }
 
@@ -138,7 +132,7 @@ data class VTXSrdEntry(
 
         //There's more data after this, I'm not gonna try that yet. Seems to be pairs of shorts?
 
-        return KorneaResult.Success(this@VTXSrdEntry)
+        return KorneaResult.success(this@VTXSrdEntry)
     }
 }
 

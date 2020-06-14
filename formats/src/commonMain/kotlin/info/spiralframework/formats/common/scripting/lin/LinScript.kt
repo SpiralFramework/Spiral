@@ -2,7 +2,6 @@ package info.spiralframework.formats.common.scripting.lin
 
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.fauxSeekFromStartFlatMap
 import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
@@ -11,12 +10,9 @@ import info.spiralframework.formats.common.games.Dr2
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.games.UDG
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.*
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.*
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.*
-import org.abimon.kornea.io.common.peekInt16BE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, val game: DrGame.LinScriptable? = null) {
@@ -39,21 +35,21 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
         const val INVALID_STRING_OFFSET_KEY = "formats.lin.invalid_string_offset"
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): KorneaResult<LinScript> {
+        suspend operator fun invoke(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): KorneaResult<LinScript> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
 
-                use(flow) {
-                    val possibleMagicNumber = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val linBlockCount =
-                            if (possibleMagicNumber and MAGIC_NUMBER_MASK_LE == MAGIC_NUMBER_LE)
-                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                            else
-                                possibleMagicNumber
+                        if (possibleMagicNumber and MAGIC_NUMBER_MASK_LE == MAGIC_NUMBER_LE)
+                            flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        else
+                            possibleMagicNumber
 
-                    if (linBlockCount !in 1 .. 2) {
-                        return KorneaResult.Error(WRONG_BLOCK_COUNT, localise(WRONG_BLOCK_COUNT_KEY, linBlockCount))
+                    if (linBlockCount !in 1..2) {
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(WRONG_BLOCK_COUNT, localise(WRONG_BLOCK_COUNT_KEY, linBlockCount))
                     }
 
 //                    val game: DrGame.LinScriptable? = game?.takeUnless { game -> game == DrGame.LinScriptable.Unknown } ?: when (possibleMagicNumber and MAGIC_NUMBER_GAME_MASK) {
@@ -93,27 +89,36 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                     requireNotNull(game) { localise("formats.lin.no_game_provided") }
 
                     val linBlocks = IntArray(linBlockCount + 1) {
-                        flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     }
-                    val scriptData = flow.fauxSeekFromStartFlatMap(linBlocks[0].toULong(), dataSource) { scriptDataFlow ->
+                    val scriptData = flow.fauxSeekFromStartForResult(linBlocks[0].toULong(), dataSource) { scriptDataFlow ->
                         readScriptData(this, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, (linBlocks[1] - linBlocks[0]).toULong())))
-                    }.doOnFailure { return it.cast() }
+                    }.getOrBreak { return@closeAfter it.cast() }
 
                     val textData = when (linBlockCount) {
                         1 -> emptyArray()
                         else -> {
-                            flow.fauxSeekFromStartFlatMap(linBlocks[1].toULong(), dataSource) { textDataFlow ->
-                                readTextData(this, textDataFlow, linBlocks[1])
-                            }.doOnFailure { error ->
-                                return error.cast()
+                            val result = if (flow is SeekableInputFlow) {
+                                bookmark(flow) {
+                                    flow.seek(linBlocks[1].toLong(), EnumSeekMode.FROM_BEGINNING)
+                                    readTextData(this, flow, linBlocks[1])
+                                }
+                            } else {
+                                dataSource.openInputFlow().map { subflow ->
+                                    if (subflow is SeekableInputFlow) subflow
+                                    else BinaryInputFlow(subflow.readAndClose())
+                                }.flatMap { subflow ->
+                                    readTextData(this, subflow, linBlocks[1])
+                                }
                             }
+
+                            result.getOrBreak { error -> return@closeAfter error.cast() }
                         }
                     }
 
-                    return KorneaResult.Success(LinScript(scriptData, textData, game))
+                    return@closeAfter KorneaResult.success(LinScript(scriptData, textData, game))
                 }
             }
-        }
 
         suspend fun readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: PeekableInputFlow): KorneaResult<Array<LinEntry>> {
             withFormats(context) {
@@ -180,33 +185,35 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                     }
                 }
 
-                return KorneaResult.Success(entries.toTypedArray())
+                return KorneaResult.success(entries.toTypedArray())
             }
         }
 
         @ExperimentalStdlibApi
-        suspend fun readTextData(context: SpiralContext, flow: InputFlow, textOffset: Int): KorneaResult<Array<String>> {
+        suspend fun readTextData(context: SpiralContext, flow: SeekableInputFlow, textOffset: Int): KorneaResult<Array<String>> {
             withFormats(context) {
                 val stringCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (stringCount <= 0)
-                    return KorneaResult.Error(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, stringCount))
+                    return KorneaResult.errorAsIllegalArgument(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, stringCount))
 
                 val offsets = Array(stringCount) { index ->
-                    Pair(index, flow.readInt32LE()?.toLong()?.plus(textOffset)
-                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
+                    Pair(
+                        index, flow.readInt32LE()?.toLong()?.plus(textOffset)
+                               ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    )
                 }.sortedBy(Pair<Int, Long>::second)
                 val strings = arrayOfNulls<String>(stringCount)
 
                 if (offsets[0].second >= flow.position().toInt()) {
                     offsets.forEach { (i, offset) ->
-                        flow.seek(offset, InputFlow.FROM_BEGINNING)
+                        flow.seek(offset, EnumSeekMode.FROM_BEGINNING)
                         strings[i] = flow.readDoubleByteNullTerminatedString(encoding = TextCharsets.UTF_16)
                     }
                 } else {
-                    return KorneaResult.Error(INVALID_STRING_OFFSET, localise(INVALID_STRING_OFFSET_KEY, offsets[0].second.toHexString(), flow.position().toLong().toHexString()))
+                    return KorneaResult.errorAsIllegalArgument(INVALID_STRING_OFFSET, localise(INVALID_STRING_OFFSET_KEY, offsets[0].second.toHexString(), flow.position().toLong().toHexString()))
                 }
 
-                return KorneaResult.Success(strings.requireNoNulls())
+                return KorneaResult.success(strings.requireNoNulls())
             }
         }
     }

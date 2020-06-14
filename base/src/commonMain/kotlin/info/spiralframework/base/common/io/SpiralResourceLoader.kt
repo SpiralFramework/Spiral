@@ -1,8 +1,8 @@
 package info.spiralframework.base.common.io
 
 import info.spiralframework.base.common.SpiralModuleBase
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.korneaNotFound
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.korneaNotFound
 import org.abimon.kornea.io.common.DataSource
 import kotlin.reflect.KClass
 

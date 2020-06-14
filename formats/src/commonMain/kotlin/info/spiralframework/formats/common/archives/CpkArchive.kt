@@ -5,7 +5,7 @@ import info.spiralframework.base.common.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.*
 
@@ -43,30 +43,29 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
         const val FILE_OFFSET_COLUMN = "FileOffset"
 
         @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<CpkArchive> {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<CpkArchive> =
             withFormats(context) {
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
 
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
-
-                use(flow) {
-                    val magic = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (magic != MAGIC_NUMBER_LE) {
-                        return KorneaResult.Error(
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(
                                 INVALID_CPK_MAGIC,
                                 localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_LE.toString(16)}")
                         )
                     }
 
                     val headerInfo = UtfTableInfo(this, OffsetDataSource(dataSource, 0x10u))
-                            .doOnFailure { return KorneaResult.Error(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY, it)) }
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY, it)) }
 
                     if (headerInfo.rowCount != 1u) {
-                        return KorneaResult.Error(INVALID_HEADER_ROW_COUNT, localise(INVALID_HEADER_ROW_COUNT_KEY, headerInfo.rowCount))
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_ROW_COUNT, localise(INVALID_HEADER_ROW_COUNT_KEY, headerInfo.rowCount))
                     }
 
                     val tocOffset = headerInfo.readRowData(this, 0, TOC_OFFSET_COLUMN)
                             .filterToInstance<UtfRowData.TypeLong>()
-                            .doOnFailure { return KorneaResult.Error(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
                             .data
 
                     val etocOffset = headerInfo.readRowData(this, 0, ETOC_OFFSET_COLUMN)
@@ -81,19 +80,19 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
 
                     val contentOffset = headerInfo.readRowData(this, 0, CONTENT_OFFSET_COLUMN)
                             .filterToInstance<UtfRowData.TypeLong>()
-                            .doOnFailure { return KorneaResult.Error(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
                             .data
 
                     val fileCount = headerInfo.readRowData(this, 0, FILES_COLUMN)
                             .filterToInstance<UtfRowData.TypeInt>()
-                            .doOnFailure { return KorneaResult.Error(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
                             .data
 
                     val tocHeader = UtfTableInfo(this, OffsetDataSource(dataSource, tocOffset.toULong() + 0x10u))
-                            .doOnFailure { return KorneaResult.Error(INVALID_TOC_TABLE, localise(INVALID_TOC_TABLE_KEY, it)) }
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_TOC_TABLE, localise(INVALID_TOC_TABLE_KEY, it)) }
 
                     if (tocHeader.rowCount != fileCount.toUInt()) {
-                        return KorneaResult.Error(INVALID_TOC_ROW_COUNT, localise(INVALID_TOC_ROW_COUNT_KEY, tocHeader.rowCount, fileCount))
+                        return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_TOC_ROW_COUNT, localise(INVALID_TOC_ROW_COUNT_KEY, tocHeader.rowCount, fileCount))
                     }
 
                     val etocHeader = etocOffset.flatMap { offset -> UtfTableInfo(this, OffsetDataSource(dataSource, offset.data.toULong() + 0x10u)) }
@@ -103,36 +102,35 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
                     val files = Array(tocHeader.rowCount.toInt()) { index ->
                         val fileName = tocHeader.readRowData(this, index, FILENAME_COLUMN)
                                 .filterToInstance<UtfRowData.TypeString>()
-                                .doOnFailure { return KorneaResult.Error(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
                                 .data
 
                         val directoryName = tocHeader.readRowData(this, index, DIRECTORY_NAME_COLUMN)
                                 .filterToInstance<UtfRowData.TypeString>()
-                                .doOnFailure { return KorneaResult.Error(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
                                 .data
 
                         val fileSize = tocHeader.readRowData(this, index, FILE_SIZE_COLUMN)
                                 .filterToInstance<UtfRowData.TypeInt>()
-                                .doOnFailure { return KorneaResult.Error(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
                                 .data
 
                         val extractSize = tocHeader.readRowData(this, index, EXTRACT_SIZE_COLUMN)
                                 .filterToInstance<UtfRowData.TypeInt>()
-                                .doOnFailure { return KorneaResult.Error(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
                                 .data
 
                         val fileOffset = tocHeader.readRowData(this, index, FILE_OFFSET_COLUMN)
                                 .filterToInstance<UtfRowData.TypeLong>()
-                                .doOnFailure { return KorneaResult.Error(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
                                 .data + minOf(contentOffset, tocOffset)
 
                         CpkFileEntry(fileName, directoryName, fileSize, extractSize, fileOffset)
                     }
 
-                    return KorneaResult.Success(CpkArchive(headerInfo, tocHeader, etocHeader, itocHeader, gtocHeader, files, dataSource))
+                    return@closeAfter KorneaResult.success(CpkArchive(headerInfo, tocHeader, etocHeader, itocHeader, gtocHeader, files, dataSource))
                 }
             }
-        }
 
         val VALID_MONTHS = 1 .. 12
         val VALID_DAYS = 1 .. 31
@@ -172,28 +170,28 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
 
     suspend fun SpiralContext.openDecompressedSource(file: CpkFileEntry): KorneaResult<DataSource<out InputFlow>> {
         if (file.isCompressed) {
-            val flow = openRawFlow(file).doOnFailure { return it.cast() }
+            val flow = openRawFlow(file).getOrBreak { return it.cast() }
             val compressedData = flow.readAndClose()
             val cache = cacheShortTerm(compressedData.sha256().toHexString())
             val output = cache.openOutputFlow()
-                    .doOnFailure {
+                    .getOrBreak {
                         cache.close()
                         return decompressCrilayla(compressedData).map { BinaryDataSource(it) }
                     }
 
             decompressCrilayla(compressedData).map { output.write(it) }
 
-            return KorneaResult.Success(cache)
+            return KorneaResult.success(cache)
         } else {
-            return KorneaResult.Success(openRawSource(file))
+            return KorneaResult.success(openRawSource(file))
         }
     }
 
     suspend fun SpiralContext.openDecompressedFlow(file: CpkFileEntry): KorneaResult<out InputFlow> {
         if (file.isCompressed) {
-            val source = openDecompressedSource(file).doOnFailure { return it.cast() }
+            val source = openDecompressedSource(file).getOrBreak { return it.cast() }
             return source.openInputFlow()
-                    .doOnSuccess { input -> input.addCloseHandler { source.close() } }
+                    .doOnSuccess { input -> input.registerCloseHandler { source.close() } }
         } else {
             return openRawFlow(file)
         }

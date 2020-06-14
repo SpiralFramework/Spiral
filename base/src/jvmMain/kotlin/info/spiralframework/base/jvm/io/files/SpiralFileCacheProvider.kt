@@ -4,15 +4,17 @@ import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.TimedDataPool
+import org.abimon.kornea.annotations.ExperimentalKorneaIO
 import org.abimon.kornea.io.common.DataPool
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.jvm.files.FileDataPool
+import org.abimon.kornea.io.jvm.files.AsyncFileDataPool
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
+@ExperimentalKorneaIO
 @ExperimentalUnsignedTypes
 class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralContext> {
     private lateinit var shortTermDir: File
@@ -30,7 +32,7 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
     override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = File(persistentDir, name).exists()
 
     override suspend fun SpiralContext.cachePersistent(name: String, location: String?): DataPool<out InputFlow, out OutputFlow> =
-            FileDataPool(File(persistentDir, name))
+            AsyncFileDataPool(File(persistentDir, name))
 
     override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = isCachedShortTerm(name)
 

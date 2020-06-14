@@ -3,14 +3,10 @@ package info.spiralframework.formats.common.scripting.exe
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.base.common.useAndFlatMap
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 data class DosHeader(
@@ -41,12 +37,12 @@ data class DosHeader(
         const val NOT_ENOUGH_DATA_KEY = "formats.exe.dos.not_enough_data"
         const val INVALID_SIGNATURE_KEY = "formats.exe.dos.invalid_signature"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DosHeader> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DosHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<DosHeader> {
             withFormats(context) {
                 val mzSignature = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (mzSignature != MAGIC_NUMBER_LE) {
-                    return KorneaResult.Error(INVALID_SIGNATURE, localise(INVALID_SIGNATURE_KEY, mzSignature.toHexString(), MAGIC_NUMBER_LE.toHexString()))
+                    return KorneaResult.errorAsIllegalArgument(INVALID_SIGNATURE, localise(INVALID_SIGNATURE_KEY, mzSignature.toHexString(), MAGIC_NUMBER_LE.toHexString()))
                 }
 
                 val usedBytesInTheLastPage = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -70,7 +66,7 @@ data class DosHeader(
                 }
                 val addressOfNewExeHeader = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.Success(DosHeader(usedBytesInTheLastPage, fileSizeInPages, numberOfRelocationItems, headerSizeInParagraphs, minimumExtraParagraphs, maximumExtraParagraphs, initialRelativeSS, initialSP, checksum, initialIP, initialRelativeCS, addressOfRelationTable, overlayNumber, reserved, oemID, oemInfo, reserved2, addressOfNewExeHeader))
+                return KorneaResult.success(DosHeader(usedBytesInTheLastPage, fileSizeInPages, numberOfRelocationItems, headerSizeInParagraphs, minimumExtraParagraphs, maximumExtraParagraphs, initialRelativeSS, initialSP, checksum, initialIP, initialRelativeCS, addressOfRelationTable, overlayNumber, reserved, oemID, oemInfo, reserved2, addressOfNewExeHeader))
             }
         }
     }

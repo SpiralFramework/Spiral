@@ -1,6 +1,5 @@
 package info.spiralframework.osb.common
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralFunction
 import info.spiralframework.base.common.SpiralSuspending
@@ -21,6 +20,7 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.TREE_TYPE_PRESENT_SELEC
 import org.abimon.kornea.io.common.flow.BinaryInputFlow
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
+import org.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi

@@ -3,9 +3,9 @@ package info.spiralframework.base.common.io
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.putBack
-import org.abimon.kornea.erorrs.common.flatMap
-import org.abimon.kornea.erorrs.common.getOrElse
-import org.abimon.kornea.erorrs.common.map
+import org.abimon.kornea.errors.common.flatMap
+import org.abimon.kornea.errors.common.getOrElse
+import org.abimon.kornea.errors.common.map
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
@@ -30,7 +30,7 @@ interface SpiralShortTermCacheProvider {
             return pool
         }
 
-        fun newDataPool(location: String?): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool(location)
+        suspend fun newDataPool(location: String?): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool(location)
     }
 
     fun supportsShortTermCaching(): Boolean
@@ -56,7 +56,7 @@ interface SpiralPersistentCacheProvider {
             return pool
         }
 
-        fun newDataPool(location: String?): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool(location = location)
+        suspend fun newDataPool(location: String?): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool(location = location)
     }
 
     fun supportsPersistentCaching(): Boolean
@@ -85,7 +85,7 @@ interface SpiralTimedCacheProvider {
         }
 
         @ExperimentalTime
-        fun newDataPool(duration: Duration, location: String?): DataPool<out InputFlow, out OutputFlow> = TimedDataPool(BinaryDataPool(location = location), duration)
+        suspend fun newDataPool(duration: Duration, location: String?): DataPool<out InputFlow, out OutputFlow> = TimedDataPool(BinaryDataPool(location = location), duration)
     }
 
     fun supportsTimedCaching(): Boolean

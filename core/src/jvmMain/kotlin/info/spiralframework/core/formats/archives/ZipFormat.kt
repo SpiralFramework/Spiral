@@ -1,32 +1,25 @@
 package info.spiralframework.core.formats.archives
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.FlowOutputStream
-import info.spiralframework.base.common.io.asOutputStream
-import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.io.readChunked
-import info.spiralframework.base.common.useAndFlatMap
-import info.spiralframework.base.common.useAndMap
-import info.spiralframework.base.jvm.crypto.sha512Hash
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
 import info.spiralframework.formats.common.archives.srd.BaseSrdEntry
 import info.spiralframework.formats.common.archives.srd.SrdArchive
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.doOnSuccess
-import org.abimon.kornea.erorrs.common.flatMap
-import org.abimon.kornea.erorrs.common.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.abimon.kornea.annotations.ExperimentalKorneaIO
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.doOnSuccess
 import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.addCloseHandler
 import org.abimon.kornea.io.common.copyToOutputFlow
 import org.abimon.kornea.io.common.flow.OutputFlow
 import org.abimon.kornea.io.common.use
-import org.abimon.kornea.io.jvm.JVMOutputFlow
-import org.abimon.kornea.io.jvm.files.FileDataSource
-import org.abimon.kornea.io.jvm.files.FileOutputFlow
-import java.io.*
+import org.abimon.kornea.io.jvm.asOutputStream
+import org.abimon.kornea.io.jvm.files.*
+import org.kornea.toolkit.common.freeze
+import java.io.File
+import java.io.IOException
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -46,41 +39,59 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
+    @ExperimentalKorneaIO
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<ZipFile> {
-        if (source is FileDataSource) {
+        if (source is SynchronousFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
                     FormatResult.Success(this@ZipFormat, ZipFile(source.backing), 1.0)
                 }
             } catch (io: IOException) {
-                return FormatResult.Fail(this, 1.0, KorneaResult.Thrown(io))
+                return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(io))
+            }
+        } else if (source is AsyncFileDataSource) {
+            try {
+                return withContext(Dispatchers.IO) {
+                    FormatResult.Success(this@ZipFormat, ZipFile(source.backing.toFile()), 1.0)
+                }
+            } catch (io: IOException) {
+                return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(io))
             }
         } else {
             var zip: ZipFile? = null
             var ioException: IOException? = null
-
-            val tmpFile = withContext(Dispatchers.IO) { File.createTempFile(UUID.randomUUID().toString(), ".dat") }
-            tmpFile.deleteOnExit()
+            var tmpFile: File? = null
 
             try {
                 source.openInputFlow().doOnSuccess { flow ->
-                    withContext(Dispatchers.IO) {
-                        FileOutputFlow(tmpFile).use { flow.copyToOutputFlow(it) }
-                        zip = ZipFile(tmpFile)
+                    if (flow is SynchronousFileInputFlow) {
+                        return FormatResult.Success(this@ZipFormat, ZipFile(flow.backingFile), 1.0)
+                    } else if (flow is AsyncFileInputFlow) {
+                        return FormatResult.Success(this@ZipFormat, ZipFile(flow.backing.toFile()), 1.0)
                     }
+                    
+                    withContext(Dispatchers.IO) {
+                        freeze(File.createTempFile(UUID.randomUUID().toString(), ".dat")) { tmp ->
+                            tmpFile = tmp
+                            tmp.deleteOnExit()
 
-                    source.addCloseHandler { withContext(Dispatchers.IO) { tmpFile.delete() } }
+                            AsyncFileOutputFlow(tmp).use { flow.copyToOutputFlow(it) }
+                            zip = ZipFile(tmp)
+
+                            source.registerCloseHandler { withContext(Dispatchers.IO) { tmp.delete() } }
+                        }
+                    }
                 }
             } catch (io: IOException) {
-                withContext(Dispatchers.IO) { tmpFile.delete() }
+                withContext(Dispatchers.IO) { tmpFile?.delete() }
                 ioException = io
             }
 
             if (zip != null) {
                 return FormatResult.Success(this, zip!!, 1.0)
             } else {
-                tmpFile.delete()
-                return FormatResult.Fail(this, 1.0, KorneaResult.Thrown(ioException))
+                tmpFile?.delete()
+                return FormatResult.Fail(this, 1.0, ioException?.let { io -> KorneaResult.WithException.of(io) })
             }
         }
     }

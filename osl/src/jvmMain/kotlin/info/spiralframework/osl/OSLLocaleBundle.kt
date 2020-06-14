@@ -6,12 +6,9 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
-import info.spiralframework.base.common.useAndFlatMap
-import info.spiralframework.base.common.useAndMap
-import org.abimon.kornea.erorrs.common.*
+import org.abimon.kornea.errors.common.*
+import org.abimon.kornea.io.common.closeAfter
 import org.abimon.kornea.io.common.flow.readAndClose
-import org.abimon.kornea.io.common.use
-import org.abimon.kornea.io.common.useInputFlow
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -43,11 +40,11 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
 
         @ExperimentalUnsignedTypes
         suspend fun loadBundleByName(resourceLoader: SpiralResourceLoader, fullName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): KorneaResult<LocaleBundle> {
-            resourceLoader.loadResource("$fullName.properties", from).doOnSuccess { ds ->
-                use(ds) {
-                    ds.openInputFlow().doOnSuccess { flow ->
+            val oslBundle = resourceLoader.loadResource("$fullName.properties", from).flatMap { ds ->
+                closeAfter(ds) {
+                    ds.openInputFlow().flatMap inner@{ flow ->
                         val input = CharStreams.fromString(buildString {
-                            appendln(String(flow.readAndClose(), Charsets.UTF_8))
+                            appendLine(String(flow.readAndClose(), Charsets.UTF_8))
                         })
                         val lexer = OSLLocaleLexer(input)
                         val tokens = CommonTokenStream(lexer)
@@ -58,17 +55,20 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
                             val tree = parser.locale()
                             val visitor = LocaleVisitor()
                             visitor.visit(tree)
-                            return KorneaResult.Success(visitor.createLocaleBundle(fullName, locale, parent, from))
+                            return@inner KorneaResult.success(visitor.createLocaleBundle(fullName, locale, parent, from))
                         } catch (pce: ParseCancellationException) {
+                            return@inner KorneaResult.thrown(pce)
                         }
                     }
                 }
             }
 
+            if (oslBundle is KorneaResult.Success) return oslBundle
+
             try {
                 return CommonLocaleBundle.load(resourceLoader, fullName, locale, from).cast()
             } catch (mre: MissingResourceException) {
-                return KorneaResult.Thrown(mre)
+                return KorneaResult.thrown(mre)
             }
         }
     }

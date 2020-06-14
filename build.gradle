@@ -1,6 +1,6 @@
 plugins {
-    id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4-M2'
+//    id 'java' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4-M2' apply false
     id 'org.jetbrains.kotlin.multiplatform' version '1.4-M2' apply false
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.4-M2' apply false
     id 'com.github.johnrengelman.shadow' version '4.0.3' apply false
@@ -19,46 +19,17 @@ ext {
     fuel_version = '2.0.1'
 }
 
-allprojects {
-    apply plugin: 'java'
-//    apply plugin: 'kotlin'
+subprojects {
     apply plugin: 'maven-publish'
 
     group = artifact_group
     version = project_version
-    sourceCompatibility = 11
+//    sourceCompatibility = 11
 
     configurations {
         compileInclude
 
         compile.extendsFrom(compileInclude)
-    }
-
-//    jar {
-//        baseName = "spiral"
-//        appendix = "$project.name"
-//        version = ""
-//    }
-//
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        baseName = "spiral"
-        appendix = "$project.name"
-        version = project_version
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        baseName = jar.baseName
-        appendix = jar.appendix
-        version = jar.version
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
     }
 
     publishing {
@@ -71,10 +42,8 @@ allprojects {
 
         publications {
             maven(MavenPublication) {
-                artifactId = "spiral-$project.name"
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
+//                artifact sourcesJar
+//                artifact javadocJar
             }
         }
     }
@@ -87,13 +56,6 @@ allprojects {
         }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         maven { url 'https://kotlin.bintray.com/kotlinx' }
-    }
-
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
     }
 }
 

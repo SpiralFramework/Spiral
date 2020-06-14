@@ -1,6 +1,5 @@
 package info.spiralframework.osb.common
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.text.toHexString
@@ -8,6 +7,7 @@ import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.WindowedInputFlow
 import org.abimon.kornea.io.common.flow.readExact
+import org.kornea.toolkit.common.SemanticVersion
 
 object OpenSpiralBitcode {
     const val MAGIC_NUMBER_LE = 0x494C534F

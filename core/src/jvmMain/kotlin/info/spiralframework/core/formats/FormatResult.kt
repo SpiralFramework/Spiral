@@ -1,7 +1,7 @@
 package info.spiralframework.core.formats
 
 import info.spiralframework.base.common.concurrent.suspendForEach
-import org.abimon.kornea.erorrs.common.KorneaResult
+import org.abimon.kornea.errors.common.KorneaResult
 import org.abimon.kornea.io.common.DataCloseable
 import java.io.Closeable
 import java.util.*

@@ -5,8 +5,8 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.srd.SrdArchive
-import org.abimon.kornea.erorrs.common.getOrElse
-import org.abimon.kornea.erorrs.common.map
+import org.abimon.kornea.errors.common.getOrElse
+import org.abimon.kornea.errors.common.map
 import org.abimon.kornea.io.common.DataSource
 import java.util.*
 

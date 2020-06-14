@@ -1,8 +1,8 @@
 package info.spiralframework.core.plugins
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.core.SpiralCoreContext
 import org.abimon.kornea.io.common.DataSource
+import org.kornea.toolkit.common.SemanticVersion
 
 interface ISpiralPlugin {
     val name: String

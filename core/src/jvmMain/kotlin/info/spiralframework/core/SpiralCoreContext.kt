@@ -1,6 +1,5 @@
 package info.spiralframework.core
 
-import info.spiralframework.base.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -12,6 +11,7 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
+import org.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralSerialisation {

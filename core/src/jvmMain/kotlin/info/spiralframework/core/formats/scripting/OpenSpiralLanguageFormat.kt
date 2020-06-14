@@ -6,6 +6,9 @@ import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.osb.common.OpenSpiralBitcodeWrapper
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.getOrElseTransform
+import org.abimon.kornea.errors.common.map
 import org.abimon.kornea.io.common.DataSource
 import org.abimon.kornea.io.common.flow.OutputFlow
 
@@ -15,9 +18,10 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OpenSpiralBitcodeWrapper>
 
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<OpenSpiralBitcodeWrapper> {
         try {
-            return FormatResult.Success(this, OpenSpiralBitcodeWrapper.unsafe(context, source), 1.0)
+            return OpenSpiralBitcodeWrapper(context, source).map { osb -> FormatResult.Success(this, osb, 1.0) }
+                .getOrElseTransform { FormatResult.Fail(this, 1.0, it) }
         } catch (iae: IllegalArgumentException) {
-            return FormatResult.Fail(this, 1.0, iae)
+            return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(iae))
         }
     }
 

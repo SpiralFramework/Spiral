@@ -4,10 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.erorrs.common.KorneaResult
-import org.abimon.kornea.erorrs.common.cast
-import org.abimon.kornea.erorrs.common.doOnFailure
-import org.abimon.kornea.erorrs.common.map
+import org.abimon.kornea.errors.common.KorneaResult
+import org.abimon.kornea.errors.common.cast
+import org.abimon.kornea.errors.common.getOrBreak
+import org.abimon.kornea.errors.common.map
 import org.abimon.kornea.io.common.*
 import org.abimon.kornea.io.common.flow.InputFlow
 import org.abimon.kornea.io.common.flow.WindowedInputFlow
@@ -17,15 +17,15 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
     companion object {
         const val NOT_ENOUGH_DATA_KEY = "formats.srd_entry.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<out BaseSrdEntry> {
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<out BaseSrdEntry> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().doOnFailure { return it.cast() }
+                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
 
-                use(flow) {
-                    val classifier = flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val mainDataLength = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val subDataLength = flow.readUInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val unknown = flow.readInt32BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                closeAfter(flow) {
+                    val classifier = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val mainDataLength = flow.readUInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val subDataLength = flow.readUInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val unknown = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     flow.skip(mainDataLength + mainDataLength.alignmentNeededFor(0x10).toULong())
                     flow.skip(subDataLength + subDataLength.alignmentNeededFor(0x10).toULong())
@@ -46,10 +46,9 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
                         else -> UnknownSrdEntry(classifier, mainDataLength.toULong(), subDataLength.toULong(), unknown, dataSource)
                     }
 
-                    return entry.setup(this)
+                    return@closeAfter entry.setup(this)
                 }
             }
-        }
     }
 
     val classifierAsString: String by lazy {
@@ -62,18 +61,18 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
     }
 
     suspend fun openMainDataSource(): DataSource<out InputFlow> =
-            WindowedDataSource(dataSource, 16uL, mainDataLength, closeParent = false)
+        WindowedDataSource(dataSource, 16uL, mainDataLength, closeParent = false)
 
     suspend fun openMainDataFlow(): KorneaResult<InputFlow> =
-            dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL, mainDataLength) }
+        dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL, mainDataLength) }
 
     suspend fun openSubDataSource(): DataSource<out InputFlow> =
-            WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength, closeParent = false)
+        WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength, closeParent = false)
 
     suspend fun openSubDataFlow(): KorneaResult<InputFlow> =
-            dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength) }
+        dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength) }
 
-    open suspend fun SpiralContext.setup(): KorneaResult<out BaseSrdEntry> = KorneaResult.Success(this@BaseSrdEntry)
+    open suspend fun SpiralContext.setup(): KorneaResult<out BaseSrdEntry> = KorneaResult.success(this@BaseSrdEntry)
 }
 
 @ExperimentalUnsignedTypes

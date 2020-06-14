@@ -2,7 +2,6 @@ package info.spiralframework.formats.common.scripting.osl
 
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.freeze
 import info.spiralframework.base.common.io.println
 import info.spiralframework.base.common.text.appendln
 import info.spiralframework.base.common.text.toHexString
@@ -12,6 +11,7 @@ import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.scripting.lin.transpile
 import org.abimon.kornea.io.common.flow.OutputFlow
+import org.kornea.toolkit.common.freeze
 import kotlin.contracts.ExperimentalContracts
 import kotlin.math.min
 
