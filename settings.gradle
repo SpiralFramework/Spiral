@@ -23,5 +23,6 @@ include ':harmony'
 include ':formats'
 include ':osl'
 include ':updater'
+include ':tpod'
 
 rootProject.children.each { child -> child.name = "spiral-${child.name}"}
