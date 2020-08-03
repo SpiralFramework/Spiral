@@ -22,9 +22,9 @@ ext {
     kornea_apollo_version = '1.0.3-alpha'
     kornea_errors_version = '1.0.2-alpha'
     kornea_img_version = '1.0.3-alpha'
-    kornea_io_version = '2.0.0-alpha'
+    kornea_io_version = '2.1.0-alpha'
     kornea_modelling_version = '1.0.2-alpha'
-    kornea_toolkit_version = '2.3.0-alpha'
+    kornea_toolkit_version = '3.0.0-alpha'
 
     jackson_version = '2.9.4'
     sfl4j_version = '1.7.25'
