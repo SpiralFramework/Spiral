@@ -5,9 +5,9 @@ import info.spiralframework.base.common.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.*
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
 
 @ExperimentalUnsignedTypes
 class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etocHeader: KorneaResult<UtfTableInfo>, val itocHeader: KorneaResult<UtfTableInfo>, val gtocHeader: KorneaResult<UtfTableInfo>, val files: Array<CpkFileEntry>, val dataSource: DataSource<*>) {

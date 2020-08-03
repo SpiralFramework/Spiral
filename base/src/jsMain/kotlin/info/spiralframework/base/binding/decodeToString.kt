@@ -9,7 +9,6 @@ private const val UUID_SET_VERSION_4: Byte = 0x40
 private const val UUID_CLEAR_VARIANT: Byte = 0x3F
 private const val UUID_SET_VARIANT_IETF: Byte = 0x80.toByte()
 
-@ExperimentalStdlibApi
 actual fun ByteArray.decodeToString(charset: TextCharsets): String = manuallyDecode(this, charset)
 
 actual fun formatPercent(percentage: Double): String = percentage.asDynamic().toFixed(2) as String

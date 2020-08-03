@@ -1,11 +1,11 @@
 package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.korneaNotFound
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.js.AjaxDataSource
-import org.abimon.kornea.io.js.urlExists
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotFound
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.js.AjaxDataSource
+import dev.brella.kornea.io.js.urlExists
 import kotlin.reflect.KClass
 
 actual class DefaultSpiralResourceLoader(val root: String) : SpiralResourceLoader {

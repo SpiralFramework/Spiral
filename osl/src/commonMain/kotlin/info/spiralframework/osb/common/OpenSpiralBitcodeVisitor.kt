@@ -1,7 +1,7 @@
 package info.spiralframework.osb.common
 
 import info.spiralframework.base.common.SpiralContext
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 interface OpenSpiralBitcodeVisitor {
     object DEBUG : OpenSpiralBitcodeVisitor {

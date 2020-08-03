@@ -22,10 +22,10 @@ import info.spiralframework.formats.common.archives.srd.SrdArchive
 import info.spiralframework.formats.common.games.DrGame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.abimon.kornea.errors.common.doOnSuccess
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.jvm.JVMDataSource
+import dev.brella.kornea.errors.common.doOnSuccess
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.jvm.JVMDataSource
 import java.util.zip.ZipFile
 import kotlin.math.floor
 import kotlin.math.log

@@ -6,8 +6,8 @@ import info.spiralframework.base.common.properties.getValue
 import info.spiralframework.base.common.text.arbitraryProgressBar
 import io.github.soc.directories.ProjectDirectories
 import kotlinx.coroutines.runBlocking
-import org.abimon.kornea.io.jvm.files.ensureDirectoryExists
-import org.abimon.kornea.io.jvm.files.ensureFileExists
+import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
+import dev.brella.kornea.io.jvm.files.ensureFileExists
 import java.io.File
 
 actual class DefaultSpiralConfig: SpiralConfig {

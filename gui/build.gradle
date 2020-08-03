@@ -37,7 +37,7 @@ kotlin {
                 api project(":spiral-bst")
                 api project(":spiral-core")
 
-                api 'org.abimon:kornea-img:1.3.5'
+                api "dev.brella:kornea-img:$kornea_img_version"
 
                 implementation "ch.qos.logback:logback-classic:$logback_version"
             }

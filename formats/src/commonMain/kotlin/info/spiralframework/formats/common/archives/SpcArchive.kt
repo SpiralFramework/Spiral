@@ -7,12 +7,12 @@ import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.WindowedInputFlow
-import org.abimon.kornea.io.common.flow.readAndClose
-import org.abimon.kornea.io.common.flow.readBytes
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.io.common.flow.readAndClose
+import dev.brella.kornea.io.common.flow.readBytes
 
 @ExperimentalUnsignedTypes
 class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataSource: DataSource<*>) {

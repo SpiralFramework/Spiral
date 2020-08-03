@@ -2,9 +2,9 @@ package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.*
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.OutputFlow
 import java.io.File
 import java.util.*
 

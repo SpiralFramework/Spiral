@@ -9,7 +9,7 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 actual data class DefaultSpiralContext actual constructor(

@@ -15,12 +15,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useAndFlatMap
-import org.abimon.kornea.io.common.useAndMap
-import org.abimon.kornea.io.common.useAndMapInputFlow
-import org.abimon.kornea.io.common.useInputFlow
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndFlatMap
+import dev.brella.kornea.io.common.useAndMap
+import dev.brella.kornea.io.common.useAndMapInputFlow
+import dev.brella.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 open class DRv3(

@@ -1,10 +1,10 @@
 package info.spiralframework.bst.common
 
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.common.writeInt16LE
-import org.abimon.kornea.io.common.writeInt32LE
-import org.abimon.kornea.io.common.writeInt64LE
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.writeInt16LE
+import dev.brella.kornea.io.common.writeInt32LE
+import dev.brella.kornea.io.common.writeInt64LE
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi

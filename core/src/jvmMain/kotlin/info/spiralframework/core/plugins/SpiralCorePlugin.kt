@@ -2,9 +2,9 @@ package info.spiralframework.core.plugins
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import info.spiralframework.core.SpiralCoreContext
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useAndMapInputFlow
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 
 class SpiralCorePlugin private constructor(context: SpiralCoreContext) : BaseSpiralPlugin(context, SpiralCorePlugin::class.java, "spiralframework_core_plugin.yaml") {
     companion object {

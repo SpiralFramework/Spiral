@@ -14,7 +14,6 @@ import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
-import info.spiralframework.base.common.freeze
 import info.spiralframework.base.common.io.print
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.toHexString
@@ -52,16 +51,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.npe.tga.TGAReader
 import net.npe.tga.readImage
-import org.abimon.kornea.img.DXT1PixelData
-import org.abimon.kornea.img.bc7.BC7PixelData
-import org.abimon.kornea.img.createPngImage
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.*
-import org.abimon.kornea.io.jvm.files.FileDataSource
-import org.abimon.kornea.io.jvm.files.FileOutputFlow
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.img.DXT1PixelData
+import dev.brella.kornea.img.bc7.BC7PixelData
+import dev.brella.kornea.img.createPngImage
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
+import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import dev.brella.kornea.toolkit.common.freeze
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
@@ -76,7 +77,7 @@ import kotlin.math.max
 
 class Lagann : Application() {
     companion object {
-        val ASCII_RANGE = 0x20 .. 0x7E
+        val ASCII_RANGE = 0x20..0x7E
 
         @JvmStatic
         fun main(args: Array<String>) {
@@ -157,13 +158,13 @@ class Lagann : Application() {
             GlobalScope.launch {
                 freeze(newValue?.value) { value ->
                     //Load the first, say, 4 kB of data
-                    val data = value?.dataSource?.useInputFlow { flow -> flow.readBytes() }
+                    val data = value?.dataSource?.useInputFlow { flow -> flow.readBytes() } ?: KorneaResult.empty()
 
                     withContext(Dispatchers.JavaFx) {
                         dataTypesDropdown.items.clear()
                     }
 
-                    if (data == null) {
+                    data.doOnFailure {
                         //Directory
                         withContext(Dispatchers.JavaFx) {
                             binaryDataView.text = null
@@ -171,22 +172,25 @@ class Lagann : Application() {
                             dataView.center = null
                             bstTextArea.text = null
                         }
-                    } else {
+                    }.doOnSuccess { data ->
                         binaryDataView.text = data.slice(0 until min(4096, data.size)).chunked(16).joinToString("\n") { row -> row.joinToString(" ") { byte -> byte.toInt().and(0xFF).toString(16).padStart(2, '0').toUpperCase() } }
 
-                        val dataSource = value.dataSource
+                        val dataSource = requireNotNull(value?.dataSource)
                         val formats: MutableList<DataPair<*>> = ArrayList()
+                        requireNotNull(value)
 
                         if (value is LagannTreeData.PredefinedSubFile) {
                             formats.add(value.data)
                         } else {
                             when (value.name.toLowerCase().substringAfterLast('.')) {
                                 "loop" -> formats.add(DataPair("Dr1 Loop", "LOOP", 1.0))  //Don't have a loop obj yet
-                                "lin" -> LinScript(spiralContext, game as? DrGame.LinScriptable
-                                        ?: DrGame.LinScriptable.Unknown, dataSource)?.let { script ->
+                                "lin" -> LinScript(
+                                    spiralContext, game as? DrGame.LinScriptable
+                                                   ?: DrGame.LinScriptable.Unknown, dataSource
+                                ).doOnSuccess { script ->
                                     formats.add(DataPair("Lin Script", script, if (script.scriptData.isEmpty()) 0.75 else 1.0))
                                 }
-                                "pak" -> PakArchive(spiralContext, dataSource)?.let { pak ->
+                                "pak" -> PakArchive(spiralContext, dataSource).doOnSuccess { pak ->
                                     when {
                                         pak.files.isEmpty() -> formats.add(DataPair("Pak Archive", pak, 0.2))
                                         pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(DataPair("Pak Archive", pak, 0.1))
@@ -205,7 +209,7 @@ class Lagann : Application() {
                                     }
                                 }
                                 "sfl" -> formats.add(DataPair("SFL", null, 1.0))
-                                "spc" -> SpcArchive(spiralContext, dataSource)?.let { spc ->
+                                "spc" -> SpcArchive(spiralContext, dataSource).doOnSuccess { spc ->
                                     formats.add(DataPair("SPC Archive", spc, 1.0))
                                 }
                                 "srdv" -> {
@@ -214,23 +218,24 @@ class Lagann : Application() {
 
                                     if (srdFileItem?.value?.dataSource != null) {
                                         SrdArchive(spiralContext, srdFileItem.value.dataSource!!)
-                                                ?.let { srd ->
-                                                    val textures = srd.entries.filterIsInstance(TextureSrdEntry::class.java)
-                                                    if (textures.isNotEmpty())
-                                                        formats.add(DataPair("Srd Textures", SrdvTexture(textures.toTypedArray()), 1.0))
-                                                }
+                                            .doOnSuccess { srd ->
+                                                val textures = srd.entries.filterIsInstance(TextureSrdEntry::class.java)
+                                                if (textures.isNotEmpty())
+                                                    formats.add(DataPair("Srd Textures", SrdvTexture(textures.toTypedArray()), 1.0))
+                                            }
                                     }
                                 }
                             }
 
                             if (formats.isEmpty()) {
-                                LinScript(spiralContext, game as? DrGame.LinScriptable
-                                        ?: DrGame.LinScriptable.Unknown, dataSource)
-                                        ?.let { script ->
-                                            formats.add(DataPair("Lin Script", script, if (script.scriptData.isEmpty()) 0.5 else 0.75))
-                                        }
+                                LinScript(
+                                    spiralContext, game as? DrGame.LinScriptable
+                                                   ?: DrGame.LinScriptable.Unknown, dataSource
+                                ).doOnSuccess { script ->
+                                    formats.add(DataPair("Lin Script", script, if (script.scriptData.isEmpty()) 0.5 else 0.75))
+                                }
 
-                                PakArchive(spiralContext, dataSource)?.let { pak ->
+                                PakArchive(spiralContext, dataSource).doOnSuccess { pak ->
                                     when {
                                         pak.files.isEmpty() -> formats.add(DataPair("Pak Archive", pak, 0.2))
                                         pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(DataPair("Pak Archive", pak, 0.1))
@@ -256,16 +261,16 @@ class Lagann : Application() {
 
                                 if ((data[0] == 0xFF.toByte() && data[1] == 0xFE.toByte()) || (data[0] == 0xFE.toByte() && data[1] == 0xFF.toByte())) {
                                     String(data, Charsets.UTF_16)
-                                            .trimEnd(NULL_TERMINATOR)
-                                            .let { str ->
-                                                formats.add(DataPair("UTF-16", Utf16String(str), if (data[data.size - 1] == 0x00.toByte() && data[data.size - 2] == 0x00.toByte()) 1.0 else 0.9))
-                                            }
+                                        .trimEnd(NULL_TERMINATOR)
+                                        .let { str ->
+                                            formats.add(DataPair("UTF-16", Utf16String(str), if (data[data.size - 1] == 0x00.toByte() && data[data.size - 2] == 0x00.toByte()) 1.0 else 0.9))
+                                        }
                                 } else if (data[data.size - 1] == 0x00.toByte() && data.dropLast(1).all { byte -> byte.toInt().and(0xFF) in ASCII_RANGE }) {
                                     String(data, Charsets.UTF_8)
-                                            .trimEnd(NULL_TERMINATOR)
-                                            .let { str ->
-                                                formats.add(DataPair("UTF-8", Utf8String(str), 0.8))
-                                            }
+                                        .trimEnd(NULL_TERMINATOR)
+                                        .let { str ->
+                                            formats.add(DataPair("UTF-8", Utf8String(str), 0.8))
+                                        }
                                 }
 
                                 if (data.readInt32LE(0) == 0x53464C4C) {
@@ -312,9 +317,9 @@ class Lagann : Application() {
                         is PakArchive -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
                                 buildString {
-                                    appendln("parseDataAs(\$FILE_TYPE_PAK)")
-                                    appendln("addMagicNumber(\$MAGIC_NUMBER_PAK)")
-                                    appendln("done()")
+                                    appendLine("parseDataAs(\$FILE_TYPE_PAK)")
+                                    appendLine("addMagicNumber(\$MAGIC_NUMBER_PAK)")
+                                    appendLine("done()")
                                 }
                             }
 
@@ -339,7 +344,7 @@ class Lagann : Application() {
                             dataNode.isShowRoot = false
 
                             if (selectedItem.children.isEmpty()) {
-                                val subfiles = data.files.map { entry -> TreeItem(LagannTreeData(entry.name, data.openDecompressedSource(spiralContext, entry))) }
+                                val subfiles = data.files.map { entry -> TreeItem(LagannTreeData(entry.name, data.openDecompressedSource(spiralContext, entry).get())) }
 
                                 withContext(Dispatchers.JavaFx) { selectedItem.children.addAll(subfiles) }
                             }
@@ -498,12 +503,14 @@ class Lagann : Application() {
                                         } else {
                                             return@useInputFlow null
                                         }
-                                    } ?: DataPair("Srdv Texture (${srdEntry.format.toHexString()}", null, 1.0)
-                                    TreeItem<LagannTreeData>(LagannTreeData.PredefinedSubFile(
+                                    }.filterNotNull().getOrElseRun { DataPair("Srdv Texture (${srdEntry.format.toHexString()}", null, 1.0) }
+                                    TreeItem<LagannTreeData>(
+                                        LagannTreeData.PredefinedSubFile(
                                             srdEntry.rsiEntry.name,
                                             WindowedDataSource(baseDataSource, srdEntry.rsiEntry.resources[0].start.toULong(), srdEntry.rsiEntry.resources[0].length.toULong()),
                                             dataPair
-                                    ))
+                                        )
+                                    )
                                 }
 
                                 withContext(Dispatchers.JavaFx) { fileTree.selectionModel.selectedItem.children.addAll(subfiles) }
@@ -533,7 +540,7 @@ class Lagann : Application() {
         loadFile.setOnAction { event ->
             val fileChooser = FileChooser()
             val tree = serialisation.yamlMapper.readTree(configFile) as? ObjectNode
-                    ?: ObjectNode(JsonNodeFactory.instance)
+                       ?: ObjectNode(JsonNodeFactory.instance)
             val lastFileLoaded = tree["last_file_loaded"]?.textValue()
             if (lastFileLoaded != null) {
                 val file = File(lastFileLoaded)
@@ -549,32 +556,30 @@ class Lagann : Application() {
                     bstMap.clear()
                     withContext(Dispatchers.JavaFx) { fileTree.root = TreeItem() }
 
-                    val wad = WadArchive(spiralContext, FileDataSource(selectedFile))
-
-                    if (wad != null) {
-                        fileTree.loadWad(wad, selectedFile.name)
-
-                        withContext(Dispatchers.JavaFx) {
-                            val alert = Alert(Alert.AlertType.INFORMATION, "Loaded ${selectedFile.name}", ButtonType.OK)
-                            alert.showAndWait()
-                        }
-                    } else {
-                        val cpk = CpkArchive(spiralContext, FileDataSource(selectedFile))
-
-                        if (cpk != null) {
-                            fileTree.loadCpk(cpk, selectedFile.name)
+                    WadArchive(spiralContext, AsyncFileDataSource(selectedFile))
+                        .doOnSuccess { wad ->
+                            fileTree.loadWad(wad, selectedFile.name)
 
                             withContext(Dispatchers.JavaFx) {
                                 val alert = Alert(Alert.AlertType.INFORMATION, "Loaded ${selectedFile.name}", ButtonType.OK)
                                 alert.showAndWait()
                             }
-                        } else {
-                            withContext(Dispatchers.JavaFx) {
-                                val alert = Alert(Alert.AlertType.ERROR, "Was unable to load ${selectedFile.name}; invalid format", ButtonType.OK)
-                                alert.showAndWait()
-                            }
+                        }.doOnFailure {
+                            CpkArchive(spiralContext, AsyncFileDataSource(selectedFile))
+                                .doOnSuccess { cpk ->
+                                    fileTree.loadCpk(cpk, selectedFile.name)
+
+                                    withContext(Dispatchers.JavaFx) {
+                                        val alert = Alert(Alert.AlertType.INFORMATION, "Loaded ${selectedFile.name}", ButtonType.OK)
+                                        alert.showAndWait()
+                                    }
+                                }.doOnFailure {
+                                    withContext(Dispatchers.JavaFx) {
+                                        val alert = Alert(Alert.AlertType.ERROR, "Was unable to load ${selectedFile.name}; invalid format", ButtonType.OK)
+                                        alert.showAndWait()
+                                    }
+                                }
                         }
-                    }
                 }
             }
         }
@@ -624,7 +629,7 @@ class Lagann : Application() {
                 GlobalScope.launch {
                     when (val data = dataTypesDropdown.selectionModel.selectedItem.data) {
                         is LinScript -> {
-                            FileOutputFlow(selectedFile).use { out ->
+                            AsyncFileOutputFlow(selectedFile).use { out ->
                                 LinTranspiler(data).transpile(out)
                             }
                         }
@@ -634,13 +639,13 @@ class Lagann : Application() {
                             }
                         }
                         is Utf8String -> {
-                            FileOutputFlow(selectedFile).use { out -> out.print(data.string) }
+                            AsyncFileOutputFlow(selectedFile).use { out -> out.print(data.string) }
                         }
                         is Utf16String -> {
-                            FileOutputFlow(selectedFile).use { out -> out.print(data.string) }
+                            AsyncFileOutputFlow(selectedFile).use { out -> out.print(data.string) }
                         }
                         else -> {
-                            FileOutputFlow(selectedFile).use { out ->
+                            AsyncFileOutputFlow(selectedFile).use { out ->
                                 fileTree.selectionModel.selectedItem.value.dataSource?.useInputFlow { flow -> flow.copyTo(out) }
                             }
                         }
@@ -695,7 +700,7 @@ class Lagann : Application() {
         changeGameToDr1.setOnAction {
             GlobalScope.launch {
                 try {
-                    val dr1 = Dr1.unsafe(spiralContext)
+                    val dr1 = Dr1(spiralContext).get()
                     game = dr1
 
                     withContext(Dispatchers.JavaFx) {
@@ -714,7 +719,7 @@ class Lagann : Application() {
         changeGameToDr2.setOnAction {
             GlobalScope.launch {
                 try {
-                    val dr2 = Dr2.unsafe(spiralContext)
+                    val dr2 = Dr2(spiralContext).get()
                     game = dr2
 
                     withContext(Dispatchers.JavaFx) {
@@ -733,7 +738,7 @@ class Lagann : Application() {
         changeGameToUdg.setOnAction {
             GlobalScope.launch {
                 try {
-                    val udg = UDG.unsafe(spiralContext)
+                    val udg = UDG(spiralContext).get()
                     game = udg
 
                     withContext(Dispatchers.JavaFx) {
@@ -752,7 +757,7 @@ class Lagann : Application() {
         changeGameToDrv3.setOnAction {
             GlobalScope.launch {
                 try {
-                    val drv3 = DRv3.unsafe(spiralContext)
+                    val drv3 = DRv3(spiralContext).get()
                     game = drv3
 
                     withContext(Dispatchers.JavaFx) {
@@ -774,20 +779,21 @@ class Lagann : Application() {
             val loggerFactory = LoggerFactory.getILoggerFactory()
             val baseLogger: Logger
             if (loggerFactory is ch.qos.logback.classic.LoggerContext) {
-                val loggerData = context.loadResource("logback.xml")?.use { src -> src.openInputFlow()?.readAndClose() }
-                if (loggerData != null) {
-                    try {
-                        val configurator = JoranConfigurator()
-                        configurator.context = loggerFactory
-                        // Call context.reset() to clear any previous configuration, e.g. default
-                        // configuration. For multi-step configuration, omit calling context.reset().
-                        loggerFactory.reset()
-                        configurator.doConfigure(ByteArrayInputStream(loggerData))
-                    } catch (je: JoranException) {
-                        // StatusPrinter will handle this
+                context.loadResource("logback.xml")
+                    .useAndMapInputFlow { flow -> flow.readBytes() }
+                    .doOnSuccess { loggerData ->
+                        try {
+                            val configurator = JoranConfigurator()
+                            configurator.context = loggerFactory
+                            // Call context.reset() to clear any previous configuration, e.g. default
+                            // configuration. For multi-step configuration, omit calling context.reset().
+                            loggerFactory.reset()
+                            configurator.doConfigure(ByteArrayInputStream(loggerData))
+                        } catch (je: JoranException) {
+                            // StatusPrinter will handle this
+                        }
+                        StatusPrinter.printInCaseOfErrorsOrWarnings(loggerFactory)
                     }
-                    StatusPrinter.printInCaseOfErrorsOrWarnings(loggerFactory)
-                }
 
                 baseLogger = loggerFactory.getLogger("Lagann")
             } else {
@@ -870,7 +876,8 @@ class Lagann : Application() {
 
         suspend fun String.toTreeItem(map: Map<String, List<String>>): TreeItem<LagannTreeData> {
             val entry = cpk[this]
-            val node = TreeItem(LagannTreeData(this, if (entry != null) cpk.openDecompressedSource(spiralContext, entry) else null))
+            val node = TreeItem(LagannTreeData(this, if (entry != null) cpk.openDecompressedSource(spiralContext, entry).getOrNull() else null))
+
             if (this in map) {
                 for (str in map.getValue(this).distinct()) {
                     node.children.add(str.toTreeItem(map))

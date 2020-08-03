@@ -2,7 +2,7 @@ package info.spiralframework.gui.jvm
 
 import javafx.scene.control.TreeCell
 import javafx.scene.control.TreeView
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.DataSource
 
 sealed class LagannTreeData(val name: String, val dataSource: DataSource<*>?) {
     companion object {

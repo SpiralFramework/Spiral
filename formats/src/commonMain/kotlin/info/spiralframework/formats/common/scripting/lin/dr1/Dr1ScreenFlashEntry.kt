@@ -3,7 +3,7 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.RawNumberValue
-import org.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.freeze
 
 inline class Dr1ScreenFlashEntry(override val rawArguments: IntArray) : MutableLinEntry {
     companion object {

@@ -7,8 +7,8 @@ import info.spiralframework.osb.common.OpenSpiralBitcode
 import info.spiralframework.osb.common.buildLongReference
 import kotlinx.coroutines.runBlocking
 import org.antlr.v4.runtime.tree.TerminalNode
-import org.kornea.toolkit.common.SemanticVersion
-import org.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.freeze
 import java.lang.IllegalStateException
 
 @ExperimentalStdlibApi

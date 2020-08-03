@@ -6,7 +6,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.environment.registerAllModules
 import info.spiralframework.base.common.locale.loadBundle
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 class SpiralModuleFormats: SpiralModuleProvider {

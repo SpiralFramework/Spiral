@@ -4,13 +4,13 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.manuallyEncode
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.*
-import org.abimon.kornea.errors.common.filterToInstance
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.useInputFlow
+import dev.brella.kornea.errors.common.filterToInstance
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.readInt16LE
+import dev.brella.kornea.io.common.useInputFlow
 import java.util.*
 
 object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {

@@ -1,7 +1,7 @@
 package info.spiralframework.formats.common.archives
 
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.OutputFlow
 
 
 @ExperimentalUnsignedTypes

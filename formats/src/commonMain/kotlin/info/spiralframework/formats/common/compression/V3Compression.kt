@@ -3,12 +3,12 @@ package info.spiralframework.formats.common.compression
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.korneaNotEnoughData
-import org.abimon.kornea.io.common.flow.BinaryInputFlow
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.flow.readExact
-import org.abimon.kornea.io.common.readInt32BE
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotEnoughData
+import dev.brella.kornea.io.common.flow.BinaryInputFlow
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.readExact
+import dev.brella.kornea.io.common.readInt32BE
 
 const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
 

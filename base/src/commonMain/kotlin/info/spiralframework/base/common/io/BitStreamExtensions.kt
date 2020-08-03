@@ -6,15 +6,13 @@ import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.decodeToString
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.text.appendln
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.flow.BufferedInputFlow.Companion.DEFAULT_BUFFER_SIZE
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.common.flow.readExact
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.readIntXLE
-import org.abimon.kornea.io.common.writeInt16LE
-import org.abimon.kornea.io.common.writeIntXLE
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.BufferedInputFlow.Companion.DEFAULT_BUFFER_SIZE
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.io.common.flow.readExact
+import kotlinx.coroutines.yield
 
 public suspend fun OutputFlow.println() {
     write('\n'.toInt())
@@ -96,13 +94,48 @@ suspend fun InputFlow.readNullTerminatedUTF8String(): String = readNullTerminate
 suspend fun InputFlow.readNullTerminatedString(maxLen: Int = 255, encoding: TextCharsets = TextCharsets.UTF_8): String {
     val data = BinaryOutputFlow()
 
-    while (true) {
-        val read = readIntXLE(encoding.bytesForNull) ?: break //This **should** work
-        require(read != -1) { "Uho..., it's -1 somehow" }
-        if (read == 0x00)
-            break
+    when (encoding.bytesForNull) {
+        1 -> while (true) {
+            yield()
 
-        data.writeIntXLE(read, encoding.bytesForNull)
+            val read = read() ?: break //This **should** work
+            require(read != -1) { "Uho..., it's -1 somehow" }
+            if (read == 0x00)
+                break
+
+            data.write(read)
+        }
+        2 -> while (true) {
+            yield()
+
+            val read = readInt16LE() ?: break //This **should** work
+            require(read != -1) { "Uho..., it's -1 somehow" }
+            if (read == 0x00)
+                break
+
+            data.writeInt16LE(read)
+        }
+        4 -> while (true) {
+            yield()
+
+            val read = readInt32LE() ?: break //This **should** work
+            require(read != -1) { "Uho..., it's -1 somehow" }
+            if (read == 0x00)
+                break
+
+            data.writeInt32LE(read)
+        }
+        8 -> while (true) {
+            yield()
+
+            val read = readInt64LE() ?: break //This **should** work
+            require(read != -1L) { "Uho..., it's -1 somehow" }
+            if (read == 0x00L)
+                break
+
+            data.writeInt64LE(read)
+        }
+        else -> throw IllegalArgumentException("Invalid charset (Number of bytes is ${encoding.bytesForNull})")
     }
 
     return data.getData().decodeToString(encoding)

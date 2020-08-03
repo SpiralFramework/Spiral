@@ -24,7 +24,7 @@ import info.spiralframework.formats.jvm.SpiralModuleFormats
 import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile

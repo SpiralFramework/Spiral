@@ -1,6 +1,6 @@
 package info.spiralframework.core.plugins
 
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 data class SpiralPluginDefinitionPojo(
     val name: String,

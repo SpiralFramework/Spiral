@@ -10,8 +10,8 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.scripting.lin.transpile
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.kornea.toolkit.common.freeze
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.toolkit.common.freeze
 import kotlin.contracts.ExperimentalContracts
 import kotlin.math.min
 

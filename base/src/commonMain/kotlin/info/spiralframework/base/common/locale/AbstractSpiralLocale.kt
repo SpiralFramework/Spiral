@@ -2,7 +2,7 @@ package info.spiralframework.base.common.locale
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.errors.common.*
+import dev.brella.kornea.errors.common.*
 import kotlin.reflect.KClass
 
 interface SpiralLocale {

@@ -6,11 +6,11 @@ import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.osb.common.OpenSpiralBitcodeWrapper
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.getOrElseTransform
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.getOrElseTransform
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.OutputFlow
 
 object OpenSpiralLanguageFormat : ReadableSpiralFormat<OpenSpiralBitcodeWrapper>, WritableSpiralFormat {
     override val name: String = "OpenSpiralLangauge"

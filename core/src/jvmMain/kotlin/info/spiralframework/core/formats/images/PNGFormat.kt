@@ -6,8 +6,8 @@ import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.jvm.asOutputStream
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.jvm.asOutputStream
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException

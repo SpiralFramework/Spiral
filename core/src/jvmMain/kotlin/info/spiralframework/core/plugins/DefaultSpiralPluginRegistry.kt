@@ -11,7 +11,7 @@ import info.spiralframework.core.*
 import info.spiralframework.core.plugins.events.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.abimon.kornea.io.jvm.files.ensureDirectoryExists
+import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader

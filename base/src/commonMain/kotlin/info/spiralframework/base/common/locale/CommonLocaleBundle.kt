@@ -1,11 +1,10 @@
 package info.spiralframework.base.common.locale
 
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.closeAfter
-import org.abimon.kornea.io.common.loadProperties
-import org.abimon.kornea.io.common.use
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.loadProperties
+import dev.brella.kornea.toolkit.common.closeAfter
 import kotlin.reflect.KClass
 
 class CommonLocaleBundle(override val bundleName: String, override val locale: CommonLocale, val backing: Map<String, String>, val context: KClass<*>) : LocaleBundle, Map<String, String> by backing {

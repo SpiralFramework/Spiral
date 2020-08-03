@@ -1,6 +1,6 @@
 package info.spiralframework.formats.common.archives.srd
 
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.DataSource
 
 @ExperimentalUnsignedTypes
 data class CT0SrdEntry(

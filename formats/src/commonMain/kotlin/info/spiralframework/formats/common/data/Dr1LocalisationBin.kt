@@ -7,10 +7,10 @@ import info.spiralframework.base.common.io.readNullTerminatedString
 import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.flatMap
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
 
 @ExperimentalUnsignedTypes
 class Dr1LocalisationBin private constructor(val stringIDs: Array<String>, val languages: Map<String, Language>) {

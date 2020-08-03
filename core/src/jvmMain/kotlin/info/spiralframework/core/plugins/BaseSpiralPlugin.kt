@@ -2,13 +2,13 @@ package info.spiralframework.core.plugins
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import info.spiralframework.core.SpiralCoreContext
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.BinaryDataSource
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useAndMapInputFlow
-import org.abimon.kornea.io.jvm.files.AsyncFileDataSource
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.BinaryDataSource
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
+import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import java.io.File
 
 abstract class BaseSpiralPlugin protected constructor(val context: SpiralCoreContext, val callingClass: Class<*>, val resourceName: String, val yaml: Boolean = true) : ISpiralPlugin {

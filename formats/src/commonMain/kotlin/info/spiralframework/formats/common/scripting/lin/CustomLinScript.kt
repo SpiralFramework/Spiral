@@ -3,11 +3,11 @@ package info.spiralframework.formats.common.scripting.lin
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.manuallyEncode
 import info.spiralframework.base.common.NULL_TERMINATOR
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.common.writeInt16LE
-import org.abimon.kornea.io.common.writeInt32LE
-import org.kornea.toolkit.common.sumByLong
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.writeInt16LE
+import dev.brella.kornea.io.common.writeInt32LE
+import dev.brella.kornea.toolkit.common.sumByLong
 
 class CustomLinScript {
     val _textData: MutableList<String> = ArrayList()

@@ -17,10 +17,10 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.EQUALITY_NOT_EQUAL
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_AND
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_OR
 import info.spiralframework.osb.common.OpenSpiralBitcode.TREE_TYPE_PRESENT_SELECTION
-import org.abimon.kornea.io.common.flow.BinaryInputFlow
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.io.common.flow.BinaryInputFlow
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi

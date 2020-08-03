@@ -3,13 +3,13 @@ package info.spiralframework.formats.common.data
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.cast
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.closeAfter
-import org.abimon.kornea.io.common.readInt16LE
-import org.abimon.kornea.io.common.use
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.closeAfter
+import dev.brella.kornea.io.common.readInt16LE
+import dev.brella.kornea.io.common.use
 
 @ExperimentalUnsignedTypes
 class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerIndex: Int, val incorrectAnswerIndex: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val unk5: Int, val unk6: Int, val gentleFilledLetters: BooleanArray, val kindFilledLetters: BooleanArray, val meanFilledLetters: BooleanArray) {

@@ -3,12 +3,13 @@ package info.spiralframework.base.common.io
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.putBack
-import org.abimon.kornea.errors.common.flatMap
-import org.abimon.kornea.errors.common.getOrElse
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.getOrElse
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.copyTo
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 

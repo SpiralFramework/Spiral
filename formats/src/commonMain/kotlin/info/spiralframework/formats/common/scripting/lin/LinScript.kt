@@ -10,9 +10,9 @@ import info.spiralframework.formats.common.games.Dr2
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.games.UDG
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.*
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
 
 @ExperimentalUnsignedTypes
 class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, val game: DrGame.LinScriptable? = null) {

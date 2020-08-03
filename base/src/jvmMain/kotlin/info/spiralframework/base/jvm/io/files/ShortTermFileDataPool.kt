@@ -1,10 +1,10 @@
 package info.spiralframework.base.jvm.io.files
 
-import org.abimon.kornea.annotations.ExperimentalKorneaIO
-import org.abimon.kornea.io.common.DataPool
-import org.abimon.kornea.io.jvm.files.AsyncFileDataPool
-import org.abimon.kornea.io.jvm.files.AsyncFileInputFlow
-import org.abimon.kornea.io.jvm.files.AsyncFileOutputFlow
+import dev.brella.kornea.annotations.ExperimentalKorneaIO
+import dev.brella.kornea.io.common.DataPool
+import dev.brella.kornea.io.jvm.files.AsyncFileDataPool
+import dev.brella.kornea.io.jvm.files.AsyncFileInputFlow
+import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import java.io.File
 
 @ExperimentalKorneaIO

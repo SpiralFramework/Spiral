@@ -4,11 +4,11 @@ import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.TimedDataPool
-import org.abimon.kornea.annotations.ExperimentalKorneaIO
-import org.abimon.kornea.io.common.DataPool
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.abimon.kornea.io.jvm.files.AsyncFileDataPool
+import dev.brella.kornea.annotations.ExperimentalKorneaIO
+import dev.brella.kornea.io.common.DataPool
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.jvm.files.AsyncFileDataPool
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.time.Duration

@@ -53,3 +53,8 @@ graph
 
 Bootstrap.kt
 formats/src/jvmMain/kotlin/Bootstrap.kt
+/tpod/src/main/antlr/KnolusLexer.g4
+/tpod/src/main/antlr/KnolusModesLexer.g4
+/tpod/src/main/antlr/KnolusParser.g4
+/tpod/src/main/antlr/LibLexer.g4
+tpod/

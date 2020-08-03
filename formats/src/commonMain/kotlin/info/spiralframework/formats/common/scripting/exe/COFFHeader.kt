@@ -4,9 +4,9 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
 
 @ExperimentalUnsignedTypes
 data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val timeDateStamp: Int, val pointerToSymbolTable: Int, val numberOfSymbols: Int, val sizeOfOptionalHeader: Int, val characteristics: Int) {

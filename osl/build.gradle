@@ -116,3 +116,8 @@ task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
 //    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.osl']
 //    outputDirectory = file("$buildDir/generated-src-mpp/antlr/jvmMain/info/spiralframework/antlr/osl")
 //}
+
+downloadLicenses {
+    includeProjectDependencies = true
+    dependencyConfiguration = 'jvmRuntimeClasspath'
+}

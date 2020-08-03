@@ -2,12 +2,12 @@ package info.spiralframework.base.binding
 
 import info.spiralframework.base.common.SpiralModuleBase
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import org.abimon.kornea.annotations.ExperimentalKorneaIO
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.korneaNotFound
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.jvm.JVMDataSource
-import org.abimon.kornea.io.jvm.files.AsyncFileDataSource
+import dev.brella.kornea.annotations.ExperimentalKorneaIO
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotFound
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.jvm.JVMDataSource
+import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import java.io.File
 import kotlin.reflect.KClass
 

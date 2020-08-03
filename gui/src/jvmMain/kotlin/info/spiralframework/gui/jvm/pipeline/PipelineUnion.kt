@@ -1,11 +1,11 @@
 package info.spiralframework.gui.jvm.pipeline
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.takeIf
 import info.spiralframework.base.common.text.toIntBaseN
 import info.spiralframework.base.common.text.toIntOrNullBaseN
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.toolkit.common.takeIf
 
 @ExperimentalUnsignedTypes
 sealed class PipelineUnion {

@@ -46,10 +46,10 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_NULL
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_PARAMETER
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_TEXT
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_VAR_REFERENCE
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import kotlin.math.roundToInt
 
 data class OpenSpiralBitcodeBuilderBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: suspend (OpenSpiralBitcodeBuilder) -> Unit)

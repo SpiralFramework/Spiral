@@ -2,18 +2,43 @@ package info.spiralframework.base.common.text
 
 import info.spiralframework.base.binding.formatPercent
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_DELAY
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_END
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_INDICATOR
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_LIMIT
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_SPACE
+import info.spiralframework.base.common.text.AsciiArt.DEFAULT_ARBITRARY_START
 import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+object AsciiArt {
+    const val DEFAULT_ARBITRARY_DELAY = 200L
+    const val DEFAULT_ARBITRARY_LIMIT = 9
+    const val DEFAULT_ARBITRARY_START = '['
+    const val DEFAULT_ARBITRARY_END = ']'
+    const val DEFAULT_ARBITRARY_SPACE = ' '
+    const val DEFAULT_ARBITRARY_INDICATOR = 'o'
+    const val DEFAULT_ARBITRARY_LOADING_TEXT = "Loading..."
+    const val DEFAULT_ARBITRARY_LOADING_KEY = "ascii.arbitrary.loading"
+    const val DEFAULT_ARBITRARY_LOADED_TEXT = "Loaded!"
+    const val DEFAULT_ARBITRARY_LOADED_KEY = "ascii.arbitrary.loaded"
+
+    val asciiDispatcher: CoroutineDispatcher by lazy { asciiDispatcher() }
+}
+
+expect fun asciiDispatcher(): CoroutineDispatcher
+
 inline fun resetLine() = print('\r')
 
 suspend inline fun <T> SpiralContext.arbitraryProgressBar(
-        delay: Long = 200, limit: Int = 9,
-        start: Char = '[', end: Char = ']',
-        space: Char = ' ', indicator: Char = 'o',
+        delay: Long = DEFAULT_ARBITRARY_DELAY, limit: Int = DEFAULT_ARBITRARY_LIMIT,
+        start: Char = DEFAULT_ARBITRARY_START, end: Char = DEFAULT_ARBITRARY_END,
+        space: Char = DEFAULT_ARBITRARY_SPACE, indicator: Char = DEFAULT_ARBITRARY_INDICATOR,
         loadingText: String? = "ascii.arbitrary.loading",
         loadedText: String? = "ascii.arbitrary.loaded!",
         operation: () -> T

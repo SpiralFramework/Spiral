@@ -6,7 +6,7 @@ import info.spiralframework.formats.common.scripting.lin.CustomLinScript
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osl.games.DRGameVisitor
-import org.abimon.kornea.io.common.toInt16LE
+import dev.brella.kornea.io.common.toInt16LE
 
 open class HopesPeakVisitor(val game: DrGame.LinScriptable) {
     private val customLin = CustomLinScript()

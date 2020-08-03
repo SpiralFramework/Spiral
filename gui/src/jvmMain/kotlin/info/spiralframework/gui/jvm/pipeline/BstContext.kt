@@ -36,7 +36,7 @@ import info.spiralframework.bst.common.BstProcessor.OPCODE_FLUSH
 import info.spiralframework.bst.common.BstProcessor.OPCODE_ITERATE_SUBFILES
 import info.spiralframework.bst.common.BstProcessor.OPCODE_PARSE_DATA
 import info.spiralframework.bst.common.BstProcessor.OPCODE_SKIP
-import org.abimon.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 
 private typealias intType = PipelineUnion.VariableValue.IntegerType
 

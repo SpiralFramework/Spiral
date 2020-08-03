@@ -6,9 +6,9 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.closeAfter
-import org.abimon.kornea.io.common.flow.readAndClose
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.closeAfter
+import dev.brella.kornea.io.common.flow.readAndClose
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream

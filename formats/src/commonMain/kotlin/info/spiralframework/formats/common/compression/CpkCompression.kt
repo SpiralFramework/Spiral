@@ -1,10 +1,10 @@
 package info.spiralframework.formats.common.compression
 
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.korneaNotEnoughData
-import org.abimon.kornea.io.common.ReversedBitPoolInput
-import org.abimon.kornea.io.common.readInt64BE
-import org.abimon.kornea.io.common.readUInt32LE
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotEnoughData
+import dev.brella.kornea.io.common.ReversedBitPoolInput
+import dev.brella.kornea.io.common.readInt64BE
+import dev.brella.kornea.io.common.readUInt32LE
 
 const val CRILAYLA_MAGIC = 0x4352494C41594C41
 

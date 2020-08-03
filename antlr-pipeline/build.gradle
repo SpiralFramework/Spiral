@@ -10,3 +10,5 @@ generateGrammarSource {
     arguments += ['-visitor', '-package', 'info.spiralframework.antlr.pipeline']
     outputDirectory = file("$buildDir/generated-src/antlr/main/info/spiralframework/antlr/pipeline")
 }
+
+tasks.compileKotlin.dependsOn(generateGrammarSource)

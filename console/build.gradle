@@ -28,7 +28,7 @@ kotlin {
 
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.3.7-1.4-M2'
                 implementation "ch.qos.logback:logback-classic:$logback_version"
-                implementation "org.abimon:kornea-img:1.3.5"
+                implementation "dev.brella:kornea-img:$kornea_img_version"
 
                 implementation "org.antlr:antlr4:4.7.2"
             }
@@ -65,3 +65,8 @@ task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
 //        }
 //    }
 //}
+
+downloadLicenses {
+    includeProjectDependencies = true
+    dependencyConfiguration = 'jvmRuntimeClasspath'
+}

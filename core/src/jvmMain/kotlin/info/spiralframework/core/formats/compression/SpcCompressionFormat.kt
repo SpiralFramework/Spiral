@@ -13,10 +13,10 @@ import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUM
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.compression.decompressVita
 import info.spiralframework.formats.common.games.DrGame
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.PeekableInputFlow
-import org.abimon.kornea.io.common.flow.readBytes
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.PeekableInputFlow
+import dev.brella.kornea.io.common.flow.readBytes
 import java.util.*
 
 data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null) : FormatReadContext

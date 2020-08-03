@@ -1,8 +1,8 @@
 package info.spiralframework.core.formats
 
 import info.spiralframework.base.common.SpiralContext
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.OutputFlow
 import java.io.OutputStream
 import java.util.*
 

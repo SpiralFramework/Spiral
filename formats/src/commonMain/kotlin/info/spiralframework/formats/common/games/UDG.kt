@@ -11,9 +11,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.flow.readBytes
-import org.abimon.kornea.io.common.useAndMapInputFlow
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 
 @ExperimentalUnsignedTypes
 class UDG(

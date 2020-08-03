@@ -1,12 +1,12 @@
 package info.spiralframework.base.common
 
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.cast
-import org.abimon.kornea.errors.common.flatMap
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.SeekableInputFlow
-import org.abimon.kornea.io.common.flow.bookmark
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.SeekableInputFlow
+import dev.brella.kornea.io.common.flow.bookmark
 
 @ExperimentalUnsignedTypes
 infix fun UInt.alignmentNeededFor(alignment: Int): Long = (alignment - this % alignment) % alignment

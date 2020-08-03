@@ -1,9 +1,9 @@
 package info.spiralframework.base.common.io
 
 import info.spiralframework.base.common.SpiralModuleBase
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.korneaNotFound
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotFound
+import dev.brella.kornea.io.common.DataSource
 import kotlin.reflect.KClass
 
 interface SpiralResourceLoader {

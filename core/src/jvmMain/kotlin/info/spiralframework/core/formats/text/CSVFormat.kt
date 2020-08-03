@@ -7,7 +7,7 @@ import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
 
 object CSVFormat: WritableSpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */

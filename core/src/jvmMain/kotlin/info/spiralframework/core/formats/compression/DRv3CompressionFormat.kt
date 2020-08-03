@@ -9,9 +9,9 @@ import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.compression.decompressV3
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.readBytes
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.readBytes
 import java.util.*
 
 object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {

@@ -3,11 +3,11 @@ package info.spiralframework.formats.common.archives
 import info.spiralframework.base.binding.now
 import info.spiralframework.base.common.*
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.OutputFlow
-import org.kornea.toolkit.common.sumByLong
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.toolkit.common.sumByLong
 
 @ExperimentalUnsignedTypes
 open class CustomCpkArchive {

@@ -6,14 +6,14 @@ import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.cast
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.WindowedInputFlow
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 @ExperimentalUnsignedTypes
 class WadArchive(val version: SemanticVersion, val header: ByteArray, val files: Array<WadFileEntry>, val directories: Array<WadDirectoryEntry>, val dataOffset: ULong, val dataSource: DataSource<*>) {

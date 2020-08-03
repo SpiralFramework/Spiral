@@ -3,11 +3,11 @@ package info.spiralframework.formats.common.archives.srd
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KORNEA_ERROR_NOT_ENOUGH_DATA
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.OffsetDataSource
+import dev.brella.kornea.errors.common.KORNEA_ERROR_NOT_ENOUGH_DATA
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.OffsetDataSource
 
 @ExperimentalUnsignedTypes
 class SrdArchive(val entries: Array<BaseSrdEntry>) {

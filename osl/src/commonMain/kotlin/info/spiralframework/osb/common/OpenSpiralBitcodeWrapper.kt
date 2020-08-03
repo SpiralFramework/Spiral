@@ -4,14 +4,14 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.cast
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.closeAfter
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.use
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.closeAfter
+import dev.brella.kornea.io.common.readInt32LE
+import dev.brella.kornea.io.common.use
 
 class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
     companion object {

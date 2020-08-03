@@ -14,7 +14,7 @@ import info.spiralframework.base.common.events.*
 import info.spiralframework.base.jvm.outOrElseGet
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.compression.*
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.DataSource
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File

@@ -6,12 +6,12 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.*
-import org.abimon.kornea.errors.common.KorneaResult.Success
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.InputFlow
-import org.abimon.kornea.io.common.flow.fauxSeekFromStart
-import org.abimon.kornea.io.common.flow.offsetPosition
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.errors.common.KorneaResult.Success
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.fauxSeekFromStart
+import dev.brella.kornea.io.common.flow.offsetPosition
 
 open class UtfTableSchema(open val name: String, open val size: UInt, open val schemaOffset: UInt, open val rowsOffset: UInt, open val stringTable: String, open val stringOffset: UInt, open val dataOffset: UInt, open val columnCount: Int, open val rowWidth: Int, open val rowCount: UInt, open val schema: Array<out UtfColumnSchema>)
 

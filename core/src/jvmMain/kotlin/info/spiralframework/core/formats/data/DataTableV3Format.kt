@@ -5,8 +5,8 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.DataSource
 
 object DataTableStructureFormat: ReadableSpiralFormat<DataTableStructure> {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */

@@ -2,13 +2,13 @@ package info.spiralframework.base.jvm
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.DataSource.Companion.korneaSourceClosed
-import org.abimon.kornea.io.common.DataSource.Companion.korneaSourceUnknown
-import org.abimon.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
-import org.abimon.kornea.io.jvm.JVMDataSource
-import org.abimon.kornea.io.jvm.JVMInputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceClosed
+import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceUnknown
+import dev.brella.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
+import dev.brella.kornea.io.jvm.JVMDataSource
+import dev.brella.kornea.io.jvm.JVMInputFlow
 import java.net.URL
 import kotlin.math.max
 

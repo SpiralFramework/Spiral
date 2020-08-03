@@ -1,7 +1,7 @@
 package info.spiralframework.core
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SemanticVersion
 
 open class SpiralCoreConfig(
         @JsonProperty("update_connect_timeout") val updateConnectTimeout: Int? = null,

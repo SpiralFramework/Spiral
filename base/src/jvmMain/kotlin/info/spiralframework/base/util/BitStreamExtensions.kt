@@ -1,6 +1,6 @@
 package info.spiralframework.base.util
 
-import org.abimon.kornea.io.jvm.CountingInputStream
+import dev.brella.kornea.io.jvm.CountingInputStream
 import java.io.InputStream
 import java.io.OutputStream
 

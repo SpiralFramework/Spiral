@@ -1,8 +1,8 @@
 package info.spiralframework.core.formats
 
 import info.spiralframework.base.common.concurrent.suspendForEach
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.io.common.DataCloseable
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.io.common.DataCloseable
 import java.io.Closeable
 import java.util.*
 import kotlin.collections.ArrayList

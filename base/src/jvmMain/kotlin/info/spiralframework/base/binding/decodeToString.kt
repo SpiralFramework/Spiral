@@ -18,6 +18,5 @@ private val PERCENT_FORMAT = DecimalFormat("00.00")
 
 actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
 //actual fun uuidString(): String = UUID.randomUUID().toString()
-@ExperimentalStdlibApi
 actual suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray =
         toByteArray(charset.java)

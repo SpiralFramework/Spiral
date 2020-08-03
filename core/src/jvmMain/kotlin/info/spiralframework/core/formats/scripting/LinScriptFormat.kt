@@ -6,10 +6,10 @@ import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.osb.common.LinCompiler
 import info.spiralframework.osb.common.OpenSpiralBitcodeWrapper
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.OutputFlow
 import java.io.OutputStream
 import java.util.*
 

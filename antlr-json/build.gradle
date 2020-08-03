@@ -76,3 +76,5 @@ generateGrammarSource {
     arguments += ['-visitor', '-package', 'info.spiralframework.antlr.json']
     outputDirectory = file("$buildDir/generated-src-mpp/antlr/jvmMain/info/spiralframework/antlr/json")
 }
+
+tasks.compileKotlinJvm.dependsOn(generateGrammarSource)

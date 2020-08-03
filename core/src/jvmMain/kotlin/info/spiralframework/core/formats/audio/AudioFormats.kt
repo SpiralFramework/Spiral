@@ -3,11 +3,11 @@ package info.spiralframework.core.formats.audio
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
-import org.abimon.kornea.errors.common.getOrElse
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.DataSource
-import org.abimon.kornea.io.common.readInt32LE
-import org.abimon.kornea.io.common.useInputFlow
+import dev.brella.kornea.errors.common.getOrElse
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.readInt32LE
+import dev.brella.kornea.io.common.useInputFlow
 import java.io.File
 import java.util.*
 

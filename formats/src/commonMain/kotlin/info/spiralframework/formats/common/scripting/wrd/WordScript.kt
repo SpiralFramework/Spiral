@@ -7,11 +7,11 @@ import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.withFormats
-import org.abimon.kornea.errors.common.KorneaResult
-import org.abimon.kornea.errors.common.cast
-import org.abimon.kornea.errors.common.getOrBreak
-import org.abimon.kornea.io.common.*
-import org.abimon.kornea.io.common.flow.*
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
 
 @ExperimentalUnsignedTypes
 class WordScript(val labels: Array<String>, val parameters: Array<String>, val strings: Array<String>?, val localBranchNumbers: Array<Pair<Int, Int>>, val scriptDataBlocks: Array<Array<WrdEntry>>) {

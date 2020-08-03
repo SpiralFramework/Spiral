@@ -5,9 +5,9 @@ import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.srd.SrdArchive
-import org.abimon.kornea.errors.common.getOrElse
-import org.abimon.kornea.errors.common.map
-import org.abimon.kornea.io.common.DataSource
+import dev.brella.kornea.errors.common.getOrElse
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.DataSource
 import java.util.*
 
 object SrdArchiveFormat: ReadableSpiralFormat<SrdArchive> {
