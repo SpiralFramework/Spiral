@@ -9,10 +9,9 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.OffsetInputFlow
-import dev.brella.kornea.io.common.flow.SinkOffsetInputFlow
-import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) {
@@ -38,7 +37,9 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
 
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE, strictOffsets: Boolean = DEFAULT_STRICT_OFFSETS): KorneaResult<PakArchive> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState { int(it) }
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -47,6 +48,7 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
                                 flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                             else
                                 possibleMagicNumber
+
                     if (fileCount !in minFileCount .. maxFileCount) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_COUNT, localise(INVALID_FILE_COUNT_KEY, fileCount, minFileCount, maxFileCount))
                     }

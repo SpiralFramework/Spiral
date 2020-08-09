@@ -8,7 +8,16 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlowStateSelector
+import dev.brella.kornea.io.common.flow.extensions.readFloat32BE
+import dev.brella.kornea.io.common.flow.extensions.readInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readInt24BE
+import dev.brella.kornea.io.common.flow.extensions.readInt32BE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.mapWithState
+import dev.brella.kornea.toolkit.common.DataCloseable
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.closeAfter
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.experimental.or
@@ -17,27 +26,6 @@ import kotlin.math.min
 @ExperimentalUnsignedTypes
 data class HighCompressionAudio(val version: SemanticVersion, val audioChannels: Array<HcaAudioChannel>, val hfrGroupCount: Int, val headerSize: Int, val sampleRate: Int, val channelCount: Int, val blockSize: Int, val blockCount: Int, val encoderDelay: Int, val encoderPadding: Int, val loopEnabled: Boolean, val loopStartBlock: Int?, val loopEndBlock: Int?, val loopStartDelay: Int?, val loopEndPadding: Int?, val samplesPerBlock: Int, val audioInfo: HcaAudioInfo, val athInfo: HcaAbsoluteThresholdHearingInfo?, val cipherInfo: HcaCipherInfo?, val comment: String?, val encryptionEnabled: Boolean, val dataSource: DataSource<*>) {
     companion object {
-        @ExperimentalUnsignedTypes
-        public suspend inline fun <T : DataCloseable, R> use(t: T, block: suspend () -> R): R {
-            contract {
-                callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-            }
-
-            var exception: Throwable? = null
-            try {
-                return block()
-            } catch (e: Throwable) {
-                exception = e
-                throw e
-            } finally {
-//                println("Hewwo")
-                t.close()
-//                t.closeFinally(exception)
-            }
-
-            throw IllegalStateException()
-        }
-
         const val INVALID_MAGIC = 0x0000
         const val INVALID_HEADER_SIZE = 0x0001
         const val INVALID_CHECKSUM = 0x0002
@@ -426,7 +414,9 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val minHeader = ByteArray(8)
@@ -434,6 +424,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
 
                     val magic = minHeader.readInt32BE(0)?.and(HCA_MASK)
                             ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
                     if (magic != MAGIC_NUMBER_BE) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_MAGIC, localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_BE.toString(16)}"))
                     }

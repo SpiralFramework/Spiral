@@ -21,9 +21,9 @@ fun Short.toHexString(): String = toInt().and(0xFF).toHexString()
 fun Int.toHexString(): String = StringBuilder().also(this::toHexString).toString()
 fun Long.toHexString(): String = StringBuilder().also(this::toHexString).toString()
 fun StringBuilder.appendHex(num: Number) = num.toInt().toHexString(this)
-fun StringBuilder.appendlnHex(num: Number) {
+fun StringBuilder.appendLineHex(num: Number) {
     num.toInt().toHexString(this)
-    appendln()
+    appendLine()
 }
 
 fun Int.toHexString(builder: StringBuilder) {
@@ -81,54 +81,3 @@ fun String.doublePadWindowsPaths(): String =
 
             "\"$drive:$components\""
         }
-
-/** Appends a line separator to this Appendable. */
-public fun Appendable.appendln(): Appendable = append('\n')
-
-/** Appends value to the given Appendable and line separator after it. */
-public inline fun Appendable.appendln(value: CharSequence?): Appendable = append(value).appendln()
-
-/** Appends value to the given Appendable and line separator after it. */
-public inline fun Appendable.appendln(value: Char): Appendable = append(value).appendln()
-
-/** Appends a line separator to this StringBuilder. */
-public fun StringBuilder.appendln(): StringBuilder = append('\n')
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: CharSequence?): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: String?): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Any?): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: StringBuilder?): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: CharArray): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Char): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Boolean): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Int): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Short): StringBuilder = append(value.toInt()).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Byte): StringBuilder = append(value.toInt()).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Long): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Float): StringBuilder = append(value).appendln()
-
-/** Appends [value] to this [StringBuilder], followed by a line separator. */
-public inline fun StringBuilder.appendln(value: Double): StringBuilder = append(value).appendln()

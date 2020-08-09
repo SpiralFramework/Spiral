@@ -7,6 +7,10 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
 
 @ExperimentalUnsignedTypes
 data class DosHeader(
@@ -40,6 +44,7 @@ data class DosHeader(
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DosHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<DosHeader> {
             withFormats(context) {
+                val flow = withState { int(flow) }
                 val mzSignature = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (mzSignature != MAGIC_NUMBER_LE) {
                     return KorneaResult.errorAsIllegalArgument(INVALID_SIGNATURE, localise(INVALID_SIGNATURE_KEY, mzSignature.toHexString(), MAGIC_NUMBER_LE.toHexString()))

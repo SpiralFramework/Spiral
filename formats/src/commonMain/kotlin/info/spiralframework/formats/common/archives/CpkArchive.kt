@@ -8,6 +8,8 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etocHeader: KorneaResult<UtfTableInfo>, val itocHeader: KorneaResult<UtfTableInfo>, val gtocHeader: KorneaResult<UtfTableInfo>, val files: Array<CpkFileEntry>, val dataSource: DataSource<*>) {
@@ -45,7 +47,9 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<CpkArchive> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState { int(it) }
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

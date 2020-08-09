@@ -7,5 +7,5 @@ actual class DefaultSpiralConfig actual constructor() : SpiralConfig {
     actual override fun SpiralContext.getConfigFile(module: String): String = ""
     actual override fun SpiralContext.getLocalDataDir(group: String): String = ""
 
-    override fun prime(catalyst: SpiralContext) {}
+    override suspend fun prime(catalyst: SpiralContext) {}
 }

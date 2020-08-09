@@ -9,6 +9,7 @@ import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceUnknown
 import dev.brella.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
 import dev.brella.kornea.io.jvm.JVMDataSource
 import dev.brella.kornea.io.jvm.JVMInputFlow
+import dev.brella.kornea.toolkit.common.closeAll
 import java.net.URL
 import kotlin.math.max
 

@@ -9,8 +9,10 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.io.readNumBytes
 
 @ExperimentalUnsignedTypes
 open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArray, val coffHeader: COFFHeader, val peOptionalHeader: PEOptionalHeader, val imageSectionHeaders: Array<ImageSectionHeader>, val dataSource: DataSource<*>) {
@@ -28,7 +30,9 @@ open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArra
             withFormats(context) {
                 val notEnoughData: () -> Any = { localise("formats.exe.not_enough_data") }
 
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val dosHeader = DosHeader(this, flow).getOrBreak { return@closeAfter it.cast() }

@@ -9,8 +9,10 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32BE
+import dev.brella.kornea.io.common.flow.extensions.readUInt32BE
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: ULong, open val subDataLength: ULong, open val unknown: Int, open val dataSource: DataSource<*>) {
@@ -19,7 +21,9 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
 
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<out BaseSrdEntry> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val classifier = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

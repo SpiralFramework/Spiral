@@ -7,7 +7,7 @@ import info.spiralframework.formats.common.games.Dr2
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.games.UnsafeDr1
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.writeInt16LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import kotlin.math.roundToInt
 
 class CustomLinNonstopDebate(val sectionSize: Int) {

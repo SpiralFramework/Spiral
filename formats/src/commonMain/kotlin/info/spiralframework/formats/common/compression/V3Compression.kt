@@ -7,8 +7,8 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.korneaNotEnoughData
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.io.common.flow.readExact
-import dev.brella.kornea.io.common.readInt32BE
 
 const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
 

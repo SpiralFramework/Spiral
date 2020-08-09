@@ -12,6 +12,11 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.peekInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class WordScript(val labels: Array<String>, val parameters: Array<String>, val strings: Array<String>?, val localBranchNumbers: Array<Pair<Int, Int>>, val scriptDataBlocks: Array<Array<WrdEntry>>) {
@@ -23,7 +28,9 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, game: DrGame.WordScriptable, dataSource: DataSource<*>): KorneaResult<WordScript> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -90,7 +97,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         require(sectionOffsets[index] > 0) { localise("formats.wrd.bad_offset", index, sectionOffsets[index]) }
 
                         flow.fauxSeekFromStartForResult(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
-                            readScriptData(labels, parameters, strings, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
+                            readScriptData(labels, parameters, strings, game, withState { int16(BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong()))) })
                         }.getOrBreak { return@closeAfter it.cast() }
                     }
 
@@ -124,7 +131,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
             })
         }
 
-        suspend fun SpiralContext.readScriptData(labels: Array<String>, parameters: Array<String>, text: Array<String>?, game: DrGame.WordScriptable, flow: PeekableInputFlow): KorneaResult<Array<WrdEntry>> {
+        suspend fun <F> SpiralContext.readScriptData(labels: Array<String>, parameters: Array<String>, text: Array<String>?, game: DrGame.WordScriptable, flow: F): KorneaResult<Array<WrdEntry>> where F: Int16FlowState, F: InputFlowState<PeekableInputFlow> {
             withFormats(this) {
                 val entries: MutableList<WrdEntry> = ArrayList()
 

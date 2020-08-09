@@ -152,7 +152,7 @@ class DefaultSpiralCoreContext private constructor(
         return instance
     }
 
-    override fun prime(catalyst: SpiralContext) {
+    override suspend fun prime(catalyst: SpiralContext) {
         config.prime(catalyst)
         cacheProvider.prime(this)
     }

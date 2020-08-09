@@ -7,6 +7,10 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
 
 @ExperimentalUnsignedTypes
 data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val timeDateStamp: Int, val pointerToSymbolTable: Int, val numberOfSymbols: Int, val sizeOfOptionalHeader: Int, val characteristics: Int) {
@@ -84,6 +88,7 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<COFFHeader> {
             withFormats(context) {
+                val flow = withState { int(flow) }
                 val machineHexValue = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.errorAsIllegalArgument(NO_MACHINE, localise(NO_MACHINE_KEY, machineHexValue.toHexString()))
                 val numberOfSections = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

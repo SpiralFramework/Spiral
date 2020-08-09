@@ -1,6 +1,5 @@
 package info.spiralframework.base.jvm.io.files
 
-import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.TimedDataPool
@@ -9,6 +8,8 @@ import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataPool
+import dev.brella.kornea.toolkit.common.SuspendInit1
+import info.spiralframework.base.common.SpiralCatalyst
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.time.Duration
@@ -26,21 +27,21 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
 
     override suspend fun SpiralContext.isCachedShortTerm(name: String): Boolean = File(shortTermDir, name).exists()
 
-    override suspend fun SpiralContext.cacheShortTerm(name: String, location: String?): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cacheShortTerm(name: String, location: String?): DataPool<InputFlow, out OutputFlow> =
             ShortTermFileDataPool(File(shortTermDir, name), location)
 
     override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = File(persistentDir, name).exists()
 
-    override suspend fun SpiralContext.cachePersistent(name: String, location: String?): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cachePersistent(name: String, location: String?): DataPool<InputFlow, OutputFlow> =
             AsyncFileDataPool(File(persistentDir, name))
 
     override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = isCachedShortTerm(name)
 
     @ExperimentalTime
-    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String?): DataPool<out InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String?): DataPool<InputFlow, OutputFlow> =
             TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration)
 
-    override fun prime(catalyst: SpiralContext) {
+    override suspend fun prime(catalyst: SpiralContext) {
         val upperDir = with(catalyst) { File(getLocalDataDir("cache")) }
         shortTermDir = File(upperDir, "short term")
         persistentDir = File(upperDir, "persistent")

@@ -11,6 +11,11 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readInt64LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 
 @ExperimentalUnsignedTypes
 class Dr1LocalisationBin private constructor(val stringIDs: Array<String>, val languages: Map<String, Language>) {
@@ -23,6 +28,7 @@ class Dr1LocalisationBin private constructor(val stringIDs: Array<String>, val l
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1LocalisationBin> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<Dr1LocalisationBin> {
             withFormats(context) {
+                val flow = withState { int(flow) }
                 val languageCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                 val languages = Array(languageCount) {

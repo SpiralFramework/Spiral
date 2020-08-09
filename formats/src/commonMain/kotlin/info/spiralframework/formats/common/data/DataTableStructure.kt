@@ -10,6 +10,11 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.InputFlowStateSelector
+import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.mapWithState
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val entries: Array<Array<DataVariable>>, val utf8Strings: Array<String>, val utf16Strings: Array<String>) {
@@ -53,7 +58,9 @@ class DataTableStructure(val variableDetails: Array<DataVariableHeader>, val ent
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DataTableStructure> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val structureCount = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

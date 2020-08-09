@@ -3,8 +3,8 @@ package info.spiralframework.formats.common.compression
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.korneaNotEnoughData
 import dev.brella.kornea.io.common.ReversedBitPoolInput
-import dev.brella.kornea.io.common.readInt64BE
-import dev.brella.kornea.io.common.readUInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readInt64BE
+import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 
 const val CRILAYLA_MAGIC = 0x4352494C41594C41
 

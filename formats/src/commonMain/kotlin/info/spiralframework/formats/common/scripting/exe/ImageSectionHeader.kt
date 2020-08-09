@@ -8,6 +8,10 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
 
 @ExperimentalUnsignedTypes
 data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtualAddress: Int, val sizeOfRawData: Int, val pointerToRawData: Int, val pointerToRelocations: Int, val pointerToLineNumbers: Int, val numberOfRelocations: Int, val numberOfLineNumbers: Int, val characteristics: Int) {
@@ -53,6 +57,7 @@ data class ImageSectionHeader(val name: String, val virtualSize: Int, val virtua
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<ImageSectionHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<ImageSectionHeader> {
             withFormats(context) {
+                val flow = withState { int(flow) }
                 val name = flow.readAsciiString(8)?.trim() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 //                val physicalAddress =
                 val virtualSize = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

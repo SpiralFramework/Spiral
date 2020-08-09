@@ -7,6 +7,7 @@ import dev.brella.kornea.io.common.toUTF16BE
 import dev.brella.kornea.io.common.toUTF16LE
 
 enum class TextCharsets(val bytesForNull: Int) {
+    ASCII(1),
     UTF_8(1),
     UTF_16(2),
     UTF_16LE(2),
@@ -20,13 +21,14 @@ enum class TextCharsets(val bytesForNull: Int) {
 }
 
 expect fun ByteArray.decodeToString(charset: TextCharsets): String
-fun ByteArray.decodeToUTF8String(): String = decodeToString(TextCharsets.UTF_8)
-fun ByteArray.decodeToUTF16String(): String = decodeToString(TextCharsets.UTF_16)
-fun ByteArray.decodeToUTF16LEString(): String = decodeToString(TextCharsets.UTF_16LE)
-fun ByteArray.decodeToUTF16BEString(): String = decodeToString(TextCharsets.UTF_16BE)
+inline fun ByteArray.decodeToUTF8String(): String = decodeToString(TextCharsets.UTF_8)
+inline fun ByteArray.decodeToUTF16String(): String = decodeToString(TextCharsets.UTF_16)
+inline fun ByteArray.decodeToUTF16LEString(): String = decodeToString(TextCharsets.UTF_16LE)
+inline fun ByteArray.decodeToUTF16BEString(): String = decodeToString(TextCharsets.UTF_16BE)
 
 fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
     when (charset) {
+        TextCharsets.ASCII -> return CharArray(array.size) { array[it].toChar() }.concatToString()
         TextCharsets.UTF_8 -> return array.decodeToString()
         TextCharsets.UTF_16 -> {
             if (array.size < 2)
@@ -67,14 +69,15 @@ fun manuallyDecode(array: ByteArray, charset: TextCharsets): String {
 }
 
 expect suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray
-suspend fun String.encodeToUTF8ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_8)
-suspend fun String.encodeToUTF16ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16)
-suspend fun String.encodeToUTF16LEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16LE)
-suspend fun String.encodeToUTF16BEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16BE)
+suspend inline fun String.encodeToUTF8ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_8)
+suspend inline fun String.encodeToUTF16ByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16)
+suspend inline fun String.encodeToUTF16LEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16LE)
+suspend inline fun String.encodeToUTF16BEByteArray(): ByteArray = encodeToByteArray(TextCharsets.UTF_16BE)
 
 @ExperimentalUnsignedTypes
 suspend fun manuallyEncode(text: String, charset: TextCharsets, includeByteOrderMarker: Boolean = true): ByteArray {
     when (charset) {
+        TextCharsets.ASCII -> return ByteArray(text.length) { text[it].toByte() }
         TextCharsets.UTF_8 -> return text.encodeToByteArray()
         TextCharsets.UTF_16 -> return manuallyEncode(text, TextCharsets.UTF_16LE, includeByteOrderMarker)
         TextCharsets.UTF_16LE -> {

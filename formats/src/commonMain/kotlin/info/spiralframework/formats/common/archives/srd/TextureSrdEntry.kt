@@ -5,9 +5,9 @@ import info.spiralframework.base.common.locale.localisedNotEnoughData
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.BinaryInputFlow
-import dev.brella.kornea.io.common.flow.SeekableInputFlow
-import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 
 @ExperimentalUnsignedTypes
@@ -42,14 +42,14 @@ data class TextureSrdEntry(
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useAndFlatMap { flow -> setup(flow) }
+            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
+            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<TextureSrdEntry> {
+    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TextureSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

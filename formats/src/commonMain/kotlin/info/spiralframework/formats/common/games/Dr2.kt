@@ -9,12 +9,11 @@ import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr2.Dr2TextEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
+import kotlinx.serialization.builtins.ListSerializer
 
 @ExperimentalUnsignedTypes
 open class Dr2(
@@ -31,19 +30,17 @@ open class Dr2(
         @Serializable
         data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
 
-        @UnstableDefault
-        @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr2> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr2.json"))
                 val gameString = loadResource("games/dr2.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                         .getOrBreak { return it.asType() }
-                val gameJson = Json.parse(Dr2GameJson.serializer(), gameString)
+                val gameJson = Json.decodeFromString(Dr2GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr2.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
                         .getOrElse(emptyList())
 
                 return KorneaResult.success(Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes))
@@ -159,12 +156,8 @@ open class Dr2(
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
-@UnstableDefault
-@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.Dr2() = Dr2(this)
 
-@UnstableDefault
-@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.UnsafeDr2(): Dr2 = Dr2(this).get()

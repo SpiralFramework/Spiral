@@ -7,9 +7,12 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.closeAfter
-import dev.brella.kornea.io.common.readInt16LE
-import dev.brella.kornea.io.common.use
+import dev.brella.kornea.io.common.flow.InputFlowStateSelector
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.int16
+import dev.brella.kornea.io.common.flow.mapWithState
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerIndex: Int, val incorrectAnswerIndex: Int, val unk1: Int, val unk2: Int, val unk3: Int, val unk4: Int, val unk5: Int, val unk6: Int, val gentleFilledLetters: BooleanArray, val kindFilledLetters: BooleanArray, val meanFilledLetters: BooleanArray) {
@@ -18,7 +21,9 @@ class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerInde
 
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1Anagram> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int16)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val timeLimit = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

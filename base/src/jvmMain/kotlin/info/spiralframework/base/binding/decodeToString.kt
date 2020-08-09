@@ -5,6 +5,7 @@ import java.text.DecimalFormat
 
 val TextCharsets.java: Charset
     get() = when (this) {
+        TextCharsets.ASCII -> Charsets.US_ASCII
         TextCharsets.UTF_8 -> Charsets.UTF_8
         TextCharsets.UTF_16 -> Charsets.UTF_16
         TextCharsets.UTF_16BE -> Charsets.UTF_16BE

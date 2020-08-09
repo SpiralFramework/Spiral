@@ -8,12 +8,11 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
+import kotlinx.serialization.builtins.ListSerializer
 
 @ExperimentalUnsignedTypes
 class UDG(
@@ -27,19 +26,17 @@ class UDG(
         @Serializable
         data class UDGGameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>)
 
-        @UnstableDefault
-        @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): KorneaResult<UDG> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/udg.json"))
                 val gameString = loadResource("games/udg.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                         .getOrBreak { return it.asType() }
-                val gameJson = Json.parse(UDGGameJson.serializer(), gameString)
+                val gameJson = Json.decodeFromString(UDGGameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/udg.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
                         .getOrElse(emptyList())
 
                 return KorneaResult.success(UDG(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
@@ -87,11 +84,8 @@ class UDG(
     }
 }
 
-@UnstableDefault
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.UDG() = UDG(this)
-@UnstableDefault
+
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.UnsafeUDG() = UDG(this).get()

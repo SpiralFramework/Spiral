@@ -1,5 +1,6 @@
 package info.spiralframework.base.common.config
 
+import dev.brella.kornea.toolkit.common.SuspendInit1
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 
@@ -8,7 +9,7 @@ interface SpiralConfig: SpiralCatalyst<SpiralContext> {
         override fun SpiralContext.getConfigFile(module: String): String = module
         override fun SpiralContext.getLocalDataDir(group: String): String = group
 
-        override fun prime(catalyst: SpiralContext) {}
+        override suspend fun prime(catalyst: SpiralContext) {}
     }
 
     fun SpiralContext.getConfigFile(module: String): String

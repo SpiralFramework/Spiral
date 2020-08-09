@@ -1,6 +1,5 @@
 package info.spiralframework.base.common.io
 
-import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.putBack
 import dev.brella.kornea.errors.common.flatMap
@@ -10,6 +9,8 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyTo
+import dev.brella.kornea.toolkit.common.SuspendInit1
+import info.spiralframework.base.common.SpiralCatalyst
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -99,7 +100,7 @@ interface SpiralTimedCacheProvider {
 @ExperimentalUnsignedTypes
 interface SpiralCacheProvider : SpiralShortTermCacheProvider, SpiralPersistentCacheProvider, SpiralTimedCacheProvider, SpiralCatalyst<SpiralContext> {
     class Memory() : SpiralCacheProvider, SpiralShortTermCacheProvider by SpiralShortTermCacheProvider.Memory(), SpiralPersistentCacheProvider by SpiralPersistentCacheProvider.Memory(), SpiralTimedCacheProvider by SpiralTimedCacheProvider.Memory() {
-        override fun prime(catalyst: SpiralContext) {}
+        override suspend fun prime(catalyst: SpiralContext) {}
     }
 }
 

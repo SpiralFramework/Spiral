@@ -12,15 +12,13 @@ import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndFlatMap
-import dev.brella.kornea.io.common.useAndMap
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import dev.brella.kornea.io.common.useInputFlow
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.parse
 
 @ExperimentalUnsignedTypes
 open class DRv3(
@@ -34,8 +32,6 @@ open class DRv3(
         @Serializable
         data class DRv3GameJson(val character_names: Map<String, String>, val character_identifiers: Map<String, String>, val colour_codes: Map<String, String>, val item_names: Array<String>)
 
-        @UnstableDefault
-        @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): KorneaResult<DRv3> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/drv3.json"))
@@ -43,11 +39,11 @@ open class DRv3(
                     .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                     .getOrBreak { return it.cast() }
 
-                val gameJson = Json.parse(DRv3GameJson.serializer(), gameString)
+                val gameJson = Json.decodeFromString(DRv3GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/drv3.json", Dr1::class)
                     .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                    .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                    .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
                     .getOrElse(emptyList())
 
                 return KorneaResult.success(DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
@@ -226,12 +222,8 @@ open class DRv3(
     }
 }
 
-@UnstableDefault
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.DRv3() = DRv3(this)
 
-@UnstableDefault
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.UnsafeDRv3() = DRv3(this).get()

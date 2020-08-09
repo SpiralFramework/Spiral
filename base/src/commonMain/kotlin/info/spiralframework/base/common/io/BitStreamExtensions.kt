@@ -5,7 +5,6 @@ package info.spiralframework.base.common.io
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.decodeToString
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
-import info.spiralframework.base.common.text.appendln
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.BufferedInputFlow.Companion.DEFAULT_BUFFER_SIZE
 import dev.brella.kornea.io.common.flow.InputFlow
@@ -13,56 +12,6 @@ import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.io.common.flow.readExact
 import kotlinx.coroutines.yield
-
-public suspend fun OutputFlow.println() {
-    write('\n'.toInt())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-public suspend fun OutputFlow.println(string: String) {
-    write(string.encodeToUTF8ByteArray())
-    write('\n'.toInt())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-public suspend fun OutputFlow.println(block: StringBuilder.() -> Unit) {
-    val builder = StringBuilder()
-    builder.block()
-    builder.appendln()
-    write(builder.toString().encodeToUTF8ByteArray())
-}
-
-public suspend fun OutputFlow.print(char: Char) {
-    write(char.toInt())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-public suspend fun OutputFlow.print(string: String) {
-    write(string.encodeToUTF8ByteArray())
-}
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-public suspend fun OutputFlow.print(block: StringBuilder.() -> Unit) {
-    val builder = StringBuilder()
-    builder.block()
-    write(builder.toString().encodeToUTF8ByteArray())
-}
-
-public suspend fun InputFlow.readChunked(bufferSize: Int = DEFAULT_BUFFER_SIZE, operation: (buffer: ByteArray, offset: Int, length: Int) -> Unit): Long? {
-    var bytesCopied: Long = 0
-    val buffer = ByteArray(bufferSize)
-    var bytes = read(buffer) ?: return null
-    while (bytes >= 0) {
-        operation(buffer, 0, bytes)
-        bytesCopied += bytes
-        bytes = read(buffer) ?: return bytesCopied
-    }
-    return bytesCopied
-}
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
@@ -75,7 +24,7 @@ suspend fun InputFlow.readString(len: Int, encoding: TextCharsets, overrideMaxLe
 suspend fun InputFlow.readAsciiString(len: Int, overrideMaxLen: Boolean = false): String? {
     val data = ByteArray(if (overrideMaxLen) len.coerceAtLeast(0) else len.coerceIn(0, 1024 * 1024))
     if (read(data) != data.size) return null
-    return String(CharArray(data.size) { data[it].toChar() })
+    return data.decodeToString()
 }
 
 @ExperimentalUnsignedTypes

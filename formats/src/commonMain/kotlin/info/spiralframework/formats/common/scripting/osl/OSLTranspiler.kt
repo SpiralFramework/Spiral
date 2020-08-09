@@ -2,8 +2,6 @@ package info.spiralframework.formats.common.scripting.osl
 
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.println
-import info.spiralframework.base.common.text.appendln
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinEntry
@@ -11,7 +9,9 @@ import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.scripting.lin.transpile
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import dev.brella.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.printLine
 import kotlin.contracts.ExperimentalContracts
 import kotlin.math.min
 
@@ -60,25 +60,25 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
 
     @ExperimentalContracts
     @ExperimentalStdlibApi
-    suspend fun transpile(out: OutputFlow) {
+    suspend fun transpile(out: PrintOutputFlow) {
         try {
             transpile(lin.scriptData.toList())
         } finally {
-            out.println("OSL Script")
-            out.write('\n'.toInt())
+            out.printLine("OSL Script")
+            out.print('\n')
             sortVariableNames(variables.keys)
                     .forEach { variableGroup ->
-                        out.println {
+                        out.printLine(buildString {
                             variableGroup.forEach { varName ->
                                 append("val ")
                                 append(varName)
                                 append(" = ")
                                 variables[varName]?.represent(this)
-                                appendln()
+                                appendLine()
                             }
-                        }
+                        })
                     }
-            output.forEach { line -> out.println(variableMappings.entries.fold(line) { str, (k, v) -> str.replace(k, v) }) }
+            output.forEach { line -> out.printLine(variableMappings.entries.fold(line) { str, (k, v) -> str.replace(k, v) }) }
             output.clear()
         }
     }

@@ -13,6 +13,9 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.peekInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, val game: DrGame.LinScriptable? = null) {
@@ -37,7 +40,9 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, game: DrGame.LinScriptable?, dataSource: DataSource<*>): KorneaResult<LinScript> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState { int(it) }
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -92,7 +97,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                         flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     }
                     val scriptData = flow.fauxSeekFromStartForResult(linBlocks[0].toULong(), dataSource) { scriptDataFlow ->
-                        readScriptData(this, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, (linBlocks[1] - linBlocks[0]).toULong())))
+                        readScriptData(this, game, withState { int16(BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, (linBlocks[1] - linBlocks[0]).toULong()))) })
                     }.getOrBreak { return@closeAfter it.cast() }
 
                     val textData = when (linBlockCount) {
@@ -120,7 +125,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                 }
             }
 
-        suspend fun readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: PeekableInputFlow): KorneaResult<Array<LinEntry>> {
+        suspend fun <F> readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: F): KorneaResult<Array<LinEntry>> where F: Int16FlowState, F: InputFlowState<PeekableInputFlow> {
             withFormats(context) {
                 val entries: MutableList<LinEntry> = ArrayList()
 

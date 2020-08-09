@@ -7,10 +7,12 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.closeAfter
+import dev.brella.kornea.io.common.flow.InputFlowStateSelector
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.mapWithState
 import dev.brella.kornea.io.common.flow.readExact
-import dev.brella.kornea.io.common.readInt16LE
-import dev.brella.kornea.io.common.use
+import dev.brella.kornea.toolkit.common.closeAfter
 import kotlin.math.round
 
 @ExperimentalUnsignedTypes
@@ -20,7 +22,9 @@ class DRv3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, va
 
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DRv3NonstopDebate> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return it.cast() }
 
                 closeAfter(flow) {
                     val timeLimit = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

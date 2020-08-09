@@ -60,7 +60,7 @@ actual data class DefaultSpiralContext private actual constructor(
             .map { module -> Pair(module.moduleName, module.moduleVersion) }
             .toMap()
 
-    override fun prime(catalyst: SpiralContext) {
+    override suspend fun prime(catalyst: SpiralContext) {
         config.prime(catalyst)
         cacheProvider.prime(this)
     }

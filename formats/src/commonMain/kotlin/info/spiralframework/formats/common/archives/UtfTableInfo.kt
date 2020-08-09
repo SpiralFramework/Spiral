@@ -9,26 +9,38 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.errors.common.KorneaResult.Success
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.fauxSeekFromStart
-import dev.brella.kornea.io.common.flow.offsetPosition
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.toolkit.common.closeAfter
 
-open class UtfTableSchema(open val name: String, open val size: UInt, open val schemaOffset: UInt, open val rowsOffset: UInt, open val stringTable: String, open val stringOffset: UInt, open val dataOffset: UInt, open val columnCount: Int, open val rowWidth: Int, open val rowCount: UInt, open val schema: Array<out UtfColumnSchema>)
+open class UtfTableSchema(
+    open val name: String,
+    open val size: UInt,
+    open val schemaOffset: UInt,
+    open val rowsOffset: UInt,
+    open val stringTable: String,
+    open val stringOffset: UInt,
+    open val dataOffset: UInt,
+    open val columnCount: Int,
+    open val rowWidth: Int,
+    open val rowCount: UInt,
+    open val schema: Array<out UtfColumnSchema>
+)
 
 @ExperimentalUnsignedTypes
 data class UtfTableInfo(
-        override val name: String,
-        override val size: UInt,
-        override val schemaOffset: UInt,
-        override val rowsOffset: UInt,
-        override val stringTable: String,
-        override val stringOffset: UInt,
-        override val dataOffset: UInt,
-        override val columnCount: Int,
-        override val rowWidth: Int,
-        override val rowCount: UInt,
-        override val schema: Array<out UtfColumnInfo>,
-        val dataSource: DataSource<*>
+    override val name: String,
+    override val size: UInt,
+    override val schemaOffset: UInt,
+    override val rowsOffset: UInt,
+    override val stringTable: String,
+    override val stringOffset: UInt,
+    override val dataOffset: UInt,
+    override val columnCount: Int,
+    override val rowWidth: Int,
+    override val rowCount: UInt,
+    override val schema: Array<out UtfColumnInfo>,
+    val dataSource: DataSource<*>
 ) : UtfTableSchema(name, size, schemaOffset, rowsOffset, stringTable, stringOffset, dataOffset, columnCount, rowWidth, rowCount, schema) {
     companion object {
         const val UTF_MAGIC_NUMBER_LE = 0x46545540
@@ -61,14 +73,16 @@ data class UtfTableInfo(
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<UtfTableInfo> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (magic != UTF_MAGIC_NUMBER_LE) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(
-                                INVALID_UTF_MAGIC_NUMBER,
-                                localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}", "0x${flow.offsetPosition().minus(4u).toString(16)}")
+                            INVALID_UTF_MAGIC_NUMBER,
+                            localise("formats.utf_table.invalid_magic", "0x${magic.toString(16)}", "0x${UTF_MAGIC_NUMBER_LE.toString(16)}", "0x${flow.offsetPosition().minus(4u).toString(16)}")
                         )
                     }
 
@@ -96,8 +110,8 @@ data class UtfTableInfo(
                     val schema = Array(columnCount) {
                         val columnType = flow.read() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         val columnName = stringTable
-                                .substring(flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
-                                .substringBefore(NULL_TERMINATOR)
+                            .substring(flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY))
+                            .substringBefore(NULL_TERMINATOR)
 
                         val columnWidth: Int
 
@@ -150,7 +164,7 @@ data class UtfTableInfo(
             }
             COLUMN_STORAGE_CONSTANT -> {
                 rowDataOffset = columnInfo.constantOffset?.toInt()
-                        ?: 8 + rowsOffset.toInt() + (rowIndex * rowWidth) + columnInfo.rowPosition
+                                ?: 8 + rowsOffset.toInt() + (rowIndex * rowWidth) + columnInfo.rowPosition
             }
             COLUMN_STORAGE_ZERO -> return when (val columnType = columnInfo.type and COLUMN_TYPE_MASK) {
                 COLUMN_TYPE_STRING -> KorneaResult.success(UtfRowData.TypeString(columnInfo.name, rowIndex, stringFromTable(0)))
@@ -168,7 +182,10 @@ data class UtfTableInfo(
             else -> return KorneaResult.errorAsIllegalArgument(UNKNOWN_STORAGE_CLASS, localise("formats.cpk.unknown_storage_class", storageClass))
         }
 
-        val flow = dataSource.openInputFlow().getOrBreak { return it.cast() }
+        val flow = dataSource.openInputFlow()
+            .mapWithState { int(it) }
+            .getOrBreak { return it.cast() }
+
         return closeAfter(flow) {
             flow.skip(rowDataOffset.toULong())
 
@@ -177,8 +194,10 @@ data class UtfTableInfo(
                     val readOffset = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val offset = readOffset.toULong() + stringOffset + 8u
                     flow.fauxSeekFromStart(offset, dataSource) { flow -> flow.readNullTerminatedUTF8String() }
-                            .filterTo { string -> if (string != stringFromTable(readOffset)) KorneaResult.errorAsIllegalArgument(-1, "Mismatching strings: [$string] vs [${stringFromTable(readOffset)}]") else null }
-                            .map { string -> UtfRowData.TypeString(columnInfo.name, rowIndex, string) }
+                        .filterTo { string ->
+                            if (string != stringFromTable(readOffset)) KorneaResult.errorAsIllegalArgument(-1, "Mismatching strings: [$string] vs [${stringFromTable(readOffset)}]")
+                            else null
+                        }.map { string -> UtfRowData.TypeString(columnInfo.name, rowIndex, string) }
                 }
                 COLUMN_TYPE_DATA -> {
                     val location = requireNotNull(flow.readInt32BE()).toULong() + dataOffset + 8u
@@ -250,7 +269,7 @@ suspend fun UtfTableInfo.readRowDataUnsafe(context: SpiralContext, rowIndex: Int
 @ExperimentalStdlibApi
 suspend fun UtfTableInfo.readRowData(context: SpiralContext, rowIndex: Int, columnName: String): KorneaResult<UtfRowData<*>> {
     val columnInfo = get(columnName)
-            ?: return KorneaResult.errorAsIllegalArgument(UtfTableInfo.NO_COLUMN_WITH_NAME, UtfTableInfo.NO_COLUMN_WITH_NAME_KEY)
+                     ?: return KorneaResult.errorAsIllegalArgument(UtfTableInfo.NO_COLUMN_WITH_NAME, UtfTableInfo.NO_COLUMN_WITH_NAME_KEY)
     return context.readRowData(rowIndex, columnInfo)
 }
 

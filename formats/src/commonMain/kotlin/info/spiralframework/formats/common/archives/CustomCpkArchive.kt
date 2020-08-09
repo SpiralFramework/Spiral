@@ -7,6 +7,9 @@ import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
 import dev.brella.kornea.toolkit.common.sumByLong
 
 @ExperimentalUnsignedTypes
@@ -62,6 +65,8 @@ open class CustomCpkArchive {
     suspend fun SpiralContext.compile(output: OutputFlow) {
         withFormats(this) {
             warn("formats.custom_cpk.header_warning")
+            val output = withState { int(output) }
+
             val writerTextVersion = writerTextVersion ?: "SpiralFormats v$writerVersion.$writerRevision.0"
             val filenames = _files.keys.toList()
 
@@ -339,6 +344,8 @@ open class CustomCpkArchive {
     //TODO: Support data writing maybe
     suspend fun SpiralContext.writeTable(output: OutputFlow, init: UtfTableSchemaBuilder.() -> Unit) = writeTable(output, utfTableSchema(init))
     suspend fun SpiralContext.writeTable(output: OutputFlow, table: UtfTableSchema) {
+        val output = withState { int(output) }
+
         //Size = 32 + stringTable.length
         output.writeInt32LE(UtfTableInfo.UTF_MAGIC_NUMBER_LE)
 
@@ -364,7 +371,9 @@ open class CustomCpkArchive {
 
     suspend fun SpiralContext.writeTableDataSingleRow(output: OutputFlow, table: UtfTableSchema, dataMap: Map<String, Any?>) = writeTableData(output, table, dataMap.mapValues { (_, value) -> listOf(value) })
     suspend fun SpiralContext.writeTableData(output: OutputFlow, table: UtfTableSchema, dataMap: Map<String, List<Any?>>) {
-        val stringTableRange = 0 until table.stringTable.length
+        val output = withState { int(output) }
+
+        val stringTableRange = table.stringTable.indices
         for (i in 0 until table.rowCount.toInt()) {
             table.schema.forEach { schema ->
                 if (schema.type and UtfTableInfo.COLUMN_STORAGE_MASK == UtfTableInfo.COLUMN_STORAGE_ZERO)

@@ -8,6 +8,8 @@ import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 
 typealias VertexBlock = RSISrdEntry.ResourceIndex
@@ -67,14 +69,14 @@ data class VTXSrdEntry(
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useAndFlatMap { flow -> setup(flow) }
+            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useAndFlatMap { flow -> setup(BinaryInputFlow(flow.readBytes())) }
+            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
         }
     }
 
     @ExperimentalStdlibApi
-    private suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<VTXSrdEntry> {
+    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<VTXSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

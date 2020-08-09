@@ -1,5 +1,8 @@
 package info.spiralframework.formats.common.games
 
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
@@ -9,15 +12,8 @@ import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.builtins.list
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndMapInputFlow
-import dev.brella.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
 open class Dr1(
@@ -63,19 +59,17 @@ open class Dr1(
                 val flag_names: Map<Int, Map<Int, String>> = emptyMap()
         )
 
-        @UnstableDefault
-        @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr1> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr1.json"))
                 val gameString = loadResource("games/dr1.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                         .getOrBreak { return it.cast() }
-                val gameJson = Json.parse(Dr1GameJson.serializer(), gameString)
+                val gameJson = Json.decodeFromString(Dr1GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr1.json", Dr1::class)
                         .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.parse(JsonOpcode.serializer().list, str) }
+                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
                         .getOrElse(emptyList())
 
                 return KorneaResult.success(
@@ -301,12 +295,8 @@ open class Dr1(
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
-@UnstableDefault
-@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.Dr1() = Dr1(this)
 
-@UnstableDefault
-@ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1(this).get()

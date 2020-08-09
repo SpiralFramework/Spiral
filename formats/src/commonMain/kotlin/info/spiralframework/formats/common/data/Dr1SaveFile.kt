@@ -8,6 +8,11 @@ import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readInt64LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 
 @ExperimentalUnsignedTypes
 class Dr1SaveFile {
@@ -23,6 +28,7 @@ class Dr1SaveFile {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1SaveFile> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<Dr1SaveFile> {
             withFormats(context) {
+                val flow = withState { int(flow) }
                 val magic = flow.readInt64LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 if (magic != MAGIC_NUMBER) {
                     return KorneaResult.errorAsIllegalArgument(INVALID_MAGIC_NUMBER, localise(INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16).padStart(16, '0')}"))

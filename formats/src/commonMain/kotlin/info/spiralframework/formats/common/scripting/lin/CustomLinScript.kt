@@ -5,8 +5,10 @@ import info.spiralframework.base.binding.manuallyEncode
 import info.spiralframework.base.common.NULL_TERMINATOR
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.writeInt16LE
-import dev.brella.kornea.io.common.writeInt32LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.withState
 import dev.brella.kornea.toolkit.common.sumByLong
 
 class CustomLinScript {
@@ -33,6 +35,7 @@ class CustomLinScript {
     @ExperimentalStdlibApi
     @ExperimentalUnsignedTypes
     suspend fun compile(output: OutputFlow) {
+        val output = withState { int(output) }
         if (writeMagicNumber) output.writeInt32LE(LinScript.MAGIC_NUMBER_LE)
 
         val scriptDataSize = scriptData.sumByLong { entry -> 2 + entry.rawArguments.size}

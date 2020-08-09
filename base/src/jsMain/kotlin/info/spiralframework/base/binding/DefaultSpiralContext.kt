@@ -54,7 +54,7 @@ actual data class DefaultSpiralContext actual constructor(
         return context
     }
 
-    override fun prime(catalyst: SpiralContext) {
+    override suspend fun prime(catalyst: SpiralContext) {
         config.prime(catalyst)
         cacheProvider.prime(this)
     }
