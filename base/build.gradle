@@ -23,7 +23,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation kotlin('reflect')
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
 
                 api "dev.brella:kornea-annotations:$kornea_annotations_version"

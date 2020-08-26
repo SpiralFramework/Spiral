@@ -85,5 +85,5 @@ fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
 
 //    require(output.size == rawSize.toInt())
 
-    return KorneaResult.success(output.toByteArray())
+    return KorneaResult.success(output.toByteArray(), null)
 }

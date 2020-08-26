@@ -21,14 +21,14 @@ sealed class OSLVisitorUnion {
     data class AddDialogueVariable(val speakerVariable: String, val dialogue: OSLUnion) : OSLVisitorUnion()
 
     data class Script(val header: Header, val scope: Scope) : OSLVisitorUnion() {
-        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder) {
+        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder<*>) {
             header.version?.let { v -> builder.setVersion(v) }
             scope.writeToBuilder(builder)
         }
     }
 
     data class Scope(val lines: List<OSLVisitorUnion>) : OSLVisitorUnion() {
-        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder) {
+        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder<*>) {
             lines.forEach { union ->
                 when (union) {
                     is Header -> union.version?.let { v -> builder.setVersion(v) }

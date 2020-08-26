@@ -23,7 +23,7 @@ interface SpiralFormat {
 /**
  * A Spiral format that supports reading from a source
  */
-interface ReadableSpiralFormat<T>: SpiralFormat {
+interface ReadableSpiralFormat<out T>: SpiralFormat {
     /**
      * Specifies a preferred conversion format for files that match this format.
      * This is used primarily for Danganronpa formats to specify we should convert to a nicer, more usable format.

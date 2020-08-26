@@ -7,8 +7,8 @@ import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.CommonLocaleBundle
 import info.spiralframework.base.common.locale.LocaleBundle
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.closeAfter
 import dev.brella.kornea.io.common.flow.readAndClose
+import dev.brella.kornea.toolkit.common.closeAfter
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -43,9 +43,7 @@ open class OSLLocaleBundle(override val bundleName: String, override val locale:
             val oslBundle = resourceLoader.loadResource("$fullName.properties", from).flatMap { ds ->
                 closeAfter(ds) {
                     ds.openInputFlow().flatMap inner@{ flow ->
-                        val input = CharStreams.fromString(buildString {
-                            appendLine(String(flow.readAndClose(), Charsets.UTF_8))
-                        })
+                        val input = CharStreams.fromString(String(flow.readAndClose(), Charsets.UTF_8))
                         val lexer = OSLLocaleLexer(input)
                         val tokens = CommonTokenStream(lexer)
                         val parser = OSLLocaleParser(tokens)

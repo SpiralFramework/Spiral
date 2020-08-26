@@ -79,10 +79,13 @@ class FontMap(val unk1: Int, val unk2: Int, val mappingTable: Map<Char, Int>, va
                             val height = fontTableFlow.readInt16LE()
                                          ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
+                            //leftSpacing?
                             val glyphUnk1 = fontTableFlow.readInt16LE()
                                             ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            //rightSpacing?
                             val glyphUnk2 = fontTableFlow.readInt16LE()
                                             ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            //verticalSpacing?
                             val glyphUnk3 = fontTableFlow.readInt16LE()
                                             ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 

@@ -2,7 +2,6 @@ apply plugin: 'antlr'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     antlr "org.antlr:antlr4:4.7.2"
 }
 

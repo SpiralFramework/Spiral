@@ -55,5 +55,5 @@ fun decompressSpcData(data: ByteArray, size: Int = 0): KorneaResult<ByteArray> {
         flag = flag shr 1
     }
 
-    return KorneaResult.success(output.toByteArray ())
+    return KorneaResult.success(output.toByteArray(), null)
 }

@@ -27,7 +27,7 @@ fun decompressCrilayla(data: ByteArray): KorneaResult<ByteArray> {
     val output: MutableList<Byte> = ArrayList(data.slice(pos + compressedSize until pos + compressedSize + 0x100))
     output.addAll(deflateCrilayla(data.sliceArray(pos until pos + compressedSize), rawSize, compressedSize))
 
-    return KorneaResult.success(output.toByteArray())
+    return KorneaResult.success(output.toByteArray(), null)
 }
 
 const val CRILAYLA_MINIMAL_REFLEN = 3

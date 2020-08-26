@@ -32,7 +32,7 @@ interface SpiralShortTermCacheProvider {
             return pool
         }
 
-        suspend fun newDataPool(location: String?): DataPool<out InputFlow, out OutputFlow> = BinaryDataPool(location)
+        suspend fun newDataPool(location: String?): DataPool<InputFlow, OutputFlow> = BinaryDataPool(location, null, 8)
     }
 
     fun supportsShortTermCaching(): Boolean

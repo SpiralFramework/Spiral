@@ -9,16 +9,20 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.closeAfter
-import dev.brella.kornea.io.common.readInt32LE
-import dev.brella.kornea.io.common.use
+import dev.brella.kornea.io.common.flow.InputFlowStateSelector
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.int
+import dev.brella.kornea.io.common.flow.mapWithState
+import dev.brella.kornea.toolkit.common.closeAfter
 
 class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
     companion object {
         @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<OpenSpiralBitcodeWrapper> =
             withFormats(context) {
-                val flow = dataSource.openInputFlow().getOrBreak { return@withFormats it.cast() }
+                val flow = dataSource.openInputFlow()
+                    .mapWithState(InputFlowStateSelector::int)
+                    .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(OpenSpiralBitcodeParser.NOT_ENOUGH_DATA_KEY)

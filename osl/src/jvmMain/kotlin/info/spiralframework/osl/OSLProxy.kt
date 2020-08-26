@@ -20,10 +20,10 @@ import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.BufferedOutputFlow
-import dev.brella.kornea.io.common.use
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileInputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
+import dev.brella.kornea.toolkit.common.use
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
