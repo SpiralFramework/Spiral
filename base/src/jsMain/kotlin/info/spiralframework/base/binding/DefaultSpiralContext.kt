@@ -10,6 +10,10 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SuspendInit0
+import info.spiralframework.base.common.SpiralCatalyst
+import info.spiralframework.base.common.tryPrime
+import kotlin.reflect.KClass
 
 @ExperimentalUnsignedTypes
 actual data class DefaultSpiralContext actual constructor(
@@ -20,7 +24,7 @@ actual data class DefaultSpiralContext actual constructor(
         val eventBus: SpiralEventBus,
         val cacheProvider: SpiralCacheProvider,
         val resourceLoader: SpiralResourceLoader
-) : SpiralContext,
+) : SpiralContext, SuspendInit0, SpiralCatalyst<SpiralContext>,
         SpiralLocale by locale,
         SpiralLogger by logger,
         SpiralConfig by config,
@@ -37,6 +41,8 @@ actual data class DefaultSpiralContext actual constructor(
     }
 
     override val loadedModules: Map<String, SemanticVersion> = emptyMap()
+    override val klass: KClass<SpiralContext> = SpiralContext::class
+    private var primed: Boolean = false
 
     override fun subcontext(module: String): SpiralContext = this
     override suspend fun copy(newLocale: SpiralLocale?, newLogger: SpiralLogger?, newConfig: SpiralConfig?, newEnvironment: SpiralEnvironment?, newEventBus: SpiralEventBus?, newCacheProvider: SpiralCacheProvider?, newResourceLoader: SpiralResourceLoader?): SpiralContext {
@@ -55,11 +61,20 @@ actual data class DefaultSpiralContext actual constructor(
     }
 
     override suspend fun prime(catalyst: SpiralContext) {
-        config.prime(catalyst)
-        cacheProvider.prime(this)
+        if (!primed) {
+            tryPrime(locale)
+            tryPrime(logger)
+            tryPrime(config)
+            tryPrime(environment)
+            tryPrime(eventBus)
+            tryPrime(cacheProvider)
+            tryPrime(resourceLoader)
+
+            primed = false
+        }
     }
 
-    actual suspend fun init() {
+    actual override suspend fun init() {
         addModuleProvider(SpiralModuleBase())
         registerAllModules()
         //moduleLoader.iterator().forEach { module -> module.register(this) }

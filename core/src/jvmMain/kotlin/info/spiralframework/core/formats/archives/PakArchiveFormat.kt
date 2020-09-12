@@ -9,13 +9,13 @@ import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.copyTo
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.jvm.JVMInputFlow
 import java.io.InputStream
-import java.util.*
 import java.util.zip.ZipFile
 import kotlin.collections.ArrayList
+import java.util.Optional as JvmOptional
 
 object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat {
     override val name: String = "Pak"
@@ -23,13 +23,11 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<PakArchive>> {
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
         val fileName = readContext?.name?.substringAfterLast('/')
         if (fileName != null && fileName.contains('.')) {
             if (!fileName.substringAfterLast('.').equals(extension, true)) {
-                return FormatResult.Fail(0.9)
-            } else {
-                return super.identify(context, readContext, source).weight { 1.0 }
+                return KorneaResult.errorAsIllegalArgument(-1, "Invalid extension ${fileName.substringAfterLast('.')}")
             }
         }
 
@@ -46,13 +44,16 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<PakArchive> =
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<PakArchive> =
             PakArchive(context, source)
-                    .map { pak ->
-                        if (pak.files.size == 1) FormatResult.Success(this, pak, 0.75)
-                        else FormatResult(this, pak, pak.files.isNotEmpty(), 0.8)
+                .filter { pak -> pak.files.isNotEmpty() }
+                .buildFormatResult { pak ->
+                    when {
+                        readContext?.name?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
+                        pak.files.size == 1 -> 0.75
+                        else -> 0.8
                     }
-                    .getOrElse(FormatResult.Fail(this, 1.0))
+                }
 
     /**
      * Does this format support writing [data]?

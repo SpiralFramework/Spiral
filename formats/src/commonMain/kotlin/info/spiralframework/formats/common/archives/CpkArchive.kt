@@ -12,7 +12,15 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
-class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etocHeader: KorneaResult<UtfTableInfo>, val itocHeader: KorneaResult<UtfTableInfo>, val gtocHeader: KorneaResult<UtfTableInfo>, val files: Array<CpkFileEntry>, val dataSource: DataSource<*>) {
+class CpkArchive(
+    val header: UtfTableInfo,
+    val tocHeader: UtfTableInfo,
+    val etocHeader: KorneaResult<UtfTableInfo>,
+    val itocHeader: KorneaResult<UtfTableInfo>,
+    val gtocHeader: KorneaResult<UtfTableInfo>,
+    val files: Array<CpkFileEntry>,
+    val dataSource: DataSource<*>
+) {
     companion object {
         const val MAGIC_NUMBER_LE = 0x204b5043
 
@@ -55,45 +63,45 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     if (magic != MAGIC_NUMBER_LE) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(
-                                INVALID_CPK_MAGIC,
-                                localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_LE.toString(16)}")
+                            INVALID_CPK_MAGIC,
+                            localise(INVALID_MAGIC_KEY, "0x${magic.toString(16)}", "0x${MAGIC_NUMBER_LE.toString(16)}")
                         )
                     }
 
                     val headerInfo = UtfTableInfo(this, OffsetDataSource(dataSource, 0x10u))
-                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY, it)) }
+                        .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY, it)) }
 
                     if (headerInfo.rowCount != 1u) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_ROW_COUNT, localise(INVALID_HEADER_ROW_COUNT_KEY, headerInfo.rowCount))
                     }
 
                     val tocOffset = headerInfo.readRowData(this, 0, TOC_OFFSET_COLUMN)
-                            .filterToInstance<UtfRowData.TypeLong>()
-                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
-                            .data
+                        .filterToInstance<UtfRowData.TypeLong>()
+                        .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                        .data
 
                     val etocOffset = headerInfo.readRowData(this, 0, ETOC_OFFSET_COLUMN)
-                            .filterToInstance<UtfRowData.TypeLong>()
-                            .filter { value -> value.data != 0L }
+                        .filterToInstance<UtfRowData.TypeLong>()
+                        .filter { value -> value.data != 0L }
                     val itocOffset = headerInfo.readRowData(this, 0, ITOC_OFFSET_COLUMN)
-                            .filterToInstance<UtfRowData.TypeLong>()
-                            .filter { value -> value.data != 0L }
+                        .filterToInstance<UtfRowData.TypeLong>()
+                        .filter { value -> value.data != 0L }
                     val gtocOffset = headerInfo.readRowData(this, 0, GTOC_OFFSET_COLUMN)
-                            .filterToInstance<UtfRowData.TypeLong>()
-                            .filter { value -> value.data != 0L }
+                        .filterToInstance<UtfRowData.TypeLong>()
+                        .filter { value -> value.data != 0L }
 
                     val contentOffset = headerInfo.readRowData(this, 0, CONTENT_OFFSET_COLUMN)
-                            .filterToInstance<UtfRowData.TypeLong>()
-                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
-                            .data
+                        .filterToInstance<UtfRowData.TypeLong>()
+                        .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                        .data
 
                     val fileCount = headerInfo.readRowData(this, 0, FILES_COLUMN)
-                            .filterToInstance<UtfRowData.TypeInt>()
-                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
-                            .data
+                        .filterToInstance<UtfRowData.TypeInt>()
+                        .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_HEADER_TABLE, localise(INVALID_HEADER_TABLE_KEY), it) }
+                        .data
 
                     val tocHeader = UtfTableInfo(this, OffsetDataSource(dataSource, tocOffset.toULong() + 0x10u))
-                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_TOC_TABLE, localise(INVALID_TOC_TABLE_KEY, it)) }
+                        .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_TOC_TABLE, localise(INVALID_TOC_TABLE_KEY, it)) }
 
                     if (tocHeader.rowCount != fileCount.toUInt()) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_TOC_ROW_COUNT, localise(INVALID_TOC_ROW_COUNT_KEY, tocHeader.rowCount, fileCount))
@@ -105,29 +113,29 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
 
                     val files = Array(tocHeader.rowCount.toInt()) { index ->
                         val fileName = tocHeader.readRowData(this, index, FILENAME_COLUMN)
-                                .filterToInstance<UtfRowData.TypeString>()
-                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
-                                .data
+                            .filterToInstance<UtfRowData.TypeString>()
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                            .data
 
                         val directoryName = tocHeader.readRowData(this, index, DIRECTORY_NAME_COLUMN)
-                                .filterToInstance<UtfRowData.TypeString>()
-                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
-                                .data
+                            .filterToInstance<UtfRowData.TypeString>()
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                            .data
 
                         val fileSize = tocHeader.readRowData(this, index, FILE_SIZE_COLUMN)
-                                .filterToInstance<UtfRowData.TypeInt>()
-                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
-                                .data
+                            .filterToInstance<UtfRowData.TypeInt>()
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                            .data
 
                         val extractSize = tocHeader.readRowData(this, index, EXTRACT_SIZE_COLUMN)
-                                .filterToInstance<UtfRowData.TypeInt>()
-                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
-                                .data
+                            .filterToInstance<UtfRowData.TypeInt>()
+                            .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                            .data
 
                         val fileOffset = tocHeader.readRowData(this, index, FILE_OFFSET_COLUMN)
-                                .filterToInstance<UtfRowData.TypeLong>()
-                                .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
-                                .data + minOf(contentOffset, tocOffset)
+                                             .filterToInstance<UtfRowData.TypeLong>()
+                                             .getOrBreak { return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_ROW, INVALID_FILE_ROW_KEY, it) }
+                                             .data + minOf(contentOffset, tocOffset)
 
                         CpkFileEntry(fileName, directoryName, fileSize, extractSize, fileOffset)
                     }
@@ -136,8 +144,8 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
                 }
             }
 
-        val VALID_MONTHS = 1 .. 12
-        val VALID_DAYS = 1 .. 31
+        val VALID_MONTHS = 1..12
+        val VALID_DAYS = 1..31
         val VALID_HOURS = 0 until 24
         val VALID_MINUTES = 0 until 60
         val VALID_SECONDS = 0 until 60
@@ -169,8 +177,8 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
 
     suspend fun SpiralContext.openRawSource(file: CpkFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.fileOffset.toULong(), file.fileSize.toULong(), closeParent = false)
     suspend fun SpiralContext.openRawFlow(file: CpkFileEntry): KorneaResult<InputFlow> =
-            dataSource.openInputFlow()
-                    .map { parent -> WindowedInputFlow(parent, file.fileOffset.toULong(), file.fileSize.toULong()) }
+        dataSource.openInputFlow()
+            .map { parent -> WindowedInputFlow(parent, file.fileOffset.toULong(), file.fileSize.toULong()) }
 
     suspend fun SpiralContext.openDecompressedSource(file: CpkFileEntry): KorneaResult<DataSource<out InputFlow>> {
         if (file.isCompressed) {
@@ -178,10 +186,10 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
             val compressedData = flow.readAndClose()
             val cache = cacheShortTerm(compressedData.sha256().toHexString())
             val output = cache.openOutputFlow()
-                    .getOrBreak {
-                        cache.close()
-                        return decompressCrilayla(compressedData).map { BinaryDataSource(it) }
-                    }
+                .getOrBreak {
+                    cache.close()
+                    return decompressCrilayla(compressedData).map { BinaryDataSource(it) }
+                }
 
             decompressCrilayla(compressedData).map { output.write(it) }
 
@@ -195,7 +203,7 @@ class CpkArchive(val header: UtfTableInfo, val tocHeader: UtfTableInfo, val etoc
         if (file.isCompressed) {
             val source = openDecompressedSource(file).getOrBreak { return it.cast() }
             return source.openInputFlow()
-                    .doOnSuccess { input -> input.registerCloseHandler { source.close() } }
+                .doOnSuccess { input -> input.registerCloseHandler { source.close() } }
         } else {
             return openRawFlow(file)
         }

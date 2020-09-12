@@ -1,5 +1,7 @@
 package info.spiralframework.base.binding
 
+import dev.brella.kornea.toolkit.common.SuspendInit0
+import dev.brella.kornea.toolkit.common.init
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -18,17 +20,14 @@ expect class DefaultSpiralContext private constructor(
         eventBus: SpiralEventBus,
         cacheProvider: SpiralCacheProvider,
         resourceLoader: SpiralResourceLoader
-) : SpiralContext {
+) : SpiralContext, SuspendInit0 {
     companion object {
         suspend operator fun invoke(locale: SpiralLocale, logger: SpiralLogger, config: SpiralConfig, environment: SpiralEnvironment, eventBus: SpiralEventBus, cacheProvider: SpiralCacheProvider, resourceLoader: SpiralResourceLoader): DefaultSpiralContext
     }
 
-    suspend fun init()
+    override suspend fun init()
 }
 
 @ExperimentalUnsignedTypes
-suspend fun defaultSpiralContext(): SpiralContext {
-    val context = DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider(), DefaultSpiralResourceLoader())
-    context.init()
-    return context
-}
+suspend fun defaultSpiralContext(): SpiralContext =
+    init(DefaultSpiralContext(DefaultSpiralLocale(), DefaultSpiralLogger("DefaultSpiral"), DefaultSpiralConfig(), DefaultSpiralEnvironment(), DefaultSpiralEventBus(), DefaultSpiralCacheProvider(), DefaultSpiralResourceLoader()))

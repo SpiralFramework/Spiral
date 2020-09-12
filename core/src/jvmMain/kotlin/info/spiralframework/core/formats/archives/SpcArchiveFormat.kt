@@ -9,9 +9,13 @@ import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.copyTo
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.copyTo
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.JVMInputFlow
+import dev.brella.kornea.toolkit.common.useAndFlatMap
+import dev.brella.kornea.toolkit.common.useAndMap
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 import java.io.InputStream
 import java.util.zip.ZipFile
 
@@ -20,6 +24,16 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
     override val extension: String = "spc"
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
+
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<SpcArchive>> =
+        source.openInputFlow().useAndFlatMap { flow ->
+            val magic = flow.readInt32LE() ?: return@useAndFlatMap context.localisedNotEnoughData(SpcArchive.NOT_ENOUGH_DATA_KEY)
+            if (magic != SpcArchive.SPC_MAGIC_NUMBER_LE) {
+                return@useAndFlatMap KorneaResult.errorAsIllegalArgument(SpcArchive.INVALID_MAGIC_NUMBER, context.localise(SpcArchive.INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16)}", "0x${SpcArchive.SPC_MAGIC_NUMBER_LE.toString(16)}"))
+            }
+
+            return@useAndFlatMap KorneaResult.success(Optional.empty())
+        }
 
     /**
      * Attempts to read the data source as [T]
@@ -31,12 +45,10 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SpcArchive> =
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<SpcArchive> =
             SpcArchive(context, source)
-                    .map { spc ->
-                        if (spc.files.size == 1) FormatResult.Success(this, spc, 0.75)
-                        else FormatResult(this, spc, spc.files.isNotEmpty(), 1.0)
-                    }.getOrElse(FormatResult.Fail(this, 1.0))
+                .filter { spc -> spc.files.isNotEmpty() }
+                .buildFormatResult { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?

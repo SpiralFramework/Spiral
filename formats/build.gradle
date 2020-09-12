@@ -43,7 +43,7 @@ kotlin {
     }
 }
 
-downloadLicenses {
-    includeProjectDependencies = true
-    dependencyConfiguration = 'jvmRuntimeClasspath'
-}
+//downloadLicenses {
+//    includeProjectDependencies = true
+//    dependencyConfiguration = 'jvmRuntimeClasspath'
+//}

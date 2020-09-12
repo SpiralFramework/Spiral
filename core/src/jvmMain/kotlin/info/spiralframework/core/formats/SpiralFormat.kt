@@ -1,10 +1,12 @@
 package info.spiralframework.core.formats
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.map
 import info.spiralframework.base.common.SpiralContext
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import java.io.OutputStream
-import java.util.*
 
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -47,8 +49,8 @@ interface ReadableSpiralFormat<out T>: SpiralFormat {
      *
      * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
      */
-    suspend fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): FormatResult<Optional<T>>
-        = read(context, readContext, source).map { Optional.of(it) }
+    suspend fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): KorneaResult<Optional<T>>
+        = read(context, readContext, source).map(::Optional)
 
     /**
      * Attempts to read the data source as [T]
@@ -58,8 +60,17 @@ interface ReadableSpiralFormat<out T>: SpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    suspend fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): FormatResult<T>
+    suspend fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): KorneaResult<T>
+
+    fun <R> KorneaResult<R>.buildFormatResult(confidence: Double): KorneaResult<R> =
+        flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence) }
+
+    fun <R> KorneaResult<R>.buildFormatResult(confidence: (value: R) -> Double): KorneaResult<R> =
+        flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence(value)) }
 }
+
+inline fun <F, R> ReadableSpiralFormat<F>.buildFormatResult(value: R, confidence: Double): KorneaResult<R> =
+    KorneaResult.formatResult(value, this, confidence)
 
 /**
  * A Spiral format that supports writing to a stream
@@ -96,7 +107,8 @@ sealed class FormatWriteResponse {
     }
 }
 
-fun <T, F: FormatResult<T>> F.withFormat(format: SpiralFormat?): F {
-    this.nullableFormat = format
-    return this
-}
+public inline fun <reified R> Iterable<*>.filterIsFormatResult(): List<FormatResult<R, R>> =
+    filterIsInstance<FormatResult<R, R>>()
+
+public inline fun <reified R> Iterable<*>.filterIsIdentifyFormatResult(): List<FormatResult<Optional<R>, R>> =
+    filterIsInstance<FormatResult<Optional<R>, R>>()

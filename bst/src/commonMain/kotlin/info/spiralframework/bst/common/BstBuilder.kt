@@ -2,9 +2,9 @@ package info.spiralframework.bst.common
 
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.writeInt16LE
-import dev.brella.kornea.io.common.writeInt32LE
-import dev.brella.kornea.io.common.writeInt64LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt64LE
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi

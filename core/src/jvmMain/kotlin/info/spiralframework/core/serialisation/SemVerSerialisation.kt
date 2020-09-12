@@ -25,6 +25,7 @@ object SemanticVersionSerialisation {
                     ?.split('.')
                     ?.mapNotNull(String::toIntOrNull)
                     ?: emptyList()
+
             return SemanticVersion(
                     components.elementAtOrNull(0) ?: 0,
                     components.elementAtOrNull(1) ?: 0,

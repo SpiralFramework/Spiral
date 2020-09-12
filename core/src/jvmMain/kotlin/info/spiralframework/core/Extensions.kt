@@ -5,21 +5,24 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.github.kittinunf.fuel.core.Request
-import com.github.kittinunf.fuel.core.Response
-import com.github.kittinunf.fuel.core.ResponseResultOf
-import com.github.kittinunf.fuel.core.isSuccessful
+import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
-import info.spiralframework.base.jvm.outOrElseGet
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.compression.*
 import dev.brella.kornea.io.common.DataSource
+import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.filterIsIdentifyFormatResult
+import info.spiralframework.core.formats.value
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+
+object UserAgents {
+    const val DEFAULT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"
+}
 
 /**
  * Executes the given [block] function on this resource and then closes it down correctly whether an exception
@@ -51,23 +54,34 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
     }
 }
 
+typealias ReadableCompressionFormat=ReadableSpiralFormat<DataSource<*>>
+
 val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 
-suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableSpiralFormat<DataSource<*>>>> {
-    val (format, result) = COMPRESSION_FORMATS.map { format -> format to format.identify(source = dataSource, context = this) }
-            .filter { pair -> pair.second.didSucceed }
-            .minBy { pair -> pair.second.chance }
-            ?: return dataSource to emptyList()
+suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableCompressionFormat>?> {
+    val result = COMPRESSION_FORMATS.map { format -> format.identify(source = dataSource, context = this) }
+                     .filterIsIdentifyFormatResult<DataSource<*>>()
+                     .maxBy(FormatResult<*, *>::confidence)
+                 ?: return Pair(dataSource, null)
 
-    val (decompressed, list) = decompress(result.obj.outOrElseGet {
-        @Suppress("UNCHECKED_CAST")
-        (result.format as ReadableSpiralFormat<DataSource<*>>).read(source = dataSource, context = this).obj
-    })
+    val resultDataSource = result.value().getOrElseRun{
+        result.format().read(source = dataSource, context = this)
+            .getOrBreak { return Pair(dataSource, null) }
+    }
 
-    return decompressed to mutableListOf(format).apply { addAll(list) }
+    val (decompressed, list) = decompress(resultDataSource)
+
+    if (list is MutableList<ReadableCompressionFormat>) {
+        list.add(0, result.format())
+        return Pair(decompressed, list)
+    } else if (list != null) {
+        val mutList = list.toMutableList()
+        mutList.add(0, result.format())
+        return Pair(decompressed, list)
+    } else {
+        return Pair(decompressed, listOf(result.format()))
+    }
 }
-
-fun Request.userAgent(ua: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"): Request = this.header("User-Agent", ua)
 
 inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
     try {
@@ -103,22 +117,6 @@ inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
     } catch (yamlParsing: YAMLException) {
     }
 
-    return null
-}
-
-fun <T : Any> ResponseResultOf<T>.takeResponseIfSuccessful(): Response? {
-    val (_, response, result) = this
-
-    if (response.isSuccessful)
-        return response
-    return null
-}
-
-fun <T : Any> ResponseResultOf<T>.takeIfSuccessful(): T? {
-    val (_, response, result) = this
-
-    if (response.isSuccessful)
-        return result.get()
     return null
 }
 

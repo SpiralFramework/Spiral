@@ -1,0 +1,145 @@
+package info.spiralframework.console.jvm
+
+import dev.brella.knolus.KnolusUnion
+import dev.brella.knolus.context.KnolusContext
+import dev.brella.knolus.context.KnolusGlobalContext
+import dev.brella.knolus.restrictions.CompoundKnolusRestriction
+import dev.brella.knolus.restrictions.KnolusRecursiveRestriction
+import dev.brella.knolus.run
+import dev.brella.knolus.transform.KnolusTransVisitorRestrictions
+import dev.brella.knolus.transform.parseKnolusTransRule
+import dev.brella.knolus.types.KnolusLazyFunctionCall
+import dev.brella.kornea.errors.common.*
+import info.spiralframework.antlr.pipeline.PipelineLexer
+import info.spiralframework.antlr.pipeline.PipelineParser
+import info.spiralframework.base.common.locale.printlnLocale
+import info.spiralframework.base.common.text.doublePadWindowsPaths
+import info.spiralframework.base.jvm.crypto.verify
+import info.spiralframework.console.jvm.commands.pilot.GurrenPilot
+import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.pipeline.*
+import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
+import info.spiralframework.core.common.SPIRAL_ENV_VERSION_KEY
+import kotlinx.coroutines.delay
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonToken
+import java.io.File
+import java.lang.StringBuilder
+
+@ExperimentalUnsignedTypes
+@ExperimentalStdlibApi
+class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext) {
+    val globalContext = KnolusGlobalContext(null, CompoundKnolusRestriction.fromPermissive(KnolusRecursiveRestriction(maxDepth = 20, maxRecursiveCount = 30)))
+
+    suspend fun handle(context: KnolusContext, value: Any): KorneaResult<Any?> =
+        when (value) {
+            is KnolusUnion.Action<*> -> value.run(context)
+            is KnolusUnion.VariableValue<*> -> handle(context, value.value)
+            is KnolusUnion.ReturnStatement -> KorneaResult.success(value.value)
+            else -> KorneaResult.empty()
+        }
+
+    override suspend fun start() {
+        with(context) {
+            println(
+                localise(
+                    "gurren.pilot.init", retrieveStaticValue(SPIRAL_ENV_BUILD_KEY)
+                                         ?: retrieveStaticValue(SPIRAL_ENV_VERSION_KEY)
+                                         ?: localise("gurren.default_version")
+                )
+            )
+
+            if (publicKey == null) {
+                warn("gurren.pilot.plugin_load.missing_public")
+            } else {
+                val enabledPlugins = enabledPlugins
+                val plugins = discover()
+                    .filter { entry -> enabledPlugins[entry.pojo.uid] == entry.pojo.semanticVersion }
+                    .filter { entry ->
+                        if (entry.source == null)
+                            return@filter true
+
+                        val signature = signatureForPlugin(
+                            entry.pojo.uid, entry.pojo.semanticVersion.toString(), entry.pojo.pluginFileName
+                                                                                   ?: entry.source!!.path.substringAfterLast('/')
+                        )
+                        if (signature == null) {
+                            debug(
+                                "gurren.pilot.plugin_load.missing_signature", entry.pojo.name, entry.pojo.version
+                                                                                               ?: entry.pojo.semanticVersion
+                            )
+                            return@filter false
+                        }
+
+                        return@filter entry.source
+                            ?.openStream()
+                            ?.verify(signature, publicKey ?: return@filter false) == true
+                    }
+
+                plugins.forEach { plugin ->
+                    info(
+                        "gurren.pilot.plugin_load.loading", plugin.pojo.name, plugin.pojo.version
+                                                                              ?: plugin.pojo.semanticVersion
+                    )
+                    loadPlugin(plugin)
+                }
+            }
+
+            GurrenPilot.register(context, globalContext)
+
+            globalContext["spiralContext"] = KnolusTypedWrapper(context)
+
+            loop@ while (GurrenPilot.keepLooping.get()) {
+                delay(50)
+                val localScope = with { operationScope }
+                print(localScope.scopePrint)
+
+                val rawInput = readLine()
+                val input: String
+
+                if (rawInput == "script()") {
+                    print(">>> ")
+
+                    var newLineCount = 0
+                    val buffer = StringBuilder()
+
+                    while (newLineCount < 1) {
+                        val line = readLine() ?: break@loop
+                        if (line.isBlank()) newLineCount++
+                        else buffer.appendLine(line.doublePadWindowsPaths())
+                    }
+
+                    input = buffer.toString()
+                } else {
+                    //TODO: Fix this bug; without the extra newline, our antlr grammar expects a newline, not an EOF
+                    //In addition, append a space to the end of this so that no parameter scripts work fine
+                    input = rawInput?.doublePadWindowsPaths()?.plus(" \n") ?: break
+                }
+
+                val lexer = PipelineLexer(CharStreams.fromString(input))
+                debug("Tokens: \n{0}", lazyString {
+                    lexer.allTokens.joinToString("\n") { token ->
+                        if (token is CommonToken) token.toString(lexer)
+                        else token.toString()
+                    }
+                })
+
+                parseKnolusTransRule(
+                    input,
+                    KnolusTransVisitorRestrictions.Permissive,
+                    ::PipelineLexer,
+                    ::PipelineParser,
+                    ::PipelineVisitor
+                ) { parser, visitor -> visitor.visitScope(parser.scope()) }
+                    .flatMap { (scope) -> (scope as KnolusUnion.ScopeType).run(globalContext) }
+                    .doOnEmpty { printlnLocale("commands.unknown") }
+                    .doOnThrown { withException -> error("ANTLR Parsing Error: ", withException.exception) }
+
+//                val matchingCommands = post(CommandRequest(readLine() ?: break, localScope)).foundCommands
+//
+//                if (matchingCommands.isEmpty())
+//                    printlnLocale("commands.unknown")
+            }
+        }
+    }
+}

@@ -12,20 +12,21 @@ import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import info.spiralframework.base.common.SpiralCatalyst
+import io.ktor.client.*
 
 @ExperimentalUnsignedTypes
-interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralSerialisation {
-    val updateConnectTimeout: Int
-    val updateReadTimeout: Int
-    val networkConnectTimeout: Int
-    val networkReadTimeout: Int
+interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralSerialisation, SpiralHttp {
+    val socketTimeout: Int
+    val connectTimeout: Int
+    val requestTimeout: Int
 
     val apiBase: String
     val jenkinsBase: String
 
     val enabledPlugins: Map<String, SemanticVersion>
 
-    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null): SpiralContext
+    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null, newHttp: SpiralHttp? = null): SpiralContext
 }
 
 @ExperimentalUnsignedTypes

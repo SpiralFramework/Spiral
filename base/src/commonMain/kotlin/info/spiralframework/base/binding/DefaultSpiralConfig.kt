@@ -1,5 +1,6 @@
 package info.spiralframework.base.binding
 
+import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 

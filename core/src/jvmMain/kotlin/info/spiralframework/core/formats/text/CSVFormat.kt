@@ -1,13 +1,14 @@
 package info.spiralframework.core.formats.text
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.print
-import info.spiralframework.base.common.io.println
 import info.spiralframework.core.formats.FormatWriteContext
 import info.spiralframework.core.formats.FormatWriteResponse
 import info.spiralframework.core.formats.WritableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.PrintOutputFlow
+import dev.brella.kornea.toolkit.common.printLine
+import info.spiralframework.base.common.PrintOutputFlowWrapper
 
 object CSVFormat: WritableSpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -41,20 +42,21 @@ object CSVFormat: WritableSpiralFormat {
      * @return An enum for the success of the operation
      */
     override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+        val out = flow as? PrintOutputFlow ?: PrintOutputFlowWrapper(flow)
         when (data) {
             is DataTableStructure -> {
-                data.variableDetails.forEach { header -> flow.print("${header.variableName} ${header.variableType},") }
-                flow.println()
+                data.variableDetails.forEach { header -> out.print("${header.variableName} ${header.variableType},") }
+                out.printLine()
                 data.entries.forEach { entry ->
                     entry.forEach { variable ->
                         when (variable) {
-                            is DataTableStructure.DataVariable.UTF8 -> flow.print(data.utf8Strings[variable.data])
-                            is DataTableStructure.DataVariable.UTF16 -> flow.print(data.utf16Strings[variable.data])
-                            else -> flow.print(variable.genericData.toString())
+                            is DataTableStructure.DataVariable.UTF8 -> out.print(data.utf8Strings[variable.data])
+                            is DataTableStructure.DataVariable.UTF16 -> out.print(data.utf16Strings[variable.data])
+                            else -> out.print(variable.genericData.toString())
                         }
-                        flow.print(',')
+                        out.printLine(',')
                     }
-                    flow.println()
+                    out.printLine()
                 }
             }
             else -> return FormatWriteResponse.WRONG_FORMAT

@@ -6,6 +6,7 @@ kotlin {
             jvmTarget = "1.8"
         }
     }
+
     sourceSets {
         commonMain {
             dependencies {
@@ -13,7 +14,6 @@ kotlin {
 
                 api project(":spiral-base")
                 api project(":spiral-formats")
-                api project(":spiral-osl")
             }
         }
         jvmMain {
@@ -28,14 +28,18 @@ kotlin {
                 api "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
                 api "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jackson_version"
 
-                api "com.github.kittinunf.fuel:fuel:$fuel_version"
-                api "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
+//                api "com.github.kittinunf.fuel:fuel:$fuel_version"
+//                api "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
+
+                api "io.ktor:ktor-client-apache:1.4.0"
 
                 api "com.twelvemonkeys.imageio:imageio-bmp:3.4.1"
                 api "com.twelvemonkeys.imageio:imageio-jpeg:3.4.1"
                 api "com.twelvemonkeys.imageio:imageio-tga:3.4.1"
 
-                api "org.greenrobot:eventbus:3.1.1"
+//                api "org.greenrobot:eventbus:3.1.1"
+
+                implementation project(":spiral-osl")
             }
         }
 
@@ -50,7 +54,7 @@ kotlin {
     }
 }
 
-downloadLicenses {
-    includeProjectDependencies = true
-    dependencyConfiguration = 'jvmRuntimeClasspath'
-}
+//downloadLicenses {
+//    includeProjectDependencies = true
+//    dependencyConfiguration = 'jvmRuntimeClasspath'
+//}

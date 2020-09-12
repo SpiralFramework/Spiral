@@ -173,7 +173,7 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
 
         val publicKey = this.publicKey
         if (publicKey == null) {
-            if (spiralFrameworkOnline) {
+            if (spiralFrameworkOnline()) {
                 //Online and key is down. Suspicious, but give the user a choice
                 //Don't delete the file
 
@@ -187,8 +187,8 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
                 } else {
                     printlnLocale("core.plugins.enable.no_key.spiral_online.denied_plugin")
                 }
-            } else if (signaturesCdnOnline) {
-                //Our Sigantures CDN online, and our public key is null. Suspicious, but give the user a choice
+            } else if (signaturesCdnOnline()) {
+                //Our Signatures CDN online, and our public key is null. Suspicious, but give the user a choice
                 //Don't delete the file
 
                 printlnLocale("core.plugins.enable.no_key.cdn_online.warning")

@@ -1,14 +1,11 @@
 package info.spiralframework.core.formats.archives
 
+import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.AwbArchive
-import dev.brella.kornea.errors.common.getOrElse
-import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
-import java.util.*
 
 object AwbArchiveFormat : ReadableSpiralFormat<AwbArchive> {
     override val name: String = "AWB"
@@ -23,11 +20,8 @@ object AwbArchiveFormat : ReadableSpiralFormat<AwbArchive> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<AwbArchive> =
-            AwbArchive(context, source)
-                    .map { awb ->
-                        if (awb.files.size == 1) FormatResult.Success(this, awb, 0.75)
-                        else FormatResult(this, awb, awb.files.isNotEmpty(), 1.0)
-                    }
-                    .getOrElse(FormatResult.Fail(this, 1.0))
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<AwbArchive> =
+        AwbArchive(context, source)
+            .filter { awb -> awb.files.isNotEmpty() }
+            .buildFormatResult { awb -> if (awb.files.size == 1) 0.75 else 1.0 }
 }

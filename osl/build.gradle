@@ -1,12 +1,12 @@
 apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply plugin: "com.github.johnrengelman.shadow"
-apply plugin: "application"
+//apply plugin: "com.github.johnrengelman.shadow"
+//apply plugin: "application"
 //apply plugin: 'antlr'
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 //mainClassName = "info.spiralframework.osl.OSLProxy"
-mainClassName = "BootstrapKt"
+//mainClassName = "BootstrapKt"
 
 kotlin {
     jvm {
@@ -31,7 +31,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation kotlin('stdlib')
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
                 implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
 
@@ -80,28 +79,28 @@ jvmJar {
     archiveVersion.set(project_version)
 }
 
-task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
-    mergeServiceFiles()
-    from jvmJar.archiveFile
-    configurations = [project.configurations.jvmRuntimeClasspath]
-    group = "shadow"
-
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-
-    archiveBaseName.set(jvmJar.archiveBaseName.get())
-    archiveAppendix.set(jvmJar.archiveAppendix.get())
-    archiveVersion.set(jvmJar.archiveVersion.get())
-    archiveClassifier.set("shadow")
-}
+//task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
+//    mergeServiceFiles()
+//    from jvmJar.archiveFile
+//    configurations = [project.configurations.jvmRuntimeClasspath]
+//    group = "shadow"
+//
+//    manifest {
+//        attributes 'Main-Class': mainClassName
+//    }
+//
+//    archiveBaseName.set(jvmJar.archiveBaseName.get())
+//    archiveAppendix.set(jvmJar.archiveAppendix.get())
+//    archiveVersion.set(jvmJar.archiveVersion.get())
+//    archiveClassifier.set("shadow")
+//}
 
 //generateGrammarSource {
 //    arguments += ['-visitor', '-package', 'info.spiralframework.antlr.osl']
 //    outputDirectory = file("$buildDir/generated-src-mpp/antlr/jvmMain/info/spiralframework/antlr/osl")
 //}
 
-downloadLicenses {
-    includeProjectDependencies = true
-    dependencyConfiguration = 'jvmRuntimeClasspath'
-}
+//downloadLicenses {
+//    includeProjectDependencies = true
+//    dependencyConfiguration = 'jvmRuntimeClasspath'
+//}

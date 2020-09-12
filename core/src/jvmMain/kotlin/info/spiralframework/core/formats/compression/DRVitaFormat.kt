@@ -7,21 +7,21 @@ import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.compression.decompressVita
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.io.common.flow.readBytes
-import java.util.*
+import info.spiralframework.core.formats.buildFormatResult
 
 object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "DrVita Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC }.getOrElse(false))
-            return FormatResult.Success(Optional.empty(), 1.0)
-        return FormatResult.Fail(1.0)
+            return buildFormatResult(Optional.empty(), 1.0)
+        return KorneaResult.empty()
     }
 
     /**
@@ -34,8 +34,8 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
-        val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return FormatResult.Fail(this, 1.0, it) }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+        val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
         val cache = context.cacheShortTerm(context, "drvita:${data.sha256().toHexString()}")
 
         return cache.openOutputFlow()
@@ -43,10 +43,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
                 @Suppress("DEPRECATION")
                 decompressVita(data).map { data ->
                     output.write(data)
-                    val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
-                    result.release.add(cache)
-
-                    result
+                    buildFormatResult(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -54,9 +51,9 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
             }.getOrElseRun {
                 cache.close()
 
-                decompressVita(data)
-                    .map<ByteArray, FormatResult<DataSource<*>>> { decompressed -> FormatResult.Success(this, BinaryDataSource(decompressed), 1.0) }
-                    .getOrElseTransform { failure -> FormatResult.Fail(this, 1.0, failure) }
+                decompressVita(data).flatMap { decompressed ->
+                    buildFormatResult(BinaryDataSource(decompressed), 1.0)
+                }
             }
     }
 }

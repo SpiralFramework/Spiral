@@ -12,6 +12,7 @@ import dev.brella.kornea.toolkit.common.SuspendInit1
 import info.spiralframework.base.common.SpiralCatalyst
 import java.io.File
 import kotlin.concurrent.thread
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -20,6 +21,9 @@ import kotlin.time.ExperimentalTime
 class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralContext> {
     private lateinit var shortTermDir: File
     private lateinit var persistentDir: File
+
+    override val klass: KClass<SpiralContext> = SpiralContext::class
+    private var primed: Boolean = false
 
     override fun supportsShortTermCaching(): Boolean = true
     override fun supportsPersistentCaching(): Boolean = true
@@ -42,15 +46,19 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
             TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration)
 
     override suspend fun prime(catalyst: SpiralContext) {
-        val upperDir = with(catalyst) { File(getLocalDataDir("cache")) }
-        shortTermDir = File(upperDir, "short term")
-        persistentDir = File(upperDir, "persistent")
+        if (!primed) {
+            val upperDir = with(catalyst) { File(getLocalDataDir("cache")) }
+            shortTermDir = File(upperDir, "short term")
+            persistentDir = File(upperDir, "persistent")
 
-        shortTermDir.mkdirs()
-        persistentDir.mkdirs()
+            shortTermDir.mkdirs()
+            persistentDir.mkdirs()
 
-        Runtime.getRuntime().addShutdownHook(thread(start = false, block = this::purgeShortTerm))
-        purgeShortTerm()
+            Runtime.getRuntime().addShutdownHook(thread(start = false, block = this::purgeShortTerm))
+            purgeShortTerm()
+
+            primed = true
+        }
     }
 
     fun purgeShortTerm() { shortTermDir.listFiles()?.forEach { file -> file.delete() } }

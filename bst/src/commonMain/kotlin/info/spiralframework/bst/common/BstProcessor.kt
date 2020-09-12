@@ -7,7 +7,9 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.toolkit.common.byteArrayOfHex
+import dev.brella.kornea.toolkit.common.use
 
 @ExperimentalStdlibApi
 object BstProcessor {
@@ -161,6 +163,7 @@ object BstProcessor {
 
     @ExperimentalUnsignedTypes
     //TODO: Look at streaming this; remember what Cap said
+    //TODO: Tell Brella to go die for writing vague comments
     suspend fun SpiralContext.processIterateSubfiles(input: InputFlow, source: DataSource<*>, bst: InputFlow, output: OutputFlow, scriptData: Any?) {
         when (scriptData) {
             is CustomPakArchive -> {

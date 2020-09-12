@@ -1,6 +1,8 @@
 package info.spiralframework.core.plugins
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.oneTimeMutable
 
 data class SpiralPluginDefinitionPojo(
     val name: String,
@@ -20,6 +22,29 @@ data class SpiralPluginDefinitionPojo(
 
     val pluginFileName: String?
 ) {
+    class Builder {
+        lateinit var name: String
+        lateinit var uid: String
+
+        var description: String? = null
+
+        var authors: Array<String>? = null
+        var supportedModules: Array<String>? = null
+        var requiredModules: Array<String>? = null
+        var contentWarnings: Array<String>? = null
+
+        var version: String? = null
+        @JsonProperty("semanticVersion")
+        var semanticVersion: SemanticVersion? = null
+
+        lateinit var pluginClass: String
+
+        val pluginFileName: String? = null
+
+        fun build(): SpiralPluginDefinitionPojo =
+            SpiralPluginDefinitionPojo(name, uid, description, authors, supportedModules, requiredModules, contentWarnings, version, requireNotNull(semanticVersion), pluginClass, pluginFileName)
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is SpiralPluginDefinitionPojo) return false

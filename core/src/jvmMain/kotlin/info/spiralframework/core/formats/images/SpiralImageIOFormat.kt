@@ -7,12 +7,9 @@ import info.spiralframework.core.formats.ReadableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.errors.common.getOrElseTransform
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useInputFlow
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -32,25 +29,24 @@ open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, Re
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<BufferedImage> =
-            source.useInputFlow { flow ->
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> =
+        source.openInputFlow()
+            .useAndFlatMap { flow ->
                 val stream = ByteArrayInputStream(flow.readBytes())
                 val imageStream = withContext(Dispatchers.IO) { ImageIO.createImageInputStream(stream) }
                 val reader = ImageIO.getImageReaders(imageStream)
-                        .asSequence()
-                        .firstOrNull { reader -> names.any { name -> name.equals(reader.formatName, true) } }
+                    .asSequence()
+                    .firstOrNull { reader -> names.any { name -> name.equals(reader.formatName, true) } }
 
                 try {
                     reader?.input = imageStream
-                    val img = withContext(Dispatchers.IO) {
-                        reader?.read(0)
-                    }
 
-                    return@useInputFlow FormatResult(this, img, img != null, 1.0)
+                    return@useAndFlatMap KorneaResult.successOrEmpty(withContext(Dispatchers.IO) { reader?.read(0) })
                 } catch (io: IOException) {
-                    return@useInputFlow FormatResult.Fail<BufferedImage>(this, 1.0, KorneaResult.WithException.of(io))
+                    return@useAndFlatMap KorneaResult.WithException.of(io)
                 } finally {
                     reader?.dispose()
                 }
-            }.getOrElseTransform { FormatResult.Fail(this, 1.0, it) }
+            }
+            .buildFormatResult(1.0)
 }

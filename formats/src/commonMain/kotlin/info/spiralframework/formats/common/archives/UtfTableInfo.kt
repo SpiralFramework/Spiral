@@ -194,7 +194,7 @@ data class UtfTableInfo(
                     val readOffset = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val offset = readOffset.toULong() + stringOffset + 8u
                     flow.fauxSeekFromStart(offset, dataSource) { flow -> flow.readNullTerminatedUTF8String() }
-                        .filterTo { string ->
+                        .flatMapOrSelf { string ->
                             if (string != stringFromTable(readOffset)) KorneaResult.errorAsIllegalArgument(-1, "Mismatching strings: [$string] vs [${stringFromTable(readOffset)}]")
                             else null
                         }.map { string -> UtfRowData.TypeString(columnInfo.name, rowIndex, string) }

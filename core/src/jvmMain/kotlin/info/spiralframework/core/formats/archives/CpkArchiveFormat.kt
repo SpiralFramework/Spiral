@@ -9,8 +9,8 @@ import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.copyTo
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.jvm.JVMInputFlow
 import java.io.InputStream
 import java.util.zip.ZipFile
@@ -29,13 +29,10 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<CpkArchive> =
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<CpkArchive> =
         CpkArchive(context, source)
-            .map { cpk ->
-                if (cpk.files.size == 1) FormatResult.Success(this, cpk, 0.75)
-                else FormatResult(this, cpk, cpk.files.isNotEmpty(), 1.0)
-            }
-            .getOrElse(FormatResult.Fail(this, 1.0))
+            .filter { cpk -> cpk.files.isNotEmpty() }
+            .buildFormatResult { cpk -> if (cpk.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?

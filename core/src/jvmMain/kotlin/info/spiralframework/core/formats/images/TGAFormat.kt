@@ -34,23 +34,23 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<BufferedImage> {
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> {
         with(context) {
             try {
-                return source.useInputFlow { flow -> FormatResult.Success(this@TGAFormat, TGAReader.readImage(this, flow.readBytes()), 1.0) }
-                           .getOrElseTransform { FormatResult.Fail(this@TGAFormat, 1.0, it) }
+                return source.useInputFlow { flow -> TGAReader.readImage(this, flow.readBytes()) }
+                    .buildFormatResult(1.0)
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(io))
+                return KorneaResult.WithException.of(io)
             } catch (iae: IllegalArgumentException) {
                 debug("core.formats.tga.invalid", source, iae)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(iae))
+                return KorneaResult.WithException.of(iae)
             } catch (oob: ArrayIndexOutOfBoundsException) {
                 debug("core.formats.tga.invalid", source, oob)
 
-                return FormatResult.Fail(this@TGAFormat, 1.0, KorneaResult.WithException.of(oob))
+                return KorneaResult.WithException.of(oob)
             }
         }
     }

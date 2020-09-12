@@ -24,8 +24,8 @@ abstract class BaseSpiralPlugin protected constructor(val context: SpiralCoreCon
         pojo = context.loadResource(resourceName, callingClass.kotlin)
             .useAndMapInputFlow { flow -> flow.readBytes() }
             .map { data ->
-                if (yaml) context.yamlMapper.readValue<SpiralPluginDefinitionPojo>(data)
-                else context.jsonMapper.readValue<SpiralPluginDefinitionPojo>(data)
+                if (yaml) context.yamlMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
+                else context.jsonMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
             }.get()
     }
 }

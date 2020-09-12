@@ -3,19 +3,19 @@ package info.spiralframework.core.formats.audio
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.formats.*
 import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import java.io.File
-import java.util.*
 
 open class SpiralAudioFormat(override val name: String, override val extension: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<File>> {
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<File>> {
         try {
             return super.identify(context, readContext, source)
         } catch (ise: IllegalStateException) {
-            return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(ise))
+            return KorneaResult.WithException.of(ise)
         }
     }
 
@@ -29,7 +29,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<File> {
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<File> {
         throw IllegalStateException(context.localise("core.formats.no_audio_impl.read", this))
     }
 

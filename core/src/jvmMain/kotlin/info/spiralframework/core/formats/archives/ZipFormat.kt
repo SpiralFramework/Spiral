@@ -1,7 +1,6 @@
 package info.spiralframework.core.formats.archives
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readChunked
 import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.archives.*
 import info.spiralframework.formats.common.archives.srd.BaseSrdEntry
@@ -12,12 +11,13 @@ import dev.brella.kornea.annotations.ExperimentalKorneaIO
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.copyToOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.use
+import dev.brella.kornea.io.common.flow.extensions.copyToOutputFlow
+import dev.brella.kornea.io.common.flow.readChunked
 import dev.brella.kornea.io.jvm.asOutputStream
 import dev.brella.kornea.io.jvm.files.*
 import dev.brella.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.use
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -40,22 +40,22 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     @ExperimentalKorneaIO
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<ZipFile> {
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<ZipFile> {
         if (source is SynchronousFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
-                    FormatResult.Success(this@ZipFormat, ZipFile(source.backing), 1.0)
+                    buildFormatResult(ZipFile(source.backing), 1.0)
                 }
             } catch (io: IOException) {
-                return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(io))
+                return KorneaResult.WithException.of(io)
             }
         } else if (source is AsyncFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
-                    FormatResult.Success(this@ZipFormat, ZipFile(source.backing.toFile()), 1.0)
+                    buildFormatResult(ZipFile(source.backing.toFile()), 1.0)
                 }
             } catch (io: IOException) {
-                return FormatResult.Fail(this, 1.0, KorneaResult.WithException.of(io))
+                return KorneaResult.WithException.of(io)
             }
         } else {
             var zip: ZipFile? = null
@@ -65,9 +65,9 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
             try {
                 source.openInputFlow().doOnSuccess { flow ->
                     if (flow is SynchronousFileInputFlow) {
-                        return FormatResult.Success(this@ZipFormat, ZipFile(flow.backingFile), 1.0)
+                        return buildFormatResult(ZipFile(flow.backingFile), 1.0)
                     } else if (flow is AsyncFileInputFlow) {
-                        return FormatResult.Success(this@ZipFormat, ZipFile(flow.backing.toFile()), 1.0)
+                        return buildFormatResult(ZipFile(flow.backing.toFile()), 1.0)
                     }
                     
                     withContext(Dispatchers.IO) {
@@ -88,10 +88,10 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
             }
 
             if (zip != null) {
-                return FormatResult.Success(this, zip!!, 1.0)
+                return buildFormatResult(zip!!, 1.0)
             } else {
                 tmpFile?.delete()
-                return FormatResult.Fail(this, 1.0, ioException?.let { io -> KorneaResult.WithException.of(io) })
+                return ioException?.let { io -> KorneaResult.WithException.of(io) } ?: KorneaResult.empty()
             }
         }
     }

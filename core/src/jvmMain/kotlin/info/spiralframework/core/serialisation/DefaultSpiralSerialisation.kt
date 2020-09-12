@@ -12,14 +12,14 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 
 class DefaultSpiralSerialisation: SpiralSerialisation {
     /** Jackson mapper for JSON data */
     override val jsonMapper: ObjectMapper = ObjectMapper()
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
+            .registerModules(KotlinModule(), Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -27,8 +27,7 @@ class DefaultSpiralSerialisation: SpiralSerialisation {
 
     /** Jackson mapper for YAML data */
     override val yamlMapper: ObjectMapper = ObjectMapper(YAMLFactory())
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
+            .registerModules(KotlinModule(), Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), SemanticVersionSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -36,8 +35,7 @@ class DefaultSpiralSerialisation: SpiralSerialisation {
 
     /** Jackson mapper for XML data */
     override val xmlMapper: ObjectMapper = XmlMapper(JacksonXmlModule().apply { setDefaultUseWrapper(false) })
-            .registerKotlinModule()
-            .registerModules(Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), InstantSerialisation.MODULE())
+            .registerModules(KotlinModule(), Jdk8Module(), JavaTimeModule(), ParameterNamesModule(), InstantSerialisation.MODULE())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(SerializationFeature.INDENT_OUTPUT)

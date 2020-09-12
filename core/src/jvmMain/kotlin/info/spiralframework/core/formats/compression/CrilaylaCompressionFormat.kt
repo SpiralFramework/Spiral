@@ -1,29 +1,28 @@
 package info.spiralframework.core.formats.compression
 
 import com.soywiz.krypto.sha256
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.BinaryDataSource
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.extensions.readInt64BE
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
 import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.formats.buildFormatResult
 import info.spiralframework.formats.common.compression.decompressCrilayla
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.BinaryDataSource
-import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.readInt64BE
-import dev.brella.kornea.io.common.useInputFlow
-import java.util.*
 
 object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "CRILAYLA Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<Optional<DataSource<*>>> {
+    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readInt64BE() == info.spiralframework.formats.common.compression.CRILAYLA_MAGIC }.getOrElse(false))
-            return FormatResult.Success(Optional.empty(), 1.0)
-        return FormatResult.Fail(1.0)
+            return buildFormatResult(Optional.empty(), 1.0)
+        return KorneaResult.empty()
     }
 
     /**
@@ -36,8 +35,8 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<DataSource<*>> {
-        val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return FormatResult.Fail(this, 1.0, it) }
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+        val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
         val cache = context.cacheShortTerm(context, "crilayla:${data.sha256().toHexString()}")
 
         return cache.openOutputFlow()
@@ -46,9 +45,7 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
                 decompressCrilayla(data).map { data ->
                     output.write(data)
 
-                    val result = FormatResult.Success<DataSource<*>>(this, cache, 1.0)
-                    result.release.add(cache)
-                    result
+                    buildFormatResult(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -56,9 +53,9 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
             }.getOrElseRun {
                 cache.close()
 
-                decompressCrilayla(data)
-                    .map<ByteArray, FormatResult<DataSource<*>>> { decompressed -> FormatResult.Success(this, BinaryDataSource(decompressed), 1.0) }
-                    .getOrElseTransform { failure -> FormatResult.Fail(this, 1.0, failure) }
+                decompressCrilayla(data).flatMap { decompressed ->
+                    buildFormatResult(BinaryDataSource(decompressed), 1.0)
+                }
             }
     }
 }

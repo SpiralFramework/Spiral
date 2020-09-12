@@ -1,12 +1,13 @@
 package info.spiralframework.core
 
-import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.core.isSuccessful
-import dev.brella.kornea.toolkit.common.ascii.arbitraryProgressBar
+import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_FILE_NAME_KEY
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.UTF8String
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
+import io.ktor.client.features.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 
 fun SpiralCoreContext.apiCheckForUpdate(project: String, build: String): String = apiCheckForUpdate(apiBase, project, build)
 fun SpiralCoreContext.apiLatestBuild(project: String): String = apiLatestBuild(apiBase, project)
@@ -19,9 +20,19 @@ fun apiBuildForFingerprint(apiBase: String, fingerprint: String): String = Strin
 fun jenkinsArtifactForBuild(jenkinsBase: String, project: String, latestBuild: String, fileName: String): String =
     String.format("%s/job/Spiral-%s/%s/artifact/%s/build/libs/%s", jenkinsBase, project, latestBuild, project.toLowerCase(), fileName)
 
-val spiralFrameworkOnline: Boolean by lazy { Fuel.head("https://spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
-val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
-val signaturesCdnOnline: Boolean by lazy { Fuel.head("https://storage.googleapis.com/signatures.spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+//val spiralFrameworkOnline: Boolean by lazy { Fuel.head("https://spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+//val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+//val signaturesCdnOnline: Boolean by lazy { Fuel.head("https://storage.googleapis.com/signatures.spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
+
+suspend fun SpiralCoreContext.spiralFrameworkOnline(): Boolean =
+    httpClient.head<HttpResponse>("https://spiralframework.info").status.value < 400
+
+suspend fun SpiralCoreContext.githubOnline(): Boolean =
+    httpClient.head<HttpResponse>("https://github.com").status.value < 400
+
+suspend fun SpiralCoreContext.signaturesCdnOnline(): Boolean =
+    httpClient.head<HttpResponse>("https://storage.googleapis.com/signatures.spiralframework.info")
+        .status.value < 400
 
 suspend fun checkForUpdate(context: SpiralCoreContext, project: String): Pair<String, Int>? {
     with(context) {
@@ -34,11 +45,7 @@ suspend fun checkForUpdate(context: SpiralCoreContext, project: String): Pair<St
         }
 
         val latestBuild = arbitraryProgressBar(loadingText = localise("gurren.update.checking"), loadedText = null) {
-            Fuel.get(apiLatestBuild(project))
-                .userAgent()
-                .timeout(updateConnectTimeout) //Time out if it takes longer than 2s to connect to our API
-                .timeoutRead(updateReadTimeout) //Time out if it takes longer than 2s to read a response
-                .response().takeIfSuccessful()?.let(::UTF8String)?.toIntOrNull() //.also(this@SpiralCoreData::printResponse)
+            runCatching { httpClient.get<String>(apiLatestBuild(project)) }.getOrNull()?.toIntOrNull()
         }
 
         if (latestBuild == null) {
@@ -55,9 +62,6 @@ suspend fun checkForUpdate(context: SpiralCoreContext, project: String): Pair<St
     }
 }
 
-fun buildForVersion(context: SpiralCoreContext, version: String): Int? =
-    Fuel.get(context.apiBuildForFingerprint(version))
-        .userAgent()
-        .timeout(5 * 1000) //Time out if it takes longer than 5s to connect to our API
-        .timeoutRead(5 * 1000) //Time out if it takes longer than 5s to read a response
-        .response().takeIfSuccessful()?.let { data -> String(data) }?.toIntOrNull() //.also(this::printResponse)
+suspend fun buildForVersion(context: SpiralCoreContext, version: String): Int? =
+    runCatching { context.httpClient.get<String>(context.apiBuildForFingerprint(version)).toIntOrNull() }
+        .getOrNull()
