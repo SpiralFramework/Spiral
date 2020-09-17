@@ -4,7 +4,7 @@ import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
 import dev.brella.kornea.io.jvm.files.ensureFileExists
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
-import io.github.soc.directories.ProjectDirectories
+import dev.dirs.ProjectDirectories
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
 import info.spiralframework.base.common.SpiralCatalyst

@@ -23,7 +23,7 @@ ext {
     kornea_apollo_version = '1.0.5-alpha'
     kornea_errors_version = '2.0.2-alpha'
     kornea_img_version = '1.0.5-alpha'
-    kornea_io_version = '3.5.2-alpha'
+    kornea_io_version = '3.6.4-alpha'
     kornea_modelling_version = '1.0.4-alpha'
     kornea_toolkit_version = '3.1.4-alpha'
 

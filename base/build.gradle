@@ -34,7 +34,7 @@ kotlin {
         jvmMain {
             dependencies {
                 api "org.slf4j:slf4j-api:$sfl4j_version"
-                api "io.github.soc:directories:11"
+                api "dev.dirs:directories:21"
             }
         }
 

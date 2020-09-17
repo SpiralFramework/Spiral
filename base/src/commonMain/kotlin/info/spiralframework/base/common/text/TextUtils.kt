@@ -1,5 +1,12 @@
 package info.spiralframework.base.common.text
 
+inline class LazyString(val init: () -> Any?) {
+    override fun toString(): String = init().toString()
+}
+
+inline fun lazyString(noinline init: () -> Any?) =
+    LazyString(init)
+
 fun String.toIntBaseN(): Int = when {
     startsWith("0b") -> substring(2).toInt(2)
     startsWith("0o") -> substring(2).toInt(8)

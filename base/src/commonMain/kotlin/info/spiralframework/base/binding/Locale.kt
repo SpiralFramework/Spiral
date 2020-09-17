@@ -6,6 +6,7 @@ import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 
 expect class DefaultSpiralLogger(name: String): SpiralLogger {
+    override val isErrorEnabled: Boolean
     override fun SpiralContext.error(format: String)
     override fun SpiralContext.error(format: String, arg: Any)
     override fun SpiralContext.error(format: String, th: Throwable)
@@ -13,6 +14,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.error(format: String, vararg args: Any)
     override fun SpiralContext.errorArray(format: String, args: Array<out Any>)
 
+    override val isWarnEnabled: Boolean
     override fun SpiralContext.warn(format: String)
     override fun SpiralContext.warn(format: String, arg: Any)
     override fun SpiralContext.warn(format: String, th: Throwable)
@@ -20,6 +22,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.warn(format: String, vararg args: Any)
     override fun SpiralContext.warnArray(format: String, args: Array<out Any>)
 
+    override val isInfoEnabled: Boolean
     override fun SpiralContext.info(format: String)
     override fun SpiralContext.info(format: String, arg: Any)
     override fun SpiralContext.info(format: String, th: Throwable)
@@ -27,6 +30,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.info(format: String, vararg args: Any)
     override fun SpiralContext.infoArray(format: String, args: Array<out Any>)
 
+    override val isDebugEnabled: Boolean
     override fun SpiralContext.debug(format: String)
     override fun SpiralContext.debug(format: String, arg: Any)
     override fun SpiralContext.debug(format: String, th: Throwable)
@@ -34,6 +38,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.debug(format: String, vararg args: Any)
     override fun SpiralContext.debugArray(format: String, args: Array<out Any>)
 
+    override val isTraceEnabled: Boolean
     override fun SpiralContext.trace(format: String)
     override fun SpiralContext.trace(format: String, arg: Any)
     override fun SpiralContext.trace(format: String, th: Throwable)

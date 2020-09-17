@@ -37,13 +37,13 @@ interface SpiralShortTermCacheProvider {
 
     fun supportsShortTermCaching(): Boolean
     suspend fun SpiralContext.isCachedShortTerm(name: String): Boolean
-    suspend fun SpiralContext.cacheShortTerm(name: String, location: String? = null): DataPool<out InputFlow, out OutputFlow>
+    suspend fun SpiralContext.cacheShortTerm(name: String, location: String? = "CacheShortTerm[$name]"): DataPool<out InputFlow, out OutputFlow>
 }
 
 @ExperimentalUnsignedTypes
 interface SpiralPersistentCacheProvider {
     class Memory : SpiralPersistentCacheProvider {
-        private val memCaches: MutableMap<String, DataPool<out InputFlow, out OutputFlow>> = HashMap()
+        private val memCaches: MutableMap<String, DataPool<InputFlow, OutputFlow>> = HashMap()
 
         override fun supportsPersistentCaching(): Boolean = true
         override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = memCaches[name]?.isClosed == false
@@ -63,13 +63,13 @@ interface SpiralPersistentCacheProvider {
 
     fun supportsPersistentCaching(): Boolean
     suspend fun SpiralContext.isCachedPersistent(name: String): Boolean
-    suspend fun SpiralContext.cachePersistent(name: String, location: String? = null): DataPool<out InputFlow, out OutputFlow>
+    suspend fun SpiralContext.cachePersistent(name: String, location: String? = "CachePersist[$name]"): DataPool<out InputFlow, out OutputFlow>
 }
 
 @ExperimentalUnsignedTypes
 interface SpiralTimedCacheProvider {
     class Memory : SpiralTimedCacheProvider {
-        private val memCaches: MutableMap<String, DataPool<out InputFlow, out OutputFlow>> = HashMap()
+        private val memCaches: MutableMap<String, DataPool<InputFlow, OutputFlow>> = HashMap()
 
         override fun supportsTimedCaching(): Boolean = true
         override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = memCaches[name]?.isClosed == false
@@ -87,14 +87,14 @@ interface SpiralTimedCacheProvider {
         }
 
         @ExperimentalTime
-        suspend fun newDataPool(duration: Duration, location: String?): DataPool<out InputFlow, out OutputFlow> = TimedDataPool(BinaryDataPool(location = location), duration)
+        suspend fun newDataPool(duration: Duration, location: String?): DataPool<InputFlow, OutputFlow> = TimedDataPool(BinaryDataPool(location = location), duration)
     }
 
     fun supportsTimedCaching(): Boolean
     suspend fun SpiralContext.isCachedTimed(name: String): Boolean
 
     @ExperimentalTime
-    suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String? = null): DataPool<out InputFlow, out OutputFlow>
+    suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String? = "CacheTimed[$name,$duration]"): DataPool<out InputFlow, out OutputFlow>
 }
 
 @ExperimentalUnsignedTypes
@@ -103,14 +103,14 @@ interface SpiralCacheProvider : SpiralShortTermCacheProvider, SpiralPersistentCa
 }
 
 @ExperimentalUnsignedTypes
-suspend fun SpiralShortTermCacheProvider.cacheShortTerm(context: SpiralContext, name: String, location: String? = null): DataPool<out InputFlow, out OutputFlow> = context.cacheShortTerm(name, location)
+suspend fun SpiralShortTermCacheProvider.cacheShortTerm(context: SpiralContext, name: String, location: String? = "CacheShortTerm[$name]"): DataPool<out InputFlow, out OutputFlow> = context.cacheShortTerm(name, location)
 
 @ExperimentalUnsignedTypes
-suspend fun SpiralPersistentCacheProvider.cachePersistent(context: SpiralContext, name: String, location: String? = null): DataPool<out InputFlow, out OutputFlow> = context.cachePersistent(name, location)
+suspend fun SpiralPersistentCacheProvider.cachePersistent(context: SpiralContext, name: String, location: String? = "CachePersist[$name]"): DataPool<out InputFlow, out OutputFlow> = context.cachePersistent(name, location)
 
 @ExperimentalUnsignedTypes
 @ExperimentalTime
-suspend fun SpiralTimedCacheProvider.cacheFor(context: SpiralContext, name: String, duration: Duration, location: String? = null): DataPool<out InputFlow, out OutputFlow> = context.cacheFor(name, duration, location)
+suspend fun SpiralTimedCacheProvider.cacheFor(context: SpiralContext, name: String, duration: Duration, location: String? = "CacheTimed[$name,$duration]"): DataPool<out InputFlow, out OutputFlow> = context.cacheFor(name, duration, location)
 
 @Suppress("USELESS_CAST")
 suspend fun <T: InputFlow> DataSource<T>.cache(context: SpiralContext): DataSource<*> {

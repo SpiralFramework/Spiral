@@ -11,6 +11,21 @@ import java.util.*
 actual class DefaultSpiralLogger(val logger: Logger) : SpiralLogger {
     actual constructor(name: String) : this(LoggerFactory.getLogger(name))
 
+    actual override val isErrorEnabled: Boolean
+        get() = logger.isErrorEnabled
+
+    actual override val isWarnEnabled: Boolean
+        get() = logger.isWarnEnabled
+
+    actual override val isInfoEnabled: Boolean
+        get() = logger.isInfoEnabled
+
+    actual override val isDebugEnabled: Boolean
+        get() = logger.isDebugEnabled
+
+    actual override val isTraceEnabled: Boolean
+        get() = logger.isTraceEnabled
+
     actual override fun SpiralContext.error(format: String) = if (logger.isErrorEnabled) logger.error(localise(format)) else Unit
     actual override fun SpiralContext.error(format: String, arg: Any) = if (logger.isErrorEnabled) logger.error(localise(format, arg), arg) else Unit
     actual override fun SpiralContext.error(format: String, th: Throwable) = if (logger.isErrorEnabled) logger.error(localise(format), th) else Unit
