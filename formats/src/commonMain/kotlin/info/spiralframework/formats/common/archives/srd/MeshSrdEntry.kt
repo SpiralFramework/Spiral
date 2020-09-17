@@ -23,16 +23,24 @@ data class MeshSrdEntry(
         const val MAGIC_NUMBER_BE = 0x244D5348
     }
 
+    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
+
     var meshName: String by oneTimeMutableInline()
     var materialName: String by oneTimeMutableInline()
 
     @ExperimentalStdlibApi
     override suspend fun SpiralContext.setup(): KorneaResult<MeshSrdEntry> {
+        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
+
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
+            return dataSource.openInputFlow()
+                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
+                .useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
+            return dataSource
+                .openInputFlow()
+                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
         }
     }
 

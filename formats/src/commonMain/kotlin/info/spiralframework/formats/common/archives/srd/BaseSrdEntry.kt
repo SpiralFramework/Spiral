@@ -13,13 +13,14 @@ import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32BE
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.text.toHexString
 
 @ExperimentalUnsignedTypes
 abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: ULong, open val subDataLength: ULong, open val unknown: Int, open val dataSource: DataSource<*>) {
     companion object {
         const val NOT_ENOUGH_DATA_KEY = "formats.srd_entry.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<out BaseSrdEntry> =
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<BaseSrdEntry> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
                     .mapWithState(InputFlowStateSelector::int)
@@ -68,15 +69,21 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         WindowedDataSource(dataSource, 16uL, mainDataLength, closeParent = false)
 
     suspend fun openMainDataFlow(): KorneaResult<InputFlow> =
-        dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL, mainDataLength) }
+        dataSource.openInputFlow().map { parent ->
+            if (parent is SeekableInputFlow) WindowedInputFlow.Seekable(parent, 16uL, mainDataLength)
+            else WindowedInputFlow(parent, 16uL, mainDataLength)
+        }
 
-    suspend fun openSubDataSource(): DataSource<out InputFlow> =
+    suspend fun openSubDataSource(): DataSource<InputFlow> =
         WindowedDataSource(dataSource, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength, closeParent = false)
 
     suspend fun openSubDataFlow(): KorneaResult<InputFlow> =
-        dataSource.openInputFlow().map { parent -> WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength) }
+        dataSource.openInputFlow().map { parent ->
+            if (parent is SeekableInputFlow) WindowedInputFlow.Seekable(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength)
+            else WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength)
+        }
 
-    open suspend fun SpiralContext.setup(): KorneaResult<out BaseSrdEntry> = KorneaResult.success(this@BaseSrdEntry)
+    abstract suspend fun SpiralContext.setup(): KorneaResult<BaseSrdEntry>
 }
 
 @ExperimentalUnsignedTypes

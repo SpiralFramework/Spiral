@@ -8,6 +8,7 @@ import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readFloat32LE
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
@@ -19,11 +20,11 @@ typealias FaceBlock = RSISrdEntry.ResourceIndex
 @ExperimentalUnsignedTypes
 /** Original Work Do Not Steal */
 data class VTXSrdEntry(
-        override val classifier: Int,
-        override val mainDataLength: ULong,
-        override val subDataLength: ULong,
-        override val unknown: Int,
-        override val dataSource: DataSource<*>
+    override val classifier: Int,
+    override val mainDataLength: ULong,
+    override val subDataLength: ULong,
+    override val unknown: Int,
+    override val dataSource: DataSource<*>
 ) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x24565458
@@ -37,7 +38,7 @@ data class VTXSrdEntry(
     val faceBlock: FaceBlock
         get() = rsiEntry.resources[1]
 
-    var unk1: Int by oneTimeMutableInline()
+    var vectorCount: Int by oneTimeMutableInline()
     var unk2: Int by oneTimeMutableInline()
     var unk3: Int by oneTimeMutableInline()
 
@@ -46,40 +47,42 @@ data class VTXSrdEntry(
     var unkA: Int by oneTimeMutableInline()
     var unkB: Int by oneTimeMutableInline()
     var unkC: Int by oneTimeMutableInline()
-    var vertxSizeDataCount: Int by oneTimeMutableInline()
+    var vertexSubBlockCount: Int by oneTimeMutableInline()
 
-    var unknownOffset: Int by oneTimeMutableInline()
-    var vertexSizeDataOffset: Int by oneTimeMutableInline()
+    var bindBoneRootOffset: Int by oneTimeMutableInline()
+    var vertexSubBlockListOffset: Int by oneTimeMutableInline()
     var floatListOffset: Int by oneTimeMutableInline()
     var bindBoneListOffset: Int by oneTimeMutableInline()
     var unk6: Int by oneTimeMutableInline()
     var unk7: Int by oneTimeMutableInline()
 
     var shortList: IntArray by oneTimeMutableInline()
-    var floatList: FloatArray by oneTimeMutableInline()
+    var floatList: Array<Triple<Float, Float, Float>> by oneTimeMutableInline()
     var bindBoneListStringOffsets: IntArray by oneTimeMutableInline()
 
     var vertexSizeData: Array<VertexSizePair> by oneTimeMutableInline()
 
     var bindBoneRoot: Int by oneTimeMutableInline()
 
-    @ExperimentalStdlibApi
     override suspend fun SpiralContext.setup(): KorneaResult<VTXSrdEntry> {
         rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
+            return dataSource.openInputFlow()
+                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
+                .useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
+            return dataSource
+                .openInputFlow()
+                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
         }
     }
 
-    @ExperimentalStdlibApi
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<VTXSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<VTXSrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
-        unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        vectorCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk2 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk3 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
@@ -91,27 +94,29 @@ data class VTXSrdEntry(
         unkA = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unkB = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unkC = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-        vertxSizeDataCount = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        unknownOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-        vertexSizeDataOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        vertexSubBlockCount = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+
+        bindBoneRootOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        vertexSubBlockListOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         floatListOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         bindBoneListOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         unk6 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk7 = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-        vertexSizeData = flow.fauxSeekFromStart(vertexSizeDataOffset.toULong(), dataSource) { vertexFlow ->
-            Array(vertxSizeDataCount) {
-                VertexSizePair(requireNotNull(vertexFlow.readInt32LE()), requireNotNull(vertexFlow.readInt32LE()))
-            }
-        }.getOrBreak { error ->
-            return error.cast()
+        flow.seek(vertexSubBlockListOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
+        debug("Reading vertex data @ {0}", (flow.flow as? InputFlowWithBacking)?.absPosition() ?: flow.flow.position())
+
+        vertexSizeData = Array(vertexSubBlockCount) {
+            VertexSizePair(requireNotNull(flow.readInt32LE()), requireNotNull(flow.readInt32LE()))
         }
 
 //        shortList = IntArray((endOfShortListOffset - 0x20) / 0x2) { requireNotNull(flow.readInt16LE()) }
 
-//        bindBoneRoot = requireNotNull(flow.readInt16LE())
+        flow.seek(bindBoneListOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
+
+            bindBoneRoot = requireNotNull(flow.readInt16LE())
 
 //        if (bindBoneListOffset != 0 && unk6 != 0) {
 //            bindBoneListStringOffsets = requireNotNull(flow.fauxSeekFromStart(bindBoneListOffset.toULong(), dataSource) { boneFlow ->
@@ -122,11 +127,8 @@ data class VTXSrdEntry(
 //            bindBoneListStringOffsets = IntArray(0)
 //        }
 
-        floatList = flow.fauxSeekFromStart(floatListOffset.toULong(), dataSource) { floatFlow ->
-            FloatArray(unk1) { requireNotNull(floatFlow.readHalfFloatLE()) }
-        }.getOrBreak { error ->
-            return error.cast()
-        }
+        flow.seek(floatListOffset.toLong(), EnumSeekMode.FROM_BEGINNING)
+        floatList = Array(vectorCount / 2) { Triple(requireNotNull(flow.readFloat32LE()), requireNotNull(flow.readFloat32LE()), requireNotNull(flow.readFloat32LE())) }
 
 //        bindBoneListOffset =
 
@@ -162,6 +164,7 @@ private suspend fun InputFlow.readHalfFloatLE(): Float? {
     } // else +/-0 -> +/-0
 
     return Float.fromBits(// combine all parts
-            hbits and 0x8000 shl 16 // sign  << ( 31 - 15 )
-                    or (exp or mant) shl 13) // value << ( 23 - 10 )
+        hbits and 0x8000 shl 16 // sign  << ( 31 - 15 )
+                or (exp or mant) shl 13
+    ) // value << ( 23 - 10 )
 }

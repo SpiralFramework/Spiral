@@ -1,6 +1,8 @@
 package info.spiralframework.formats.common.archives.srd
 
+import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.DataSource
+import info.spiralframework.base.common.SpiralContext
 
 @ExperimentalUnsignedTypes
 data class CFHSrdEntry(
@@ -13,4 +15,6 @@ data class CFHSrdEntry(
     companion object {
         const val MAGIC_NUMBER_BE = 0x24436448
     }
+
+    override suspend fun SpiralContext.setup(): KorneaResult<BaseSrdEntry> = KorneaResult.success(this@CFHSrdEntry)
 }

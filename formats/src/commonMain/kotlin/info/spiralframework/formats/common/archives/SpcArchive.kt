@@ -14,6 +14,7 @@ import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 
 @ExperimentalUnsignedTypes
 class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataSource: DataSource<*>) {
@@ -37,7 +38,6 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
 
         const val COMPRESSED_FLAG = 0x02
 
-        @ExperimentalStdlibApi
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<SpcArchive> =
             withFormats(context) {
                 val flow = requireNotNull(dataSource.openInputFlow())
@@ -109,13 +109,12 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
             val cache = cacheShortTerm(compressedData.sha256().toHexString())
 
             return cache.openOutputFlow()
-                .flatMap { output ->
+                .useAndFlatMap { output ->
                     decompressSpcData(compressedData, file.decompressedSize.toInt()).map { data ->
                         output.write(data)
                         cache
                     }.doOnFailure {
                         cache.close()
-                        output.close()
                     }
                 }.switchIfFailure { failure ->
                     cache.close()
@@ -152,9 +151,7 @@ suspend fun SpcArchive.openDecompressedSource(context: SpiralContext, file: SpcF
 suspend fun SpcArchive.openDecompressedFlow(context: SpiralContext, file: SpcFileEntry) = context.openDecompressedFlow(file)
 
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.SpcArchive(dataSource: DataSource<*>) = SpcArchive(this, dataSource)
 
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
 suspend fun SpiralContext.UnsafeSpcArchive(dataSource: DataSource<*>) = SpcArchive(this, dataSource).get()

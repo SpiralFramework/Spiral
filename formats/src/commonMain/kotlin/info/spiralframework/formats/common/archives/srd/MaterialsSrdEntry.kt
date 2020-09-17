@@ -36,9 +36,13 @@ data class MaterialsSrdEntry(
 
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
+            return dataSource.openInputFlow()
+                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
+                .useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
+            return dataSource
+                .openInputFlow()
+                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
         }
     }
 

@@ -5,11 +5,14 @@ import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.filterToInstance
+import dev.brella.kornea.errors.common.switchIfEmpty
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
+import info.spiralframework.base.common.logging.SpiralLogger.NoOp.trace
+import info.spiralframework.base.common.text.lazyString
 
 @ExperimentalUnsignedTypes
 /** ResourceInfoEntry? */
@@ -23,11 +26,16 @@ data class RSISrdEntry(
     companion object {
         const val MAGIC_NUMBER_BE = 0x24525349
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<RSISrdEntry> = BaseSrdEntry(context, dataSource).filterToInstance()
+        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<RSISrdEntry> = BaseSrdEntry(context, dataSource)
+            .also { context.trace("'RSI': {0}", it) }
+            .filterToInstance()
     }
 
     data class ResourceIndex(val start: Int, val length: Int, val unk1: Int, val unk2: Int)
     data class LabelledResourceIndex(val name: Int, val start: Int, val length: Int, val unk2: Int)
+
+    var locationKey: String by oneTimeMutableInline()
+    var setupFlow: InputFlow by oneTimeMutableInline()
 
     var unk1: Int by oneTimeMutableInline()
     var unk2: Int by oneTimeMutableInline()
@@ -45,15 +53,29 @@ data class RSISrdEntry(
     override suspend fun SpiralContext.setup(): KorneaResult<RSISrdEntry> {
         val dataSource = openMainDataSource()
         if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow().filterToInstance<SeekableInputFlow>().useFlatMapWithState { flow -> setup(int(flow)) }
+            return dataSource.openInputFlow()
+                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
+                .useFlatMapWithState { flow -> setup(int(flow)) }
         else {
-            return dataSource.openInputFlow().useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readBytes()))) }
+            return dataSource
+                .openInputFlow()
+                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
         }
     }
 
     @ExperimentalStdlibApi
     private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<RSISrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+        locationKey = flow.location.toString()
+        setupFlow = flow
+        debug("Setting up RSI entry @ {0}", locationKey)
+
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
+
+        debug("[{0}] Reading RSI entry @ {1}", locationKey, (flow.flow as? InputFlowWithBacking)?.absPosition() ?: flow.position())
+
+        if (locationKey.endsWith("+5560h[A0h,120h][10h,65h]")) {
+            println()
+        }
 
         unk1 = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         unk2 = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
