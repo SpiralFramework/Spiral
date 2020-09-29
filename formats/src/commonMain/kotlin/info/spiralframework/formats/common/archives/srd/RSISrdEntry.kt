@@ -5,14 +5,12 @@ import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.filterToInstance
-import dev.brella.kornea.errors.common.switchIfEmpty
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.logging.SpiralLogger.NoOp.trace
-import info.spiralframework.base.common.text.lazyString
 
 @ExperimentalUnsignedTypes
 /** ResourceInfoEntry? */
@@ -22,7 +20,7 @@ data class RSISrdEntry(
         override val subDataLength: ULong,
         override val unknown: Int,
         override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x24525349
 
@@ -49,22 +47,7 @@ data class RSISrdEntry(
     var resources: Array<ResourceIndex> by oneTimeMutableInline()
     var name: String by oneTimeMutableInline()
 
-    @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup(): KorneaResult<RSISrdEntry> {
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
-    @ExperimentalStdlibApi
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<RSISrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<RSISrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         locationKey = flow.location.toString()
         setupFlow = flow
         debug("Setting up RSI entry @ {0}", locationKey)

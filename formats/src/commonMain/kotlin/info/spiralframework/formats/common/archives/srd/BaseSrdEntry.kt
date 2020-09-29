@@ -83,11 +83,8 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
             else WindowedInputFlow(parent, 16uL + mainDataLength + mainDataLength.alignmentNeededFor(0x10).toUInt(), subDataLength)
         }
 
-    abstract suspend fun SpiralContext.setup(): KorneaResult<BaseSrdEntry>
+    abstract suspend fun setup(context: SpiralContext): KorneaResult<BaseSrdEntry>
 }
-
-@ExperimentalUnsignedTypes
-suspend fun BaseSrdEntry.setup(context: SpiralContext) = context.setup()
 
 @ExperimentalUnsignedTypes
 suspend fun SpiralContext.BaseSrdEntry(dataSource: DataSource<*>) = BaseSrdEntry(this, dataSource)

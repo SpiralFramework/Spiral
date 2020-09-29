@@ -11,9 +11,13 @@ import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import dev.brella.kornea.toolkit.common.iterator
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
 
 @ExperimentalUnsignedTypes
-class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSource: DataSource<*>) {
+class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSource: DataSource<*>): SpiralArchive {
     companion object {
         /** 'AFS2' */
         const val MAGIC_NUMBER_LE = 0x32534641
@@ -65,11 +69,17 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
             }
         }
 
-    suspend fun openSource(file: AwbFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
+    override val fileCount: Int
+        get() = files.size
+
+    suspend fun openSource(file: AwbFileEntry): DataSource<InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
     suspend fun openFlow(file: AwbFileEntry): KorneaResult<InputFlow> =
             dataSource.openInputFlow().map { parent ->
                 WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
             }
+
+    override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
+        files.asFlow().map { file -> SpiralArchiveSubfile("${file.id}_awb.dat", openSource(file)) }
 }
 
 @ExperimentalUnsignedTypes

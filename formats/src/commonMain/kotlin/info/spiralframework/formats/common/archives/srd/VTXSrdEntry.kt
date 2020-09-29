@@ -3,8 +3,6 @@ package info.spiralframework.formats.common.archives.srd
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
@@ -25,14 +23,13 @@ data class VTXSrdEntry(
     override val subDataLength: ULong,
     override val unknown: Int,
     override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x24565458
     }
 
     data class VertexSizePair(val offset: Int, val size: Int)
 
-    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
     val vertexBlock: VertexBlock
         get() = rsiEntry.resources[0]
     val faceBlock: FaceBlock
@@ -64,22 +61,7 @@ data class VTXSrdEntry(
 
     var bindBoneRoot: Int by oneTimeMutableInline()
 
-    override suspend fun SpiralContext.setup(): KorneaResult<VTXSrdEntry> {
-        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
-
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<VTXSrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<VTXSrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         vectorCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

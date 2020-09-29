@@ -18,6 +18,7 @@ import dev.brella.kornea.io.jvm.asOutputStream
 import dev.brella.kornea.io.jvm.files.*
 import dev.brella.kornea.toolkit.common.freeze
 import dev.brella.kornea.toolkit.common.use
+import info.spiralframework.formats.jvm.archives.ZipArchive
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -25,7 +26,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
+object ZipFormat : ReadableSpiralFormat<ZipArchive>, WritableSpiralFormat {
     override val name: String = "Zip"
     override val extension: String = "zip"
 
@@ -40,11 +41,11 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     @ExperimentalKorneaIO
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<ZipFile> {
+    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<ZipArchive> {
         if (source is SynchronousFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
-                    buildFormatResult(ZipFile(source.backing), 1.0)
+                    buildFormatResult(ZipArchive(ZipFile(source.backing)), 1.0)
                 }
             } catch (io: IOException) {
                 return KorneaResult.WithException.of(io)
@@ -52,7 +53,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
         } else if (source is AsyncFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
-                    buildFormatResult(ZipFile(source.backing.toFile()), 1.0)
+                    buildFormatResult(ZipArchive(ZipFile(source.backing.toFile())), 1.0)
                 }
             } catch (io: IOException) {
                 return KorneaResult.WithException.of(io)
@@ -65,9 +66,9 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
             try {
                 source.openInputFlow().doOnSuccess { flow ->
                     if (flow is SynchronousFileInputFlow) {
-                        return buildFormatResult(ZipFile(flow.backingFile), 1.0)
+                        return buildFormatResult(ZipArchive(ZipFile(flow.backingFile)), 1.0)
                     } else if (flow is AsyncFileInputFlow) {
-                        return buildFormatResult(ZipFile(flow.backing.toFile()), 1.0)
+                        return buildFormatResult(ZipArchive(ZipFile(flow.backing.toFile())), 1.0)
                     }
                     
                     withContext(Dispatchers.IO) {
@@ -88,7 +89,7 @@ object ZipFormat : ReadableSpiralFormat<ZipFile>, WritableSpiralFormat {
             }
 
             if (zip != null) {
-                return buildFormatResult(zip!!, 1.0)
+                return buildFormatResult(ZipArchive(zip!!), 1.0)
             } else {
                 tmpFile?.delete()
                 return ioException?.let { io -> KorneaResult.WithException.of(io) } ?: KorneaResult.empty()

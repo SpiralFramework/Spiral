@@ -8,9 +8,18 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.OffsetDataSource
+import info.spiralframework.formats.common.archives.SpiralArchive
+import info.spiralframework.formats.common.archives.SpiralArchiveSubfile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.withIndex
 
 @ExperimentalUnsignedTypes
-class SrdArchive(val entries: Array<BaseSrdEntry>) {
+class SrdArchive(val entries: Array<BaseSrdEntry>): SpiralArchive {
     companion object {
         const val NO_ENTRIES = 0x0001
         const val INVALID_ENTRY = 0x0000
@@ -48,6 +57,20 @@ class SrdArchive(val entries: Array<BaseSrdEntry>) {
 
 
     }
+
+    override val fileCount: Int
+        get() = entries.sumBy { entry -> (if (entry.mainDataLength > 0uL) 1 else 0) + (if (entry.subDataLength > 0uL) 1 else 0) }
+
+    override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
+        entries.asFlow().withIndex().transform { (index, entry) ->
+            if (entry.mainDataLength > 0uL) {
+                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_data.dat", entry.openMainDataSource()))
+            }
+
+            if (entry.subDataLength > 0uL) {
+                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_sub-data.dat", entry.openSubDataSource()))
+            }
+        }
 }
 
 @ExperimentalUnsignedTypes

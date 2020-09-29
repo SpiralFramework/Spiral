@@ -25,7 +25,7 @@ interface SpiralFormat {
 /**
  * A Spiral format that supports reading from a source
  */
-interface ReadableSpiralFormat<out T>: SpiralFormat {
+interface ReadableSpiralFormat<out T> : SpiralFormat {
     /**
      * Specifies a preferred conversion format for files that match this format.
      * This is used primarily for Danganronpa formats to specify we should convert to a nicer, more usable format.
@@ -49,8 +49,8 @@ interface ReadableSpiralFormat<out T>: SpiralFormat {
      *
      * @return A FormatResult containing either an optional with the value [T] or null, if the stream does not seem to match an object of type [T]
      */
-    suspend fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): KorneaResult<Optional<T>>
-        = read(context, readContext, source).map(::Optional)
+    suspend fun identify(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): KorneaResult<Optional<T>> =
+        read(context, readContext, source).map<T, Optional<T>>(::Optional).buildFormatResult(1.0)
 
     /**
      * Attempts to read the data source as [T]
@@ -63,10 +63,12 @@ interface ReadableSpiralFormat<out T>: SpiralFormat {
     suspend fun read(context: SpiralContext, readContext: FormatReadContext? = null, source: DataSource<*>): KorneaResult<T>
 
     fun <R> KorneaResult<R>.buildFormatResult(confidence: Double): KorneaResult<R> =
-        flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence) }
+        if (this is FormatResult<R, *>) this
+        else flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence) }
 
     fun <R> KorneaResult<R>.buildFormatResult(confidence: (value: R) -> Double): KorneaResult<R> =
-        flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence(value)) }
+        if (this is FormatResult<R, *>) this
+        else flatMap { value -> KorneaResult.formatResult(value, this@ReadableSpiralFormat, confidence(value)) }
 }
 
 inline fun <F, R> ReadableSpiralFormat<F>.buildFormatResult(value: R, confidence: Double): KorneaResult<R> =
@@ -75,7 +77,7 @@ inline fun <F, R> ReadableSpiralFormat<F>.buildFormatResult(value: R, confidence
 /**
  * A Spiral format that supports writing to a stream
  */
-interface WritableSpiralFormat: SpiralFormat {
+interface WritableSpiralFormat : SpiralFormat {
     /**
      * Does this format support writing [data]?
      *
@@ -98,12 +100,12 @@ interface WritableSpiralFormat: SpiralFormat {
 }
 
 sealed class FormatWriteResponse {
-    object SUCCESS: FormatWriteResponse()
-    object WRONG_FORMAT: FormatWriteResponse()
+    object SUCCESS : FormatWriteResponse()
+    object WRONG_FORMAT : FormatWriteResponse()
 
     //TODO: Replace this with a result
-    class FAIL(val reason: Throwable): FormatWriteResponse() {
-        constructor(context: SpiralContext): this(Throwable(context.localise("gurren.errors.no_reason")))
+    class FAIL(val reason: Throwable) : FormatWriteResponse() {
+        constructor(context: SpiralContext) : this(Throwable(context.localise("gurren.errors.no_reason")))
     }
 }
 

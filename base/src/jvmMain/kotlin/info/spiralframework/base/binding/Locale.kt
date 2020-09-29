@@ -107,6 +107,11 @@ internal actual fun defaultLocale(): CommonLocale {
     return CommonLocale(jvmLocale.language, jvmLocale.country, jvmLocale.variant)
 }
 
+inline fun SpiralLocale.prompt(promptText: String, defaultToAffirmative: Boolean = true): Boolean {
+    print(localise(promptText))
+    return readConfirmation(defaultToAffirmative)
+}
+
 fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean {
     val affirmative = promptAffirmative()
 

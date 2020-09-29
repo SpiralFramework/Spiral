@@ -7,6 +7,8 @@ object BaseCommonLocaleKeys {
     const val PROMPT_SHORT_AFFIRMATIVE = "base.prompt.short.affirmative"
     const val PROMPT_SHORT_NEGATIVE = "base.prompt.short.negative"
 
+    const val PROMPT_EXIT = "base.prompt.exit"
+
     const val CONST_NULL = "base.const.null"
 }
 
@@ -17,3 +19,4 @@ fun SpiralLocale.promptShortAffirmative(): String = localise(BaseCommonLocaleKey
 fun SpiralLocale.promptShortNegative(): String = localise(BaseCommonLocaleKeys.PROMPT_SHORT_NEGATIVE)
 
 fun SpiralLocale.constNull(): String = localise(BaseCommonLocaleKeys.CONST_NULL)
+fun SpiralLocale.promptExit(): List<String> = localise(BaseCommonLocaleKeys.PROMPT_EXIT).split(';')

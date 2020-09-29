@@ -12,7 +12,6 @@ import dev.brella.kornea.io.common.EnumSeekMode
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 
 @ExperimentalUnsignedTypes
 data class MaterialsSrdEntry(
@@ -21,33 +20,14 @@ data class MaterialsSrdEntry(
         override val subDataLength: ULong,
         override val unknown: Int,
         override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x244D4154
     }
-
-    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
     private val materialsMutable: MutableMap<String, String> = HashMap()
     val materials: Map<String, String> = materialsMutable
 
-    @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup(): KorneaResult<MaterialsSrdEntry> {
-        rsiEntry = RSISrdEntry(this, openSubDataSource()).getOrBreak { return it.cast() }
-
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
-    @ExperimentalStdlibApi
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MaterialsSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MaterialsSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
         materialsMutable.clear()
 

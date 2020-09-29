@@ -10,6 +10,10 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 
 @ExperimentalUnsignedTypes
 class CpkArchive(
@@ -20,7 +24,7 @@ class CpkArchive(
     val gtocHeader: KorneaResult<UtfTableInfo>,
     val files: Array<CpkFileEntry>,
     val dataSource: DataSource<*>
-) {
+) : SpiralArchive {
     companion object {
         const val MAGIC_NUMBER_LE = 0x204b5043
 
@@ -173,14 +177,17 @@ class CpkArchive(
         }
     }
 
+    override val fileCount: Int
+        get() = files.size
+
     operator fun get(name: String): CpkFileEntry? = files.firstOrNull { entry -> entry.name == name }
 
-    suspend fun SpiralContext.openRawSource(file: CpkFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.fileOffset.toULong(), file.fileSize.toULong(), closeParent = false)
+    suspend fun SpiralContext.openRawSource(file: CpkFileEntry): DataSource<InputFlow> = WindowedDataSource(dataSource, file.fileOffset.toULong(), file.fileSize.toULong(), closeParent = false)
     suspend fun SpiralContext.openRawFlow(file: CpkFileEntry): KorneaResult<InputFlow> =
         dataSource.openInputFlow()
             .map { parent -> WindowedInputFlow(parent, file.fileOffset.toULong(), file.fileSize.toULong()) }
 
-    suspend fun SpiralContext.openDecompressedSource(file: CpkFileEntry): KorneaResult<DataSource<out InputFlow>> {
+    suspend fun SpiralContext.openDecompressedSource(file: CpkFileEntry): KorneaResult<DataSource<InputFlow>> {
         if (file.isCompressed) {
             val flow = openRawFlow(file).getOrBreak { return it.cast() }
             val compressedData = flow.readAndClose()
@@ -199,7 +206,7 @@ class CpkArchive(
         }
     }
 
-    suspend fun SpiralContext.openDecompressedFlow(file: CpkFileEntry): KorneaResult<out InputFlow> {
+    suspend fun SpiralContext.openDecompressedFlow(file: CpkFileEntry): KorneaResult<InputFlow> {
         if (file.isCompressed) {
             val source = openDecompressedSource(file).getOrBreak { return it.cast() }
             return source.openInputFlow()
@@ -208,6 +215,14 @@ class CpkArchive(
             return openRawFlow(file)
         }
     }
+
+    override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
+        files.asFlow().mapNotNull { file ->
+            SpiralArchiveSubfile(file.name, openDecompressedSource(file).getOrBreak { failure ->
+                error("Cpk sub file {0} did not decompress properly: {1}", file.name, failure)
+                return@mapNotNull null
+            })
+        }
 }
 
 @ExperimentalUnsignedTypes

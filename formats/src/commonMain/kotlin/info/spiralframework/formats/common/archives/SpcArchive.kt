@@ -15,9 +15,13 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
 import dev.brella.kornea.toolkit.common.useAndFlatMap
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 
 @ExperimentalUnsignedTypes
-class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataSource: DataSource<*>) {
+class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataSource: DataSource<*>): SpiralArchive {
     companion object {
         /** .SPC */
         const val SPC_MAGIC_NUMBER_LE = 0x2E535043
@@ -96,13 +100,16 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
             }
     }
 
+    override val fileCount: Int
+        get() = files.size
+
     operator fun get(name: String): SpcFileEntry? = files.firstOrNull { entry -> entry.name == name }
 
-    suspend fun SpiralContext.openRawSource(file: SpcFileEntry): DataSource<out InputFlow> = WindowedDataSource(dataSource, file.offset, file.compressedSize.toULong(), closeParent = false)
+    suspend fun SpiralContext.openRawSource(file: SpcFileEntry): DataSource<InputFlow> = WindowedDataSource(dataSource, file.offset, file.compressedSize.toULong(), closeParent = false)
     suspend fun SpiralContext.openRawFlow(file: SpcFileEntry): KorneaResult<InputFlow> = dataSource.openInputFlow()
         .map { parent -> WindowedInputFlow(parent, file.offset, file.compressedSize.toULong()) }
 
-    suspend fun SpiralContext.openDecompressedSource(file: SpcFileEntry): KorneaResult<DataSource<out InputFlow>> {
+    suspend fun SpiralContext.openDecompressedSource(file: SpcFileEntry): KorneaResult<DataSource<InputFlow>> {
         if (file.compressionFlag == COMPRESSED_FLAG) {
             val flow = openRawFlow(file).getOrBreak { return it.cast() }
             val compressedData = flow.readAndClose()
@@ -127,7 +134,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
         }
     }
 
-    suspend fun SpiralContext.openDecompressedFlow(file: SpcFileEntry): KorneaResult<out InputFlow> {
+    suspend fun SpiralContext.openDecompressedFlow(file: SpcFileEntry): KorneaResult<InputFlow> {
         if (file.compressionFlag == COMPRESSED_FLAG) {
             val source = openDecompressedSource(file).getOrBreak { return it.cast() }
             return source.openInputFlow()
@@ -136,6 +143,14 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
             return openRawFlow(file)
         }
     }
+
+    override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
+        files.asFlow().mapNotNull { file ->
+            SpiralArchiveSubfile(file.name, openDecompressedSource(file).getOrBreak { failure ->
+                error("Cpk sub file {0} did not decompress properly: {1}", file.name, failure)
+                return@mapNotNull null
+            })
+        }
 }
 
 @ExperimentalUnsignedTypes

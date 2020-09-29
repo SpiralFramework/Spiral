@@ -18,34 +18,16 @@ data class MeshSrdEntry(
         override val subDataLength: ULong,
         override val unknown: Int,
         override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x244D5348
     }
-
-    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
 
     var meshName: String by oneTimeMutableInline()
     var materialName: String by oneTimeMutableInline()
 
     @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup(): KorneaResult<MeshSrdEntry> {
-        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
-
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
-    @ExperimentalStdlibApi
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MeshSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MeshSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         val unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         val meshNameOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

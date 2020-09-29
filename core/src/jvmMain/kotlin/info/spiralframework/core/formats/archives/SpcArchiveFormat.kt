@@ -32,7 +32,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
                 return@useAndFlatMap KorneaResult.errorAsIllegalArgument(SpcArchive.INVALID_MAGIC_NUMBER, context.localise(SpcArchive.INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16)}", "0x${SpcArchive.SPC_MAGIC_NUMBER_LE.toString(16)}"))
             }
 
-            return@useAndFlatMap KorneaResult.success(Optional.empty())
+            return@useAndFlatMap buildFormatResult(Optional.empty(), 1.0)
         }
 
     /**

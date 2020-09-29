@@ -7,6 +7,6 @@ import info.spiralframework.base.common.SpiralContext
 @ExperimentalUnsignedTypes
 data class UnknownSrdEntry(override val classifier: Int, override val mainDataLength: ULong, override val subDataLength: ULong, override val unknown: Int, override val dataSource: DataSource<*>) :
     BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
-    override suspend fun SpiralContext.setup(): KorneaResult<BaseSrdEntry> =
+    override suspend fun setup(context: SpiralContext): KorneaResult<BaseSrdEntry> =
         KorneaResult.success(this@UnknownSrdEntry)
 }

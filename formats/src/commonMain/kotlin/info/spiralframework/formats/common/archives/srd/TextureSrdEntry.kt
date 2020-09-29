@@ -17,12 +17,11 @@ data class TextureSrdEntry(
         override val subDataLength: ULong,
         override val unknown: Int,
         override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x24545852
     }
 
-    var rsiEntry: RSISrdEntry by oneTimeMutableInline()
     val mipmaps: Array<RSISrdEntry.ResourceIndex>
         get() = rsiEntry.resources
 
@@ -35,25 +34,8 @@ data class TextureSrdEntry(
     var unk2: Int by oneTimeMutableInline()
     var palette: Int by oneTimeMutableInline()
     var paletteID: Int by oneTimeMutableInline()
-    
-    @ExperimentalStdlibApi
-    override suspend fun SpiralContext.setup(): KorneaResult<TextureSrdEntry> {
-        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
 
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
-    @ExperimentalStdlibApi
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TextureSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TextureSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

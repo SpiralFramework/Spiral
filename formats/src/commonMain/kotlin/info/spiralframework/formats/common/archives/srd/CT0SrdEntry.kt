@@ -16,6 +16,6 @@ data class CT0SrdEntry(
         const val MAGIC_NUMBER_BE = 0x24435430
     }
 
-    override suspend fun SpiralContext.setup(): KorneaResult<BaseSrdEntry> =
+    override suspend fun setup(context: SpiralContext): KorneaResult<BaseSrdEntry> =
         KorneaResult.success(this@CT0SrdEntry)
 }

@@ -12,9 +12,12 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
 
 @ExperimentalUnsignedTypes
-class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) {
+class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>): SpiralArchive {
     companion object {
         const val MAGIC_NUMBER_LE = 0x2E50414B
 
@@ -92,9 +95,12 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
             }
     }
 
+    override val fileCount: Int
+        get() = files.size
+
     operator fun get(index: Int): PakFileEntry = files[index]
 
-    suspend fun openSource(file: PakFileEntry): DataSource<out InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
+    suspend fun openSource(file: PakFileEntry): DataSource<InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
     suspend fun openFlow(file: PakFileEntry): KorneaResult<OffsetInputFlow> =
             dataSource.openInputFlow().map { parent ->
                 if (file.size == -1)
@@ -102,6 +108,9 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) 
                 else
                     WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
             }
+
+    override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
+        files.asFlow().map { file -> SpiralArchiveSubfile("${file.index}.dat", openSource(file)) }
 }
 
 @ExperimentalUnsignedTypes

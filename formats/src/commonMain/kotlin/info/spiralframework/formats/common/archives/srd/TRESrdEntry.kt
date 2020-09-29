@@ -17,7 +17,7 @@ data class TRESrdEntry(
     override val subDataLength: ULong,
     override val unknown: Int,
     override val dataSource: DataSource<*>
-) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown, dataSource) {
     sealed class TreeNode {
         data class Branch internal constructor(
             val stringOffset: UInt,
@@ -126,21 +126,6 @@ data class TRESrdEntry(
         const val MAGIC_NUMBER_BE = 0x24545245
     }
 
-    override suspend fun SpiralContext.setup(): KorneaResult<TRESrdEntry> {
-//        rsiEntry = RSISrdEntry(this, openSubDataSource()).get()
-
-        val dataSource = openMainDataSource()
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
-                .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> setup(int(flow)) }
-        else {
-            return dataSource
-                .openInputFlow()
-                .useFlatMapWithState { flow -> setup(int(BinaryInputFlow(flow.readAndClose()))) }
-        }
-    }
-
     var maxTreeDepth: UInt by oneTimeMutableInline()
     var unk14: Int by oneTimeMutableInline()
     var totalEntryCount: Int by oneTimeMutableInline()
@@ -150,7 +135,7 @@ data class TRESrdEntry(
 
     var tree: TreeNode.Branch by oneTimeMutableInline()
 
-    private suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TRESrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
+    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TRESrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         maxTreeDepth = flow.readUInt32LE()!!
