@@ -7,6 +7,8 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.bookmark
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 @ExperimentalUnsignedTypes
 infix fun UInt.alignmentNeededFor(alignment: Int): Long = (alignment - this % alignment) % alignment
@@ -51,3 +53,26 @@ fun <K, V> MutableMap<K, V>.putBack(key: K, value: V): V {
 }
 
 inline fun String.trimNulls(): String = trimEnd(NULL_TERMINATOR)
+
+@Suppress("unused")
+inline fun Any?.unit(): Unit = Unit
+@Suppress("unused")
+inline fun <T> Any?.nulled(): T? = null
+inline fun unitBlock(block: () -> Any?): Unit {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+
+    block()
+
+    return
+}
+inline fun <T> nullBlock(block: () -> Any?): T? {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+
+    block()
+
+    return null
+}

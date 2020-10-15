@@ -30,7 +30,7 @@ import kotlin.math.floor
 import kotlin.math.log
 
 object GurrenShared {
-    val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<out Any>> by lazy {
+    val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<SpiralArchive>> by lazy {
         mutableListOf(
             AwbArchiveFormat, CpkArchiveFormat, PakArchiveFormat,
 //                SFLFormat,

@@ -9,6 +9,7 @@ import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
+import info.spiralframework.base.common.text.lazyString
 
 @ExperimentalUnsignedTypes
 data class TRESrdEntry(
@@ -89,7 +90,7 @@ data class TRESrdEntry(
             infix fun descend(path: List<String>): Branch {
                 var node = this
                 path.forEachIndexed { index, seg ->
-                    node = node.children.firstOrNull { node -> node.string.split('|')[index] == seg } as? Branch ?: return node
+                    node = node.children.firstOrNull { node -> node.string.split('|').drop(2).getOrNull(index) == seg } as? Branch ?: return node
                 }
 
                 return node
@@ -162,8 +163,16 @@ data class TRESrdEntry(
         tree = treeEntries.firstOrNull { node -> node.nodeDepth == 0 } ?: return KorneaResult.empty()
         treeEntries.remove(tree)
 
-        treeEntries.sortedBy(TreeNode.Branch::nodeDepth)
-            .forEach { branch -> (tree descend branch.string.split('|').drop(1).take(branch.nodeDepth)).add(branch) }
+        treeEntries.groupBy(TreeNode.Branch::nodeDepth)
+            .mapValues { (_, values) -> values.sortedBy(TreeNode.Branch::string) }
+            .entries
+            .sortedBy(Map.Entry<Int, List<TreeNode.Branch>>::key)
+            .forEach { (depth, branches) ->
+                branches.forEach { branch ->
+                    trace("Descending into {0} -> {1} ({2} -> {3})", tree.string, lazyString { branch.string.split('|').drop(2).take(branch.nodeDepth - 1) }, branch.string, branch.nodeDepth)
+                    (tree descend branch.string.split('|').drop(2).take(branch.nodeDepth - 1)).add(branch)
+                }
+            }
 
         return KorneaResult.success(this@TRESrdEntry)
     }

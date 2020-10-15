@@ -25,7 +25,7 @@ ext {
     kornea_img_version = '1.0.5-alpha'
     kornea_io_version = '3.6.4-alpha'
     kornea_modelling_version = '1.0.4-alpha'
-    kornea_toolkit_version = '3.1.4-alpha'
+    kornea_toolkit_version = '3.1.6-alpha'
 
     jackson_version = '2.11.0'
     sfl4j_version = '1.7.25'

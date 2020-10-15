@@ -23,12 +23,13 @@ data class MeshSrdEntry(
         const val MAGIC_NUMBER_BE = 0x244D5348
     }
 
+    var unk: Int by oneTimeMutableInline()
     var meshName: String by oneTimeMutableInline()
     var materialName: String by oneTimeMutableInline()
 
     @ExperimentalStdlibApi
     override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MeshSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
-        val unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+        unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         val meshNameOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
         val materialNameOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

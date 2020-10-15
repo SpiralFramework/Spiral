@@ -10,25 +10,32 @@ import dev.brella.knolus.transform.KnolusTransVisitorRestrictions
 import dev.brella.knolus.transform.parseKnolusTransRule
 import dev.brella.knolus.types.KnolusLazyFunctionCall
 import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
+import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.doublePadWindowsPaths
+import info.spiralframework.base.common.text.lazyString
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.console.jvm.commands.pilot.GurrenPilot
 import info.spiralframework.console.jvm.data.SpiralCockpitContext
 import info.spiralframework.console.jvm.pipeline.*
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_VERSION_KEY
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonToken
 import java.io.File
 import java.lang.StringBuilder
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext) {
+class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext), CoroutineScope {
     val globalContext = KnolusGlobalContext(null, CompoundKnolusRestriction.fromPermissive(KnolusRecursiveRestriction(maxDepth = 20, maxRecursiveCount = 30)))
 
     suspend fun handle(context: KnolusContext, value: Any): KorneaResult<Any?> =
@@ -39,6 +46,12 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
             else -> KorneaResult.empty()
         }
 
+    val debuggingCounter = AtomicInteger(0)
+    val debuggingThread = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "Debugging-${debuggingCounter.incrementAndGet()}") }
+        .asCoroutineDispatcher()
+
+    override val coroutineContext: CoroutineContext = SupervisorJob() + debuggingThread
+
     override suspend fun start() {
         with(context) {
             println(
@@ -48,6 +61,25 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
                                          ?: localise("gurren.default_version")
                 )
             )
+
+            launch {
+                val file = File("stats.csv")
+                file.delete()
+                val runtime = Runtime.getRuntime()
+                val out = AsyncFileOutputFlow(file)
+                val csv = arrayOf(
+                    "time" to { System.currentTimeMillis() },
+                    "memory_used" to { runtime.totalMemory() - runtime.freeMemory() },
+                    "memory_free" to runtime::freeMemory,
+                    "memory_total" to runtime::totalMemory,
+                    "memory_max" to runtime::maxMemory
+                )
+                out.printLine(csv.joinToString { (key) -> key })
+
+                while (isActive) {
+                    delay(200 - measureTimeMillis { out.printLine(csv.joinToString { (_, func) -> func().toString() }) })
+                }
+            }
 
             if (publicKey == null) {
                 warn("gurren.pilot.plugin_load.missing_public")

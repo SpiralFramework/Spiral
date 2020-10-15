@@ -8,11 +8,6 @@ import dev.brella.knolus.modules.functionregistry.functionBuilder
 import dev.brella.knolus.modules.functionregistry.setFunctionWithContextWithoutReturn
 import dev.brella.knolus.types.KnolusTypedValue
 
-inline fun lazyString(crossinline init: () -> Any?) =
-    object {
-        override fun toString(): String = init().toString()
-    }
-
 fun <P1, P2, P3, P4, P5> KnolusContext.registerFunction(
     functionName: String,
     firstParameterSpec: ParameterSpec<*, P1>,
@@ -152,7 +147,18 @@ fun KnolusContext.registerFunctionWithAliasesWithContextWithoutReturn(
     )
 }
 
-
+fun <P1> KnolusContext.registerFunctionWithAliasesWithContextWithoutReturn(
+    vararg functionNames: String,
+    firstParameterSpec: ParameterSpec<*, P1>,
+    func: suspend (context: KnolusContext, firstParameter: P1) -> Unit
+) = functionNames.forEach { functionName ->
+    register(
+        functionName,
+        functionBuilder()
+            .setFunctionWithContextWithoutReturn(firstParameterSpec, func)
+            .build()
+    )
+}
 
 
 //fun <T> KnolusFunctionBuilder<T?>.setFunctionWithContextWithoutReturn(
