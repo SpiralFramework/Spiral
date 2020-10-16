@@ -16,7 +16,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-                implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version"
 
                 api "com.soywiz.korlibs.krypto:krypto:1.7.1"
 

@@ -14,7 +14,6 @@ import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
-import info.spiralframework.base.common.io.print
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.base.jvm.crypto.sha512Hash
@@ -57,6 +56,7 @@ import dev.brella.kornea.img.bc7.BC7PixelData
 import dev.brella.kornea.img.createPngImage
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import org.antlr.v4.runtime.CharStream
@@ -316,11 +316,11 @@ class Lagann : Application() {
                     when (val data = newValue.data) {
                         is PakArchive -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
-                                buildString {
+                                StringBuilder().apply {
                                     appendLine("parseDataAs(\$FILE_TYPE_PAK)")
                                     appendLine("addMagicNumber(\$MAGIC_NUMBER_PAK)")
                                     appendLine("done()")
-                                }
+                                }.toString()
                             }
 
                             val root = TreeItem<String>()
@@ -352,10 +352,10 @@ class Lagann : Application() {
                         }
                         is LinScript -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
-                                buildString {
+                                StringBuilder().apply {
                                     appendln("addMagicNumber(\$MAGIC_NUMBER_${(game?.takeIf { it is DrGame.LinScriptable })?.identifier?.toUpperCase() ?: "UNK"}_LIN)")
                                     appendln("done()")
-                                }
+                                }.toString()
                             }
                             val out = BinaryOutputFlow()
                             LinTranspiler(data).transpile(out)

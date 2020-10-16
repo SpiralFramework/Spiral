@@ -18,7 +18,6 @@ import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import dev.brella.kornea.io.common.useInputFlow
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.parse
 
 @ExperimentalUnsignedTypes
 open class DRv3(
