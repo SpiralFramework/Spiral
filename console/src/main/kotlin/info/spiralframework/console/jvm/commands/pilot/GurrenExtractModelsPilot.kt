@@ -27,8 +27,8 @@ import info.spiralframework.base.common.logging.trace
 import info.spiralframework.base.common.nullBlock
 import info.spiralframework.base.common.nulled
 import info.spiralframework.console.jvm.commands.CommandRegistrar
-import info.spiralframework.console.jvm.data.SrdiMesh
-import info.spiralframework.console.jvm.data.collada.*
+//import info.spiralframework.console.jvm.data.SrdiMesh
+//import info.spiralframework.console.jvm.data.collada.*
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.serialisation.SpiralSerialisation
 import info.spiralframework.formats.common.archives.SpcArchive
@@ -63,7 +63,7 @@ object GurrenExtractModelsPilot : CommandRegistrar {
         val fileDataSource = AsyncFileDataSource(File(path))
         val flipUVs = true
         val invertXAxis = true
-        try {
+        /*try {
             val spc = SpcArchive(fileDataSource)
                 .getOrBreak {
                     println("Invalid spc archive")
@@ -408,7 +408,7 @@ object GurrenExtractModelsPilot : CommandRegistrar {
             return
         } finally {
             fileDataSource.close()
-        }
+        }*/
 
         return
     }

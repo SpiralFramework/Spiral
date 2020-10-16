@@ -40,8 +40,8 @@ import info.spiralframework.base.common.logging.error
 import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
-import info.spiralframework.console.jvm.data.SrdiMesh
-import info.spiralframework.console.jvm.data.collada.*
+//import info.spiralframework.console.jvm.data.SrdiMesh
+//import info.spiralframework.console.jvm.data.collada.*
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithAliasesWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext

@@ -56,6 +56,7 @@ import dev.brella.kornea.img.bc7.BC7PixelData
 import dev.brella.kornea.img.createPngImage
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
@@ -63,6 +64,8 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import dev.brella.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.use
+import info.spiralframework.base.common.PrintOutputFlowWrapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
@@ -358,16 +361,16 @@ class Lagann : Application() {
                                 }.toString()
                             }
                             val out = BinaryOutputFlow()
-                            LinTranspiler(data).transpile(out)
+                            LinTranspiler(data).transpile(PrintOutputFlowWrapper(out))
                             dataNode = TextArea(String(out.getData()))
                             dataNode.isEditable = false
                         }
                         "LOOP" -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
-                                buildString {
+                                StringBuilder().apply {
                                     appendln("addMagicNumber(\$MAGIC_NUMBER_DR1_LOOP)")
                                     appendln("done()")
-                                }
+                                }.toString()
                             }
 
                             dataNode = null
@@ -396,10 +399,10 @@ class Lagann : Application() {
                         }
                         is Utf8String -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
-                                buildString {
+                                StringBuilder().apply {
                                     appendln("addMagicNumber(\$MAGIC_NUMBER_UTF8)")
                                     appendln("done()")
-                                }
+                                }.toString()
                             }
                             dataNode = TextArea(data.string)
                             dataNode.isEditable = false
@@ -550,7 +553,7 @@ class Lagann : Application() {
 
             val selectedFile = fileChooser.showOpenDialog(primaryStage)
             if (selectedFile != null) {
-                tree["last_file_loaded"] = TextNode(selectedFile.absolutePath)
+                tree.replace("last_file_loaded", TextNode(selectedFile.absolutePath))
                 serialisation.yamlMapper.writeValue(configFile, tree)
                 GlobalScope.launch {
                     bstMap.clear()
@@ -665,7 +668,7 @@ class Lagann : Application() {
                 when (val data = dataTypesDropdown.selectionModel.selectedItem.data) {
                     is LinScript -> {
                         BinaryOutputFlow().use { out ->
-                            LinTranspiler(data).transpile(out)
+                            LinTranspiler(data).transpile(PrintOutputFlowWrapper(out))
                             withContext(Dispatchers.JavaFx) {
                                 Clipboard.getSystemClipboard().setContent(mapOf(DataFormat.PLAIN_TEXT to String(out.getData())))
                             }
