@@ -11,7 +11,9 @@ import info.spiralframework.base.common.events.*
 import info.spiralframework.core.formats.ReadableSpiralFormat
 import info.spiralframework.core.formats.compression.*
 import dev.brella.kornea.io.common.DataSource
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.formats.SpiralFormat
 import info.spiralframework.core.formats.filterIsIdentifyFormatResult
 import info.spiralframework.core.formats.value
 import org.yaml.snakeyaml.error.YAMLException
@@ -19,6 +21,7 @@ import java.io.Closeable
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+import kotlin.math.abs
 
 object UserAgents {
     const val DEFAULT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"
@@ -131,4 +134,29 @@ fun <T> T.identifySelf(): T = this
 fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
     register("Logging", SpiralEventPriority.HIGHEST) { event: SpiralEvent -> trace("core.eventbus.logging.event", event) }
     return this
+}
+
+
+/**
+ * Returns a list of all formats sorted against the name provided by the read context
+ *
+ * The sort is _stable_. It means that equal elements preserve their order relative to each other after sorting.
+ *
+ * @sample samples.collections.Collections.Sorting.sortedBy
+ */
+public inline fun <T: SpiralFormat> Iterable<T>.sortedAgainst(readContext: FormatReadContext): List<T> {
+    return sortedWith(compareBy { format -> abs(format.extension?.compareTo(readContext.name?.substringAfterLast('.') ?: "") ?: -100) })
+}
+
+public inline fun <T, R: KorneaResult<*>> Iterable<T>.mapResults(transform: (T) -> R): List<R> {
+    return mapResultsTo(ArrayList<R>(10), transform)
+}
+
+public inline fun <T, R: KorneaResult<*>, C : MutableCollection<in R>> Iterable<T>.mapResultsTo(destination: C, transform: (T) -> R): C {
+    for (item in this) {
+        val transformed = transform(item)
+        destination.add(transformed)
+        if (transformed is FormatResult<*, *> && transformed.confidence() >= 0.99) break
+    }
+    return destination
 }

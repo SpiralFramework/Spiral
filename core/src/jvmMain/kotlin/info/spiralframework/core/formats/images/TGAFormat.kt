@@ -8,10 +8,14 @@ import net.npe.tga.TGAReader
 import net.npe.tga.readImage
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.getOrElseTransform
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.img.createPngImage
+import dev.brella.kornea.img.readTargaImage
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useInputFlow
+import dev.brella.kornea.io.common.useInputFlowForResult
 import dev.brella.kornea.io.jvm.asOutputStream
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -37,7 +41,9 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> {
         with(context) {
             try {
-                return source.useInputFlow { flow -> TGAReader.readImage(this, flow.readBytes()) }
+                //TODO: This code is bad!! Write your own goddamn targa reader brella
+                return source.useInputFlowForResult { flow -> flow.readTargaImage() }
+                    .map { targa -> targa.createPngImage() }
                     .buildFormatResult(1.0)
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
@@ -99,6 +105,7 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
             try {
                 withContext(Dispatchers.IO) {
                     asOutputStream(flow, false) { out ->
+                        //TODO: This code is bad!! Write your own goddamn targa writer brella
                         ImageIO.write(tga, "TGA", out)
                     }
                 }

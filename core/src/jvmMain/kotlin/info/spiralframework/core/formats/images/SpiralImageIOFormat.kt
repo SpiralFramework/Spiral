@@ -32,7 +32,7 @@ open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, Re
     override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> =
         source.openInputFlow()
             .useAndFlatMap { flow ->
-                val stream = ByteArrayInputStream(flow.readBytes())
+                val stream = ByteArrayInputStream(flow.readBytes(dataSize = 5_000_000))
                 val imageStream = withContext(Dispatchers.IO) { ImageIO.createImageInputStream(stream) }
                 val reader = ImageIO.getImageReaders(imageStream)
                     .asSequence()

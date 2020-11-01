@@ -16,7 +16,6 @@ import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.base.jvm.crypto.sha512Hash
 import info.spiralframework.base.jvm.crypto.sha512HashBytes
 import info.spiralframework.base.jvm.retrieveStackTrace
 import info.spiralframework.core.serialisation.DefaultSpiralSerialisation
@@ -44,7 +43,6 @@ import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,25 +58,26 @@ import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
-import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import dev.brella.kornea.toolkit.common.freeze
 import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.PrintOutputFlowWrapper
+import info.spiralframework.core.formats.DefaultFormatReadContext
+import javafx.stage.DirectoryChooser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.lang.Integer.min
 import javax.imageio.ImageIO
 import kotlin.math.log
-import kotlin.math.max
 
-class Lagann : Application() {
+class Lagann : Application(), CoroutineScope by MainScope() {
     companion object {
         val ASCII_RANGE = 0x20..0x7E
 
@@ -103,6 +102,7 @@ class Lagann : Application() {
     val fileTreeSplitPane = SplitPane(fileTree, fileTreeDataView)
 
     val loadFile = MenuItem("Load File")
+    val extractFile = MenuItem("Extract File")
     val saveBstMap = MenuItem("Save BST Map")
     val exportData = MenuItem("Export Item")
     val copyImage = MenuItem("Copy Image")
@@ -113,7 +113,7 @@ class Lagann : Application() {
     val changeGameRadial = ToggleGroup().apply { toggles.addAll(changeGameToDr1, changeGameToDr2, changeGameToUdg, changeGameToDrv3) }
 
     val changeGame = Menu("Change Game", null, changeGameToDr1, changeGameToDr2, changeGameToUdg, changeGameToDrv3)
-    val fileMenu = Menu("File", null, loadFile, saveBstMap, exportData, copyImage, changeGame)
+    val fileMenu = Menu("File", null, loadFile, extractFile, saveBstMap, exportData, copyImage, changeGame)
     val menubar = MenuBar(fileMenu)
 
     val root = BorderPane()
@@ -158,7 +158,7 @@ class Lagann : Application() {
                 }
             }
 
-            GlobalScope.launch {
+            launch {
                 freeze(newValue?.value) { value ->
                     //Load the first, say, 4 kB of data
                     val data = value?.dataSource?.useInputFlow { flow -> flow.readBytes() } ?: KorneaResult.empty()
@@ -307,7 +307,7 @@ class Lagann : Application() {
             if (oldValue != null && bstTextArea.text != null)
                 bstMap[fileTree.selectionModel.selectedItem.value.name to dataTypesDropdown.items.indexOf(oldValue)] = bstTextArea.text
 
-            GlobalScope.launch {
+            launch {
                 val dataNode: Node?
 
                 freeze(fileTree.selectionModel.selectedItem) { selectedItem ->
@@ -555,7 +555,7 @@ class Lagann : Application() {
             if (selectedFile != null) {
                 tree.replace("last_file_loaded", TextNode(selectedFile.absolutePath))
                 serialisation.yamlMapper.writeValue(configFile, tree)
-                GlobalScope.launch {
+                launch {
                     bstMap.clear()
                     withContext(Dispatchers.JavaFx) { fileTree.root = TreeItem() }
 
@@ -587,9 +587,51 @@ class Lagann : Application() {
             }
         }
 
+        extractFile.accelerator = KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN)
+        extractFile.setOnAction { event ->
+            val fileChooser = FileChooser()
+            val tree = serialisation.yamlMapper.readTree(configFile) as? ObjectNode
+                       ?: ObjectNode(JsonNodeFactory.instance)
+            val lastFileLoaded = tree["last_file_loaded"]?.textValue()
+            if (lastFileLoaded != null) {
+                val file = File(lastFileLoaded)
+                fileChooser.initialDirectory = file.parentFile
+                fileChooser.initialFileName = file.name
+            }
+
+            val selectedFile = fileChooser.showOpenDialog(primaryStage)
+            if (selectedFile != null) {
+                tree.replace("last_file_loaded", TextNode(selectedFile.absolutePath))
+                serialisation.yamlMapper.writeValue(configFile, tree)
+
+                val directoryChooser = DirectoryChooser()
+                directoryChooser.initialDirectory = selectedFile.parentFile
+                directoryChooser.title = "Extraction Directory"
+
+                val extractDirectory = directoryChooser.showDialog(primaryStage)
+
+                if (extractDirectory != null) {
+                    launch {
+                        AsyncFileDataSource(selectedFile).use { ds ->
+                            LagannExtractFilesCommand(
+                                spiralContext, DefaultFormatReadContext(selectedFile.absolutePath, game), ds, extractDirectory.absolutePath, ".+",
+                                leaveCompressed = false,
+                                extractSubfiles = false,
+                                predictive = false,
+                                convert = false
+                            )
+                        }
+                    }
+                } else {
+                    val alert = Alert(Alert.AlertType.INFORMATION, "Extraction cancelled", ButtonType.OK)
+                    alert.showAndWait()
+                }
+            }
+        }
+
         saveBstMap.accelerator = KeyCodeCombination(KeyCode.S, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         saveBstMap.setOnAction {
-            GlobalScope.launch {
+            launch {
                 val allItems: MutableSet<LagannTreeData> = HashSet()
 
                 fun recurseTree(item: TreeItem<LagannTreeData>) {
@@ -629,7 +671,7 @@ class Lagann : Application() {
             }
             val selectedFile = fileChooser.showSaveDialog(primaryStage)
             if (selectedFile != null) {
-                GlobalScope.launch {
+                launch {
                     when (val data = dataTypesDropdown.selectionModel.selectedItem.data) {
                         is LinScript -> {
                             AsyncFileOutputFlow(selectedFile).use { out ->
@@ -664,7 +706,7 @@ class Lagann : Application() {
 
         copyImage.accelerator = KeyCodeCombination(KeyCode.C, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         copyImage.setOnAction {
-            GlobalScope.launch {
+            launch {
                 when (val data = dataTypesDropdown.selectionModel.selectedItem.data) {
                     is LinScript -> {
                         BinaryOutputFlow().use { out ->
@@ -701,7 +743,7 @@ class Lagann : Application() {
 
         changeGameToDr1.accelerator = KeyCodeCombination(KeyCode.DIGIT1, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         changeGameToDr1.setOnAction {
-            GlobalScope.launch {
+            launch {
                 try {
                     val dr1 = Dr1(spiralContext).get()
                     game = dr1
@@ -720,7 +762,7 @@ class Lagann : Application() {
         }
         changeGameToDr2.accelerator = KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         changeGameToDr2.setOnAction {
-            GlobalScope.launch {
+            launch {
                 try {
                     val dr2 = Dr2(spiralContext).get()
                     game = dr2
@@ -739,7 +781,7 @@ class Lagann : Application() {
         }
         changeGameToUdg.accelerator = KeyCodeCombination(KeyCode.U, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         changeGameToUdg.setOnAction {
-            GlobalScope.launch {
+            launch {
                 try {
                     val udg = UDG(spiralContext).get()
                     game = udg
@@ -758,7 +800,7 @@ class Lagann : Application() {
         }
         changeGameToDrv3.accelerator = KeyCodeCombination(KeyCode.DIGIT3, KeyCombination.SHIFT_DOWN, KeyCombination.CONTROL_DOWN)
         changeGameToDrv3.setOnAction {
-            GlobalScope.launch {
+            launch {
                 try {
                     val drv3 = DRv3(spiralContext).get()
                     game = drv3
@@ -776,7 +818,7 @@ class Lagann : Application() {
             }
         }
 
-        GlobalScope.launch {
+        launch {
             val context = defaultSpiralContext()
 
             val loggerFactory = LoggerFactory.getILoggerFactory()

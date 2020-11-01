@@ -5,73 +5,77 @@ import dev.brella.knolus.modules.functionregistry.registerFunctionWithContextWit
 import dev.brella.knolus.stringTypeParameter
 import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.errors.common.doOnSuccess
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.toolkit.common.use
-import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
+import dev.brella.kornea.toolkit.coroutines.ascii.createArbitraryProgressBar
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.cache
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printlnLocale
-import info.spiralframework.base.common.logging.trace
 import info.spiralframework.console.jvm.commands.CommandRegistrar
-import info.spiralframework.console.jvm.commands.pilot.GurrenExtractFilesPilot.extractFiles
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
-import info.spiralframework.console.jvm.mapResults
-import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
-import info.spiralframework.core.decompress
+import info.spiralframework.core.ReadableCompressionFormat
 import info.spiralframework.core.formats.DefaultFormatReadContext
+import info.spiralframework.core.formats.FormatReadContext
 import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.formats.common.archives.SpiralArchive
+import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.panels.IdentifyCommand
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import java.io.File
-import kotlin.math.abs
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.roundToInt
 
-object GurrenIdentifyPilot : CommandRegistrar {
-    suspend fun SpiralContext.identify(knolusContext: KnolusContext, filePath: String) {
-        println("Identifying '$filePath'...")
+class GurrenIdentifyPilot(override val identifiableFormats: List<ReadableSpiralFormat<*>>) : IdentifyCommand, CoroutineScope {
+    companion object : CommandRegistrar {
+        private inline fun DataSource<*>.readContext(): FormatReadContext =
+            DefaultFormatReadContext(location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, GurrenPilot.game)
 
-        AsyncFileDataSource(File(filePath)).use { baseDataSource ->
-            val (decompressedDataSource, archiveCompressionFormats) = if (baseDataSource.reproducibility.isUnreliable() || baseDataSource.reproducibility.isUnstable()) {
-                baseDataSource.cache(this).use { ds -> decompress(ds) }
-            } else {
-                decompress(baseDataSource)
+        override suspend fun register(spiralContext: SpiralContext, knolusContext: KnolusContext) {
+            with(knolusContext) {
+                registerFunctionWithContextWithoutReturn("identify", stringTypeParameter("file_path")) { context, filePath ->
+                    context.spiralContext().doOnSuccess { identifyStub(it, context, filePath) }
+                }
             }
 
-            val readContext = DefaultFormatReadContext(decompressedDataSource.location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, GurrenPilot.game)
-            val result = arbitraryProgressBar(loadingText = localise("commands.pilot.extract_files.analysing_archive"), loadedText = null) {
-                GurrenShared.READABLE_FORMATS.sortedBy { format -> abs(format.extension?.compareTo(readContext.name?.substringAfterLast('.') ?: "") ?: -100) }
-                    .mapResults { archive -> archive.identify(this, readContext, decompressedDataSource) }
-                    .also { results ->
-                        trace {
-                            trace("\rResults for \"{0}\":", baseDataSource.location ?: constNull())
-                            results.forEachIndexed { index, result ->
-                                trace("\t{0}] == {1} ==", GurrenShared.EXTRACTABLE_ARCHIVES[index].name, result)
-                            }
-                        }
-                    }
-                    .filterIsInstance<FormatResult<Optional<*>, *>>()
-                    .sortedBy(FormatResult<*, *>::confidence)
-                    .asReversed()
-                    .firstOrNull()
-            }
+            GurrenPilot.help("identify")
+            GurrenPilot.help("identify" to listOf("identification", "identify_file", "identify_files", "identify_file_format"))
+        }
 
-            print("\r                                                                            \r")
+        suspend inline fun identifyStub(spiralContext: SpiralContext, knolusContext: KnolusContext, filePath: String) = identifyStub(spiralContext, knolusContext, DefaultFormatReadContext(filePath, GurrenPilot.game), filePath)
+        suspend inline fun identifyStub(spiralContext: SpiralContext, knolusContext: KnolusContext, readContext: FormatReadContext, filePath: String) =
+            AsyncFileDataSource(File(filePath)).use { identifyStub(spiralContext, knolusContext, readContext, it) }
 
-            if (result == null) {
-                printlnLocale("commands.pilot.extract_files.err_no_format_for", baseDataSource.location ?: constNull())
-                return
-            }
+        suspend fun identifyStub(spiralContext: SpiralContext, knolusContext: KnolusContext, readContext: FormatReadContext, dataSource: DataSource<*>) {
+            spiralContext.printlnLocale("commands.pilot.identify.begin", readContext.name ?: spiralContext.constNull())
 
-            println("There's a ${(result.confidence() * 10000).roundToInt() / 100.0}% chance that that file is a ${result.format().name} file")
+            GurrenIdentifyPilot(GurrenShared.READABLE_FORMATS)(spiralContext, readContext, dataSource)
         }
     }
 
-    override suspend fun register(spiralContext: SpiralContext, knolusContext: KnolusContext) {
-        with(knolusContext) {
-            registerFunctionWithContextWithoutReturn("identify", stringTypeParameter("file_path")) { context, filePath ->
-                context.spiralContext().doOnSuccess { it.identify(context, filePath) }
-            }
-        }
+    override val coroutineContext: CoroutineContext = SupervisorJob()
+
+    private var fileAnalysisProgressBar: Job? = null
+
+    override suspend fun beginIdentification(context: SpiralContext, readContext: FormatReadContext, dataSource: DataSource<*>, formats: List<ReadableSpiralFormat<*>>) {
+        fileAnalysisProgressBar = createArbitraryProgressBar(loadingText = context.localise("commands.pilot.identify.identifying"), loadedText = context.localise("commands.pilot.identify.identified"))
+    }
+
+    override suspend fun noFormatFound(context: SpiralContext, readContext: FormatReadContext, dataSource: DataSource<*>) {
+        context.printlnLocale("commands.pilot.identify.err_no_format_for", dataSource.location ?: context.constNull())
+    }
+
+    override suspend fun foundFileFormat(context: SpiralContext, readContext: FormatReadContext, dataSource: DataSource<*>, result: FormatResult<Optional<*>, *>, compressionFormats: List<ReadableCompressionFormat>?) {
+        context.printlnLocale("commands.pilot.identify.format_is", (result.confidence() * 10000).roundToInt() / 100.0, dataSource.location ?: context.constNull(), result.format().name)
+    }
+
+    override suspend fun finishIdentification(context: SpiralContext, readContext: FormatReadContext, dataSource: DataSource<*>) {
+        fileAnalysisProgressBar?.cancelAndJoin()
+        fileAnalysisProgressBar = null
+
+        print('\r')
     }
 }

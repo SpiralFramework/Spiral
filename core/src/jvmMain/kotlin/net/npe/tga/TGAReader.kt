@@ -2,6 +2,11 @@
 
 package net.npe.tga
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.korneaNotEnoughData
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.flow.readExact
 import info.spiralframework.base.common.SpiralContext
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -40,19 +45,19 @@ object TGAReader {
     }
 
     @Throws(IOException::class)
-    fun SpiralContext.readImage(data: ByteArray): BufferedImage {
+    fun SpiralContext.readImage(data: ByteArray): KorneaResult<BufferedImage> {
         val width = getWidth(data)
         val height = getHeight(data)
 
-        require(width in WIDTH_RANGE) { localise("core.formats.tga.invalid_width", width, MAX_WIDTH) }
-        require(height in HEIGHT_RANGE) { localise("core.formats.tga.invalid_height", height, MAX_HEIGHT) }
+        if (width !in WIDTH_RANGE) return KorneaResult.errorAsIllegalState(-1, localise("core.formats.tga.invalid_width", width, MAX_WIDTH))
+        if (height !in HEIGHT_RANGE) return KorneaResult.errorAsIllegalState(-1, localise("core.formats.tga.invalid_height", height, MAX_HEIGHT))
 
         val pixels = read(data, ARGB)
 
         val img = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         img.setRGB(0, 0, width, height, pixels, 0, width)
 
-        return img
+        return KorneaResult.success(img, null)
     }
 
     @Throws(IOException::class)
@@ -536,3 +541,13 @@ object TGAReader {
 }
 
 fun TGAReader.readImage(context: SpiralContext, data: ByteArray) = context.readImage(data)
+suspend fun TGAReader.readImage(context: SpiralContext, flow: InputFlow): KorneaResult<BufferedImage> {
+    val header = flow.readExact(16) ?: return korneaNotEnoughData()
+    val width = getWidth(header)
+    val height = getHeight(header)
+
+    if (width !in WIDTH_RANGE) return KorneaResult.errorAsIllegalState(-1, context.localise("core.formats.tga.invalid_width", width, MAX_WIDTH))
+    if (height !in HEIGHT_RANGE) return KorneaResult.errorAsIllegalState(-1, context.localise("core.formats.tga.invalid_height", height, MAX_HEIGHT))
+
+    return context.readImage(header.plus(flow.readBytes()))
+}
