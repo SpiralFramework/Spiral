@@ -14,10 +14,12 @@ import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
+import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.base.common.text.lazyString
 import info.spiralframework.base.jvm.crypto.verify
+import info.spiralframework.console.jvm.commands.data.HelpDetails
 import info.spiralframework.console.jvm.commands.pilot.GurrenPilot
 import info.spiralframework.console.jvm.data.SpiralCockpitContext
 import info.spiralframework.console.jvm.pipeline.*
@@ -31,6 +33,8 @@ import java.lang.StringBuilder
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
@@ -164,8 +168,42 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
                     ::PipelineVisitor
                 ) { parser, visitor -> visitor.visitScope(parser.scope()) }
                     .flatMap { (scope) -> (scope as KnolusUnion.ScopeType).run(globalContext) }
-                    .doOnEmpty { printlnLocale("commands.unknown") }
-                    .doOnThrown { withException -> error("ANTLR Parsing Error: ", withException.exception) }
+                    .doOnFailure {
+                        val commandEntered = input.split('\n')
+                            .dropLastWhile(String::isBlank)
+                            .lastOrNull()
+                            ?.substringBefore('(')
+                            ?.trim()
+                            ?.let(HelpDetails::sanitiseFunctionIdentifier)
+
+                        if (commandEntered == null) {
+                            printlnLocale("commands.unknown")
+                            return@doOnFailure
+                        }
+
+                        val commandSimilarity =
+                            GurrenPilot.helpCommands.values.distinct()
+                                .mapNotNull { key -> Pair(key, GurrenPilot.helpFor(context, key)?.cmdKey?.compareTo(commandEntered)?.absoluteValue ?: return@mapNotNull null) }
+                                .minByOrNull(Pair<String, Int>::second)
+
+                        if (commandSimilarity == null) {
+                            printlnLocale("commands.unknown")
+                            return@doOnFailure
+                        }
+
+                        val help = GurrenPilot.helpFor(context, commandSimilarity.first)
+
+                        when {
+                            commandSimilarity.second == 0 ->
+                                printlnLocale("commands.usage", help?.usage ?: commandSimilarity.first)
+                            commandSimilarity.second <= commandSimilarity.first.length / 4 ->
+                                printlnLocale("commands.did_you_mean", help?.cmd ?: commandSimilarity.first)
+                            else ->
+                                printlnLocale("commands.unknown")
+                        }
+                    }.doOnThrown { withException ->
+                        debug("ANTLR Parsing Error: ", withException.exception)
+                    }
 
 //                val matchingCommands = post(CommandRequest(readLine() ?: break, localScope)).foundCommands
 //

@@ -89,3 +89,15 @@ suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, loca
 
 inline fun <reified T> SpiralLocale.localisedNotEnoughData(message: String): KorneaResult<T> =
         KorneaResult.errorAsIllegalState(KORNEA_ERROR_NOT_ENOUGH_DATA, localise(message))
+
+inline fun SpiralLocale.localiseOrNull(msg: String): String? = localise(msg).takeUnless { it == msg }
+inline fun SpiralLocale.localiseOrNull(msg: String, arg: Any): String? = localise(msg, arg).takeUnless { it == msg }
+inline fun SpiralLocale.localiseOrNull(msg: String, arg1: Any, arg2: Any): String? = localise(msg, arg1, arg2).takeUnless { it == msg }
+inline fun SpiralLocale.localiseOrNull(msg: String, vararg args: Any): String? = localiseArray(msg, args).takeUnless { it == msg }
+inline fun SpiralLocale.localiseArrayOrNull(msg: String, args: Array<out Any>): String? = localiseArray(msg, args).takeUnless { it == msg }
+
+inline fun SpiralLocale.localiseOrElse(msg: String, default: () -> Any): String = localise(msg).takeUnless { it == msg } ?: default().toString()
+inline fun SpiralLocale.localiseOrElse(msg: String, arg: Any, default: () -> Any): String = localise(msg, arg).takeUnless { it == msg } ?: default().toString()
+inline fun SpiralLocale.localiseOrElse(msg: String, arg1: Any, arg2: Any, default: () -> Any): String = localise(msg, arg1, arg2).takeUnless { it == msg } ?: default().toString()
+inline fun SpiralLocale.localiseOrElse(msg: String, vararg args: Any, default: () -> Any): String = localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()
+inline fun SpiralLocale.localiseArrayOrElse(msg: String, args: Array<out Any>, default: () -> Any): String = localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()
