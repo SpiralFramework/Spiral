@@ -1,4 +1,4 @@
-package info.spiralframework.core.formats.compression
+package info.spiralframework.core.common.formats.compression
 
 import com.soywiz.krypto.sha256
 import dev.brella.kornea.errors.common.*
@@ -10,9 +10,9 @@ import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.toHexString
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.buildFormatResult
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.buildFormatResult
 import info.spiralframework.formats.common.compression.decompressCrilayla
 
 object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {

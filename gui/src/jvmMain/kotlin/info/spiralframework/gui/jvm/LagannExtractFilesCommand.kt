@@ -5,11 +5,11 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.core.ReadableCompressionFormat
-import info.spiralframework.core.formats.DefaultFormatReadContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.archives.AwbArchiveFormat
+import info.spiralframework.core.common.formats.DefaultFormatReadContext
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
 import info.spiralframework.core.formats.archives.CpkArchiveFormat
 import info.spiralframework.core.formats.archives.PakArchiveFormat
 import info.spiralframework.core.formats.archives.SpcArchiveFormat

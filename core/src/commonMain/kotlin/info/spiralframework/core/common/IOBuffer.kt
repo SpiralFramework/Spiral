@@ -1,16 +1,12 @@
-package info.spiralframework.core
+package info.spiralframework.core.common
 
 import dev.brella.kornea.io.common.flow.OutputFlow
-import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.Executors
 
 const val MAX_BUFFER_SIZE = 65_536
 const val MAX_BUFFER_ALLOCATION = 16_000_000
 const val MAX_BUFFER_OPERATIONS = MAX_BUFFER_ALLOCATION / MAX_BUFFER_SIZE
 
 const val MAX_MISSING_DATA_COUNT = 8
-
-val BUFFERED_IO_DISPATCHER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
 sealed class BufferIOOperation {
     class Open(val flow: OutputFlow) : BufferIOOperation()

@@ -1,16 +1,22 @@
-package info.spiralframework.core.formats.text
+package info.spiralframework.core.common.formats.text
 
 import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.binding.manuallyEncode
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useInputFlow
+import info.spiralframework.base.binding.decodeToUTF16String
 import info.spiralframework.base.common.text.toHexString
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.buildFormatResult
 
 object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
     override val name: String = "UTF-16 Text"
@@ -31,7 +37,7 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
 
         if (!hasBom)
             return KorneaResult.errorAsIllegalArgument(-1, "Invalid byte order marker ${data[0].toHexString()} ${data[1].toHexString()}")
-        return buildFormatResult(String(data, Charsets.UTF_16).trimEnd('\u0000'), 1.0)
+        return buildFormatResult(data.decodeToUTF16String().trimEnd('\u0000'), 1.0)
     }
 
     override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = true

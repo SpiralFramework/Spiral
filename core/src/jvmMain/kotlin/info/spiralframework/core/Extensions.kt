@@ -8,14 +8,17 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.compression.*
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import dev.brella.kornea.io.common.DataSource
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.SpiralFormat
-import info.spiralframework.core.formats.filterIsIdentifyFormatResult
-import info.spiralframework.core.formats.value
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.SpiralFormat
+import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
+import info.spiralframework.core.common.formats.compression.DRVitaFormat
+import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat
+import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
+import info.spiralframework.core.common.formats.filterIsIdentifyFormatResult
+import info.spiralframework.core.common.formats.value
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
 import java.io.File
@@ -57,7 +60,7 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
     }
 }
 
-typealias ReadableCompressionFormat=ReadableSpiralFormat<DataSource<*>>
+typealias ReadableCompressionFormat= ReadableSpiralFormat<DataSource<*>>
 
 val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 

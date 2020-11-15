@@ -1,7 +1,6 @@
-package info.spiralframework.core.formats.scripting
+package info.spiralframework.core.common.formats.scripting
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
@@ -11,6 +10,11 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import info.spiralframework.base.common.PrintOutputFlowWrapper
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 
 object OpenSpiralLanguageFormat : ReadableSpiralFormat<OpenSpiralBitcodeWrapper>, WritableSpiralFormat {
 

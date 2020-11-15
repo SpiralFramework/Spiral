@@ -1,6 +1,6 @@
 package info.spiralframework.console.jvm.commands.data
 
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 import java.io.File
 
 class CompileArgs {
@@ -19,11 +19,11 @@ class CompileArgs {
     var builder: Boolean = false
 
     fun makeImmutable(
-            defaultCompilingDir: File? = null,
-            defaultCompileDestination: File? = null,
-            defaultFormatOverride: WritableSpiralFormat? = null,
-            defaultFilter: Regex? = null,
-            defaultAttemptCompression: Boolean? = null
+        defaultCompilingDir: File? = null,
+        defaultCompileDestination: File? = null,
+        defaultFormatOverride: WritableSpiralFormat? = null,
+        defaultFilter: Regex? = null,
+        defaultAttemptCompression: Boolean? = null
     ): Immutable =
             Immutable(
                     compilingDir ?: defaultCompilingDir,

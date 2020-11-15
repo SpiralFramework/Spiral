@@ -4,14 +4,10 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.errors.common.filter
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.srd.SrdArchive
-import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
-import java.util.*
-import java.util.Optional as JvmOptional
 
 object SrdArchiveFormat: ReadableSpiralFormat<SrdArchive> {
     override val name: String = "SRD"

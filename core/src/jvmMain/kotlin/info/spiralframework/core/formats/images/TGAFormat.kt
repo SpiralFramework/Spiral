@@ -1,22 +1,21 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.npe.tga.TGAReader
-import net.npe.tga.readImage
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.getOrElseTransform
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.img.createPngImage
 import dev.brella.kornea.img.readTargaImage
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useInputFlow
 import dev.brella.kornea.io.common.useInputFlowForResult
 import dev.brella.kornea.io.jvm.asOutputStream
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException

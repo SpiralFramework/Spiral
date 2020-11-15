@@ -63,7 +63,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import dev.brella.kornea.toolkit.common.freeze
 import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.PrintOutputFlowWrapper
-import info.spiralframework.core.formats.DefaultFormatReadContext
+import info.spiralframework.core.common.formats.DefaultFormatReadContext
 import javafx.stage.DirectoryChooser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope

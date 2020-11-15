@@ -1,9 +1,8 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dev.brella.kornea.errors.common.KorneaResult

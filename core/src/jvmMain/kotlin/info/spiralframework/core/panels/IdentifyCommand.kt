@@ -1,23 +1,17 @@
 package info.spiralframework.core.panels
 
 import dev.brella.kornea.errors.common.Optional
-import dev.brella.kornea.errors.common.filterNotNull
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.errors.common.getOrElseRun
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cache
-import info.spiralframework.base.common.locale.constNull
-import info.spiralframework.base.common.logging.trace
 import info.spiralframework.core.ReadableCompressionFormat
 import info.spiralframework.core.decompress
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.mapResults
 import info.spiralframework.core.sortedAgainst
-import info.spiralframework.formats.common.archives.SpiralArchive
 
 interface IdentifyCommand {
     val identifiableFormats: List<ReadableSpiralFormat<*>>

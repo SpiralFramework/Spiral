@@ -1,16 +1,11 @@
-package info.spiralframework.core.formats.data
+package info.spiralframework.core.common.formats.data
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.flatMap
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
-import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
-import info.spiralframework.core.formats.buildFormatResult
 
 object DataTableStructureFormat : ReadableSpiralFormat<DataTableStructure> {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */

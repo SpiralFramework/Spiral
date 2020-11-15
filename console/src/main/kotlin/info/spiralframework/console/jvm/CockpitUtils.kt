@@ -1,8 +1,5 @@
 package info.spiralframework.console.jvm
 
-import dev.brella.kornea.errors.common.KorneaResult
-import info.spiralframework.core.formats.FormatResult
-
 //suspend fun <T: ParboiledCommand> SpiralEventBus.registerCommandClassViaRequest(context: SpiralContext, commandRegistry: Any, registerSubclass: KClass<in T> = ParboiledCommand::class) {
 //    commandRegistry.javaClass.kotlin.memberProperties.forEach { recruit ->
 //        @Suppress("UNCHECKED_CAST")

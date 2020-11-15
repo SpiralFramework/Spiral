@@ -14,6 +14,7 @@ kotlin {
 
                 api project(":spiral-base")
                 api project(":spiral-formats")
+                api project(":spiral-osl")
 
                 api "dev.brella:kornea-img:$kornea_img_version"
             }
@@ -33,15 +34,13 @@ kotlin {
 //                api "com.github.kittinunf.fuel:fuel:$fuel_version"
 //                api "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
 
-                api "io.ktor:ktor-client-apache:1.4.0"
+                api "io.ktor:ktor-client-apache:$ktor_version"
 
                 api "com.twelvemonkeys.imageio:imageio-bmp:3.4.1"
                 api "com.twelvemonkeys.imageio:imageio-jpeg:3.4.1"
                 api "com.twelvemonkeys.imageio:imageio-tga:3.4.1"
 
 //                api "org.greenrobot:eventbus:3.1.1"
-
-                implementation project(":spiral-osl")
             }
         }
 

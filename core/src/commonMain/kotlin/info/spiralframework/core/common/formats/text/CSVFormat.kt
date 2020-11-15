@@ -1,9 +1,9 @@
-package info.spiralframework.core.formats.text
+package info.spiralframework.core.common.formats.text
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatWriteContext
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 import info.spiralframework.formats.common.data.DataTableStructure
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.PrintOutputFlow

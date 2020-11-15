@@ -2,12 +2,11 @@ package info.spiralframework.core.formats.audio
 
 import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
+import info.spiralframework.core.common.formats.FormatReadContext
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.useInputFlow
-import info.spiralframework.core.formats.buildFormatResult
+import info.spiralframework.core.common.formats.buildFormatResult
 import java.io.File
 
 object AudioFormats {

@@ -1,14 +1,18 @@
-package info.spiralframework.core.formats.scripting
+package info.spiralframework.core.common.formats.scripting
 
 import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.osb.common.LinCompiler
 import info.spiralframework.osb.common.OpenSpiralBitcodeWrapper
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 
 object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
     override val name: String = "Lin"

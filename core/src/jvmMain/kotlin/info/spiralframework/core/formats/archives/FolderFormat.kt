@@ -3,12 +3,14 @@ package info.spiralframework.core.formats.archives
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.Optional
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 import java.io.File
-import java.util.*
-import java.util.Optional as JvmOptional
 
 object FolderFormat : ReadableSpiralFormat<File>, WritableSpiralFormat {
     override val name: String = "folder"

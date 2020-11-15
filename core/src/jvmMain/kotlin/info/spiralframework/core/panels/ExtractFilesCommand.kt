@@ -15,16 +15,15 @@ import info.spiralframework.base.common.io.cache
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.logging.error
 import info.spiralframework.base.common.logging.trace
-import info.spiralframework.core.BUFFERED_IO_DISPATCHER
-import info.spiralframework.core.BufferIOOperation
-import info.spiralframework.core.IOBuffer
-import info.spiralframework.core.MAX_BUFFER_SIZE
-import info.spiralframework.core.MAX_MISSING_DATA_COUNT
+import info.spiralframework.core.common.BufferIOOperation
+import info.spiralframework.core.common.IOBuffer
+import info.spiralframework.core.common.MAX_BUFFER_SIZE
+import info.spiralframework.core.common.MAX_MISSING_DATA_COUNT
 import info.spiralframework.core.ReadableCompressionFormat
 import info.spiralframework.core.decompress
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.mapResults
 import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
@@ -140,59 +139,58 @@ interface ExtractFilesCommand {
             return
         }
 
-        withContext(BUFFERED_IO_DISPATCHER) {
-            val output = IOBuffer()
+        val output = IOBuffer()
 
-            beginExtracting(context, archive, destination)
+        beginExtracting(context, archive, destination)
 
-            files.onCompletion {
-                output.flush()
+        files.onCompletion {
+            output.flush()
 
-                finishExtracting(context, archive, destination)
-            }.catch { th ->
-                th.printStackTrace()
-            }.collect { (name, source) ->
-                closeAfter(source) {
-                    source.useInputFlow { flow ->
-                        val outFile = File(destination, name)
-                        outFile.parentFile.mkdirs()
+            finishExtracting(context, archive, destination)
+        }.catch { th ->
+            th.printStackTrace()
+        }.collect { (name, source) ->
+            closeAfter(source) {
+                source.useInputFlow { flow ->
+                    val outFile = File(destination, name)
+                    outFile.parentFile.mkdirs()
 
-                        val out = AsyncFileOutputFlow(outFile)
+                    val out = AsyncFileOutputFlow(outFile)
 
-                        output.buffer(BufferIOOperation.Open(out))
+                    output.buffer(BufferIOOperation.Open(out))
 
-                        beginExtractingSubfile(context, archive, destination, name, flow, source)
+                    beginExtractingSubfile(context, archive, destination, name, flow, source)
 
-                        var bytesCopied: Long = 0
-                        val buffer = ByteArray(minOf(MAX_BUFFER_SIZE, source.dataSize?.toInt() ?: Int.MAX_VALUE))
-                        if (buffer.isEmpty()) {
-                            context.error("{0} is empty, cannot extract", flow.location ?: source.location ?: "(unknown)")
-                            subfileIsEmpty(context, archive, destination, name, flow, source)
-                            output.buffer(BufferIOOperation.Close)
-                            return@closeAfter
-                        }
+                    var bytesCopied: Long = 0
+                    val buffer = ByteArray(minOf(MAX_BUFFER_SIZE, source.dataSize?.toInt() ?: Int.MAX_VALUE))
+                    if (buffer.isEmpty()) {
+                        context.error("{0} is empty, cannot extract", flow.location ?: source.location ?: "(unknown)")
+                        subfileIsEmpty(context, archive, destination, name, flow, source)
+                        output.buffer(BufferIOOperation.Close)
+                        return@closeAfter
+                    }
 
-                        var bytes = flow.read(buffer)
-                        var missingDataCount = 0
-                        while (bytes != null) {
-                            if (bytes == 0) {
-                                if (missingDataCount++ > MAX_MISSING_DATA_COUNT) {
-                                    context.error("{0} has no more remaining data, waited {1} times", flow.location ?: source.location ?: "(unknown)", missingDataCount)
-                                    subfileHasNoMoreData(context, archive, destination, name, flow, source, missingDataCount)
-                                    output.buffer(BufferIOOperation.Close)
-                                    return@closeAfter
-                                }
-
-                                delay(2.0.pow(missingDataCount.toDouble()).roundToLong() * 250)
-                            } else {
-                                output.buffer(BufferIOOperation.Write(buffer, 0, bytes))
-                                bytesCopied += bytes
+                    var bytes = flow.read(buffer)
+                    var missingDataCount = 0
+                    while (bytes != null) {
+                        if (bytes == 0) {
+                            if (missingDataCount++ > MAX_MISSING_DATA_COUNT) {
+                                context.error("{0} has no more remaining data, waited {1} times", flow.location ?: source.location ?: "(unknown)", missingDataCount)
+                                subfileHasNoMoreData(context, archive, destination, name, flow, source, missingDataCount)
+                                output.buffer(BufferIOOperation.Close)
+                                return@closeAfter
                             }
 
-                            bytes = flow.read(buffer)
+                            delay(2.0.pow(missingDataCount.toDouble()).roundToLong() * 250)
+                        } else {
+                            output.buffer(BufferIOOperation.Write(buffer, 0, bytes))
+                            bytesCopied += bytes
                         }
 
-                        output.buffer(BufferIOOperation.CloseAndPerform {
+                        bytes = flow.read(buffer)
+                    }
+
+                    output.buffer(BufferIOOperation.CloseAndPerform {
 /*                        if (extractSubfiles) {
                             val didSubOutput = AsyncFileDataSource(outFile).use subUse@{ subfileDataSource ->
                                 val readContext = DefaultFormatReadContext(name, GurrenPilot.game)
@@ -280,9 +278,8 @@ interface ExtractFilesCommand {
                             if (didSubOutput) outFile.delete()
                         }*/
 
-                            finishExtractingSubfile(context, archive, destination, name, flow, source)
-                        })
-                    }
+                        finishExtractingSubfile(context, archive, destination, name, flow, source)
+                    })
                 }
             }
         }

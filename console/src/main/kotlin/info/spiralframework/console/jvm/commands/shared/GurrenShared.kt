@@ -1,33 +1,30 @@
 package info.spiralframework.console.jvm.commands.shared
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.*
 import info.spiralframework.core.formats.archives.*
 import info.spiralframework.core.formats.audio.AudioFormats
-import info.spiralframework.core.formats.compression.CrilaylaCompressionFormat
-import info.spiralframework.core.formats.compression.DRVitaFormat
-import info.spiralframework.core.formats.compression.DRv3CompressionFormat
-import info.spiralframework.core.formats.compression.SpcCompressionFormat
-import info.spiralframework.core.formats.data.DataTableStructureFormat
+import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
+import info.spiralframework.core.common.formats.compression.DRVitaFormat
+import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat
+import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
+import info.spiralframework.core.common.formats.data.DataTableStructureFormat
 import info.spiralframework.core.formats.images.JPEGFormat
 import info.spiralframework.core.formats.images.PNGFormat
 import info.spiralframework.core.formats.images.TGAFormat
-import info.spiralframework.core.formats.scripting.LinScriptFormat
-import info.spiralframework.core.formats.scripting.OpenSpiralLanguageFormat
-import info.spiralframework.core.formats.text.CSVFormat
-import info.spiralframework.core.formats.text.UTF16TextFormat
-import info.spiralframework.core.formats.text.StrictUtf8TextFormat
+import info.spiralframework.core.common.formats.scripting.LinScriptFormat
+import info.spiralframework.core.common.formats.scripting.OpenSpiralLanguageFormat
+import info.spiralframework.core.common.formats.text.CSVFormat
+import info.spiralframework.core.common.formats.text.UTF16TextFormat
+import info.spiralframework.core.common.formats.text.StrictUtf8TextFormat
 import info.spiralframework.formats.common.archives.*
-import info.spiralframework.formats.common.archives.srd.SrdArchive
 import info.spiralframework.formats.common.games.DrGame
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
-import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.jvm.JVMDataSource
-import java.util.zip.ZipFile
-import kotlin.math.floor
-import kotlin.math.log
+import info.spiralframework.core.common.formats.DefaultFormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.SpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
 
 object GurrenShared {
     val EXTRACTABLE_ARCHIVES: MutableList<ReadableSpiralFormat<SpiralArchive>> by lazy {

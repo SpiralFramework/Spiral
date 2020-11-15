@@ -41,9 +41,9 @@ import info.spiralframework.console.jvm.commands.shared.GurrenShared
 import info.spiralframework.console.jvm.pipeline.DataSourceType
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.decompress
-import info.spiralframework.core.formats.DefaultFormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.SpiralFormat
+import info.spiralframework.core.common.formats.DefaultFormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.SpiralFormat
 import info.spiralframework.formats.common.archives.SpiralArchive
 import info.spiralframework.formats.common.archives.getSubfiles
 import info.spiralframework.formats.common.archives.srd.SrdArchive

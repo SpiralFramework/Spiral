@@ -1,12 +1,11 @@
-package info.spiralframework.core.formats.compression
+package info.spiralframework.core.common.formats.compression
 
 import com.soywiz.krypto.sha256
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.toHexString
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.formats.common.archives.SpcArchive
 import info.spiralframework.formats.common.archives.SpcFileEntry
 import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUMBER
@@ -16,7 +15,7 @@ import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.readBytes
-import info.spiralframework.core.formats.buildFormatResult
+import info.spiralframework.core.common.formats.buildFormatResult
 
 data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null) : FormatReadContext
 

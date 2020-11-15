@@ -1,9 +1,9 @@
 package info.spiralframework.core.formats.images
 
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.formats.FormatWriteContext
-import info.spiralframework.core.formats.FormatWriteResponse
-import info.spiralframework.core.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.WritableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dev.brella.kornea.io.common.flow.OutputFlow

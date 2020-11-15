@@ -1,12 +1,6 @@
-package info.spiralframework.core.formats
+package info.spiralframework.core.common.formats
 
-import dev.brella.kornea.annotations.AvailableSince
-import dev.brella.kornea.errors.common.KorneaErrors
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.toolkit.common.DataCloseable
-import info.spiralframework.base.common.concurrent.suspendForEach
-import java.util.*
-import kotlin.collections.ArrayList
 
 public interface FormatResult<out T, out F> : KorneaResult.Success<T> {
     public companion object {

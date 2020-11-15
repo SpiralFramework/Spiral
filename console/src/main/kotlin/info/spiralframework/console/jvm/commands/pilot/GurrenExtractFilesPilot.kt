@@ -39,11 +39,11 @@ import info.spiralframework.console.jvm.pipeline.registerFunctionWithAliasesWith
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.ReadableCompressionFormat
-import info.spiralframework.core.formats.DefaultFormatReadContext
-import info.spiralframework.core.formats.FormatReadContext
-import info.spiralframework.core.formats.FormatResult
-import info.spiralframework.core.formats.ReadableSpiralFormat
-import info.spiralframework.core.formats.SpiralFormat
+import info.spiralframework.core.common.formats.DefaultFormatReadContext
+import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.SpiralFormat
 import info.spiralframework.core.panels.ExtractFilesCommand
 import info.spiralframework.formats.common.archives.SpiralArchive
 import kotlinx.coroutines.CoroutineScope

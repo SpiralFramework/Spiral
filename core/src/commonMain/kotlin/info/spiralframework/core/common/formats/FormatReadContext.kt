@@ -1,4 +1,4 @@
-package info.spiralframework.core.formats
+package info.spiralframework.core.common.formats
 
 import info.spiralframework.formats.common.games.DrGame
 

@@ -1,4 +1,4 @@
-package info.spiralframework.core.formats
+package info.spiralframework.core.common.formats
 
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.Optional
