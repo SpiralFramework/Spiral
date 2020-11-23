@@ -183,8 +183,8 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
 
                         val commandSimilarity =
                             GurrenPilot.helpCommands.values.distinct()
-                                .mapNotNull { key -> Pair(key, GurrenPilot.helpFor(context, key)?.cmdKey?.compareTo(commandEntered)?.absoluteValue ?: return@mapNotNull null) }
-                                .minByOrNull(Pair<String, Int>::second)
+                                .mapNotNull { key -> Pair(key, GurrenPilot.helpFor(context, key)?.cmdKey?.commonPrefixWith(commandEntered, true)?.length ?: return@mapNotNull null) }
+                                .maxByOrNull(Pair<String, Int>::second)
 
                         if (commandSimilarity == null) {
                             printlnLocale("commands.unknown")
@@ -194,9 +194,9 @@ class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) :
                         val help = GurrenPilot.helpFor(context, commandSimilarity.first)
 
                         when {
-                            commandSimilarity.second == 0 ->
+                            commandSimilarity.second == commandSimilarity.first.length ->
                                 printlnLocale("commands.usage", help?.usage ?: commandSimilarity.first)
-                            commandSimilarity.second <= commandSimilarity.first.length / 4 ->
+                            commandSimilarity.second > commandSimilarity.first.length / 3 ->
                                 printlnLocale("commands.did_you_mean", help?.cmd ?: commandSimilarity.first)
                             else ->
                                 printlnLocale("commands.unknown")

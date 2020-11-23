@@ -40,7 +40,7 @@ object GurrenPilot : CommandRegistrar {
     val helpCommands: MutableMap<String, String> = HashMap()
     val submodules = arrayOf(
         GurrenExtractFilesPilot, GurrenExtractTexturesPilot, GurrenExtractModelsPilot,
-        GurrenIdentifyPilot
+        GurrenIdentifyPilot, GurrenConvertPilot
     )
 
     private val helpMutex: Mutex = Mutex()

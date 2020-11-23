@@ -16,7 +16,9 @@ fragment NEW_LINE: '\r'? '\n';
 fragment STRING_SCRIPT_LIST
     : H E L P ((SWS) W I T H)?
     | I D E N T I F Y
+    | C O N V E R T
     ;
+
 fragment SCRIPT_LIST
     : E X T R A C T (SWS) (F I L E S | M O D E L S | T E X T U R E S)
     | E X T R A C T (SWS) F I L E S (SWS) W I Z A R D

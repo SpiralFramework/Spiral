@@ -114,3 +114,11 @@ public inline fun <reified R> Iterable<*>.filterIsFormatResult(): List<FormatRes
 
 public inline fun <reified R> Iterable<*>.filterIsIdentifyFormatResult(): List<FormatResult<Optional<R>, R>> =
     filterIsInstance<FormatResult<Optional<R>, R>>()
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <reified R> KorneaResult<*>.filterIsFormatResult(): KorneaResult<FormatResult<R, R>> =
+    if (this is FormatResult<*, *>) KorneaResult.success(this as FormatResult<R, R>, null) else KorneaResult.empty()
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <reified R> KorneaResult<*>.filterIsIdentifyFormatResult(): FormatResult<Optional<R>, R>? =
+    if (this is FormatResult<*, *>) this as FormatResult<Optional<R>, R> else null
