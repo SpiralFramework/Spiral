@@ -3,8 +3,6 @@ apply plugin: 'org.jetbrains.kotlin.multiplatform'
 //apply plugin: "application"
 //apply plugin: 'antlr'
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 //mainClassName = "info.spiralframework.osl.OSLProxy"
 //mainClassName = "BootstrapKt"
 
@@ -43,7 +41,7 @@ kotlin {
             dependencies {
 //                implementation kotlin('stdlib-jdk8')
 
-                implementation project(":spiral-antlr-osl-java")
+                api project(":spiral-antlr-osl-java")
                 implementation "ch.qos.logback:logback-classic:$logback_version"
             }
         }

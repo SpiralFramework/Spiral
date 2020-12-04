@@ -36,9 +36,10 @@ class CustomLinScript {
     @ExperimentalUnsignedTypes
     suspend fun compile(output: OutputFlow) {
         val output = withState { int(output) }
+
         if (writeMagicNumber) output.writeInt32LE(LinScript.MAGIC_NUMBER_LE)
 
-        val scriptDataSize = scriptData.sumByLong { entry -> 2 + entry.rawArguments.size}
+        val scriptDataSize = scriptData.sumByLong { entry -> 2 + entry.rawArguments.size }
 
         if (textData.isEmpty()) {
             output.writeInt32LE(1)          // 1 section

@@ -31,7 +31,7 @@ class CustomPakArchive {
 
         var offset = startingOffset + 4 + (_files.size * 4)
 
-        val range = (_files.keys.max() ?: return) + 1
+        val range = (_files.keys.maxOrNull() ?: return) + 1
 
         for (index in 0 until range) {
             val dataSource = _files[index] ?: continue

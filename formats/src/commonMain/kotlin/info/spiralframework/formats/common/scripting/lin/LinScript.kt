@@ -117,7 +117,10 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                                 }
                             }
 
-                            result.getOrBreak { error -> return@closeAfter error.cast() }
+                            result.switchIfEmpty {
+                                if (linBlocks.size > 2 && linBlocks[2] - linBlocks[1] <= 8) KorneaResult.success(emptyArray())
+                                else KorneaResult.errorAsIllegalArgument(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, 0))
+                            }.getOrBreak { error -> return@closeAfter error.cast() }
                         }
                     }
 
@@ -125,7 +128,7 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
                 }
             }
 
-        suspend fun <F> readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: F): KorneaResult<Array<LinEntry>> where F: Int16FlowState, F: InputFlowState<PeekableInputFlow> {
+        suspend fun <F> readScriptData(context: SpiralContext, game: DrGame.LinScriptable, flow: F): KorneaResult<Array<LinEntry>> where F : Int16FlowState, F : InputFlowState<PeekableInputFlow> {
             withFormats(context) {
                 val entries: MutableList<LinEntry> = ArrayList()
 
@@ -198,7 +201,9 @@ class LinScript(val scriptData: Array<LinEntry>, val textData: Array<String>, va
         suspend fun readTextData(context: SpiralContext, flow: SeekableInputFlow, textOffset: Int): KorneaResult<Array<String>> {
             withFormats(context) {
                 val stringCount = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                if (stringCount <= 0)
+                if (stringCount == 0)
+                    return KorneaResult.empty()
+                else if (stringCount < 0)
                     return KorneaResult.errorAsIllegalArgument(INVALID_STRING_COUNT, localise(INVALID_STRING_COUNT_KEY, stringCount))
 
                 val offsets = Array(stringCount) { index ->

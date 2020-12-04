@@ -1,5 +1,6 @@
 package info.spiralframework.osb.common
 
+import dev.brella.kornea.annotations.AvailableSince
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.text.toHexString
@@ -80,6 +81,11 @@ object OpenSpiralBitcode {
 
 data class OpenSpiralBitcodeFlagBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: ByteArray)
 data class OpenSpiralBitcodeFlagCondition(val checking: OSLUnion, val operation: Int, val against: OSLUnion)
+
+@ExperimentalUnsignedTypes
+@AvailableSince(KorneaIO.VERSION_3_2_2_ALPHA)
+public suspend inline fun <T> T.readVariableInt16NotBroken(): Int? where T: Int16FlowState, T: InputFlow =
+    (this as InputFlow).readVariableInt16()
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
@@ -300,7 +306,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
     private suspend fun SpiralContext.addPlainOpcode(notEnoughData: () -> String) {
         val opcode = requireNotNull(flow.read(), notEnoughData)
         val argumentCount = requireNotNull(flow.read(), notEnoughData)
-        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16(), notEnoughData) }
+        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16NotBroken(), notEnoughData) }
 
         visitor.addPlainOpcode(this, opcode, arguments)
     }
@@ -308,7 +314,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
     private suspend fun SpiralContext.addPlainOpcodeNamed(notEnoughData: () -> String) {
         val name = flow.readNullTerminatedUTF8String()
         val argumentCount = requireNotNull(flow.read(), notEnoughData)
-        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16(), notEnoughData) }
+        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16NotBroken(), notEnoughData) }
 
         visitor.addPlainOpcodeNamed(this, name, arguments)
     }
