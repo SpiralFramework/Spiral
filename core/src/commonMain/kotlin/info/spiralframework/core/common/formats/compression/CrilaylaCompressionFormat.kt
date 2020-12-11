@@ -10,8 +10,8 @@ import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.toHexString
-import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.buildFormatResult
 import info.spiralframework.formats.common.compression.decompressCrilayla
 
@@ -19,7 +19,7 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "CRILAYLA Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readInt64BE() == info.spiralframework.formats.common.compression.CRILAYLA_MAGIC }.getOrElse(false))
             return buildFormatResult(Optional.empty(), 1.0)
         return KorneaResult.empty()
@@ -35,7 +35,7 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
         val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
         val cache = context.cacheShortTerm(context, "crilayla:${data.sha256().toHexString()}")
 

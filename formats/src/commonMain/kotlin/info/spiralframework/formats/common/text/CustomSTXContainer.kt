@@ -1,11 +1,9 @@
 package info.spiralframework.formats.common.text
 
-import info.spiralframework.base.binding.encodeToUTF16LEByteArray
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
+import info.spiralframework.base.binding.encodeToUTF16LEByteArray
 
 @ExperimentalUnsignedTypes
 class CustomSTXContainer {
@@ -127,8 +125,6 @@ class CustomSTXContainer {
 
     @ExperimentalStdlibApi
     suspend fun compile(output: OutputFlow) {
-        val output = withState { int(output) }
-
         val sortedStrings = strings
                 .mapValues { (_, str) -> str.encodeToUTF16LEByteArray() }
                 .entries

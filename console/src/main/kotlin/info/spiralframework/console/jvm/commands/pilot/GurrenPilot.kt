@@ -1,30 +1,24 @@
 package info.spiralframework.console.jvm.commands.pilot
 
+//import info.spiralframework.console.jvm.data.SrdiMesh
+//import info.spiralframework.console.jvm.data.collada.*
 import dev.brella.knolus.context.KnolusContext
 import dev.brella.knolus.stringTypeParameter
 import dev.brella.kornea.errors.common.*
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.CommonLocale
-import info.spiralframework.base.common.locale.localiseOrNull
 import info.spiralframework.base.common.locale.printlnLocale
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.data.HelpDetails
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
-//import info.spiralframework.console.jvm.data.SrdiMesh
-//import info.spiralframework.console.jvm.data.collada.*
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithAliasesWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
-import info.spiralframework.formats.common.games.DrGame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.DecimalFormat
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.ExperimentalUnsignedTypes
-import kotlin.Pair
-import kotlin.String
-import kotlin.arrayOf
-import kotlin.with
 
 @ExperimentalCoroutinesApi
 @ExperimentalUnsignedTypes
@@ -33,7 +27,7 @@ object GurrenPilot : CommandRegistrar {
 
     /** Helper Variables */
     var keepLooping = AtomicBoolean(true)
-    var game: DrGame? = null
+    val formatContext: SpiralProperties = SpiralProperties()
 
     val PERCENT_FORMAT = DecimalFormat("00.00")
 

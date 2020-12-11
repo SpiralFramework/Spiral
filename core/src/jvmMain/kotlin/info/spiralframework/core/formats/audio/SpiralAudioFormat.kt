@@ -5,8 +5,7 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -15,7 +14,7 @@ import java.io.File
 open class SpiralAudioFormat(override val name: String, override val extension: String): ReadableSpiralFormat<File>, WritableSpiralFormat {
     open val needsMediaPlugin: Boolean = true
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<File>> {
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<File>> {
         try {
             return super.identify(context, readContext, source)
         } catch (ise: IllegalStateException) {
@@ -33,7 +32,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<File> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<File> {
         throw IllegalStateException(context.localise("core.formats.no_audio_impl.read", this))
     }
 
@@ -46,7 +45,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean {
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean {
         throw IllegalStateException(context.localise("core.formats.no_audio_impl.support_write", this))
     }
 
@@ -61,7 +60,7 @@ open class SpiralAudioFormat(override val name: String, override val extension: 
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         throw IllegalStateException(context.localise("core.formats.no_audio_impl.write", this))
     }
 }

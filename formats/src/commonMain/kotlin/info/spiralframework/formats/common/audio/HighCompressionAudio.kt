@@ -1,25 +1,19 @@
 package info.spiralframework.formats.common.audio
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlowStateSelector
 import dev.brella.kornea.io.common.flow.extensions.readFloat32BE
 import dev.brella.kornea.io.common.flow.extensions.readInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readInt24BE
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.mapWithState
-import dev.brella.kornea.toolkit.common.DataCloseable
 import dev.brella.kornea.toolkit.common.SemanticVersion
 import dev.brella.kornea.toolkit.common.closeAfter
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 import kotlin.experimental.or
 import kotlin.math.min
 
@@ -415,7 +409,6 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

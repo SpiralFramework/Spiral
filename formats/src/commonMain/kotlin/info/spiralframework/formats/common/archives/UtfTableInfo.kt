@@ -74,7 +74,6 @@ data class UtfTableInfo(
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<UtfTableInfo> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
@@ -183,7 +182,6 @@ data class UtfTableInfo(
         }
 
         val flow = dataSource.openInputFlow()
-            .mapWithState { int(it) }
             .getOrBreak { return it.cast() }
 
         return closeAfter(flow) {

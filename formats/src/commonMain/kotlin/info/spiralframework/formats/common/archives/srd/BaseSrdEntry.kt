@@ -23,7 +23,6 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<BaseSrdEntry> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

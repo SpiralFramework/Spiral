@@ -27,6 +27,9 @@ open class Dr2(
     companion object {
         const val NONSTOP_DEBATE_SECTION_SIZE = 34
 
+        const val IDENTIFIER = "dr2"
+        val NAMES = arrayOf("Dr2", "SDr2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
+
         @Serializable
         data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
 
@@ -48,9 +51,9 @@ open class Dr2(
         }
     }
 
-    override val names: Array<String> = arrayOf("DR2", "SDR2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
+    override val names: Array<String> = NAMES
     override val steamID: String = "413420"
-    override val identifier: String = "dr2"
+    override val identifier: String = IDENTIFIER
     override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
         opcode(0x02, argumentCount = 2, name = "Text")

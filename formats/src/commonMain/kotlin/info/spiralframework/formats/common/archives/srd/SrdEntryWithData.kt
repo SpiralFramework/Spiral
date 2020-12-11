@@ -7,13 +7,10 @@ import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.InputFlowState
-import dev.brella.kornea.io.common.flow.IntFlowState
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
-import dev.brella.kornea.io.common.flow.int
 import dev.brella.kornea.io.common.flow.readAndClose
-import dev.brella.kornea.io.common.flow.useFlatMapWithState
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 
 abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int, dataSource: DataSource<*>) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {
@@ -34,13 +31,13 @@ abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataL
         if (dataSource.reproducibility.isRandomAccess())
             return dataSource.openInputFlow()
                 .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
-                .useFlatMapWithState { flow -> context.setup(int(flow)) }
+                .flatMap { flow -> context.setup(flow) }
         else {
             return dataSource
                 .openInputFlow()
-                .useFlatMapWithState { flow -> context.setup(int(BinaryInputFlow(flow.readAndClose()))) }
+                .useAndFlatMap { flow -> context.setup(BinaryInputFlow(flow.readAndClose())) }
         }
     }
 
-    protected abstract suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<SrdEntryWithData> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState
+    protected abstract suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<SrdEntryWithData>
 }

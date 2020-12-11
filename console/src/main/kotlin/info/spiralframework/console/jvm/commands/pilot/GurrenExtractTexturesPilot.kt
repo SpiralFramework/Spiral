@@ -14,6 +14,7 @@ import dev.brella.kornea.errors.common.filterNotNull
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.getOrElseRun
+import dev.brella.kornea.errors.common.getOrNull
 import dev.brella.kornea.errors.common.switchIfEmpty
 import dev.brella.kornea.img.DXT1PixelData
 import dev.brella.kornea.img.bc7.BC7PixelData
@@ -36,14 +37,14 @@ import info.spiralframework.base.common.locale.printLocale
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.logging.error
 import info.spiralframework.base.common.logging.trace
+import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
 import info.spiralframework.console.jvm.pipeline.DataSourceType
 import info.spiralframework.console.jvm.pipeline.spiralContext
-import info.spiralframework.core.decompress
-import info.spiralframework.core.common.formats.DefaultFormatReadContext
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.SpiralFormat
+import info.spiralframework.core.decompress
 import info.spiralframework.formats.common.archives.SpiralArchive
 import info.spiralframework.formats.common.archives.getSubfiles
 import info.spiralframework.formats.common.archives.srd.SrdArchive
@@ -99,7 +100,7 @@ object GurrenExtractTexturesPilot: CommandRegistrar {
                 decompress(archiveDataSource)
             }
 
-        val readContext = DefaultFormatReadContext(decompressedDataSource.location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, GurrenPilot.game)
+        val readContext = GurrenPilot.formatContext.withOptional(ISpiralProperty.FileName, archiveDataSource.locationAsUri().getOrNull()?.path)
         val result = arbitraryProgressBar(loadingText = localise("commands.pilot.extract_textures.analysing_archive"), loadedText = null) {
             GurrenShared.EXTRACTABLE_ARCHIVES.map { archive -> archive.identify(this, readContext, decompressedDataSource) }
                 .also { results ->

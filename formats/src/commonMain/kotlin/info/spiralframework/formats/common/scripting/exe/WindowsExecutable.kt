@@ -1,9 +1,5 @@
 package info.spiralframework.formats.common.scripting.exe
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.archives.PakFileEntry
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
@@ -12,7 +8,10 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNumBytes
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
 open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArray, val coffHeader: COFFHeader, val peOptionalHeader: PEOptionalHeader, val imageSectionHeaders: Array<ImageSectionHeader>, val dataSource: DataSource<*>) {
@@ -31,7 +30,6 @@ open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArra
                 val notEnoughData: () -> Any = { localise("formats.exe.not_enough_data") }
 
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

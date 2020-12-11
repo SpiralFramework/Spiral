@@ -3,13 +3,10 @@ package info.spiralframework.formats.common.archives.srd
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.EnumSeekMode
-import dev.brella.kornea.io.common.flow.InputFlowState
-import dev.brella.kornea.io.common.flow.IntFlowState
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.bookmark
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.seek
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readNullTerminatedUTF8String
@@ -35,7 +32,7 @@ data class SCNSrdEntry(
     var sceneRootNodes: Array<String> by oneTimeMutableInline()
     var unknownStrings: Array<String> by oneTimeMutableInline()
 
-    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<SCNSrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
+    override suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<SCNSrdEntry> {
         unk = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
         val sceneRootNodeIndexOffset = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

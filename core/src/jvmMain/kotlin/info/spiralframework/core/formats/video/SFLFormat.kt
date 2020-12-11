@@ -15,7 +15,7 @@ package info.spiralframework.core.formats.video
 //     *
 //     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
 //     */
-//    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<SFL> {
+//    override suspend fun read(context: SpiralContext, readContext: SpiralFormatContext?, source: DataSource<*>): FormatResult<SFL> {
 //        val sfl = SFL(context, source) ?: return FormatResult.Fail(this, 1.0)
 //        return FormatResult.Success(this, sfl, 1.0)
 //    }

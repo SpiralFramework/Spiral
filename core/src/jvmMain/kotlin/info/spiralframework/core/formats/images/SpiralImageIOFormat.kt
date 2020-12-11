@@ -1,14 +1,14 @@
 package info.spiralframework.core.formats.images
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.toolkit.common.useAndFlatMap
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -28,7 +28,7 @@ open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, Re
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<BufferedImage> =
         source.openInputFlow()
             .useAndFlatMap { flow ->
                 val stream = ByteArrayInputStream(flow.readBytes(dataSize = 5_000_000))

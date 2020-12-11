@@ -14,6 +14,7 @@ import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralSuspending
+import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.core.SpiralCoreContext
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonToken
@@ -77,7 +78,7 @@ data class KnolusTypedWrapper<T : Any>(public val inner: T, override val typeInf
     }
 
     companion object {
-        val SPIRAL_CONTEXT = typeInfo<SpiralCoreContext>()
+        val SPIRAL_CONTEXT = typeInfo<GurrenSpiralContext>()
         val RANDOM = typeInfo<Random>()
         val FILE = typeInfo<File>()
 
@@ -105,6 +106,6 @@ suspend fun <S : KnolusTypedValue, R : Any, I : KnolusTypedWrapper.TypeInfo<R>> 
     asType(context, typeInfo).map(KnolusTypedWrapper<R>::inner)
 
 @ExperimentalUnsignedTypes
-suspend fun KnolusContext.spiralContext(): KorneaResult<SpiralCoreContext> = this["spiralContext"].flatMap { value -> value.unwrap(this, KnolusTypedWrapper.SPIRAL_CONTEXT) }
+suspend fun KnolusContext.spiralContext(): KorneaResult<GurrenSpiralContext> = this["spiralContext"].flatMap { value -> value.unwrap(this, KnolusTypedWrapper.SPIRAL_CONTEXT) }
 
 inline fun <reified R: Any> wrap(value: R): KnolusTypedWrapper<R> = KnolusTypedWrapper.invoke(value)

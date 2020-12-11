@@ -1,16 +1,19 @@
 package info.spiralframework.formats.common.scripting.exe
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
+import dev.brella.kornea.io.common.flow.extensions.readInt32BE
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readInt64BE
+import dev.brella.kornea.io.common.flow.extensions.readInt64LE
+import dev.brella.kornea.io.common.useInputFlowForResult
+import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.extensions.*
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 
 @ExperimentalUnsignedTypes
 sealed class PEOptionalHeader {
@@ -53,7 +56,6 @@ sealed class PEOptionalHeader {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PEOptionalHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PEOptionalHeader> {
             withFormats(context) {
-                val flow = withState { int(flow) }
                 val signature = flow.readInt16LE()
                         ?: return localisedNotEnoughData("formats.exe.pe_opt.not_enough_data")
 
@@ -104,7 +106,6 @@ sealed class PEOptionalHeader {
             suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE32> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
             suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE32> {
                 withFormats(context) {
-                    val flow = withState { int(flow) }
                     val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -257,7 +258,6 @@ sealed class PEOptionalHeader {
             suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE64> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
             suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE64> {
                 withFormats(context) {
-                    val flow = withState { int(flow) }
                     val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

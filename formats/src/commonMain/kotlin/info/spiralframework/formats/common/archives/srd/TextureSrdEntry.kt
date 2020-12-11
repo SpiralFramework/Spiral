@@ -35,7 +35,7 @@ data class TextureSrdEntry(
     var palette: Int by oneTimeMutableInline()
     var paletteID: Int by oneTimeMutableInline()
 
-    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TextureSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<TextureSrdEntry> {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

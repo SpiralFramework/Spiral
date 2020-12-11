@@ -40,7 +40,6 @@ class WadArchive(val version: SemanticVersion, val header: ByteArray, val files:
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<WadArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

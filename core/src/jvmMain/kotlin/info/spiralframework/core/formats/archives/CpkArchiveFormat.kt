@@ -11,8 +11,7 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.jvm.JVMInputFlow
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -33,7 +32,7 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<CpkArchive> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<CpkArchive> =
         CpkArchive(context, source)
             .filter { cpk -> cpk.files.isNotEmpty() }
             .buildFormatResult { cpk -> if (cpk.files.size == 1) 0.75 else 1.0 }
@@ -47,7 +46,7 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
 
     /**
      * Writes [data] to [flow] in this format
@@ -60,7 +59,7 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         val customCpk = CustomCpkArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
         when (data) {

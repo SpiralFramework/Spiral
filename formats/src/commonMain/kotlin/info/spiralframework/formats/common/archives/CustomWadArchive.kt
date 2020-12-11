@@ -5,9 +5,6 @@ import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyFrom
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt64LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
-
 
 @ExperimentalUnsignedTypes
 open class CustomWadArchive {
@@ -27,8 +24,6 @@ open class CustomWadArchive {
 
     @ExperimentalStdlibApi
     suspend fun compile(output: OutputFlow) {
-        val output = withState { int(output) }
-
         output.writeInt32LE(WadArchive.MAGIC_NUMBER_LE)
 
         output.writeInt32LE(major)

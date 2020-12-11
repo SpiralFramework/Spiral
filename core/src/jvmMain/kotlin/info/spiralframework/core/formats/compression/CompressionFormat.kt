@@ -14,7 +14,7 @@ package info.spiralframework.core.formats.compression
 //     *
 //     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
 //     */
-//    override fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource): FormatResult<DataSource> {
+//    override fun read(context: SpiralContext, readContext: SpiralFormatContext?, source: DataSource): FormatResult<DataSource> {
 //        if (compressionFormat.isCompressed(context, source)) {
 //            val tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".dat")
 //            tmpFile.deleteOnExit()

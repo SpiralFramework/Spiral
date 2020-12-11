@@ -11,8 +11,7 @@ import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.binding.decodeToUTF16String
 import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -22,13 +21,13 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
     override val name: String = "UTF-16 Text"
     override val extension: String = "txt"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<String>> =
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<String>> =
         source.openInputFlow().flatMap { flow ->
             val bom = flow.readInt16LE()
             if (bom == 0xFFFE || bom == 0xFEFF) KorneaResult.success(Optional.empty<String>()) else KorneaResult.errorAsIllegalArgument(-1, "Invalid magic number $bom")
         }.buildFormatResult(1.0)
 
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<String> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<String> {
         val data = source.useInputFlow { flow -> flow.readBytes() }
             .getOrBreak { return it.cast() }
 
@@ -40,9 +39,9 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
         return buildFormatResult(data.decodeToUTF16String().trimEnd('\u0000'), 1.0)
     }
 
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = true
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = true
 
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         flow.write(manuallyEncode(data.toString(), TextCharsets.UTF_16LE, true))
         return FormatWriteResponse.SUCCESS
     }

@@ -47,14 +47,14 @@ data class RSISrdEntry(
     var resources: Array<ResourceIndex> by oneTimeMutableInline()
     var name: String by oneTimeMutableInline()
 
-    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<RSISrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<RSISrdEntry> {
         locationKey = flow.location.toString()
         setupFlow = flow
         debug("Setting up RSI entry @ {0}", locationKey)
 
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
-        debug("[{0}] Reading RSI entry @ {1}", locationKey, (flow.flow as? InputFlowWithBacking)?.absPosition() ?: flow.position())
+        debug("[{0}] Reading RSI entry @ {1}", locationKey, flow.globalOffset())
 
         if (locationKey.endsWith("+5560h[A0h,120h][10h,65h]")) {
             println()

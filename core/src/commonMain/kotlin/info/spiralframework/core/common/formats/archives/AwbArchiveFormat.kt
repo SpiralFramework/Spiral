@@ -1,11 +1,11 @@
 package info.spiralframework.core.common.formats.archives
 
 import dev.brella.kornea.errors.common.*
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.formats.common.archives.AwbArchive
 import dev.brella.kornea.io.common.DataSource
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.formats.common.archives.AwbArchive
 
 object AwbArchiveFormat : ReadableSpiralFormat<AwbArchive> {
     override val name: String = "AWB"
@@ -20,7 +20,7 @@ object AwbArchiveFormat : ReadableSpiralFormat<AwbArchive> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<AwbArchive> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<AwbArchive> =
         AwbArchive(context, source)
             .filter { awb -> awb.files.isNotEmpty() }
             .buildFormatResult { awb -> if (awb.files.size == 1) 0.75 else 1.0 }

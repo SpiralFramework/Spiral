@@ -1,18 +1,15 @@
 package info.spiralframework.formats.common.data
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.flow.InputFlowStateSelector
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.mapWithState
 import dev.brella.kornea.io.common.flow.readExact
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 import kotlin.math.round
 
 @ExperimentalUnsignedTypes
@@ -23,7 +20,6 @@ class DRv3NonstopDebate(val baseTimeLimit: Int, val unk1: Int, val unk2: Int, va
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<DRv3NonstopDebate> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return it.cast() }
 
                 closeAfter(flow) {

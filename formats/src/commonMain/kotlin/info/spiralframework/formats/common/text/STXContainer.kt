@@ -1,21 +1,18 @@
 package info.spiralframework.formats.common.text
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.fauxSeekFromStart
+import dev.brella.kornea.toolkit.common.closeAfter
 import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlowStateSelector
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.fauxSeekFromStart
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.mapWithState
-import dev.brella.kornea.toolkit.common.closeAfter
 
 @ExperimentalUnsignedTypes
 abstract class STXContainer {
@@ -56,7 +53,6 @@ abstract class STXContainer {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<STXContainer> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

@@ -28,15 +28,17 @@ infix fun Long.alignedTo(alignment: Int): Long = alignmentNeededFor(alignment) +
 
 fun ByteArray.toHexString(): String = buildString {
     this@toHexString.forEach { byte ->
-        append(byte.toInt()
+        append(
+            byte.toInt()
                 .and(0xFF)
                 .toString(16)
-                .padStart(2, '0'))
+                .padStart(2, '0')
+        )
     }
 }
 
 fun Byte.reverseBits(): Int =
-        (((this.toInt() and 0xFF) * 0x0202020202L and 0x010884422010L) % 1023).toInt() and 0xFF
+    (((this.toInt() and 0xFF) * 0x0202020202L and 0x010884422010L) % 1023).toInt() and 0xFF
 
 fun ByteArray.foldToInt16LE(): IntArray = IntArray(size / 2) { i -> (this[i * 2 + 1].toInt() and 0xFF shl 8) or (this[i * 2].toInt() and 0xFF) }
 fun ByteArray.foldToInt16BE(): IntArray = IntArray(size / 2) { i -> (this[i * 2].toInt() and 0xFF shl 8) or (this[i * 2 + 1].toInt() and 0xFF) }
@@ -44,7 +46,8 @@ fun ByteArray.foldToInt32LE(): IntArray = IntArray(size / 4) { i ->
     (this[i * 4 + 3].toInt() and 0xFF shl 8) or
             (this[i * 4 + 2].toInt() and 0xFF shl 8) or
             (this[i * 4 + 1].toInt() and 0xFF shl 8) or
-            (this[i * 4].toInt() and 0xFF) }
+            (this[i * 4].toInt() and 0xFF)
+}
 
 /** Puts [value] in this, and returns [value] back */
 fun <K, V> MutableMap<K, V>.putBack(key: K, value: V): V {
@@ -56,6 +59,7 @@ inline fun String.trimNulls(): String = trimEnd(NULL_TERMINATOR)
 
 @Suppress("unused")
 inline fun Any?.unit(): Unit = Unit
+
 @Suppress("unused")
 inline fun <T> Any?.nulled(): T? = null
 inline fun unitBlock(block: () -> Any?): Unit {
@@ -67,6 +71,7 @@ inline fun unitBlock(block: () -> Any?): Unit {
 
     return
 }
+
 inline fun <T> nullBlock(block: () -> Any?): T? {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -76,3 +81,11 @@ inline fun <T> nullBlock(block: () -> Any?): T? {
 
     return null
 }
+
+inline fun <K, V> mutableMapOfAll(vararg maps: Pair<Array<K>, V>): MutableMap<K, V> =
+    HashMap<K, V>().apply {
+        maps.forEach { (keys, value) -> keys.forEach { k -> this[k] = value } }
+    }
+
+inline fun <K, V> mutableMapOfAll(vararg maps: Map<K, V>): MutableMap<K, V> =
+    HashMap<K, V>().apply { maps.forEach { map -> putAll(map) } }

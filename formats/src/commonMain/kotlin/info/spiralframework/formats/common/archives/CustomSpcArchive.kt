@@ -1,16 +1,23 @@
 package info.spiralframework.formats.common.archives
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.alignmentNeededFor
-import info.spiralframework.base.common.environment.set
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyFrom
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
 import dev.brella.kornea.toolkit.common.byteArrayOfHex
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.alignmentNeededFor
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableMap
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.forEach
+import kotlin.collections.forEachIndexed
+import kotlin.collections.set
+import kotlin.collections.toList
 
 @ExperimentalUnsignedTypes
 open class CustomSpcArchive {
@@ -51,8 +58,6 @@ open class CustomSpcArchive {
 
     @ExperimentalStdlibApi
     suspend fun compile(output: OutputFlow) {
-        val output = withState { int(output) }
-
         output.writeInt32LE(SpcArchive.SPC_MAGIC_NUMBER_LE)
         output.write(SPC_MAGIC_PADDING)
 

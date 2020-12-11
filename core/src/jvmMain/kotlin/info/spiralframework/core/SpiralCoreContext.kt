@@ -1,5 +1,6 @@
 package info.spiralframework.core
 
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
@@ -11,9 +12,6 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
-import dev.brella.kornea.toolkit.common.SemanticVersion
-import info.spiralframework.base.common.SpiralCatalyst
-import io.ktor.client.*
 
 @ExperimentalUnsignedTypes
 interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralSerialisation, SpiralHttp {

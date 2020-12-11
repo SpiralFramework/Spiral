@@ -40,6 +40,9 @@ open class Dr1(
 
         const val NONSTOP_DEBATE_SECTION_SIZE = 30
 
+        const val IDENTIFIER = "dr1"
+        val NAMES = arrayOf("Dr1", "Danganronpa 1", "Danganronpa: Trigger Happy Havoc")
+
         @Serializable
         data class Dr1GameJson(
                 val character_ids: Map<Int, String>,
@@ -96,9 +99,9 @@ open class Dr1(
         }
     }
 
-    override val names: Array<String> = arrayOf("DR1", "Danganronpa 1", "Danganronpa: Trigger Happy Havoc")
+    override val names: Array<String> = NAMES
     override val steamID: String = "413410"
-    override val identifier: String = "dr1"
+    override val identifier: String = IDENTIFIER
 
     override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")

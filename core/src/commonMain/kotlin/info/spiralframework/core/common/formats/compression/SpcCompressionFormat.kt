@@ -1,21 +1,22 @@
 package info.spiralframework.core.common.formats.compression
 
 import com.soywiz.krypto.sha256
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.readBytes
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.core.common.formats.buildFormatResult
 import info.spiralframework.formats.common.archives.SpcArchive
 import info.spiralframework.formats.common.archives.SpcFileEntry
 import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUMBER
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.games.DrGame
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.readBytes
-import info.spiralframework.core.common.formats.buildFormatResult
 
 data class SpcEntryFormatReadContextdata(val entry: SpcFileEntry?, override val name: String? = null, override val game: DrGame? = null) : FormatReadContext
 
@@ -29,7 +30,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "SPC Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER }.getOrElse(false) || (readContext as? SpcEntryFormatReadContextdata)?.entry?.compressionFlag == SpcArchive.COMPRESSED_FLAG)
             return buildFormatResult(Optional.empty(), 1.0)
         return KorneaResult.empty()
@@ -45,7 +46,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
         val data = source.useInputFlow { flow ->
             val entry = (readContext as? SpcEntryFormatReadContextdata)?.entry
 

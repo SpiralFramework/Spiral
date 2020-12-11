@@ -1,10 +1,10 @@
 package info.spiralframework.osl
 
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.osb.common.OSLUnion
 import info.spiralframework.osb.common.OpenSpiralBitcodeBuilder
 import info.spiralframework.osb.common.OpenSpiralBitcodeBuilderBranch
 import info.spiralframework.osb.common.OpenSpiralBitcodeFlagCondition
-import dev.brella.kornea.toolkit.common.SemanticVersion
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
@@ -21,14 +21,14 @@ sealed class OSLVisitorUnion {
     data class AddDialogueVariable(val speakerVariable: String, val dialogue: OSLUnion) : OSLVisitorUnion()
 
     data class Script(val header: Header, val scope: Scope) : OSLVisitorUnion() {
-        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder<*>) {
+        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder) {
             header.version?.let { v -> builder.setVersion(v) }
             scope.writeToBuilder(builder)
         }
     }
 
     data class Scope(val lines: List<OSLVisitorUnion>) : OSLVisitorUnion() {
-        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder<*>) {
+        suspend fun writeToBuilder(builder: OpenSpiralBitcodeBuilder) {
             lines.forEach { union ->
                 when (union) {
                     is Header -> union.version?.let { v -> builder.setVersion(v) }

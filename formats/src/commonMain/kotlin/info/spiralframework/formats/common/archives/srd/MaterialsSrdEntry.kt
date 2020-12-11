@@ -27,7 +27,7 @@ data class MaterialsSrdEntry(
     private val materialsMutable: MutableMap<String, String> = HashMap()
     val materials: Map<String, String> = materialsMutable
 
-    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<MaterialsSrdEntry> where T: InputFlowState<SeekableInputFlow>, T: IntFlowState {
+    override suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<MaterialsSrdEntry> {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
         materialsMutable.clear()
 

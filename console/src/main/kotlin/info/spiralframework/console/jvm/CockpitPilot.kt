@@ -8,20 +8,18 @@ import dev.brella.knolus.restrictions.KnolusRecursiveRestriction
 import dev.brella.knolus.run
 import dev.brella.knolus.transform.KnolusTransVisitorRestrictions
 import dev.brella.knolus.transform.parseKnolusTransRule
-import dev.brella.knolus.types.KnolusLazyFunctionCall
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
-import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.base.common.text.lazyString
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.console.jvm.commands.data.HelpDetails
 import info.spiralframework.console.jvm.commands.pilot.GurrenPilot
-import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.console.jvm.pipeline.*
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_VERSION_KEY
@@ -33,13 +31,11 @@ import java.lang.StringBuilder
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
-import kotlin.math.abs
-import kotlin.math.absoluteValue
 import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-class CockpitPilot internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext), CoroutineScope {
+class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : Cockpit(startingContext), CoroutineScope {
     val globalContext = KnolusGlobalContext(null, CompoundKnolusRestriction.fromPermissive(KnolusRecursiveRestriction(maxDepth = 20, maxRecursiveCount = 30)))
 
     suspend fun handle(context: KnolusContext, value: Any): KorneaResult<Any?> =

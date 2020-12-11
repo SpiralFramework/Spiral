@@ -10,13 +10,14 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.core.SpiralCoreConfig
 import info.spiralframework.core.SpiralCoreContext
 import info.spiralframework.core.SpiralHttp
+import info.spiralframework.base.common.properties.SpiralPropertyProvider
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.core.serialisation.SpiralSerialisation
 
 @ExperimentalUnsignedTypes
-interface SpiralCockpitContext: SpiralCoreContext {
+interface GurrenSpiralContext: SpiralCoreContext, SpiralPropertyProvider.Mutable {
     val args: GurrenArgs
 
-    suspend fun copy(newArgs: GurrenArgs? = null, newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null, newHttp: SpiralHttp? = null): SpiralCockpitContext
+    suspend fun copy(newArgs: GurrenArgs? = null, newCore: SpiralCoreConfig? = null, newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null, newHttp: SpiralHttp? = null): GurrenSpiralContext
 }

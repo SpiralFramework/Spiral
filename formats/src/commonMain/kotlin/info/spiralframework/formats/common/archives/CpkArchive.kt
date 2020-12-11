@@ -60,7 +60,6 @@ class CpkArchive(
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<CpkArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState { int(it) }
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

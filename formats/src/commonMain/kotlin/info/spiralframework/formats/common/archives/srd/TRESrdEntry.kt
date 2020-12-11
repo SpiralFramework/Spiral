@@ -1,7 +1,6 @@
 package info.spiralframework.formats.common.archives.srd
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.EnumSeekMode
 import dev.brella.kornea.io.common.flow.*
@@ -33,7 +32,7 @@ data class TRESrdEntry(
         ) : TreeNode() {
             companion object {
                 internal suspend inline operator fun invoke(
-                    flow: InputFlowState<SeekableInputFlow>,
+                    flow: SeekableInputFlow,
                     stringOffset: UInt,
                     leafValueOffsets: UInt,
                     leafCount: Int,
@@ -136,7 +135,7 @@ data class TRESrdEntry(
 
     var tree: TreeNode.Branch by oneTimeMutableInline()
 
-    override suspend fun <T> SpiralContext.setup(flow: T): KorneaResult<TRESrdEntry> where T : InputFlowState<SeekableInputFlow>, T : IntFlowState {
+    override suspend fun SpiralContext.setup(flow: SeekableInputFlow): KorneaResult<TRESrdEntry> {
         flow.seek(0, EnumSeekMode.FROM_BEGINNING)
 
         maxTreeDepth = flow.readUInt32LE()!!

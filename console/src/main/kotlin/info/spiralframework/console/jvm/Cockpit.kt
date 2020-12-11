@@ -8,8 +8,6 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.config.getConfigFile
 import info.spiralframework.base.common.environment.SpiralEnvironment
-import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_FILE_NAME_KEY
-import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_SHA256_KEY
 import info.spiralframework.base.common.events.SpiralEvent
 import info.spiralframework.base.common.events.SpiralEventBus
 import info.spiralframework.base.common.events.SpiralEventListener
@@ -17,21 +15,14 @@ import info.spiralframework.base.common.events.SpiralEventPriority
 import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
-import info.spiralframework.base.common.locale.constNull
-import info.spiralframework.base.common.locale.printLocale
-import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.logging.SpiralLogger
-import info.spiralframework.base.jvm.crypto.md5Hash
-import info.spiralframework.base.jvm.crypto.verify
-import info.spiralframework.base.jvm.toFileSize
-import info.spiralframework.console.jvm.data.DefaultSpiralCockpitContext
+import info.spiralframework.console.jvm.data.DefaultGurrenSpiralContext
 import info.spiralframework.console.jvm.data.GurrenArgs
-import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.console.jvm.data.SpiralScope
 import info.spiralframework.console.jvm.eventbus.ScopeRequest
 import info.spiralframework.console.jvm.eventbus.ScopeResponse
 import info.spiralframework.core.*
-import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.plugins.DefaultSpiralPluginRegistry
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.DefaultSpiralSignatures
@@ -42,7 +33,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import dev.brella.kornea.errors.common.doOnSuccess
-import dev.brella.kornea.io.common.flow.readAndClose
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import dev.brella.kornea.io.jvm.files.relativePathFrom
@@ -50,9 +40,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.nio.channels.FileChannel
-import java.nio.channels.ReadableByteChannel
-import java.nio.file.StandardOpenOption
 import kotlin.reflect.KClass
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
@@ -61,7 +48,7 @@ import kotlin.time.ExperimentalTime
 /** The driving force behind the console interface for Spiral */
 //<SELF : Cockpit<SELF>>
 @ExperimentalUnsignedTypes
-abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var context: SpiralCockpitContext) {
+abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var context: GurrenSpiralContext) {
     companion object {
         @ExperimentalTime
         @ExperimentalUnsignedTypes
@@ -118,7 +105,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val signatures: SpiralSignatures = DefaultSpiralSignatures()
             val pluginRegistry: SpiralPluginRegistry = DefaultSpiralPluginRegistry()
             val http: SpiralHttp = DefaultSpiralHttp()
-            val startingContext: SpiralCockpitContext = DefaultSpiralCockpitContext(
+            val startingContext: GurrenSpiralContext = DefaultGurrenSpiralContext(
                     gurrenArgs,
                     coreConfig,
                     parentContext,
@@ -326,12 +313,12 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val pluginRegistry: SpiralPluginRegistry = DefaultSpiralPluginRegistry()
             val http: SpiralHttp = DefaultSpiralHttp()
 
-            return invoke(DefaultSpiralCockpitContext(gurrenArgs, coreConfig, parentContext, signatures, pluginRegistry, serialisation, http))
+            return invoke(DefaultGurrenSpiralContext(gurrenArgs, coreConfig, parentContext, signatures, pluginRegistry, serialisation, http))
         }
 
         @ExperimentalTime
         @ExperimentalStdlibApi
-        operator fun invoke(context: SpiralCockpitContext): Cockpit {
+        operator fun invoke(context: GurrenSpiralContext): Cockpit {
             return if (context.args.isTool) {
                 CockpitMechanic(context)
             } else {

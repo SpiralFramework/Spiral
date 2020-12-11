@@ -17,8 +17,7 @@ import dev.brella.kornea.io.jvm.asOutputStream
 import dev.brella.kornea.io.jvm.files.*
 import dev.brella.kornea.toolkit.common.freeze
 import dev.brella.kornea.toolkit.common.use
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -46,7 +45,7 @@ object ZipFormat : ReadableSpiralFormat<ZipArchive>, WritableSpiralFormat {
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     @ExperimentalKorneaIO
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<ZipArchive> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<ZipArchive> {
         if (source is SynchronousFileDataSource) {
             try {
                 return withContext(Dispatchers.IO) {
@@ -111,7 +110,7 @@ object ZipFormat : ReadableSpiralFormat<ZipArchive>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -124,7 +123,7 @@ object ZipFormat : ReadableSpiralFormat<ZipArchive>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         return withContext(Dispatchers.IO) {
             asOutputStream(flow, false) { rawOut ->
                 val zipOut = ZipOutputStream(rawOut)

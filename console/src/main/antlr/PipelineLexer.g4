@@ -55,20 +55,22 @@ END_SCRIPT_CALL: (NEW_LINE | ')' | EOF) -> popMode;
 
 mode StringParamMode;
 
-END_STRING_CALL: (NL_SEPARATOR | NEW_LINE | ')' | EOF) -> type(END_SCRIPT_CALL), popMode;
+END_STRING_CALL: (NL_SEPARATOR | NEW_LINE | ')' | EOF) -> type(END_SCRIPT_CALL);
 
-//Matches a double quote, pushes to the Quoted String Mode, then pops back to the default mode
-STRING_PARAM_COMMAND_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), popMode, pushMode(QuotedStringMode);
+//Matches a double quote, pushes to the Quoted String Mode
+STRING_PARAM_COMMAND_BEGIN_QUOTED_STRING: '"' -> type(BEGIN_QUOTED_STRING), pushMode(QuotedStringMode);
 //Matches an open parenthesis, pushes to the expression mode, then pops back to the default mode
-STRING_PARAM_COMMAND_START_EXPRESSION: '(' -> type(BEGIN_EXPRESSION), popMode, pushMode(ExpressionMode);
+STRING_PARAM_COMMAND_START_EXPRESSION: '(' -> type(BEGIN_EXPRESSION), pushMode(ExpressionMode);
+
+STRING_PARAM_SEPARATOR: SCRIPT_CALL_PARAM_SEPARATOR -> type(SCRIPT_CALL_PARAM_SEPARATOR);
 
 //Identifier has to go LAST!!!
 //Matches an identifier, then an open parenthesis; pushes to the function call mode, then pops back to the default mode
-STRING_PARAM_COMMAND_FUNCTION_CALL: IDENTIFIER_START IDENTIFIER_END* '(' -> type(BEGIN_FUNCTION_CALL), popMode, pushMode(FunctionCall);
+STRING_PARAM_COMMAND_FUNCTION_CALL: IDENTIFIER_START IDENTIFIER_END* '(' -> type(BEGIN_FUNCTION_CALL), pushMode(FunctionCall);
 //Matches an identifier, then a single dot; this doesn't change modes, since we will need to follow it up with a function call or a variable reference
 STRING_PARAM_COMMAND_MEMBER_REFERENCE: IDENTIFIER_START IDENTIFIER_END* '.' -> type(BEGIN_MEMBER_REFERENCE);
 //Matches a dollar sign, then an identifier, then pops back to the default mode
-STRING_PARAM_COMMAND_VARIABLE_REFERENCE: '$' IDENTIFIER_START IDENTIFIER_END* -> type(IDENTIFIER), popMode;
+STRING_PARAM_COMMAND_VARIABLE_REFERENCE: '$' IDENTIFIER_START IDENTIFIER_END* -> type(IDENTIFIER);
 
 // The following three lexer rules are for matching 'plain strings'; strings outside of quotes.
 // Most strings *should* work, but they a) don't support interpolation, and b) form one string for the whole contents

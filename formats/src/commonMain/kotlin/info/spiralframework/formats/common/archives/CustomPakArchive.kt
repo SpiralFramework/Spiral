@@ -5,8 +5,6 @@ import dev.brella.kornea.io.common.flow.CountingOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyFrom
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
 import dev.brella.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
@@ -25,8 +23,6 @@ class CustomPakArchive {
 
     suspend fun compile(output: OutputFlow) = compileFrom(output, if (output is CountingOutputFlow) output.streamOffset else 0)
     suspend fun compileFrom(output: OutputFlow, startingOffset: Long) {
-        val output = withState { int(output) }
-
         output.writeInt32LE(_files.size)
 
         var offset = startingOffset + 4 + (_files.size * 4)

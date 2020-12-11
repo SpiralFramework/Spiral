@@ -30,7 +30,6 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<AwbArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

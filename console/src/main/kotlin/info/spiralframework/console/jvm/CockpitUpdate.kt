@@ -3,7 +3,7 @@ package info.spiralframework.console.jvm
 import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.console.jvm.data.GurrenArgs
-import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.spiral.updater.jarLocation
 import info.spiralframework.spiral.updater.moveUpdate
 import kotlinx.coroutines.CancellationException
@@ -15,7 +15,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @ExperimentalUnsignedTypes
-class CockpitUpdate internal constructor(val updateFile: File, startingContext: SpiralCockpitContext, vararg rawArgs: String) : Cockpit(startingContext) {
+class CockpitUpdate internal constructor(val updateFile: File, startingContext: GurrenSpiralContext, vararg rawArgs: String) : Cockpit(startingContext) {
     companion object {
         val needsMove = AtomicBoolean(true)
     }
@@ -39,7 +39,7 @@ class CockpitUpdate internal constructor(val updateFile: File, startingContext: 
         }
     }
 
-    suspend fun SpiralCockpitContext.move() {
+    suspend fun GurrenSpiralContext.move() {
         printlnLocale("gurren.update.moving")
         arbitraryProgressBar {
             moveUpdate(updateFile.toURI(), Cockpit::class.java.jarLocation.toURI(), "")

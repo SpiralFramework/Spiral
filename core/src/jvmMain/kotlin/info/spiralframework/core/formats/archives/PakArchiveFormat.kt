@@ -1,9 +1,5 @@
 package info.spiralframework.core.formats.archives
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.cacheShortTerm
-import info.spiralframework.formats.common.archives.*
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
@@ -11,14 +7,18 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.jvm.JVMInputFlow
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.concurrent.suspendForEach
+import info.spiralframework.base.common.io.cacheShortTerm
+import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.properties.get
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.formats.common.archives.*
 import java.io.InputStream
 import java.util.zip.ZipFile
-import kotlin.collections.ArrayList
 
 object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat {
     override val name: String = "Pak"
@@ -26,8 +26,8 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
-        val fileName = readContext?.name?.substringAfterLast('/')
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
+        val fileName = readContext[ISpiralProperty.FileName]?.substringAfterLast('/')
         if (fileName != null && fileName.contains('.')) {
             if (!fileName.substringAfterLast('.').equals(extension, true)) {
                 return KorneaResult.errorAsIllegalArgument(-1, "Invalid extension ${fileName.substringAfterLast('.')}")
@@ -47,12 +47,12 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<PakArchive> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<PakArchive> =
             PakArchive(context, source)
                 .filter { pak -> pak.files.isNotEmpty() }
                 .buildFormatResult { pak ->
                     when {
-                        readContext?.name?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
+                        readContext[ISpiralProperty.FileName]?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
                         pak.files.size == 1 -> 0.75
                         else -> 0.8
                     }
@@ -67,7 +67,7 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -80,7 +80,7 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         val customPak = CustomPakArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
 

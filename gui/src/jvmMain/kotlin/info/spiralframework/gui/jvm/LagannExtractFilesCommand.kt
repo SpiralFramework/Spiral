@@ -4,9 +4,8 @@ import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.ReadableCompressionFormat
-import info.spiralframework.core.common.formats.DefaultFormatReadContext
-import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
@@ -18,7 +17,6 @@ import info.spiralframework.core.formats.archives.WadArchiveFormat
 import info.spiralframework.core.formats.archives.ZipFormat
 import info.spiralframework.core.panels.ExtractFilesCommand
 import info.spiralframework.formats.common.archives.SpiralArchive
-import info.spiralframework.formats.common.games.DrGame
 import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
 import javafx.scene.control.ProgressIndicator
@@ -31,15 +29,12 @@ import kotlin.math.roundToInt
 
 class LagannExtractFilesCommand : ExtractFilesCommand, CoroutineScope {
     companion object {
-        private inline fun DataSource<*>.readContext(game: DrGame?): FormatReadContext =
-            DefaultFormatReadContext(location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, game)
-
-        suspend operator fun invoke(context: SpiralContext, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean, game: DrGame?) =
-            LagannExtractFilesCommand()(context, archiveDataSource.readContext(game), archiveDataSource, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert)
+//        suspend operator fun invoke(context: SpiralContext, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean, game: DrGame?) =
+//            LagannExtractFilesCommand()(context, archiveDataSource.readContext(game), archiveDataSource, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert)
 
         suspend operator fun invoke(
             context: SpiralContext,
-            readContext: FormatReadContext,
+            readContext: SpiralProperties,
             archiveDataSource: DataSource<*>,
             destDir: String?,
             filter: String,

@@ -14,8 +14,7 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.JVMInputFlow
 import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -29,7 +28,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
 
     override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<SpcArchive>> =
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<SpcArchive>> =
         source.openInputFlow().useAndFlatMap { flow ->
             val magic = flow.readInt32LE() ?: return@useAndFlatMap context.localisedNotEnoughData(SpcArchive.NOT_ENOUGH_DATA_KEY)
             if (magic != SpcArchive.SPC_MAGIC_NUMBER_LE) {
@@ -49,7 +48,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<SpcArchive> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<SpcArchive> =
             SpcArchive(context, source)
                 .filter { spc -> spc.files.isNotEmpty() }
                 .buildFormatResult { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
@@ -63,7 +62,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -76,7 +75,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         val customSpc = CustomSpcArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
 

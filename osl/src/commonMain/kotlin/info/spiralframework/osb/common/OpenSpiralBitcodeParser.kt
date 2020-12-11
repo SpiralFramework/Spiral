@@ -1,13 +1,13 @@
 package info.spiralframework.osb.common
 
 import dev.brella.kornea.annotations.AvailableSince
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readNullTerminatedUTF8String
-import info.spiralframework.base.common.text.toHexString
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.readNullTerminatedUTF8String
+import info.spiralframework.base.common.text.toHexString
 
 object OpenSpiralBitcode {
     const val MAGIC_NUMBER_LE = 0x494C534F
@@ -89,7 +89,7 @@ public suspend inline fun <T> T.readVariableInt16NotBroken(): Int? where T: Int1
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisitor, val level: Int) where F : IntFlowState, F : InputFlowState<*> {
+class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcodeVisitor, val level: Int) {
     companion object {
         const val PREFIX = "osl.bitcode.parser"
         const val INVALID_MAGIC = 0x0000
@@ -183,7 +183,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
         if (checking == against) {
             //Success! Run the code against our visitor
             val length = requireNotNull(flow.readInt32LE(), notEnoughData)
-            OpenSpiralBitcodeParser(withState { int(WindowedInputFlow(flow, 0uL, length.toULong())) }, visitor, level + 1)
+            OpenSpiralBitcodeParser(WindowedInputFlow(flow, 0uL, length.toULong()), visitor, level + 1)
                 .parse(this)
 
             //Then, we need to discard the rest of the else if branches
@@ -212,7 +212,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
                 val length = requireNotNull(flow.readInt32LE(), notEnoughData)
 
                 if (!success && checking == against) {
-                    OpenSpiralBitcodeParser(withState { int(WindowedInputFlow(flow, 0uL, length.toULong())) }, visitor, level + 1)
+                    OpenSpiralBitcodeParser(WindowedInputFlow(flow, 0uL, length.toULong()), visitor, level + 1)
                         .parse(this)
                     success = true
                 } else {
@@ -225,7 +225,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
 
                 //We haven't had a successful branch yet; run the else branch
                 if (!success) {
-                    OpenSpiralBitcodeParser(withState { int(WindowedInputFlow(flow, 0uL, length.toULong())) }, visitor, level + 1)
+                    OpenSpiralBitcodeParser(WindowedInputFlow(flow, 0uL, length.toULong()), visitor, level + 1)
                         .parse(this)
                 } else {
                     flow.skip(length.toULong())
@@ -306,7 +306,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
     private suspend fun SpiralContext.addPlainOpcode(notEnoughData: () -> String) {
         val opcode = requireNotNull(flow.read(), notEnoughData)
         val argumentCount = requireNotNull(flow.read(), notEnoughData)
-        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16NotBroken(), notEnoughData) }
+        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16(), notEnoughData) }
 
         visitor.addPlainOpcode(this, opcode, arguments)
     }
@@ -314,7 +314,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
     private suspend fun SpiralContext.addPlainOpcodeNamed(notEnoughData: () -> String) {
         val name = flow.readNullTerminatedUTF8String()
         val argumentCount = requireNotNull(flow.read(), notEnoughData)
-        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16NotBroken(), notEnoughData) }
+        val arguments = IntArray(argumentCount) { requireNotNull(flow.readVariableInt16(), notEnoughData) }
 
         visitor.addPlainOpcodeNamed(this, name, arguments)
     }
@@ -408,7 +408,7 @@ class OpenSpiralBitcodeParser<F>(val flow: F, val visitor: OpenSpiralBitcodeVisi
 suspend fun <T : OpenSpiralBitcodeVisitor> InputFlow.parseOpenSpiralBitcode(context: SpiralContext, visitor: T): T {
     val magic = requireNotNull(readInt32LE()) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.not_enough_data") }
     require(magic == OpenSpiralBitcode.MAGIC_NUMBER_LE) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.invalid_magic") }
-    val parser = OpenSpiralBitcodeParser(if (this is IntFlowState && this is InputFlowState<*>) this else withState { int(this@parseOpenSpiralBitcode) }, visitor, 0)
+    val parser = OpenSpiralBitcodeParser(this, visitor, 0)
     parser.parse(context)
     return visitor
 }

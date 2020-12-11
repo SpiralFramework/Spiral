@@ -15,15 +15,17 @@ import info.spiralframework.base.common.io.cache
 import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.logging.error
 import info.spiralframework.base.common.logging.trace
+import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.properties.get
+import info.spiralframework.core.ReadableCompressionFormat
 import info.spiralframework.core.common.BufferIOOperation
 import info.spiralframework.core.common.IOBuffer
 import info.spiralframework.core.common.MAX_BUFFER_SIZE
 import info.spiralframework.core.common.MAX_MISSING_DATA_COUNT
-import info.spiralframework.core.ReadableCompressionFormat
-import info.spiralframework.core.decompress
-import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.decompress
 import info.spiralframework.core.mapResults
 import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
@@ -32,7 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.pow
 import kotlin.math.roundToLong
@@ -64,7 +65,7 @@ interface ExtractFilesCommand {
 
     suspend fun finishExtracting(context: SpiralContext, archive: SpiralArchive, destination: File)
 
-    suspend operator fun invoke(context: SpiralContext, readContext: FormatReadContext, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean) {
+    suspend operator fun invoke(context: SpiralContext, readContext: SpiralProperties, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean) {
         if (destDir == null) {
             noDestinationDirectory(context)
             return
@@ -117,7 +118,7 @@ interface ExtractFilesCommand {
 
         foundFileFormat(context, result, archiveCompressionFormats, archive)
 
-        this(context, archive, readContext.name, destination, filter.toRegex(), leaveCompressed, extractSubfiles, predictive, convert)
+        this(context, archive, readContext[ISpiralProperty.FileName], destination, filter.toRegex(), leaveCompressed, extractSubfiles, predictive, convert)
     }
 
     @OptIn(ExperimentalTime::class)

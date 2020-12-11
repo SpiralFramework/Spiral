@@ -9,6 +9,7 @@ import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceUnknown
 import dev.brella.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
 import dev.brella.kornea.io.jvm.JVMDataSource
 import dev.brella.kornea.io.jvm.JVMInputFlow
+import dev.brella.kornea.io.jvm.files.fromUri
 import dev.brella.kornea.toolkit.common.closeAll
 import java.net.URL
 import kotlin.math.max
@@ -27,6 +28,8 @@ class URLDataSource(
 
     override val reproducibility: DataSourceReproducibility =
         DataSourceReproducibility(isUnreliable = true)
+
+    override fun locationAsUri(): KorneaResult<Uri> = KorneaResult.success(Uri.fromUri(url.toURI()), null)
 
     override suspend fun whenClosed() {
         super.whenClosed()

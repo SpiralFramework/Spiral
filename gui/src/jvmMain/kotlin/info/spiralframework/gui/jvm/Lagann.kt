@@ -6,11 +6,24 @@ import ch.qos.logback.core.util.StatusPrinter
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.img.DXT1PixelData
+import dev.brella.kornea.img.bc7.BC7PixelData
+import dev.brella.kornea.img.createPngImage
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.copyTo
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
+import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
+import dev.brella.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.binding.DefaultSpiralLogger
 import info.spiralframework.base.binding.defaultSpiralContext
 import info.spiralframework.base.common.NULL_TERMINATOR
+import info.spiralframework.base.common.PrintOutputFlowWrapper
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
@@ -40,39 +53,24 @@ import javafx.scene.image.WritablePixelFormat
 import javafx.scene.input.*
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
+import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.npe.tga.TGAReader
 import net.npe.tga.readImage
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.img.DXT1PixelData
-import dev.brella.kornea.img.bc7.BC7PixelData
-import dev.brella.kornea.img.createPngImage
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
-import dev.brella.kornea.io.common.flow.extensions.copyTo
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
-import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
-import dev.brella.kornea.toolkit.common.freeze
-import dev.brella.kornea.toolkit.common.use
-import info.spiralframework.base.common.PrintOutputFlowWrapper
-import info.spiralframework.core.common.formats.DefaultFormatReadContext
-import javafx.stage.DirectoryChooser
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.lang.Integer.min
 import javax.imageio.ImageIO
 import kotlin.math.log
@@ -612,7 +610,7 @@ class Lagann : Application(), CoroutineScope by MainScope() {
 
                 if (extractDirectory != null) {
                     launch {
-                        AsyncFileDataSource(selectedFile).use { ds ->
+                        /*AsyncFileDataSource(selectedFile).use { ds ->
                             LagannExtractFilesCommand(
                                 spiralContext, DefaultFormatReadContext(selectedFile.absolutePath, game), ds, extractDirectory.absolutePath, ".+",
                                 leaveCompressed = false,
@@ -620,7 +618,7 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                                 predictive = false,
                                 convert = false
                             )
-                        }
+                        }*/
                     }
                 } else {
                     val alert = Alert(Alert.AlertType.INFORMATION, "Extraction cancelled", ButtonType.OK)

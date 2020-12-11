@@ -1,5 +1,10 @@
 package info.spiralframework.formats.common.games
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.toolkit.common.KorneaTypeChecker
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.mutableMapOfAll
+import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -17,6 +22,10 @@ import info.spiralframework.formats.common.scripting.wrd.WrdEntry
  * This is only used as a form of abstraction.
  */
 interface DrGame {
+    companion object: ISpiralProperty.PropertyKey<DrGame>, KorneaTypeChecker<DrGame> by KorneaTypeChecker.ClassBased() {
+        override val name: String = "DrGame"
+    }
+
     val names: Array<String>
     val identifier: String
         get() = names.firstOrNull() ?: "none"
@@ -25,13 +34,37 @@ interface DrGame {
 
     /** Traits */
 
+    interface UnknownGame: DrGame {
+        override val names: Array<String>
+            get() = arrayOf("Unknown")
+
+        override val identifier: String
+            get() = "Unknown"
+
+        override val steamID: String?
+            get() = null
+    }
+
     interface ScriptOpcodeFactory<P, S> {
         fun entryFor(opcode: Int, rawArguments: P): S
     }
 
     /** A game that supports lin scripts */
-    interface LinScriptable {
-        object Unknown : LinScriptable {
+    interface LinScriptable: DrGame {
+        companion object: ISpiralProperty.PropertyKey<LinScriptable>, KorneaTypeChecker<LinScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "DrGame"
+
+            val NAMES = arrayOf(Dr1.NAMES.first(), Dr2.NAMES.first(), UDG.NAMES.first())
+
+            val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<LinScriptable>> =
+                mutableMapOfAll(
+                    Dr1.NAMES to SpiralContext::Dr1,
+                    Dr2.NAMES to SpiralContext::Dr2,
+                    UDG.NAMES to SpiralContext::UDG
+                )
+        }
+
+        object Unknown : LinScriptable, UnknownGame {
             override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = emptyMap()
             override val linCharacterIdentifiers: Map<String, Int> = emptyMap()
             override val linCharacterIDs: Map<Int, String> = emptyMap()
@@ -76,20 +109,33 @@ interface DrGame {
     }
 
     /** TODO: Figure out how to do this full stop */
-    interface LinNonstopScriptable {
+    interface LinNonstopScriptable: DrGame {
+        companion object: ISpiralProperty.PropertyKey<LinNonstopScriptable>, KorneaTypeChecker<LinNonstopScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "DrGame"
+        }
+
         val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
         val linNonstopSectionSize: Int
     }
 
     /** TODO: Figure out how to do this for V3 */
     interface LinTrialSupported {
+        companion object: ISpiralProperty.PropertyKey<LinTrialSupported>, KorneaTypeChecker<LinTrialSupported> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "DrGame"
+        }
+
+
         val trialCameraNames: Array<String>
         val evidenceNames: Array<String>
     }
 
     /** A game that supports word scripts */
-    interface WordScriptable {
-        object Unknown : WordScriptable {
+    interface WordScriptable: DrGame {
+        companion object: ISpiralProperty.PropertyKey<WordScriptable>, KorneaTypeChecker<WordScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "DrGame"
+        }
+
+        object Unknown : WordScriptable, UnknownGame {
             override val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry> = emptyMap()
             override val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand> = emptyMap()
             override val wrdCharacterIdentifiers: Map<String, String> = emptyMap()
@@ -116,6 +162,10 @@ interface DrGame {
 
     /** A game that has subfiles stored within pak archives. */
     interface PakMapped {
+        companion object: ISpiralProperty.PropertyKey<PakMapped>, KorneaTypeChecker<PakMapped> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "DrGame"
+        }
+
         val pakNames: Map<String, Array<String>>
     }
 }

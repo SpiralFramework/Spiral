@@ -1,18 +1,16 @@
 package info.spiralframework.formats.common.scripting.wrd
 
+import dev.brella.kornea.io.common.flow.BinaryOutputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.writeInt16BE
+import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
+import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import info.spiralframework.base.binding.encodeToUTF16LEByteArray
 import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.text.removeEscapes
 import info.spiralframework.formats.common.games.DRv3
-import dev.brella.kornea.io.common.flow.BinaryOutputFlow
-import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.writeInt16BE
-import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
-import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
 
 class CustomWordScript {
     private val _labels: MutableList<String> = ArrayList()
@@ -55,7 +53,6 @@ class CustomWordScript {
     @ExperimentalStdlibApi
     @ExperimentalUnsignedTypes
     suspend fun SpiralContext.compile(output: OutputFlow) {
-        val output = withState { int(output) }
         if (writeMagicNumber) output.writeInt32LE(WordScript.MAGIC_NUMBER_LE)
 
         val entryData = BinaryOutputFlow()

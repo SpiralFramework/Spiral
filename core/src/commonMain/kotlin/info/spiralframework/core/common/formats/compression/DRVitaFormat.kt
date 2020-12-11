@@ -1,23 +1,23 @@
 package info.spiralframework.core.common.formats.compression
 
 import com.soywiz.krypto.sha256
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.cacheShortTerm
-import info.spiralframework.base.common.toHexString
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.formats.common.compression.decompressVita
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.io.common.flow.readBytes
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.cacheShortTerm
+import info.spiralframework.base.common.toHexString
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.formats.common.compression.decompressVita
 
 object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "DrVita Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC }.getOrElse(false))
             return buildFormatResult(Optional.empty(), 1.0)
         return KorneaResult.empty()
@@ -33,7 +33,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
         val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
         val cache = context.cacheShortTerm(context, "drvita:${data.sha256().toHexString()}")
 

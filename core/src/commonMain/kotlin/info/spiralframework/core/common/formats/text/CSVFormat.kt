@@ -1,14 +1,14 @@
 package info.spiralframework.core.common.formats.text
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.common.formats.FormatWriteContext
-import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.formats.common.data.DataTableStructure
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.base.common.PrintOutputFlowWrapper
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.core.common.formats.FormatWriteResponse
+import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.formats.common.data.DataTableStructure
 
 object CSVFormat: WritableSpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -28,7 +28,7 @@ object CSVFormat: WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is DataTableStructure
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is DataTableStructure
 
     /**
      * Writes [data] to [stream] in this format
@@ -41,7 +41,7 @@ object CSVFormat: WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         val out = flow as? PrintOutputFlow ?: PrintOutputFlowWrapper(flow)
         when (data) {
             is DataTableStructure -> {

@@ -6,18 +6,20 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.DataSource
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import dev.brella.kornea.io.common.DataSource
-import info.spiralframework.core.common.formats.FormatReadContext
+import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.properties.get
 import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.SpiralFormat
 import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
 import info.spiralframework.core.common.formats.compression.DRVitaFormat
 import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat
 import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
-import info.spiralframework.core.common.formats.filterIsIdentifyFormatResult
+import info.spiralframework.core.common.formats.filterIsIdentifyFormatResultOrNull
 import info.spiralframework.core.common.formats.value
 import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
@@ -66,7 +68,7 @@ val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCo
 
 suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableCompressionFormat>?> {
     val result = COMPRESSION_FORMATS.map { format -> format.identify(source = dataSource, context = this) }
-                     .filterIsIdentifyFormatResult<DataSource<*>>()
+                     .filterIsIdentifyFormatResultOrNull<DataSource<*>>()
                      .maxBy(FormatResult<*, *>::confidence)
                  ?: return Pair(dataSource, null)
 
@@ -147,8 +149,8 @@ fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
  *
  * @sample samples.collections.Collections.Sorting.sortedBy
  */
-public inline fun <T: SpiralFormat> Iterable<T>.sortedAgainst(readContext: FormatReadContext): List<T> {
-    return sortedWith(compareBy { format -> abs(format.extension?.compareTo(readContext.name?.substringAfterLast('.') ?: "") ?: -100) })
+public inline fun <T: SpiralFormat> Iterable<T>.sortedAgainst(context: SpiralProperties?): List<T> {
+    return sortedWith(compareBy { format -> abs(format.extension?.compareTo(context[ISpiralProperty.FileName]?.substringAfterLast('.') ?: "") ?: -100) })
 }
 
 public inline fun <T, R: KorneaResult<*>> Iterable<T>.mapResults(transform: (T) -> R): List<R> {

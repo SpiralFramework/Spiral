@@ -23,6 +23,9 @@ class UDG(
         customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
     companion object {
+        const val IDENTIFIER = "udg"
+        val NAMES = arrayOf("UDG", "Danganronpa Another Episode", "Danganronpa Another Episode: Ultra Despair Girls", "Danganronpa: Ultra Despair Girls", "Ultra Despair Girls")
+
         @Serializable
         data class UDGGameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>)
 
@@ -44,8 +47,8 @@ class UDG(
         }
     }
 
-    override val names: Array<String> = arrayOf("UDG", "Danganronpa Another Episode", "Danganronpa Another Episode: Ultra Despair Girls", "Danganronpa: Ultra Despair Girls", "Ultra Despair Girls")
-    override val identifier: String = "udg"
+    override val names: Array<String> = NAMES
+    override val identifier: String = IDENTIFIER
     override val steamID: String = "555950"
 
     override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {

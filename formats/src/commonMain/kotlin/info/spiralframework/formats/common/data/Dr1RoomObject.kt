@@ -1,17 +1,14 @@
 package info.spiralframework.formats.common.data
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.*
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.extensions.readFloatLE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.withState
 import dev.brella.kornea.toolkit.common.useAndFlatMap
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
 class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, val y: Float, val z: Float, val width: Float, val height: Float, val perspective: Float, val unk4: Int) {
@@ -22,7 +19,6 @@ class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, 
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1RoomObject> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
         suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<Dr1RoomObject> {
             withFormats(context) {
-                val flow = withState { int(flow) }
                 val unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val id = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val modelID = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

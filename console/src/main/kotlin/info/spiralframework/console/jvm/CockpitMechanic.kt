@@ -2,13 +2,13 @@ package info.spiralframework.console.jvm
 
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.times
-import info.spiralframework.console.jvm.data.SpiralCockpitContext
+import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 @ExperimentalUnsignedTypes
 @ExperimentalTime
-class CockpitMechanic internal constructor(startingContext: SpiralCockpitContext) : Cockpit(startingContext) {
+class CockpitMechanic internal constructor(startingContext: GurrenSpiralContext) : Cockpit(startingContext) {
     companion object {
         const val SUCCESS = 0
         const val UNKNOWN_COMMAND = 3

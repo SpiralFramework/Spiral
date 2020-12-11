@@ -24,13 +24,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.base.common.*
+import info.spiralframework.console.jvm.commands.panels.GurrenSpiralProperty
+import info.spiralframework.base.common.properties.ISpiralProperty
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
 import kotlin.reflect.KClass
 
 @ExperimentalUnsignedTypes
-class DefaultSpiralCockpitContext private constructor(
+class DefaultGurrenSpiralContext private constructor(
     override val args: GurrenArgs,
     val core: SpiralCoreConfig,
     val locale: SpiralLocale,
@@ -44,7 +46,7 @@ class DefaultSpiralCockpitContext private constructor(
     val pluginRegistry: SpiralPluginRegistry,
     val serialisation: SpiralSerialisation,
     val http: SpiralHttp
-) : SpiralCockpitContext, SpiralCatalyst<SpiralCockpitContext>,
+) : GurrenSpiralContext, SpiralCatalyst<GurrenSpiralContext>,
     SpiralLocale by locale,
     SpiralLogger by logger,
     SpiralConfig by config,
@@ -71,20 +73,20 @@ class DefaultSpiralCockpitContext private constructor(
             pluginRegistry: SpiralPluginRegistry,
             serialisation: SpiralSerialisation,
             http: SpiralHttp
-        ): DefaultSpiralCockpitContext {
-            val instance = DefaultSpiralCockpitContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, signatures, pluginRegistry, serialisation, http)
+        ): DefaultGurrenSpiralContext {
+            val instance = DefaultGurrenSpiralContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, signatures, pluginRegistry, serialisation, http)
             instance.init()
             return instance
         }
 
-        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation, http: SpiralHttp): DefaultSpiralCockpitContext {
-            val instance = DefaultSpiralCockpitContext(args, core, parent, signatures, pluginRegistry, serialisation, http)
+        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation, http: SpiralHttp): DefaultGurrenSpiralContext {
+            val instance = DefaultGurrenSpiralContext(args, core, parent, signatures, pluginRegistry, serialisation, http)
             instance.init()
             return instance
         }
 
-        suspend operator fun invoke(args: GurrenArgs, parent: SpiralCoreContext): DefaultSpiralCockpitContext {
-            val instance = DefaultSpiralCockpitContext(args, parent)
+        suspend operator fun invoke(args: GurrenArgs, parent: SpiralCoreContext): DefaultGurrenSpiralContext {
+            val instance = DefaultGurrenSpiralContext(args, parent)
             instance.init()
             return instance
         }
@@ -123,7 +125,7 @@ class DefaultSpiralCockpitContext private constructor(
     )
 
     private var primed: Boolean = false
-    override val klass: KClass<SpiralCockpitContext> = SpiralCockpitContext::class
+    override val klass: KClass<GurrenSpiralContext> = GurrenSpiralContext::class
 
     override val connectTimeout: Int = core.connectTimeout ?: DefaultSpiralCoreContext.DEFAULT_CONNECT_TIMEOUT
     override val requestTimeout: Int = core.requestTimeout ?: DefaultSpiralCoreContext.DEFAULT_REQUEST_TIMEOUT
@@ -133,6 +135,10 @@ class DefaultSpiralCockpitContext private constructor(
     override val jenkinsBase: String = core.jenkinsBase ?: DefaultSpiralCoreContext.DEFAULT_JENKINS_BASE
 
     override val enabledPlugins: Map<String, SemanticVersion> = core.enabledPlugins ?: DefaultSpiralCoreContext.DEFAULT_ENABLED_PLUGINS
+
+    override val availableProperties: MutableList<ISpiralProperty<*>> = mutableListOf(
+        GurrenSpiralProperty.LinScriptable
+    )
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)
     override val loadedModules: Map<String, SemanticVersion> = moduleLoader.iterator()
@@ -151,7 +157,7 @@ class DefaultSpiralCockpitContext private constructor(
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?
     ): SpiralContext {
-        val instance = DefaultSpiralCockpitContext(
+        val instance = DefaultGurrenSpiralContext(
             args,
             core,
             newLocale ?: locale,
@@ -183,7 +189,7 @@ class DefaultSpiralCockpitContext private constructor(
         newSerialisation: SpiralSerialisation?,
         newHttp: SpiralHttp?
     ): SpiralContext {
-        val instance = DefaultSpiralCockpitContext(
+        val instance = DefaultGurrenSpiralContext(
             args,
             core,
             newLocale ?: locale,
@@ -216,8 +222,8 @@ class DefaultSpiralCockpitContext private constructor(
         newPluginRegistry: SpiralPluginRegistry?,
         newSerialisation: SpiralSerialisation?,
         newHttp: SpiralHttp?
-    ): SpiralCockpitContext {
-        val instance = DefaultSpiralCockpitContext(
+    ): GurrenSpiralContext {
+        val instance = DefaultGurrenSpiralContext(
             newArgs ?: args,
             newCore ?: core,
             newLocale ?: locale,
@@ -236,7 +242,7 @@ class DefaultSpiralCockpitContext private constructor(
         return instance
     }
 
-    override suspend fun prime(catalyst: SpiralCockpitContext) {
+    override suspend fun prime(catalyst: GurrenSpiralContext) {
         if (!primed) {
             tryPrime(args)
             tryPrime(core)
@@ -300,7 +306,7 @@ class DefaultSpiralCockpitContext private constructor(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as DefaultSpiralCockpitContext
+        other as DefaultGurrenSpiralContext
 
         if (args != other.args) return false
         if (core != other.core) return false

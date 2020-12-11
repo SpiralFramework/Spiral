@@ -15,8 +15,10 @@ import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.getOrElseRun
+import dev.brella.kornea.errors.common.getOrNull
 import dev.brella.kornea.errors.common.switchIfEmpty
 import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.Uri
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.toolkit.common.ProgressBar
@@ -31,6 +33,8 @@ import info.spiralframework.base.common.locale.constNull
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.locale.promptExit
 import info.spiralframework.base.common.logging.error
+import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
@@ -39,8 +43,6 @@ import info.spiralframework.console.jvm.pipeline.registerFunctionWithAliasesWith
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.ReadableCompressionFormat
-import info.spiralframework.core.common.formats.DefaultFormatReadContext
-import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.SpiralFormat
@@ -57,10 +59,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 class GurrenExtractFilesPilot(override val archiveFormats: List<ReadableSpiralFormat<SpiralArchive>>) : ExtractFilesCommand, CoroutineScope {
-    companion object: CommandRegistrar {
-        private inline fun DataSource<*>.readContext(): FormatReadContext =
-            DefaultFormatReadContext(location?.replace("$(.+?)(?:\\+[0-9a-fA-F]+h|\\[[0-9a-fA-F]+h,\\s*[0-9a-fA-F]+h\\])".toRegex()) { result -> result.groupValues[1] }, GurrenPilot.game)
-
+    companion object : CommandRegistrar {
         override suspend fun register(spiralContext: SpiralContext, knolusContext: KnolusContext) {
             with(knolusContext) {
                 registerFunctionWithContextWithoutReturn(
@@ -194,8 +193,17 @@ class GurrenExtractFilesPilot(override val archiveFormats: List<ReadableSpiralFo
             }
         }
 
-        suspend operator fun invoke(context: SpiralContext, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean, readContext: FormatReadContext = archiveDataSource.readContext()) =
-            GurrenExtractFilesPilot(GurrenShared.EXTRACTABLE_ARCHIVES)(context, readContext, archiveDataSource, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert)
+        suspend operator fun invoke(
+            context: SpiralContext,
+            archiveDataSource: DataSource<*>,
+            destDir: String?,
+            filter: String,
+            leaveCompressed: Boolean,
+            extractSubfiles: Boolean,
+            predictive: Boolean,
+            convert: Boolean,
+            readContext: SpiralProperties = GurrenPilot.formatContext.withOptional(ISpiralProperty.FileName, archiveDataSource.locationAsUri().getOrNull()?.takeIf { uri -> uri.protocol == Uri.PROTOCOL_FILE }?.path)
+        ) = GurrenExtractFilesPilot(GurrenShared.EXTRACTABLE_ARCHIVES)(context, readContext, archiveDataSource, destDir, filter, leaveCompressed, extractSubfiles, predictive, convert)
 
         suspend operator fun invoke(
             context: SpiralContext,

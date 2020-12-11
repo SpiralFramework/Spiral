@@ -45,7 +45,6 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<SpcArchive> =
             withFormats(context) {
                 val flow = requireNotNull(dataSource.openInputFlow())
-                    .mapWithState { int(it) }
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

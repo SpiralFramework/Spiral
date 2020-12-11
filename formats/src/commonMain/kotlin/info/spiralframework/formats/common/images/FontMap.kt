@@ -1,17 +1,14 @@
 package info.spiralframework.formats.common.images
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlowStateSelector
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.mapWithState
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
 class FontMap(val unk1: Int, val unk2: Int, val mappingTable: Map<Char, Int>, val glyphs: Array<Glyph>) {
@@ -31,7 +28,6 @@ class FontMap(val unk1: Int, val unk2: Int, val mappingTable: Map<Char, Int>, va
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<FontMap> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return it.cast() }
 
                 closeAfter(flow) {

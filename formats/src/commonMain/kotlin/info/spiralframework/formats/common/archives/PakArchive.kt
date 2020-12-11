@@ -41,7 +41,6 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>):
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE, strictOffsets: Boolean = DEFAULT_STRICT_OFFSETS): KorneaResult<PakArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState { int(it) }
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

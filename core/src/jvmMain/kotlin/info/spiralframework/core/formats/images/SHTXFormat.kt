@@ -33,7 +33,7 @@ package info.spiralframework.core.formats.images
 //     *
 //     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
 //     */
-//    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): FormatResult<BufferedImage> {
+//    override suspend fun read(context: SpiralContext, readContext: SpiralFormatContext?, source: DataSource<*>): FormatResult<BufferedImage> {
 //        with(context) {
 //            source.useInputFlow { flow ->
 //                val magic = flow.readInt32LE()
@@ -190,7 +190,7 @@ package info.spiralframework.core.formats.images
 //     *
 //     * @return An enum for the success of the operation
 //     */
-//    override fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, stream: OutputStream): FormatWriteResponse {
+//    override fun write(context: SpiralContext, writeContext: SpiralFormatContext?, data: Any, stream: OutputStream): FormatWriteResponse {
 //        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 //    }
 //}

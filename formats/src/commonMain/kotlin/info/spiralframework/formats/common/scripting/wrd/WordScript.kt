@@ -1,12 +1,5 @@
 package info.spiralframework.formats.common.scripting.wrd
 
-import info.spiralframework.base.binding.TextCharsets
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
-import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.games.DrGame
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
@@ -17,6 +10,13 @@ import dev.brella.kornea.io.common.flow.extensions.readInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.binding.TextCharsets
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
+import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.games.DrGame
+import info.spiralframework.formats.common.withFormats
 
 @ExperimentalUnsignedTypes
 class WordScript(val labels: Array<String>, val parameters: Array<String>, val strings: Array<String>?, val localBranchNumbers: Array<Pair<Int, Int>>, val scriptDataBlocks: Array<Array<WrdEntry>>) {
@@ -29,7 +29,6 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         suspend operator fun invoke(context: SpiralContext, game: DrGame.WordScriptable, dataSource: DataSource<*>): KorneaResult<WordScript> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
@@ -97,7 +96,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
                         require(sectionOffsets[index] > 0) { localise("formats.wrd.bad_offset", index, sectionOffsets[index]) }
 
                         flow.fauxSeekFromStartForResult(sectionOffsets[index].toULong(), dataSource) { scriptDataFlow ->
-                            readScriptData(labels, parameters, strings, game, withState { int16(BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong()))) })
+                            readScriptData(labels, parameters, strings, game, BufferedInputFlow(WindowedInputFlow(scriptDataFlow, 0uL, size.toULong())))
                         }.getOrBreak { return@closeAfter it.cast() }
                     }
 
@@ -131,7 +130,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
             })
         }
 
-        suspend fun <F> SpiralContext.readScriptData(labels: Array<String>, parameters: Array<String>, text: Array<String>?, game: DrGame.WordScriptable, flow: F): KorneaResult<Array<WrdEntry>> where F: Int16FlowState, F: InputFlowState<PeekableInputFlow> {
+        suspend fun SpiralContext.readScriptData(labels: Array<String>, parameters: Array<String>, text: Array<String>?, game: DrGame.WordScriptable, flow: PeekableInputFlow): KorneaResult<Array<WrdEntry>> {
             withFormats(this) {
                 val entries: MutableList<WrdEntry> = ArrayList()
 

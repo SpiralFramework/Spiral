@@ -1,19 +1,16 @@
 package info.spiralframework.osb.common
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.text.toHexString
-import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.io.common.flow.InputFlowStateSelector
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.int
-import dev.brella.kornea.io.common.flow.mapWithState
 import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
+import info.spiralframework.formats.common.withFormats
 
 class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
     companion object {
@@ -21,7 +18,6 @@ class OpenSpiralBitcodeWrapper private constructor(val source: DataSource<*>) {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<OpenSpiralBitcodeWrapper> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .mapWithState(InputFlowStateSelector::int)
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {

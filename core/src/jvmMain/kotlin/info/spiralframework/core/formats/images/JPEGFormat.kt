@@ -1,13 +1,13 @@
 package info.spiralframework.core.formats.images
 
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.jvm.asOutputStream
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.WritableSpiralFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.jvm.asOutputStream
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -26,7 +26,7 @@ object JPEGFormat : SpiralImageIOFormat("jpg", "jpeg"), WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is Image
 
     /**
      * Writes [data] to [stream] in this format
@@ -39,7 +39,7 @@ object JPEGFormat : SpiralImageIOFormat("jpg", "jpeg"), WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         with(context) {
             if (data !is Image)
                 return FormatWriteResponse.WRONG_FORMAT

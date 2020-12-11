@@ -11,8 +11,7 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.useInputFlowForResult
 import dev.brella.kornea.io.jvm.asOutputStream
-import info.spiralframework.core.common.formats.FormatReadContext
-import info.spiralframework.core.common.formats.FormatWriteContext
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -37,7 +36,7 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: FormatReadContext?, source: DataSource<*>): KorneaResult<BufferedImage> {
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<BufferedImage> {
         with(context) {
             try {
                 //TODO: This code is bad!! Write your own goddamn targa reader brella
@@ -69,7 +68,7 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: FormatWriteContext?, data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is Image
 
     /**
      * Writes [data] to [stream] in this format
@@ -82,7 +81,7 @@ object TGAFormat : ReadableSpiralFormat<BufferedImage>, WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: FormatWriteContext?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         with(context) {
             if (data !is Image)
                 return FormatWriteResponse.WRONG_FORMAT
