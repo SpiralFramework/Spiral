@@ -1,5 +1,9 @@
 package info.spiralframework.base.jvm
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.StdinInputFlow
+import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.text.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -122,3 +126,6 @@ fun MutableCollection<Int>.addAll(ints: IntArray): Boolean = addAll(ints.toTyped
 //Out variance screws up the way Optional works
 inline fun <T> Optional<out T>.outOrElse(other: T): T = if (isPresent) get() else other
 inline fun <T> Optional<out T>.outOrElseGet(func: () -> T): T = if (isPresent) get() else func()
+
+suspend inline fun <reified T> select(prefix: String?, keys: Array<String>, values: Array<T>): KorneaResult<T> = info.spiralframework.base.common.select(::readLine, prefix, keys, values)
+suspend inline fun <reified T> select(prefix: String?, keys: Array<String>, values: Map<String, T>): KorneaResult<T> = info.spiralframework.base.common.select(::readLine, prefix, keys, values)

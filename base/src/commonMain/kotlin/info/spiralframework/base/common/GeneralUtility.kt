@@ -1,12 +1,9 @@
 package info.spiralframework.base.common
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.korneaNotEnoughData
 import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.SeekableInputFlow
-import dev.brella.kornea.io.common.flow.bookmark
+import info.spiralframework.base.common.text.toIntOrNullBaseN
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
@@ -89,3 +86,115 @@ inline fun <K, V> mutableMapOfAll(vararg maps: Pair<Array<K>, V>): MutableMap<K,
 
 inline fun <K, V> mutableMapOfAll(vararg maps: Map<K, V>): MutableMap<K, V> =
     HashMap<K, V>().apply { maps.forEach { map -> putAll(map) } }
+
+suspend inline fun <reified T> select(readline: () -> String?, prefix: String?, keys: Array<String>, values: Array<T>): KorneaResult<T> {
+    val string = buildString {
+        if (prefix?.isNotBlank() == true) append(prefix)
+
+        keys.mapIndexed { index, name ->
+            append("\n\t")
+            append(index + 1)
+            append(") ")
+            append(name)
+        }
+
+        append("\n\t")
+        append(keys.size + 1)
+        append(") Exit")
+    }
+
+    while (true) {
+        println(string)
+        print(">>> ")
+
+        val input = readline() ?: return korneaNotEnoughData("stdin broken")
+
+        if (input.equals("exit", true) || input.equals("break", true) || input.equals("quit", true)) {
+            println("(Exiting selection)")
+            return KorneaResult.empty()
+        }
+
+        val inputAsNum = input.trim().toIntOrNullBaseN()?.minus(1)
+
+        if (inputAsNum != null) {
+            if (inputAsNum in keys.indices) {
+                println("Selected: '${keys[inputAsNum]}'")
+
+                return KorneaResult.success(values[inputAsNum], null)
+            } else if (inputAsNum == keys.size) {
+                println("(Exiting selection)")
+                return KorneaResult.empty()
+            } else {
+                println("${inputAsNum + 1} outside of range!")
+                continue
+            }
+        }
+
+        val valueForKey = keys.withIndex().groupBy({ (_, k) -> k.commonPrefixWith(input, true).length }, IndexedValue<*>::index)
+            .entries
+            .maxByOrNull(Map.Entry<Int, *>::key)
+            ?.let { (_, v) -> if (v.size == 1) v.first() else null }
+
+        if (valueForKey == null) {
+            println("Sorry, '$input' is a little ambiguous, try again maybe?")
+        } else {
+            return KorneaResult.success(values[valueForKey])
+        }
+    }
+}
+
+suspend inline fun <reified T> select(readline: () -> String?, prefix: String?, keys: Array<String>, values: Map<String, T>): KorneaResult<T> {
+    val string = buildString {
+        if (prefix?.isNotBlank() == true) append(prefix)
+
+        keys.mapIndexed { index, name ->
+            append("\n\t")
+            append(index + 1)
+            append(") ")
+            append(name)
+        }
+
+        append("\n\t")
+        append(keys.size + 1)
+        append(") Exit")
+    }
+
+    while (true) {
+        println(string)
+        print(">>> ")
+
+        val input = readline() ?: return korneaNotEnoughData("stdin broken")
+
+        if (input.equals("exit", true) || input.equals("break", true) || input.equals("quit", true)) {
+            println("(Exiting selection)")
+            return KorneaResult.empty()
+        }
+
+        val inputAsNum = input.trim().toIntOrNullBaseN()?.minus(1)
+
+        if (inputAsNum != null) {
+            if (inputAsNum in keys.indices) {
+                println("Selected: '${keys[inputAsNum]}'")
+
+                return KorneaResult.successOrEmpty(values[keys[inputAsNum]], null)
+            } else if (inputAsNum == keys.size) {
+                println("(Exiting selection)")
+                return KorneaResult.empty()
+            } else {
+                println("${inputAsNum + 1} outside of range!")
+                continue
+            }
+        }
+
+        val valueForKey = values.entries.groupBy { (k) -> k.commonPrefixWith(input, true).length }
+            .entries
+            .maxByOrNull(Map.Entry<Int, *>::key)
+            ?.let { (_, v) -> v.firstOrNull { (k) -> k.length == input.length } }
+
+        if (valueForKey == null) {
+            println("Sorry, '$input' is a little ambiguous, try again maybe?")
+        } else {
+            return KorneaResult.success(valueForKey.value)
+        }
+    }
+}

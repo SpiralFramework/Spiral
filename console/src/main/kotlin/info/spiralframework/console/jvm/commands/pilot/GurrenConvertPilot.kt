@@ -86,9 +86,9 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
         }
 
         suspend operator fun invoke(context: GurrenSpiralContext, dataSource: DataSource<*>, readContext: SpiralProperties, from: KorneaResult<String>, to: KorneaResult<String>, saveAs: KorneaResult<String>) =
-            GurrenConvertPilot(GurrenShared.READABLE_FORMATS, GurrenShared.WRITABLE_FORMATS)(context, dataSource, readContext, from, to, saveAs.map { path ->
+            GurrenConvertPilot(GurrenShared.READABLE_FORMATS, GurrenShared.WRITABLE_FORMATS)(context, dataSource, readContext, {}, from, to, saveAs.map { path ->
                 Pair(AsyncFileOutputFlow(File(path)), GurrenPilot.formatContext.with(ISpiralProperty.FileName, path))
-            })
+            }, GurrenPilot::formatContext.setter)
     }
 
     override val coroutineContext: CoroutineContext = SupervisorJob()
@@ -101,7 +101,7 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
         println("Format error: $formatError / $dataSource")
     }
 
-    suspend operator fun invoke(context: GurrenSpiralContext, dataSource: DataSource<*>, readContext: SpiralProperties, from: KorneaResult<String>, to: KorneaResult<String>, saveAs: KorneaResult<Pair<OutputFlow, SpiralProperties>>) {
+    suspend operator fun invoke(context: GurrenSpiralContext, dataSource: DataSource<*>, readContext: SpiralProperties, updateReadContext: (SpiralProperties) -> Unit, from: KorneaResult<String>, to: KorneaResult<String>, saveAs: KorneaResult<Pair<OutputFlow, SpiralProperties>>, updateWriteProperties: (SpiralProperties) -> Unit) {
         val (readingResult, readFormatFail) = from.map { name ->
             readableFormats.firstOrNull { format -> format.name.equals(name, true) }
             ?: readableFormats.firstOrNull { format -> format.extension?.equals(name, true) == true }
@@ -173,5 +173,7 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
         }
 
         println(writeResult)
+
+        if (formatContext != writeContext) updateWriteProperties(formatContext.without(formatContext.keys().filterNot(ISpiralProperty.PropertyKey<*>::isPersistent)))
     }
 }

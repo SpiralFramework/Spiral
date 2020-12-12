@@ -1,5 +1,12 @@
 package info.spiralframework.formats.common.games
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.getOrElse
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
@@ -12,12 +19,8 @@ import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndMapInputFlow
-import dev.brella.kornea.io.common.useInputFlow
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 @ExperimentalUnsignedTypes
 open class DRv3(
@@ -28,6 +31,8 @@ open class DRv3(
     customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.WordScriptable, DrGame.ScriptOpcodeFactory<Array<WordScriptValue>, WrdEntry> {
     companion object {
+        val NAMES = arrayOf("DRv3", "NDRv3", "V3", "Danganronpa V3: Killing Harmony", "New Danganronpa V3: Killing Harmony")
+
         @Serializable
         data class DRv3GameJson(val character_names: Map<String, String>, val character_identifiers: Map<String, String>, val colour_codes: Map<String, String>, val item_names: Array<String>)
 
@@ -50,7 +55,7 @@ open class DRv3(
         }
     }
 
-    override val names: Array<String> = arrayOf("DRv3", "NDRv3", "V3", "Danganronpa V3: Killing Harmony", "New Danganronpa V3: Killing Harmony")
+    override val names: Array<String> = NAMES
     override val identifier: String = "drv3"
     override val steamID: String = "567640"
 

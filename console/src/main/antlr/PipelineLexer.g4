@@ -4,6 +4,9 @@ import KnolusLexer;
 SINGLE_LINE_COMMENT: '//' ~[\n]+ NEW_LINE* -> skip;
 MULTI_LINE_COMMENT: '/*' .*? '*/' NEW_LINE* -> skip ; // .*? matches anything until the first */
 
+GLOBAL: G L O B A L;
+VARIABLE_DECLARATION: (V A R) | (V A L);
+
 CALL_STRING_SCRIPT: STRING_SCRIPT_LIST INLINE_WHITESPACE_CHARACTERS+ -> type(CALL_SCRIPT), pushMode(StringParamMode);
 CALL_SCRIPT: SCRIPT_LIST INLINE_WHITESPACE_CHARACTERS+ -> pushMode(ScriptCall);
 
@@ -17,18 +20,20 @@ fragment STRING_SCRIPT_LIST
     : H E L P ((SWS) W I T H)?
     | I D E N T I F Y
     | C O N V E R T
+    | S E T ((SWS) P R O P (E R T Y)?)?
     ;
 
 fragment SCRIPT_LIST
     : E X T R A C T (SWS) (F I L E S | M O D E L S | T E X T U R E S)
     | E X T R A C T (SWS) F I L E S (SWS) W I Z A R D
     | S H O W (SWS) E N V (I R O N M E N T)?
+    | S H O W (SWS) P R O P (E R T I E S)?
     | E X I T | Q U I T
     ;
 
 SKIP_WS: INLINE_WHITESPACE_CHARACTERS+ -> skip;
 
-fragment SWS: INLINE_WHITESPACE_CHARACTERS*;
+fragment SWS: (INLINE_WHITESPACE_CHARACTERS | '_')*;
 
 mode ScriptCall;
 

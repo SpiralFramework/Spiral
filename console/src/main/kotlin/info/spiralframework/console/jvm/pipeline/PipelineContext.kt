@@ -2,7 +2,6 @@ package info.spiralframework.console.jvm.pipeline
 
 import dev.brella.knolus.*
 import dev.brella.knolus.context.KnolusContext
-import dev.brella.knolus.modules.functionregistry.functionBuilder
 import dev.brella.knolus.types.KnolusTypedValue
 import dev.brella.knolus.types.asType
 import dev.brella.kornea.errors.common.KorneaResult
@@ -10,23 +9,14 @@ import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.errors.common.successInline
 import dev.brella.kornea.toolkit.common.KorneaTypeChecker
-import info.spiralframework.antlr.pipeline.PipelineLexer
-import info.spiralframework.antlr.pipeline.PipelineParser
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.SpiralSuspending
 import info.spiralframework.console.jvm.data.GurrenSpiralContext
-import info.spiralframework.core.SpiralCoreContext
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonToken
-import org.antlr.v4.runtime.CommonTokenStream
+import kotlinx.coroutines.Job
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.misc.Utils
 import org.antlr.v4.runtime.tree.Tree
 import org.antlr.v4.runtime.tree.Trees
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 
 fun toStringTree(t: Tree, recog: Parser?): String? {
@@ -81,6 +71,7 @@ data class KnolusTypedWrapper<T : Any>(public val inner: T, override val typeInf
         val SPIRAL_CONTEXT = typeInfo<GurrenSpiralContext>()
         val RANDOM = typeInfo<Random>()
         val FILE = typeInfo<File>()
+        val JOB = typeInfo<Job>()
 
         inline operator fun <reified T : Any> invoke(inner: T): KnolusTypedWrapper<T> = KnolusTypedWrapper(inner, TypeInfo(T::class))
     }
@@ -98,6 +89,7 @@ inline fun <reified T : Any> typeInfo() = KnolusTypedWrapper.TypeInfo(T::class)
 
 //inline fun spiralContextParameter(name: String? = null) = wrappedParameter(name, KnolusTypedWrapper.SPIRAL_CONTEXT)
 inline fun fileParameter(name: String? = null) = wrappedParameter(name, KnolusTypedWrapper.FILE)
+inline fun jobParameter(name: String? = null) = wrappedParameter(name, KnolusTypedWrapper.JOB)
 
 inline fun <reified T : Any> wrappedParameter(name: String? = null, typeInfo: KnolusTypedWrapper.TypeInfo<T> = typeInfo(), vararg aliases: String) =
     typeInfo.typeSpecWith(name, null, aliases, { _ -> KorneaResult.successInline(inner) })

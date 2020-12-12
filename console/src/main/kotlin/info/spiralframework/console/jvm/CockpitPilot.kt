@@ -27,31 +27,11 @@ import kotlinx.coroutines.*
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonToken
 import java.io.File
-import java.lang.StringBuilder
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureTimeMillis
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : Cockpit(startingContext), CoroutineScope {
-    val globalContext = KnolusGlobalContext(null, CompoundKnolusRestriction.fromPermissive(KnolusRecursiveRestriction(maxDepth = 20, maxRecursiveCount = 30)))
-
-    suspend fun handle(context: KnolusContext, value: Any): KorneaResult<Any?> =
-        when (value) {
-            is KnolusUnion.Action<*> -> value.run(context)
-            is KnolusUnion.VariableValue<*> -> handle(context, value.value)
-            is KnolusUnion.ReturnStatement -> KorneaResult.success(value.value)
-            else -> KorneaResult.empty()
-        }
-
-    val debuggingCounter = AtomicInteger(0)
-    val debuggingThread = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "Debugging-${debuggingCounter.incrementAndGet()}") }
-        .asCoroutineDispatcher()
-
-    override val coroutineContext: CoroutineContext = SupervisorJob() + debuggingThread
-
+class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : Cockpit(startingContext) {
     override suspend fun start() {
         with(context) {
             println(
@@ -62,7 +42,7 @@ class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : 
                 )
             )
 
-            launch {
+            GurrenPilot.launch {
                 val file = File("stats.csv")
                 file.delete()
                 val runtime = Runtime.getRuntime()
@@ -117,9 +97,9 @@ class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : 
                 }
             }
 
-            GurrenPilot.register(context, globalContext)
+            GurrenPilot.register(context)
 
-            globalContext["spiralContext"] = KnolusTypedWrapper(context)
+            GurrenPilot.globalContext["spiralContext"] = KnolusTypedWrapper(context)
 
             loop@ while (GurrenPilot.keepLooping.get()) {
                 delay(50)
@@ -163,7 +143,7 @@ class CockpitPilot internal constructor(startingContext: GurrenSpiralContext) : 
                     ::PipelineParser,
                     ::PipelineVisitor
                 ) { parser, visitor -> visitor.visitScope(parser.scope()) }
-                    .flatMap { (scope) -> (scope as KnolusUnion.ScopeType).run(globalContext) }
+                    .flatMap { (scope) -> (scope as KnolusUnion.ScopeType).run(GurrenPilot.globalContext) }
                     .doOnFailure {
                         val commandEntered = input.split('\n')
                             .dropLastWhile(String::isBlank)

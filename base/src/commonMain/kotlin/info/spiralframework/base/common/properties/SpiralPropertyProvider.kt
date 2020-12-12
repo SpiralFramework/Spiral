@@ -8,8 +8,8 @@ interface SpiralPropertyProvider {
 
     suspend fun SpiralContext.populate(writeContext: SpiralProperties?, data: Any, keys: List<ISpiralProperty.PropertyKey<*>>): SpiralProperties? =
         keys.fold(writeContext) { formatContext, key ->
-            val property = availableProperties.firstOrNull { it.key == key } ?: return@fold formatContext
-            if (property.isPresent(this, formatContext, data)) return@fold formatContext
+            val property = availableProperties.firstOrNull { it.key === key } ?: return@fold formatContext
+            if (formatContext[property] != null) return@fold formatContext
 
             property.fillIn(this, formatContext, data).getOrElse(formatContext)
         }

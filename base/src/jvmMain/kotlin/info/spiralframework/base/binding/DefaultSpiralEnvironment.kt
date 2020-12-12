@@ -29,7 +29,7 @@ actual class DefaultSpiralEnvironment : SpiralEnvironment {
     override suspend fun SpiralContext.retrieveEnvironment(): Map<String, String> {
         val envMap = HashMap(staticEnvironment)
         dynamicEnvironment.forEach { (key, func) -> envMap[key] = func(key) ?: return@forEach }
-        environmentalVariables.forEach { key -> envMap[key] = System.getenv(key) ?: System.getProperty(key) }
+        environmentalVariables.forEach { key -> envMap[key] = System.getenv(key) ?: System.getProperty(key) ?: "" }
         return envMap
     }
 

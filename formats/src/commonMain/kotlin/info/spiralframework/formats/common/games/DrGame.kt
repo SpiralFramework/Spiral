@@ -24,6 +24,25 @@ import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 interface DrGame {
     companion object: ISpiralProperty.PropertyKey<DrGame>, KorneaTypeChecker<DrGame> by KorneaTypeChecker.ClassBased() {
         override val name: String = "DrGame"
+
+        val NAMES = arrayOf(Dr1.NAMES.first(), Dr2.NAMES.first(), UDG.NAMES.first(), DRv3.NAMES.first())
+
+        val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<DrGame>> =
+            mutableMapOfAll(
+                Dr1.NAMES to SpiralContext::Dr1,
+                Dr2.NAMES to SpiralContext::Dr2,
+                UDG.NAMES to SpiralContext::UDG,
+                DRv3.NAMES to SpiralContext::DRv3
+            )
+
+        override fun hashCode(): Int = name.hashCode()
+        override fun equals(other: Any?): Boolean = when (other) {
+            is CharSequence -> other == name
+            is ISpiralProperty<*> -> other.name == name
+            is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+            else -> false
+        }
     }
 
     val names: Array<String>
@@ -62,6 +81,15 @@ interface DrGame {
                     Dr2.NAMES to SpiralContext::Dr2,
                     UDG.NAMES to SpiralContext::UDG
                 )
+
+            override fun hashCode(): Int = name.hashCode()
+            override fun equals(other: Any?): Boolean = when (other) {
+                is CharSequence -> other == name
+                is ISpiralProperty<*> -> other.name == name
+                is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+                else -> false
+            }
         }
 
         object Unknown : LinScriptable, UnknownGame {
@@ -112,6 +140,15 @@ interface DrGame {
     interface LinNonstopScriptable: DrGame {
         companion object: ISpiralProperty.PropertyKey<LinNonstopScriptable>, KorneaTypeChecker<LinNonstopScriptable> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
+
+            override fun hashCode(): Int = name.hashCode()
+            override fun equals(other: Any?): Boolean = when (other) {
+                is CharSequence -> other == name
+                is ISpiralProperty<*> -> other.name == name
+                is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+                else -> false
+            }
         }
 
         val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
@@ -122,6 +159,15 @@ interface DrGame {
     interface LinTrialSupported {
         companion object: ISpiralProperty.PropertyKey<LinTrialSupported>, KorneaTypeChecker<LinTrialSupported> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
+
+            override fun hashCode(): Int = name.hashCode()
+            override fun equals(other: Any?): Boolean = when (other) {
+                is CharSequence -> other == name
+                is ISpiralProperty<*> -> other.name == name
+                is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+                else -> false
+            }
         }
 
 
@@ -133,6 +179,15 @@ interface DrGame {
     interface WordScriptable: DrGame {
         companion object: ISpiralProperty.PropertyKey<WordScriptable>, KorneaTypeChecker<WordScriptable> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
+
+            override fun hashCode(): Int = name.hashCode()
+            override fun equals(other: Any?): Boolean = when (other) {
+                is CharSequence -> other == name
+                is ISpiralProperty<*> -> other.name == name
+                is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+                else -> false
+            }
         }
 
         object Unknown : WordScriptable, UnknownGame {
@@ -164,6 +219,15 @@ interface DrGame {
     interface PakMapped {
         companion object: ISpiralProperty.PropertyKey<PakMapped>, KorneaTypeChecker<PakMapped> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
+
+            override fun hashCode(): Int = name.hashCode()
+            override fun equals(other: Any?): Boolean = when (other) {
+                is CharSequence -> other == name
+                is ISpiralProperty<*> -> other.name == name
+                is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+                else -> false
+            }
         }
 
         val pakNames: Map<String, Array<String>>

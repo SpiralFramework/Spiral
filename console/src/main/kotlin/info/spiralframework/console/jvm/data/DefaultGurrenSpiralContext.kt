@@ -1,5 +1,7 @@
 package info.spiralframework.console.jvm.data
 
+import dev.brella.kornea.toolkit.common.SemanticVersion
+import info.spiralframework.base.common.*
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
@@ -7,7 +9,9 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.console.jvm.SpiralModuleConsole
+import info.spiralframework.console.jvm.commands.panels.GurrenSpiralProperty
 import info.spiralframework.core.*
 import info.spiralframework.core.common.SPIRAL_CORE_MODULE
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
@@ -22,10 +26,6 @@ import info.spiralframework.formats.jvm.SpiralModuleFormats
 import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import dev.brella.kornea.toolkit.common.SemanticVersion
-import info.spiralframework.base.common.*
-import info.spiralframework.console.jvm.commands.panels.GurrenSpiralProperty
-import info.spiralframework.base.common.properties.ISpiralProperty
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
@@ -137,7 +137,7 @@ class DefaultGurrenSpiralContext private constructor(
     override val enabledPlugins: Map<String, SemanticVersion> = core.enabledPlugins ?: DefaultSpiralCoreContext.DEFAULT_ENABLED_PLUGINS
 
     override val availableProperties: MutableList<ISpiralProperty<*>> = mutableListOf(
-        GurrenSpiralProperty.LinScriptable
+        GurrenSpiralProperty.Game, GurrenSpiralProperty.LinScriptable
     )
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)

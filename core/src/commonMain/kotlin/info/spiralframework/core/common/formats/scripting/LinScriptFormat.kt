@@ -28,7 +28,7 @@ object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<LinScript>> {
         //Check here if we have an explicit game override that says this *isn't* a game from HPA.
         //ie: V3
-        val game = readContext?.get(DrGame)
+        val game = readContext[DrGame]
         if (game != null && game !is DrGame.LinScriptable)
             return KorneaResult.errorAsIllegalArgument(-1, context.localise("core.formats.lin.invalid_game_provided", game))
 
