@@ -1,6 +1,9 @@
 lexer grammar OpenSpiralLexer;
 import LibLexer, OSLBacktickLexer, OSLCommonLexer, OSLWordScriptLexer;
 
+SINGLE_LINE_COMMENT: '//' ~[\n]+ ('\r'?'\n')* -> skip;
+MULTI_LINE_COMMENT: '/*' .*? '*/' ('\r'?'\n')* -> skip ; // .*? matches anything until the first */
+
 HEADER_DECLARATION: O S L INLINE_WHITESPACE S C R I P T (INLINE_WHITESPACE SEMANTIC_VERSION)?;
 
 SEMICOLON_SEPARATOR: (';' NEW_LINE? OPT_WHITESPACE);
