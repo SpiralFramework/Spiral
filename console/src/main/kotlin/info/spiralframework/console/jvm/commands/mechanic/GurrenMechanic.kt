@@ -8,6 +8,11 @@ import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
+import info.spiralframework.core.common.formats.archives.PakArchiveFormat
+import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
+import info.spiralframework.core.common.formats.archives.WadArchiveFormat
+import info.spiralframework.core.common.formats.archives.ZipFormat
 import info.spiralframework.core.formats.archives.*
 import java.text.DecimalFormat
 
@@ -15,8 +20,8 @@ import java.text.DecimalFormat
 @ExperimentalUnsignedTypes
 object GurrenMechanic : CommandRegistrar {
     val COMPILABLE_ARCHIVES = arrayOf<WritableSpiralFormat>(
-            CpkArchiveFormat, PakArchiveFormat, SpcArchiveFormat,
-            WadArchiveFormat, ZipFormat
+        CpkArchiveFormat, PakArchiveFormat, SpcArchiveFormat,
+        WadArchiveFormat, ZipFormat
     )
 
     val PERCENT_FORMAT = DecimalFormat("00.00")

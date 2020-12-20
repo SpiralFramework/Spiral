@@ -6,9 +6,12 @@ import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.toolkit.common.KorneaTypeChecker
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.properties.defaultEquals
+import info.spiralframework.base.common.properties.defaultHashCode
 
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -31,7 +34,7 @@ interface ReadableSpiralFormat<out T> : SpiralFormat {
     /**
      * Specifies a preferred conversion format for files that match this format.
      * This is used primarily for Danganronpa formats to specify we should convert to a nicer, more usable format.
-     * It should **not** be used in contexts where there is ambiguity about what format may be desired; thus, it should not be defined for regular formats to Danganronpa formats in mots cases.
+     * It should **not** be used in contexts where there is ambiguity about what format may be desired; thus, it should not be defined for regular formats to Danganronpa formats in most cases.
      */
     fun preferredConversionFormat(): WritableSpiralFormat? = null
 
@@ -103,6 +106,37 @@ interface WritableSpiralFormat : SpiralFormat {
      * @return An enum for the success of the operation
      */
     suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse
+}
+
+interface WritableSpiralFormatBridge {
+    companion object: ISpiralProperty.PropertyKey<List<WritableSpiralFormatBridge>>, KorneaTypeChecker<List<WritableSpiralFormatBridge>> by KorneaTypeChecker.ClassBased() {
+        override val name: String = "WritableSpiralFormatBridge"
+
+        override fun hashCode(): Int = defaultHashCode()
+        override fun equals(other: Any?): Boolean = defaultEquals(other)
+    }
+
+    /**
+     * Does this format support writing [data]?
+     *
+     * @return If we are able to write [data] as this format
+     */
+    fun supportsWritingAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any): Boolean
+
+    fun requiredPropertiesForWritingAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any): List<ISpiralProperty.PropertyKey<*>> = emptyList()
+
+    /**
+     * Writes [data] to [stream] as [format]
+     *
+     * @param name Name of the data, if any
+     * @param game Game relevant to this data
+     * @param dataContext Context that we retrieved this file in
+     * @param data The data to wrote
+     * @param stream The stream to write to
+     *
+     * @return An enum for the success of the operation
+     */
+    suspend fun writeAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any, flow: OutputFlow): FormatWriteResponse
 }
 
 sealed class FormatWriteResponse {

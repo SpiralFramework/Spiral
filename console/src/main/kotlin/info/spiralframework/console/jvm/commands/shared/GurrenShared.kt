@@ -10,6 +10,11 @@ import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.SpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
 import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
+import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
+import info.spiralframework.core.common.formats.archives.PakArchiveFormat
+import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
+import info.spiralframework.core.common.formats.archives.WadArchiveFormat
+import info.spiralframework.core.common.formats.archives.ZipFormat
 import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
 import info.spiralframework.core.common.formats.compression.DRVitaFormat
 import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat

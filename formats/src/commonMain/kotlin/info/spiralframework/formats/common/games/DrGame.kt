@@ -5,6 +5,8 @@ import dev.brella.kornea.toolkit.common.KorneaTypeChecker
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.mutableMapOfAll
 import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.properties.defaultEquals
+import info.spiralframework.base.common.properties.defaultHashCode
 import info.spiralframework.formats.common.OpcodeCommandTypeMap
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.EnumWordScriptCommand
@@ -35,14 +37,8 @@ interface DrGame {
                 DRv3.NAMES to SpiralContext::DRv3
             )
 
-        override fun hashCode(): Int = name.hashCode()
-        override fun equals(other: Any?): Boolean = when (other) {
-            is CharSequence -> other == name
-            is ISpiralProperty<*> -> other.name == name
-            is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-            else -> false
-        }
+        override fun hashCode(): Int = defaultHashCode()
+        override fun equals(other: Any?): Boolean = defaultEquals(other)
     }
 
     val names: Array<String>
@@ -82,14 +78,8 @@ interface DrGame {
                     UDG.NAMES to SpiralContext::UDG
                 )
 
-            override fun hashCode(): Int = name.hashCode()
-            override fun equals(other: Any?): Boolean = when (other) {
-                is CharSequence -> other == name
-                is ISpiralProperty<*> -> other.name == name
-                is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-                else -> false
-            }
+            override fun hashCode(): Int = defaultHashCode()
+            override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
         object Unknown : LinScriptable, UnknownGame {
@@ -141,14 +131,8 @@ interface DrGame {
         companion object: ISpiralProperty.PropertyKey<LinNonstopScriptable>, KorneaTypeChecker<LinNonstopScriptable> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
 
-            override fun hashCode(): Int = name.hashCode()
-            override fun equals(other: Any?): Boolean = when (other) {
-                is CharSequence -> other == name
-                is ISpiralProperty<*> -> other.name == name
-                is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-                else -> false
-            }
+            override fun hashCode(): Int = defaultHashCode()
+            override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
         val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
@@ -160,14 +144,8 @@ interface DrGame {
         companion object: ISpiralProperty.PropertyKey<LinTrialSupported>, KorneaTypeChecker<LinTrialSupported> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
 
-            override fun hashCode(): Int = name.hashCode()
-            override fun equals(other: Any?): Boolean = when (other) {
-                is CharSequence -> other == name
-                is ISpiralProperty<*> -> other.name == name
-                is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-                else -> false
-            }
+            override fun hashCode(): Int = defaultHashCode()
+            override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
 
@@ -180,14 +158,8 @@ interface DrGame {
         companion object: ISpiralProperty.PropertyKey<WordScriptable>, KorneaTypeChecker<WordScriptable> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
 
-            override fun hashCode(): Int = name.hashCode()
-            override fun equals(other: Any?): Boolean = when (other) {
-                is CharSequence -> other == name
-                is ISpiralProperty<*> -> other.name == name
-                is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-                else -> false
-            }
+            override fun hashCode(): Int = defaultHashCode()
+            override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
         object Unknown : WordScriptable, UnknownGame {
@@ -220,14 +192,8 @@ interface DrGame {
         companion object: ISpiralProperty.PropertyKey<PakMapped>, KorneaTypeChecker<PakMapped> by KorneaTypeChecker.ClassBased() {
             override val name: String = "DrGame"
 
-            override fun hashCode(): Int = name.hashCode()
-            override fun equals(other: Any?): Boolean = when (other) {
-                is CharSequence -> other == name
-                is ISpiralProperty<*> -> other.name == name
-                is ISpiralProperty.PropertyKey<*> -> other.name == name
-
-                else -> false
-            }
+            override fun hashCode(): Int = defaultHashCode()
+            override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
         val pakNames: Map<String, Array<String>>

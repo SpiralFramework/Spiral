@@ -1,24 +1,18 @@
-package info.spiralframework.core.formats.archives
+package info.spiralframework.core.common.formats.archives
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.cacheShortTerm
-import info.spiralframework.formats.common.archives.*
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.copyTo
-import dev.brella.kornea.io.jvm.JVMInputFlow
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
-import java.io.InputStream
-import java.util.zip.ZipFile
+import info.spiralframework.formats.common.archives.*
 
-object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat {
+object WadArchiveFormat : ReadableSpiralFormat<WadArchive>, WritableSpiralFormat {
     override val name: String = "Wad"
     override val extension: String = "wad"
 
@@ -33,9 +27,9 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<WadArchive> =
-            WadArchive(context, source)
-                .filter { wad -> wad.files.isNotEmpty() }
-                .buildFormatResult { wad -> if (wad.files.size == 1) 0.75 else 1.0 }
+        WadArchive(context, source)
+            .filter { wad -> wad.files.isNotEmpty() }
+            .buildFormatResult { wad -> if (wad.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?
@@ -46,7 +40,13 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
+        data is AwbArchive
+        || data is WadArchive
+        || data is CpkArchive
+        || data is SpcArchive
+        || data is PakArchive
+//        || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -73,19 +73,19 @@ object WadArchiveFormat: ReadableSpiralFormat<WadArchive>, WritableSpiralFormat 
                 data.openDecompressedSource(context, entry).doOnSuccess { customWad[entry.name] = it }
             }
             is WadArchive -> data.files.forEach { entry -> customWad[entry.name] = data.openSource(entry) }
-            is ZipFile -> data.entries().iterator().forEach { entry ->
-                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
-
-                cache.openOutputFlow()
-                        .map { output ->
-                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                            customWad[entry.name] = cache
-                            caches.add(cache)
-                        }.doOnFailure {
-                            cache.close()
-                            customWad[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                        }
-            }
+//            is ZipFile -> data.entries().iterator().forEach { entry ->
+//                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
+//
+//                cache.openOutputFlow()
+//                        .map { output ->
+//                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+//                            customWad[entry.name] = cache
+//                            caches.add(cache)
+//                        }.doOnFailure {
+//                            cache.close()
+//                            customWad[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+//                        }
+//            }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }
 

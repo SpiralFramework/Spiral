@@ -9,12 +9,12 @@ import info.spiralframework.core.ReadableCompressionFormat
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
-import info.spiralframework.core.formats.archives.CpkArchiveFormat
-import info.spiralframework.core.formats.archives.PakArchiveFormat
-import info.spiralframework.core.formats.archives.SpcArchiveFormat
+import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
+import info.spiralframework.core.common.formats.archives.PakArchiveFormat
+import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
 import info.spiralframework.core.formats.archives.SrdArchiveFormat
-import info.spiralframework.core.formats.archives.WadArchiveFormat
-import info.spiralframework.core.formats.archives.ZipFormat
+import info.spiralframework.core.common.formats.archives.WadArchiveFormat
+import info.spiralframework.core.common.formats.archives.ZipFormat
 import info.spiralframework.core.panels.ExtractFilesCommand
 import info.spiralframework.formats.common.archives.SpiralArchive
 import javafx.scene.control.Alert

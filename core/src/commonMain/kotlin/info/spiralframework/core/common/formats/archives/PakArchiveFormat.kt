@@ -1,15 +1,11 @@
-package info.spiralframework.core.formats.archives
+package info.spiralframework.core.common.formats.archives
 
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.copyTo
-import dev.brella.kornea.io.jvm.JVMInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.get
@@ -17,14 +13,12 @@ import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
 import info.spiralframework.formats.common.archives.*
-import java.io.InputStream
-import java.util.zip.ZipFile
 
 object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat {
     override val name: String = "Pak"
     override val extension: String = "pak"
 
-    override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
+    override fun preferredConversionFormat(): WritableSpiralFormat = ZipFormat
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
         val fileName = readContext[ISpiralProperty.FileName]?.substringAfterLast('/')
@@ -48,15 +42,15 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<PakArchive> =
-            PakArchive(context, source)
-                .filter { pak -> pak.files.isNotEmpty() }
-                .buildFormatResult { pak ->
-                    when {
-                        readContext[ISpiralProperty.FileName]?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
-                        pak.files.size == 1 -> 0.75
-                        else -> 0.8
-                    }
+        PakArchive(context, source)
+            .filter { pak -> pak.files.isNotEmpty() }
+            .buildFormatResult { pak ->
+                when {
+                    readContext[ISpiralProperty.FileName]?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
+                    pak.files.size == 1 -> 0.75
+                    else -> 0.8
                 }
+            }
 
     /**
      * Does this format support writing [data]?
@@ -67,7 +61,13 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
+        data is AwbArchive ||
+        data is WadArchive ||
+        data is CpkArchive ||
+        data is SpcArchive ||
+        data is PakArchive
+//        || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -99,23 +99,23 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
             }
             is WadArchive -> data.files.forEach { entry ->
                 customPak[entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()] =
-                        data.openSource(entry)
+                    data.openSource(entry)
             }
-            is ZipFile -> data.entries().iterator().forEach { entry ->
-                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
-                val index = entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()
-
-                @Suppress("DEPRECATION")
-                cache.openOutputFlow()
-                        .map { output ->
-                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                            customPak[index] = cache
-                            caches.add(cache)
-                        }.doOnFailure {
-                            cache.close()
-                            customPak[index] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                        }
-            }
+//            is ZipFile -> data.entries().iterator().forEach { entry ->
+//                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
+//                val index = entry.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex()
+//
+//                @Suppress("DEPRECATION")
+//                cache.openOutputFlow()
+//                    .map { output ->
+//                        data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+//                        customPak[index] = cache
+//                        caches.add(cache)
+//                    }.doOnFailure {
+//                        cache.close()
+//                        customPak[index] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+//                    }
+//            }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }
 

@@ -40,7 +40,17 @@ interface ISpiralProperty<T> {
 
         override val isPersistent: Boolean = false
 
-        override fun hashCode(): Int = name.hashCode()
-        override fun equals(other: Any?): Boolean = name == other
+        override fun hashCode(): Int = defaultHashCode()
+        override fun equals(other: Any?): Boolean = defaultEquals(other)
     }
 }
+
+inline fun <T> ISpiralProperty.PropertyKey<T>.defaultEquals(other: Any?): Boolean = when (other) {
+    is CharSequence -> other == name
+    is ISpiralProperty<*> -> other.name == name
+    is ISpiralProperty.PropertyKey<*> -> other.name == name
+
+    else -> false
+}
+
+inline fun <T> ISpiralProperty.PropertyKey<T>.defaultHashCode(): Int = name.hashCode()

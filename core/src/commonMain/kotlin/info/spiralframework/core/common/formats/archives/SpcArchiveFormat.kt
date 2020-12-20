@@ -1,26 +1,20 @@
-package info.spiralframework.core.formats.archives
+package info.spiralframework.core.common.formats.archives
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.concurrent.suspendForEach
-import info.spiralframework.base.common.io.cacheShortTerm
-import info.spiralframework.formats.common.archives.*
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.copyTo
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.jvm.JVMInputFlow
 import dev.brella.kornea.toolkit.common.useAndFlatMap
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
 import info.spiralframework.core.common.formats.buildFormatResult
-import java.io.InputStream
-import java.util.zip.ZipFile
+import info.spiralframework.formats.common.archives.*
 
 object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat {
     override val name: String = "Spc"
@@ -49,9 +43,9 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<SpcArchive> =
-            SpcArchive(context, source)
-                .filter { spc -> spc.files.isNotEmpty() }
-                .buildFormatResult { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
+        SpcArchive(context, source)
+            .filter { spc -> spc.files.isNotEmpty() }
+            .buildFormatResult { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?
@@ -62,7 +56,13 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is AwbArchive || data is WadArchive || data is CpkArchive || data is SpcArchive || data is PakArchive || data is ZipFile
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
+        data is AwbArchive
+        || data is WadArchive
+        || data is CpkArchive
+        || data is SpcArchive
+        || data is PakArchive
+//        || data is ZipFile
 
     /**
      * Writes [data] to [stream] in this format
@@ -83,26 +83,26 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
             is AwbArchive -> data.files.forEach { entry -> customSpc[entry.id.toString()] = data.openSource(entry) }
             is CpkArchive -> data.files.forEach { entry ->
                 customSpc[entry.name, if (entry.isCompressed) SpcArchive.COMPRESSED_FLAG else 0, entry.fileSize.toLong(), entry.extractSize.toLong()] =
-                        data.openRawSource(context, entry)
+                    data.openRawSource(context, entry)
             }
             is PakArchive -> data.files.forEach { entry -> customSpc[entry.index.toString()] = data.openSource(entry) }
             is SpcArchive -> data.files.forEach { entry ->
                 data.openDecompressedSource(context, entry).doOnSuccess { customSpc[entry.name] = it }
             }
             is WadArchive -> data.files.forEach { entry -> customSpc[entry.name] = data.openSource(entry) }
-            is ZipFile -> data.entries().iterator().forEach { entry ->
-                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
-
-                cache.openOutputFlow()
-                        .map { output ->
-                            data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
-                            customSpc[entry.name] = cache
-                            caches.add(cache)
-                        }.doOnFailure {
-                            cache.close()
-                            customSpc[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
-                        }
-            }
+//            is ZipFile -> data.entries().iterator().forEach { entry ->
+//                val cache = context.cacheShortTerm(context, "zip:${entry.name}")
+//
+//                cache.openOutputFlow()
+//                    .map { output ->
+//                        data.getInputStream(entry).use { inStream -> JVMInputFlow(inStream, entry.name).copyTo(output) }
+//                        customSpc[entry.name] = cache
+//                        caches.add(cache)
+//                    }.doOnFailure {
+//                        cache.close()
+//                        customSpc[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
+//                    }
+//            }
             else -> return FormatWriteResponse.WRONG_FORMAT
         }
 
