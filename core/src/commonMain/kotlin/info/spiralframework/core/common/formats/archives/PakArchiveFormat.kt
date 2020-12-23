@@ -18,7 +18,7 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
     override val name: String = "Pak"
     override val extension: String = "pak"
 
-    override fun preferredConversionFormat(): WritableSpiralFormat = ZipFormat
+    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat = ZipFormat
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
         val fileName = readContext[ISpiralProperty.FileName]?.substringAfterLast('/')

@@ -137,7 +137,7 @@ class DefaultGurrenSpiralContext private constructor(
     override val enabledPlugins: Map<String, SemanticVersion> = core.enabledPlugins ?: DefaultSpiralCoreContext.DEFAULT_ENABLED_PLUGINS
 
     override val availableProperties: MutableList<ISpiralProperty<*>> = mutableListOf(
-        GurrenSpiralProperty.Game, GurrenSpiralProperty.LinScriptable
+        GurrenSpiralProperty.Game, GurrenSpiralProperty.LinScriptable, GurrenSpiralProperty.PreferredImageFormatProperty
     )
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)

@@ -13,6 +13,7 @@ import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
 import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
 import info.spiralframework.core.common.formats.archives.PakArchiveFormat
 import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
+import info.spiralframework.core.common.formats.archives.SrdArchiveFormat
 import info.spiralframework.core.common.formats.archives.WadArchiveFormat
 import info.spiralframework.core.common.formats.archives.ZipFormat
 import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
@@ -20,6 +21,7 @@ import info.spiralframework.core.common.formats.compression.DRVitaFormat
 import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat
 import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
 import info.spiralframework.core.common.formats.data.DataTableStructureFormat
+import info.spiralframework.core.common.formats.images.SHTXFormat
 import info.spiralframework.core.common.formats.scripting.LinScriptFormat
 import info.spiralframework.core.common.formats.scripting.OpenSpiralBitcodeFormat
 import info.spiralframework.core.common.formats.text.CSVFormat
@@ -51,7 +53,7 @@ object GurrenShared {
             AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
             CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat,
 //                DDSImageFormat.DXT1,
-            JPEGFormat, PNGFormat, TGAFormat,
+            JPEGFormat, PNGFormat, TGAFormat, SHTXFormat,
             LinScriptFormat, OpenSpiralBitcodeFormat, OpenSpiralLanguageFormat,
 //                SFLFormat,
             DataTableStructureFormat

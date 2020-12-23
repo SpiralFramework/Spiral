@@ -10,8 +10,10 @@ import dev.brella.kornea.toolkit.common.KorneaTypeChecker
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.properties.SpiralPropertyProvider
 import info.spiralframework.base.common.properties.defaultEquals
 import info.spiralframework.base.common.properties.defaultHashCode
+import info.spiralframework.base.common.properties.get
 
 interface SpiralFormat {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
@@ -22,8 +24,13 @@ interface SpiralFormat {
      */
     val extension: String?
 
-    companion object {
+    companion object : ISpiralProperty.PropertyKey<SpiralFormat>, KorneaTypeChecker<SpiralFormat> by KorneaTypeChecker.ClassBased() {
         const val DEFAULT_EXTENSION = "dat"
+
+        override val name: String = "SpiralFormat"
+
+        override fun hashCode(): Int = defaultHashCode()
+        override fun equals(other: Any?): Boolean = defaultEquals(other)
     }
 }
 
@@ -31,12 +38,21 @@ interface SpiralFormat {
  * A Spiral format that supports reading from a source
  */
 interface ReadableSpiralFormat<out T> : SpiralFormat {
+    companion object : ISpiralProperty.PropertyKey<ReadableSpiralFormat<*>>, KorneaTypeChecker<ReadableSpiralFormat<*>> by KorneaTypeChecker.ClassBased() {
+        override val name: String = "SpiralFormat"
+
+        override fun hashCode(): Int = defaultHashCode()
+        override fun equals(other: Any?): Boolean = defaultEquals(other)
+    }
+
+    fun requiredPropertiesForConversionSelection(context: SpiralContext, properties: SpiralProperties?): List<ISpiralProperty.PropertyKey<*>> = emptyList()
+
     /**
      * Specifies a preferred conversion format for files that match this format.
      * This is used primarily for Danganronpa formats to specify we should convert to a nicer, more usable format.
      * It should **not** be used in contexts where there is ambiguity about what format may be desired; thus, it should not be defined for regular formats to Danganronpa formats in most cases.
      */
-    fun preferredConversionFormat(): WritableSpiralFormat? = null
+    fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat? = null
 
     /**
      * Should we attempt to automatically identify this file?
@@ -109,7 +125,7 @@ interface WritableSpiralFormat : SpiralFormat {
 }
 
 interface WritableSpiralFormatBridge {
-    companion object: ISpiralProperty.PropertyKey<List<WritableSpiralFormatBridge>>, KorneaTypeChecker<List<WritableSpiralFormatBridge>> by KorneaTypeChecker.ClassBased() {
+    companion object : ISpiralProperty.PropertyKey<List<WritableSpiralFormatBridge>>, KorneaTypeChecker<List<WritableSpiralFormatBridge>> by KorneaTypeChecker.ClassBased() {
         override val name: String = "WritableSpiralFormatBridge"
 
         override fun hashCode(): Int = defaultHashCode()
@@ -139,11 +155,19 @@ interface WritableSpiralFormatBridge {
     suspend fun writeAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any, flow: OutputFlow): FormatWriteResponse
 }
 
+inline fun SpiralContext.bridgeFor(format: WritableSpiralFormat, writeContext: SpiralProperties?, data: Any): WritableSpiralFormatBridge? =
+    writeContext[WritableSpiralFormatBridge]?.firstOrNull { bridge -> bridge.supportsWritingAs(this, writeContext, format, data) }
+
+suspend inline fun <C> C.populateForConversionSelection(readingFormat: ReadableSpiralFormat<*>, context: SpiralProperties?): SpiralProperties? where C : SpiralPropertyProvider, C : SpiralContext =
+    readingFormat.requiredPropertiesForConversionSelection(this, context)
+        .takeIf(List<*>::isNotEmpty)
+        ?.let { populate(context, null, it) }
+
 sealed class FormatWriteResponse {
     object SUCCESS : FormatWriteResponse()
     object WRONG_FORMAT : FormatWriteResponse()
 
-    data class MISSING_PROPERTY(val property: ISpiralProperty.PropertyKey<*>): FormatWriteResponse()
+    data class MISSING_PROPERTY(val property: ISpiralProperty.PropertyKey<*>) : FormatWriteResponse()
 
     //TODO: Replace this with a result
     class FAIL(val reason: Throwable) : FormatWriteResponse() {

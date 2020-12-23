@@ -1,5 +1,6 @@
 package info.spiralframework.core.formats.images
 
+import dev.brella.kornea.img.RgbMatrix
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.asOutputStream
 import info.spiralframework.base.common.SpiralContext
@@ -26,7 +27,7 @@ object JPEGFormat : SpiralImageIOFormat("jpg", "jpeg"), WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is Image
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is Image || data is RgbMatrix
 
     /**
      * Writes [data] to [stream] in this format
@@ -41,21 +42,32 @@ object JPEGFormat : SpiralImageIOFormat("jpg", "jpeg"), WritableSpiralFormat {
      */
     override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
         with(context) {
-            if (data !is Image)
-                return FormatWriteResponse.WRONG_FORMAT
+            val jpg: BufferedImage
 
-            val width = data.getWidth(null)
-            val height = data.getHeight(null)
+            when (data) {
+                is Image -> {
+                    val width = data.getWidth(null)
+                    val height = data.getHeight(null)
 
-            if (width < 0 || height < 0)
-                return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", width, height)))
+                    if (width < 0 || height < 0)
+                        return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", width, height)))
 
-            val jpg = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-            val g = jpg.graphics
-            try {
-                g.drawImage(data, 0, 0, null)
-            } finally {
-                g.dispose()
+                    jpg = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+                    val g = jpg.graphics
+                    try {
+                        g.drawImage(data, 0, 0, null)
+                    } finally {
+                        g.dispose()
+                    }
+                }
+                is RgbMatrix -> {
+                    if (data.width < 0 || data.height < 0)
+                        return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", data.width, data.height)))
+
+                    jpg = BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB)
+                    jpg.setRGB(0, 0, data.width, data.height, data.rgb, 0, data.width)
+                }
+                else -> return FormatWriteResponse.WRONG_FORMAT
             }
 
             try {

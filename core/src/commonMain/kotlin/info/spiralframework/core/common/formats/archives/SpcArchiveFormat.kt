@@ -20,7 +20,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
     override val name: String = "Spc"
     override val extension: String = "spc"
 
-    override fun preferredConversionFormat(): WritableSpiralFormat? = ZipFormat
+    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat? = ZipFormat
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<SpcArchive>> =
         source.openInputFlow().useAndFlatMap { flow ->

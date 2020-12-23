@@ -6,7 +6,7 @@ import info.spiralframework.base.common.SpiralContext
 interface SpiralPropertyProvider {
     val availableProperties: List<ISpiralProperty<*>>
 
-    suspend fun SpiralContext.populate(writeContext: SpiralProperties?, data: Any, keys: List<ISpiralProperty.PropertyKey<*>>): SpiralProperties? =
+    suspend fun SpiralContext.populate(writeContext: SpiralProperties?, data: Any?, keys: List<ISpiralProperty.PropertyKey<*>>): SpiralProperties? =
         keys.fold(writeContext) { formatContext, key ->
             val property = availableProperties.firstOrNull { it.key === key } ?: return@fold formatContext
             if (formatContext[property] != null) return@fold formatContext
@@ -19,5 +19,5 @@ interface SpiralPropertyProvider {
     }
 }
 
-suspend inline fun <C> C.populate(writeContext: SpiralProperties?, data: Any, keys: List<ISpiralProperty.PropertyKey<*>>) where C: SpiralPropertyProvider, C: SpiralContext =
+suspend inline fun <C> C.populate(writeContext: SpiralProperties?, data: Any?, keys: List<ISpiralProperty.PropertyKey<*>>) where C: SpiralPropertyProvider, C: SpiralContext =
     populate(writeContext, data, keys)

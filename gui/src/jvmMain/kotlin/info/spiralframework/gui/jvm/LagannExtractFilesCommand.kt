@@ -12,7 +12,7 @@ import info.spiralframework.core.common.formats.archives.AwbArchiveFormat
 import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
 import info.spiralframework.core.common.formats.archives.PakArchiveFormat
 import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
-import info.spiralframework.core.formats.archives.SrdArchiveFormat
+import info.spiralframework.core.common.formats.archives.SrdArchiveFormat
 import info.spiralframework.core.common.formats.archives.WadArchiveFormat
 import info.spiralframework.core.common.formats.archives.ZipFormat
 import info.spiralframework.core.panels.ExtractFilesCommand

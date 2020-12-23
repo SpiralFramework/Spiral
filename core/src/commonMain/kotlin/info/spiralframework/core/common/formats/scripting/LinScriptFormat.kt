@@ -23,7 +23,7 @@ object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
     override val extension: String = "lin"
     val REQUIRED_PROPERTIES = listOf(DrGame.LinScriptable)
 
-    override fun preferredConversionFormat(): WritableSpiralFormat = OpenSpiralBitcodeFormat
+    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat = OpenSpiralBitcodeFormat
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<LinScript>> {
         //Check here if we have an explicit game override that says this *isn't* a game from HPA.

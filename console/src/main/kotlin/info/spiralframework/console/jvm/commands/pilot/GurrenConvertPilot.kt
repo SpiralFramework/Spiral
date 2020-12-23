@@ -26,7 +26,9 @@ import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.common.formats.FormatResult
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.bridgeFor
 import info.spiralframework.core.common.formats.filterIsIdentifyFormatResult
+import info.spiralframework.core.common.formats.populateForConversionSelection
 import info.spiralframework.core.mapResults
 import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
@@ -101,7 +103,16 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
         println("Format error: $formatError / $dataSource")
     }
 
-    suspend operator fun invoke(context: GurrenSpiralContext, dataSource: DataSource<*>, readContext: SpiralProperties, updateReadContext: (SpiralProperties) -> Unit, from: KorneaResult<String>, to: KorneaResult<String>, saveAs: KorneaResult<Pair<OutputFlow, SpiralProperties>>, updateWriteProperties: (SpiralProperties) -> Unit) {
+    suspend operator fun invoke(
+        context: GurrenSpiralContext,
+        dataSource: DataSource<*>,
+        readContext: SpiralProperties,
+        updateReadContext: (SpiralProperties) -> Unit,
+        from: KorneaResult<String>,
+        to: KorneaResult<String>,
+        saveAs: KorneaResult<Pair<OutputFlow, SpiralProperties>>,
+        updateWriteProperties: (SpiralProperties) -> Unit
+    ) {
         val (readingResult, readFormatFail) = from.map { name ->
             readableFormats.firstOrNull { format -> format.name.equals(name, true) }
             ?: readableFormats.firstOrNull { format -> format.extension?.equals(name, true) == true }
@@ -124,7 +135,14 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
             ?: writableFormats.firstOrNull { format -> format.extension?.equals(name, true) == true }
             ?: return noMatchingFormatName(name)
         }.switchIfEmpty {
-            KorneaResult.successOrEmpty(readingResult.format().preferredConversionFormat())
+            val readingFormat = readingResult.format()
+
+            KorneaResult.successOrEmpty(
+                readingFormat.preferredConversionFormat(
+                    context,
+                    context.populateForConversionSelection(readingFormat, readContext)
+                )
+            )
         }.getOrBreak { failure -> return println("No writing format: $failure") }
 
         val readingData = KorneaResult.successOrEmpty(readingResult.get().getOrNull())
@@ -150,29 +168,48 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
             Pair(AsyncFileOutputFlow(outputFile), GurrenPilot.formatContext.with(ISpiralProperty.FileName, outputFile.name))
         }
 
-        if (!writingFormat.supportsWriting(context, writeContext, readingData)) {
-            return println("${writingFormat.name} does not support writing this type of data (${readingResult.format().name} / ${readingData::class.simpleName})")
-        }
-
-        println("Converting from ${readingResult.format().name} -> ${writingFormat.name} ($readingData), and saving to $outputFlow")
-
-        val requiredProperties = writingFormat.requiredPropertiesForWrite(context, writeContext, readingData)
-
         val formatContext: SpiralProperties?
 
-        if (requiredProperties.isNotEmpty()) {
+        if (!writingFormat.supportsWriting(context, writeContext, readingData)) {
+            val bridge = context.bridgeFor(writingFormat, writeContext, readingData)
+                         ?: return println("${writingFormat.name} does not support writing this type of data (${readingResult.format().name} / ${readingData::class.simpleName})")
+
+            println("Converting from ${readingResult.format().name} -> ${writingFormat.name} ($readingData), and saving to $outputFlow")
+
+            val requiredProperties = bridge.requiredPropertiesForWritingAs(context, writeContext, writingFormat, readingData)
+
+            if (requiredProperties.isNotEmpty()) {
 //            println("Attempting to fill in ${requiredProperties.size} propert(y/ies)")
 
-            formatContext = context.populate(writeContext, readingData, requiredProperties) ?: writeContext
+                formatContext = context.populate(writeContext, readingData, requiredProperties) ?: writeContext
+            } else {
+                formatContext = writeContext
+            }
+
+            val writeResult = arbitraryProgressBar(loadingText = "Converting...", loadedText = "Finished converting!") {
+                outputFlow.use { bridge.writeAs(context, formatContext, writingFormat, readingData, it) }
+            }
+
+            println(writeResult)
         } else {
-            formatContext = writeContext
-        }
+            println("Converting from ${readingResult.format().name} -> ${writingFormat.name} ($readingData), and saving to $outputFlow")
 
-        val writeResult = arbitraryProgressBar(loadingText = "Converting...", loadedText = "Finished converting!") {
-            writingFormat.write(context, formatContext, readingData, outputFlow)
-        }
+            val requiredProperties = writingFormat.requiredPropertiesForWrite(context, writeContext, readingData)
 
-        println(writeResult)
+            if (requiredProperties.isNotEmpty()) {
+//            println("Attempting to fill in ${requiredProperties.size} propert(y/ies)")
+
+                formatContext = context.populate(writeContext, readingData, requiredProperties) ?: writeContext
+            } else {
+                formatContext = writeContext
+            }
+
+            val writeResult = arbitraryProgressBar(loadingText = "Converting...", loadedText = "Finished converting!") {
+                outputFlow.use { writingFormat.write(context, formatContext, readingData, it) }
+            }
+
+            println(writeResult)
+        }
 
         if (formatContext != writeContext) updateWriteProperties(formatContext.without(formatContext.keys().filterNot(ISpiralProperty.PropertyKey<*>::isPersistent)))
     }
