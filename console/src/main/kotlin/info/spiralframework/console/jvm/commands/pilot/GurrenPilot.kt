@@ -5,59 +5,41 @@ package info.spiralframework.console.jvm.commands.pilot
 import dev.brella.knolus.KnolusUnion
 import dev.brella.knolus.context.KnolusContext
 import dev.brella.knolus.context.KnolusGlobalContext
-import dev.brella.knolus.modules.functionregistry.registerFunctionWithContextWithoutReturn
 import dev.brella.knolus.modules.functionregistry.registerFunctionWithoutReturn
 import dev.brella.knolus.modules.functionregistry.registerMemberFunctionWithContext
 import dev.brella.knolus.objectTypeAsStringParameter
 import dev.brella.knolus.objectTypeParameter
 import dev.brella.knolus.restrictions.CompoundKnolusRestriction
 import dev.brella.knolus.restrictions.KnolusRecursiveRestriction
-import dev.brella.knolus.run
 import dev.brella.knolus.stringTypeParameter
-import dev.brella.knolus.transform.KnolusTransVisitorRestrictions
-import dev.brella.knolus.transform.parseKnolusTransRule
 import dev.brella.knolus.types.KnolusString
 import dev.brella.knolus.types.asString
-import dev.brella.knolus.types.asType
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.toolkit.common.mapToArray
-import info.spiralframework.antlr.pipeline.PipelineLexer
-import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.printlnLocale
-import info.spiralframework.base.common.logging.error
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.base.common.text.doublePadWindowsPaths
 import info.spiralframework.base.jvm.select
 import info.spiralframework.console.jvm.commands.data.HelpDetails
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
-import info.spiralframework.console.jvm.pipeline.KnolusTypedWrapper
-import info.spiralframework.console.jvm.pipeline.PipelineVisitor
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithAliasesWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
-import info.spiralframework.console.jvm.pipeline.wrap
+import info.spiralframework.core.common.formats.WritableSpiralFormatBridge
+import info.spiralframework.core.common.formats.archives.ZipFormat
+import info.spiralframework.core.formats.archives.FolderFormat
 import io.ktor.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.yield
-import org.antlr.v4.runtime.CharStreams
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds
 import java.text.DecimalFormat
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.regex.PatternSyntaxException
 import kotlin.collections.set
 import kotlin.coroutines.CoroutineContext
 
@@ -69,6 +51,7 @@ object GurrenPilot: CoroutineScope {
     /** Helper Variables */
     var keepLooping = AtomicBoolean(true)
     var formatContext: SpiralProperties = SpiralProperties()
+        .with(WritableSpiralFormatBridge, listOf(ZipFormat, FolderFormat))
 
     val debuggingCounter = AtomicInteger(0)
     val debuggingThread = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "Debugging-${debuggingCounter.incrementAndGet()}") }
@@ -92,7 +75,7 @@ object GurrenPilot: CoroutineScope {
     val helpCommands: MutableMap<String, String> = HashMap()
     val submodules = arrayOf(
         GurrenExtractFilesPilot, GurrenExtractTexturesPilot, GurrenExtractModelsPilot,
-        GurrenIdentifyPilot, GurrenConvertPilot,
+        GurrenIdentifyPilot, GurrenConvertPilot, GurrenCompilePilot,
 
         GurrenWatchtower
     )

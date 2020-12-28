@@ -3,7 +3,6 @@ package info.spiralframework.console.jvm.pipeline
 import dev.brella.knolus.booleanTypeParameter
 import dev.brella.knolus.context.KnolusContext
 import dev.brella.knolus.modules.functionregistry.registerFunction
-import dev.brella.knolus.modules.functionregistry.registerFunctionWithContextWithoutReturn
 import dev.brella.knolus.modules.functionregistry.registerFunctionWithoutReturn
 import dev.brella.knolus.numberTypeAsIntParameter
 import dev.brella.knolus.objectTypeAsStringParameter
@@ -12,7 +11,6 @@ import dev.brella.knolus.types.KnolusArray
 import dev.brella.knolus.types.KnolusConstants
 import dev.brella.kornea.errors.common.getOrElse
 import dev.brella.kornea.errors.common.map
-import dev.brella.kornea.errors.common.orElse
 import dev.brella.kornea.toolkit.common.mapToArray
 import info.spiralframework.base.jvm.URLDataSource
 import java.io.File
@@ -24,6 +22,8 @@ object PipelineFunctions {
     fun registerAll(pipelineContext: KnolusContext) {
         with(pipelineContext) {
             registerFunctionWithoutReturn("println", objectTypeAsStringParameter("line")) { line -> println(line) }
+
+            registerFunction("folder", stringTypeParameter("path")) { path -> KnolusTypedWrapper(File(path)) }
 
             registerFunction(
                 "sub_files",

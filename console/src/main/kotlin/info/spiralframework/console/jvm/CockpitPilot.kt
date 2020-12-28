@@ -1,10 +1,6 @@
 package info.spiralframework.console.jvm
 
 import dev.brella.knolus.KnolusUnion
-import dev.brella.knolus.context.KnolusContext
-import dev.brella.knolus.context.KnolusGlobalContext
-import dev.brella.knolus.restrictions.CompoundKnolusRestriction
-import dev.brella.knolus.restrictions.KnolusRecursiveRestriction
 import dev.brella.knolus.run
 import dev.brella.knolus.transform.KnolusTransVisitorRestrictions
 import dev.brella.knolus.transform.parseKnolusTransRule

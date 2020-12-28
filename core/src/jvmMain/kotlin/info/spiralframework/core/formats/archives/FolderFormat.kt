@@ -1,33 +1,98 @@
 package info.spiralframework.core.formats.archives
 
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.Optional
-import info.spiralframework.base.common.SpiralContext
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
+import dev.brella.kornea.io.jvm.files.relativePathFrom
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.jvm.io.files.Folder
 import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.WritableSpiralFormatBridge
+import info.spiralframework.core.common.formats.archives.CpkArchiveFormat
+import info.spiralframework.core.common.formats.archives.PakArchiveFormat
+import info.spiralframework.core.common.formats.archives.SpcArchiveFormat
+import info.spiralframework.core.common.formats.archives.WadArchiveFormat
+import info.spiralframework.formats.common.archives.CustomCpkArchive
+import info.spiralframework.formats.common.archives.CustomPakArchive
+import info.spiralframework.formats.common.archives.CustomSpcArchive
+import info.spiralframework.formats.common.archives.CustomWadArchive
+import info.spiralframework.formats.common.archives.compile
 import java.io.File
+import java.util.*
 
-object FolderFormat : ReadableSpiralFormat<File>, WritableSpiralFormat {
-    override val name: String = "folder"
-    override val extension: String? = null
+object FolderFormat : WritableSpiralFormatBridge {
+    override fun supportsWritingAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any): Boolean =
+        data is Folder && (format === CpkArchiveFormat || format === PakArchiveFormat || format === SpcArchiveFormat || format === WadArchiveFormat)
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<File>> {
-        TODO("Not Implemented; Data Sources only provide Input Streams")
-    }
+    override suspend fun writeAs(context: SpiralContext, writeContext: SpiralProperties?, format: WritableSpiralFormat, data: Any, flow: OutputFlow): FormatWriteResponse =
+        when (data) {
+            is Folder -> {
+                when (format) {
+                    CpkArchiveFormat -> {
+                        val customCpk = CustomCpkArchive()
+                        val files: MutableList<DataSource<*>> = ArrayList()
 
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<File> {
-        TODO("Not Implemented; Data Sources only provide Input Streams")
-    }
+                        data.base.walk()
+                            .filter(File::isFile)
+                            .forEach { file ->
+                                customCpk[file relativePathFrom data.base] = AsyncFileDataSource(file).also(files::add)
+                            }
 
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+                        customCpk.compile(context, flow)
+                        files.suspendForEach(DataSource<*>::close)
+                        FormatWriteResponse.SUCCESS
+                    }
+                    PakArchiveFormat -> {
+                        val customPak = CustomPakArchive()
+                        val files: MutableList<DataSource<*>> = ArrayList()
 
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+                        data.base.walk()
+                            .filter(File::isFile)
+                            .associateBy { file -> file.name.substringBeforeLast('.').toIntOrNull() ?: customPak.nextFreeIndex() }
+                            .forEach { (index, file) ->
+                                customPak[index] = AsyncFileDataSource(file).also(files::add)
+                            }
+
+                        customPak.compile(flow)
+                        files.suspendForEach(DataSource<*>::close)
+                        FormatWriteResponse.SUCCESS
+                    }
+                    SpcArchiveFormat -> {
+                        val customSpc = CustomSpcArchive()
+                        val files: MutableList<DataSource<*>> = ArrayList()
+
+                        data.base.walk()
+                            .filter(File::isFile)
+                            .forEach { file ->
+                                customSpc[file relativePathFrom data.base] = AsyncFileDataSource(file).also(files::add)
+                            }
+
+                        customSpc.compile(flow)
+                        files.suspendForEach(DataSource<*>::close)
+                        FormatWriteResponse.SUCCESS
+                    }
+                    WadArchiveFormat -> {
+                        val customWad = CustomWadArchive()
+                        val files: MutableList<DataSource<*>> = ArrayList()
+
+                        data.base.walk()
+                            .filter(File::isFile)
+                            .forEach { file ->
+                                customWad[file relativePathFrom data.base] = AsyncFileDataSource(file).also(files::add)
+                            }
+
+                        customWad.compile(flow)
+                        files.suspendForEach(DataSource<*>::close)
+                        FormatWriteResponse.SUCCESS
+                    }
+                    else -> FormatWriteResponse.WRONG_FORMAT
+                }
+            }
+            else -> {
+                FormatWriteResponse.WRONG_FORMAT
+            }
+        }
 }

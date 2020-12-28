@@ -1,10 +1,14 @@
 package info.spiralframework.formats.common.archives
 
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyFrom
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt64LE
+import dev.brella.kornea.io.common.useInputFlow
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 @ExperimentalUnsignedTypes
 open class CustomWadArchive {
@@ -57,14 +61,14 @@ open class CustomWadArchive {
                 if (!directories.containsKey(newSub))
                     directories[newSub] = ArrayList()
 
-                directories[newSub]!!.add(subbedName)
+                directories[newSub]?.let { list -> if (subbedName !in list) list.add(subbedName) }
                 subbedName = newSub
             } while (subbedName.contains('/'))
 
             if (!directories.containsKey(""))
                 directories[""] = ArrayList()
 
-            directories[""]!!.add(subbedName)
+            directories[""]?.let { list -> if (subbedName !in list) list.add(subbedName) }
         }
 
         val realDirectories = directories.filterKeys { directoryName -> directoryName !in fileNames }

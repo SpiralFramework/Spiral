@@ -62,7 +62,7 @@ object GurrenShared {
 
     val WRITABLE_FORMATS: MutableList<WritableSpiralFormat> by lazy {
         mutableListOf<WritableSpiralFormat>(
-            CpkArchiveFormat, FolderFormat, PakArchiveFormat, SpcArchiveFormat, WadArchiveFormat, ZipFormat,
+            CpkArchiveFormat, PakArchiveFormat, SpcArchiveFormat, WadArchiveFormat, ZipFormat,
             AudioFormats.mp3, AudioFormats.ogg, AudioFormats.wav,
             JPEGFormat, PNGFormat, TGAFormat,
             LinScriptFormat, OpenSpiralBitcodeFormat, OpenSpiralLanguageFormat,
