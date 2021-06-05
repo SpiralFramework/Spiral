@@ -1,7 +1,7 @@
 package info.spiralframework.core.common.formats.archives
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.errors.common.filter
 import dev.brella.kornea.io.common.DataSource
 import info.spiralframework.base.common.SpiralContext

@@ -1,17 +1,21 @@
 package info.spiralframework.core.common.formats.text
 
-import dev.brella.kornea.errors.common.*
-import info.spiralframework.base.binding.TextCharsets
-import info.spiralframework.base.binding.manuallyEncode
-import info.spiralframework.base.common.SpiralContext
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.empty
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.decodeToUTF16String
+import dev.brella.kornea.io.common.encodeToUTF16LEByteArray
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useInputFlow
-import info.spiralframework.base.binding.decodeToUTF16String
-import info.spiralframework.base.common.text.toHexString
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
@@ -42,7 +46,7 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = true
 
     override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
-        flow.write(manuallyEncode(data.toString(), TextCharsets.UTF_16LE, true))
+        flow.write(data.toString().encodeToUTF16LEByteArray())
         return FormatWriteResponse.SUCCESS
     }
 }

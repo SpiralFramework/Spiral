@@ -1,7 +1,5 @@
 package info.spiralframework.core.plugins
 
-import com.fasterxml.jackson.module.kotlin.readValue
-import info.spiralframework.core.SpiralCoreContext
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataSource
@@ -9,6 +7,8 @@ import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import info.spiralframework.core.SpiralCoreContext
+import kotlinx.serialization.decodeFromString
 import java.io.File
 
 abstract class BaseSpiralPlugin protected constructor(val context: SpiralCoreContext, val callingClass: Class<*>, val resourceName: String, val yaml: Boolean = true) : ISpiralPlugin {
@@ -24,8 +24,11 @@ abstract class BaseSpiralPlugin protected constructor(val context: SpiralCoreCon
         pojo = context.loadResource(resourceName, callingClass.kotlin)
             .useAndMapInputFlow { flow -> flow.readBytes() }
             .map { data ->
-                if (yaml) context.yamlMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
-                else context.jsonMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
+//                if (yaml) context.yamlMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
+//                else context.jsonMapper.readValue<SpiralPluginDefinitionPojo.Builder>(data).build()
+                context.json.decodeFromString<SpiralPluginDefinitionPojo>(data.decodeToString())
+
+//                Json.decodeFromString<SpiralPluginDefinitionPojo>(data.decodeToString())
             }.get()
     }
 }

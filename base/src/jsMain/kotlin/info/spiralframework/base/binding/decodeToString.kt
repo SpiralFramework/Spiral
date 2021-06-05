@@ -1,5 +1,6 @@
 package info.spiralframework.base.binding
 
+import dev.brella.kornea.io.common.TextCharsets
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.random.Random
@@ -8,8 +9,6 @@ private const val UUID_CLEAR_VERSION: Byte = 0x0F
 private const val UUID_SET_VERSION_4: Byte = 0x40
 private const val UUID_CLEAR_VARIANT: Byte = 0x3F
 private const val UUID_SET_VARIANT_IETF: Byte = 0x80.toByte()
-
-actual fun ByteArray.decodeToString(charset: TextCharsets): String = manuallyDecode(this, charset)
 
 actual fun formatPercent(percentage: Double): String = percentage.asDynamic().toFixed(2) as String
 @Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
@@ -51,6 +50,3 @@ fun uuidString(): String {
         append(((lsb shr 0) and 0xFFFFFFFFFFFFu).toString(16).padStart(12, '0'))
     }
 }
-
-@ExperimentalStdlibApi
-actual suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray = manuallyEncode(this, charset)

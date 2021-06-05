@@ -1,9 +1,9 @@
 package info.spiralframework.formats.common.text
 
+import dev.brella.kornea.io.common.encodeToUTF16LEByteArray
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import info.spiralframework.base.binding.encodeToUTF16LEByteArray
 
 @ExperimentalUnsignedTypes
 class CustomSTXContainer {

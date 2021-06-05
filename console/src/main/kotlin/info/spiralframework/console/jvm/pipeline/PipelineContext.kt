@@ -7,7 +7,6 @@ import dev.brella.knolus.types.asType
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.map
-import dev.brella.kornea.errors.common.successInline
 import dev.brella.kornea.toolkit.common.KorneaTypeChecker
 import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import kotlinx.coroutines.Job
@@ -92,7 +91,7 @@ inline fun fileParameter(name: String? = null) = wrappedParameter(name, KnolusTy
 inline fun jobParameter(name: String? = null) = wrappedParameter(name, KnolusTypedWrapper.JOB)
 
 inline fun <reified T : Any> wrappedParameter(name: String? = null, typeInfo: KnolusTypedWrapper.TypeInfo<T> = typeInfo(), vararg aliases: String) =
-    typeInfo.typeSpecWith(name, null, aliases, { _ -> KorneaResult.successInline(inner) })
+    typeInfo.typeSpecWith(name, null, aliases) { _ -> KorneaResult.success(inner) }
 
 suspend fun <S : KnolusTypedValue, R : Any, I : KnolusTypedWrapper.TypeInfo<R>> S.unwrap(context: KnolusContext, typeInfo: I): KorneaResult<R> =
     asType(context, typeInfo).map(KnolusTypedWrapper<R>::inner)

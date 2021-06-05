@@ -1,14 +1,13 @@
 package info.spiralframework.formats.common.scripting.lin
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.peekInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readDoubleByteNullTerminatedString
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
-import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.Dr1

@@ -1,15 +1,18 @@
 package info.spiralframework.formats.common.scripting.exe
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.WindowedDataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
+import dev.brella.kornea.io.common.flow.extensions.readNumBytes
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readNumBytes
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 
@@ -33,7 +36,7 @@ open class WindowsExecutable(val dosHeader: DosHeader, val stubProgram: ByteArra
                     .getOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
-                    val dosHeader = DosHeader(this, flow).getOrBreak { return@closeAfter it.cast() }
+                    val dosHeader = DosHeader(this, flow).consumeAndGetOrBreak { return@closeAfter it.cast() }
 
                     if (dosHeader.addressOfNewExeHeader <= 0) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_NEW_EXE_HEADER, localise(INVALID_NEW_EXE_HEADER_KEY, dosHeader.addressOfNewExeHeader))

@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.archives
 
 import com.soywiz.krypto.sha256
+import dev.brella.kornea.base.common.closeAfter
 import info.spiralframework.base.common.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressCrilayla
@@ -9,7 +10,6 @@ import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
@@ -60,7 +60,7 @@ class CpkArchive(
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<CpkArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

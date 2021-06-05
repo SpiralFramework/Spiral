@@ -2,6 +2,7 @@ package info.spiralframework.formats.common.scripting.exe
 
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
@@ -10,7 +11,6 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.extensions.readInt64BE
 import dev.brella.kornea.io.common.flow.extensions.readInt64LE
 import dev.brella.kornea.io.common.useInputFlowForResult
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats

@@ -1,15 +1,15 @@
 package info.spiralframework.console.jvm.data
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import info.spiralframework.base.binding.isAnsiSupported
+import kotlinx.serialization.SerialName
 
 data class GurrenArgs(
-        val disableUpdateCheck: Boolean = DEFAULTS.DISABLE_UPDATE_CHECK,
-        val isTool: Boolean = DEFAULTS.IS_TOOL,
-        val timeCommands: Boolean = DEFAULTS.TIME_COMMANDS,
-        val silenceOutput: Boolean = DEFAULTS.SILENCE_OUTPUT,
-        val ansiEnabled: Boolean = DEFAULTS.ANSI_ENABLED,
-        val rawArgs: Array<String>
+    val disableUpdateCheck: Boolean = DEFAULTS.DISABLE_UPDATE_CHECK,
+    val isTool: Boolean = DEFAULTS.IS_TOOL,
+    val timeCommands: Boolean = DEFAULTS.TIME_COMMANDS,
+    val silenceOutput: Boolean = DEFAULTS.SILENCE_OUTPUT,
+    val ansiEnabled: Boolean = DEFAULTS.ANSI_ENABLED,
+    val rawArgs: Array<String>
 ) {
     companion object Keys {
         const val DISABLE_UPDATE_CHECK = "disable update check"
@@ -54,6 +54,7 @@ data class GurrenArgs(
 
         fun disableConfigLoad(args: Array<String>): Boolean = args hasArg DISABLE_CONFIG_LOAD || args hasShortArg DISABLE_CONFIG_LOAD_SHORT
     }
+
     object DEFAULTS {
         const val DISABLE_UPDATE_CHECK = false
         const val IS_TOOL = false
@@ -63,29 +64,29 @@ data class GurrenArgs(
     }
 
     class Pojo(
-            @JsonProperty("disable_update_check")   val disableUpdateCheck: Boolean?,
-            @JsonProperty("is_tool")                val isTool: Boolean?,
-            @JsonProperty("time_commands")          val timeCommands: Boolean?,
-            @JsonProperty("silence_output")         val silenceOutput: Boolean?,
-            @JsonProperty("ansi_enabled")           val ansiEnabled: Boolean?
+        @SerialName("disable_update_check") val disableUpdateCheck: Boolean?,
+        @SerialName("is_tool") val isTool: Boolean?,
+        @SerialName("time_commands") val timeCommands: Boolean?,
+        @SerialName("silence_output") val silenceOutput: Boolean?,
+        @SerialName("ansi_enabled") val ansiEnabled: Boolean?
     )
 
-    constructor(args: Array<String>): this(
-            args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT,
-            args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT,
-            args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT,
-            args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT,
-            (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
-            args
+    constructor(args: Array<String>) : this(
+        args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT,
+        args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT,
+        args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT,
+        args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT,
+        (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
+        args
     )
 
-    constructor(args: Array<String>, pojo: Pojo): this(
-            args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT || (pojo.disableUpdateCheck ?: DEFAULTS.DISABLE_UPDATE_CHECK),
-            args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT || (pojo.isTool ?: DEFAULTS.IS_TOOL),
-            args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT || (pojo.timeCommands ?: DEFAULTS.TIME_COMMANDS),
-            args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT || (pojo.silenceOutput ?: DEFAULTS.SILENCE_OUTPUT),
-            (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT || pojo.ansiEnabled == true) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
-            args
+    constructor(args: Array<String>, pojo: Pojo) : this(
+        args hasArg DISABLE_UPDATE_CHECK || args hasShortArg DISABLE_UPDATE_CHECK_SHORT || (pojo.disableUpdateCheck ?: DEFAULTS.DISABLE_UPDATE_CHECK),
+        args hasArg USE_AS_TOOL || args hasShortArg USE_AS_TOOL_SHORT || (pojo.isTool ?: DEFAULTS.IS_TOOL),
+        args hasArg TIME_COMMANDS || args hasShortArg TIME_COMMANDS_SHORT || (pojo.timeCommands ?: DEFAULTS.TIME_COMMANDS),
+        args hasArg SILENCE_OUTPUT || args hasShortArg SILENCE_OUTPUT_SHORT || (pojo.silenceOutput ?: DEFAULTS.SILENCE_OUTPUT),
+        (isAnsiSupported() || args hasArg ENABLE_ANSI || args hasShortArg ENABLE_ANSI_SHORT || pojo.ansiEnabled == true) && !(args hasArg DISABLE_ANSI || args hasShortArg DISABLE_ANSI_SHORT),
+        args
     )
 
     val filteredArgs = rawArgs.filterNot { arg -> arg isArg DISABLE_UPDATE_CHECK || arg isArg USE_AS_TOOL || arg.isShortArg }

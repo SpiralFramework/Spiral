@@ -1,17 +1,15 @@
 package info.spiralframework.formats.common.archives
 
-import info.spiralframework.base.binding.TextCharsets
+import dev.brella.kornea.base.common.closeAfter
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.extensions.*
 import info.spiralframework.base.common.NULL_TERMINATOR
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.*
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.errors.common.KorneaResult.Success
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
-import dev.brella.kornea.io.common.flow.extensions.*
-import dev.brella.kornea.toolkit.common.closeAfter
 
 open class UtfTableSchema(
     open val name: String,
@@ -74,7 +72,7 @@ data class UtfTableInfo(
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<UtfTableInfo> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

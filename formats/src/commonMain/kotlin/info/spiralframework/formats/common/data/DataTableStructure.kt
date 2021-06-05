@@ -1,12 +1,11 @@
 package info.spiralframework.formats.common.data
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.extensions.*
-import dev.brella.kornea.toolkit.common.closeAfter
-import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.io.*

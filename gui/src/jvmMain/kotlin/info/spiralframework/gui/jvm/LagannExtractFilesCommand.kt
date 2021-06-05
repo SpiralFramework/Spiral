@@ -1,6 +1,6 @@
 package info.spiralframework.gui.jvm
 
-import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
 import info.spiralframework.base.common.SpiralContext

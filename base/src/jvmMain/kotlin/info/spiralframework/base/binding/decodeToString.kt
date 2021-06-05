@@ -1,5 +1,6 @@
 package info.spiralframework.base.binding
 
+import dev.brella.kornea.io.common.TextCharsets
 import java.nio.charset.Charset
 import java.text.DecimalFormat
 
@@ -12,12 +13,7 @@ val TextCharsets.java: Charset
         TextCharsets.UTF_16LE -> Charsets.UTF_16LE
     }
 
-actual fun ByteArray.decodeToString(charset: TextCharsets): String =
-        String(this, charset.java)
-
 private val PERCENT_FORMAT = DecimalFormat("00.00")
 
 actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
 //actual fun uuidString(): String = UUID.randomUUID().toString()
-actual suspend fun String.encodeToByteArray(charset: TextCharsets): ByteArray =
-        toByteArray(charset.java)

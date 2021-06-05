@@ -1,11 +1,11 @@
 package info.spiralframework.formats.common.data
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
-import dev.brella.kornea.toolkit.common.closeAfter
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
@@ -18,7 +18,7 @@ class Dr1Anagram(val timeLimit: Int, val damageTaken: Int, val correctAnswerInde
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1Anagram> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val timeLimit = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

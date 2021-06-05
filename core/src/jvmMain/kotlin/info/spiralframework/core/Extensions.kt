@@ -1,10 +1,12 @@
 package info.spiralframework.core
-
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+//
+//import com.fasterxml.jackson.core.JsonParseException
+//import com.fasterxml.jackson.core.JsonProcessingException
+//import com.fasterxml.jackson.databind.JsonMappingException
+//import com.fasterxml.jackson.databind.ObjectMapper
+//import com.fasterxml.jackson.module.kotlin.readValue
+//import org.yaml.snakeyaml.error.YAMLException
+import dev.brella.kornea.base.common.getOrElseRun
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataSource
 import info.spiralframework.base.common.SpiralContext
@@ -21,11 +23,7 @@ import info.spiralframework.core.common.formats.compression.DRv3CompressionForma
 import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
 import info.spiralframework.core.common.formats.filterIsIdentifyFormatResultOrNull
 import info.spiralframework.core.common.formats.value
-import org.yaml.snakeyaml.error.YAMLException
 import java.io.Closeable
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.InputStream
 import kotlin.math.abs
 
 object UserAgents {
@@ -62,17 +60,17 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
     }
 }
 
-typealias ReadableCompressionFormat= ReadableSpiralFormat<DataSource<*>>
+typealias ReadableCompressionFormat = ReadableSpiralFormat<DataSource<*>>
 
 val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 
 suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableCompressionFormat>?> {
     val result = COMPRESSION_FORMATS.map { format -> format.identify(source = dataSource, context = this) }
                      .filterIsIdentifyFormatResultOrNull<DataSource<*>>()
-                     .maxBy(FormatResult<*, *>::confidence)
+                     .maxByOrNull(FormatResult<*, *>::confidence)
                  ?: return Pair(dataSource, null)
 
-    val resultDataSource = result.value().getOrElseRun{
+    val resultDataSource = result.value().getOrElseRun {
         result.format().read(source = dataSource, context = this)
             .getOrBreak { return Pair(dataSource, null) }
     }
@@ -91,42 +89,42 @@ suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource
     }
 }
 
-inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
-    try {
-        return this.readValue(src)
-    } catch (jsonProcessing: JsonProcessingException) {
-    } catch (jsonMapping: JsonMappingException) {
-    } catch (jsonParsing: JsonParseException) {
-    } catch (yamlParsing: YAMLException) {
-    }
-
-    return null
-}
-
-inline fun <reified T : Any> ObjectMapper.tryReadValue(src: InputStream): T? {
-    try {
-        return this.readValue(src)
-    } catch (jsonProcessing: JsonProcessingException) {
-    } catch (jsonMapping: JsonMappingException) {
-    } catch (jsonParsing: JsonParseException) {
-    } catch (yamlParsing: YAMLException) {
-    }
-
-    return null
-}
-
-inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
-    try {
-        return this.readValue(src)
-    } catch (jsonProcessing: JsonProcessingException) {
-    } catch (jsonMapping: JsonMappingException) {
-    } catch (jsonParsing: JsonParseException) {
-    } catch (io: FileNotFoundException) {
-    } catch (yamlParsing: YAMLException) {
-    }
-
-    return null
-}
+//inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
+//    try {
+//        return this.readValue(src)
+//    } catch (jsonProcessing: JsonProcessingException) {
+//    } catch (jsonMapping: JsonMappingException) {
+//    } catch (jsonParsing: JsonParseException) {
+//    } catch (yamlParsing: YAMLException) {
+//    }
+//
+//    return null
+//}
+//
+//inline fun <reified T : Any> ObjectMapper.tryReadValue(src: InputStream): T? {
+//    try {
+//        return this.readValue(src)
+//    } catch (jsonProcessing: JsonProcessingException) {
+//    } catch (jsonMapping: JsonMappingException) {
+//    } catch (jsonParsing: JsonParseException) {
+//    } catch (yamlParsing: YAMLException) {
+//    }
+//
+//    return null
+//}
+//
+//inline fun <reified T : Any> ObjectMapper.tryReadValue(src: File): T? {
+//    try {
+//        return this.readValue(src)
+//    } catch (jsonProcessing: JsonProcessingException) {
+//    } catch (jsonMapping: JsonMappingException) {
+//    } catch (jsonParsing: JsonParseException) {
+//    } catch (io: FileNotFoundException) {
+//    } catch (yamlParsing: YAMLException) {
+//    }
+//
+//    return null
+//}
 
 suspend fun <T : CancellableSpiralEvent> SpiralEventBus.postCancellable(context: SpiralContext, event: T): Boolean {
     context.post(event)
@@ -149,15 +147,15 @@ fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
  *
  * @sample samples.collections.Collections.Sorting.sortedBy
  */
-public inline fun <T: SpiralFormat> Iterable<T>.sortedAgainst(context: SpiralProperties?): List<T> {
+public inline fun <T : SpiralFormat> Iterable<T>.sortedAgainst(context: SpiralProperties?): List<T> {
     return sortedWith(compareBy { format -> abs(format.extension?.compareTo(context[ISpiralProperty.FileName]?.substringAfterLast('.') ?: "") ?: -100) })
 }
 
-public inline fun <T, R: KorneaResult<*>> Iterable<T>.mapResults(transform: (T) -> R): List<R> {
+public inline fun <T, R : KorneaResult<*>> Iterable<T>.mapResults(transform: (T) -> R): List<R> {
     return mapResultsTo(ArrayList<R>(10), transform)
 }
 
-public inline fun <T, R: KorneaResult<*>, C : MutableCollection<in R>> Iterable<T>.mapResultsTo(destination: C, transform: (T) -> R): C {
+public inline fun <T, R : KorneaResult<*>, C : MutableCollection<in R>> Iterable<T>.mapResultsTo(destination: C, transform: (T) -> R): C {
     for (item in this) {
         val transformed = transform(item)
         destination.add(transformed)

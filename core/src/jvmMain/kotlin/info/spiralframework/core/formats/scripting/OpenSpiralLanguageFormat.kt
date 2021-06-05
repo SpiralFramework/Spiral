@@ -1,22 +1,22 @@
 package info.spiralframework.core.formats.scripting
 
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.Optional
-import dev.brella.kornea.errors.common.empty
+import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.FlowReader
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.PrintOutputFlow
+import dev.brella.kornea.io.common.flow.extensions.readAsciiString
 import dev.brella.kornea.io.common.flow.useEachLine
 import dev.brella.kornea.io.common.useInputFlowForResult
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.base.common.PrintOutputFlowWrapper
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readAsciiString
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.get

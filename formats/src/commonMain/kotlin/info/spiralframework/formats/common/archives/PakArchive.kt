@@ -1,23 +1,27 @@
 package info.spiralframework.formats.common.archives
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.alignedTo
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.formats.common.withFormats
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.map
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.OffsetDataSource
+import dev.brella.kornea.io.common.WindowedDataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OffsetInputFlow
+import dev.brella.kornea.io.common.flow.SinkOffsetInputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.formats.common.withFormats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 
 @ExperimentalUnsignedTypes
-class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>): SpiralArchive {
+class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>) : SpiralArchive {
     companion object {
         const val MAGIC_NUMBER_LE = 0x2E50414B
 
@@ -38,20 +42,28 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>):
         const val DEFAULT_MAX_FILE_SIZE = 64_000_000 //64 MB
         const val DEFAULT_STRICT_OFFSETS = false
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>, minFileCount: Int = DEFAULT_MIN_FILE_COUNT, maxFileCount: Int = DEFAULT_MAX_FILE_COUNT, minFileSize: Int = DEFAULT_MIN_FILE_SIZE, maxFileSize: Int = DEFAULT_MAX_FILE_SIZE, strictOffsets: Boolean = DEFAULT_STRICT_OFFSETS): KorneaResult<PakArchive> =
+        suspend operator fun invoke(
+            context: SpiralContext,
+            dataSource: DataSource<*>,
+            minFileCount: Int = DEFAULT_MIN_FILE_COUNT,
+            maxFileCount: Int = DEFAULT_MAX_FILE_COUNT,
+            minFileSize: Int = DEFAULT_MIN_FILE_SIZE,
+            maxFileSize: Int = DEFAULT_MAX_FILE_SIZE,
+            strictOffsets: Boolean = DEFAULT_STRICT_OFFSETS
+        ): KorneaResult<PakArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return it.cast() }
 
                 closeAfter(flow) {
                     val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val fileCount =
-                            if (possibleMagicNumber == MAGIC_NUMBER_LE)
-                                flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                            else
-                                possibleMagicNumber
+                        if (possibleMagicNumber == MAGIC_NUMBER_LE)
+                            flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        else
+                            possibleMagicNumber
 
-                    if (fileCount !in minFileCount .. maxFileCount) {
+                    if (fileCount !in minFileCount..maxFileCount) {
                         return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_COUNT, localise(INVALID_FILE_COUNT_KEY, fileCount, minFileCount, maxFileCount))
                     }
 
@@ -81,7 +93,7 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>):
                             }
 
                             size = entryOffsets[index + 1] - offset
-                            if (size !in minFileSize .. maxFileSize) {
+                            if (size !in minFileSize..maxFileSize) {
                                 return@closeAfter KorneaResult.errorAsIllegalArgument(INVALID_FILE_SIZE, localise(INVALID_FILE_SIZE_KEY, index, size, minFileSize, maxFileSize))
                             }
                         }
@@ -99,14 +111,16 @@ class PakArchive(val files: Array<PakFileEntry>, val dataSource: DataSource<*>):
 
     operator fun get(index: Int): PakFileEntry = files[index]
 
-    suspend fun openSource(file: PakFileEntry): DataSource<InputFlow> = if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
+    suspend fun openSource(file: PakFileEntry): DataSource<InputFlow> =
+        if (file.size == -1) OffsetDataSource(dataSource, file.offset.toULong(), closeParent = false) else WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
+
     suspend fun openFlow(file: PakFileEntry): KorneaResult<OffsetInputFlow> =
-            dataSource.openInputFlow().map { parent ->
-                if (file.size == -1)
-                    SinkOffsetInputFlow(parent, file.offset.toULong())
-                else
-                    WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
-            }
+        dataSource.openInputFlow().map { parent ->
+            if (file.size == -1)
+                SinkOffsetInputFlow(parent, file.offset.toULong())
+            else
+                WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
+        }
 
     override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
         files.asFlow().map { file -> SpiralArchiveSubfile("${file.index}.dat", openSource(file)) }

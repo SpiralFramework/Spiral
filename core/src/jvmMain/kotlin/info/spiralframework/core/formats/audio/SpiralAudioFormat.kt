@@ -2,7 +2,7 @@ package info.spiralframework.core.formats.audio
 
 import info.spiralframework.base.common.SpiralContext
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import info.spiralframework.base.common.properties.SpiralProperties

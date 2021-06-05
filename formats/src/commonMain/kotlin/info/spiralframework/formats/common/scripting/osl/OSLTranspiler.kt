@@ -1,6 +1,5 @@
 package info.spiralframework.formats.common.scripting.osl
 
-import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.DrGame

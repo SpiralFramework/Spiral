@@ -3,7 +3,18 @@ package info.spiralframework.console.jvm
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.joran.spi.JoranException
 import ch.qos.logback.core.util.StatusPrinter
-import info.spiralframework.base.binding.*
+import dev.brella.kornea.errors.common.doOnSuccess
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
+import dev.brella.kornea.io.jvm.files.relativePathFrom
+import info.spiralframework.base.binding.DefaultSpiralCacheProvider
+import info.spiralframework.base.binding.DefaultSpiralConfig
+import info.spiralframework.base.binding.DefaultSpiralContext
+import info.spiralframework.base.binding.DefaultSpiralEnvironment
+import info.spiralframework.base.binding.DefaultSpiralEventBus
+import info.spiralframework.base.binding.DefaultSpiralLocale
+import info.spiralframework.base.binding.DefaultSpiralLogger
+import info.spiralframework.base.binding.DefaultSpiralResourceLoader
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.config.getConfigFile
@@ -22,7 +33,10 @@ import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.console.jvm.data.SpiralScope
 import info.spiralframework.console.jvm.eventbus.ScopeRequest
 import info.spiralframework.console.jvm.eventbus.ScopeResponse
-import info.spiralframework.core.*
+import info.spiralframework.core.DefaultSpiralHttp
+import info.spiralframework.core.SpiralCoreConfig
+import info.spiralframework.core.SpiralHttp
+import info.spiralframework.core.installLoggingSubscriber
 import info.spiralframework.core.plugins.DefaultSpiralPluginRegistry
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.DefaultSpiralSignatures
@@ -32,10 +46,7 @@ import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import dev.brella.kornea.errors.common.doOnSuccess
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndMapInputFlow
-import dev.brella.kornea.io.jvm.files.relativePathFrom
+import kotlinx.serialization.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
@@ -85,7 +96,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val config: SpiralConfig = DefaultSpiralConfig()
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
-                    .installLoggingSubscriber()
+                .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
             val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
 
@@ -95,24 +106,32 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             if (GurrenArgs.disableConfigLoad(args)) {
                 gurrenArgs = GurrenArgs(args)
             } else {
-                val pojo = serialisation.yamlMapper.tryReadValue<GurrenArgs.Pojo>(File(config.getConfigFile(parentContext, "console")))
+//                val pojo = serialisation.yamlMapper.tryReadValue<GurrenArgs.Pojo>(File(config.getConfigFile(parentContext, "console")))
+                val pojo = File(config.getConfigFile(parentContext, "console")).takeIf(File::exists)?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it.readText()) }
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             }
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
 
-            val coreConfig: SpiralCoreConfig = serialisation.yamlMapper.tryReadValue(File(config.getConfigFile(parentContext, "core")))
-                    ?: SpiralCoreConfig()
+//            val coreConfig: SpiralCoreConfig = serialisation.yamlMapper.tryReadValue(File(config.getConfigFile(parentContext, "core")))
+//                                               ?: SpiralCoreConfig()
+
+            val coreConfig: SpiralCoreConfig =
+                File(config.getConfigFile(parentContext, "core"))
+                    .takeIf(File::exists)
+                    ?.let { serialisation.json.decodeFromString(it.readText()) }
+                ?: SpiralCoreConfig()
+
             val signatures: SpiralSignatures = DefaultSpiralSignatures()
             val pluginRegistry: SpiralPluginRegistry = DefaultSpiralPluginRegistry()
             val http: SpiralHttp = DefaultSpiralHttp()
             val startingContext: GurrenSpiralContext = DefaultGurrenSpiralContext(
-                    gurrenArgs,
-                    coreConfig,
-                    parentContext,
-                    signatures,
-                    pluginRegistry,
-                    serialisation,
-                    http
+                gurrenArgs,
+                coreConfig,
+                parentContext,
+                signatures,
+                pluginRegistry,
+                serialisation,
+                http
             )
 
 /*            var runUpdate: Boolean = false
@@ -274,7 +293,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
 //            if (runUpdate) {
 //                instance = CockpitUpdate(updateFile, startingContext, *args)
 //            } else {
-                instance = invoke(startingContext)
+            instance = invoke(startingContext)
 //            }
 
             instance.start()
@@ -290,7 +309,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val config: SpiralConfig = DefaultSpiralConfig()
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
-                    .installLoggingSubscriber()
+                .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
             val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
             val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
@@ -303,10 +322,20 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                 gurrenArgs = GurrenArgs(args)
                 coreConfig = SpiralCoreConfig()
             } else {
-                val pojo = serialisation.yamlMapper.tryReadValue<GurrenArgs.Pojo>(File(config.getConfigFile(parentContext, "console")))
+//                val pojo = serialisation.yamlMapper.tryReadValue<GurrenArgs.Pojo>(File(config.getConfigFile(parentContext, "console")))
+//                gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
+//                coreConfig = serialisation.yamlMapper.tryReadValue(File(config.getConfigFile(parentContext, "core")))
+//                             ?: SpiralCoreConfig()
+
+                val pojo = File(config.getConfigFile(parentContext, "console"))
+                    .takeIf(File::exists)
+                    ?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it.readText()) }
+
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
-                coreConfig = serialisation.yamlMapper.tryReadValue(File(config.getConfigFile(parentContext, "core")))
-                        ?: SpiralCoreConfig()
+                coreConfig = File(config.getConfigFile(parentContext, "core"))
+                                 .takeIf(File::exists)
+                                 ?.let { serialisation.json.decodeFromString<SpiralCoreConfig>(it.readText()) }
+                             ?: SpiralCoreConfig()
             }
 
             val signatures: SpiralSignatures = DefaultSpiralSignatures()

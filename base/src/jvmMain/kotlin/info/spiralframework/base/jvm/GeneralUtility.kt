@@ -3,7 +3,6 @@ package info.spiralframework.base.jvm
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.StdinInputFlow
-import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.text.Ansi
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream

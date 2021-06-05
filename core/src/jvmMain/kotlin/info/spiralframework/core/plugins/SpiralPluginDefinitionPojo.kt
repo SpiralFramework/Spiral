@@ -1,49 +1,63 @@
 package info.spiralframework.core.plugins
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import dev.brella.kornea.toolkit.common.SemanticVersion
-import dev.brella.kornea.toolkit.common.oneTimeMutable
+import info.spiralframework.core.common.serialisation.SemVerSerialiser
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SpiralPluginDefinitionPojo(
     val name: String,
     val uid: String,
 
-    val description: String?,
+    val description: String? = null,
 
-    val authors: Array<String>?,
-    val supportedModules: Array<String>?,
-    val requiredModules: Array<String>?,
-    val contentWarnings: Array<String>?,
+    val authors: Array<String>? = null,
 
-    val version: String?,
+    @SerialName("supported_modules")
+    val supportedModules: Array<String>? = null,
+
+    @SerialName("required_modules")
+    val requiredModules: Array<String>? = null,
+
+    @SerialName("content_warnings")
+    val contentWarnings: Array<String>? = null,
+
+    val version: String? = null,
+
+    @SerialName("semantic_version")
+    @Serializable(SemVerSerialiser::class)
     val semanticVersion: SemanticVersion,
 
+    @SerialName("plugin_class")
     val pluginClass: String,
 
-    val pluginFileName: String?
+    @SerialName("plugin_file_name")
+    val pluginFileName: String? = null
 ) {
-    class Builder {
-        lateinit var name: String
-        lateinit var uid: String
-
-        var description: String? = null
-
-        var authors: Array<String>? = null
-        var supportedModules: Array<String>? = null
-        var requiredModules: Array<String>? = null
-        var contentWarnings: Array<String>? = null
-
-        var version: String? = null
-        @JsonProperty("semanticVersion")
-        var semanticVersion: SemanticVersion? = null
-
-        lateinit var pluginClass: String
-
-        val pluginFileName: String? = null
-
-        fun build(): SpiralPluginDefinitionPojo =
-            SpiralPluginDefinitionPojo(name, uid, description, authors, supportedModules, requiredModules, contentWarnings, version, requireNotNull(semanticVersion), pluginClass, pluginFileName)
-    }
+//    class Builder {
+//        lateinit var name: String
+//        lateinit var uid: String
+//
+//        var description: String? = null
+//
+//        var authors: Array<String>? = null
+//        var supportedModules: Array<String>? = null
+//        var requiredModules: Array<String>? = null
+//        var contentWarnings: Array<String>? = null
+//
+//        var version: String? = null
+////        @JsonProperty("semanticVersion")
+//        @SerialName("semantic_version")
+//        var semanticVersion: SemanticVersion? = null
+//
+//        lateinit var pluginClass: String
+//
+//        val pluginFileName: String? = null
+//
+//        fun build(): SpiralPluginDefinitionPojo =
+//            SpiralPluginDefinitionPojo(name, uid, description, authors, supportedModules, requiredModules, contentWarnings, version, requireNotNull(semanticVersion), pluginClass, pluginFileName)
+//    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

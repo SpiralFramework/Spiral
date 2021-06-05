@@ -1,12 +1,12 @@
 package info.spiralframework.formats.common.scripting.wrd
 
+import dev.brella.kornea.io.common.encodeToUTF16LEByteArray
+import dev.brella.kornea.io.common.encodeToUTF8ByteArray
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.writeInt16BE
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import info.spiralframework.base.binding.encodeToUTF16LEByteArray
-import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.text.removeEscapes
@@ -62,9 +62,9 @@ class CustomWordScript {
         val localBranches: MutableList<Pair<ULong, Int>> = ArrayList()
 
         val subLabels = scriptData.filter { entry -> entry.opcode == 0x4A }
-                .map { entry -> entry.arguments[0].raw }
-                .distinct()
-                .sorted()
+            .map { entry -> entry.arguments[0].raw }
+            .distinct()
+            .sorted()
 
         if (rewriteSubLabels && subLabels.isNotEmpty() && subLabels[0] < 0) {
             warn("formats.custom_wrd.sublabel_too_small", 0, subLabels[0])
@@ -76,10 +76,10 @@ class CustomWordScript {
 
         if (strings.isEmpty() && externalStringCount == 0) {
             val highestTextID = scriptData.filter { entry -> entry.opcode == 0x46 }
-                    .maxBy { script -> script.arguments[0].raw }
-                    ?.arguments
-                    ?.get(0)
-                    ?.raw
+                .maxByOrNull { script -> script.arguments[0].raw }
+                ?.arguments
+                ?.get(0)
+                ?.raw
 
             if (highestTextID != null) {
                 externalStringCount = highestTextID + 1

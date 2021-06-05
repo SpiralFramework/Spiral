@@ -1,5 +1,7 @@
 package info.spiralframework.osb.common
 
+import dev.brella.kornea.base.common.use
+import dev.brella.kornea.io.common.encodeToUTF8ByteArray
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.writeFloatLE
@@ -12,8 +14,6 @@ import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt64LE
 import dev.brella.kornea.io.common.flow.extensions.writeVariableInt16
 import dev.brella.kornea.toolkit.common.SemanticVersion
-import dev.brella.kornea.toolkit.common.use
-import info.spiralframework.base.binding.encodeToUTF8ByteArray
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
@@ -84,21 +84,18 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             }
         }
 
-        @ExperimentalStdlibApi
         suspend fun appendText(text: String) {
             output.write(LONG_REFERENCE_TEXT)
             output.write(text.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        @ExperimentalStdlibApi
         suspend fun appendVariable(variableName: String) {
             output.write(LONG_REFERENCE_VARIABLE)
             output.write(variableName.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        @ExperimentalStdlibApi
         suspend fun appendColourCode(colourCode: String) {
             output.write(LONG_REFERENCE_COLOUR_CODE)
             output.write(colourCode.encodeToUTF8ByteArray())
@@ -116,14 +113,12 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             }
         }
 
-        @ExperimentalStdlibApi
         suspend fun appendText(text: String) {
             output.write(ACTION_TEXT)
             output.write(text.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        @ExperimentalStdlibApi
         suspend fun appendVariable(variableName: String) {
             output.write(ACTION_VARIABLE)
             output.write(variableName.encodeToUTF8ByteArray())
@@ -202,7 +197,6 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    @ExperimentalStdlibApi
     suspend fun addOpcode(opcodeName: String, rawArguments: IntArray) {
         output.write(OPERATION_ADD_PLAIN_OPCODE_NAMED)
         output.write(opcodeName.encodeToUTF8ByteArray())

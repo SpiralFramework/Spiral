@@ -1,5 +1,6 @@
 package info.spiralframework.core.serialisation
 
+/*
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.Version
@@ -37,4 +38,4 @@ object SemanticVersionSerialisation {
     }
 
     class MODULE : SimpleModule("Semantic Version Serialisation", Version.unknownVersion(), mapOf(SemanticVersion::class.java to DESERIALISER), listOf(SERIALISER))
-}
+}*/

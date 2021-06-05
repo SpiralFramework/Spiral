@@ -1,8 +1,8 @@
 package info.spiralframework.core.panels
 
-import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.use
 import dev.brella.kornea.io.common.DataSource
-import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cache
 import info.spiralframework.base.common.properties.SpiralProperties

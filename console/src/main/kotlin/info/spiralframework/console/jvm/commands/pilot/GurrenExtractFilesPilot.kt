@@ -9,8 +9,9 @@ import dev.brella.knolus.types.KnolusArray
 import dev.brella.knolus.types.KnolusString
 import dev.brella.knolus.types.KnolusTypedValue
 import dev.brella.knolus.types.asString
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.use
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.Optional
 import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.errors.common.getOrBreak
@@ -22,7 +23,6 @@ import dev.brella.kornea.io.common.Uri
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.toolkit.common.ProgressBar
-import dev.brella.kornea.toolkit.common.use
 import dev.brella.kornea.toolkit.coroutines.ascii.AsciiProgressBarConfig
 import dev.brella.kornea.toolkit.coroutines.ascii.AsciiProgressBarStyle
 import dev.brella.kornea.toolkit.coroutines.ascii.createArbitraryProgressBar

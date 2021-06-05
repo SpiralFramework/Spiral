@@ -1,9 +1,8 @@
 package info.spiralframework.formats.common.archives
 
 import com.soywiz.krypto.sha256
-import info.spiralframework.base.binding.TextCharsets
+import dev.brella.kornea.base.common.closeAfter
 import info.spiralframework.base.common.*
-import info.spiralframework.base.common.io.readString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressSpcData
 import info.spiralframework.formats.common.withFormats
@@ -12,9 +11,8 @@ import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readString
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
@@ -45,7 +43,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<SpcArchive> =
             withFormats(context) {
                 val flow = requireNotNull(dataSource.openInputFlow())
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)

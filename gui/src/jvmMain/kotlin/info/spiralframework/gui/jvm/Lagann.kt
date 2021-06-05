@@ -3,9 +3,7 @@ package info.spiralframework.gui.jvm
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.joran.spi.JoranException
 import ch.qos.logback.core.util.StatusPrinter
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
+import dev.brella.kornea.base.common.use
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.img.DXT1PixelData
 import dev.brella.kornea.img.bc7.BC7PixelData
@@ -17,7 +15,6 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import dev.brella.kornea.toolkit.common.freeze
-import dev.brella.kornea.toolkit.common.use
 import info.spiralframework.antlr.pipeline.PipelineLexer
 import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.binding.DefaultSpiralLogger
@@ -28,6 +25,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
 import info.spiralframework.base.common.logging.SpiralLogger
+import info.spiralframework.base.common.properties.plus
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.base.jvm.crypto.sha512HashBytes
 import info.spiralframework.base.jvm.retrieveStackTrace
@@ -62,6 +60,12 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import net.npe.tga.TGAReader
 import net.npe.tga.readImage
 import org.antlr.v4.runtime.CharStreams
@@ -540,9 +544,8 @@ class Lagann : Application(), CoroutineScope by MainScope() {
         loadFile.accelerator = KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN)
         loadFile.setOnAction { event ->
             val fileChooser = FileChooser()
-            val tree = serialisation.yamlMapper.readTree(configFile) as? ObjectNode
-                       ?: ObjectNode(JsonNodeFactory.instance)
-            val lastFileLoaded = tree["last_file_loaded"]?.textValue()
+            var tree = Json.parseToJsonElement(configFile.readText()).jsonObject
+            val lastFileLoaded = tree["last_file_loaded"]?.jsonPrimitive?.content
             if (lastFileLoaded != null) {
                 val file = File(lastFileLoaded)
                 fileChooser.initialDirectory = file.parentFile
@@ -551,8 +554,8 @@ class Lagann : Application(), CoroutineScope by MainScope() {
 
             val selectedFile = fileChooser.showOpenDialog(primaryStage)
             if (selectedFile != null) {
-                tree.replace("last_file_loaded", TextNode(selectedFile.absolutePath))
-                serialisation.yamlMapper.writeValue(configFile, tree)
+                tree = JsonObject(tree.plus("last_file_loaded", JsonPrimitive(selectedFile.absolutePath)))
+                configFile.writeText(Json.encodeToString(tree))
                 launch {
                     bstMap.clear()
                     withContext(Dispatchers.JavaFx) { fileTree.root = TreeItem() }
@@ -588,9 +591,9 @@ class Lagann : Application(), CoroutineScope by MainScope() {
         extractFile.accelerator = KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN)
         extractFile.setOnAction { event ->
             val fileChooser = FileChooser()
-            val tree = serialisation.yamlMapper.readTree(configFile) as? ObjectNode
-                       ?: ObjectNode(JsonNodeFactory.instance)
-            val lastFileLoaded = tree["last_file_loaded"]?.textValue()
+            var tree = Json.parseToJsonElement(configFile.readText()).jsonObject
+            val lastFileLoaded = tree["last_file_loaded"]?.jsonPrimitive?.content
+
             if (lastFileLoaded != null) {
                 val file = File(lastFileLoaded)
                 fileChooser.initialDirectory = file.parentFile
@@ -599,8 +602,8 @@ class Lagann : Application(), CoroutineScope by MainScope() {
 
             val selectedFile = fileChooser.showOpenDialog(primaryStage)
             if (selectedFile != null) {
-                tree.replace("last_file_loaded", TextNode(selectedFile.absolutePath))
-                serialisation.yamlMapper.writeValue(configFile, tree)
+                tree = JsonObject(tree.plus("last_file_loaded", JsonPrimitive(selectedFile.absolutePath)))
+                configFile.writeText(Json.encodeToString(tree))
 
                 val directoryChooser = DirectoryChooser()
                 directoryChooser.initialDirectory = selectedFile.parentFile

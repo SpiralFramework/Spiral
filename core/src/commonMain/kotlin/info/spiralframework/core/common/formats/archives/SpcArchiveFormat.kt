@@ -1,11 +1,12 @@
 package info.spiralframework.core.common.formats.archives
 
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.locale.localisedNotEnoughData

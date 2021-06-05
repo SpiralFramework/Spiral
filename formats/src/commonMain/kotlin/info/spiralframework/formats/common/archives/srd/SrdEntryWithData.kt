@@ -4,13 +4,13 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.filterToInstance
 import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.readAndClose
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 
 abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int, dataSource: DataSource<*>) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown, dataSource) {

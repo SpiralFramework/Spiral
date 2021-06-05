@@ -1,13 +1,16 @@
 package info.spiralframework.core.common.formats.text
 
-import dev.brella.kornea.errors.common.*
-import info.spiralframework.base.common.SpiralContext
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.empty
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.flatMap
 import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.decodeToUTF8String
+import dev.brella.kornea.io.common.encodeToUTF8ByteArray
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt24BE
 import dev.brella.kornea.io.common.flow.readBytes
-import info.spiralframework.base.binding.decodeToUTF8String
-import info.spiralframework.base.binding.encodeToUTF8ByteArray
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat

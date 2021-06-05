@@ -1,6 +1,8 @@
 package info.spiralframework.core.common.formats.compression
 
 import com.soywiz.krypto.sha256
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.DataSource
@@ -9,9 +11,9 @@ import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
+import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.buildFormatResult
 import info.spiralframework.formats.common.compression.decompressCrilayla
 

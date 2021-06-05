@@ -1,5 +1,6 @@
 apply plugin: 'antlr'
 apply plugin: 'org.jetbrains.kotlin.jvm'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "application"
 
@@ -15,6 +16,7 @@ dependencies {
     implementation project(":spiral-updater")
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version"
     implementation "ch.qos.logback:logback-classic:$logback_version"
 
     implementation("dev.brella:knolus-core:2.6.5")

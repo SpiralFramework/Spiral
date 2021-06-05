@@ -1,5 +1,6 @@
 package info.spiralframework.core.plugins
 
+import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
 import info.spiralframework.base.binding.readConfirmation
 import info.spiralframework.base.common.environment.SpiralEnvironment.Companion.SPIRAL_MODULE_KEY
 import info.spiralframework.base.common.locale.constNull
@@ -7,17 +8,25 @@ import info.spiralframework.base.common.locale.printLocale
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.crypto.sha256Hash
 import info.spiralframework.base.jvm.crypto.verify
-import info.spiralframework.core.*
-import info.spiralframework.core.plugins.events.*
+import info.spiralframework.core.SpiralCoreContext
+import info.spiralframework.core.plugins.events.BeginLoadingPluginEvent
+import info.spiralframework.core.plugins.events.BeginPluginDiscoveryEvent
+import info.spiralframework.core.plugins.events.DiscoveredPluginEvent
+import info.spiralframework.core.plugins.events.EndPluginDiscoveryEvent
+import info.spiralframework.core.plugins.events.FailedPluginLoadEvent
+import info.spiralframework.core.plugins.events.SuccessfulPluginLoadEvent
+import info.spiralframework.core.postCancellable
+import info.spiralframework.core.signaturesCdnOnline
+import info.spiralframework.core.spiralFrameworkOnline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
 import java.util.*
 import java.util.zip.ZipFile
-import kotlin.reflect.full.createInstance
 
 class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
     val pojoServiceLoader = ServiceLoader.load(SpiralPluginRegistry.PojoProvider::class.java)
@@ -42,21 +51,21 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         val ourFile = File(DefaultSpiralPluginRegistry::class.java.protectionDomain.codeSource.location.path).absoluteFile
 
         val localWorkingPlugins = File("plugins")
-                .ensureDirectoryExists()
-                .walk()
-                .discoverPlugins(this)
+            .ensureDirectoryExists()
+            .walk()
+            .discoverPlugins(this)
         val localSpiralPlugins = File(ourFile.parentFile, "plugins")
-                .ensureDirectoryExists()
-                .walk()
-                .discoverPlugins(this)
+            .ensureDirectoryExists()
+            .walk()
+            .discoverPlugins(this)
         val storagePlugins = File(getLocalDataDir("plugins"))
-                .ensureDirectoryExists()
-                .walk()
-                .discoverPlugins(this)
+            .ensureDirectoryExists()
+            .walk()
+            .discoverPlugins(this)
 
         val classpathPlugins = pojoServiceLoader.asIterable()
-                .map { provider -> provider.readPojo(this) }
-                .map { pojo -> PluginEntry(pojo, null) }
+            .map { provider -> provider.readPojo(this) }
+            .map { pojo -> PluginEntry(pojo, null) }
 
         val plugins = ArrayList<PluginEntry>().apply {
             addAll(localWorkingPlugins)
@@ -64,9 +73,9 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
             addAll(storagePlugins)
             addAll(classpathPlugins)
         }.sortedBy { entry -> entry.pojo.semanticVersion }
-                .asReversed()
-                .distinctBy { entry -> entry.pojo.uid }
-                .filter { entry -> !postCancellable(this, DiscoveredPluginEvent(entry)) }
+            .asReversed()
+            .distinctBy { entry -> entry.pojo.uid }
+            .filter { entry -> !postCancellable(this, DiscoveredPluginEvent(entry)) }
 
         post(EndPluginDiscoveryEvent())
 
@@ -77,13 +86,14 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         try {
             val zip = ZipFile(file)
             zip.entries().asSequence().filter { entry -> entry.name.endsWith("plugin.yaml") || entry.name.endsWith("plugin.yml") || entry.name.endsWith("plugin.json')") }
-                    .mapNotNull { entry ->
-                        if (entry.name.endsWith("json"))
-                            zip.getInputStream(entry).use { stream -> context.jsonMapper.tryReadValue<SpiralPluginDefinitionPojo>(stream) }
-                        else
-                            zip.getInputStream(entry).use { stream -> context.yamlMapper.tryReadValue<SpiralPluginDefinitionPojo>(stream) }
-                    }
-                    .map { pojo -> PluginEntry(pojo, file.toURI().toURL()) }
+                .mapNotNull { entry ->
+//                        if (entry.name.endsWith("json"))
+//                            zip.getInputStream(entry).use { stream -> context.jsonMapper.tryReadValue<SpiralPluginDefinitionPojo>(stream) }
+//                        else
+//                            zip.getInputStream(entry).use { stream -> context.yamlMapper.tryReadValue<SpiralPluginDefinitionPojo>(stream) }
+                    zip.getInputStream(entry).use { stream -> Json.decodeFromString<SpiralPluginDefinitionPojo>(stream.readBytes().decodeToString()) }
+                }
+                .map { pojo -> PluginEntry(pojo, file.toURI().toURL()) }
         } catch (io: IOException) {
             return@flatMap emptySequence<PluginEntry>()
         }
@@ -144,15 +154,16 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         }
 
         val pluginKlass = classLoader.loadClass(pluginEntry.pojo.pluginClass).kotlin
-        val plugin = (pluginKlass.objectInstance
-                ?: runCatching { pluginKlass.createInstance() }.getOrDefault(null)
-                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin
-                ?: return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
+        //TODO
+//        val plugin = (pluginKlass.objectInstance
+//                ?: runCatching { pluginKlass.createInstance() }.getOrDefault(null)
+//                ?: return LoadPluginResult.NO_PLUGIN_CLASS_CONSTRUCTOR) as? ISpiralPlugin
+        return LoadPluginResult.PLUGIN_CLASS_NOT_SPIRAL_PLUGIN
 
-        loadedPlugins.add(plugin)
-        plugin.load(this)
-
-        return LoadPluginResult.SUCCESS
+//        loadedPlugins.add(plugin)
+//        plugin.load(this)
+//
+//        return LoadPluginResult.SUCCESS
     }
 
     override suspend fun SpiralCoreContext.unloadPlugin(plugin: ISpiralPlugin) {
@@ -217,13 +228,17 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
                 }
             }
         } else {
-            val signature = signatureForPlugin(plugin.pojo.uid, plugin.pojo.semanticVersion.toString(), plugin.pojo.pluginFileName
-                    ?: plugin.source!!.path.substringAfterLast('/'))
+            val signature = signatureForPlugin(
+                plugin.pojo.uid, plugin.pojo.semanticVersion.toString(), plugin.pojo.pluginFileName
+                                                                         ?: plugin.source!!.path.substringAfterLast('/')
+            )
 
             if (signature == null) {
                 //Ask user if they want to load an unsigned plugin
-                printlnLocale("core.plugins.enable.unsigned_warning", plugin.source?.openStream()?.sha256Hash()
-                        ?: constNull())
+                printlnLocale(
+                    "core.plugins.enable.unsigned_warning", plugin.source?.openStream()?.sha256Hash()
+                                                            ?: constNull()
+                )
                 printLocale("core.plugins.enable.unsigned_warning_prompt")
 
                 loadPlugin = readConfirmation(defaultToAffirmative = false)
@@ -236,8 +251,10 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
             } else {
                 if (plugin.source?.openStream()?.verify(signature, publicKey) == true) {
                     //Signature verified
-                    printlnLocale("core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version
-                            ?: plugin.pojo.semanticVersion)
+                    printlnLocale(
+                        "core.plugins.enable.signature_verified", plugin.pojo.name, plugin.pojo.version
+                                                                                    ?: plugin.pojo.semanticVersion ?: "(null)"
+                    )
                     loadPlugin = true
                 } else {
                     //Signature cannot be verified

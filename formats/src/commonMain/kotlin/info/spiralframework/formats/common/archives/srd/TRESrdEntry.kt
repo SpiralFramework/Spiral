@@ -7,7 +7,6 @@ import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.text.lazyString
 
 @ExperimentalUnsignedTypes

@@ -7,9 +7,9 @@ import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.bookmark
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.extensions.readNullTerminatedUTF8String
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readNullTerminatedUTF8String
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 
 @ExperimentalUnsignedTypes

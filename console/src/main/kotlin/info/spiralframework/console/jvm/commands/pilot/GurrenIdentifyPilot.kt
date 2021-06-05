@@ -3,11 +3,11 @@ package info.spiralframework.console.jvm.commands.pilot
 import dev.brella.knolus.context.KnolusContext
 import dev.brella.knolus.modules.functionregistry.registerFunctionWithContextWithoutReturn
 import dev.brella.knolus.stringTypeParameter
-import dev.brella.kornea.errors.common.Optional
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.use
 import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
-import dev.brella.kornea.toolkit.common.use
 import dev.brella.kornea.toolkit.coroutines.ascii.createArbitraryProgressBar
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.constNull

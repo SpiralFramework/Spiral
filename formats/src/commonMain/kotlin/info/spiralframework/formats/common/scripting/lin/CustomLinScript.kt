@@ -1,12 +1,13 @@
 package info.spiralframework.formats.common.scripting.lin
 
+import dev.brella.kornea.io.common.TextCharsets
+import dev.brella.kornea.io.common.encodeToUTF16LEByteArray
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.toolkit.common.sumByLong
-import info.spiralframework.base.binding.TextCharsets
-import info.spiralframework.base.binding.manuallyEncode
 import info.spiralframework.base.common.NULL_TERMINATOR
 
 class CustomLinScript {
@@ -54,7 +55,13 @@ class CustomLinScript {
             var textOffset = 0
             textData.forEachIndexed { index, text ->
                 textOffsets[index] += textOffset
-                val textBytes = manuallyEncode(text.trimEnd(NULL_TERMINATOR), TextCharsets.UTF_16LE, includeByteOrderMarker = includeTextByteOrderMarker)
+                val textBytes = text.trimEnd(NULL_TERMINATOR).encodeToUTF16LEByteArray()
+                    .let {
+                        if (!includeTextByteOrderMarker) {
+                            if (it.readInt16LE() == TextCharsets.UTF_16LE_BOM) it.copyOfRange(2, it.size)
+                            else it
+                        } else it
+                    }
 
                 textOutputFlow.write(textBytes)
                 textOutputFlow.writeInt16LE(0x00)
@@ -85,6 +92,7 @@ inline fun linScript(block: CustomLinScript.() -> Unit): CustomLinScript {
     lin.block()
     return lin
 }
+
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
 suspend fun OutputFlow.compileLinScript(block: CustomLinScript.() -> Unit) {

@@ -1,18 +1,19 @@
 package info.spiralframework.formats.common.archives.srd
 
+import dev.brella.kornea.base.common.closeAfter
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32BE
-import dev.brella.kornea.toolkit.common.closeAfter
 import info.spiralframework.base.common.text.toHexString
 
 @ExperimentalUnsignedTypes
@@ -23,7 +24,7 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<BaseSrdEntry> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val classifier = flow.readInt32BE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -64,7 +65,7 @@ abstract class BaseSrdEntry(open val classifier: Int, open val mainDataLength: U
         }
     }
 
-    suspend fun openMainDataSource(): DataSource<out InputFlow> =
+    suspend fun openMainDataSource(): DataSource<InputFlow> =
         WindowedDataSource(dataSource, 16uL, mainDataLength, closeParent = false)
 
     suspend fun openMainDataFlow(): KorneaResult<InputFlow> =

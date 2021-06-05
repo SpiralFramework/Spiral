@@ -1,24 +1,24 @@
 package info.spiralframework.console.jvm.commands.pilot
 
 import dev.brella.knolus.context.KnolusContext
-import dev.brella.knolus.modules.functionregistry.registerFunctionWithContextWithoutReturn
 import dev.brella.knolus.objectTypeParameter
 import dev.brella.knolus.stringTypeParameter
 import dev.brella.knolus.types.asString
+import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.getOrNull
+import dev.brella.kornea.base.common.use
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.Uri
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
-import dev.brella.kornea.toolkit.common.use
 import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.populate
-import info.spiralframework.base.jvm.io.files.Folder
 import info.spiralframework.console.jvm.commands.CommandRegistrar
 import info.spiralframework.console.jvm.commands.shared.GurrenShared
 import info.spiralframework.console.jvm.data.GurrenSpiralContext
@@ -184,6 +184,7 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
             )
         }.getOrBreak { failure -> return noWritingFormat(readingResult, failure) }
 
+        //TODO
         val readingData = KorneaResult.successOrEmpty(readingResult.get().getOrNull())
             .switchIfEmpty { readingResult.format().read(context, readContext, dataSource) }
             .getOrBreak { failure -> return readingFailed(readingResult, failure) }

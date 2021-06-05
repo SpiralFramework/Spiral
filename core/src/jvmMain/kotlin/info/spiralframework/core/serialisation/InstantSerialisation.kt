@@ -1,24 +1,13 @@
 package info.spiralframework.core.serialisation
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.Version
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.module.SimpleModule
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
 /**
  * XML files require instants to be serialised as ISO_ZONED_DATE_TIME (at GMT)
  */
+/*
 object InstantSerialisation {
     object SERIALISER : JsonSerializer<Instant>() {
-        /**
+        */
+/**
          * Method that can be called to ask implementation to serialize
          * values of type this serializer handles.
          *
@@ -26,7 +15,8 @@ object InstantSerialisation {
          * @param gen Generator used to output resulting Json content
          * @param serializers Provider that can be used to get serializers for
          * serializing Objects value contains, if any.
-         */
+         *//*
+
         override fun serialize(value: Instant, gen: JsonGenerator, serializers: SerializerProvider?) {
             gen.writeString(value.atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
         }
@@ -35,7 +25,8 @@ object InstantSerialisation {
     }
 
     object DESERIALISER : JsonDeserializer<Instant>() {
-        /**
+        */
+/**
          * Method that can be called to ask implementation to deserialize
          * JSON content into the value type this serializer handles.
          * Returned instance is to be constructed by method itself.
@@ -89,11 +80,12 @@ object InstantSerialisation {
          * this deserialization activity.
          *
          * @return Deserialized value
-         */
+         *//*
+
         override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): Instant = ZonedDateTime.parse(p.valueAsString, DateTimeFormatter.ISO_ZONED_DATE_TIME).toInstant()
 
         override fun handledType(): Class<Instant> = Instant::class.java
     }
 
     class MODULE : SimpleModule("Instant Serialisation", Version.unknownVersion(), mapOf(Instant::class.java to DESERIALISER), listOf(SERIALISER))
-}
+}*/

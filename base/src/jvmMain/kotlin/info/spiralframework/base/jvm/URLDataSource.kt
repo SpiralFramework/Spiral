@@ -1,18 +1,15 @@
 package info.spiralframework.base.jvm
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import dev.brella.kornea.base.common.closeAll
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceClosed
-import dev.brella.kornea.io.common.DataSource.Companion.korneaSourceUnknown
-import dev.brella.kornea.io.common.DataSource.Companion.korneaTooManySourcesOpen
-import dev.brella.kornea.io.jvm.JVMDataSource
+import dev.brella.kornea.io.common.DataSourceReproducibility
+import dev.brella.kornea.io.common.LimitedInstanceDataSource
+import dev.brella.kornea.io.common.Uri
 import dev.brella.kornea.io.jvm.JVMInputFlow
 import dev.brella.kornea.io.jvm.files.fromUri
-import dev.brella.kornea.toolkit.common.closeAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.net.URL
-import kotlin.math.max
 
 class URLDataSource(
     val url: URL,

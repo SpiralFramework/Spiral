@@ -1,10 +1,11 @@
 package info.spiralframework.core.plugins
 
-import com.fasterxml.jackson.module.kotlin.readValue
-import info.spiralframework.core.SpiralCoreContext
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
+import info.spiralframework.core.SpiralCoreContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class SpiralCorePlugin private constructor(context: SpiralCoreContext) : BaseSpiralPlugin(context, SpiralCorePlugin::class.java, "spiralframework_core_plugin.yaml") {
     companion object {
@@ -19,7 +20,7 @@ class SpiralCorePlugin private constructor(context: SpiralCoreContext) : BaseSpi
         override suspend fun readPojo(context: SpiralCoreContext): SpiralPluginDefinitionPojo =
             context.loadResource("spiralframework_core_plugin.yaml")
                 .useAndMapInputFlow { flow -> flow.readBytes() }
-                .map { data -> context.yamlMapper.readValue<SpiralPluginDefinitionPojo>(data) }
+                .map { data -> Json.decodeFromString<SpiralPluginDefinitionPojo>(data.decodeToString()) }
                 .get()
     }
 

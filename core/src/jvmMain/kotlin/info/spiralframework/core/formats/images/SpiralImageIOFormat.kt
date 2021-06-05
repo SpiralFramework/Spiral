@@ -1,11 +1,11 @@
 package info.spiralframework.core.formats.images
 
 import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.img.asMatrixFromPng
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.toolkit.common.useAndFlatMap
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse

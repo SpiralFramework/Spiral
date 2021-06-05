@@ -1,18 +1,21 @@
 package info.spiralframework.formats.common.text
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.TextCharsets
+import dev.brella.kornea.io.common.fauxSeekFromStartForResult
+import dev.brella.kornea.io.common.flow.extensions.readDoubleByteNullTerminatedString
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.fauxSeekFromStart
-import dev.brella.kornea.toolkit.common.closeAfter
-import info.spiralframework.base.binding.TextCharsets
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
+import kotlin.collections.set
 
 @ExperimentalUnsignedTypes
 abstract class STXContainer {
@@ -53,7 +56,7 @@ abstract class STXContainer {
         suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<STXContainer> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val magic = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -94,7 +97,7 @@ abstract class STXContainer {
                         })
                     }.getOrBreak { return@closeAfter it.cast() }
 
-                    val maxStringID = stringOffsets.max()?.stringID ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val maxStringID = stringOffsets.maxOrNull()?.stringID ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     if (maxStringID >= count) {
                         //We need to use a map

@@ -1,19 +1,19 @@
 package info.spiralframework.formats.common.scripting.wrd
 
+import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.peekInt16BE
+import dev.brella.kornea.io.common.flow.extensions.readDoubleByteNullTerminatedString
 import dev.brella.kornea.io.common.flow.extensions.readInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.toolkit.common.closeAfter
-import info.spiralframework.base.binding.TextCharsets
+import dev.brella.kornea.io.common.flow.extensions.readSingleByteNullTerminatedString
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.readDoubleByteNullTerminatedString
-import info.spiralframework.base.common.io.readSingleByteNullTerminatedString
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.withFormats
@@ -29,7 +29,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
         suspend operator fun invoke(context: SpiralContext, game: DrGame.WordScriptable, dataSource: DataSource<*>): KorneaResult<WordScript> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .getOrBreak { return@withFormats it.cast() }
+                    .consumeAndGetOrBreak { return@withFormats it.cast() }
 
                 closeAfter(flow) {
                     val possibleMagicNumber = flow.readInt32LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
