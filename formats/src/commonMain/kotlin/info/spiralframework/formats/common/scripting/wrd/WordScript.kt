@@ -5,14 +5,20 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.consumeAndGetOrBreak
 import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.TextCharsets
+import dev.brella.kornea.io.common.fauxSeekFromStartForResult
+import dev.brella.kornea.io.common.flow.BufferedInputFlow
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.PeekableInputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
 import dev.brella.kornea.io.common.flow.extensions.peekInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readDoubleByteNullTerminatedString
 import dev.brella.kornea.io.common.flow.extensions.readInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.flow.extensions.readSingleByteNullTerminatedString
+import dev.brella.kornea.io.common.flow.readExact
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.games.DrGame
@@ -80,7 +86,7 @@ class WordScript(val labels: Array<String>, val parameters: Array<String>, val s
 
                     val sectionOffsets = flow.fauxSeekFromStartForResult(sectionOffset.toULong(), dataSource) { sectionFlow ->
                         KorneaResult.success(IntArray(labelCount) {
-                            sectionFlow.readInt16LE() ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            sectionFlow.readInt16LE()?.plus(0x20) ?: return@fauxSeekFromStartForResult localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         })
                     }.getOrBreak { return@closeAfter it.cast() }
 

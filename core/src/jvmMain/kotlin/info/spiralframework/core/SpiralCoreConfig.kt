@@ -1,7 +1,10 @@
 package info.spiralframework.core
 
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import info.spiralframework.core.common.serialisation.SemVerSerialiser
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SpiralCoreConfig(
         val socketTimeout: Int? = null,
         val connectTimeout: Int? = null,
@@ -9,7 +12,7 @@ data class SpiralCoreConfig(
         val apiBase: String? = null,
         val jenkinsBase: String? = null,
 
-        val enabledPlugins: Map<String, SemanticVersion>? = null
+        val enabledPlugins: Map<String, @Serializable(SemVerSerialiser::class) SemanticVersion > ? = null
 ) {
     constructor(context: SpiralCoreContext) : this(
             context.socketTimeout,

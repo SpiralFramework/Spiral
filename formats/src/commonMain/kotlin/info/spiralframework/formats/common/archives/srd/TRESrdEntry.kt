@@ -14,9 +14,8 @@ data class TRESrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
-    override val unknown: Int,
-    override val dataSource: DataSource<*>
-) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+    override val unknown: Int
+) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
     sealed class TreeNode {
         data class Branch internal constructor(
             val stringOffset: UInt,
@@ -173,6 +172,14 @@ data class TRESrdEntry(
             }
 
         return KorneaResult.success(this@TRESrdEntry)
+    }
+
+    override suspend fun SpiralContext.writeMainData(out: OutputFlow) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun SpiralContext.writeSubData(out: OutputFlow) {
+        TODO("Not yet implemented")
     }
 }
 

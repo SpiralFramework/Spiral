@@ -15,5 +15,14 @@ object SemVerSerialiser: KSerializer<SemanticVersion> {
         encoder.encodeString(value.toString())
 
     override fun deserialize(decoder: Decoder): SemanticVersion =
-        SemanticVersion.fromString(decoder.decodeString())
+        fromString(decoder.decodeString())
+
+    private val regex: Regex by lazy { SemanticVersion.SEMVER_REGEX.toRegex() }
+    public fun fromString(string: String): SemanticVersion {
+        val match = requireNotNull(regex.matchEntire(string)) {
+            "Version string is not a valid semantic version: $string"
+        }.groupValues
+
+        return SemanticVersion(match[1].toInt(), match[2].toInt(), match[3].toInt(), match?.getOrNull(4)?.takeIf(String::isNotBlank)?.let(SemanticVersion.ReleaseCycle.Companion::fromRepresentation))
+    }
 }

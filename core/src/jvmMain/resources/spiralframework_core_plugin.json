@@ -1,0 +1,6 @@
+{
+  "name": "Spiral Framework - Core",
+  "uid": "SPIRAL_FRAMEWORK_CORE",
+  "semantic_version": "0.1.0",
+  "plugin_class": "info.spiralframework.core.plugins.SpiralCorePlugin"
+}

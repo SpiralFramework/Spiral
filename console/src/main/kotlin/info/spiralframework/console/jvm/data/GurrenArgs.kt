@@ -2,6 +2,7 @@ package info.spiralframework.console.jvm.data
 
 import info.spiralframework.base.binding.isAnsiSupported
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 data class GurrenArgs(
     val disableUpdateCheck: Boolean = DEFAULTS.DISABLE_UPDATE_CHECK,
@@ -63,12 +64,13 @@ data class GurrenArgs(
         const val ANSI_ENABLED = false
     }
 
+    @Serializable
     class Pojo(
-        @SerialName("disable_update_check") val disableUpdateCheck: Boolean?,
-        @SerialName("is_tool") val isTool: Boolean?,
-        @SerialName("time_commands") val timeCommands: Boolean?,
-        @SerialName("silence_output") val silenceOutput: Boolean?,
-        @SerialName("ansi_enabled") val ansiEnabled: Boolean?
+        @SerialName("disable_update_check") val disableUpdateCheck: Boolean? = null,
+        @SerialName("is_tool") val isTool: Boolean? = null,
+        @SerialName("time_commands") val timeCommands: Boolean? = null,
+        @SerialName("silence_output") val silenceOutput: Boolean? = null,
+        @SerialName("ansi_enabled") val ansiEnabled: Boolean? = null
     )
 
     constructor(args: Array<String>) : this(

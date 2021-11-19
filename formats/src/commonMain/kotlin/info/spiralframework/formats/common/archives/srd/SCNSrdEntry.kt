@@ -1,8 +1,8 @@
 package info.spiralframework.formats.common.archives.srd
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.EnumSeekMode
+import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.bookmark
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
@@ -17,9 +17,8 @@ data class SCNSrdEntry(
         override val classifier: Int,
         override val mainDataLength: ULong,
         override val subDataLength: ULong,
-        override val unknown: Int,
-        override val dataSource: DataSource<*>
-) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+        override val unknown: Int
+) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x2453434E
     }
@@ -61,5 +60,13 @@ data class SCNSrdEntry(
         }
 
         return KorneaResult.success(this@SCNSrdEntry)
+    }
+
+    override suspend fun SpiralContext.writeMainData(out: OutputFlow) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun SpiralContext.writeSubData(out: OutputFlow) {
+        TODO("Not yet implemented")
     }
 }

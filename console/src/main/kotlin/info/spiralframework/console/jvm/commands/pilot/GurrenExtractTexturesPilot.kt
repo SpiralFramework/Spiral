@@ -48,6 +48,7 @@ import info.spiralframework.core.common.formats.SpiralFormat
 import info.spiralframework.core.decompress
 import info.spiralframework.formats.common.archives.SpiralArchive
 import info.spiralframework.formats.common.archives.getSubfiles
+import info.spiralframework.formats.common.archives.srd.RSISrdEntry
 import info.spiralframework.formats.common.archives.srd.SrdArchive
 import info.spiralframework.formats.common.archives.srd.TextureSrdEntry
 import info.spiralframework.formats.jvm.archives.FolderArchive
@@ -168,7 +169,8 @@ object GurrenExtractTexturesPilot: CommandRegistrar {
 
             textureEntries.forEach { textureEntry ->
                 srdvEntry.dataSource.useInputFlow { srdvFlow ->
-                    val textureFlow = WindowedInputFlow(srdvFlow, textureEntry.rsiEntry.resources[0].start.toULong(), textureEntry.rsiEntry.resources[0].length.toULong())
+                    val rsiResource = textureEntry.rsiEntry.resources.first { it is RSISrdEntry.ResourceIndex.GlobalTextureResource } as RSISrdEntry.ResourceIndex.GlobalTextureResource
+                    val textureFlow = WindowedInputFlow(srdvFlow, rsiResource.start.toULong(), rsiResource.length.toULong())
 
                     val swizzled = textureEntry.swizzle and 1 != 1
                     if (textureEntry.format in arrayOf(0x01, 0x02, 0x05, 0x1A)) {

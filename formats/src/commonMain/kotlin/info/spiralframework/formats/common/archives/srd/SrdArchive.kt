@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.withIndex
 
 @ExperimentalUnsignedTypes
-class SrdArchive(val entries: Array<BaseSrdEntry>): SpiralArchive {
+class SrdArchive(val entries: Array<BaseSrdEntry>, val dataSource: DataSource<*>): SpiralArchive {
     companion object {
         const val NO_ENTRIES = 0x0001
         const val INVALID_ENTRY = 0x0000
@@ -51,7 +51,7 @@ class SrdArchive(val entries: Array<BaseSrdEntry>): SpiralArchive {
                     return KorneaResult.errorAsIllegalArgument(NO_ENTRIES, localise(NO_ENTRIES_KEY))
                 }
 
-                return KorneaResult.success(SrdArchive(entries.toTypedArray()))
+                return KorneaResult.success(SrdArchive(entries.toTypedArray(), dataSource))
             }
         }
 
@@ -64,11 +64,11 @@ class SrdArchive(val entries: Array<BaseSrdEntry>): SpiralArchive {
     override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =
         entries.asFlow().withIndex().transform { (index, entry) ->
             if (entry.mainDataLength > 0uL) {
-                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_data.dat", entry.openMainDataSource()))
+                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_data.dat", entry.openMainDataSource(dataSource)))
             }
 
             if (entry.subDataLength > 0uL) {
-                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_sub-data.dat", entry.openSubDataSource()))
+                emit(SpiralArchiveSubfile("${index}_${entry.classifierAsString}_sub-data.dat", entry.openSubDataSource(dataSource)))
             }
         }
 }

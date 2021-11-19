@@ -1,11 +1,14 @@
 package info.spiralframework.formats.common.archives.srd
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.EnumSeekMode
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.SeekableInputFlow
 import dev.brella.kornea.io.common.flow.extensions.readFloat32LE
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.globalOffset
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
@@ -20,9 +23,8 @@ data class VTXSrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
-    override val unknown: Int,
-    override val dataSource: DataSource<*>
-) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+    override val unknown: Int
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x24565458
     }
@@ -118,6 +120,14 @@ data class VTXSrdEntry(
         //There's more data after this, I'm not gonna try that yet. Seems to be pairs of shorts?
 
         return KorneaResult.success(this@VTXSrdEntry)
+    }
+
+    override suspend fun SpiralContext.writeMainData(out: OutputFlow) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun SpiralContext.writeSubData(out: OutputFlow) {
+        TODO("Not yet implemented")
     }
 }
 

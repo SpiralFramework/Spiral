@@ -7,5 +7,5 @@ interface WrdEntry {
     /**
      * This should be an interpretable statement in something like OSL
      */
-    fun format(): String = "0x${opcode.toString(16).padStart(2, '0').toUpperCase()}|${arguments.joinToString()}"
+    fun format(): String = "0x${opcode.toString(16).padStart(2, '0').uppercase()}|${arguments.joinToString()}"
 }

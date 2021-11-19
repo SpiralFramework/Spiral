@@ -5,9 +5,6 @@ import ch.qos.logback.core.joran.spi.JoranException
 import ch.qos.logback.core.util.StatusPrinter
 import dev.brella.kornea.base.common.use
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.img.DXT1PixelData
-import dev.brella.kornea.img.bc7.BC7PixelData
-import dev.brella.kornea.img.createPngImage
 import dev.brella.kornea.io.common.*
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.copyTo
@@ -26,7 +23,6 @@ import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.properties.plus
-import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.base.jvm.crypto.sha512HashBytes
 import info.spiralframework.base.jvm.retrieveStackTrace
 import info.spiralframework.core.serialisation.DefaultSpiralSerialisation
@@ -414,7 +410,7 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                             dataNode = TextArea(data.string)
                             dataNode.isEditable = false
                         }
-                        is SrdvTexture -> {
+/*                        is SrdvTexture -> {
                             bstTextArea.text = null
 
                             val root = TreeItem<String>()
@@ -521,7 +517,7 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                                 withContext(Dispatchers.JavaFx) { fileTree.selectionModel.selectedItem.children.addAll(subfiles) }
                             }
                             clearChildren = false
-                        }
+                        }*/
                         else -> {
                             bstTextArea.text = null
                             dataNode = null

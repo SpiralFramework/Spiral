@@ -1,23 +1,17 @@
 package info.spiralframework.formats.common.archives
 
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyFrom
 import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
+import dev.brella.kornea.io.common.useInputFlow
 import dev.brella.kornea.toolkit.common.byteArrayOfHex
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignmentNeededFor
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableMap
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.forEach
-import kotlin.collections.forEachIndexed
 import kotlin.collections.set
-import kotlin.collections.toList
 
 @ExperimentalUnsignedTypes
 open class CustomSpcArchive {
@@ -50,13 +44,13 @@ open class CustomSpcArchive {
     }
 
     operator fun set(name: String, source: DataSource<*>) = set(name, CustomSpcEntry(0x00, source.dataSize!!.toLong(), source.dataSize!!.toLong(), source))
+    operator fun set(name: String, compressionFlag: Int, source: DataSource<*>) = set(name, CustomSpcEntry(compressionFlag, source.dataSize!!.toLong(), source.dataSize!!.toLong(), source))
     operator fun set(name: String, compressionFlag: Int, compressedSize: Long, decompressedSize: Long, dataSource: DataSource<*>) = set(name, CustomSpcEntry(compressionFlag, compressedSize, decompressedSize, dataSource))
     operator fun set(name: String, entry: CustomSpcEntry) {
         require(entry.compressedSize == entry.dataSource.dataSize?.toLong())
         _files[name] = entry
     }
 
-    @ExperimentalStdlibApi
     suspend fun compile(output: OutputFlow) {
         output.writeInt32LE(SpcArchive.SPC_MAGIC_NUMBER_LE)
         output.write(SPC_MAGIC_PADDING)
@@ -87,18 +81,17 @@ open class CustomSpcArchive {
 }
 
 @ExperimentalUnsignedTypes
-inline fun spcArchive(block: CustomSpcArchive.() -> Unit): CustomSpcArchive {
+inline fun buildSpcArchive(block: CustomSpcArchive.() -> Unit): CustomSpcArchive {
     val spc = CustomSpcArchive()
     spc.block()
     return spc
 }
 @ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun OutputFlow.compileSpcArchive(block: CustomSpcArchive.() -> Unit) {
+suspend inline fun OutputFlow.compileSpcArchive(block: CustomSpcArchive.() -> Unit) {
     val spc = CustomSpcArchive()
     spc.block()
     spc.compile(this)
 }
 
 @ExperimentalUnsignedTypes
-suspend fun CustomSpcArchive.add(spc: SpcArchive, context: SpiralContext) = context.add(spc)
+suspend inline fun CustomSpcArchive.add(spc: SpcArchive, context: SpiralContext) = context.add(spc)

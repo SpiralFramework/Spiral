@@ -7,7 +7,7 @@ import info.spiralframework.core.SpiralCoreContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-class SpiralCorePlugin private constructor(context: SpiralCoreContext) : BaseSpiralPlugin(context, SpiralCorePlugin::class.java, "spiralframework_core_plugin.yaml") {
+class SpiralCorePlugin private constructor(context: SpiralCoreContext) : BaseSpiralPlugin(context, SpiralCorePlugin::class.java, "spiralframework_core_plugin.json") {
     companion object {
         suspend operator fun invoke(context: SpiralCoreContext): SpiralCorePlugin {
             val plugin = SpiralCorePlugin(context)

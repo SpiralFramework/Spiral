@@ -77,6 +77,8 @@ object GurrenPilot: CoroutineScope {
         GurrenExtractFilesPilot, GurrenExtractTexturesPilot, GurrenExtractModelsPilot,
         GurrenIdentifyPilot, GurrenConvertPilot, GurrenCompilePilot,
 
+        GurrenV3FontPilot,
+
         GurrenWatchtower
     )
 

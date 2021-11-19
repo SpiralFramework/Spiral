@@ -18,9 +18,8 @@ data class MaterialsSrdEntry(
         override val classifier: Int,
         override val mainDataLength: ULong,
         override val subDataLength: ULong,
-        override val unknown: Int,
-        override val dataSource: DataSource<*>
-) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown, dataSource) {
+        override val unknown: Int
+) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
     companion object {
         const val MAGIC_NUMBER_BE = 0x244D4154
     }
@@ -52,5 +51,13 @@ data class MaterialsSrdEntry(
         }
 
         return KorneaResult.success(this@MaterialsSrdEntry)
+    }
+
+    override suspend fun SpiralContext.writeMainData(out: OutputFlow) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun SpiralContext.writeSubData(out: OutputFlow) {
+        TODO("Not yet implemented")
     }
 }
