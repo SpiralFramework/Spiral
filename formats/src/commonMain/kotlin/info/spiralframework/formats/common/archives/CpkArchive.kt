@@ -2,17 +2,30 @@ package info.spiralframework.formats.common.archives
 
 import com.soywiz.krypto.sha256
 import dev.brella.kornea.base.common.closeAfter
-import info.spiralframework.base.common.*
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.cast
+import dev.brella.kornea.errors.common.consumeAndGetOrBreak
+import dev.brella.kornea.errors.common.doOnSuccess
+import dev.brella.kornea.errors.common.filter
+import dev.brella.kornea.errors.common.filterToInstance
+import dev.brella.kornea.errors.common.flatMap
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.io.common.BinaryDataSource
+import dev.brella.kornea.io.common.DataSource
+import dev.brella.kornea.io.common.OffsetDataSource
+import dev.brella.kornea.io.common.WindowedDataSource
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
+import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import dev.brella.kornea.io.common.flow.readAndClose
+import info.spiralframework.base.common.Moment
+import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.withFormats
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 
 @ExperimentalUnsignedTypes
@@ -190,7 +203,7 @@ class CpkArchive(
         if (file.isCompressed) {
             val flow = openRawFlow(file).getOrBreak { return it.cast() }
             val compressedData = flow.readAndClose()
-            val cache = cacheShortTerm(compressedData.sha256().toHexString())
+            val cache = cacheShortTerm(compressedData.sha256().hexLower)
             val output = cache.openOutputFlow()
                 .getOrBreak {
                     cache.close()

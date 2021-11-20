@@ -10,7 +10,6 @@ import dev.brella.kornea.io.common.flow.readBytes
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.buildFormatResult
 import info.spiralframework.formats.common.compression.decompressVita
@@ -37,7 +36,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
      */
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
         val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
-        val cache = context.cacheShortTerm(context, "drvita:${data.sha256().toHexString()}")
+        val cache = context.cacheShortTerm(context, "drvita:${data.sha256().hexLower}")
 
         return cache.openOutputFlow()
             .flatMap { output ->

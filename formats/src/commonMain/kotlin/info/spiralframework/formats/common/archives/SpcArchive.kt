@@ -110,7 +110,7 @@ class SpcArchive(val unknownFlag: Int, val files: Array<SpcFileEntry>, val dataS
         if (file.compressionFlag == COMPRESSED_FLAG) {
             val flow = openRawFlow(file).getOrBreak { return it.cast() }
             val compressedData = flow.readAndClose()
-            val cache = cacheShortTerm(compressedData.sha256().toHexString())
+            val cache = cacheShortTerm(compressedData.sha256().hexLower)
 
             return cache.openOutputFlow()
                 .useAndFlatMap { output ->

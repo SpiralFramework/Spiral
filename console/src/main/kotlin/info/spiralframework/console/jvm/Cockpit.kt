@@ -107,7 +107,11 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                 gurrenArgs = GurrenArgs(args)
             } else {
 //                val pojo = serialisation.yamlMapper.tryReadValue<GurrenArgs.Pojo>(File(config.getConfigFile(parentContext, "console")))
-                val pojo = File(config.getConfigFile(parentContext, "console")).takeIf(File::exists)?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it.readText()) }
+                val pojo = File(config.getConfigFile(parentContext, "console"))
+                    .takeIf(File::exists)
+                    ?.readText()
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it) }
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             }
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
@@ -118,7 +122,9 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val coreConfig: SpiralCoreConfig =
                 File(config.getConfigFile(parentContext, "core"))
                     .takeIf(File::exists)
-                    ?.let { serialisation.json.decodeFromString(it.readText()) }
+                    ?.readText()
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { serialisation.json.decodeFromString(it) }
                 ?: SpiralCoreConfig()
 
             val signatures: SpiralSignatures = DefaultSpiralSignatures()

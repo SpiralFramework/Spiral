@@ -6,7 +6,6 @@ import dev.brella.kornea.errors.common.getOrElseRun
 import dev.brella.kornea.errors.common.useAndMap
 import dev.brella.kornea.io.common.BinaryDataSource
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.toHexString
 import info.spiralframework.formats.common.archives.SpiralArchive
 import info.spiralframework.formats.common.archives.SpiralArchiveSubfile
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +28,7 @@ class ZipArchive(val zipFile: ZipFile) : SpiralArchive {
             .filter { entry -> !entry.isDirectory }
             .map { entry ->
                 val data = withContext(Dispatchers.IO) { zipFile.getInputStream(entry).use(InputStream::readAllBytes) }
-                val cache = cacheShortTerm(data.sha256().toHexString())
+                val cache = cacheShortTerm(data.sha256().hexLower)
 
                 SpiralArchiveSubfile(
                     entry.name,

@@ -1,15 +1,14 @@
-apply plugin: 'org.jetbrains.kotlin.multiplatform'
-//apply plugin: "com.github.johnrengelman.shadow"
-//apply plugin: "application"
-//apply plugin: 'antlr'
-
-//mainClassName = "info.spiralframework.osl.OSLProxy"
-//mainClassName = "BootstrapKt"
+plugins {
+    kotlin("multiplatform")
+}
 
 kotlin {
     jvm {
-        compilations.main.kotlinOptions {
-            jvmTarget = "1.8"
+        val main by compilations.getting {
+            kotlinOptions {
+                jvmTarget = "1.8"
+                freeCompilerArgs = listOf("-XXLanguage:+InlineClasses")
+            }
         }
     }
     js()
@@ -27,31 +26,31 @@ kotlin {
 //    mingwX64("mingw") {
 //    }
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-                implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
 
-                implementation project(":spiral-base")
-                implementation project(":spiral-formats")
+                implementation(project(":spiral-base"))
+                implementation(project(":spiral-formats"))
 //                api project(":osl-json")
             }
         }
-        jvmMain {
+        val jvmMain by getting {
             dependencies {
 //                implementation kotlin('stdlib-jdk8')
 
-                api project(":spiral-antlr-osl-java")
-                implementation "ch.qos.logback:logback-classic:$logback_version"
+                api(project(":spiral-antlr-osl-java"))
+                implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
             }
         }
 
         all {
-            languageSettings {
+            languageSettings.apply {
                 enableLanguageFeature("InlineClasses")
-                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
-                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
-                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+                useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+                useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+                useExperimentalAnnotation("kotlin.contracts.ExperimentalContracts")
             }
         }
 //        jsMain {
@@ -72,10 +71,10 @@ kotlin {
     }
 }
 
-jvmJar {
-    archiveBaseName.set("spiral-$project.name")
-    archiveVersion.set(project_version)
-}
+//tasks.jvmJar {
+//    archiveBaseName.set("spiral-$project.name")
+//    archiveVersion.set(project_version)
+//}
 
 //task jvmShadowJar(type: ShadowJar, dependsOn: [jvmJar]) {
 //    mergeServiceFiles()

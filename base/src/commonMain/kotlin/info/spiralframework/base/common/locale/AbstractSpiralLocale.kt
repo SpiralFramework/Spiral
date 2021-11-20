@@ -49,7 +49,6 @@ abstract class AbstractSpiralLocale: SpiralLocale {
 
     private var currentLocale: CommonLocale = CommonLocale.defaultLocale
 
-    @ExperimentalUnsignedTypes
     override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle> {
         val bundle = CommonLocaleBundle.load(this, bundleName, currentLocale, context)
         if (bundle is KorneaResult.Success) {

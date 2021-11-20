@@ -10,7 +10,6 @@ import dev.brella.kornea.io.common.flow.readBytes
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.base.common.toHexString
 import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.buildFormatResult
@@ -62,7 +61,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
             KorneaResult.success(flow.readBytes())
         }.flatten().getOrBreak { return it.cast() }
 
-        val cache = context.cacheShortTerm(context, "spc:${data.sha256().toHexString()}")
+        val cache = context.cacheShortTerm(context, "spc:${data.sha256().hexLower}")
 
         return cache.openOutputFlow()
             .flatMap { output ->

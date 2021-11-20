@@ -57,7 +57,6 @@ class CommonLocaleBundle(override val bundleName: String, override val locale: C
                         }
     }
 
-    @ExperimentalUnsignedTypes
     override suspend fun SpiralResourceLoader.loadWithLocale(locale: CommonLocale): KorneaResult<LocaleBundle> =
             load(this, bundleName, locale, context).cast()
 }

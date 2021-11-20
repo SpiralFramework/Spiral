@@ -1,13 +1,13 @@
 package info.spiralframework.base.binding
 
-import info.spiralframework.base.common.SpiralModuleBase
-import info.spiralframework.base.common.io.SpiralResourceLoader
 import dev.brella.kornea.annotations.ExperimentalKorneaIO
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.korneaNotFound
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.jvm.JVMDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
+import info.spiralframework.base.common.SpiralModuleBase
+import info.spiralframework.base.common.io.SpiralResourceLoader
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -33,7 +33,7 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
         )
     }
 
-    @ExperimentalKorneaIO
+    @OptIn(ExperimentalKorneaIO::class)
     override suspend fun loadResource(name: String, from: KClass<*>): KorneaResult<DataSource<*>> {
         val classLoader = from.java.classLoader
 

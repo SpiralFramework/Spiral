@@ -1,5 +1,7 @@
 package info.spiralframework.osl
 
+import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.freeze
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.antlr.osl.OpenSpiralParserBaseVisitor
 import info.spiralframework.osb.common.OSLUnion
@@ -7,9 +9,6 @@ import info.spiralframework.osb.common.OpenSpiralBitcode
 import info.spiralframework.osb.common.buildLongReference
 import kotlinx.coroutines.runBlocking
 import org.antlr.v4.runtime.tree.TerminalNode
-import dev.brella.kornea.toolkit.common.SemanticVersion
-import dev.brella.kornea.toolkit.common.freeze
-import java.lang.IllegalStateException
 
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
@@ -51,14 +50,12 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
         )
     }
 
-    @ExperimentalStdlibApi
     override fun visitBasicDrill(ctx: OpenSpiralParser.BasicDrillContext): OSLVisitorUnion.AddOpcode {
         val opcode = ctx.INTEGER().text.toIntVariable()
         val values = ctx.basicDrillValue()
         return OSLVisitorUnion.AddOpcode(opcode, Array(values.size) { i -> (visitBasicDrillValue(values[i]) as OSLVisitorUnion.Value<*>).union })
     }
 
-    @ExperimentalStdlibApi
     override fun visitBasicDrillNamed(ctx: OpenSpiralParser.BasicDrillNamedContext): OSLVisitorUnion.AddNamedOpcode {
         val opcodeName = ctx.NAME_IDENTIFIER().text.trimEnd('|')
         val values = ctx.basicDrillValue()
@@ -120,7 +117,6 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
 //        return OSLUnion.UndefinedType
 //    }
 
-    @ExperimentalStdlibApi
     override fun visitWrdLabelReference(ctx: OpenSpiralParser.WrdLabelReferenceContext): OSLVisitorUnion.Value<*>? {
         ctx.WRD_SHORT_LABEL_REFERENCE()?.let { node -> return OSLVisitorUnion.Value(OSLUnion.LabelType(node.text.substring(1))) }
         ctx.wrdLongLabelReference()?.let(this::visitWrdLongLabelReference)?.let { return it }
@@ -128,7 +124,6 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
         return null
     }
 
-    @ExperimentalStdlibApi
     override fun visitWrdParameterReference(ctx: OpenSpiralParser.WrdParameterReferenceContext): OSLVisitorUnion.Value<*>? {
         ctx.WRD_SHORT_PARAMETER_REFERENCE()?.let { node -> return OSLVisitorUnion.Value(OSLUnion.ParameterType(node.text.substring(1))) }
         ctx.wrdLongParameterReference()?.let(this::visitWrdLongParameterReference)?.let { return it }
@@ -136,15 +131,12 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
         return null
     }
 
-    @ExperimentalStdlibApi
     override fun visitWrdLongLabelReference(ctx: OpenSpiralParser.WrdLongLabelReferenceContext): OSLVisitorUnion.Value<OSLUnion.LongLabelType> =
             OSLVisitorUnion.Value(OSLUnion.LongLabelType(visitLongReference(ctx.longReference()).union.longReference))
 
-    @ExperimentalStdlibApi
     override fun visitWrdLongParameterReference(ctx: OpenSpiralParser.WrdLongParameterReferenceContext): OSLVisitorUnion.Value<OSLUnion.LongParameterType> =
             OSLVisitorUnion.Value(OSLUnion.LongParameterType(visitLongReference(ctx.longReference()).union.longReference))
 
-    @ExperimentalStdlibApi
     override fun visitLongReference(ctx: OpenSpiralParser.LongReferenceContext): OSLVisitorUnion.Value<OSLUnion.LongReferenceType> {
         val longReference = runBlocking {
             buildLongReference {
@@ -185,7 +177,6 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
         return OSLVisitorUnion.Value(OSLUnion.LongReferenceType(longReference))
     }
 
-    @ExperimentalStdlibApi
     override fun visitQuotedStringContent(ctx: OpenSpiralParser.QuotedStringContentContext): OSLVisitorUnion.Value<OSLUnion.LongReferenceType> {
         val longReference = runBlocking {
             buildLongReference {
@@ -237,14 +228,12 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
         return OSLVisitorUnion.Value(OSLUnion.LongReferenceType(longReference))
     }
 
-    @ExperimentalStdlibApi
     override fun visitMetaVariableAssignment(ctx: OpenSpiralParser.MetaVariableAssignmentContext): OSLVisitorUnion.SetVariable? {
         val name = ctx.ASSIGN_VARIABLE_NAME().text.substringAfter(' ').trim()
         val value = visitVariableValue(ctx.variableValue())?.union ?: return null
         return OSLVisitorUnion.SetVariable(name, value)
     }
 
-    @ExperimentalStdlibApi
     override fun visitVariableValue(ctx: OpenSpiralParser.VariableValueContext): OSLVisitorUnion.Value<*>? =
             wrapUnionValue {
                 ctx.DECIMAL_NUMBER()?.let { double -> return@wrapUnionValue OSLUnion.DecimalNumberType(double.text.toDouble()) }
@@ -259,7 +248,6 @@ class OSLVisitor : OpenSpiralParserBaseVisitor<OSLVisitorUnion>() {
                 OSLUnion.UndefinedType
             }
 
-    @ExperimentalStdlibApi
     override fun visitFunctionVariableValue(ctx: OpenSpiralParser.FunctionVariableValueContext): OSLVisitorUnion.Value<*>? =
             wrapUnionValue {
                 ctx.FUNC_CALL_DECIMAL_NUMBER()?.let { double -> return@wrapUnionValue OSLUnion.DecimalNumberType(double.text.toDouble()) }

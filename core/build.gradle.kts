@@ -1,27 +1,32 @@
-apply plugin: 'org.jetbrains.kotlin.multiplatform'
-apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.serialization")
+}
 
 kotlin {
     jvm {
-        compilations.main.kotlinOptions {
-            jvmTarget = "1.8"
+        val main by compilations.getting {
+            kotlinOptions {
+                jvmTarget = "1.8"
+                freeCompilerArgs = listOf("-XXLanguage:+InlineClasses")
+            }
         }
     }
 
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
-                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-                implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version"
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
 
-                api project(":spiral-base")
-                api project(":spiral-formats")
-                api project(":spiral-osl")
+                api(project(":spiral-base"))
+                api(project(":spiral-formats"))
+                api(project(":spiral-osl"))
 
-                api "dev.brella:kornea-img:$kornea_img_version"
+                api("dev.brella:kornea-img:$KORNEA_IMG_VERSION")
             }
         }
-        jvmMain {
+        val jvmMain by getting {
             dependencies {
 //                api "com.fasterxml.jackson.core:jackson-core:$jackson_version"
 //                api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
@@ -36,22 +41,22 @@ kotlin {
 //                api "com.github.kittinunf.fuel:fuel:$fuel_version"
 //                api "com.github.kittinunf.fuel:fuel-coroutines:$fuel_version"
 
-                api "io.ktor:ktor-client-apache:$ktor_version"
+                api("io.ktor:ktor-client-apache:$KTOR_VERSION")
 
-                api "com.twelvemonkeys.imageio:imageio-bmp:3.4.1"
-                api "com.twelvemonkeys.imageio:imageio-jpeg:3.4.1"
-                api "com.twelvemonkeys.imageio:imageio-tga:3.4.1"
+                api("com.twelvemonkeys.imageio:imageio-bmp:3.4.1")
+                api("com.twelvemonkeys.imageio:imageio-jpeg:3.4.1")
+                api("com.twelvemonkeys.imageio:imageio-tga:3.4.1")
 
 //                api "org.greenrobot:eventbus:3.1.1"
             }
         }
 
         all {
-            languageSettings {
+            languageSettings.apply {
                 enableLanguageFeature("InlineClasses")
-                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
-                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
-                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+                useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+                useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+                useExperimentalAnnotation("kotlin.contracts.ExperimentalContracts")
             }
         }
     }

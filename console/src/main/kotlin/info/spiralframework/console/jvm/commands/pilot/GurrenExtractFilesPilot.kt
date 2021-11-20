@@ -260,7 +260,7 @@ class GurrenExtractFilesPilot(override val archiveFormats: List<ReadableSpiralFo
         context.printlnLocale("commands.pilot.extract_files.empty_archive", archive)
     }
 
-    @ExperimentalTime
+    @OptIn(ExperimentalTime::class)
     override suspend fun beginExtracting(context: SpiralContext, archive: SpiralArchive, destination: File) {
         fileExtractionProgressBar = createAsciiProgressBar(
             archive.fileCount.toLong(),
@@ -295,7 +295,7 @@ class GurrenExtractFilesPilot(override val archiveFormats: List<ReadableSpiralFo
         fileExtractionProgressBar?.trackProgress(++fileExtractionCount)
     }
 
-    @ExperimentalTime
+    @OptIn(ExperimentalTime::class)
     override suspend fun finishExtracting(context: SpiralContext, archive: SpiralArchive, destination: File) {
         fileExtractionProgressBar?.complete()
         fileExtractionProgressBar = null
