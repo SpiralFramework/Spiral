@@ -9,12 +9,12 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import info.spiralframework.base.common.serialisation.SpiralSerialisation
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
-import info.spiralframework.core.serialisation.SpiralSerialisation
 
 @ExperimentalUnsignedTypes
-interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralSerialisation, SpiralHttp {
+interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralHttp {
     val socketTimeout: Int
     val connectTimeout: Int
     val requestTimeout: Int
@@ -24,7 +24,7 @@ interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegist
 
     val enabledPlugins: Map<String, SemanticVersion>
 
-    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newSerialisation: SpiralSerialisation? = null, newHttp: SpiralHttp? = null): SpiralContext
+    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSerialisation: SpiralSerialisation? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newHttp: SpiralHttp? = null): SpiralContext
 }
 
 @ExperimentalUnsignedTypes

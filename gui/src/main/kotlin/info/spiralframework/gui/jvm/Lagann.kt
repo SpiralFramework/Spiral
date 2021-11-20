@@ -25,7 +25,6 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.properties.plus
 import info.spiralframework.base.jvm.crypto.sha512HashBytes
 import info.spiralframework.base.jvm.retrieveStackTrace
-import info.spiralframework.core.serialisation.DefaultSpiralSerialisation
 import info.spiralframework.formats.common.archives.*
 import info.spiralframework.formats.common.archives.srd.SrdArchive
 import info.spiralframework.formats.common.archives.srd.TextureSrdEntry
@@ -73,6 +72,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.lang.Integer.min
 import javax.imageio.ImageIO
+import kotlin.contracts.ExperimentalContracts
 import kotlin.math.log
 
 class Lagann : Application(), CoroutineScope by MainScope() {
@@ -87,7 +87,6 @@ class Lagann : Application(), CoroutineScope by MainScope() {
 
     lateinit var spiralContext: SpiralContext
     lateinit var configFile: File
-    val serialisation = DefaultSpiralSerialisation()
     var game: DrGame? = null
 
     val fileTree = TreeView<LagannTreeData>()
@@ -138,6 +137,7 @@ class Lagann : Application(), CoroutineScope by MainScope() {
      * Applications may create other stages, if needed, but they will not be
      * primary stages and will not be embedded in the browser.
      */
+    @OptIn(ExperimentalContracts::class, ExperimentalStdlibApi::class)
     override fun start(primaryStage: Stage) {
         this.primaryStage = primaryStage
 

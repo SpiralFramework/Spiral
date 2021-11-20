@@ -1,5 +1,6 @@
 plugins {
-    kotlin("multiplatform")
+    kotlinMultiplatform()
+    kotlinSerialisation()
 }
 
 kotlin {
@@ -28,6 +29,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(KOTLINX_COROUTINES_CORE)
+                implementation(KOTLINX_SERIALISATION_JSON)
 
                 api("dev.brella:kornea-annotations:$KORNEA_ANNOTATIONS_VERSION")
                 api("dev.brella:kornea-errors:$KORNEA_ERRORS_VERSION")

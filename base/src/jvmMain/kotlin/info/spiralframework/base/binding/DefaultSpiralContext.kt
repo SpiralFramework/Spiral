@@ -1,5 +1,12 @@
 package info.spiralframework.base.binding
 
+import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.SuspendInit0
+import dev.brella.kornea.toolkit.common.init
+import info.spiralframework.base.common.SpiralCatalyst
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
+import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
@@ -7,10 +14,8 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
-import dev.brella.kornea.toolkit.common.SemanticVersion
-import dev.brella.kornea.toolkit.common.SuspendInit0
-import dev.brella.kornea.toolkit.common.init
-import info.spiralframework.base.common.*
+import info.spiralframework.base.common.serialisation.SpiralSerialisation
+import info.spiralframework.base.common.tryPrime
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -22,7 +27,8 @@ actual data class DefaultSpiralContext private actual constructor(
     val environment: SpiralEnvironment,
     val eventBus: SpiralEventBus,
     val cacheProvider: SpiralCacheProvider,
-    val resourceLoader: SpiralResourceLoader
+    val resourceLoader: SpiralResourceLoader,
+    val serialisation: SpiralSerialisation,
 ) : SpiralContext, SuspendInit0, SpiralCatalyst<SpiralContext>,
     SpiralLocale by locale,
     SpiralLogger by logger,
@@ -30,7 +36,8 @@ actual data class DefaultSpiralContext private actual constructor(
     SpiralEnvironment by environment,
     SpiralEventBus by eventBus,
     SpiralCacheProvider by cacheProvider,
-    SpiralResourceLoader by resourceLoader {
+    SpiralResourceLoader by resourceLoader,
+    SpiralSerialisation by serialisation {
     actual companion object {
         actual suspend operator fun invoke(
             locale: SpiralLocale,
@@ -39,9 +46,10 @@ actual data class DefaultSpiralContext private actual constructor(
             environment: SpiralEnvironment,
             eventBus: SpiralEventBus,
             cacheProvider: SpiralCacheProvider,
-            resourceLoader: SpiralResourceLoader
+            resourceLoader: SpiralResourceLoader,
+            serialisation: SpiralSerialisation,
         ): DefaultSpiralContext =
-            init(DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader))
+            init(DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation))
     }
 
     override fun subcontext(module: String): SpiralContext = this
@@ -52,7 +60,8 @@ actual data class DefaultSpiralContext private actual constructor(
         newEnvironment: SpiralEnvironment?,
         newEventBus: SpiralEventBus?,
         newCacheProvider: SpiralCacheProvider?,
-        newResourceLoader: SpiralResourceLoader?
+        newResourceLoader: SpiralResourceLoader?,
+        newSerialisation: SpiralSerialisation?
     ): SpiralContext {
         val context =
             DefaultSpiralContext(
@@ -62,7 +71,8 @@ actual data class DefaultSpiralContext private actual constructor(
                 newEnvironment ?: environment,
                 newEventBus ?: eventBus,
                 newCacheProvider ?: cacheProvider,
-                newResourceLoader ?: resourceLoader
+                newResourceLoader ?: resourceLoader,
+                newSerialisation ?: serialisation
             )
         context.init()
         return context
@@ -85,6 +95,7 @@ actual data class DefaultSpiralContext private actual constructor(
             tryPrime(eventBus)
             tryPrime(cacheProvider)
             tryPrime(resourceLoader)
+            tryPrime(serialisation)
 
             primed = true
         }

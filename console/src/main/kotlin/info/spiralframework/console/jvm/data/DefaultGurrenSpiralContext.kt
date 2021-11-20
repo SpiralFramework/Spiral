@@ -1,7 +1,10 @@
 package info.spiralframework.console.jvm.data
 
 import dev.brella.kornea.toolkit.common.SemanticVersion
-import info.spiralframework.base.common.*
+import info.spiralframework.base.common.SpiralCatalyst
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.SpiralModuleBase
+import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
@@ -10,9 +13,16 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.properties.ISpiralProperty
+import info.spiralframework.base.common.serialisation.SpiralSerialisation
+import info.spiralframework.base.common.tryPrime
 import info.spiralframework.console.jvm.SpiralModuleConsole
 import info.spiralframework.console.jvm.commands.panels.GurrenSpiralProperty
-import info.spiralframework.core.*
+import info.spiralframework.core.DefaultSpiralCoreContext
+import info.spiralframework.core.SpiralCoreConfig
+import info.spiralframework.core.SpiralCoreContext
+import info.spiralframework.core.SpiralHttp
+import info.spiralframework.core.SpiralModuleCore
+import info.spiralframework.core.buildForVersion
 import info.spiralframework.core.common.SPIRAL_CORE_MODULE
 import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import info.spiralframework.core.common.SPIRAL_ENV_LANG_KEY
@@ -21,7 +31,6 @@ import info.spiralframework.core.plugins.PluginEntry
 import info.spiralframework.core.plugins.SpiralCorePlugin
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
-import info.spiralframework.core.serialisation.SpiralSerialisation
 import info.spiralframework.formats.jvm.SpiralModuleFormats
 import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
@@ -42,9 +51,9 @@ class DefaultGurrenSpiralContext private constructor(
     val eventBus: SpiralEventBus,
     val cacheProvider: SpiralCacheProvider,
     val resourceLoader: SpiralResourceLoader,
+    val serialisation: SpiralSerialisation,
     val signatures: SpiralSignatures,
     val pluginRegistry: SpiralPluginRegistry,
-    val serialisation: SpiralSerialisation,
     val http: SpiralHttp
 ) : GurrenSpiralContext, SpiralCatalyst<GurrenSpiralContext>,
     SpiralLocale by locale,
@@ -54,9 +63,9 @@ class DefaultGurrenSpiralContext private constructor(
     SpiralEventBus by eventBus,
     SpiralCacheProvider by cacheProvider,
     SpiralResourceLoader by resourceLoader,
+    SpiralSerialisation by serialisation,
     SpiralSignatures by signatures,
     SpiralPluginRegistry by pluginRegistry,
-    SpiralSerialisation by serialisation,
     SpiralHttp by http {
     companion object {
         suspend operator fun invoke(
@@ -69,18 +78,18 @@ class DefaultGurrenSpiralContext private constructor(
             eventBus: SpiralEventBus,
             cacheProvider: SpiralCacheProvider,
             resourceLoader: SpiralResourceLoader,
+            serialisation: SpiralSerialisation,
             signatures: SpiralSignatures,
             pluginRegistry: SpiralPluginRegistry,
-            serialisation: SpiralSerialisation,
             http: SpiralHttp
         ): DefaultGurrenSpiralContext {
-            val instance = DefaultGurrenSpiralContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, signatures, pluginRegistry, serialisation, http)
+            val instance = DefaultGurrenSpiralContext(args, core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation, signatures, pluginRegistry, http)
             instance.init()
             return instance
         }
 
-        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation, http: SpiralHttp): DefaultGurrenSpiralContext {
-            val instance = DefaultGurrenSpiralContext(args, core, parent, signatures, pluginRegistry, serialisation, http)
+        suspend operator fun invoke(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, http: SpiralHttp): DefaultGurrenSpiralContext {
+            val instance = DefaultGurrenSpiralContext(args, core, parent, signatures, pluginRegistry, http)
             instance.init()
             return instance
         }
@@ -92,7 +101,7 @@ class DefaultGurrenSpiralContext private constructor(
         }
     }
 
-    private constructor(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, serialisation: SpiralSerialisation, http: SpiralHttp) : this(
+    private constructor(args: GurrenArgs, core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, http: SpiralHttp) : this(
         args,
         core,
         parent,
@@ -102,9 +111,9 @@ class DefaultGurrenSpiralContext private constructor(
         parent,
         parent,
         parent,
+        parent,
         signatures,
         pluginRegistry,
-        serialisation,
         http
     )
 
@@ -155,7 +164,8 @@ class DefaultGurrenSpiralContext private constructor(
         newEnvironment: SpiralEnvironment?,
         newEventBus: SpiralEventBus?,
         newCacheProvider: SpiralCacheProvider?,
-        newResourceLoader: SpiralResourceLoader?
+        newResourceLoader: SpiralResourceLoader?,
+        newSerialisation: SpiralSerialisation?
     ): SpiralContext {
         val instance = DefaultGurrenSpiralContext(
             args,
@@ -167,9 +177,9 @@ class DefaultGurrenSpiralContext private constructor(
             newEventBus ?: eventBus,
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
+            newSerialisation ?: serialisation,
             signatures,
             pluginRegistry,
-            serialisation,
             http
         )
         instance.init()
@@ -184,9 +194,9 @@ class DefaultGurrenSpiralContext private constructor(
         newEventBus: SpiralEventBus?,
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?,
+        newSerialisation: SpiralSerialisation?,
         newSignatures: SpiralSignatures?,
         newPluginRegistry: SpiralPluginRegistry?,
-        newSerialisation: SpiralSerialisation?,
         newHttp: SpiralHttp?
     ): SpiralContext {
         val instance = DefaultGurrenSpiralContext(
@@ -199,9 +209,9 @@ class DefaultGurrenSpiralContext private constructor(
             newEventBus ?: eventBus,
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
+            newSerialisation ?: serialisation,
             newSignatures ?: signatures,
             newPluginRegistry ?: pluginRegistry,
-            newSerialisation ?: serialisation,
             newHttp ?: http
         )
         instance.init()
@@ -218,9 +228,9 @@ class DefaultGurrenSpiralContext private constructor(
         newEventBus: SpiralEventBus?,
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?,
+        newSerialisation: SpiralSerialisation?,
         newSignatures: SpiralSignatures?,
         newPluginRegistry: SpiralPluginRegistry?,
-        newSerialisation: SpiralSerialisation?,
         newHttp: SpiralHttp?
     ): GurrenSpiralContext {
         val instance = DefaultGurrenSpiralContext(
@@ -233,9 +243,9 @@ class DefaultGurrenSpiralContext private constructor(
             newEventBus ?: eventBus,
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
+            newSerialisation ?: serialisation,
             newSignatures ?: signatures,
             newPluginRegistry ?: pluginRegistry,
-            newSerialisation ?: serialisation,
             newHttp ?: http
         )
         instance.init()
@@ -254,9 +264,9 @@ class DefaultGurrenSpiralContext private constructor(
             tryPrime(eventBus)
             tryPrime(cacheProvider)
             tryPrime(resourceLoader)
+            tryPrime(serialisation)
             tryPrime(signatures)
             tryPrime(pluginRegistry)
-            tryPrime(serialisation)
             tryPrime(http)
 
             primed = true
@@ -317,9 +327,9 @@ class DefaultGurrenSpiralContext private constructor(
         if (eventBus != other.eventBus) return false
         if (cacheProvider != other.cacheProvider) return false
         if (resourceLoader != other.resourceLoader) return false
+        if (serialisation != other.serialisation) return false
         if (signatures != other.signatures) return false
         if (pluginRegistry != other.pluginRegistry) return false
-        if (serialisation != other.serialisation) return false
         if (http != other.http) return false
         if (klass != other.klass) return false
         if (connectTimeout != other.connectTimeout) return false

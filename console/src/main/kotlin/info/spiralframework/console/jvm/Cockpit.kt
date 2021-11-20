@@ -27,6 +27,9 @@ import info.spiralframework.base.common.io.SpiralCacheProvider
 import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
+import info.spiralframework.base.common.serialisation.DefaultSpiralSerialisation
+import info.spiralframework.base.common.serialisation.SpiralSerialisation
+import info.spiralframework.base.common.serialisation.decodeFromJsonString
 import info.spiralframework.console.jvm.data.DefaultGurrenSpiralContext
 import info.spiralframework.console.jvm.data.GurrenArgs
 import info.spiralframework.console.jvm.data.GurrenSpiralContext
@@ -41,12 +44,10 @@ import info.spiralframework.core.plugins.DefaultSpiralPluginRegistry
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.DefaultSpiralSignatures
 import info.spiralframework.core.security.SpiralSignatures
-import info.spiralframework.core.serialisation.DefaultSpiralSerialisation
 import info.spiralframework.spiral.updater.jarLocationAsFile
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
@@ -98,9 +99,8 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                 .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
-
-            val serialisation = DefaultSpiralSerialisation()
+            val serialisation: SpiralSerialisation = DefaultSpiralSerialisation()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation)
 
             val gurrenArgs: GurrenArgs
             if (GurrenArgs.disableConfigLoad(args)) {
@@ -111,7 +111,8 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                     .takeIf(File::exists)
                     ?.readText()
                     ?.takeIf(String::isNotBlank)
-                    ?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it) }
+                    ?.let { serialisation.decodeFromJsonString<GurrenArgs.Pojo>(it) }
+                    ?.get()
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
             }
             val updateFile = File(Cockpit::class.java.jarLocationAsFile.absolutePath + ".update")
@@ -124,7 +125,8 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                     .takeIf(File::exists)
                     ?.readText()
                     ?.takeIf(String::isNotBlank)
-                    ?.let { serialisation.json.decodeFromString(it) }
+                    ?.let { serialisation.decodeFromJsonString<SpiralCoreConfig>(it) }
+                    ?.get()
                 ?: SpiralCoreConfig()
 
             val signatures: SpiralSignatures = DefaultSpiralSignatures()
@@ -136,7 +138,6 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                 parentContext,
                 signatures,
                 pluginRegistry,
-                serialisation,
                 http
             )
 
@@ -318,9 +319,9 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
                 .installLoggingSubscriber()
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
             val resourceLoader: SpiralResourceLoader = DefaultSpiralResourceLoader()
-            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader)
+            val serialisation: SpiralSerialisation = DefaultSpiralSerialisation()
+            val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation)
 
-            val serialisation = DefaultSpiralSerialisation()
 
             val gurrenArgs: GurrenArgs
             val coreConfig: SpiralCoreConfig
@@ -335,12 +336,14 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
 
                 val pojo = File(config.getConfigFile(parentContext, "console"))
                     .takeIf(File::exists)
-                    ?.let { serialisation.json.decodeFromString<GurrenArgs.Pojo>(it.readText()) }
+                    ?.let { serialisation.decodeFromJsonString<GurrenArgs.Pojo>(it.readText()) }
+                    ?.get()
 
                 gurrenArgs = pojo?.let { GurrenArgs(args, it) } ?: GurrenArgs(args)
                 coreConfig = File(config.getConfigFile(parentContext, "core"))
                                  .takeIf(File::exists)
-                                 ?.let { serialisation.json.decodeFromString<SpiralCoreConfig>(it.readText()) }
+                                 ?.let { serialisation.decodeFromJsonString<SpiralCoreConfig>(it.readText()) }
+                                 ?.get()
                              ?: SpiralCoreConfig()
             }
 
@@ -348,7 +351,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val pluginRegistry: SpiralPluginRegistry = DefaultSpiralPluginRegistry()
             val http: SpiralHttp = DefaultSpiralHttp()
 
-            return invoke(DefaultGurrenSpiralContext(gurrenArgs, coreConfig, parentContext, signatures, pluginRegistry, serialisation, http))
+            return invoke(DefaultGurrenSpiralContext(gurrenArgs, coreConfig, parentContext, signatures, pluginRegistry, http))
         }
 
         @ExperimentalTime
