@@ -21,7 +21,7 @@ const val KORNEA_ERRORS_VERSION = "2.2.4-alpha"
 const val KORNEA_IMG_VERSION = "1.3.0-alpha"
 const val KORNEA_IO_VERSION = "5.4.3-alpha"
 const val KORNEA_MODELLING_VERSION = "1.1.0-alpha"
-const val KORNEA_TOOLKIT_VERSION = "3.4.0-alpha"
+const val KORNEA_TOOLKIT_VERSION = "3.4.2-alpha"
 
 const val KOTLINX_COROUTINES_CORE = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION"
 const val KOTLINX_SERIALISATION_CORE = "org.jetbrains.kotlinx:kotlinx-serialization-core:$KOTLINX_SERIALISATION_VERSION"
