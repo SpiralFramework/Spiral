@@ -14,17 +14,17 @@ import info.spiralframework.base.jvm.crypto.sha256Hash
 import java.io.File
 import java.io.InputStream
 
-actual class DefaultSpiralEnvironment : SpiralEnvironment {
-    val staticEnvironment: MutableMap<String, String> = HashMap()
-    val dynamicEnvironment: MutableMap<String, DynamicEnvironmentFunction> = HashMap()
-    val environmentalVariables: MutableSet<String> = hashSetOf(
+public actual class DefaultSpiralEnvironment : SpiralEnvironment {
+    private val staticEnvironment: MutableMap<String, String> = HashMap()
+    private val dynamicEnvironment: MutableMap<String, DynamicEnvironmentFunction> = HashMap()
+    private val environmentalVariables: MutableSet<String> = hashSetOf(
             "os.name", "os.version", "os.arch",
             "java.vendor", "java.version", "java.vendor.url",
             "file.separator", "path.separator", "line.separator",
             "path"
     )
-    val moduleProviders: MutableMap<String, SpiralModuleProvider> = HashMap()
-    val enabledModules: MutableSet<String> = HashSet()
+    private val moduleProviders: MutableMap<String, SpiralModuleProvider> = HashMap()
+    private val enabledModules: MutableSet<String> = HashSet()
 
     override suspend fun SpiralContext.retrieveEnvironment(): Map<String, String> {
         val envMap = HashMap(staticEnvironment)

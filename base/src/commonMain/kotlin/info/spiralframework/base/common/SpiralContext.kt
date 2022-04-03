@@ -9,10 +9,12 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.serialisation.SpiralSerialisation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlin.coroutines.CoroutineContext
 
-@ExperimentalUnsignedTypes
-interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnvironment, SpiralEventBus, SpiralCacheProvider, SpiralResourceLoader, SpiralSerialisation {
-    object NoOp : SpiralContext,
+public interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnvironment, SpiralEventBus, SpiralCacheProvider, SpiralResourceLoader, SpiralSerialisation, CoroutineScope {
+    public object NoOp : SpiralContext,
         SpiralLocale by SpiralLocale.NoOp,
         SpiralLogger by SpiralLogger.NoOp,
         SpiralConfig by SpiralConfig.NoOp,
@@ -24,6 +26,8 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
         override val loadedModules: Map<String, SemanticVersion>
             get() = throw IllegalStateException("NoOp context")
 
+        override val coroutineContext: CoroutineContext = SupervisorJob()
+
         override fun subcontext(module: String): SpiralContext = this
         override suspend fun copy(
             newLocale: SpiralLocale?,
@@ -34,13 +38,14 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
             newCacheProvider: SpiralCacheProvider?,
             newResourceLoader: SpiralResourceLoader?,
             newSerialisation: SpiralSerialisation?,
+            newParentCoroutineContext: CoroutineContext?
         ): SpiralContext = this
     }
 
-    val loadedModules: Map<String, SemanticVersion>
+    public val loadedModules: Map<String, SemanticVersion>
 
-    fun subcontext(module: String): SpiralContext
-    suspend fun copy(
+    public fun subcontext(module: String): SpiralContext
+    public suspend fun copy(
         newLocale: SpiralLocale? = null,
         newLogger: SpiralLogger? = null,
         newConfig: SpiralConfig? = null,
@@ -48,9 +53,9 @@ interface SpiralContext : SpiralLocale, SpiralLogger, SpiralConfig, SpiralEnviro
         newEventBus: SpiralEventBus? = null,
         newCacheProvider: SpiralCacheProvider? = null,
         newResourceLoader: SpiralResourceLoader? = null,
-        newSerialisation: SpiralSerialisation? = null
+        newSerialisation: SpiralSerialisation? = null,
+        newParentCoroutineContext: CoroutineContext? = null
     ): SpiralContext
 }
 
-@ExperimentalUnsignedTypes
-inline fun <T> SpiralContext.with(module: String, block: SpiralContext.() -> T): T = subcontext(module).block()
+public inline fun <T> SpiralContext.with(module: String, block: SpiralContext.() -> T): T = subcontext(module).block()

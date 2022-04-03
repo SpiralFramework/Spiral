@@ -1,3 +1,3 @@
 package info.spiralframework.base.binding
 
-actual fun isAnsiSupported(): Boolean = false
+public actual fun isAnsiSupported(): Boolean = false

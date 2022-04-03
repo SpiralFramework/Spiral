@@ -4,10 +4,10 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.events.*
 import kotlin.reflect.KClass
 
-actual class DefaultSpiralEventBus actual constructor() : SpiralEventBus {
+public actual class DefaultSpiralEventBus actual constructor() : SpiralEventBus {
     private val listeners: MutableSet<SpiralEventListener<*>> = HashSet()
 
-    override fun <T : SpiralEvent> register(klass: KClass<T>, name: String, priority: SpiralEventPriority, block: suspend SpiralContext.(event: T) -> Unit) = register(BlockSpiralEventListener(klass, name, priority, block))
+    override fun <T : SpiralEvent> register(klass: KClass<T>, name: String, priority: SpiralEventPriority, block: suspend SpiralContext.(event: T) -> Unit): Unit = register(BlockSpiralEventListener(klass, name, priority, block))
     override fun <T : SpiralEvent> register(listener: SpiralEventListener<T>) { listeners.add(listener) }
 
     override fun <T : SpiralEvent> deregister(klass: KClass<T>, name: String, priority: SpiralEventPriority) {

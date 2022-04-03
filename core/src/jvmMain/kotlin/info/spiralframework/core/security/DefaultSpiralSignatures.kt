@@ -4,7 +4,6 @@ import dev.brella.kornea.toolkit.common.oneTimeMutable
 import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.jvm.crypto.RSAPublicKey
 import info.spiralframework.base.jvm.crypto.matchesSha256
-import info.spiralframework.core.SpiralCoreContext
 import info.spiralframework.core.SpiralHttp
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -56,8 +55,7 @@ class DefaultSpiralSignatures : SpiralSignatures, SpiralCatalyst<SpiralHttp> {
 
     override suspend fun prime(catalyst: SpiralHttp) {
         if (!primed) {
-            //TODO: Upgrade to Backblaze
-            cdnLastPublicKeySha256 = catalyst.httpClient.get<HttpResponse>("https://storage.googleapis.com/signatures.spiralframework.info/public.key.sha256")
+            cdnLastPublicKeySha256 = catalyst.httpClient.get<HttpResponse>("https://cdn.spiralframework.info/signatures/public.key.sha256")
                 .takeIf { response -> response.status.value < 400 }
                 ?.readText()
 

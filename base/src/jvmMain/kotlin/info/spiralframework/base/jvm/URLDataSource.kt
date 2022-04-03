@@ -11,12 +11,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URL
 
-class URLDataSource(
-    val url: URL,
+public class URLDataSource(
+    public val url: URL,
     override val maximumInstanceCount: Int? = null,
     override val location: String? = url.toExternalForm()
 ) : LimitedInstanceDataSource.Typed<JVMInputFlow, URLDataSource>(withBareOpener(this::openBareInputFlow)) {
-    companion object {
+    public companion object {
         public suspend fun openBareInputFlow(self: URLDataSource, location: String?): JVMInputFlow =
             withContext(Dispatchers.IO) { JVMInputFlow(self.url.openStream(), location ?: self.location) }
     }
@@ -26,7 +26,7 @@ class URLDataSource(
     override val reproducibility: DataSourceReproducibility =
         DataSourceReproducibility(isUnreliable = true)
 
-    override fun locationAsUri(): KorneaResult<Uri> = KorneaResult.success(Uri.fromUri(url.toURI()), null)
+    override fun locationAsUri(): KorneaResult<Uri> = KorneaResult.success(Uri.fromUri(url.toURI()))
 
     override suspend fun whenClosed() {
         super.whenClosed()

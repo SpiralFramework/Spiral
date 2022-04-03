@@ -5,7 +5,7 @@ import info.spiralframework.base.common.locale.AbstractSpiralLocale
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 
-expect class DefaultSpiralLogger(name: String): SpiralLogger {
+public expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override val isErrorEnabled: Boolean
     override fun SpiralContext.error(format: String)
     override fun SpiralContext.error(format: String, arg: Any)
@@ -47,7 +47,7 @@ expect class DefaultSpiralLogger(name: String): SpiralLogger {
     override fun SpiralContext.traceArray(format: String, args: Array<out Any>)
 }
 
-expect class DefaultSpiralLocale(): AbstractSpiralLocale {
+public expect class DefaultSpiralLocale(): AbstractSpiralLocale {
     override fun localise(msg: String): String
     override fun localise(msg: String, arg: Any): String
     override fun localise(msg: String, arg1: Any, arg2: Any): String

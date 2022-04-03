@@ -2,11 +2,13 @@ package info.spiralframework.console.jvm.commands.data
 
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localiseOrNull
+import java.util.*
 
 data class HelpDetails(val key: String, val name: String?, val blurb: String?, val desc: String?, val usage: String?, val cmd: String?) {
     companion object {
         private val SEPARATOR_CHARACTERS = "[_\\- ]".toRegex()
-        fun sanitiseFunctionIdentifier(name: String): String = name.toUpperCase().replace(SEPARATOR_CHARACTERS, "")
+        fun sanitiseFunctionIdentifier(name: String): String =
+            name.uppercase(Locale.getDefault()).replace(SEPARATOR_CHARACTERS, "")
 
         public inline operator fun invoke(context: SpiralContext, key: String) =
             HelpDetails(

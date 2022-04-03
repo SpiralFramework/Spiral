@@ -2,18 +2,18 @@ package info.spiralframework.base.binding
 
 import dev.brella.kornea.io.jvm.files.ensureDirectoryExists
 import dev.brella.kornea.io.jvm.files.ensureFileExists
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.config.SpiralConfig
-import dev.dirs.ProjectDirectories
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
+import dev.dirs.ProjectDirectories
 import info.spiralframework.base.common.SpiralCatalyst
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.config.SpiralConfig
 import java.io.File
 import kotlin.reflect.KClass
 
-actual class DefaultSpiralConfig : SpiralConfig, SpiralCatalyst<SpiralContext> {
+public actual class DefaultSpiralConfig : SpiralConfig, SpiralCatalyst<SpiralContext> {
     private var primed: Boolean = false
-    var projectDirectories: ProjectDirectories by oneTimeMutableInline()
+    private var projectDirectories: ProjectDirectories by oneTimeMutableInline()
     override val klass: KClass<SpiralContext> = SpiralContext::class
 
     actual override fun SpiralContext.getConfigFile(module: String): String {

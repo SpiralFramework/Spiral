@@ -15,7 +15,6 @@ import dev.brella.kornea.io.common.flow.useEachLine
 import dev.brella.kornea.io.common.useInputFlowForResult
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
-import info.spiralframework.base.common.PrintOutputFlowWrapper
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties

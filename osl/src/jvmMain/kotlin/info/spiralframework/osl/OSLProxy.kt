@@ -1,5 +1,7 @@
 package info.spiralframework.osl
 
+import dev.brella.kornea.annotations.ExperimentalKorneaIO
+import dev.brella.kornea.annotations.ExperimentalKorneaToolkit
 import dev.brella.kornea.base.common.use
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
@@ -29,6 +31,7 @@ import java.io.File
 import java.io.PrintStream
 
 object OSLProxy {
+    @OptIn(ExperimentalKorneaIO::class, ExperimentalKorneaToolkit::class)
     @ExperimentalStdlibApi
     @ExperimentalUnsignedTypes
     @JvmStatic
@@ -38,11 +41,11 @@ object OSLProxy {
                 val dr1 = UnsafeDr1()
                 val dr2 = UnsafeDr2()
 
-                val game = if (args.any { str -> str == "--dr2" }) dr2 else dr1
+                val game = dr2 //if (args.any { str -> str == "--dr2" }) dr2 else dr1
 
                 suspend fun transpile(base: File, filename: String) {
                     val linFileSource = AsyncFileDataSource(File(base, "$filename.lin"))
-                    val lin = UnsafeLinScript(dr1, linFileSource)
+                    val lin = UnsafeLinScript(game, linFileSource)
                     val out = AsyncFileOutputFlow(File(base, "$filename.osl"))
 
                     val transpiler = LinTranspiler(lin)
@@ -65,34 +68,39 @@ object OSLProxy {
                     linOut.compileLinFromBitcode(this, UnsafeDr1(), AsyncFileInputFlow(File(base, "$filename.osb")))
                 }
 
-                var i = 0
-                while (i < args.size) {
-                    when (args[i]) {
-                        in arrayOf("-x", "--extract") -> {
-                            while (!args[i + 1].startsWith('-')) {
-                                val name = args[++i]
-                                val file = File(name)
-                                transpile(file.parentFile, file.nameWithoutExtension)
-                            }
-                        }
+                File("D:\\Games\\Steam\\steamapps\\common\\Danganronpa 2 Goodbye Despair\\dr2_data_us\\Dr2\\data\\us\\script")
+                    ?.listFiles { file -> file.extension == "lin" }
+                    ?.forEach { file -> transpile(file.parentFile, file.nameWithoutExtension) }
 
-                        in arrayOf("-o", "--compile", "--object") -> {
-                            while (!args[i + 1].startsWith('-')) {
-                                val name = args[++i]
-                                val file = File(name)
-                                compile(file.parentFile, file.nameWithoutExtension)
-                            }
-                        }
-
-                        else -> {
-                            println("Unknown operation ${args[i]}")
-                        }
-                    }
-                }
+//                var i = 0
+//                while (i < args.size) {
+//                    when (args[i]) {
+//                        in arrayOf("-x", "--extract") -> {
+//                            while (i + 1 in args.indices && !args[i + 1].startsWith('-')) {
+//                                val name = args[++i]
+//                                val file = File(name)
+//                                transpile(file.parentFile, file.nameWithoutExtension)
+//                            }
+//                        }
+//
+//                        in arrayOf("-o", "--compile", "--object") -> {
+//                            while (i + 1 in args.indices && !args[i + 1].startsWith('-')) {
+//                                val name = args[++i]
+//                                val file = File(name)
+//                                compile(file.parentFile, file.nameWithoutExtension)
+//                            }
+//                        }
+//
+//                        else -> {
+//                            println("Unknown operation ${args[i++]}")
+//                        }
+//                    }
+//                }
             }
         }
     }
 
+    @OptIn(ExperimentalKorneaIO::class)
     @ExperimentalUnsignedTypes
     @ExperimentalStdlibApi
     suspend fun SpiralContext.convertToOsl(path: String) {

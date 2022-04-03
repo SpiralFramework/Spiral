@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package info.spiralframework.base.common.properties
 
 import kotlin.reflect.KProperty
@@ -71,7 +73,8 @@ public enum class PrimedLazyThreadSafetyMode {
 }
 
 
-object UNINITIALIZED_VALUE
+@Suppress("ClassName")
+public object UNINITIALIZED_VALUE
 
 // internal to be called from primedLazy in JS
 internal class UnsafePrimedLazyImpl<out T, P>(initializer: (P) -> T) : PrimedLazy<T, P> {

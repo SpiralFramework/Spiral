@@ -5,7 +5,7 @@ import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.environment.DynamicEnvironmentFunction
 import info.spiralframework.base.common.environment.SpiralEnvironment
 
-actual class DefaultSpiralEnvironment actual constructor() : SpiralEnvironment {
+public actual class DefaultSpiralEnvironment actual constructor() : SpiralEnvironment {
     override suspend fun SpiralContext.retrieveEnvironment(): Map<String, String> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -38,7 +38,6 @@ actual class DefaultSpiralEnvironment actual constructor() : SpiralEnvironment {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    @ExperimentalUnsignedTypes
     override suspend fun SpiralContext.registerAllModules() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

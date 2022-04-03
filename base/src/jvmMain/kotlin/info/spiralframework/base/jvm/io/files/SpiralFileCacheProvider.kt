@@ -1,24 +1,21 @@
 package info.spiralframework.base.jvm.io.files
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.io.SpiralCacheProvider
-import info.spiralframework.base.common.io.TimedDataPool
-import dev.brella.kornea.annotations.ExperimentalKorneaIO
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataPool
-import dev.brella.kornea.toolkit.common.SuspendInit1
 import info.spiralframework.base.common.SpiralCatalyst
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.io.SpiralCacheProvider
+import info.spiralframework.base.common.io.TimedDataPool
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import kotlin.concurrent.thread
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-@ExperimentalKorneaIO
-@ExperimentalUnsignedTypes
-class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralContext> {
+public class SpiralFileCacheProvider : SpiralCacheProvider, SpiralCatalyst<SpiralContext> {
     private lateinit var shortTermDir: File
     private lateinit var persistentDir: File
 
@@ -31,7 +28,7 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
 
     override suspend fun SpiralContext.isCachedShortTerm(name: String): Boolean = File(shortTermDir, name).exists()
 
-    override suspend fun SpiralContext.cacheShortTerm(name: String, location: String?): DataPool<InputFlow, out OutputFlow> =
+    override suspend fun SpiralContext.cacheShortTerm(name: String, location: String?): DataPool<InputFlow, OutputFlow> =
             ShortTermFileDataPool(File(shortTermDir, name), location)
 
     override suspend fun SpiralContext.isCachedPersistent(name: String): Boolean = File(persistentDir, name).exists()
@@ -42,8 +39,8 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
     override suspend fun SpiralContext.isCachedTimed(name: String): Boolean = isCachedShortTerm(name)
 
     @ExperimentalTime
-    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration, location: String?): DataPool<InputFlow, OutputFlow> =
-            TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration)
+    override suspend fun SpiralContext.cacheFor(name: String, duration: Duration, scope: CoroutineScope, location: String?): DataPool<InputFlow, OutputFlow> =
+            TimedDataPool(ShortTermFileDataPool(File(shortTermDir, name)), duration, scope)
 
     override suspend fun prime(catalyst: SpiralContext) {
         if (!primed) {
@@ -61,5 +58,5 @@ class SpiralFileCacheProvider(): SpiralCacheProvider, SpiralCatalyst<SpiralConte
         }
     }
 
-    fun purgeShortTerm() { shortTermDir.listFiles()?.forEach { file -> file.delete() } }
+    public fun purgeShortTerm() { shortTermDir.listFiles()?.forEach { file -> file.delete() } }
 }

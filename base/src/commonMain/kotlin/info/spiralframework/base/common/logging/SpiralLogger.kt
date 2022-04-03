@@ -2,8 +2,8 @@ package info.spiralframework.base.common.logging
 
 import info.spiralframework.base.common.SpiralContext
 
-interface SpiralLogger {
-    object NoOp : SpiralLogger {
+public interface SpiralLogger {
+    public object NoOp : SpiralLogger {
         override val isErrorEnabled: Boolean = false
         override fun SpiralContext.error(format: String) {}
         override fun SpiralContext.error(format: String, arg: Any) {}
@@ -45,83 +45,83 @@ interface SpiralLogger {
         override fun SpiralContext.traceArray(format: String, args: Array<out Any>) {}
     }
 
-    val isErrorEnabled: Boolean
-    fun SpiralContext.error(format: String)
-    fun SpiralContext.error(format: String, arg: Any)
-    fun SpiralContext.error(format: String, th: Throwable)
-    fun SpiralContext.error(format: String, arg1: Any, arg2: Any)
-    fun SpiralContext.error(format: String, vararg args: Any)
-    fun SpiralContext.errorArray(format: String, args: Array<out Any>)
+    public val isErrorEnabled: Boolean
+    public fun SpiralContext.error(format: String)
+    public fun SpiralContext.error(format: String, arg: Any)
+    public fun SpiralContext.error(format: String, th: Throwable)
+    public fun SpiralContext.error(format: String, arg1: Any, arg2: Any)
+    public fun SpiralContext.error(format: String, vararg args: Any)
+    public fun SpiralContext.errorArray(format: String, args: Array<out Any>)
 
-    val isWarnEnabled: Boolean
-    fun SpiralContext.warn(format: String)
-    fun SpiralContext.warn(format: String, arg: Any)
-    fun SpiralContext.warn(format: String, th: Throwable)
-    fun SpiralContext.warn(format: String, arg1: Any, arg2: Any)
-    fun SpiralContext.warn(format: String, vararg args: Any)
-    fun SpiralContext.warnArray(format: String, args: Array<out Any>)
+    public val isWarnEnabled: Boolean
+    public fun SpiralContext.warn(format: String)
+    public fun SpiralContext.warn(format: String, arg: Any)
+    public fun SpiralContext.warn(format: String, th: Throwable)
+    public fun SpiralContext.warn(format: String, arg1: Any, arg2: Any)
+    public fun SpiralContext.warn(format: String, vararg args: Any)
+    public fun SpiralContext.warnArray(format: String, args: Array<out Any>)
 
-    val isInfoEnabled: Boolean
-    fun SpiralContext.info(format: String)
-    fun SpiralContext.info(format: String, arg: Any)
-    fun SpiralContext.info(format: String, th: Throwable)
-    fun SpiralContext.info(format: String, arg1: Any, arg2: Any)
-    fun SpiralContext.info(format: String, vararg args: Any)
-    fun SpiralContext.infoArray(format: String, args: Array<out Any>)
+    public val isInfoEnabled: Boolean
+    public fun SpiralContext.info(format: String)
+    public fun SpiralContext.info(format: String, arg: Any)
+    public fun SpiralContext.info(format: String, th: Throwable)
+    public fun SpiralContext.info(format: String, arg1: Any, arg2: Any)
+    public fun SpiralContext.info(format: String, vararg args: Any)
+    public fun SpiralContext.infoArray(format: String, args: Array<out Any>)
 
-    val isDebugEnabled: Boolean
-    fun SpiralContext.debug(format: String)
-    fun SpiralContext.debug(format: String, arg: Any)
-    fun SpiralContext.debug(format: String, th: Throwable)
-    fun SpiralContext.debug(format: String, arg1: Any, arg2: Any)
-    fun SpiralContext.debug(format: String, vararg args: Any)
-    fun SpiralContext.debugArray(format: String, args: Array<out Any>)
+    public val isDebugEnabled: Boolean
+    public fun SpiralContext.debug(format: String)
+    public fun SpiralContext.debug(format: String, arg: Any)
+    public fun SpiralContext.debug(format: String, th: Throwable)
+    public fun SpiralContext.debug(format: String, arg1: Any, arg2: Any)
+    public fun SpiralContext.debug(format: String, vararg args: Any)
+    public fun SpiralContext.debugArray(format: String, args: Array<out Any>)
 
-    val isTraceEnabled: Boolean
-    fun SpiralContext.trace(format: String)
-    fun SpiralContext.trace(format: String, arg: Any)
-    fun SpiralContext.trace(format: String, th: Throwable)
-    fun SpiralContext.trace(format: String, arg1: Any, arg2: Any)
-    fun SpiralContext.trace(format: String, vararg args: Any)
-    fun SpiralContext.traceArray(format: String, args: Array<out Any>)
+    public val isTraceEnabled: Boolean
+    public fun SpiralContext.trace(format: String)
+    public fun SpiralContext.trace(format: String, arg: Any)
+    public fun SpiralContext.trace(format: String, th: Throwable)
+    public fun SpiralContext.trace(format: String, arg1: Any, arg2: Any)
+    public fun SpiralContext.trace(format: String, vararg args: Any)
+    public fun SpiralContext.traceArray(format: String, args: Array<out Any>)
 }
 
-inline fun <T> T.error(block: T.() -> Unit) where T : SpiralLogger, T : SpiralContext = if (isErrorEnabled) block() else Unit
-inline fun <T> T.error(format: String) where T : SpiralLogger, T : SpiralContext = error(format)
-inline fun <T> T.error(format: String, arg: Any) where T : SpiralLogger, T : SpiralContext = error(format, arg)
-inline fun <T> T.error(format: String, th: Throwable) where T : SpiralLogger, T : SpiralContext = error(format, th)
-inline fun <T> T.error(format: String, arg1: Any, arg2: Any) where T : SpiralLogger, T : SpiralContext = error(format, arg1, arg2)
-inline fun <T> T.error(format: String, vararg args: Any) where T : SpiralLogger, T : SpiralContext = errorArray(format, args)
-inline fun <T> T.errorArray(format: String, args: Array<out Any>) where T : SpiralLogger, T : SpiralContext = errorArray(format, args)
+public inline fun <T> T.error(block: T.() -> Unit): Unit where T : SpiralLogger, T : SpiralContext = if (isErrorEnabled) block() else Unit
+public fun <T> T.error(format: String): Unit where T : SpiralLogger, T : SpiralContext = error(format)
+public fun <T> T.error(format: String, arg: Any): Unit where T : SpiralLogger, T : SpiralContext = error(format, arg)
+public fun <T> T.error(format: String, th: Throwable): Unit where T : SpiralLogger, T : SpiralContext = error(format, th)
+public fun <T> T.error(format: String, arg1: Any, arg2: Any): Unit where T : SpiralLogger, T : SpiralContext = error(format, arg1, arg2)
+public fun <T> T.error(format: String, vararg args: Any): Unit where T : SpiralLogger, T : SpiralContext = errorArray(format, args)
+public fun <T> T.errorArray(format: String, args: Array<out Any>): Unit where T : SpiralLogger, T : SpiralContext = errorArray(format, args)
 
-inline fun <T> T.warn(block: T.() -> Unit) where T : SpiralLogger, T : SpiralContext = if (isWarnEnabled) block() else Unit
-inline fun <T> T.warn(format: String) where T : SpiralLogger, T : SpiralContext = warn(format)
-inline fun <T> T.warn(format: String, arg: Any) where T : SpiralLogger, T : SpiralContext = warn(format, arg)
-inline fun <T> T.warn(format: String, th: Throwable) where T : SpiralLogger, T : SpiralContext = warn(format, th)
-inline fun <T> T.warn(format: String, arg1: Any, arg2: Any) where T : SpiralLogger, T : SpiralContext = warn(format, arg1, arg2)
-inline fun <T> T.warn(format: String, vararg args: Any) where T : SpiralLogger, T : SpiralContext = warnArray(format, args)
-inline fun <T> T.warnArray(format: String, args: Array<out Any>) where T : SpiralLogger, T : SpiralContext = warnArray(format, args)
+public inline fun <T> T.warn(block: T.() -> Unit): Unit where T : SpiralLogger, T : SpiralContext = if (isWarnEnabled) block() else Unit
+public fun <T> T.warn(format: String): Unit where T : SpiralLogger, T : SpiralContext = warn(format)
+public fun <T> T.warn(format: String, arg: Any): Unit where T : SpiralLogger, T : SpiralContext = warn(format, arg)
+public fun <T> T.warn(format: String, th: Throwable): Unit where T : SpiralLogger, T : SpiralContext = warn(format, th)
+public fun <T> T.warn(format: String, arg1: Any, arg2: Any): Unit where T : SpiralLogger, T : SpiralContext = warn(format, arg1, arg2)
+public fun <T> T.warn(format: String, vararg args: Any): Unit where T : SpiralLogger, T : SpiralContext = warnArray(format, args)
+public fun <T> T.warnArray(format: String, args: Array<out Any>): Unit where T : SpiralLogger, T : SpiralContext = warnArray(format, args)
 
-inline fun <T> T.info(block: T.() -> Unit) where T : SpiralLogger, T : SpiralContext = if (isInfoEnabled) block() else Unit
-inline fun <T> T.info(format: String) where T : SpiralLogger, T : SpiralContext = info(format)
-inline fun <T> T.info(format: String, arg: Any) where T : SpiralLogger, T : SpiralContext = info(format, arg)
-inline fun <T> T.info(format: String, th: Throwable) where T : SpiralLogger, T : SpiralContext = info(format, th)
-inline fun <T> T.info(format: String, arg1: Any, arg2: Any) where T : SpiralLogger, T : SpiralContext = info(format, arg1, arg2)
-inline fun <T> T.info(format: String, vararg args: Any) where T : SpiralLogger, T : SpiralContext = infoArray(format, args)
-inline fun <T> T.infoArray(format: String, args: Array<out Any>) where T : SpiralLogger, T : SpiralContext = infoArray(format, args)
+public inline fun <T> T.info(block: T.() -> Unit): Unit where T : SpiralLogger, T : SpiralContext = if (isInfoEnabled) block() else Unit
+public fun <T> T.info(format: String): Unit where T : SpiralLogger, T : SpiralContext = info(format)
+public fun <T> T.info(format: String, arg: Any): Unit where T : SpiralLogger, T : SpiralContext = info(format, arg)
+public fun <T> T.info(format: String, th: Throwable): Unit where T : SpiralLogger, T : SpiralContext = info(format, th)
+public fun <T> T.info(format: String, arg1: Any, arg2: Any): Unit where T : SpiralLogger, T : SpiralContext = info(format, arg1, arg2)
+public fun <T> T.info(format: String, vararg args: Any): Unit where T : SpiralLogger, T : SpiralContext = infoArray(format, args)
+public fun <T> T.infoArray(format: String, args: Array<out Any>): Unit where T : SpiralLogger, T : SpiralContext = infoArray(format, args)
 
-inline fun <T> T.debug(block: T.() -> Unit) where T : SpiralLogger, T : SpiralContext = if (isDebugEnabled) block() else Unit
-inline fun <T> T.debug(format: String) where T : SpiralLogger, T : SpiralContext = debug(format)
-inline fun <T> T.debug(format: String, arg: Any) where T : SpiralLogger, T : SpiralContext = debug(format, arg)
-inline fun <T> T.debug(format: String, th: Throwable) where T : SpiralLogger, T : SpiralContext = debug(format, th)
-inline fun <T> T.debug(format: String, arg1: Any, arg2: Any) where T : SpiralLogger, T : SpiralContext = debug(format, arg1, arg2)
-inline fun <T> T.debug(format: String, vararg args: Any) where T : SpiralLogger, T : SpiralContext = debugArray(format, args)
-inline fun <T> T.debugArray(format: String, args: Array<out Any>) where T : SpiralLogger, T : SpiralContext = debugArray(format, args)
+public inline fun <T> T.debug(block: T.() -> Unit): Unit where T : SpiralLogger, T : SpiralContext = if (isDebugEnabled) block() else Unit
+public fun <T> T.debug(format: String): Unit where T : SpiralLogger, T : SpiralContext = debug(format)
+public fun <T> T.debug(format: String, arg: Any): Unit where T : SpiralLogger, T : SpiralContext = debug(format, arg)
+public fun <T> T.debug(format: String, th: Throwable): Unit where T : SpiralLogger, T : SpiralContext = debug(format, th)
+public fun <T> T.debug(format: String, arg1: Any, arg2: Any): Unit where T : SpiralLogger, T : SpiralContext = debug(format, arg1, arg2)
+public fun <T> T.debug(format: String, vararg args: Any): Unit where T : SpiralLogger, T : SpiralContext = debugArray(format, args)
+public fun <T> T.debugArray(format: String, args: Array<out Any>): Unit where T : SpiralLogger, T : SpiralContext = debugArray(format, args)
 
-inline fun <T> T.trace(block: T.() -> Unit) where T : SpiralLogger, T : SpiralContext = if (isTraceEnabled) block() else Unit
-inline fun <T> T.trace(format: String) where T : SpiralLogger, T : SpiralContext = trace(format)
-inline fun <T> T.trace(format: String, arg: Any) where T : SpiralLogger, T : SpiralContext = trace(format, arg)
-inline fun <T> T.trace(format: String, th: Throwable) where T : SpiralLogger, T : SpiralContext = trace(format, th)
-inline fun <T> T.trace(format: String, arg1: Any, arg2: Any) where T : SpiralLogger, T : SpiralContext = trace(format, arg1, arg2)
-inline fun <T> T.trace(format: String, vararg args: Any) where T : SpiralLogger, T : SpiralContext = traceArray(format, args)
-inline fun <T> T.traceArray(format: String, args: Array<out Any>) where T : SpiralLogger, T : SpiralContext = traceArray(format, args)
+public inline fun <T> T.trace(block: T.() -> Unit): Unit where T : SpiralLogger, T : SpiralContext = if (isTraceEnabled) block() else Unit
+public fun <T> T.trace(format: String): Unit where T : SpiralLogger, T : SpiralContext = trace(format)
+public fun <T> T.trace(format: String, arg: Any): Unit where T : SpiralLogger, T : SpiralContext = trace(format, arg)
+public fun <T> T.trace(format: String, th: Throwable): Unit where T : SpiralLogger, T : SpiralContext = trace(format, th)
+public fun <T> T.trace(format: String, arg1: Any, arg2: Any): Unit where T : SpiralLogger, T : SpiralContext = trace(format, arg1, arg2)
+public fun <T> T.trace(format: String, vararg args: Any): Unit where T : SpiralLogger, T : SpiralContext = traceArray(format, args)
+public fun <T> T.traceArray(format: String, args: Array<out Any>): Unit where T : SpiralLogger, T : SpiralContext = traceArray(format, args)

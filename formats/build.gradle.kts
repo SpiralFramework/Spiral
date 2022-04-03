@@ -3,16 +3,11 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-repositories {
-    maven("https://dl.bintray.com/korlibs/korlibs/")
-}
-
 kotlin {
     jvm {
         val main by compilations.getting {
             kotlinOptions {
                 jvmTarget = "1.8"
-                freeCompilerArgs = listOf("-XXLanguage:+InlineClasses")
             }
         }
     }
@@ -31,9 +26,9 @@ kotlin {
         all {
             languageSettings.apply {
                 enableLanguageFeature("InlineClasses")
-                useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
-                useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
-                useExperimentalAnnotation("kotlin.contracts.ExperimentalContracts")
+                optIn("kotlin.ExperimentalUnsignedTypes")
+                optIn("kotlin.ExperimentalStdlibApi")
+                optIn("kotlin.contracts.ExperimentalContracts")
             }
         }
 //        jsTest {

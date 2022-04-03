@@ -1,38 +1,38 @@
 package info.spiralframework.base.common.locale
 
-data class CommonLocale(val language: String, val country: String = "", val variant: String = "") {
-    companion object {
-        val ENGLISH = CommonLocale("en")
-        val FRENCH = CommonLocale("fr")
-        val GERMAN = CommonLocale("de")
-        val ITALIAN = CommonLocale("it")
-        val JAPANESE = CommonLocale("ja")
-        val KOREAN = CommonLocale("ko")
-        val CHINESE = CommonLocale("zh")
+public data class CommonLocale(val language: String, val country: String = "", val variant: String = "") {
+    public companion object {
+        public val ENGLISH: CommonLocale = CommonLocale("en")
+        public val FRENCH: CommonLocale = CommonLocale("fr")
+        public val GERMAN: CommonLocale = CommonLocale("de")
+        public val ITALIAN: CommonLocale = CommonLocale("it")
+        public val JAPANESE: CommonLocale = CommonLocale("ja")
+        public val KOREAN: CommonLocale = CommonLocale("ko")
+        public val CHINESE: CommonLocale = CommonLocale("zh")
 
-        val SIMPLIFIED_CHINESE = CommonLocale("zh", "CN")
-        val TRADITIONAL_CHINESE = CommonLocale("zh", "TW")
+        public val SIMPLIFIED_CHINESE: CommonLocale = CommonLocale("zh", "CN")
+        public val TRADITIONAL_CHINESE: CommonLocale = CommonLocale("zh", "TW")
 
-        val FRANCE = CommonLocale("fr", "FR")
-        val GERMANY = CommonLocale("de", "DE")
-        val ITALY = CommonLocale("it", "IT")
-        val JAPAN = CommonLocale("ja", "JP")
-        val KOREA = CommonLocale("ko", "KR")
-        val CHINA = SIMPLIFIED_CHINESE
-        val PRC = SIMPLIFIED_CHINESE
-        val TAIWAN = TRADITIONAL_CHINESE
-        val UK = CommonLocale("en", "GB")
-        val US = CommonLocale("en", "US")
-        val AUSTRALIA = CommonLocale("en", "AU")
-        val CANADA = CommonLocale("en", "CA")
-        val CANADA_FRENCH = CommonLocale("fr", "CA")
+        public val FRANCE: CommonLocale = CommonLocale("fr", "FR")
+        public val GERMANY: CommonLocale = CommonLocale("de", "DE")
+        public val ITALY: CommonLocale = CommonLocale("it", "IT")
+        public val JAPAN: CommonLocale = CommonLocale("ja", "JP")
+        public val KOREA: CommonLocale = CommonLocale("ko", "KR")
+        public val CHINA: CommonLocale = SIMPLIFIED_CHINESE
+        public val PRC: CommonLocale = SIMPLIFIED_CHINESE
+        public val TAIWAN: CommonLocale = TRADITIONAL_CHINESE
+        public val UK: CommonLocale = CommonLocale("en", "GB")
+        public val US: CommonLocale = CommonLocale("en", "US")
+        public val AUSTRALIA: CommonLocale = CommonLocale("en", "AU")
+        public val CANADA: CommonLocale = CommonLocale("en", "CA")
+        public val CANADA_FRENCH: CommonLocale = CommonLocale("fr", "CA")
 
-        val ROOT = CommonLocale("")
+        public val ROOT: CommonLocale = CommonLocale("")
 
-        val defaultLocale: CommonLocale by lazy { info.spiralframework.base.binding.defaultLocale() }
+        public val defaultLocale: CommonLocale by lazy { info.spiralframework.base.binding.defaultLocale() }
     }
 
-    fun languageString(): String = buildString {
+    public fun languageString(): String = buildString {
         append(language)
         if (country.isNotBlank()) {
             append('_')

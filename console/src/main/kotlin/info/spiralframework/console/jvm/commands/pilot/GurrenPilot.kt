@@ -37,6 +37,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.DecimalFormat
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -86,13 +87,14 @@ object GurrenPilot: CoroutineScope {
     private val helpDetails: MutableMap<CommonLocale?, MutableMap<String, HelpDetails>> = HashMap()
 
     inline fun help(vararg commands: String) =
-        commands.forEach { helpCommands[it.replace(COMMAND_NAME_REGEX, "").toUpperCase()] = it }
+        commands.forEach { helpCommands[it.replace(COMMAND_NAME_REGEX, "").uppercase(Locale.getDefault())] = it }
 
     inline fun help(vararg commands: Pair<String, String>) =
-        commands.forEach { (a, b) -> helpCommands[a.replace(COMMAND_NAME_REGEX, "").toUpperCase()] = b }
+        commands.forEach { (a, b) -> helpCommands[a.replace(COMMAND_NAME_REGEX, "").uppercase(Locale.getDefault())] = b }
 
     inline fun help(command: Pair<String, List<String>>) =
-        command.second.forEach { a -> helpCommands[a.replace(COMMAND_NAME_REGEX, "").toUpperCase()] = command.first }
+        command.second.forEach { a ->
+            helpCommands[a.replace(COMMAND_NAME_REGEX, "").uppercase(Locale.getDefault())] = command.first }
 
     suspend fun helpFor(context: SpiralContext, command: String): HelpDetails? = helpMutex.withLock {
         helpDetails
@@ -115,7 +117,8 @@ object GurrenPilot: CoroutineScope {
             registerFunctionWithAliasesWithContextWithoutReturn(functionNames = arrayOf("help", "help_with"), stringTypeParameter("command").asOptional()) { context, cmdNameParam ->
                 context.spiralContext().doOnSuccess { spiralContext ->
                     cmdNameParam.doOnSuccess { cmdName ->
-                        val cmdPrompt = helpCommands[cmdName.replace(COMMAND_NAME_REGEX, "").toUpperCase()]
+                        val cmdPrompt =
+                            helpCommands[cmdName.replace(COMMAND_NAME_REGEX, "").uppercase(Locale.getDefault())]
 
                         if (cmdPrompt == null) {
                             spiralContext.printlnLocale("commands.pilot.help.err_not_found", cmdName)

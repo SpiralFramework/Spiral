@@ -4,6 +4,7 @@ import dev.brella.knolus.context.KnolusContext
 import dev.brella.knolus.objectTypeParameter
 import dev.brella.knolus.stringTypeParameter
 import dev.brella.knolus.types.asString
+import dev.brella.kornea.annotations.ExperimentalKorneaIO
 import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.base.common.getOrNull
 import dev.brella.kornea.base.common.use
@@ -25,12 +26,7 @@ import info.spiralframework.console.jvm.data.GurrenSpiralContext
 import info.spiralframework.console.jvm.pipeline.DataSourceType
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
-import info.spiralframework.core.common.formats.FormatResult
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.bridgeFor
-import info.spiralframework.core.common.formats.filterIsIdentifyFormatResult
-import info.spiralframework.core.common.formats.populateForConversionSelection
+import info.spiralframework.core.common.formats.*
 import info.spiralframework.core.mapResults
 import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
@@ -75,6 +71,7 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
             GurrenPilot.help("convert")
         }
 
+        @OptIn(ExperimentalKorneaIO::class)
         suspend fun convertStub(context: GurrenSpiralContext, filePath: String, from: KorneaResult<String>, to: KorneaResult<String>, saveAs: KorneaResult<String>) {
             val file = File(filePath)
 

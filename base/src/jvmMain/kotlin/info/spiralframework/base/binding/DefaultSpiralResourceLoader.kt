@@ -11,10 +11,9 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import java.io.File
 import kotlin.reflect.KClass
 
-@ExperimentalUnsignedTypes
-actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLoader {
-    companion object {
-        val spiralModules = arrayOf(
+public actual class DefaultSpiralResourceLoader public actual constructor() : SpiralResourceLoader {
+    public companion object {
+        public val spiralModules: Array<String> = arrayOf(
                 "antlr-json",
                 "base",
                 "base-extended",
@@ -27,7 +26,7 @@ actual class DefaultSpiralResourceLoader actual constructor() : SpiralResourceLo
                 "updater"
         )
 
-        val platformModules = arrayOf(
+        public val platformModules: Array<String> = arrayOf(
                 "commonMain",
                 "jvmMain"
         )

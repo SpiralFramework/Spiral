@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory
 import java.text.MessageFormat
 import java.util.*
 
-actual class DefaultSpiralLogger(val logger: Logger) : SpiralLogger {
-    actual constructor(name: String) : this(LoggerFactory.getLogger(name))
+public actual class DefaultSpiralLogger(private val logger: Logger) : SpiralLogger {
+    public actual constructor(name: String) : this(LoggerFactory.getLogger(name))
 
     actual override val isErrorEnabled: Boolean
         get() = logger.isErrorEnabled
@@ -26,43 +26,43 @@ actual class DefaultSpiralLogger(val logger: Logger) : SpiralLogger {
     actual override val isTraceEnabled: Boolean
         get() = logger.isTraceEnabled
 
-    actual override fun SpiralContext.error(format: String) = if (logger.isErrorEnabled) logger.error(localise(format)) else Unit
-    actual override fun SpiralContext.error(format: String, arg: Any) = if (logger.isErrorEnabled) logger.error(localise(format, arg), arg) else Unit
-    actual override fun SpiralContext.error(format: String, th: Throwable) = if (logger.isErrorEnabled) logger.error(localise(format), th) else Unit
-    actual override fun SpiralContext.error(format: String, arg1: Any, arg2: Any) = if (logger.isErrorEnabled) logger.error(localise(format, arg1, arg2), arg2) else Unit
-    actual override fun SpiralContext.error(format: String, vararg args: Any) = if (logger.isErrorEnabled) logger.error(localiseArray(format, args), args.lastOrNull()) else Unit
-    actual override fun SpiralContext.errorArray(format: String, args: Array<out Any>) = if (logger.isErrorEnabled) logger.error(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.error(format: String): Unit = if (logger.isErrorEnabled) logger.error(localise(format)) else Unit
+    actual override fun SpiralContext.error(format: String, arg: Any): Unit = if (logger.isErrorEnabled) logger.error(localise(format, arg), arg) else Unit
+    actual override fun SpiralContext.error(format: String, th: Throwable): Unit = if (logger.isErrorEnabled) logger.error(localise(format), th) else Unit
+    actual override fun SpiralContext.error(format: String, arg1: Any, arg2: Any): Unit = if (logger.isErrorEnabled) logger.error(localise(format, arg1, arg2), arg2) else Unit
+    actual override fun SpiralContext.error(format: String, vararg args: Any): Unit = if (logger.isErrorEnabled) logger.error(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.errorArray(format: String, args: Array<out Any>): Unit = if (logger.isErrorEnabled) logger.error(localiseArray(format, args), args.lastOrNull()) else Unit
 
-    actual override fun SpiralContext.warn(format: String) = if (logger.isWarnEnabled) logger.warn(localise(format)) else Unit
-    actual override fun SpiralContext.warn(format: String, arg: Any) = if (logger.isWarnEnabled) logger.warn(localise(format, arg), arg) else Unit
-    actual override fun SpiralContext.warn(format: String, th: Throwable) = if (logger.isWarnEnabled) logger.warn(localise(format), th) else Unit
-    actual override fun SpiralContext.warn(format: String, arg1: Any, arg2: Any) = if (logger.isWarnEnabled) logger.warn(localise(format, arg1, arg2), arg2) else Unit
-    actual override fun SpiralContext.warn(format: String, vararg args: Any) = if (logger.isWarnEnabled) logger.warn(localiseArray(format, args), args.lastOrNull()) else Unit
-    actual override fun SpiralContext.warnArray(format: String, args: Array<out Any>) = if (logger.isWarnEnabled) logger.warn(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.warn(format: String): Unit = if (logger.isWarnEnabled) logger.warn(localise(format)) else Unit
+    actual override fun SpiralContext.warn(format: String, arg: Any): Unit = if (logger.isWarnEnabled) logger.warn(localise(format, arg), arg) else Unit
+    actual override fun SpiralContext.warn(format: String, th: Throwable): Unit = if (logger.isWarnEnabled) logger.warn(localise(format), th) else Unit
+    actual override fun SpiralContext.warn(format: String, arg1: Any, arg2: Any): Unit = if (logger.isWarnEnabled) logger.warn(localise(format, arg1, arg2), arg2) else Unit
+    actual override fun SpiralContext.warn(format: String, vararg args: Any): Unit = if (logger.isWarnEnabled) logger.warn(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.warnArray(format: String, args: Array<out Any>): Unit = if (logger.isWarnEnabled) logger.warn(localiseArray(format, args), args.lastOrNull()) else Unit
 
-    actual override fun SpiralContext.info(format: String) = if (logger.isInfoEnabled) logger.info(localise(format)) else Unit
-    actual override fun SpiralContext.info(format: String, arg: Any) = if (logger.isInfoEnabled) logger.info(localise(format, arg), arg) else Unit
-    actual override fun SpiralContext.info(format: String, th: Throwable) = if (logger.isInfoEnabled) logger.info(localise(format), th) else Unit
-    actual override fun SpiralContext.info(format: String, arg1: Any, arg2: Any) = if (logger.isInfoEnabled) logger.info(localise(format, arg1, arg2), arg2) else Unit
-    actual override fun SpiralContext.info(format: String, vararg args: Any) = if (logger.isInfoEnabled) logger.info(localiseArray(format, args), args.lastOrNull()) else Unit
-    actual override fun SpiralContext.infoArray(format: String, args: Array<out Any>) = if (logger.isInfoEnabled) logger.info(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.info(format: String): Unit = if (logger.isInfoEnabled) logger.info(localise(format)) else Unit
+    actual override fun SpiralContext.info(format: String, arg: Any): Unit = if (logger.isInfoEnabled) logger.info(localise(format, arg), arg) else Unit
+    actual override fun SpiralContext.info(format: String, th: Throwable): Unit = if (logger.isInfoEnabled) logger.info(localise(format), th) else Unit
+    actual override fun SpiralContext.info(format: String, arg1: Any, arg2: Any): Unit = if (logger.isInfoEnabled) logger.info(localise(format, arg1, arg2), arg2) else Unit
+    actual override fun SpiralContext.info(format: String, vararg args: Any): Unit = if (logger.isInfoEnabled) logger.info(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.infoArray(format: String, args: Array<out Any>): Unit = if (logger.isInfoEnabled) logger.info(localiseArray(format, args), args.lastOrNull()) else Unit
 
-    actual override fun SpiralContext.debug(format: String) = if (logger.isDebugEnabled) logger.debug(localise(format)) else Unit
-    actual override fun SpiralContext.debug(format: String, arg: Any) = if (logger.isDebugEnabled) logger.debug(localise(format, arg), arg) else Unit
-    actual override fun SpiralContext.debug(format: String, th: Throwable) = if (logger.isDebugEnabled) logger.debug(localise(format), th) else Unit
-    actual override fun SpiralContext.debug(format: String, arg1: Any, arg2: Any) = if (logger.isDebugEnabled) logger.debug(localise(format, arg1, arg2), arg2) else Unit
-    actual override fun SpiralContext.debug(format: String, vararg args: Any) = if (logger.isDebugEnabled) logger.debug(localiseArray(format, args), args.lastOrNull()) else Unit
-    actual override fun SpiralContext.debugArray(format: String, args: Array<out Any>) = if (logger.isDebugEnabled) logger.debug(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.debug(format: String): Unit = if (logger.isDebugEnabled) logger.debug(localise(format)) else Unit
+    actual override fun SpiralContext.debug(format: String, arg: Any): Unit = if (logger.isDebugEnabled) logger.debug(localise(format, arg), arg) else Unit
+    actual override fun SpiralContext.debug(format: String, th: Throwable): Unit = if (logger.isDebugEnabled) logger.debug(localise(format), th) else Unit
+    actual override fun SpiralContext.debug(format: String, arg1: Any, arg2: Any): Unit = if (logger.isDebugEnabled) logger.debug(localise(format, arg1, arg2), arg2) else Unit
+    actual override fun SpiralContext.debug(format: String, vararg args: Any): Unit = if (logger.isDebugEnabled) logger.debug(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.debugArray(format: String, args: Array<out Any>): Unit = if (logger.isDebugEnabled) logger.debug(localiseArray(format, args), args.lastOrNull()) else Unit
 
-    actual override fun SpiralContext.trace(format: String) = if (logger.isTraceEnabled) logger.trace(localise(format)) else Unit
-    actual override fun SpiralContext.trace(format: String, arg: Any) = if (logger.isTraceEnabled) logger.trace(localise(format, arg), arg) else Unit
-    actual override fun SpiralContext.trace(format: String, th: Throwable) = if (logger.isTraceEnabled) logger.trace(localise(format), th) else Unit
-    actual override fun SpiralContext.trace(format: String, arg1: Any, arg2: Any) = if (logger.isTraceEnabled) logger.trace(localise(format, arg1, arg2), arg2) else Unit
-    actual override fun SpiralContext.trace(format: String, vararg args: Any) = if (logger.isTraceEnabled) logger.trace(localiseArray(format, args), args.lastOrNull()) else Unit
-    actual override fun SpiralContext.traceArray(format: String, args: Array<out Any>) = if (logger.isTraceEnabled) logger.trace(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.trace(format: String): Unit = if (logger.isTraceEnabled) logger.trace(localise(format)) else Unit
+    actual override fun SpiralContext.trace(format: String, arg: Any): Unit = if (logger.isTraceEnabled) logger.trace(localise(format, arg), arg) else Unit
+    actual override fun SpiralContext.trace(format: String, th: Throwable): Unit = if (logger.isTraceEnabled) logger.trace(localise(format), th) else Unit
+    actual override fun SpiralContext.trace(format: String, arg1: Any, arg2: Any): Unit = if (logger.isTraceEnabled) logger.trace(localise(format, arg1, arg2), arg2) else Unit
+    actual override fun SpiralContext.trace(format: String, vararg args: Any): Unit = if (logger.isTraceEnabled) logger.trace(localiseArray(format, args), args.lastOrNull()) else Unit
+    actual override fun SpiralContext.traceArray(format: String, args: Array<out Any>): Unit = if (logger.isTraceEnabled) logger.trace(localiseArray(format, args), args.lastOrNull()) else Unit
 }
 
-actual class DefaultSpiralLocale : AbstractSpiralLocale() {
+public actual class DefaultSpiralLocale : AbstractSpiralLocale() {
     actual override fun localise(msg: String): String {
         val str = localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg
         return MessageFormat.format(str)
@@ -107,12 +107,13 @@ internal actual fun defaultLocale(): CommonLocale {
     return CommonLocale(jvmLocale.language, jvmLocale.country, jvmLocale.variant)
 }
 
-inline fun SpiralLocale.prompt(promptText: String, defaultToAffirmative: Boolean = true): Boolean {
+@Suppress("NOTHING_TO_INLINE")
+public inline fun SpiralLocale.prompt(promptText: String, defaultToAffirmative: Boolean = true): Boolean {
     print(localise(promptText))
     return readConfirmation(defaultToAffirmative)
 }
 
-fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean {
+public fun SpiralLocale.readConfirmation(defaultToAffirmative: Boolean = true): Boolean {
     val affirmative = promptAffirmative()
 
     val input = readLine()?.trim()?.takeIf(String::isNotBlank)

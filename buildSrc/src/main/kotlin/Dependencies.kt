@@ -8,20 +8,20 @@ import org.gradle.plugin.use.PluginDependenciesSpec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
-const val KOTLIN_VERSION = "1.6.0"
-const val KOTLINX_COROUTINES_VERSION = "1.5.2"
-const val KOTLINX_SERIALISATION_VERSION = "1.3.1"
-const val KTOR_VERSION = "1.6.3"
-const val LOGBACK_VERSION = "1.2.3"
-const val SFL4J_VERSION = "1.7.32"
+const val KOTLIN_VERSION = "1.6.10"
+const val KOTLINX_COROUTINES_VERSION = "1.6.0"
+const val KOTLINX_SERIALISATION_VERSION = "1.3.2"
+const val KTOR_VERSION = "1.6.7"
+const val LOGBACK_VERSION = "1.2.11"
+const val SFL4J_VERSION = "1.7.36"
 
-const val KORNEA_ANNOTATIONS_VERSION = "1.1.0-alpha"
-const val KORNEA_APOLLO_VERSION = "1.0.6-alpha"
-const val KORNEA_ERRORS_VERSION = "2.2.4-alpha"
-const val KORNEA_IMG_VERSION = "1.3.0-alpha"
-const val KORNEA_IO_VERSION = "5.4.3-alpha"
-const val KORNEA_MODELLING_VERSION = "1.1.0-alpha"
-const val KORNEA_TOOLKIT_VERSION = "3.4.2-alpha"
+const val KORNEA_ANNOTATIONS_VERSION = "1.2.0-alpha"
+const val KORNEA_APOLLO_VERSION = "1.1.0-alpha"
+const val KORNEA_ERRORS_VERSION = "3.0.1-alpha"
+const val KORNEA_IMG_VERSION = "1.4.0-alpha"
+const val KORNEA_IO_VERSION = "5.5.1-alpha"
+const val KORNEA_MODELLING_VERSION = "1.2.0-alpha"
+const val KORNEA_TOOLKIT_VERSION = "3.5.0-alpha"
 
 const val KOTLINX_COROUTINES_CORE = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION"
 const val KOTLINX_SERIALISATION_CORE = "org.jetbrains.kotlinx:kotlinx-serialization-core:$KOTLINX_SERIALISATION_VERSION"

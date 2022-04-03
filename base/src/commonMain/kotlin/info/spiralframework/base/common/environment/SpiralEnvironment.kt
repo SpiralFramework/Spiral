@@ -3,10 +3,10 @@ package info.spiralframework.base.common.environment
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralModuleProvider
 
-typealias DynamicEnvironmentFunction = suspend SpiralContext.(key: String) -> String?
+public typealias DynamicEnvironmentFunction = suspend SpiralContext.(key: String) -> String?
 
-interface SpiralEnvironment {
-    object NoOp: SpiralEnvironment {
+public interface SpiralEnvironment {
+    public object NoOp: SpiralEnvironment {
         override suspend fun SpiralContext.retrieveEnvironment(): Map<String, String> = emptyMap()
         override fun storeStaticValue(key: String, value: String) {}
         override fun storeDynamicValue(key: String, value: DynamicEnvironmentFunction) {}
@@ -18,30 +18,29 @@ interface SpiralEnvironment {
         override suspend fun SpiralContext.registerAllModules() {}
     }
 
-    companion object {
-        const val SPIRAL_MODULE_KEY = "spiral.module"
-        const val SPIRAL_FILE_NAME_KEY = "spiral.name"
-        const val SPIRAL_MD5_KEY = "spiral.md5"
-        const val SPIRAL_SHA256_KEY = "spiral.sha256"
+    public companion object {
+        public const val SPIRAL_MODULE_KEY: String = "spiral.module"
+        public const val SPIRAL_FILE_NAME_KEY: String = "spiral.name"
+        public const val SPIRAL_MD5_KEY: String = "spiral.md5"
+        public const val SPIRAL_SHA256_KEY: String = "spiral.sha256"
     }
 
-    suspend fun SpiralContext.retrieveEnvironment(): Map<String, String>
-    fun storeStaticValue(key: String, value: String)
-    fun storeDynamicValue(key: String, value: DynamicEnvironmentFunction)
-    fun storeEnvironmentalValue(key: String)
+    public suspend fun SpiralContext.retrieveEnvironment(): Map<String, String>
+    public fun storeStaticValue(key: String, value: String)
+    public fun storeDynamicValue(key: String, value: DynamicEnvironmentFunction)
+    public fun storeEnvironmentalValue(key: String)
 
-    suspend fun retrieveStaticValue(key: String): String?
-    suspend fun retrieveEnvironmentalValue(key: String): String?
-    suspend fun SpiralContext.retrieveDynamicValue(key: String): String?
+    public suspend fun retrieveStaticValue(key: String): String?
+    public suspend fun retrieveEnvironmentalValue(key: String): String?
+    public suspend fun SpiralContext.retrieveDynamicValue(key: String): String?
 
-    suspend fun addModuleProvider(moduleProvider: SpiralModuleProvider)
-    @ExperimentalUnsignedTypes
-    suspend fun SpiralContext.registerAllModules()
+    public suspend fun addModuleProvider(moduleProvider: SpiralModuleProvider)
+    public suspend fun SpiralContext.registerAllModules()
 }
 
-suspend fun SpiralEnvironment.retrieveEnvironment(context: SpiralContext) = context.retrieveEnvironment()
-suspend fun SpiralEnvironment.retrieveDynamicValue(context: SpiralContext, key: String) = context.retrieveDynamicValue(key)
-suspend fun SpiralEnvironment.registerAllModules(context: SpiralContext) = context.registerAllModules()
+public suspend fun SpiralEnvironment.retrieveEnvironment(context: SpiralContext): Map<String, String> = context.retrieveEnvironment()
+public suspend fun SpiralEnvironment.retrieveDynamicValue(context: SpiralContext, key: String): String? = context.retrieveDynamicValue(key)
+public suspend fun SpiralEnvironment.registerAllModules(context: SpiralContext): Unit = context.registerAllModules()
 
-operator fun SpiralEnvironment.set(key: String, value: String) = storeStaticValue(key, value)
-operator fun SpiralEnvironment.set(key: String, value: DynamicEnvironmentFunction) = storeDynamicValue(key, value)
+public operator fun SpiralEnvironment.set(key: String, value: String): Unit = storeStaticValue(key, value)
+public operator fun SpiralEnvironment.set(key: String, value: DynamicEnvironmentFunction): Unit = storeDynamicValue(key, value)

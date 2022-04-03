@@ -7,6 +7,7 @@ import io.ktor.client.features.*
 class DefaultSpiralHttp: SpiralHttp {
     override val httpClient: HttpClient = HttpClient(Apache) {
         followRedirects = true
+        expectSuccess = false
 
         // Shortcut for the curl-like user agent.
         CurlUserAgent()

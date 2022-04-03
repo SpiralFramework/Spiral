@@ -82,7 +82,7 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             trace("calling $functionName(${flattened.map { value -> stringify(this, value) }.joinToString()})")
         }
 
-        val function = registry[functionName.toUpperCase().replace("_", "")]
+        val function = registry[functionName.uppercase().replace("_", "")]
                            ?.firstOrNull { func -> func.parameterNames.size == flattened.size || (func is SpiralSuspending.FuncX && func.variadicSupported && flattened.size >= func.parameterNames.size) }
                        ?: return null
 
@@ -410,11 +410,19 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         when (val union = requireNotNull(param) as OSLUnion) {
             is OSLUnion.NumberType -> union.number.toString()
             is OSLUnion.StringType -> union.string
-            is OSLUnion.LongReferenceType -> union.longReference.joinToString(" ") { byte -> byte.toString(16).toUpperCase().padStart(2, '0') }
+            is OSLUnion.LongReferenceType -> union.longReference.joinToString(" ") { byte ->
+                byte.toString(16).uppercase().padStart(2, '0')
+            }
             is OSLUnion.VariableReferenceType -> stringStub(context, getData(context, union.variableName))
-            is OSLUnion.LongLabelType -> union.longReference.joinToString(" ") { byte -> byte.toString(16).toUpperCase().padStart(2, '0') }
-            is OSLUnion.LongParameterType -> union.longReference.joinToString(" ") { byte -> byte.toString(16).toUpperCase().padStart(2, '0') }
-            is OSLUnion.ActionType -> union.actionName.joinToString(" ") { byte -> byte.toString(16).toUpperCase().padStart(2, '0') }
+            is OSLUnion.LongLabelType -> union.longReference.joinToString(" ") { byte ->
+                byte.toString(16).uppercase().padStart(2, '0')
+            }
+            is OSLUnion.LongParameterType -> union.longReference.joinToString(" ") { byte ->
+                byte.toString(16).uppercase().padStart(2, '0')
+            }
+            is OSLUnion.ActionType -> union.actionName.joinToString(" ") { byte ->
+                byte.toString(16).uppercase().padStart(2, '0')
+            }
             is OSLUnion.BooleanType -> union.boolean.toString()
             is OSLUnion.FunctionParameterType -> stringStub(context, union.parameterValue)
             is OSLUnion.FunctionCallType -> stringStub(
@@ -495,11 +503,11 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
 
     fun register(func: SpiralFunction<OSLUnion>) {
         val functions: MutableList<SpiralFunction<OSLUnion>>
-        if (func.name.toUpperCase().replace("_", "") !in registry) {
+        if (func.name.uppercase().replace("_", "") !in registry) {
             functions = ArrayList()
-            registry[func.name.toUpperCase().replace("_", "")] = functions
+            registry[func.name.uppercase().replace("_", "")] = functions
         } else {
-            functions = registry.getValue(func.name.toUpperCase().replace("_", ""))
+            functions = registry.getValue(func.name.uppercase().replace("_", ""))
         }
 
         functions.add(func)

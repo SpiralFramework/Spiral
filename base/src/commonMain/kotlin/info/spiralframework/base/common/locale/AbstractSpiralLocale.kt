@@ -1,19 +1,27 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package info.spiralframework.base.common.locale
 
-import info.spiralframework.base.common.SpiralContext
+import dev.brella.kornea.errors.common.KORNEA_ERROR_NOT_ENOUGH_DATA
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.doOnSuccess
+import dev.brella.kornea.errors.common.korneaNotFound
 import info.spiralframework.base.common.io.SpiralResourceLoader
-import dev.brella.kornea.errors.common.*
 import kotlin.reflect.KClass
 
-interface SpiralLocale {
-    object NoOp: SpiralLocale {
+public interface SpiralLocale {
+    public object NoOp : SpiralLocale {
         override fun localise(msg: String): String = msg
         override fun localise(msg: String, arg: Any): String = msg
         override fun localise(msg: String, arg1: Any, arg2: Any): String = msg
         override fun localise(msg: String, vararg args: Any): String = msg
         override fun localiseArray(msg: String, args: Array<out Any>): String = msg
 
-        override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle> = korneaNotFound("Could not add bundle $bundleName (NoOp Locale)")
+        override suspend fun SpiralResourceLoader.addBundle(
+            bundleName: String,
+            context: KClass<*>
+        ): KorneaResult<LocaleBundle> = korneaNotFound("Could not add bundle $bundleName (NoOp Locale)")
+
         override fun addBundle(localeBundle: LocaleBundle) {}
 
         override fun removeBundle(bundleName: String) {}
@@ -23,40 +31,39 @@ interface SpiralLocale {
         override fun currentLocale(): CommonLocale? = null
     }
 
-    fun localise(msg: String): String
-    fun localise(msg: String, arg: Any): String
-    fun localise(msg: String, arg1: Any, arg2: Any): String
-    fun localise(msg: String, vararg args: Any): String
-    fun localiseArray(msg: String, args: Array<out Any>): String
+    public fun localise(msg: String): String
+    public fun localise(msg: String, arg: Any): String
+    public fun localise(msg: String, arg1: Any, arg2: Any): String
+    public fun localise(msg: String, vararg args: Any): String
+    public fun localiseArray(msg: String, args: Array<out Any>): String
 
-    suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle>
-    fun addBundle(localeBundle: LocaleBundle)
+    public suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle>
+    public fun addBundle(localeBundle: LocaleBundle)
 
-    fun removeBundle(bundleName: String)
-    fun removeBundle(localeBundle: LocaleBundle)
+    public fun removeBundle(bundleName: String)
+    public fun removeBundle(localeBundle: LocaleBundle)
 
-    suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale)
+    public suspend fun SpiralResourceLoader.changeLocale(locale: CommonLocale)
 
-    fun currentLocale(): CommonLocale?
+    public fun currentLocale(): CommonLocale?
 }
 
-abstract class AbstractSpiralLocale: SpiralLocale {
+public abstract class AbstractSpiralLocale : SpiralLocale {
     private val _localisationBundles: MutableList<LocaleBundle> = ArrayList()
     private val _englishBundles: MutableList<LocaleBundle> = ArrayList()
 
-    val localisationBundles: List<LocaleBundle> = _localisationBundles
-    val englishBundles: List<LocaleBundle> = _englishBundles
+    public val localisationBundles: List<LocaleBundle> = _localisationBundles
+    public val englishBundles: List<LocaleBundle> = _englishBundles
 
     private var currentLocale: CommonLocale = CommonLocale.defaultLocale
 
-    override suspend fun SpiralResourceLoader.addBundle(bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle> {
-        val bundle = CommonLocaleBundle.load(this, bundleName, currentLocale, context)
-        if (bundle is KorneaResult.Success) {
-            _localisationBundles.add(bundle.get())
-        }
+    override suspend fun SpiralResourceLoader.addBundle(
+        bundleName: String,
+        context: KClass<*>
+    ): KorneaResult<LocaleBundle> =
+        CommonLocaleBundle.load(this, bundleName, currentLocale, context)
+            .doOnSuccess(_localisationBundles::add)
 
-        return bundle.cast()
-    }
     override fun addBundle(localeBundle: LocaleBundle) {
         _localisationBundles.add(localeBundle)
     }
@@ -65,6 +72,7 @@ abstract class AbstractSpiralLocale: SpiralLocale {
         _localisationBundles.removeAll { bundle -> bundle.bundleName == bundleName }
         _englishBundles.removeAll { bundle -> bundle.bundleName == bundleName }
     }
+
     override fun removeBundle(localeBundle: LocaleBundle) {
         _localisationBundles.remove(localeBundle)
     }
@@ -80,23 +88,43 @@ abstract class AbstractSpiralLocale: SpiralLocale {
     override fun currentLocale(): CommonLocale = currentLocale
 }
 
-suspend inline fun <reified T: Any> SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String) = resourceLoader.addBundle(bundleName, T::class)
-suspend inline fun <reified T: Any, B> B.loadTestBundle(bundleName: String) where B: SpiralLocale, B: SpiralContext = (this as SpiralResourceLoader).addBundle(bundleName, T::class)
+public suspend inline fun <reified T : Any> SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String): KorneaResult<LocaleBundle> =
+    resourceLoader.addBundle(bundleName, T::class)
 
-suspend fun SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>) = resourceLoader.addBundle(bundleName, context)
-suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, locale: CommonLocale) = resourceLoader.changeLocale(locale)
+public suspend inline fun <reified T : Any, B> B.loadTestBundle(bundleName: String): KorneaResult<LocaleBundle> where B : SpiralLocale, B : SpiralResourceLoader =
+    this.addBundle(bundleName, T::class) //(this as SpiralResourceLoader)
 
-inline fun <reified T> SpiralLocale.localisedNotEnoughData(message: String): KorneaResult<T> =
-        KorneaResult.errorAsIllegalState(KORNEA_ERROR_NOT_ENOUGH_DATA, localise(message))
+public suspend fun SpiralLocale.loadBundle(resourceLoader: SpiralResourceLoader, bundleName: String, context: KClass<*>): KorneaResult<LocaleBundle> =
+    resourceLoader.addBundle(bundleName, context)
 
-inline fun SpiralLocale.localiseOrNull(msg: String): String? = localise(msg).takeUnless { it == msg }
-inline fun SpiralLocale.localiseOrNull(msg: String, arg: Any): String? = localise(msg, arg).takeUnless { it == msg }
-inline fun SpiralLocale.localiseOrNull(msg: String, arg1: Any, arg2: Any): String? = localise(msg, arg1, arg2).takeUnless { it == msg }
-inline fun SpiralLocale.localiseOrNull(msg: String, vararg args: Any): String? = localiseArray(msg, args).takeUnless { it == msg }
-inline fun SpiralLocale.localiseArrayOrNull(msg: String, args: Array<out Any>): String? = localiseArray(msg, args).takeUnless { it == msg }
+public suspend fun SpiralLocale.changeLocale(resourceLoader: SpiralResourceLoader, locale: CommonLocale): Unit =
+    resourceLoader.changeLocale(locale)
 
-inline fun SpiralLocale.localiseOrElse(msg: String, default: () -> Any): String = localise(msg).takeUnless { it == msg } ?: default().toString()
-inline fun SpiralLocale.localiseOrElse(msg: String, arg: Any, default: () -> Any): String = localise(msg, arg).takeUnless { it == msg } ?: default().toString()
-inline fun SpiralLocale.localiseOrElse(msg: String, arg1: Any, arg2: Any, default: () -> Any): String = localise(msg, arg1, arg2).takeUnless { it == msg } ?: default().toString()
-inline fun SpiralLocale.localiseOrElse(msg: String, vararg args: Any, default: () -> Any): String = localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()
-inline fun SpiralLocale.localiseArrayOrElse(msg: String, args: Array<out Any>, default: () -> Any): String = localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()
+public inline fun <reified T> SpiralLocale.localisedNotEnoughData(message: String): KorneaResult<T> =
+    KorneaResult.errorAsIllegalState(KORNEA_ERROR_NOT_ENOUGH_DATA, localise(message))
+
+public inline fun SpiralLocale.localiseOrNull(msg: String): String? = localise(msg).takeUnless { it == msg }
+public inline fun SpiralLocale.localiseOrNull(msg: String, arg: Any): String? = localise(msg, arg).takeUnless { it == msg }
+public inline fun SpiralLocale.localiseOrNull(msg: String, arg1: Any, arg2: Any): String? =
+    localise(msg, arg1, arg2).takeUnless { it == msg }
+
+public inline fun SpiralLocale.localiseOrNull(msg: String, vararg args: Any): String? =
+    localiseArray(msg, args).takeUnless { it == msg }
+
+public inline fun SpiralLocale.localiseArrayOrNull(msg: String, args: Array<out Any>): String? =
+    localiseArray(msg, args).takeUnless { it == msg }
+
+public inline fun SpiralLocale.localiseOrElse(msg: String, default: () -> Any): String =
+    localise(msg).takeUnless { it == msg } ?: default().toString()
+
+public inline fun SpiralLocale.localiseOrElse(msg: String, arg: Any, default: () -> Any): String =
+    localise(msg, arg).takeUnless { it == msg } ?: default().toString()
+
+public inline fun SpiralLocale.localiseOrElse(msg: String, arg1: Any, arg2: Any, default: () -> Any): String =
+    localise(msg, arg1, arg2).takeUnless { it == msg } ?: default().toString()
+
+public inline fun SpiralLocale.localiseOrElse(msg: String, vararg args: Any, default: () -> Any): String =
+    localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()
+
+public inline fun SpiralLocale.localiseArrayOrElse(msg: String, args: Array<out Any>, default: () -> Any): String =
+    localiseArray(msg, args).takeUnless { it == msg } ?: default().toString()

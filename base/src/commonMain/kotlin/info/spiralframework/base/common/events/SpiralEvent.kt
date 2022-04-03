@@ -1,6 +1,6 @@
 package info.spiralframework.base.common.events
 
-interface SpiralEvent
-interface CancellableSpiralEvent: SpiralEvent {
-    var cancelled: Boolean
+public interface SpiralEvent
+public interface CancellableSpiralEvent: SpiralEvent {
+    public var cancelled: Boolean
 }

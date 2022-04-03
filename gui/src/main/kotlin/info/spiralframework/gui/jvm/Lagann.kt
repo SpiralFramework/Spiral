@@ -17,7 +17,6 @@ import info.spiralframework.antlr.pipeline.PipelineParser
 import info.spiralframework.base.binding.DefaultSpiralLogger
 import info.spiralframework.base.binding.defaultSpiralContext
 import info.spiralframework.base.common.NULL_TERMINATOR
-import info.spiralframework.base.common.PrintOutputFlowWrapper
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.alignedTo
 import info.spiralframework.base.common.config.getConfigFile
@@ -71,7 +70,12 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.lang.Integer.min
+import java.util.*
 import javax.imageio.ImageIO
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.math.log
 
@@ -174,7 +178,9 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                             bstTextArea.text = null
                         }
                     }.doOnSuccess { data ->
-                        binaryDataView.text = data.slice(0 until min(4096, data.size)).chunked(16).joinToString("\n") { row -> row.joinToString(" ") { byte -> byte.toInt().and(0xFF).toString(16).padStart(2, '0').toUpperCase() } }
+                        binaryDataView.text = data.slice(0 until min(4096, data.size)).chunked(16).joinToString("\n") { row -> row.joinToString(" ") { byte ->
+                            byte.toInt().and(0xFF).toString(16).padStart(2, '0').uppercase(Locale.getDefault())
+                        } }
 
                         val dataSource = requireNotNull(value?.dataSource)
                         val formats: MutableList<DataPair<*>> = ArrayList()
@@ -183,18 +189,30 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                         if (value is LagannTreeData.PredefinedSubFile) {
                             formats.add(value.data)
                         } else {
-                            when (value.name.toLowerCase().substringAfterLast('.')) {
+                            when (value.name.lowercase(Locale.getDefault()).substringAfterLast('.')) {
                                 "loop" -> formats.add(DataPair("Dr1 Loop", "LOOP", 1.0))  //Don't have a loop obj yet
                                 "lin" -> LinScript(
                                     spiralContext, game as? DrGame.LinScriptable
-                                                   ?: DrGame.LinScriptable.Unknown, dataSource
+                                        ?: DrGame.LinScriptable.Unknown, dataSource
                                 ).doOnSuccess { script ->
-                                    formats.add(DataPair("Lin Script", script, if (script.scriptData.isEmpty()) 0.75 else 1.0))
+                                    formats.add(
+                                        DataPair(
+                                            "Lin Script",
+                                            script,
+                                            if (script.scriptData.isEmpty()) 0.75 else 1.0
+                                        )
+                                    )
                                 }
                                 "pak" -> PakArchive(spiralContext, dataSource).doOnSuccess { pak ->
                                     when {
                                         pak.files.isEmpty() -> formats.add(DataPair("Pak Archive", pak, 0.2))
-                                        pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(DataPair("Pak Archive", pak, 0.1))
+                                        pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(
+                                            DataPair(
+                                                "Pak Archive",
+                                                pak,
+                                                0.1
+                                            )
+                                        )
                                         pak.files.fold((4 + pak.files.size * 4).alignedTo(0x10)) { lastOffset, entry ->
                                             if (lastOffset == -1) lastOffset
                                             else if (lastOffset != entry.offset) -1
@@ -214,15 +232,23 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                                     formats.add(DataPair("SPC Archive", spc, 1.0))
                                 }
                                 "srdv" -> {
-                                    val lookingFor = "${value.name.toLowerCase().substringBeforeLast('.')}.srd"
-                                    val srdFileItem = fileTree.selectionModel.selectedItem.parent.children.firstOrNull { item -> item.value.name == lookingFor }
+                                    val lookingFor =
+                                        "${value.name.lowercase(Locale.getDefault()).substringBeforeLast('.')}.srd"
+                                    val srdFileItem =
+                                        fileTree.selectionModel.selectedItem.parent.children.firstOrNull { item -> item.value.name == lookingFor }
 
                                     if (srdFileItem?.value?.dataSource != null) {
                                         SrdArchive(spiralContext, srdFileItem.value.dataSource!!)
                                             .doOnSuccess { srd ->
                                                 val textures = srd.entries.filterIsInstance(TextureSrdEntry::class.java)
                                                 if (textures.isNotEmpty())
-                                                    formats.add(DataPair("Srd Textures", SrdvTexture(textures.toTypedArray()), 1.0))
+                                                    formats.add(
+                                                        DataPair(
+                                                            "Srd Textures",
+                                                            SrdvTexture(textures.toTypedArray()),
+                                                            1.0
+                                                        )
+                                                    )
                                             }
                                     }
                                 }
@@ -231,15 +257,27 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                             if (formats.isEmpty()) {
                                 LinScript(
                                     spiralContext, game as? DrGame.LinScriptable
-                                                   ?: DrGame.LinScriptable.Unknown, dataSource
+                                        ?: DrGame.LinScriptable.Unknown, dataSource
                                 ).doOnSuccess { script ->
-                                    formats.add(DataPair("Lin Script", script, if (script.scriptData.isEmpty()) 0.5 else 0.75))
+                                    formats.add(
+                                        DataPair(
+                                            "Lin Script",
+                                            script,
+                                            if (script.scriptData.isEmpty()) 0.5 else 0.75
+                                        )
+                                    )
                                 }
 
                                 PakArchive(spiralContext, dataSource).doOnSuccess { pak ->
                                     when {
                                         pak.files.isEmpty() -> formats.add(DataPair("Pak Archive", pak, 0.2))
-                                        pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(DataPair("Pak Archive", pak, 0.1))
+                                        pak.files.first().offset < (4 + pak.files.size * 4) -> formats.add(
+                                            DataPair(
+                                                "Pak Archive",
+                                                pak,
+                                                0.1
+                                            )
+                                        )
                                         pak.files.fold((4 + pak.files.size * 4).alignedTo(0x10)) { lastOffset, entry ->
                                             if (lastOffset == -1) lastOffset
                                             else if (lastOffset != entry.offset) -1
@@ -264,9 +302,17 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                                     String(data, Charsets.UTF_16)
                                         .trimEnd(NULL_TERMINATOR)
                                         .let { str ->
-                                            formats.add(DataPair("UTF-16", Utf16String(str), if (data[data.size - 1] == 0x00.toByte() && data[data.size - 2] == 0x00.toByte()) 1.0 else 0.9))
+                                            formats.add(
+                                                DataPair(
+                                                    "UTF-16",
+                                                    Utf16String(str),
+                                                    if (data[data.size - 1] == 0x00.toByte() && data[data.size - 2] == 0x00.toByte()) 1.0 else 0.9
+                                                )
+                                            )
                                         }
-                                } else if (data[data.size - 1] == 0x00.toByte() && data.dropLast(1).all { byte -> byte.toInt().and(0xFF) in ASCII_RANGE }) {
+                                } else if (data[data.size - 1] == 0x00.toByte() && data.dropLast(1)
+                                        .all { byte -> byte.toInt().and(0xFF) in ASCII_RANGE }
+                                ) {
                                     String(data, Charsets.UTF_8)
                                         .trimEnd(NULL_TERMINATOR)
                                         .let { str ->
@@ -354,7 +400,12 @@ class Lagann : Application(), CoroutineScope by MainScope() {
                         is LinScript -> {
                             bstTextArea.text = bstMap.computeIfAbsent(selectedItem.value.name to dataTypesDropdown.selectionModel.selectedIndex) {
                                 StringBuilder().apply {
-                                    appendln("addMagicNumber(\$MAGIC_NUMBER_${(game?.takeIf { it is DrGame.LinScriptable })?.identifier?.toUpperCase() ?: "UNK"}_LIN)")
+                                    appendln(
+                                        "addMagicNumber(\$MAGIC_NUMBER_${
+                                            (game?.takeIf { it is DrGame.LinScriptable })?.identifier?.uppercase(
+                                                Locale.getDefault()
+                                            ) ?: "UNK"
+                                        }_LIN)")
                                     appendln("done()")
                                 }.toString()
                             }

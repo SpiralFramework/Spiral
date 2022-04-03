@@ -31,9 +31,9 @@ dependencies {
 //        all {
 //            languageSettings {
 //                enableLanguageFeature("InlineClasses")
-//                useExperimentalAnnotation('kotlin.ExperimentalUnsignedTypes')
-//                useExperimentalAnnotation('kotlin.ExperimentalStdlibApi')
-//                useExperimentalAnnotation('kotlin.contracts.ExperimentalContracts')
+//                optIn('kotlin.ExperimentalUnsignedTypes')
+//                optIn('kotlin.ExperimentalStdlibApi')
+//                optIn('kotlin.contracts.ExperimentalContracts')
 //            }
 //        }
 

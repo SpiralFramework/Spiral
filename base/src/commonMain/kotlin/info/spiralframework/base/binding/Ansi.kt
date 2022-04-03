@@ -1,3 +1,3 @@
 package info.spiralframework.base.binding
 
-expect fun isAnsiSupported(): Boolean
+public expect fun isAnsiSupported(): Boolean

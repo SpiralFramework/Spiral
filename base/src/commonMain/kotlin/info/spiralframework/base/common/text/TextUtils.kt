@@ -1,13 +1,18 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package info.spiralframework.base.common.text
 
-inline class LazyString(val init: () -> Any?) {
+import kotlin.jvm.JvmInline
+
+@JvmInline
+public value class LazyString(private val init: () -> Any?) {
     override fun toString(): String = init().toString()
 }
 
-inline fun lazyString(noinline init: () -> Any?) =
+public inline fun lazyString(noinline init: () -> Any?): LazyString =
     LazyString(init)
 
-fun String.toIntBaseN(): Int = when {
+public fun String.toIntBaseN(): Int = when {
     startsWith("0b") -> substring(2).toInt(2)
     startsWith("0o") -> substring(2).toInt(8)
     startsWith("0x") -> substring(2).toInt(16)
@@ -15,7 +20,7 @@ fun String.toIntBaseN(): Int = when {
     else -> toInt()
 }
 
-fun String.toIntOrNullBaseN(): Int? = when {
+public fun String.toIntOrNullBaseN(): Int? = when {
     startsWith("0b") -> substring(2).toIntOrNull(2)
     startsWith("0o") -> substring(2).toIntOrNull(8)
     startsWith("0x") -> substring(2).toIntOrNull(16)
@@ -23,37 +28,37 @@ fun String.toIntOrNullBaseN(): Int? = when {
     else -> toIntOrNull()
 }
 
-fun Byte.toHexString(): String = toInt().and(0xFF).toHexString()
-fun Short.toHexString(): String = toInt().and(0xFF).toHexString()
-fun Int.toHexString(): String = StringBuilder().also(this::toHexString).toString()
-fun Long.toHexString(): String = StringBuilder().also(this::toHexString).toString()
-fun StringBuilder.appendHex(num: Number) = num.toInt().toHexString(this)
-fun StringBuilder.appendLineHex(num: Number) {
+public fun Byte.toHexString(): String = toInt().and(0xFF).toHexString()
+public fun Short.toHexString(): String = toInt().and(0xFFFF).toHexString()
+public fun Int.toHexString(): String = StringBuilder().also(this::toHexString).toString()
+public fun Long.toHexString(): String = StringBuilder().also(this::toHexString).toString()
+public fun StringBuilder.appendHex(num: Number): Unit = num.toInt().toHexString(this)
+public fun StringBuilder.appendLineHex(num: Number) {
     num.toInt().toHexString(this)
     appendLine()
 }
 
-fun Int.toHexString(builder: StringBuilder) {
+public fun Int.toHexString(builder: StringBuilder) {
     with(builder) {
         append("0x")
-        val hex = toString(16).toUpperCase()
+        val hex = toString(16).uppercase()
         for (i in 0 until hex.length % 2)
             append('0')
         append(hex)
     }
 }
 
-fun Long.toHexString(builder: StringBuilder) {
+public fun Long.toHexString(builder: StringBuilder) {
     with(builder) {
         append("0x")
-        val hex = toString(16).toUpperCase()
+        val hex = toString(16).uppercase()
         for (i in 0 until hex.length % 2)
             append('0')
         append(hex)
     }
 }
 
-fun String.removeEscapes(): String =
+public fun String.removeEscapes(): String =
         buildString {
             var i = 0
             while (i in this@removeEscapes.indices) {
@@ -81,8 +86,8 @@ fun String.removeEscapes(): String =
             }
         }
 
-fun String.doublePadWindowsPaths(): String =
-        replace("\"([a-zA-Z]):((?:\\\\(?:[^\\\\/:*\"?<>|]{1,254}))+)\"".toRegex()) { result ->
+public fun String.doublePadWindowsPaths(): String =
+        replace("\"([a-zA-Z]):((?:\\\\([^\\\\/:*\"?<>|]{1,254}))+)\"".toRegex()) { result ->
             val drive = result.groupValues[1]
             val components = result.groupValues[2].replace("\\", "\\\\")
 

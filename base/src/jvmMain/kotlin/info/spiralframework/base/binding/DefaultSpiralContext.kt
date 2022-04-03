@@ -3,10 +3,7 @@ package info.spiralframework.base.binding
 import dev.brella.kornea.toolkit.common.SemanticVersion
 import dev.brella.kornea.toolkit.common.SuspendInit0
 import dev.brella.kornea.toolkit.common.init
-import info.spiralframework.base.common.SpiralCatalyst
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.SpiralModuleBase
-import info.spiralframework.base.common.SpiralModuleProvider
+import info.spiralframework.base.common.*
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.environment.SpiralEnvironment
 import info.spiralframework.base.common.events.SpiralEventBus
@@ -15,12 +12,12 @@ import info.spiralframework.base.common.io.SpiralResourceLoader
 import info.spiralframework.base.common.locale.SpiralLocale
 import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.serialisation.SpiralSerialisation
-import info.spiralframework.base.common.tryPrime
+import kotlinx.coroutines.SupervisorJob
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
-@ExperimentalUnsignedTypes
-actual data class DefaultSpiralContext private actual constructor(
+public actual data class DefaultSpiralContext private actual constructor(
     val locale: SpiralLocale,
     val logger: SpiralLogger,
     val config: SpiralConfig,
@@ -29,6 +26,7 @@ actual data class DefaultSpiralContext private actual constructor(
     val cacheProvider: SpiralCacheProvider,
     val resourceLoader: SpiralResourceLoader,
     val serialisation: SpiralSerialisation,
+    val parentCoroutineContext: CoroutineContext?
 ) : SpiralContext, SuspendInit0, SpiralCatalyst<SpiralContext>,
     SpiralLocale by locale,
     SpiralLogger by logger,
@@ -38,8 +36,8 @@ actual data class DefaultSpiralContext private actual constructor(
     SpiralCacheProvider by cacheProvider,
     SpiralResourceLoader by resourceLoader,
     SpiralSerialisation by serialisation {
-    actual companion object {
-        actual suspend operator fun invoke(
+    public actual companion object {
+        public actual suspend operator fun invoke(
             locale: SpiralLocale,
             logger: SpiralLogger,
             config: SpiralConfig,
@@ -48,8 +46,9 @@ actual data class DefaultSpiralContext private actual constructor(
             cacheProvider: SpiralCacheProvider,
             resourceLoader: SpiralResourceLoader,
             serialisation: SpiralSerialisation,
+            parentCoroutineContext: CoroutineContext?
         ): DefaultSpiralContext =
-            init(DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation))
+            init(DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation, parentCoroutineContext))
     }
 
     override fun subcontext(module: String): SpiralContext = this
@@ -61,7 +60,8 @@ actual data class DefaultSpiralContext private actual constructor(
         newEventBus: SpiralEventBus?,
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?,
-        newSerialisation: SpiralSerialisation?
+        newSerialisation: SpiralSerialisation?,
+        newParentCoroutineContext: CoroutineContext?
     ): SpiralContext {
         val context =
             DefaultSpiralContext(
@@ -72,11 +72,14 @@ actual data class DefaultSpiralContext private actual constructor(
                 newEventBus ?: eventBus,
                 newCacheProvider ?: cacheProvider,
                 newResourceLoader ?: resourceLoader,
-                newSerialisation ?: serialisation
+                newSerialisation ?: serialisation,
+                newParentCoroutineContext ?: parentCoroutineContext
             )
         context.init()
         return context
     }
+
+    override val coroutineContext: CoroutineContext = parentCoroutineContext?.plus(SupervisorJob()) ?: SupervisorJob()
 
     val moduleLoader: ServiceLoader<SpiralModuleProvider> = ServiceLoader.load(SpiralModuleProvider::class.java)
     override val klass: KClass<SpiralContext> = SpiralContext::class

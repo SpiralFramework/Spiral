@@ -3,7 +3,6 @@ package info.spiralframework.core.common.formats.text
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import dev.brella.kornea.toolkit.common.printLine
-import info.spiralframework.base.common.PrintOutputFlowWrapper
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse

@@ -7,7 +7,7 @@ import info.spiralframework.base.common.events.SpiralEventListener
 import info.spiralframework.base.common.events.SpiralEventPriority
 import kotlin.reflect.KClass
 
-actual class DefaultSpiralEventBus actual constructor() : SpiralEventBus {
+public actual class DefaultSpiralEventBus actual constructor() : SpiralEventBus {
     override fun <T : SpiralEvent> register(klass: KClass<T>, name: String, priority: SpiralEventPriority, block: suspend SpiralContext.(event: T) -> Unit) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

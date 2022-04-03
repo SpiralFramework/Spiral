@@ -1,18 +1,16 @@
 package info.spiralframework.base.common.config
 
-import dev.brella.kornea.toolkit.common.SuspendInit1
-import info.spiralframework.base.common.SpiralCatalyst
 import info.spiralframework.base.common.SpiralContext
 
-interface SpiralConfig {
-    object NoOp: SpiralConfig {
+public interface SpiralConfig {
+    public object NoOp: SpiralConfig {
         override fun SpiralContext.getConfigFile(module: String): String = module
         override fun SpiralContext.getLocalDataDir(group: String): String = group
     }
 
-    fun SpiralContext.getConfigFile(module: String): String
-    fun SpiralContext.getLocalDataDir(group: String): String
+    public fun SpiralContext.getConfigFile(module: String): String
+    public fun SpiralContext.getLocalDataDir(group: String): String
 }
 
-fun SpiralConfig.getConfigFile(context: SpiralContext, module: String): String = context.getConfigFile(module)
-fun SpiralConfig.getLocalDataDir(context: SpiralContext, group: String): String = context.getLocalDataDir(group)
+public fun SpiralConfig.getConfigFile(context: SpiralContext, module: String): String = context.getConfigFile(module)
+public fun SpiralConfig.getLocalDataDir(context: SpiralContext, group: String): String = context.getLocalDataDir(group)

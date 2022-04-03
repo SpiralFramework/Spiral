@@ -1,19 +1,21 @@
 package info.spiralframework.base.common.io
 
-import kotlinx.coroutines.*
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-@ExperimentalUnsignedTypes
-class TimedDataPool<I: InputFlow, O: OutputFlow>(val backing: DataPool<I, O>, closeAfter: Duration, scope: CoroutineScope = GlobalScope, context: CoroutineContext = EmptyCoroutineContext): DataPool<I, O> by backing {
+public class TimedDataPool<I: InputFlow, O: OutputFlow>(private val backing: DataPool<I, O>, closeAfter: Duration, scope: CoroutineScope, context: CoroutineContext = EmptyCoroutineContext): DataPool<I, O> by backing {
     private var closingJob: Job = scope.launch(context) {
-        delay(closeAfter.toLongMilliseconds())
+        delay(closeAfter.inWholeMilliseconds)
         close()
     }
 
@@ -24,10 +26,10 @@ class TimedDataPool<I: InputFlow, O: OutputFlow>(val backing: DataPool<I, O>, cl
         }
     }
 
-    fun extend(closeAfter: Duration, scope: CoroutineScope = GlobalScope, context: CoroutineContext) {
+    public fun extend(closeAfter: Duration, scope: CoroutineScope, context: CoroutineContext) {
         closingJob.cancel()
         closingJob = scope.launch(context) {
-            delay(closeAfter.toLongMilliseconds())
+            delay(closeAfter.inWholeMilliseconds)
             close()
         }
     }

@@ -7,8 +7,7 @@ import info.spiralframework.base.common.logging.CommonSpiralLogger
 import info.spiralframework.base.common.logging.SpiralLogger
 import kotlinx.browser.window
 
-@ExperimentalUnsignedTypes
-actual class DefaultSpiralLogger actual constructor(name: String) : SpiralLogger, CommonSpiralLogger(name) {
+public actual class DefaultSpiralLogger public actual constructor(name: String) : SpiralLogger, CommonSpiralLogger(name) {
     override val errorPrintln: (String) -> Unit = { console.error(it) }
     override val warnPrintln: (String) -> Unit = { console.warn(it) }
     override val infoPrintln: (String) -> Unit = { console.info(it) }
@@ -17,7 +16,7 @@ actual class DefaultSpiralLogger actual constructor(name: String) : SpiralLogger
 }
 
 /** Since we don't have a message formatter, we have to manually replace single quotes */
-actual class DefaultSpiralLocale actual constructor() : AbstractSpiralLocale() {
+public actual class DefaultSpiralLocale actual constructor() : AbstractSpiralLocale() {
     actual override fun localise(msg: String): String =
             stripJavaQuirks(localisationBundles.firstOrNull { bundle -> bundle.containsKey(msg) }?.get(msg) ?: msg)
 

@@ -7,14 +7,7 @@ import dev.brella.kornea.errors.common.doOnSuccess
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import dev.brella.kornea.io.jvm.files.relativePathFrom
-import info.spiralframework.base.binding.DefaultSpiralCacheProvider
-import info.spiralframework.base.binding.DefaultSpiralConfig
-import info.spiralframework.base.binding.DefaultSpiralContext
-import info.spiralframework.base.binding.DefaultSpiralEnvironment
-import info.spiralframework.base.binding.DefaultSpiralEventBus
-import info.spiralframework.base.binding.DefaultSpiralLocale
-import info.spiralframework.base.binding.DefaultSpiralLogger
-import info.spiralframework.base.binding.DefaultSpiralResourceLoader
+import info.spiralframework.base.binding.*
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.config.SpiralConfig
 import info.spiralframework.base.common.config.getConfigFile
@@ -98,6 +91,7 @@ abstract class Cockpit @ExperimentalUnsignedTypes internal constructor(var conte
             val environment: SpiralEnvironment = DefaultSpiralEnvironment()
             val eventBus: SpiralEventBus = DefaultSpiralEventBus()
                 .installLoggingSubscriber()
+
             val cacheProvider: SpiralCacheProvider = DefaultSpiralCacheProvider()
             val serialisation: SpiralSerialisation = DefaultSpiralSerialisation()
             val parentContext: SpiralContext = DefaultSpiralContext(locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation)

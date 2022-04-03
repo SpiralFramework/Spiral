@@ -23,9 +23,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
     implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
 
-    implementation("dev.brella:knolus-core:2.6.5")
+    implementation("dev.brella:knolus-core:2.7.0")
 
-    antlr("org.antlr:antlr4:4.7.2")
+    antlr("org.antlr:antlr4:4.9.3")
 }
 
 tasks.compileKotlin {

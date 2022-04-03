@@ -4,7 +4,7 @@ import dev.brella.kornea.io.common.TextCharsets
 import java.nio.charset.Charset
 import java.text.DecimalFormat
 
-val TextCharsets.java: Charset
+public val TextCharsets.java: Charset
     get() = when (this) {
         TextCharsets.ASCII -> Charsets.US_ASCII
         TextCharsets.UTF_8 -> Charsets.UTF_8
@@ -15,5 +15,5 @@ val TextCharsets.java: Charset
 
 private val PERCENT_FORMAT = DecimalFormat("00.00")
 
-actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
+public actual fun formatPercent(percentage: Double): String = PERCENT_FORMAT.format(percentage)
 //actual fun uuidString(): String = UUID.randomUUID().toString()

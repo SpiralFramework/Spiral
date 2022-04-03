@@ -303,7 +303,7 @@ class DefaultGurrenSpiralContext private constructor(
             withContext(Dispatchers.IO) {
                 JarFile(file).use { jar ->
                     jar.manifest.mainAttributes.forEach { key, value ->
-                        storeStaticValue("manifest.${key.toString().toLowerCase()}", value.toString())
+                        storeStaticValue("manifest.${key.toString().lowercase(Locale.getDefault())}", value.toString())
                     }
                 }
             }

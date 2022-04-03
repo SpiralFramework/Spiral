@@ -2,11 +2,10 @@ package info.spiralframework.base.common
 
 import dev.brella.kornea.annotations.AvailableSince
 import dev.brella.kornea.toolkit.common.KorneaToolkit
-import dev.brella.kornea.toolkit.common.SuspendInit1
 import kotlin.reflect.KClass
 
-interface SpiralCatalyst<T : Any> {
-    val klass: KClass<T>
+public interface SpiralCatalyst<T : Any> {
+    public val klass: KClass<T>
     public suspend fun prime(catalyst: T)
 }
 

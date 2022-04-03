@@ -8,6 +8,7 @@ import info.spiralframework.core.common.SPIRAL_ENV_BUILD_KEY
 import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import java.util.*
 
 fun SpiralCoreContext.apiCheckForUpdate(project: String, build: String): String = apiCheckForUpdate(apiBase, project, build)
 fun SpiralCoreContext.apiLatestBuild(project: String): String = apiLatestBuild(apiBase, project)
@@ -18,7 +19,14 @@ fun apiCheckForUpdate(apiBase: String, project: String, build: String): String =
 fun apiLatestBuild(apiBase: String, project: String): String = String.format("%s/jenkins/projects/Spiral-%s/latest_build", apiBase, project)
 fun apiBuildForFingerprint(apiBase: String, fingerprint: String): String = String.format("%s/jenkins/fingerprint/%s/build", apiBase, apiBase, fingerprint)
 fun jenkinsArtifactForBuild(jenkinsBase: String, project: String, latestBuild: String, fileName: String): String =
-    String.format("%s/job/Spiral-%s/%s/artifact/%s/build/libs/%s", jenkinsBase, project, latestBuild, project.toLowerCase(), fileName)
+    String.format(
+        "%s/job/Spiral-%s/%s/artifact/%s/build/libs/%s",
+        jenkinsBase,
+        project,
+        latestBuild,
+        project.lowercase(Locale.getDefault()),
+        fileName
+    )
 
 //val spiralFrameworkOnline: Boolean by lazy { Fuel.head("https://spiralframework.info").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }
 //val githubOnline: Boolean by lazy { Fuel.head("https://github.com").userAgent().timeout(10 * 1000).timeoutRead(5 * 1000).response().second.isSuccessful }

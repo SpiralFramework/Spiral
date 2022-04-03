@@ -1,7 +1,7 @@
 package info.spiralframework.base.common
 
-data class Moment(val year: Int, val month: Int, val day: Int, val hour: Int, val minute: Int, val second: Int, val millisecond: Int) {
-    companion object {}
+public data class Moment(val year: Int, val month: Int, val day: Int, val hour: Int, val minute: Int, val second: Int, val millisecond: Int) {
+    public companion object {}
 
     override fun toString(): String = buildString {
         append(year.toString().padStart(4, '0'))

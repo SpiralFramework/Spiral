@@ -1,22 +1,22 @@
 package info.spiralframework.base.common.locale
 
-object BaseCommonLocaleKeys {
-    const val PROMPT_AFFIRMATIVE = "base.prompt.affirmative"
-    const val PROMPT_NEGATIVE = "base.prompt.negative"
+public object BaseCommonLocaleKeys {
+    public const val PROMPT_AFFIRMATIVE: String = "base.prompt.affirmative"
+    public const val PROMPT_NEGATIVE: String = "base.prompt.negative"
 
-    const val PROMPT_SHORT_AFFIRMATIVE = "base.prompt.short.affirmative"
-    const val PROMPT_SHORT_NEGATIVE = "base.prompt.short.negative"
+    public const val PROMPT_SHORT_AFFIRMATIVE: String = "base.prompt.short.affirmative"
+    public const val PROMPT_SHORT_NEGATIVE: String = "base.prompt.short.negative"
 
-    const val PROMPT_EXIT = "base.prompt.exit"
+    public const val PROMPT_EXIT: String = "base.prompt.exit"
 
-    const val CONST_NULL = "base.const.null"
+    public const val CONST_NULL: String = "base.const.null"
 }
 
-fun SpiralLocale.promptAffirmative(): String = localise(BaseCommonLocaleKeys.PROMPT_AFFIRMATIVE)
-fun SpiralLocale.promptNegative(): String = localise(BaseCommonLocaleKeys.PROMPT_NEGATIVE)
+public fun SpiralLocale.promptAffirmative(): String = localise(BaseCommonLocaleKeys.PROMPT_AFFIRMATIVE)
+public fun SpiralLocale.promptNegative(): String = localise(BaseCommonLocaleKeys.PROMPT_NEGATIVE)
 
-fun SpiralLocale.promptShortAffirmative(): String = localise(BaseCommonLocaleKeys.PROMPT_SHORT_AFFIRMATIVE)
-fun SpiralLocale.promptShortNegative(): String = localise(BaseCommonLocaleKeys.PROMPT_SHORT_NEGATIVE)
+public fun SpiralLocale.promptShortAffirmative(): String = localise(BaseCommonLocaleKeys.PROMPT_SHORT_AFFIRMATIVE)
+public fun SpiralLocale.promptShortNegative(): String = localise(BaseCommonLocaleKeys.PROMPT_SHORT_NEGATIVE)
 
-fun SpiralLocale.constNull(): String = localise(BaseCommonLocaleKeys.CONST_NULL)
-fun SpiralLocale.promptExit(): List<String> = localise(BaseCommonLocaleKeys.PROMPT_EXIT).split(';')
+public fun SpiralLocale.constNull(): String = localise(BaseCommonLocaleKeys.CONST_NULL)
+public fun SpiralLocale.promptExit(): List<String> = localise(BaseCommonLocaleKeys.PROMPT_EXIT).split(';')

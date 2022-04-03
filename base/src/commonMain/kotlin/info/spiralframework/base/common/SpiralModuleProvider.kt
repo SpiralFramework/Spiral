@@ -2,9 +2,9 @@ package info.spiralframework.base.common
 
 import dev.brella.kornea.toolkit.common.SemanticVersion
 
-interface SpiralModuleProvider {
-    val moduleName: String
-    val moduleVersion: SemanticVersion
+public interface SpiralModuleProvider {
+    public val moduleName: String
+    public val moduleVersion: SemanticVersion
 
-    suspend fun register(context: SpiralContext)
+    public suspend fun register(context: SpiralContext)
 }

@@ -1,6 +1,5 @@
 package info.spiralframework.base.binding
 
-import dev.brella.kornea.io.common.TextCharsets
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.random.Random
@@ -10,9 +9,9 @@ private const val UUID_SET_VERSION_4: Byte = 0x40
 private const val UUID_CLEAR_VARIANT: Byte = 0x3F
 private const val UUID_SET_VARIANT_IETF: Byte = 0x80.toByte()
 
-actual fun formatPercent(percentage: Double): String = percentage.asDynamic().toFixed(2) as String
+public actual fun formatPercent(percentage: Double): String = percentage.asDynamic().toFixed(2) as String
 @Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-fun uuidString(): String {
+public fun uuidString(): String {
     val ng = Random.Default
 
     val data = ByteArray(16)
