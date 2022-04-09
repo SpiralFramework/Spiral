@@ -14,7 +14,7 @@ import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 import info.spiralframework.formats.common.archives.*
 
 object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat {
@@ -30,7 +30,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
                 return@useAndFlatMap KorneaResult.errorAsIllegalArgument(SpcArchive.INVALID_MAGIC_NUMBER, context.localise(SpcArchive.INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16)}", "0x${SpcArchive.SPC_MAGIC_NUMBER_LE.toString(16)}"))
             }
 
-            return@useAndFlatMap buildFormatResult(Optional.empty(), 1.0)
+            return@useAndFlatMap ensureFormatSuccess(Optional.empty(), 1.0)
         }
 
     /**
@@ -46,7 +46,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<SpcArchive> =
         SpcArchive(context, source)
             .filter { spc -> spc.files.isNotEmpty() }
-            .buildFormatResult { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
+            .ensureFormatSuccess { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?
@@ -84,7 +84,7 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
             is AwbArchive -> data.files.forEach { entry -> customSpc[entry.id.toString()] = data.openSource(entry) }
             is CpkArchive -> data.files.forEach { entry ->
                 customSpc[entry.name, if (entry.isCompressed) SpcArchive.COMPRESSED_FLAG else 0, entry.fileSize.toLong(), entry.extractSize.toLong()] =
-                    data.openRawSource(context, entry)
+                    data.openRawSource(entry)
             }
             is PakArchive -> data.files.forEach { entry -> customSpc[entry.index.toString()] = data.openSource(entry) }
             is SpcArchive -> data.files.forEach { entry ->

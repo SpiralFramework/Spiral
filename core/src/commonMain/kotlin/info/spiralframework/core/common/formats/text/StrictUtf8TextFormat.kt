@@ -25,14 +25,14 @@ object StrictUtf8TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat
         source.openInputFlow().flatMap { flow ->
             val magic = flow.readInt24BE()
             if (magic == BOM) KorneaResult.success(Optional.empty<String>()) else KorneaResult.errorAsIllegalArgument(-1, "Invalid magic number $magic")
-        }.buildFormatResult(1.0)
+        }.ensureFormatSuccess(1.0)
 
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<String> =
         source.openInputFlow().flatMap { flow ->
             val magic = flow.readInt24BE()
             if (magic != BOM) return@flatMap KorneaResult.errorAsIllegalArgument(-1, "Invalid magic number $magic")
             KorneaResult.success(flow.readBytes().decodeToUTF8String().trimEnd('\u0000'))
-        }.buildFormatResult(1.0)
+        }.ensureFormatSuccess(1.0)
 
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = true
 

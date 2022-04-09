@@ -1,6 +1,6 @@
 package info.spiralframework.formats.common.scripting.lin
 
-data class UnknownLinEntry(override val opcode: Int, override val rawArguments: IntArray): LinEntry {
+public data class UnknownLinEntry(override val opcode: Int, override val rawArguments: IntArray): LinEntry {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is UnknownLinEntry) return false

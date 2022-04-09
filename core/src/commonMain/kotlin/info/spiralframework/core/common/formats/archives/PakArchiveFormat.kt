@@ -46,7 +46,7 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<PakArchive> =
         PakArchive(context, source)
             .filter { pak -> pak.files.isNotEmpty() }
-            .buildFormatResult { pak ->
+            .ensureFormatSuccess { pak ->
                 when {
                     readContext[ISpiralProperty.FileName]?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
                     pak.files.size == 1 -> 0.75

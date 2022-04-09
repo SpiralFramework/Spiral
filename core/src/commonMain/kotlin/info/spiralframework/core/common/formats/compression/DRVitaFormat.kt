@@ -11,7 +11,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 import info.spiralframework.formats.common.compression.decompressVita
 
 object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
@@ -20,7 +20,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC }.getOrElse(false))
-            return buildFormatResult(Optional.empty(), 1.0)
+            return ensureFormatSuccess(Optional.empty(), 1.0)
         return KorneaResult.empty()
     }
 
@@ -43,7 +43,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
                 @Suppress("DEPRECATION")
                 decompressVita(data).map { data ->
                     output.write(data)
-                    buildFormatResult(cache, 1.0)
+                    ensureFormatSuccess(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -52,7 +52,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
                 cache.close()
 
                 decompressVita(data).flatMap { decompressed ->
-                    buildFormatResult(BinaryDataSource(decompressed), 1.0)
+                    ensureFormatSuccess(BinaryDataSource(decompressed), 1.0)
                 }
             }
     }

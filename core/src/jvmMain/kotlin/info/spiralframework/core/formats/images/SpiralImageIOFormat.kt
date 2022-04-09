@@ -75,5 +75,5 @@ open class SpiralImageIOFormat(vararg val names: String) : SpiralImageFormat, Re
                     reader?.dispose()
                 }
             }
-            .buildFormatResult(1.0)
+            .ensureFormatSuccess(1.0)
 }

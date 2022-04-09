@@ -6,30 +6,28 @@ import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 
 //TODO: Fix terminology
-@ExperimentalUnsignedTypes
-class CustomWavAudio {
-    companion object {
-        val MAGIC_NUMBER_LE = 0x46464952
-        val TYPE_MAGIC_NUMBER_LE = 0x45564157
-        val FORMAT_CHUNK_MAGIC_NUMBER_LE = 0x20746D66
-        val DATA_CHUNK_MAGIC_NUMBER_LE = 0x61746164
+public class CustomWavAudio {
+    public companion object {
+        public val MAGIC_NUMBER_LE: Int = 0x46464952
+        public val TYPE_MAGIC_NUMBER_LE: Int = 0x45564157
+        public val FORMAT_CHUNK_MAGIC_NUMBER_LE: Int = 0x20746D66
+        public val DATA_CHUNK_MAGIC_NUMBER_LE: Int = 0x61746164
     }
 
-    var numberOfChannels: Int = 0
-    var sampleRate: Int = 44100
+    public var numberOfChannels: Int = 0
+    public var sampleRate: Int = 44100
 
     private val pcmSamples: BinaryOutputFlow = BinaryOutputFlow()
 
-    suspend fun addSamples(array: ShortArray) {
+    public suspend fun addSamples(array: ShortArray) {
         array.forEach { item -> pcmSamples.writeInt16LE(item) }
     }
 
-    suspend fun addSamples(list: List<Short>) {
+    public suspend fun addSamples(list: List<Short>) {
         list.forEach { item -> pcmSamples.writeInt16LE(item) }
     }
 
-    @ExperimentalUnsignedTypes
-    suspend fun write(out: OutputFlow) {
+    public suspend fun write(out: OutputFlow) {
         val sampleDataSize = pcmSamples.getDataSize().toInt()
         out.writeInt32LE(MAGIC_NUMBER_LE)                                //Marks the file as a riff file. Characters are each 1 byte long.
         out.writeInt32LE(sampleDataSize + 44)                       //Size of the overall file - 8 bytes, in bytes (32-bit integer). Typically, you'd fill this in after creation.
@@ -48,14 +46,13 @@ class CustomWavAudio {
     }
 }
 
-@ExperimentalUnsignedTypes
-inline fun wavAudio(block: CustomWavAudio.() -> Unit): CustomWavAudio {
+public inline fun buildWavAudio(block: CustomWavAudio.() -> Unit): CustomWavAudio {
     val wav = CustomWavAudio()
     wav.block()
     return wav
 }
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.writeWavAudio(block: CustomWavAudio.() -> Unit) {
+
+public suspend fun OutputFlow.writeWavAudio(block: CustomWavAudio.() -> Unit) {
     val wav = CustomWavAudio()
     wav.block()
     wav.write(this)

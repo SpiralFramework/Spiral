@@ -3,31 +3,31 @@ package info.spiralframework.osb.common
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-sealed class OSLUnion {
-    abstract class NumberType : OSLUnion() {
-        abstract val number: Number
-        inline operator fun <T> invoke(operation: Number.() -> T): T = number.operation()
+public sealed class OSLUnion {
+    public abstract class NumberType : OSLUnion() {
+        public abstract val number: Number
+        public inline operator fun <T> invoke(operation: Number.() -> T): T = number.operation()
     }
 
-    data class Int8NumberType(override val number: Number) : NumberType()
-    data class Int16LENumberType(override val number: Number) : NumberType()
-    data class Int16BENumberType(override val number: Number) : NumberType()
-    data class Int24LENumberType(override val number: Number) : NumberType()
-    data class Int24BENumberType(override val number: Number) : NumberType()
-    data class Int32LENumberType(override val number: Number) : NumberType()
-    data class Int32BENumberType(override val number: Number) : NumberType()
-    data class IntegerNumberType(override val number: Number) : NumberType()
-    data class DecimalNumberType(override val number: Number) : NumberType()
+    public data class Int8NumberType(override val number: Number) : NumberType()
+    public data class Int16LENumberType(override val number: Number) : NumberType()
+    public data class Int16BENumberType(override val number: Number) : NumberType()
+    public data class Int24LENumberType(override val number: Number) : NumberType()
+    public data class Int24BENumberType(override val number: Number) : NumberType()
+    public data class Int32LENumberType(override val number: Number) : NumberType()
+    public data class Int32BENumberType(override val number: Number) : NumberType()
+    public data class IntegerNumberType(override val number: Number) : NumberType()
+    public data class DecimalNumberType(override val number: Number) : NumberType()
 
-    abstract class StringType(open val string: String) : OSLUnion(), CharSequence by string {
-        inline operator fun <T> invoke(operation: String.() -> T): T = string.operation()
+    public abstract class StringType(public open val string: String) : OSLUnion(), CharSequence by string {
+        public inline operator fun <T> invoke(operation: String.() -> T): T = string.operation()
     }
 
-    data class RawStringType(override val string: String) : StringType(string)
-    data class LabelType(val label: String) : StringType(label)
-    data class ParameterType(val parameter: String) : StringType(parameter)
+    public data class RawStringType(override val string: String) : StringType(string)
+    public data class LabelType(val label: String) : StringType(label)
+    public data class ParameterType(val parameter: String) : StringType(parameter)
 
-    data class LongReferenceType(val longReference: ByteArray) : OSLUnion() {
+    public data class LongReferenceType(val longReference: ByteArray) : OSLUnion() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -44,8 +44,8 @@ sealed class OSLUnion {
         }
     }
 
-    data class VariableReferenceType(val variableName: String) : OSLUnion()
-    data class LongLabelType(val longReference: ByteArray) : OSLUnion() {
+    public data class VariableReferenceType(val variableName: String) : OSLUnion()
+    public data class LongLabelType(val longReference: ByteArray) : OSLUnion() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -62,7 +62,7 @@ sealed class OSLUnion {
         }
     }
 
-    data class LongParameterType(val longReference: ByteArray) : OSLUnion() {
+    public data class LongParameterType(val longReference: ByteArray) : OSLUnion() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -79,7 +79,7 @@ sealed class OSLUnion {
         }
     }
 
-    data class ActionType(val actionName: ByteArray) : OSLUnion() {
+    public data class ActionType(val actionName: ByteArray) : OSLUnion() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -96,8 +96,9 @@ sealed class OSLUnion {
         }
     }
 
-    data class FunctionParameterType(val parameterName: String?, val parameterValue: OSLUnion) : OSLUnion()
-    data class FunctionCallType(val functionName: String, val parameters: Array<FunctionParameterType>) : OSLUnion() {
+    public data class FunctionParameterType(val parameterName: String?, val parameterValue: OSLUnion) : OSLUnion()
+    public data class FunctionCallType(val functionName: String, val parameters: Array<FunctionParameterType>) :
+        OSLUnion() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
@@ -117,23 +118,24 @@ sealed class OSLUnion {
         }
     }
 
-    data class BooleanType(val boolean: Boolean) : OSLUnion() {
-        inline operator fun <T> invoke(operation: Boolean.() -> T): T = boolean.operation()
+    public data class BooleanType(val boolean: Boolean) : OSLUnion() {
+        public inline operator fun <T> invoke(operation: Boolean.() -> T): T = boolean.operation()
     }
 
-    object UndefinedType : OSLUnion()
-    object NullType : OSLUnion()
-    object NoOpType : OSLUnion()
+    public object UndefinedType : OSLUnion()
+    public object NullType : OSLUnion()
+    public object NoOpType : OSLUnion()
 
-    fun orElse(other: OSLUnion): OSLUnion =
-            if (this is NullType || this is UndefinedType || this is NoOpType) other
-            else this
+    public fun orElse(other: OSLUnion): OSLUnion =
+        if (this is NullType || this is UndefinedType || this is NoOpType) other
+        else this
 }
 
-inline fun runNoOp(block: () -> Unit): OSLUnion.NoOpType {
+public inline fun runNoOp(block: () -> Unit): OSLUnion.NoOpType {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
+
     block()
     return OSLUnion.NoOpType
 }

@@ -2,19 +2,19 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 
-inline class Dr1RunScriptEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(chapter: Int, scene: Int, room: Int): this(intArrayOf(chapter, scene, room))
+public class Dr1RunScriptEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(chapter: Int, scene: Int, room: Int) : this(intArrayOf(chapter, scene, room))
 
-    var chapter: Int
+    public var chapter: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    var scene: Int
+    public var scene: Int
         get() = get(1)
         set(value) = set(1, value)
 
-    var room: Int
+    public var room: Int
         get() = get(2)
         set(value) = set(2, value)
 

@@ -1,11 +1,7 @@
 package info.spiralframework.formats.common.archives
 
 import dev.brella.kornea.base.common.closeAfter
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.errors.common.korneaNotEnoughData
-import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.WindowedDataSource
 import dev.brella.kornea.io.common.flow.InputFlow
@@ -21,18 +17,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 
-@ExperimentalUnsignedTypes
-class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSource: DataSource<*>): SpiralArchive {
-    companion object {
+public class AwbArchive(public val unknown1: Int, public val files: Array<AwbFileEntry>, public val dataSource: DataSource<*>): SpiralArchive {
+    public companion object {
         /** 'AFS2' */
-        const val MAGIC_NUMBER_LE = 0x32534641
+        public const val MAGIC_NUMBER_LE: Int = 0x32534641
 
-        const val INVALID_MAGIC_NUMBER = 0x0000
+        public const val INVALID_MAGIC_NUMBER: Int = 0x0000
 
-        const val NOT_ENOUGH_DATA_KEY = "formats.awb.not_enough_data"
-        const val INVALID_MAGIC_KEY = "formats.awb.invalid_magic"
+        public const val NOT_ENOUGH_DATA_KEY: String = "formats.awb.not_enough_data"
+        public const val INVALID_MAGIC_KEY: String = "formats.awb.invalid_magic"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<AwbArchive> =
+        public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<AwbArchive> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
                     .getOrBreak { return@withFormats it.cast() }
@@ -76,8 +71,8 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
     override val fileCount: Int
         get() = files.size
 
-    suspend fun openSource(file: AwbFileEntry): DataSource<InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
-    suspend fun openFlow(file: AwbFileEntry): KorneaResult<InputFlow> =
+    public fun openSource(file: AwbFileEntry): DataSource<InputFlow> = WindowedDataSource(dataSource, file.offset.toULong(), file.size.toULong(), closeParent = false)
+    public suspend fun openFlow(file: AwbFileEntry): KorneaResult<InputFlow> =
             dataSource.openInputFlow().map { parent ->
                 WindowedInputFlow(parent, file.offset.toULong(), file.size.toULong())
             }
@@ -86,8 +81,10 @@ class AwbArchive(val unknown1: Int, val files: Array<AwbFileEntry>, val dataSour
         files.asFlow().map { file -> SpiralArchiveSubfile("${file.id}_awb.dat", openSource(file)) }
 }
 
+@Suppress("FunctionName")
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.AwbArchive(dataSource: DataSource<*>) = AwbArchive(this, dataSource)
+public suspend fun SpiralContext.AwbArchive(dataSource: DataSource<*>): KorneaResult<AwbArchive> = AwbArchive(this, dataSource)
 
+@Suppress("FunctionName")
 @ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeAwbArchive(dataSource: DataSource<*>) = AwbArchive(this, dataSource).get()
+public suspend fun SpiralContext.UnsafeAwbArchive(dataSource: DataSource<*>): AwbArchive = AwbArchive(this, dataSource).getOrThrow()

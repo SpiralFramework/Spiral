@@ -37,5 +37,5 @@ object SrdArchiveFormat: ReadableSpiralFormat<SrdArchive> {
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<SrdArchive> =
             SrdArchive(context, source)
                 .filter { srd -> srd.entries.isNotEmpty() }
-                .buildFormatResult { srd -> if (srd.entries.size == 1) 0.4 else 0.5 }
+                .ensureFormatSuccess { srd -> if (srd.entries.size == 1) 0.4 else 0.5 }
 }

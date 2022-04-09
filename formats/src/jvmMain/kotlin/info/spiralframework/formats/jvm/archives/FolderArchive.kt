@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import java.io.File
 
-class FolderArchive(val file: File): SpiralArchive {
+public class FolderArchive(public val file: File): SpiralArchive {
     override val fileCount: Int by lazy { file.walkTopDown().count(File::isFile) }
 
     override suspend fun SpiralContext.getSubfiles(): Flow<SpiralArchiveSubfile<*>> =

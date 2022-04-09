@@ -23,5 +23,5 @@ object AwbArchiveFormat : ReadableSpiralFormat<AwbArchive> {
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<AwbArchive> =
         AwbArchive(context, source)
             .filter { awb -> awb.files.isNotEmpty() }
-            .buildFormatResult { awb -> if (awb.files.size == 1) 0.75 else 1.0 }
+            .ensureFormatSuccess { awb -> if (awb.files.size == 1) 0.75 else 1.0 }
 }

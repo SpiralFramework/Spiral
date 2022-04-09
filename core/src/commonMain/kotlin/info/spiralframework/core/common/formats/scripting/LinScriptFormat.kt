@@ -39,7 +39,7 @@ object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
         //For the purposes of this, we can ignore flag check fuckery
         return LinScript(context, (game as? DrGame.LinScriptable) ?: DrGame.LinScriptable.Unknown, source)
             .map { Optional<LinScript>(it) }
-            .buildFormatResult { it.map { lin -> if (lin.scriptData.isEmpty()) 0.45 else 0.85 }.getOrElse(0.0) }
+            .ensureFormatSuccess { it.map { lin -> if (lin.scriptData.isEmpty()) 0.45 else 0.85 }.getOrElse(0.0) }
     }
 
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<LinScript> {
@@ -50,7 +50,7 @@ object LinScriptFormat : ReadableSpiralFormat<LinScript>, WritableSpiralFormat {
         }
 
         return LinScript(context, game, source)
-            .buildFormatResult { lin -> if (lin.scriptData.isEmpty()) 0.6 else 0.9 }
+            .ensureFormatSuccess { lin -> if (lin.scriptData.isEmpty()) 0.6 else 0.9 }
     }
 
     override fun requiredPropertiesForWrite(context: SpiralContext, writeContext: SpiralProperties?, data: Any): List<ISpiralProperty.PropertyKey<*>> = REQUIRED_PROPERTIES

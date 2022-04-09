@@ -12,7 +12,7 @@ import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.FormatReadContext
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 import info.spiralframework.formats.common.archives.SpcArchive
 import info.spiralframework.formats.common.archives.SpcFileEntry
 import info.spiralframework.formats.common.compression.SPC_COMPRESSION_MAGIC_NUMBER
@@ -33,7 +33,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readInt32LE() == SPC_COMPRESSION_MAGIC_NUMBER }.getOrElse(false) || (readContext as? SpcEntryFormatReadContextdata)?.entry?.compressionFlag == SpcArchive.COMPRESSED_FLAG)
-            return buildFormatResult(Optional.empty(), 1.0)
+            return ensureFormatSuccess(Optional.empty(), 1.0)
         return KorneaResult.empty()
     }
 
@@ -68,7 +68,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
                 @Suppress("DEPRECATION")
                 decompressSpcData(data).map { data ->
                     output.write(data)
-                    buildFormatResult(cache, 1.0)
+                    ensureFormatSuccess(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -77,7 +77,7 @@ object SpcCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
                 cache.close()
 
                 decompressSpcData(data).flatMap { decompressed ->
-                    buildFormatResult(BinaryDataSource(decompressed), 1.0)
+                    ensureFormatSuccess(BinaryDataSource(decompressed), 1.0)
                 }
             }
     }

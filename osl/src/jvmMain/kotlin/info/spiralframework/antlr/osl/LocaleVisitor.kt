@@ -1,13 +1,12 @@
-package info.spiralframework.osl
+package info.spiralframework.antlr.osl
 
-import info.spiralframework.antlr.osl.OSLLocaleParser
-import info.spiralframework.antlr.osl.OSLLocaleParserBaseVisitor
 import info.spiralframework.base.common.locale.CommonLocale
 import info.spiralframework.base.common.locale.LocaleBundle
+import info.spiralframework.osl.OSLLocaleBundle
 import org.antlr.v4.runtime.tree.TerminalNode
 import kotlin.reflect.KClass
 
-class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
+public class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
     private val localeMap: MutableMap<String, String> = HashMap()
 
     override fun visitLocaleLine(ctx: OSLLocaleParser.LocaleLineContext) {
@@ -35,14 +34,18 @@ class LocaleVisitor : OSLLocaleParserBaseVisitor<Unit>() {
         }
 
         val processed = value
-                .toCharArray()
-                .map { c -> "\\u${c.toInt().toString(16).padStart(4, '0')}" }
-                .joinToString("")
+            .toCharArray()
+            .joinToString("") { c -> "\\u${c.code.toString(16).padStart(4, '0')}" }
 
         localeMap[key] = processed
     }
 
-    fun createLocaleBundle(bundleName: String, locale: CommonLocale, parent: LocaleBundle?, from: KClass<*>): LocaleBundle {
+    public fun createLocaleBundle(
+        bundleName: String,
+        locale: CommonLocale,
+        parent: LocaleBundle?,
+        from: KClass<*>
+    ): LocaleBundle {
         val bundleMap: MutableMap<String, String> = HashMap()
         bundleMap.putAll(parent ?: emptyMap())
         bundleMap.putAll(this.localeMap)

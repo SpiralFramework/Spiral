@@ -29,7 +29,7 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<CpkArchive> =
         CpkArchive(context, source)
             .filter { cpk -> cpk.files.isNotEmpty() }
-            .buildFormatResult { cpk -> if (cpk.files.size == 1) 0.75 else 1.0 }
+            .ensureFormatSuccess { cpk -> if (cpk.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?

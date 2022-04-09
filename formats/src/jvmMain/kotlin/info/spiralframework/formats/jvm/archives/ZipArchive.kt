@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-class ZipArchive(val zipFile: ZipFile) : SpiralArchive {
+public class ZipArchive(public val zipFile: ZipFile) : SpiralArchive {
     override val fileCount: Int
         get() = zipFile.entries().asSequence().count { entry -> !entry.isDirectory }
 

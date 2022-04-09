@@ -12,20 +12,20 @@ import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.text.removeEscapes
 import info.spiralframework.formats.common.games.DRv3
 
-class CustomWordScript {
+public class CustomWordScript {
     private val _labels: MutableList<String> = ArrayList()
     private val _parameters: MutableList<String> = ArrayList()
     private val _strings: MutableList<String> = ArrayList()
     private val _scriptData: MutableList<WrdEntry> = ArrayList()
 
-    val labels: List<String> get() = _labels
-    val parameters: List<String> get() = _parameters
-    val strings: List<String> get() = _strings
-    val scriptData: List<WrdEntry> = ArrayList()
+    public val labels: List<String> get() = _labels
+    public val parameters: List<String> get() = _parameters
+    public val strings: List<String> get() = _strings
+    public val scriptData: List<WrdEntry> = ArrayList()
 
-    var writeMagicNumber: Boolean = false
-    var rewriteSubLabels: Boolean = true
-    var externalStringCount: Int = 0
+    public var writeMagicNumber: Boolean = false
+    public var rewriteSubLabels: Boolean = true
+    public var externalStringCount: Int = 0
 
     private fun add(base: String, list: MutableList<String>): Int {
         val str = base.removeEscapes()
@@ -34,7 +34,7 @@ class CustomWordScript {
         return list.indexOf(str)
     }
 
-    fun addEntry(entry: WrdEntry) {
+    public fun addEntry(entry: WrdEntry) {
         entry.arguments.forEach { value ->
             when (value) {
                 is WordScriptValue.Label -> addLabel(value.label)
@@ -46,13 +46,11 @@ class CustomWordScript {
         _scriptData.add(entry)
     }
 
-    fun addText(text: String): Int = add(text, _strings)
-    fun addLabel(label: String): Int = add(label, _labels)
-    fun addParameter(parameter: String): Int = add(parameter, _parameters)
+    public fun addText(text: String): Int = add(text, _strings)
+    public fun addLabel(label: String): Int = add(label, _labels)
+    public fun addParameter(parameter: String): Int = add(parameter, _parameters)
 
-    @ExperimentalStdlibApi
-    @ExperimentalUnsignedTypes
-    suspend fun SpiralContext.compile(output: OutputFlow) {
+    public suspend fun SpiralContext.compile(output: OutputFlow) {
         if (writeMagicNumber) output.writeInt32LE(WordScript.MAGIC_NUMBER_LE)
 
         val entryData = BinaryOutputFlow()
@@ -173,19 +171,15 @@ class CustomWordScript {
     }
 }
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun CustomWordScript.compile(output: OutputFlow, context: SpiralContext) = context.compile(output)
+public suspend fun CustomWordScript.compile(output: OutputFlow, context: SpiralContext): Unit = context.compile(output)
 
-inline fun wordScript(block: CustomWordScript.() -> Unit): CustomWordScript {
+public inline fun wordScript(block: CustomWordScript.() -> Unit): CustomWordScript {
     val script = CustomWordScript()
     script.block()
     return script
 }
 
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun OutputFlow.compileWordScript(context: SpiralContext, block: CustomWordScript.() -> Unit) {
+public suspend fun OutputFlow.compileWordScript(context: SpiralContext, block: CustomWordScript.() -> Unit) {
     val script = CustomWordScript()
     script.block()
     return script.compile(this, context)

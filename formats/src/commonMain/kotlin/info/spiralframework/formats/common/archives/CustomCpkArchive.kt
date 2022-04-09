@@ -1,84 +1,79 @@
 package info.spiralframework.formats.common.archives
 
 import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.io.common.useInputFlow
 import dev.brella.kornea.toolkit.common.sumByLong
 import info.spiralframework.base.binding.now
 import info.spiralframework.base.common.*
 import info.spiralframework.formats.common.withFormats
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableMap
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.distinct
-import kotlin.collections.forEach
-import kotlin.collections.getOrNull
-import kotlin.collections.getValue
-import kotlin.collections.joinToString
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapOf
-import kotlin.collections.mapValues
 import kotlin.collections.set
-import kotlin.collections.sumBy
-import kotlin.collections.toList
-import kotlin.collections.toMutableList
 
 @ExperimentalUnsignedTypes
-open class CustomCpkArchive {
-    companion object {
-        val STORAGE_DATA = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_DATA
-        val STORAGE_STRING = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_STRING
-        val STORAGE_LONG = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_8BYTE
-        val STORAGE_INT = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_4BYTE
-        val STORAGE_SHORT = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_2BYTE
+public open class CustomCpkArchive {
+    public companion object {
+        public const val STORAGE_DATA: Int = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_DATA
+        public const val STORAGE_STRING: Int = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_STRING
+        public const val STORAGE_LONG: Int = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_8BYTE
+        public const val STORAGE_INT: Int = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_4BYTE
+        public const val STORAGE_SHORT: Int = UtfTableInfo.COLUMN_STORAGE_PERROW or UtfTableInfo.COLUMN_TYPE_2BYTE
 
-        val ZERO_STORAGE_STRING = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_STRING
-        val ZERO_STORAGE_LONG = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_8BYTE
-        val ZERO_STORAGE_INT = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_4BYTE
-        val ZERO_STORAGE_SHORT = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_2BYTE
+        public const val ZERO_STORAGE_STRING: Int = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_STRING
+        public const val ZERO_STORAGE_LONG: Int = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_8BYTE
+        public const val ZERO_STORAGE_INT: Int = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_4BYTE
+        public const val ZERO_STORAGE_SHORT: Int = UtfTableInfo.COLUMN_STORAGE_ZERO or UtfTableInfo.COLUMN_TYPE_2BYTE
 
-        val TOC_MAGIC_NUMBER_LE = 0x20434f54
-        val ETOC_MAGIC_NUMBER_LE = 0x434f5445
+        public const val TOC_MAGIC_NUMBER_LE: Int = 0x20434f54
+        public const val ETOC_MAGIC_NUMBER_LE: Int = 0x434f5445
 
-        fun rowSizeOf(schema: Array<out UtfColumnSchema>): Int = schema.sumBy { column ->
-            if (column.type and UtfTableInfo.COLUMN_STORAGE_MASK == UtfTableInfo.COLUMN_STORAGE_ZERO)
-                0
-            else
-                when (column.type and UtfTableInfo.COLUMN_TYPE_MASK) {
-                    UtfTableInfo.COLUMN_TYPE_STRING -> 4
-                    UtfTableInfo.COLUMN_TYPE_8BYTE -> 8
-                    UtfTableInfo.COLUMN_TYPE_DATA -> 8
-                    UtfTableInfo.COLUMN_TYPE_FLOAT -> 4
-                    UtfTableInfo.COLUMN_TYPE_4BYTE -> 4
-                    UtfTableInfo.COLUMN_TYPE_4BYTE2 -> 4
-                    UtfTableInfo.COLUMN_TYPE_2BYTE -> 2
-                    UtfTableInfo.COLUMN_TYPE_2BYTE2 -> 2
-                    UtfTableInfo.COLUMN_TYPE_1BYTE -> 1
-                    UtfTableInfo.COLUMN_TYPE_1BYTE2 -> 1
-                    else -> 0
-                }
-        }
+        public const val ZERO_STORAGE_SIZE: Int = 0
+        public const val STRING_STORAGE_SIZE: Int = 4
+        public const val LONG_STORAGE_SIZE: Int = 8
+        public const val DATA_STORAGE_SIZE: Int = 8
+        public const val FLOAT_STORAGE_SIZE: Int = 4
+        public const val INT_STORAGE_SIZE: Int = 4
+        public const val SHORT_STORAGE_SIZE: Int = 2
+        public const val BYTE_STORAGE_SIZE: Int = 1
+
+        public fun rowSizeOf(schema: Array<out UtfColumnSchema>): Int =
+            schema.sumOf { column ->
+                if (column.type and UtfTableInfo.COLUMN_STORAGE_MASK == UtfTableInfo.COLUMN_STORAGE_ZERO)
+                    ZERO_STORAGE_SIZE
+                else
+                    when (column.type and UtfTableInfo.COLUMN_TYPE_MASK) {
+                        UtfTableInfo.COLUMN_TYPE_STRING -> STRING_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_8BYTE -> LONG_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_DATA -> DATA_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_FLOAT -> FLOAT_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_4BYTE -> INT_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_4BYTE2 -> INT_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_2BYTE -> SHORT_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_2BYTE2 -> SHORT_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_1BYTE -> BYTE_STORAGE_SIZE
+                        UtfTableInfo.COLUMN_TYPE_1BYTE2 -> BYTE_STORAGE_SIZE
+                        else -> ZERO_STORAGE_SIZE
+                    }
+            }
     }
 
-    val _files: MutableMap<String, DataSource<*>> = LinkedHashMap()
-    val files: List<Map.Entry<String, DataSource<*>>>
+    public val _files: MutableMap<String, DataSource<*>> = LinkedHashMap()
+    public val files: List<Map.Entry<String, DataSource<*>>>
         get() = _files.entries.toList()
 
-    var writerVersion = 1
-    var writerRevision = 12
-    var writerTextVersion: String? = null
+    public var writerVersion: Int = 1
+    public var writerRevision: Int = 12
+    public var writerTextVersion: String? = null
 
-    operator fun set(name: String, source: DataSource<*>) {
+    public operator fun set(name: String, source: DataSource<*>) {
         _files[name] = source
     }
 
     @ExperimentalStdlibApi
-    suspend fun SpiralContext.compile(output: OutputFlow) {
+    public suspend fun SpiralContext.compile(output: OutputFlow) {
         withFormats(this) {
             warn("formats.custom_cpk.header_warning")
 
@@ -87,49 +82,49 @@ open class CustomCpkArchive {
 
             val header = utfTableSchema {
                 schema(
-                        UtfColumnSchema("UpdateDateTime", STORAGE_LONG),
-                        UtfColumnSchema("FileSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("ContentOffset", STORAGE_LONG),
-                        UtfColumnSchema("ContentSize", STORAGE_LONG),
-                        UtfColumnSchema("TocOffset", STORAGE_LONG),
-                        UtfColumnSchema("TocSize", STORAGE_LONG),
-                        UtfColumnSchema("TocCrc", ZERO_STORAGE_INT),
-                        UtfColumnSchema("HtocOffset", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("HtocSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("EtocOffset", STORAGE_LONG),
-                        UtfColumnSchema("EtocSize", STORAGE_LONG),
-                        UtfColumnSchema("ItocOffset", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("ItocSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("GtocOffset", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("GtocSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("GtocCrc", ZERO_STORAGE_INT),
-                        UtfColumnSchema("HgtocOffset", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("HgtocSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("EnabledPackedSize", STORAGE_LONG),
-                        UtfColumnSchema("EnabledDataSize", STORAGE_LONG),
-                        UtfColumnSchema("TotalDataSize", ZERO_STORAGE_LONG),
-                        UtfColumnSchema("Tocs", ZERO_STORAGE_INT),
-                        UtfColumnSchema("Files", STORAGE_INT),
-                        UtfColumnSchema("Groups", STORAGE_INT),
-                        UtfColumnSchema("Attrs", STORAGE_INT),
-                        UtfColumnSchema("TotalFiles", ZERO_STORAGE_INT),
-                        UtfColumnSchema("Directories", ZERO_STORAGE_INT),
-                        UtfColumnSchema("Updates", ZERO_STORAGE_INT),
-                        UtfColumnSchema("Version", STORAGE_SHORT),
-                        UtfColumnSchema("Revision", STORAGE_SHORT),
-                        UtfColumnSchema("Align", STORAGE_SHORT),
-                        UtfColumnSchema("Sorted", STORAGE_SHORT),
-                        UtfColumnSchema("EnableFileName", STORAGE_SHORT),
-                        UtfColumnSchema("EID", ZERO_STORAGE_SHORT),
-                        UtfColumnSchema("CpkMode", STORAGE_INT),
-                        UtfColumnSchema("Tvers", STORAGE_STRING),
-                        UtfColumnSchema("Comment", ZERO_STORAGE_STRING),
-                        UtfColumnSchema("Codec", STORAGE_INT),
-                        UtfColumnSchema("DpkItoc", STORAGE_INT),
-                        UtfColumnSchema("EnableTocCrc", STORAGE_SHORT),
-                        UtfColumnSchema("EnableFileCrc", STORAGE_SHORT),
-                        UtfColumnSchema("CrcMode", STORAGE_INT),
-                        UtfColumnSchema("CrcTable", STORAGE_DATA)
+                    UtfColumnSchema("UpdateDateTime", STORAGE_LONG),
+                    UtfColumnSchema("FileSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("ContentOffset", STORAGE_LONG),
+                    UtfColumnSchema("ContentSize", STORAGE_LONG),
+                    UtfColumnSchema("TocOffset", STORAGE_LONG),
+                    UtfColumnSchema("TocSize", STORAGE_LONG),
+                    UtfColumnSchema("TocCrc", ZERO_STORAGE_INT),
+                    UtfColumnSchema("HtocOffset", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("HtocSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("EtocOffset", STORAGE_LONG),
+                    UtfColumnSchema("EtocSize", STORAGE_LONG),
+                    UtfColumnSchema("ItocOffset", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("ItocSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("GtocOffset", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("GtocSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("GtocCrc", ZERO_STORAGE_INT),
+                    UtfColumnSchema("HgtocOffset", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("HgtocSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("EnabledPackedSize", STORAGE_LONG),
+                    UtfColumnSchema("EnabledDataSize", STORAGE_LONG),
+                    UtfColumnSchema("TotalDataSize", ZERO_STORAGE_LONG),
+                    UtfColumnSchema("Tocs", ZERO_STORAGE_INT),
+                    UtfColumnSchema("Files", STORAGE_INT),
+                    UtfColumnSchema("Groups", STORAGE_INT),
+                    UtfColumnSchema("Attrs", STORAGE_INT),
+                    UtfColumnSchema("TotalFiles", ZERO_STORAGE_INT),
+                    UtfColumnSchema("Directories", ZERO_STORAGE_INT),
+                    UtfColumnSchema("Updates", ZERO_STORAGE_INT),
+                    UtfColumnSchema("Version", STORAGE_SHORT),
+                    UtfColumnSchema("Revision", STORAGE_SHORT),
+                    UtfColumnSchema("Align", STORAGE_SHORT),
+                    UtfColumnSchema("Sorted", STORAGE_SHORT),
+                    UtfColumnSchema("EnableFileName", STORAGE_SHORT),
+                    UtfColumnSchema("EID", ZERO_STORAGE_SHORT),
+                    UtfColumnSchema("CpkMode", STORAGE_INT),
+                    UtfColumnSchema("Tvers", STORAGE_STRING),
+                    UtfColumnSchema("Comment", ZERO_STORAGE_STRING),
+                    UtfColumnSchema("Codec", STORAGE_INT),
+                    UtfColumnSchema("DpkItoc", STORAGE_INT),
+                    UtfColumnSchema("EnableTocCrc", STORAGE_SHORT),
+                    UtfColumnSchema("EnableFileCrc", STORAGE_SHORT),
+                    UtfColumnSchema("CrcMode", STORAGE_INT),
+                    UtfColumnSchema("CrcTable", STORAGE_DATA)
                 )
 
                 stringTable = buildString {
@@ -160,14 +155,14 @@ open class CustomCpkArchive {
 
             val toc = utfTableSchema {
                 schema(
-                        UtfColumnSchema("DirName", STORAGE_STRING),
-                        UtfColumnSchema("FileName", STORAGE_STRING),
-                        UtfColumnSchema("FileSize", STORAGE_INT),
-                        UtfColumnSchema("ExtractSize", STORAGE_INT),
-                        UtfColumnSchema("FileOffset", STORAGE_LONG),
-                        UtfColumnSchema("ID", STORAGE_INT),
-                        UtfColumnSchema("Info", ZERO_STORAGE_INT),
-                        UtfColumnSchema("UserString", STORAGE_STRING)
+                    UtfColumnSchema("DirName", STORAGE_STRING),
+                    UtfColumnSchema("FileName", STORAGE_STRING),
+                    UtfColumnSchema("FileSize", STORAGE_INT),
+                    UtfColumnSchema("ExtractSize", STORAGE_INT),
+                    UtfColumnSchema("FileOffset", STORAGE_LONG),
+                    UtfColumnSchema("ID", STORAGE_INT),
+                    UtfColumnSchema("Info", ZERO_STORAGE_INT),
+                    UtfColumnSchema("UserString", STORAGE_STRING)
                 )
 
                 stringTable = buildString {
@@ -180,10 +175,14 @@ open class CustomCpkArchive {
                     append(schema.joinToString("$NULL_TERMINATOR", transform = UtfColumnSchema::name))
                     append(NULL_TERMINATOR)
 
-                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.distinct().joinToString("$NULL_TERMINATOR"))
+                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }
+                        .distinct().joinToString("$NULL_TERMINATOR"))
                     append(NULL_TERMINATOR)
 
-                    append(filenames.map { name -> name.substringAfterLast('/') }.distinct().joinToString("$NULL_TERMINATOR"))
+                    append(
+                        filenames.map { name -> name.substringAfterLast('/') }.distinct()
+                            .joinToString("$NULL_TERMINATOR")
+                    )
                     append(NULL_TERMINATOR)
                 }
 
@@ -201,8 +200,8 @@ open class CustomCpkArchive {
 
             val etoc = utfTableSchema {
                 schema(
-                        UtfColumnSchema("UpdateDateTime", STORAGE_LONG),
-                        UtfColumnSchema("LocalDir", STORAGE_STRING)
+                    UtfColumnSchema("UpdateDateTime", STORAGE_LONG),
+                    UtfColumnSchema("LocalDir", STORAGE_STRING)
                 )
 
                 stringTable = buildString {
@@ -215,7 +214,8 @@ open class CustomCpkArchive {
                     append(schema.joinToString("$NULL_TERMINATOR", transform = UtfColumnSchema::name))
                     append(NULL_TERMINATOR)
 
-                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.distinct().joinToString("$NULL_TERMINATOR"))
+                    append(filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }
+                        .distinct().joinToString("$NULL_TERMINATOR"))
                     append(NULL_TERMINATOR)
                 }
 
@@ -245,7 +245,8 @@ open class CustomCpkArchive {
 
             //Write Table
             writeTable(output, header)
-            writeTableDataSingleRow(output, header, mapOf(
+            writeTableDataSingleRow(
+                output, header, mapOf(
                     "UpdateDateTime" to 1, //??
                     "ContentOffset" to (2048u + (tocAlignedSize + 16u).alignedTo(2048)).toInt(),
                     "ContentSize" to totalSize.alignedTo(2048),
@@ -271,7 +272,8 @@ open class CustomCpkArchive {
                     "EnableFileCrc" to 0,
                     "CrcMode" to 0,
                     "CrcTable" to Pair(header.dataOffset.toInt(), 0)
-            ))
+                )
+            )
 
             //Write String Table
             output.write(header.stringTable.encodeToByteArray())
@@ -296,7 +298,8 @@ open class CustomCpkArchive {
             output.writeInt32LE(0x00)
 
             writeTable(output, toc)
-            writeTableData(output, toc, mapOf(
+            writeTableData(
+                output, toc, mapOf(
                     "DirName" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") },
                     "FileName" to filenames.map { name -> name.substringAfterLast('/') },
                     "FileSize" to filenames.map { name -> _files.getValue(name).dataSize!!.toLong() },
@@ -311,7 +314,8 @@ open class CustomCpkArchive {
                     }.toList(),
                     "ID" to IntArray(filenames.size) { index -> 6 + index }.toList(),
                     "UserString" to Array(filenames.size) { "" }.toList()
-            ))
+                )
+            )
 
             //Write String Table
             output.write(toc.stringTable.encodeToByteArray())
@@ -324,7 +328,8 @@ open class CustomCpkArchive {
             //Write Data
             filenames.forEach { name ->
                 val source = _files.getValue(name)
-                val copied = source.useInputFlow { output.copyFrom(it) }.getOrBreak { return@forEach debug("Skipping {0}", name) }
+                val copied = source.useInputFlow { output.copyFrom(it) }
+                    .getOrBreak { return@forEach debug("Skipping {0}", name) }
                 if (copied != source.dataSize?.toLong())
                     warn("CPK: Was told to copy {0} bytes; copied {1} instead", source.dataSize.toString(), copied)
                 else
@@ -346,8 +351,9 @@ open class CustomCpkArchive {
 
             writeTable(output, etoc)
             writeTableData(output, etoc, mapOf(
-                    "UpdateDateTime" to LongArray(filenames.size) { etocTime }.toMutableList().apply { add(0L) },
-                    "LocalDir" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }.toMutableList().apply { add("$NULL_TERMINATOR$NULL_TERMINATOR") }
+                "UpdateDateTime" to LongArray(filenames.size) { etocTime }.toMutableList().apply { add(0L) },
+                "LocalDir" to filenames.map { name -> name.substringBeforeLast('/', missingDelimiterValue = "") }
+                    .toMutableList().apply { add("$NULL_TERMINATOR$NULL_TERMINATOR") }
             ))
 
             //Write String Table
@@ -357,8 +363,10 @@ open class CustomCpkArchive {
     }
 
     //TODO: Support data writing maybe
-    suspend fun SpiralContext.writeTable(output: OutputFlow, init: UtfTableSchemaBuilder.() -> Unit) = writeTable(output, utfTableSchema(init))
-    suspend fun SpiralContext.writeTable(output: OutputFlow, table: UtfTableSchema) {
+    public suspend fun writeTable(output: OutputFlow, init: UtfTableSchemaBuilder.() -> Unit): Unit =
+        writeTable(output, utfTableSchema(init))
+
+    public suspend fun writeTable(output: OutputFlow, table: UtfTableSchema) {
         //Size = 32 + stringTable.length
         output.writeInt32LE(UtfTableInfo.UTF_MAGIC_NUMBER_LE)
 
@@ -382,8 +390,17 @@ open class CustomCpkArchive {
         }
     }
 
-    suspend fun SpiralContext.writeTableDataSingleRow(output: OutputFlow, table: UtfTableSchema, dataMap: Map<String, Any?>) = writeTableData(output, table, dataMap.mapValues { (_, value) -> listOf(value) })
-    suspend fun SpiralContext.writeTableData(output: OutputFlow, table: UtfTableSchema, dataMap: Map<String, List<Any?>>) {
+    public suspend fun SpiralContext.writeTableDataSingleRow(
+        output: OutputFlow,
+        table: UtfTableSchema,
+        dataMap: Map<String, Any?>
+    ): Unit = writeTableData(output, table, dataMap.mapValues { (_, value) -> listOf(value) })
+
+    public suspend fun SpiralContext.writeTableData(
+        output: OutputFlow,
+        table: UtfTableSchema,
+        dataMap: Map<String, List<Any?>>
+    ) {
         val stringTableRange = table.stringTable.indices
         for (i in 0 until table.rowCount.toInt()) {
             table.schema.forEach { schema ->
@@ -395,7 +412,7 @@ open class CustomCpkArchive {
                 when (schema.type and UtfTableInfo.COLUMN_TYPE_MASK) {
                     UtfTableInfo.COLUMN_TYPE_STRING -> {
                         val offset = (data?.toString()?.let { str -> table.stringTable.indexOf(str + NULL_TERMINATOR) }
-                                ?: (table.stringTable.lastIndexOf(0x00.toChar()) - 1)).coerceIn(stringTableRange)
+                            ?: (table.stringTable.lastIndexOf(0x00.toChar()) - 1)).coerceIn(stringTableRange)
                         output.writeInt32BE(offset)
                     }
                     UtfTableInfo.COLUMN_TYPE_DATA -> {
@@ -416,7 +433,12 @@ open class CustomCpkArchive {
                     UtfTableInfo.COLUMN_TYPE_FLOAT -> output.writeFloatBE((data as? Number ?: 0).toFloat())
                     UtfTableInfo.COLUMN_TYPE_1BYTE2 -> output.write((data as? Number ?: 0).toInt() and 0xFF)
                     UtfTableInfo.COLUMN_TYPE_1BYTE -> output.write((data as? Number ?: 0).toInt() and 0xFF)
-                    else -> throw IllegalArgumentException(localise("formats.custom_cpk.unknown_column_constant", schema.type))
+                    else -> throw IllegalArgumentException(
+                        localise(
+                            "formats.custom_cpk.unknown_column_constant",
+                            schema.type
+                        )
+                    )
                 }
             }
         }
@@ -425,16 +447,19 @@ open class CustomCpkArchive {
 
 @ExperimentalUnsignedTypes
 @ExperimentalStdlibApi
-suspend fun CustomCpkArchive.compile(context: SpiralContext, output: OutputFlow) = context.compile(output)
+public suspend fun CustomCpkArchive.compile(context: SpiralContext, output: OutputFlow): Unit =
+    context.compile(output)
+
 @ExperimentalUnsignedTypes
-inline fun cpkArchive(block: CustomCpkArchive.() -> Unit): CustomCpkArchive {
+public inline fun cpkArchive(block: CustomCpkArchive.() -> Unit): CustomCpkArchive {
     val custom = CustomCpkArchive()
     custom.block()
     return custom
 }
+
 @ExperimentalStdlibApi
 @ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileCpkArchive(context: SpiralContext, block: CustomCpkArchive.() -> Unit) {
+public suspend fun OutputFlow.compileCpkArchive(context: SpiralContext, block: CustomCpkArchive.() -> Unit) {
     val custom = CustomCpkArchive()
     custom.block()
     custom.compile(context, this)

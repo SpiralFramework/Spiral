@@ -29,7 +29,7 @@ object WadArchiveFormat : ReadableSpiralFormat<WadArchive>, WritableSpiralFormat
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<WadArchive> =
         WadArchive(context, source)
             .filter { wad -> wad.files.isNotEmpty() }
-            .buildFormatResult { wad -> if (wad.files.size == 1) 0.75 else 1.0 }
+            .ensureFormatSuccess { wad -> if (wad.files.size == 1) 0.75 else 1.0 }
 
     /**
      * Does this format support writing [data]?

@@ -5,59 +5,59 @@ import dev.brella.kornea.errors.common.cast
 import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
-import dev.brella.kornea.io.common.flow.extensions.readInt16LE
-import dev.brella.kornea.io.common.flow.extensions.readInt32BE
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.extensions.readInt64BE
-import dev.brella.kornea.io.common.flow.extensions.readInt64LE
+import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.io.common.useInputFlowForResult
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 
-@ExperimentalUnsignedTypes
-sealed class PEOptionalHeader {
-    data class DataDirectory(val virtualAddress: Int, val size: Int)
-    companion object {
-        const val IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10B
-        const val IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20B
-        const val IMAGE_ROM_OPTIONAL_HDR_MAGIC = 0x107
+public sealed class PEOptionalHeader {
+    public data class DataDirectory(val virtualAddress: Int, val size: Int)
 
-        const val IMAGE_SUBSYSTEM_UNKNOWN = 0
-        const val IMAGE_SUBSYSTEM_NATIVE = 1
-        const val IMAGE_SUBSYSTEM_WINDOWS_GUI = 2
-        const val IMAGE_SUBSYSTEM_WINDOWS_CUI = 3
-        const val IMAGE_SUBSYSTEM_OS2_CUI = 5
-        const val IMAGE_SUBSYSTEM_POSIX_CUI = 7
-        const val IMAGE_SUBSYSTEM_WINDOWS_CE_GUI = 9
-        const val IMAGE_SUBSYSTEM_EFI_APPLICATION = 10
-        const val IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER = 11
-        const val IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER = 12
-        const val IMAGE_SUBSYSTEM_EFI_ROM = 13
-        const val IMAGE_SUBSYSTEM_XBOX = 14
-        const val IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16
+    public companion object {
+        public const val IMAGE_NT_OPTIONAL_HDR32_MAGIC: Int = 0x10B
+        public const val IMAGE_NT_OPTIONAL_HDR64_MAGIC: Int = 0x20B
+        public const val IMAGE_ROM_OPTIONAL_HDR_MAGIC: Int = 0x107
 
-        const val IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040
-        const val IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY = 0x0080
-        const val IMAGE_DLLCHARACTERISTICS_NX_COMPAT = 0x0100
-        const val IMAGE_DLLCHARACTERISTICS_NO_ISOLATION = 0x0200
-        const val IMAGE_DLLCHARACTERISTICS_NO_SEH = 0x0400
-        const val IMAGE_DLLCHARACTERISTICS_NO_BIND = 0x0800
-        const val IMAGE_DLLCHARACTERISTICS_APPCONTAINER = 0x1000
-        const val IMAGE_DLLCHARACTERISTICS_WDM_DRIVER = 0x2000
-        const val IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
+        public const val IMAGE_SUBSYSTEM_UNKNOWN: Int = 0
+        public const val IMAGE_SUBSYSTEM_NATIVE: Int = 1
+        public const val IMAGE_SUBSYSTEM_WINDOWS_GUI: Int = 2
+        public const val IMAGE_SUBSYSTEM_WINDOWS_CUI: Int = 3
+        public const val IMAGE_SUBSYSTEM_OS2_CUI: Int = 5
+        public const val IMAGE_SUBSYSTEM_POSIX_CUI: Int = 7
+        public const val IMAGE_SUBSYSTEM_WINDOWS_CE_GUI: Int = 9
+        public const val IMAGE_SUBSYSTEM_EFI_APPLICATION: Int = 10
+        public const val IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER: Int = 11
+        public const val IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER: Int = 12
+        public const val IMAGE_SUBSYSTEM_EFI_ROM: Int = 13
+        public const val IMAGE_SUBSYSTEM_XBOX: Int = 14
+        public const val IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION: Int = 16
 
-        const val PE32_MAGIC_NUMBER_LE = 0x10B
-        const val PE64_MAGIC_NUMBER_LE = 0x20B
+        public const val IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE: Int = 0x0040
+        public const val IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY: Int = 0x0080
+        public const val IMAGE_DLLCHARACTERISTICS_NX_COMPAT: Int = 0x0100
+        public const val IMAGE_DLLCHARACTERISTICS_NO_ISOLATION: Int = 0x0200
+        public const val IMAGE_DLLCHARACTERISTICS_NO_SEH: Int = 0x0400
+        public const val IMAGE_DLLCHARACTERISTICS_NO_BIND: Int = 0x0800
+        public const val IMAGE_DLLCHARACTERISTICS_APPCONTAINER: Int = 0x1000
+        public const val IMAGE_DLLCHARACTERISTICS_WDM_DRIVER: Int = 0x2000
+        public const val IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE: Int = 0x8000
 
-        const val INVALID_SIGNATURE = 0x0000
-        const val INVALID_SIGNATURE_KEY = "formats.exe.pe_opt.invalid_signature"
+        public const val PE32_MAGIC_NUMBER_LE: Int = 0x10B
+        public const val PE64_MAGIC_NUMBER_LE: Int = 0x20B
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PEOptionalHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PEOptionalHeader> {
+        public const val INVALID_SIGNATURE: Int = 0x0000
+        public const val INVALID_SIGNATURE_KEY: String = "formats.exe.pe_opt.invalid_signature"
+
+        public suspend operator fun invoke(
+            context: SpiralContext,
+            dataSource: DataSource<*>
+        ): KorneaResult<PEOptionalHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
+
+        public suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PEOptionalHeader> {
             withFormats(context) {
                 val signature = flow.readInt16LE()
-                        ?: return localisedNotEnoughData("formats.exe.pe_opt.not_enough_data")
+                    ?: return localisedNotEnoughData("formats.exe.pe_opt.not_enough_data")
 
                 when (signature) {
                     PE32_MAGIC_NUMBER_LE -> return PE32(this, flow).cast()
@@ -68,50 +68,52 @@ sealed class PEOptionalHeader {
         }
     }
 
-    data class PE32(
-            val majorLinkerVersion: Int,
-            val minorLinkerVersion: Int,
-            val sizeOfCode: Int,
-            val sizeOfInitialisedData: Int,
-            val sizeOfUninitialisedData: Int,
-            val addressOfEntryPoint: Int,
-            val baseOfCode: Int,
-            val baseOfData: Int,
-            val imageBase: Int,
-            val sectionAlignment: Int,
-            val fileAlignment: Int,
-            val majorOSVersion: Int,
-            val minorOSVersion: Int,
-            val majorImageVersion: Int,
-            val minorImageVersion: Int,
-            val majorSubsystemVersion: Int,
-            val minorSubsystemVersion: Int,
-            val win32VersionValue: Int,
-            val sizeOfImage: Int,
-            val sizeOfHeaders: Int,
-            val checksum: Int,
-            val subsystem: Int,
-            val dllCharacteristics: Int,
-            val sizeOfStackReserve: Int,
-            val sizeOfStackCommit: Int,
-            val sizeOfHeapReserve: Int,
-            val sizeOfHeapCommit: Int,
-            val loaderFlags: Int,
-            val numberOfRvaAndSizes: Int,
-            val dataDirectory: Array<DataDirectory>
+    public data class PE32(
+        val majorLinkerVersion: Int,
+        val minorLinkerVersion: Int,
+        val sizeOfCode: Int,
+        val sizeOfInitialisedData: Int,
+        val sizeOfUninitialisedData: Int,
+        val addressOfEntryPoint: Int,
+        val baseOfCode: Int,
+        val baseOfData: Int,
+        val imageBase: Int,
+        val sectionAlignment: Int,
+        val fileAlignment: Int,
+        val majorOSVersion: Int,
+        val minorOSVersion: Int,
+        val majorImageVersion: Int,
+        val minorImageVersion: Int,
+        val majorSubsystemVersion: Int,
+        val minorSubsystemVersion: Int,
+        val win32VersionValue: Int,
+        val sizeOfImage: Int,
+        val sizeOfHeaders: Int,
+        val checksum: Int,
+        val subsystem: Int,
+        val dllCharacteristics: Int,
+        val sizeOfStackReserve: Int,
+        val sizeOfStackCommit: Int,
+        val sizeOfHeapReserve: Int,
+        val sizeOfHeapCommit: Int,
+        val loaderFlags: Int,
+        val numberOfRvaAndSizes: Int,
+        val dataDirectory: Array<DataDirectory>
     ) : PEOptionalHeader() {
-        companion object {
-            const val NOT_ENOUGH_DATA_KEY = "formats.exe.pe_opt_32.not_enough_data"
+        public companion object {
+            public const val NOT_ENOUGH_DATA_KEY: String = "formats.exe.pe_opt_32.not_enough_data"
 
-            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE32> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
-            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE32> {
+            public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE32> =
+                dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+
+            public suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE32> {
                 withFormats(context) {
                     val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfInitialisedData = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfUninitialisedData = flow.readInt32LE()
-                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val addressOfEntryPoint = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val baseOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val baseOfData = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -138,12 +140,45 @@ sealed class PEOptionalHeader {
                     val numberOfRvaAndSizes = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val dataDirectory = Array(numberOfRvaAndSizes) {
                         DataDirectory(
-                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
-                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
+                            flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         )
                     }
 
-                    return KorneaResult.success(PE32(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, baseOfData, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
+                    return KorneaResult.success(
+                        PE32(
+                            majorLinkerVersion,
+                            minorLinkerVersion,
+                            sizeOfCode,
+                            sizeOfInitialisedData,
+                            sizeOfUninitialisedData,
+                            addressOfEntryPoint,
+                            baseOfCode,
+                            baseOfData,
+                            imageBase,
+                            sectionAlignment,
+                            fileAlignment,
+                            majorOSVersion,
+                            minorOSVersion,
+                            majorImageVersion,
+                            minorImageVersion,
+                            majorSubsystemVersion,
+                            minorSubsystemVersion,
+                            win32VersionValue,
+                            sizeOfImage,
+                            sizeOfHeaders,
+                            checksum,
+                            subsystem,
+                            dllCharacteristics,
+                            sizeOfStackReserve,
+                            sizeOfStackCommit,
+                            sizeOfHeapReserve,
+                            sizeOfHeapCommit,
+                            loaderFlags,
+                            numberOfRvaAndSizes,
+                            dataDirectory
+                        )
+                    )
                 }
             }
         }
@@ -221,50 +256,52 @@ sealed class PEOptionalHeader {
         }
     }
 
-    data class PE64(
-            val majorLinkerVersion: Int,
-            val minorLinkerVersion: Int,
-            val sizeOfCode: Int,
-            val sizeOfInitialisedData: Int,
-            val sizeOfUninitialisedData: Int,
-            val addressOfEntryPoint: Int,
-            val baseOfCode: Int,
-            val imageBase: Long,
-            val sectionAlignment: Int,
-            val fileAlignment: Int,
-            val majorOSVersion: Int,
-            val minorOSVersion: Int,
-            val majorImageVersion: Int,
-            val minorImageVersion: Int,
-            val majorSubsystemVersion: Int,
-            val minorSubsystemVersion: Int,
-            val win32VersionValue: Int,
-            val sizeOfImage: Int,
-            val sizeOfHeaders: Int,
-            val checksum: Int,
-            val subsystem: Int,
-            val dllCharacteristics: Int,
-            val sizeOfStackReserve: Long,
-            val sizeOfStackCommit: Long,
-            val sizeOfHeapReserve: Long,
-            val sizeOfHeapCommit: Long,
-            val loaderFlags: Int,
-            val numberOfRvaAndSizes: Int,
-            val dataDirectory: Array<DataDirectory>
+    public data class PE64(
+        val majorLinkerVersion: Int,
+        val minorLinkerVersion: Int,
+        val sizeOfCode: Int,
+        val sizeOfInitialisedData: Int,
+        val sizeOfUninitialisedData: Int,
+        val addressOfEntryPoint: Int,
+        val baseOfCode: Int,
+        val imageBase: Long,
+        val sectionAlignment: Int,
+        val fileAlignment: Int,
+        val majorOSVersion: Int,
+        val minorOSVersion: Int,
+        val majorImageVersion: Int,
+        val minorImageVersion: Int,
+        val majorSubsystemVersion: Int,
+        val minorSubsystemVersion: Int,
+        val win32VersionValue: Int,
+        val sizeOfImage: Int,
+        val sizeOfHeaders: Int,
+        val checksum: Int,
+        val subsystem: Int,
+        val dllCharacteristics: Int,
+        val sizeOfStackReserve: Long,
+        val sizeOfStackCommit: Long,
+        val sizeOfHeapReserve: Long,
+        val sizeOfHeapCommit: Long,
+        val loaderFlags: Int,
+        val numberOfRvaAndSizes: Int,
+        val dataDirectory: Array<DataDirectory>
     ) : PEOptionalHeader() {
-        companion object {
-            const val NOT_ENOUGH_DATA_KEY = "formats.exe.pe_opt_64.not_enough_data"
+        public companion object {
+            public const val NOT_ENOUGH_DATA_KEY: String = "formats.exe.pe_opt_64.not_enough_data"
 
-            suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE64> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
-            suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE64> {
+            public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<PE64> =
+                dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+
+            public suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<PE64> {
                 withFormats(context) {
                     val majorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val minorLinkerVersion = flow.read() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfInitialisedData = flow.readInt32LE()
-                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val sizeOfUninitialisedData = flow.readInt32LE()
-                            ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                        ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val addressOfEntryPoint = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val baseOfCode = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val imageBase = flow.readInt64BE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -290,12 +327,44 @@ sealed class PEOptionalHeader {
                     val numberOfRvaAndSizes = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                     val dataDirectory = Array(numberOfRvaAndSizes) {
                         DataDirectory(
-                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
-                                flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                            flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY),
+                            flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                         )
                     }
 
-                    return KorneaResult.success(PE64(majorLinkerVersion, minorLinkerVersion, sizeOfCode, sizeOfInitialisedData, sizeOfUninitialisedData, addressOfEntryPoint, baseOfCode, imageBase, sectionAlignment, fileAlignment, majorOSVersion, minorOSVersion, majorImageVersion, minorImageVersion, majorSubsystemVersion, minorSubsystemVersion, win32VersionValue, sizeOfImage, sizeOfHeaders, checksum, subsystem, dllCharacteristics, sizeOfStackReserve, sizeOfStackCommit, sizeOfHeapReserve, sizeOfHeapCommit, loaderFlags, numberOfRvaAndSizes, dataDirectory))
+                    return KorneaResult.success(
+                        PE64(
+                            majorLinkerVersion,
+                            minorLinkerVersion,
+                            sizeOfCode,
+                            sizeOfInitialisedData,
+                            sizeOfUninitialisedData,
+                            addressOfEntryPoint,
+                            baseOfCode,
+                            imageBase,
+                            sectionAlignment,
+                            fileAlignment,
+                            majorOSVersion,
+                            minorOSVersion,
+                            majorImageVersion,
+                            minorImageVersion,
+                            majorSubsystemVersion,
+                            minorSubsystemVersion,
+                            win32VersionValue,
+                            sizeOfImage,
+                            sizeOfHeaders,
+                            checksum,
+                            subsystem,
+                            dllCharacteristics,
+                            sizeOfStackReserve,
+                            sizeOfStackCommit,
+                            sizeOfHeapReserve,
+                            sizeOfHeapCommit,
+                            loaderFlags,
+                            numberOfRvaAndSizes,
+                            dataDirectory
+                        )
+                    )
                 }
             }
         }

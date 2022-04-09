@@ -1,10 +1,6 @@
 package info.spiralframework.formats.common.games
 
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.errors.common.getOrElse
-import dev.brella.kornea.errors.common.map
+import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.flow.readBytes
 import dev.brella.kornea.io.common.useAndMapInputFlow
 import info.spiralframework.base.common.SpiralContext
@@ -18,28 +14,46 @@ import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
 import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.formats.common.scripting.wrd.WrdEntry
 import info.spiralframework.formats.common.withFormats
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNames
 
-@ExperimentalUnsignedTypes
-open class DRv3(
+public open class DRv3(
     override val wrdCharacterNames: Map<String, String>,
     override val wrdCharacterIdentifiers: Map<String, String>,
     override val wrdColourCodes: Map<String, String>,
-    override val wrdItemNames: Array<String>,
+    override val wrdItemNames: List<String>,
     customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.WordScriptable, DrGame.ScriptOpcodeFactory<Array<WordScriptValue>, WrdEntry> {
-    companion object {
-        val NAMES = arrayOf("DRv3", "NDRv3", "V3", "Danganronpa V3: Killing Harmony", "New Danganronpa V3: Killing Harmony")
+    public companion object {
+        public val NAMES: Array<String> =
+            arrayOf("DRv3", "NDRv3", "V3", "Danganronpa V3: Killing Harmony", "New Danganronpa V3: Killing Harmony")
 
+        public val PRIMARY_NAME: String
+            get() = NAMES.first()
+
+        @OptIn(ExperimentalSerializationApi::class)
         @Serializable
-        data class DRv3GameJson(val character_names: Map<String, String>, val character_identifiers: Map<String, String>, val colour_codes: Map<String, String>, val item_names: Array<String>)
+        public data class DRv3GameJson(
+            @JsonNames("characterNames")
+            val characterNames: Map<String, String>,
 
-        suspend operator fun invoke(context: SpiralContext): KorneaResult<DRv3> {
+            @JsonNames("character_identifiers")
+            val characterIdentifiers: Map<String, String>,
+
+            @JsonNames("colour_codes", "color_codes", "colorCodes")
+            val colourCodes: Map<String, String>,
+
+            @JsonNames("item_names")
+            val itemNames: List<String>
+        )
+
+        public suspend operator fun invoke(context: SpiralContext): KorneaResult<DRv3> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/drv3.json"))
-                val gameString = loadResource("games/drv3.json", Dr1::class)
+                val gameString = loadResource("games/drv3.json", DRv3::class)
                     .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                     .getOrBreak { return it.cast() }
 
@@ -48,9 +62,17 @@ open class DRv3(
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/drv3.json", Dr1::class)
                     .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
                     .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
-                    .getOrElse(emptyList())
+                    .getOrElse { emptyList() }
 
-                return KorneaResult.success(DRv3(gameJson.character_names, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
+                return KorneaResult.success(
+                    DRv3(
+                        gameJson.characterNames,
+                        gameJson.characterIdentifiers,
+                        gameJson.colourCodes,
+                        gameJson.itemNames,
+                        customOpcodes
+                    )
+                )
             }
         }
     }
@@ -61,16 +83,30 @@ open class DRv3(
 
     override val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry> = buildScriptOpcodes {
         opcode(0x00, names = arrayOf("Set Flag", "FLG"), argumentCount = 2) //FLG
-        flagCheck(0x01, names = arrayOf("Check Flag", "If Flag", "IFF"), flagGroupLength = 3, endFlagCheckOpcode = 0x49) //IFF
+        flagCheck(
+            0x01,
+            names = arrayOf("Check Flag", "If Flag", "IFF"),
+            flagGroupLength = 3,
+            endFlagCheckOpcode = 0x49
+        ) //IFF
         opcode(0x02, names = arrayOf("Set Game Parameter", "WAK"), argumentCount = 3) //WAK
-        flagCheck(0x03, names = arrayOf("Check Game Parameter", "If Game Parameter", "IFW"), flagGroupLength = 3, endFlagCheckOpcode = 0x49) //IFW
+        flagCheck(
+            0x03,
+            names = arrayOf("Check Game Parameter", "If Game Parameter", "IFW"),
+            flagGroupLength = 3,
+            endFlagCheckOpcode = 0x49
+        ) //IFW
         opcode(0x04, names = arrayOf("Switch", "When", "SWI"), argumentCount = 1) //SWI
         opcode(0x05, names = arrayOf("Case", "CAS"), argumentCount = 1) //CAS
         opcode(0x06, names = arrayOf("MPF"), argumentCount = 3) //MPF, Map Flag?
         opcode(0x07, names = arrayOf("SWP"), argumentCount = -1) //SPW
         opcode(0x08, names = arrayOf("Set Game Mode", "MOD"), argumentCount = 4)
         opcode(0x09, names = arrayOf("HUM"), argumentCount = 1) //HUM
-        opcode(0x0A, names = arrayOf("Check for Variable", "CHK"), argumentCount = 1) //CHK, seems to check if a given flag/variable exists?
+        opcode(
+            0x0A,
+            names = arrayOf("Check for Variable", "CHK"),
+            argumentCount = 1
+        ) //CHK, seems to check if a given flag/variable exists?
         opcode(0x0B, names = arrayOf("Truth Bullet", "KTB"), argumentCount = 2) //KTB
         opcode(0x0C, names = arrayOf("CLR"), argumentCount = -1) //CLR
         opcode(0x0D, names = arrayOf("RET"), argumentCount = -1) //RET
@@ -96,7 +132,11 @@ open class DRv3(
         opcode(0x21, names = arrayOf("Set Lighting Parameter", "LIG"), argumentCount = 3) //LIG
         opcode(0x22, names = arrayOf("Set Character Parameter", "CHR"), argumentCount = 5) //CHR
         opcode(0x23, names = arrayOf("Set Background Parameter", "BGD"), argumentCount = 4) //BGD
-        opcode(0x24, names = arrayOf("Cutin", "CUT"), argumentCount = 2) //CUT, used for stuff like "Truth Bullet Get!" popups
+        opcode(
+            0x24,
+            names = arrayOf("Cutin", "CUT"),
+            argumentCount = 2
+        ) //CUT, used for stuff like "Truth Bullet Get!" popups
         opcode(0x25, names = arrayOf("Character Vibration", "ADF"), argumentCount = 5) //ADF
         opcode(0x26, names = arrayOf("PAL"), argumentCount = -1) //PAL
         opcode(0x27, names = arrayOf("Load Map", "MAP"), argumentCount = 3) //MAP
@@ -111,7 +151,11 @@ open class DRv3(
         opcode(0x30, names = arrayOf("MSC"), argumentCount = -1) //MSC
         opcode(0x31, names = arrayOf("CSM"), argumentCount = -1) //CSM
         opcode(0x32, names = arrayOf("Post-Processing", "PST"), argumentCount = 5) //PST
-        opcode(0x33, names = arrayOf("KNS"), argumentCount = 5) //KNS; numeric parmeters related to camera movement? (raw camera coords???)
+        opcode(
+            0x33,
+            names = arrayOf("KNS"),
+            argumentCount = 5
+        ) //KNS; numeric parmeters related to camera movement? (raw camera coords???)
         opcode(0x34, names = arrayOf("Set Font", "FON"), argumentCount = 2) //FON
         opcode(0x35, names = arrayOf("Load Background Object", "BGO"), argumentCount = 5) //BGO
         opcode(0x36, names = arrayOf("LOG"), argumentCount = 0) //LOG, edits text backlog
@@ -120,7 +164,11 @@ open class DRv3(
         opcode(0x39, names = arrayOf("Size Modifier", "SZM"), argumentCount = 4) //SZM, only used in Class Trials?
         opcode(0x3A, names = arrayOf("PVI"), argumentCount = 1) //PVI, Class Trial Chapter? Pre-trial intermissions?
         opcode(0x3B, names = arrayOf("Give EXP", "EXP"), argumentCount = 1) //EXP
-        opcode(0x3C, names = arrayOf("MTA"), argumentCount = 1) //MTA, only used in Class Trials (), usually passed "non"?
+        opcode(
+            0x3C,
+            names = arrayOf("MTA"),
+            argumentCount = 1
+        ) //MTA, only used in Class Trials (), usually passed "non"?
         opcode(0x3D, names = arrayOf("Move Object to Position", "MVP"), argumentCount = -1) //MVP
         opcode(0x3E, names = arrayOf("Create Position", "POS"), argumentCount = 5) //POS
         opcode(0x3F, names = arrayOf("Program World Character Icon"), argumentCount = -1) //ICO
@@ -129,11 +177,19 @@ open class DRv3(
         opcode(0x42, names = arrayOf("Camera Follow Path", "CFP"), argumentCount = -1) //CFP
         opcode(0x43, names = arrayOf("Set Text Color", "CLT="), argumentCount = -1) //CLT=; never used as an opcode?
         opcode(0x44, names = arrayOf("R="), argumentCount = -1) //R=; never used as an opcode?
-        opcode(0x45, names = arrayOf("Display Gamepad Symbol", "PAD="), argumentCount = -1) //PAD=; never used as an opcode?
+        opcode(
+            0x45,
+            names = arrayOf("Display Gamepad Symbol", "PAD="),
+            argumentCount = -1
+        ) //PAD=; never used as an opcode?
         opcode(0x46, names = arrayOf("Text", "LOC"), argumentCount = 1) //LOC
         opcode(0x47, names = arrayOf("Wait for Input", "BTN"), argumentCount = 0)
         opcode(0x48, names = arrayOf("ENT"), argumentCount = -1) //ENT
-        opcode(0x49, names = arrayOf("End Flag Check", "End If", "CED"), argumentCount = 0) //CED, called immediately after all variable checks
+        opcode(
+            0x49,
+            names = arrayOf("End Flag Check", "End If", "CED"),
+            argumentCount = 0
+        ) //CED, called immediately after all variable checks
         opcode(0x4A, names = arrayOf("Mark Sublabel", "Sublabel", "LBN"), argumentCount = 1) //LBN
         opcode(0x4B, names = arrayOf("Jump to Sublabel", "Goto Sublabel", "JMN"), argumentCount = 1) //JMN
 
@@ -145,18 +201,30 @@ open class DRv3(
         //this[$1] = intArrayOf($2)
         opcode(0x00, types = intArrayOf(0, 0))              // Set Flag
         opcode(0x01) { EnumWordScriptCommand.PARAMETER }     // If Flag
-        opcode(0x02, types = intArrayOf(0, 0, 0))           // Wake? Work? (Seems to be used to configure game engine parameters)
+        opcode(
+            0x02,
+            types = intArrayOf(0, 0, 0)
+        )           // Wake? Work? (Seems to be used to configure game engine parameters)
         opcode(0x03) { EnumWordScriptCommand.PARAMETER }     // If WAK
         opcode(0x04, types = intArrayOf(0))                 // Begin switch statement
         opcode(0x05, types = intArrayOf(1))                 // Switch Case
         opcode(0x06, types = intArrayOf(0, 0, 0))           // Map Flag?
         opcode(0x07, types = intArrayOf())
-        opcode(0x08, types = intArrayOf(0, 0, 0, 0))        // Set Modifier (Also used to configure game engine parameters)
-        opcode(0x09, types = intArrayOf(0))                 // Human? Seems to be used to initialize "interactable" objects in a map?
+        opcode(
+            0x08,
+            types = intArrayOf(0, 0, 0, 0)
+        )        // Set Modifier (Also used to configure game engine parameters)
+        opcode(
+            0x09,
+            types = intArrayOf(0)
+        )                 // Human? Seems to be used to initialize "interactable" objects in a map?
         opcode(0x0A, types = intArrayOf(0))                 // Check?
         opcode(0x0B, types = intArrayOf(0, 0))              // Kotodama?
         opcode(0x0C, types = intArrayOf())                  // Clear?
-        opcode(0x0D, types = intArrayOf())                  // Return? There's another command later which is definitely return, though...
+        opcode(
+            0x0D,
+            types = intArrayOf()
+        )                  // Return? There's another command later which is definitely return, though...
         opcode(0x0E, types = intArrayOf(0, 0, 0, 0, 0))     // Kinematics (camera movement)
         opcode(0x0F, types = intArrayOf())                  // Camera Parameters?
         opcode(0x10, types = intArrayOf(0, 0))              // Load Script File & jump to label
@@ -197,10 +265,16 @@ open class DRv3(
         opcode(0x33, types = intArrayOf(0, 1, 1, 1, 1))     // Kinematics Numeric parameters?
         opcode(0x34, types = intArrayOf(1, 1))              // Set Font
         opcode(0x35, types = intArrayOf(0, 0, 0, 0, 0))     // Load Background Object
-        opcode(0x36, types = intArrayOf())                  // Add next text to log (only used in class trials during nonstop debates)
+        opcode(
+            0x36,
+            types = intArrayOf()
+        )                  // Add next text to log (only used in class trials during nonstop debates)
         opcode(0x37, types = intArrayOf(0))                 // Used only in Class Trial? Always set to "non"?
         opcode(0x38, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        opcode(0x39, types = intArrayOf(0, 0, 0, 0))        // Stand Position (Class Trial) (posX, posY, speed) (can be negative and floats)
+        opcode(
+            0x39,
+            types = intArrayOf(0, 0, 0, 0)
+        )        // Stand Position (Class Trial) (posX, posY, speed) (can be negative and floats)
         opcode(0x3A, types = intArrayOf(0))                 // Class Trial Chapter? Pre-trial intermission?
         opcode(0x3B, types = intArrayOf(0))                 // Give EXP
         opcode(0x3C, types = intArrayOf(0))                 // Used only in Class Trial? Usually set to "non"?
@@ -209,7 +283,10 @@ open class DRv3(
         opcode(0x3F, types = intArrayOf(0, 0, 0, 0))           // Display a Program World character portrait
         opcode(0x40, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0))  // Exisal AI
         opcode(0x41, types = intArrayOf(0, 0, 0))           // Set object collision
-        opcode(0x42, types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0)) // Camera Follow Path? Seems to make the camera move in some way
+        opcode(
+            0x42,
+            types = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0)
+        ) // Camera Follow Path? Seems to make the camera move in some way
         opcode(0x43, types = intArrayOf(0))                // Text modifier command
         opcode(0x44, types = intArrayOf())
         opcode(0x45, types = intArrayOf(0))                // Gamepad button symbol
@@ -226,8 +303,7 @@ open class DRv3(
     }
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.DRv3() = DRv3(this)
-
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDRv3() = DRv3(this).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.DRv3(): KorneaResult<DRv3> = DRv3(this)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeDRv3(): DRv3 = DRv3(this).getOrThrow()

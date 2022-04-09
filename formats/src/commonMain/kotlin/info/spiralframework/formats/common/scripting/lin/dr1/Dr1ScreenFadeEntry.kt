@@ -4,41 +4,40 @@ import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
-inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    companion object {
-        const val FADE_IN_METHOD = 0
-        const val FADE_OUT_METHOD = 1
+public class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    public companion object {
+        public const val FADE_IN_METHOD: Int = 0
+        public const val FADE_OUT_METHOD: Int = 1
 
-        const val FADE_COLOUR_BLACK = 1
-        const val FADE_COLOUR_WHITE = 2
-        const val FADE_COLOUR_RED = 3
+        public const val FADE_COLOUR_BLACK: Int = 1
+        public const val FADE_COLOUR_WHITE: Int = 2
+        public const val FADE_COLOUR_RED: Int = 3
     }
 
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(fadeMethod: Int, colour: Int, duration: Int): this(intArrayOf(fadeMethod, colour, duration))
-    constructor(fadeIn: Boolean, colour: Int, duration: Int): this(intArrayOf(if (fadeIn) FADE_IN_METHOD else FADE_OUT_METHOD, colour, duration))
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(fadeMethod: Int, colour: Int, duration: Int): this(intArrayOf(fadeMethod, colour, duration))
+    public constructor(fadeIn: Boolean, colour: Int, duration: Int): this(intArrayOf(if (fadeIn) FADE_IN_METHOD else FADE_OUT_METHOD, colour, duration))
 
     override val opcode: Int
         get() = 0x22
 
-    var fadeMethod: Int
+    public var fadeMethod: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    var fadeIn: Boolean
+    public var fadeIn: Boolean
         get() = get(0) == FADE_IN_METHOD
         set(value) = set(0, if (value) FADE_IN_METHOD else FADE_OUT_METHOD)
 
-    var colour: Int
+    public var colour: Int
         get() = get(1)
         set(value) = set(1, value)
 
     /** Duration in frames */
-    var duration: Int
+    public var duration: Int
         get() = get(2)
         set(value) = set(2, value)
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpile(indent: Int) {
         addOutput {
             repeat(indent) { append('\t') }
@@ -60,7 +59,6 @@ inline class Dr1ScreenFadeEntry(override val rawArguments: IntArray) : MutableLi
         }
     }
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         with(builder) {
             if (fadeMethod == 0 || fadeMethod == 1) {

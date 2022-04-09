@@ -1,5 +1,8 @@
 package info.spiralframework.formats.common.games
 
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.common.OpcodeMap
 import info.spiralframework.formats.common.data.buildScriptOpcodes
@@ -8,45 +11,74 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr2.Dr2TextEntry
 import info.spiralframework.formats.common.withFormats
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndMapInputFlow
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNames
 
-@ExperimentalUnsignedTypes
-open class Dr2(
-        override val linCharacterIDs: Map<Int, String>,
-        override val linCharacterIdentifiers: Map<String, Int>,
-        override val linColourCodes: Map<String, Int>,
-        override val linItemNames: Array<String>,
-        override val pakNames: Map<String, Array<String>>,
-        customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
-    companion object {
-        const val NONSTOP_DEBATE_SECTION_SIZE = 34
+public open class Dr2(
+    override val linCharacterIDs: Map<Int, String>,
+    override val linCharacterIdentifiers: Map<String, Int>,
+    override val linColourCodes: Map<String, Int>,
+    override val linItemNames: List<String>,
+    override val pakNames: Map<String, List<String>>,
+    customOpcodes: List<JsonOpcode>
+) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>,
+    DrGame.LinNonstopScriptable {
+    public companion object {
+        public const val NONSTOP_DEBATE_SECTION_SIZE: Int = 34
 
-        const val IDENTIFIER = "dr2"
-        val NAMES = arrayOf("Dr2", "SDr2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
+        public const val IDENTIFIER: String = "dr2"
 
+        public val NAMES: Array<String> =
+            arrayOf("Dr2", "SDr2", "Danganronpa 2", "Danganronpa 2: Goodbye Despair")
+
+        public val PRIMARY_NAME: String
+            get() = NAMES.first()
+
+        @OptIn(ExperimentalSerializationApi::class)
         @Serializable
-        data class Dr2GameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>, val pak_names: Map<String, Array<String>>)
+        public data class Dr2GameJson(
+            @JsonNames("character_ids", "characterIds")
+            val characterIDs: Map<Int, String>,
 
-        suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr2> {
+            @JsonNames("character_identifiers")
+            val characterIdentifiers: Map<String, Int>,
+
+            @JsonNames("colour_codes", "color_codes", "colorCodes")
+            val colourCodes: Map<String, Int>,
+
+            @JsonNames("item_names")
+            val itemNames: List<String>,
+
+            @JsonNames("pak_names")
+            val pakNames: Map<String, List<String>>
+        )
+
+        public suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr2> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr2.json"))
-                val gameString = loadResource("games/dr2.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .getOrBreak { return it.asType() }
+                val gameString = loadResource("games/dr2.json", Dr2::class)
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .getOrBreak { return it.asType() }
                 val gameJson = Json.decodeFromString(Dr2GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr2.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
-                        .getOrElse(emptyList())
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
+                    .getOrElse { emptyList() }
 
-                return KorneaResult.success(Dr2(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, gameJson.pak_names, customOpcodes))
+                return KorneaResult.success(
+                    Dr2(
+                        gameJson.characterIDs,
+                        gameJson.characterIdentifiers,
+                        gameJson.colourCodes,
+                        gameJson.itemNames,
+                        gameJson.pakNames,
+                        customOpcodes
+                    )
+                )
             }
         }
     }
@@ -136,11 +168,11 @@ open class Dr2(
 
         fromList(customOpcodes)
     }
-    override val linBgmNames: Array<String> = emptyArray()
-    override val linEvidenceNames: Array<String> = emptyArray()
-    override val linMapNames: Array<String> = emptyArray()
-    override val linMovieNames: Array<String> = emptyArray()
-    override val linSkillNames: Array<String> = emptyArray()
+    override val linBgmNames: List<String> = emptyList()
+    override val linEvidenceNames: List<String> = emptyList()
+    override val linMapNames: List<String> = emptyList()
+    override val linMovieNames: List<String> = emptyList()
+    override val linSkillNames: List<String> = emptyList()
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
         0x02 -> Dr2TextEntry(opcode, rawArguments)
@@ -159,8 +191,8 @@ open class Dr2(
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr2() = Dr2(this)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.Dr2(): KorneaResult<Dr2> = Dr2(this)
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr2(): Dr2 = Dr2(this).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeDr2(): Dr2 = Dr2(this).getOrThrow()

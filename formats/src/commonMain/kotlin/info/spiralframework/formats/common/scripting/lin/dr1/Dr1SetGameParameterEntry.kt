@@ -4,40 +4,40 @@ import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
-inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    companion object {
-        const val OPERATOR_SET = 0x00
-        const val OPERATOR_PLUS = 0x01
-        const val OPERATOR_MINUS = 0x02
-        const val OPERATOR_TIMES = 0x03
-        const val OPERATOR_DIVIDE = 0x04
+public class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    public companion object {
+        public const val OPERATOR_SET: Int = 0x00
+        public const val OPERATOR_PLUS: Int = 0x01
+        public const val OPERATOR_MINUS: Int = 0x02
+        public const val OPERATOR_TIMES: Int = 0x03
+        public const val OPERATOR_DIVIDE: Int = 0x04
 
-        const val GAME_PARAMETER_WAIT_FORCE = 6
+        public const val GAME_PARAMETER_WAIT_FORCE: Int = 6
     }
 
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(variable: Int, operation: Int, value: Int) : this(intArrayOf(variable, operation, (value shr 8) and 0xFF, value and 0xFF))
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(variable: Int, operation: Int, value: Int) : this(intArrayOf(variable, operation, (value shr 8) and 0xFF, value and 0xFF))
 
     override val opcode: Int
         get() = 0x33
 
-    var variable: Int
+    public var variable: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    var operation: Int
+    public var operation: Int
         get() = get(1)
         set(value) = set(1, value)
 
-    var value: Int
+    public var value: Int
         get() = getInt16BE(2) //rawArguments[2] shl 8) or rawArguments[3]
         set(value) = setInt16BE(2, value)
 
-    var valueUpper: Int
+    public var valueUpper: Int
         get() = get(2)
         set(value) = set(2, value)
 
-    var valueLower: Int
+    public var valueLower: Int
         get() = get(3)
         set(value) = set(3, value)
 
@@ -45,6 +45,7 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
         addOutput {
             repeat(indent) { append('\t') }
             if (variable == GAME_PARAMETER_WAIT_FORCE) {
+                //TODO: Better handle names for forced wait
                 append("Wait(")
                 append(value)
                 append(")")
@@ -56,13 +57,12 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
         }
     }
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         with(builder) {
             val parameterName = game?.getNameOfLinGameParameter(variable)
-                    ?.toLowerCase()
-                    ?.replace(' ', '_')
-                    ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+                ?.lowercase()
+                ?.replace(' ', '_')
+                ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
             if (parameterName != null) {
                 val parameterVariable = "game_parameter_$parameterName"
@@ -100,9 +100,9 @@ inline class Dr1SetGameParameterEntry(override val rawArguments: IntArray) : Mut
             }
 
             val valueName = game?.getNameOfLinGameParameterValue(variable, value)
-                    ?.toLowerCase()
-                    ?.replace(' ', '_')
-                    ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+                ?.lowercase()
+                ?.replace(' ', '_')
+                ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
             if (valueName != null) {
                 val valueVariable =

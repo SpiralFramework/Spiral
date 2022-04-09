@@ -12,15 +12,14 @@ import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 
-@ExperimentalUnsignedTypes
-data class SCNSrdEntry(
+public data class SCNSrdEntry(
         override val classifier: Int,
         override val mainDataLength: ULong,
         override val subDataLength: ULong,
         override val unknown: Int
 ) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x2453434E
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x2453434E
     }
 
 //    override suspend fun setup(context: SpiralContext): KorneaResult<BaseSrdEntry> =

@@ -26,7 +26,7 @@ object OpenSpiralBitcodeFormat : ReadableSpiralFormat<OpenSpiralBitcodeWrapper>,
 
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<OpenSpiralBitcodeWrapper> =
         OpenSpiralBitcodeWrapper(context, source)
-            .buildFormatResult(1.0)
+            .ensureFormatSuccess(1.0)
 
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
         data is OpenSpiralBitcodeWrapper || data is LinScript

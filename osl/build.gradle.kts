@@ -7,7 +7,6 @@ kotlin {
         val main by compilations.getting {
             kotlinOptions {
                 jvmTarget = "1.8"
-                freeCompilerArgs = listOf("-XXLanguage:+InlineClasses")
             }
         }
     }
@@ -47,7 +46,9 @@ kotlin {
 
         all {
             languageSettings.apply {
-                enableLanguageFeature("InlineClasses")
+                optIn("kotlin.RequiresOptIn")
+                explicitApi()
+
                 optIn("kotlin.ExperimentalUnsignedTypes")
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.contracts.ExperimentalContracts")

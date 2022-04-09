@@ -1,104 +1,116 @@
 package info.spiralframework.osb.common
 
 import dev.brella.kornea.annotations.AvailableSince
-import dev.brella.kornea.io.common.*
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.KorneaIO
+import dev.brella.kornea.io.common.flow.InputFlow
+import dev.brella.kornea.io.common.flow.Int16FlowState
+import dev.brella.kornea.io.common.flow.WindowedInputFlow
 import dev.brella.kornea.io.common.flow.extensions.*
+import dev.brella.kornea.io.common.flow.readExact
 import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.text.toHexString
 
-object OpenSpiralBitcode {
-    const val MAGIC_NUMBER_LE = 0x494C534F
+public object OpenSpiralBitcode {
+    public const val MAGIC_NUMBER_LE: Int = 0x494C534F
 
     /** Operations */
 
-    const val OPERATION_SET_VERSION = 0x00
-    const val OPERATION_ADD_DIALOGUE = 0x01
-    const val OPERATION_ADD_DIALOGUE_VARIABLE = 0x02
-    const val OPERATION_ADD_FUNCTION_CALL = 0x03
-    const val OPERATION_ADD_IF_CHECK = 0x04
-    const val OPERATION_ADD_FLAG_CHECK = 0x05
-    const val OPERATION_ADD_TREE = 0x06
-    const val OPERATION_ADD_LOAD_MAP = 0x07
+    public const val OPERATION_SET_VERSION: Int = 0x00
+    public const val OPERATION_ADD_DIALOGUE: Int = 0x01
+    public const val OPERATION_ADD_DIALOGUE_VARIABLE: Int = 0x02
+    public const val OPERATION_ADD_FUNCTION_CALL: Int = 0x03
+    public const val OPERATION_ADD_IF_CHECK: Int = 0x04
+    public const val OPERATION_ADD_FLAG_CHECK: Int = 0x05
+    public const val OPERATION_ADD_TREE: Int = 0x06
+    public const val OPERATION_ADD_LOAD_MAP: Int = 0x07
 
-    const val OPERATION_ADD_PLAIN_OPCODE = 0x70
-    const val OPERATION_ADD_VARIABLE_OPCODE = 0x71
-    const val OPERATION_ADD_PLAIN_OPCODE_NAMED = 0x72
-    const val OPERATION_ADD_VARIABLE_OPCODE_NAMED = 0x73
+    public const val OPERATION_ADD_PLAIN_OPCODE: Int = 0x70
+    public const val OPERATION_ADD_VARIABLE_OPCODE: Int = 0x71
+    public const val OPERATION_ADD_PLAIN_OPCODE_NAMED: Int = 0x72
+    public const val OPERATION_ADD_VARIABLE_OPCODE_NAMED: Int = 0x73
 
-    const val OPERATION_ADD_LABEL = 0x80
-    const val OPERATION_ADD_PARAMETER = 0x81
-    const val OPERATION_ADD_TEXT = 0x82
-    const val OPERATION_SET_VARIABLE = 0x8F
+    public const val OPERATION_ADD_LABEL: Int = 0x80
+    public const val OPERATION_ADD_PARAMETER: Int = 0x81
+    public const val OPERATION_ADD_TEXT: Int = 0x82
+    public const val OPERATION_SET_VARIABLE: Int = 0x8F
 
     /** Other magic values */
 
-    const val VARIABLE_LABEL = 0x60
-    const val VARIABLE_PARAMETER = 0x61
-    const val VARIABLE_TEXT = 0x62
-    const val VARIABLE_LONG_LABEL = 0x63
-    const val VARIABLE_LONG_PARAMETER = 0x64
-    const val VARIABLE_LONG_REFERENCE = 0x65
-    const val VARIABLE_BOOL = 0x6A
-    const val VARIABLE_FUNCTION_CALL = 0x6B
-    const val VARIABLE_VAR_REFERENCE = 0x6C
-    const val VARIABLE_NULL = 0x6F
+    public const val VARIABLE_LABEL: Int = 0x60
+    public const val VARIABLE_PARAMETER: Int = 0x61
+    public const val VARIABLE_TEXT: Int = 0x62
+    public const val VARIABLE_LONG_LABEL: Int = 0x63
+    public const val VARIABLE_LONG_PARAMETER: Int = 0x64
+    public const val VARIABLE_LONG_REFERENCE: Int = 0x65
+    public const val VARIABLE_BOOL: Int = 0x6A
+    public const val VARIABLE_FUNCTION_CALL: Int = 0x6B
+    public const val VARIABLE_VAR_REFERENCE: Int = 0x6C
+    public const val VARIABLE_NULL: Int = 0x6F
 
-    const val VARIABLE_INT8 = 0x70
-    const val VARIABLE_INT16LE = 0x71
-    const val VARIABLE_INT16BE = 0x72
-    const val VARIABLE_INT24LE = 0x73
-    const val VARIABLE_INT24BE = 0x74
-    const val VARIABLE_INT32LE = 0x75
-    const val VARIABLE_INT32BE = 0x76
-    const val VARIABLE_ARBITRARY_INTEGER = 0x7E
-    const val VARIABLE_ARBITRARY_DECIMAL = 0x7F
+    public const val VARIABLE_INT8: Int = 0x70
+    public const val VARIABLE_INT16LE: Int = 0x71
+    public const val VARIABLE_INT16BE: Int = 0x72
+    public const val VARIABLE_INT24LE: Int = 0x73
+    public const val VARIABLE_INT24BE: Int = 0x74
+    public const val VARIABLE_INT32LE: Int = 0x75
+    public const val VARIABLE_INT32BE: Int = 0x76
+    public const val VARIABLE_ARBITRARY_INTEGER: Int = 0x7E
+    public const val VARIABLE_ARBITRARY_DECIMAL: Int = 0x7F
 
-    const val LONG_REFERENCE_TEXT = 0xA0
-    const val LONG_REFERENCE_VARIABLE = 0xA1
-    const val LONG_REFERENCE_COLOUR_CODE = 0xA2
-    const val LONG_REFERENCE_END = 0xAF
+    public const val LONG_REFERENCE_TEXT: Int = 0xA0
+    public const val LONG_REFERENCE_VARIABLE: Int = 0xA1
+    public const val LONG_REFERENCE_COLOUR_CODE: Int = 0xA2
+    public const val LONG_REFERENCE_END: Int = 0xAF
 
-    const val ACTION_TEXT = 0xB0
-    const val ACTION_VARIABLE = 0xB1
-    const val ACTION_COLOUR_CODE = 0xB2
-    const val ACTION_END = 0xBF
+    public const val ACTION_TEXT: Int = 0xB0
+    public const val ACTION_VARIABLE: Int = 0xB1
+    public const val ACTION_COLOUR_CODE: Int = 0xB2
+    public const val ACTION_END: Int = 0xBF
 
-    const val EQUALITY_EQUAL = 0
-    const val EQUALITY_NOT_EQUAL = 1
-    const val EQUALITY_LESS_THAN = 2
-    const val EQUALITY_GREATER_THAN = 3
-    const val EQUALITY_LESS_THAN_EQUAL_TO = 4
-    const val EQUALITY_GREATER_THAN_EQUAL_TO = 5
+    public const val EQUALITY_EQUAL: Int = 0
+    public const val EQUALITY_NOT_EQUAL: Int = 1
+    public const val EQUALITY_LESS_THAN: Int = 2
+    public const val EQUALITY_GREATER_THAN: Int = 3
+    public const val EQUALITY_LESS_THAN_EQUAL_TO: Int = 4
+    public const val EQUALITY_GREATER_THAN_EQUAL_TO: Int = 5
 
-    const val LOGICAL_AND = 0
-    const val LOGICAL_OR = 1
+    public const val LOGICAL_AND: Int = 0
+    public const val LOGICAL_OR: Int = 1
 
-    const val TREE_TYPE_PRESENT_SELECTION = 0
+    public const val TREE_TYPE_PRESENT_SELECTION: Int = 0
 }
 
-data class OpenSpiralBitcodeFlagBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: ByteArray)
-data class OpenSpiralBitcodeFlagCondition(val checking: OSLUnion, val operation: Int, val against: OSLUnion)
+public data class OpenSpiralBitcodeFlagBranch(
+    val condition: OpenSpiralBitcodeFlagCondition,
+    val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>,
+    val branch: ByteArray
+)
 
-@ExperimentalUnsignedTypes
+public data class OpenSpiralBitcodeFlagCondition(
+    val checking: OSLUnion,
+    val operation: Int,
+    val against: OSLUnion
+)
+
 @AvailableSince(KorneaIO.VERSION_3_2_2_ALPHA)
-public suspend inline fun <T> T.readVariableInt16NotBroken(): Int? where T: Int16FlowState, T: InputFlow =
+public suspend inline fun <T> T.readVariableInt16NotBroken(): Int? where T : Int16FlowState, T : InputFlow =
     (this as InputFlow).readVariableInt16()
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcodeVisitor, val level: Int) {
-    companion object {
-        const val PREFIX = "osl.bitcode.parser"
-        const val INVALID_MAGIC = 0x0000
+public class OpenSpiralBitcodeParser(
+    public val flow: InputFlow,
+    public val visitor: OpenSpiralBitcodeVisitor,
+    public val level: Int
+) {
+    public companion object {
+        public const val PREFIX: String = "osl.bitcode.parser"
+        public const val INVALID_MAGIC: Int = 0x0000
 
-        const val NOT_ENOUGH_DATA_KEY = "$PREFIX.not_enough_data"
-        const val INVALID_MAGIC_KEY = "$PREFIX.invalid_magic"
+        public const val NOT_ENOUGH_DATA_KEY: String = "$PREFIX.not_enough_data"
+        public const val INVALID_MAGIC_KEY: String = "$PREFIX.invalid_magic"
     }
 
-    @ExperimentalUnsignedTypes
-    suspend fun parse(context: SpiralContext) {
+    public suspend fun parse(context: SpiralContext) {
         try {
             with(context) {
                 val notEnoughData: () -> String = { localise("$PREFIX.not_enough_data") }
@@ -256,7 +268,11 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
 
         //This code has a number of differences from the if check, since we run the check in game, not at compile
 
-        val mainBranch = OpenSpiralBitcodeFlagBranch(mainCondition, otherConditions, requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData)))))
+        val mainBranch = OpenSpiralBitcodeFlagBranch(
+            mainCondition,
+            otherConditions,
+            requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData))))
+        )
         val elseIfBranches = Array(elseIfBranchCount) {
             conditionCount = requireNotNull(flow.read(), notEnoughData)
             mainCondition = OpenSpiralBitcodeFlagCondition(
@@ -280,7 +296,16 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
                 requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData))))
             )
         }
-        val elseBranch = if (hasElseBranch) requireNotNull(flow.readExact(ByteArray(requireNotNull(flow.readInt32LE(), notEnoughData)))) else null
+        val elseBranch = if (hasElseBranch) requireNotNull(
+            flow.readExact(
+                ByteArray(
+                    requireNotNull(
+                        flow.readInt32LE(),
+                        notEnoughData
+                    )
+                )
+            )
+        ) else null
 
         visitor.addFlagCheck(this, mainBranch, elseIfBranches, elseBranch, level + 1)
     }
@@ -386,14 +411,54 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
             }
 
             OpenSpiralBitcode.VARIABLE_INT8 -> OSLUnion.Int8NumberType(requireNotNull(flow.read(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT16LE -> OSLUnion.Int16LENumberType(requireNotNull(flow.readInt16LE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT16BE -> OSLUnion.Int16BENumberType(requireNotNull(flow.readInt16BE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT24LE -> OSLUnion.Int24LENumberType(requireNotNull(flow.readInt24LE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT24BE -> OSLUnion.Int24BENumberType(requireNotNull(flow.readInt24BE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT32LE -> OSLUnion.Int32LENumberType(requireNotNull(flow.readInt32LE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_INT32BE -> OSLUnion.Int32BENumberType(requireNotNull(flow.readInt32BE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER -> OSLUnion.IntegerNumberType(requireNotNull(flow.readInt64LE(), notEnoughData))
-            OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL -> OSLUnion.DecimalNumberType(requireNotNull(flow.readFloatLE(), notEnoughData))
+            OpenSpiralBitcode.VARIABLE_INT16LE -> OSLUnion.Int16LENumberType(
+                requireNotNull(
+                    flow.readInt16LE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_INT16BE -> OSLUnion.Int16BENumberType(
+                requireNotNull(
+                    flow.readInt16BE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_INT24LE -> OSLUnion.Int24LENumberType(
+                requireNotNull(
+                    flow.readInt24LE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_INT24BE -> OSLUnion.Int24BENumberType(
+                requireNotNull(
+                    flow.readInt24BE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_INT32LE -> OSLUnion.Int32LENumberType(
+                requireNotNull(
+                    flow.readInt32LE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_INT32BE -> OSLUnion.Int32BENumberType(
+                requireNotNull(
+                    flow.readInt32BE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_ARBITRARY_INTEGER -> OSLUnion.IntegerNumberType(
+                requireNotNull(
+                    flow.readInt64LE(),
+                    notEnoughData
+                )
+            )
+            OpenSpiralBitcode.VARIABLE_ARBITRARY_DECIMAL -> OSLUnion.DecimalNumberType(
+                requireNotNull(
+                    flow.readFloatLE(),
+                    notEnoughData
+                )
+            )
 
             OpenSpiralBitcode.VARIABLE_VAR_REFERENCE -> OSLUnion.VariableReferenceType(flow.readNullTerminatedUTF8String())
             OpenSpiralBitcode.VARIABLE_NULL -> OSLUnion.NullType
@@ -402,11 +467,10 @@ class OpenSpiralBitcodeParser(val flow: InputFlow, val visitor: OpenSpiralBitcod
         }
 }
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun <T : OpenSpiralBitcodeVisitor> InputFlow.parseOpenSpiralBitcode(context: SpiralContext, visitor: T): T {
+public suspend fun <T : OpenSpiralBitcodeVisitor> InputFlow.parseOpenSpiralBitcode(context: SpiralContext, visitor: T): T {
     val magic = requireNotNull(readInt32LE()) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.not_enough_data") }
     require(magic == OpenSpiralBitcode.MAGIC_NUMBER_LE) { context.localise("${OpenSpiralBitcodeParser.PREFIX}.invalid_magic") }
+
     val parser = OpenSpiralBitcodeParser(this, visitor, 0)
     parser.parse(context)
     return visitor

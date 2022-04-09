@@ -12,15 +12,14 @@ import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 
-@ExperimentalUnsignedTypes
-data class TextureSrdEntry(
+public data class TextureSrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
     override val unknown: Int
 ) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x24545852
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x24545852
     }
 
     val mipmaps: List<RSISrdEntry.ResourceIndex.GlobalTextureResource>
@@ -71,11 +70,12 @@ data class TextureSrdEntry(
 }
 
 @SrdBuilder
-inline fun buildTextureSrdEntry(unk1: Int, swizzle: Int, displayWidth: Int, displayHeight: Int, scanline: Int, format: Int, unk2: Int, palette: Int, paletteID: Int, rsi: () -> RSISrdEntry): TextureSrdEntry =
+public inline fun buildTextureSrdEntry(unk1: Int, swizzle: Int, displayWidth: Int, displayHeight: Int, scanline: Int, format: Int, unk2: Int, palette: Int, paletteID: Int, rsi: () -> RSISrdEntry): TextureSrdEntry =
     buildTextureSrdEntry(unk1, swizzle, displayWidth, displayHeight, scanline, format, unk2, palette, paletteID, rsi())
 
+@Suppress("NOTHING_TO_INLINE")
 @SrdBuilder
-inline fun buildTextureSrdEntry(unk1: Int, swizzle: Int, displayWidth: Int, displayHeight: Int, scanline: Int, format: Int, unk2: Int, palette: Int, paletteID: Int, rsi: RSISrdEntry): TextureSrdEntry {
+public inline fun buildTextureSrdEntry(unk1: Int, swizzle: Int, displayWidth: Int, displayHeight: Int, scanline: Int, format: Int, unk2: Int, palette: Int, paletteID: Int, rsi: RSISrdEntry): TextureSrdEntry {
     val entry = TextureSrdEntry(TextureSrdEntry.MAGIC_NUMBER_BE, ULong.MAX_VALUE, ULong.MAX_VALUE, 0)
     entry.unk1 = unk1
     entry.swizzle = swizzle

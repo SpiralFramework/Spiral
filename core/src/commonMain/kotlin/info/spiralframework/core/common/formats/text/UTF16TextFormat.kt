@@ -19,7 +19,7 @@ import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 
 object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
     override val name: String = "UTF-16 Text"
@@ -29,7 +29,7 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
         source.openInputFlow().flatMap { flow ->
             val bom = flow.readInt16LE()
             if (bom == 0xFFFE || bom == 0xFEFF) KorneaResult.success(Optional.empty<String>()) else KorneaResult.errorAsIllegalArgument(-1, "Invalid magic number $bom")
-        }.buildFormatResult(1.0)
+        }.ensureFormatSuccess(1.0)
 
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<String> {
         val data = source.useInputFlow { flow -> flow.readBytes() }
@@ -40,7 +40,7 @@ object UTF16TextFormat : ReadableSpiralFormat<String>, WritableSpiralFormat {
 
         if (!hasBom)
             return KorneaResult.errorAsIllegalArgument(-1, "Invalid byte order marker ${data[0].toHexString()} ${data[1].toHexString()}")
-        return buildFormatResult(data.decodeToUTF16String().trimEnd('\u0000'), 1.0)
+        return ensureFormatSuccess(data.decodeToUTF16String().trimEnd('\u0000'), 1.0)
     }
 
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = true

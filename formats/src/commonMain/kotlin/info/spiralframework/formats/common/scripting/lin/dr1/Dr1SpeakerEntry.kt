@@ -4,24 +4,24 @@ import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
-inline class Dr1SpeakerEntry(override val rawArguments: IntArray): MutableLinEntry {
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(characterID: Int): this(intArrayOf(characterID))
+public class Dr1SpeakerEntry(override val rawArguments: IntArray): MutableLinEntry {
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(characterID: Int): this(intArrayOf(characterID))
 
     override val opcode: Int
         get() = 0x21
 
-    var characterID: Int
+    public var characterID: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         val speakerName = game?.linCharacterIDs
-                ?.get(characterID)
-                ?.toLowerCase()
-                ?.replace(' ', '_')
-                ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+            ?.get(characterID)
+            ?.lowercase()
+            ?.replace(' ', '_')
+            ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+
         if (speakerName?.isNotBlank() == true) {
             val speakerVariable = "speaker_$speakerName"
             if (speakerVariable !in variables) {

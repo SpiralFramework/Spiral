@@ -49,16 +49,6 @@ kotlin {
                 explicitApi()
             }
         }
-
-//        jsTest {
-//            dependencies {
-//                implementation kotlin('test-js')
-//            }
-//        }
-//        mingwMain {
-//        }
-//        mingwTest {
-//        }
     }
 }
 

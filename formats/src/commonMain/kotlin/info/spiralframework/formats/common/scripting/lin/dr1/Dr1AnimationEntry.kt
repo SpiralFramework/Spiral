@@ -4,36 +4,35 @@ import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 import info.spiralframework.formats.common.scripting.osl.RawNumberValue
 
-inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int) : this(intArrayOf(id shr 8, id and 0xFF, arg3, arg4, arg5, arg6, arg7, frame))
+public class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(id: Int, arg3: Int, arg4: Int, arg5: Int, arg6: Int, arg7: Int, frame: Int) : this(intArrayOf(id shr 8, id and 0xFF, arg3, arg4, arg5, arg6, arg7, frame))
 
     override val opcode: Int
         get() = 0x06
 
-    var id: Int
+    public var id: Int
         get() = getInt16BE(0)
         set(value) = setInt16BE(0, value)
-    var arg3: Int
+    public var arg3: Int
         get() = rawArguments[2]
         set(value) = set(2, value)
-    var arg4: Int
+    public var arg4: Int
         get() = rawArguments[3]
         set(value) = set(3, value)
-    var arg5: Int
+    public var arg5: Int
         get() = rawArguments[4]
         set(value) = set(4, value)
-    var arg6: Int
+    public var arg6: Int
         get() = rawArguments[5]
         set(value) = set(5, value)
-    var arg7: Int
+    public var arg7: Int
         get() = rawArguments[6]
         set(value) = set(6, value)
-    var frame: Int
+    public var frame: Int
         get() = rawArguments[7]
         set(value) = set(7, value)
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpile(indent: Int) {
         addOutput {
             repeat(indent) { append('\t') }
@@ -53,10 +52,10 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
                 }
             } else if (id >= 2000) {
                 val itemName = game?.linItemNames
-                        ?.getOrNull(id - 2000)
-                        ?.toLowerCase()
-                        ?.replace(' ', '_')
-                        ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+                    ?.getOrNull(id - 2000)
+                    ?.lowercase()
+                    ?.replace(' ', '_')
+                    ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
                 if (frame == 1) {
                     append("ShowItem(")
@@ -98,7 +97,6 @@ inline class Dr1AnimationEntry(override val rawArguments: IntArray) : MutableLin
 
     }
 
-    @ExperimentalUnsignedTypes
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         with(builder) {
             append("int16BE(")

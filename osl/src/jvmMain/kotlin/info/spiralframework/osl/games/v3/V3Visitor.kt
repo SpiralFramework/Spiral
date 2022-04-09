@@ -2,17 +2,13 @@ package info.spiralframework.osl.games.v3
 
 import info.spiralframework.formats.common.games.DRv3
 import info.spiralframework.formats.common.scripting.wrd.CustomWordScript
-import info.spiralframework.formats.common.scripting.wrd.UnknownWrdEntry
-import info.spiralframework.formats.common.scripting.wrd.WordScriptValue
 import info.spiralframework.osb.common.OSLUnion
-import info.spiralframework.osl.games.DRGameVisitor
 
-@ExperimentalUnsignedTypes
-open class V3Visitor(val game: DRv3) {
+public open class V3Visitor(public val game: DRv3) {
     //TODO: Make private again
-    val customWrd = CustomWordScript()
+    private val customWrd: CustomWordScript = CustomWordScript()
 
-    fun handleScriptLine(line: OSLUnion) {
+    public fun handleScriptLine(line: OSLUnion) {
         when (line) {
             is OSLUnion.NumberType -> {
             }
@@ -26,6 +22,7 @@ open class V3Visitor(val game: DRv3) {
             }
             OSLUnion.NoOpType -> {
             }
+            else -> {}
         }
     }
 
@@ -41,7 +38,7 @@ open class V3Visitor(val game: DRv3) {
 //        val parsedArguments = WordScriptValue.parse(arguments, customWrd.labels, customWrd.parameters, customWrd.strings, game.wrdOpcodeCommandType[opcode])
 //    }
 
-    fun handleArgumentForEntry(arguments: MutableList<Int>, argument: OSLUnion) {
+    public fun handleArgumentForEntry(arguments: MutableList<Int>, argument: OSLUnion) {
         when (argument) {
             is OSLUnion.NumberType -> arguments.add(argument { toInt() and 0xFFFF })
             is OSLUnion.RawStringType -> arguments.add(argument { customWrd.addText(this) })
@@ -54,21 +51,23 @@ open class V3Visitor(val game: DRv3) {
             }
             OSLUnion.NoOpType -> {
             }
+
+            else -> {}
         }
     }
 
-    fun clearCltCode(builder: StringBuilder): Boolean {
+    public fun clearCltCode(builder: StringBuilder): Boolean {
         builder.append("<CLT=cltNORMAL>")
         return true
     }
 
-    fun handleCltCode(builder: StringBuilder, code: String): Boolean {
+    public fun handleCltCode(builder: StringBuilder, code: String): Boolean {
         builder.append("<CLT=$code>")
         return true
     }
 
     //CaptainSwag101#0482: V3 does not terminate CLT commands
-    fun closeCltCode(builder: StringBuilder) {}
+    public fun closeCltCode(builder: StringBuilder) {}
 
 //    fun scriptResult(): OSLUnion = OSLUnion.CustomWrdType(customWrd)
 }

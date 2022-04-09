@@ -11,9 +11,16 @@ import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.withFormats
 
-@ExperimentalUnsignedTypes
-data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val timeDateStamp: Int, val pointerToSymbolTable: Int, val numberOfSymbols: Int, val sizeOfOptionalHeader: Int, val characteristics: Int) {
-    enum class MachineType(val hexValue: Int) {
+public data class COFFHeader(
+    val machine: MachineType,
+    val numberOfSections: Int,
+    val timeDateStamp: Int,
+    val pointerToSymbolTable: Int,
+    val numberOfSymbols: Int,
+    val sizeOfOptionalHeader: Int,
+    val characteristics: Int
+) {
+    public enum class MachineType(public val hexValue: Int) {
         INTEL_386(0x14C),
         X64(0x8664),
         MIPS_R3000(0x162),
@@ -42,53 +49,72 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
         ARM64_LITTLE_ENDIAN(0xAA64),
         CLR_PURE_MSIL(0xC0EE);
 
-        companion object {
-            fun valueOf(hexValue: Int): MachineType? = values().firstOrNull { type -> type.hexValue == hexValue }
+        public companion object {
+            public fun valueOf(hexValue: Int): MachineType? = values().firstOrNull { type -> type.hexValue == hexValue }
         }
     }
 
-    companion object {
+    public companion object {
         /** Relocation information was stripped from file */
-        const val IMAGE_FILE_RELOCS_STRIPPED = 0x0001
+        public const val IMAGE_FILE_RELOCS_STRIPPED: Int = 0x0001
+
         /** The file is executable */
-        const val IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002
+        public const val IMAGE_FILE_EXECUTABLE_IMAGE: Int = 0x0002
+
         /** COFF line numbers were stripped from file */
-        const val IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004
+        public const val IMAGE_FILE_LINE_NUMS_STRIPPED: Int = 0x0004
+
         /** COFF symbol table entries were stripped from file */
-        const val IMAGE_FILE_LOCAL_SYMS_STRIPPED = 0x0008
+        public const val IMAGE_FILE_LOCAL_SYMS_STRIPPED: Int = 0x0008
+
         /** Aggressively trim the working set (obsolete) */
-        const val IMAGE_FILE_AGGRESSIVE_WS_TRIM = 0x0010
+        public const val IMAGE_FILE_AGGRESSIVE_WS_TRIM: Int = 0x0010
+
         /** The application can handle addresses greater than 2 GB */
-        const val IMAGE_FILE_LARGE_ADDRESS_AWARE = 0x0020
+        public const val IMAGE_FILE_LARGE_ADDRESS_AWARE: Int = 0x0020
+
         /** The bytes of the word are reversed (obsolete) */
-        const val IMAGE_FILE_BYTES_REVERSED_LO = 0x0080
+        public const val IMAGE_FILE_BYTES_REVERSED_LO: Int = 0x0080
+
         /** The computer supports 32-bit words */
-        const val IMAGE_FILE_32BIT_MACHINE = 0x0100
+        public const val IMAGE_FILE_32BIT_MACHINE: Int = 0x0100
+
         /** Debugging information was removed and stored separately in another file */
-        const val IMAGE_FILE_DEBUG_STRIPPED = 0x0200
+        public const val IMAGE_FILE_DEBUG_STRIPPED: Int = 0x0200
+
         /** If the image is on removable media, copy it to and run it from the swap file */
-        const val IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP = 0x0400
+        public const val IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP: Int = 0x0400
+
         /** If the image is on the network, copy it to and run it from the swap file */
-        const val IMAGE_FILE_NET_RUN_FROM_SWAP = 0x0800
+        public const val IMAGE_FILE_NET_RUN_FROM_SWAP: Int = 0x0800
+
         /** The image is a system file */
-        const val IMAGE_FILE_SYSTEM = 0x1000
+        public const val IMAGE_FILE_SYSTEM: Int = 0x1000
+
         /** The image is a DLL file */
-        const val IMAGE_FILE_DLL = 0x2000
+        public const val IMAGE_FILE_DLL: Int = 0x2000
+
         /** The image should only be run on a single processor computer */
-        const val IMAGE_FILE_UP_SYSTEM_ONLY = 0x4000
+        public const val IMAGE_FILE_UP_SYSTEM_ONLY: Int = 0x4000
+
         /** The bytes of the word are reversed (obsolete) */
-        const val IMAGE_FILE_BYTES_REVERSED_HI = 0x8000
+        public const val IMAGE_FILE_BYTES_REVERSED_HI: Int = 0x8000
 
-        const val NO_MACHINE = 0x0000
+        public const val NO_MACHINE: Int = 0x0000
 
-        const val NOT_ENOUGH_DATA_KEY = "formats.exe.coff.not_enough_data"
-        const val NO_MACHINE_KEY = "formats.exe.coff.no_machine"
+        public const val NOT_ENOUGH_DATA_KEY: String = "formats.exe.coff.not_enough_data"
+        public const val NO_MACHINE_KEY: String = "formats.exe.coff.no_machine"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> = dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<COFFHeader> {
+        public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<COFFHeader> =
+            dataSource.useInputFlowForResult { flow -> invoke(context, flow) }
+
+        public suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<COFFHeader> {
             withFormats(context) {
                 val machineHexValue = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.errorAsIllegalArgument(NO_MACHINE, localise(NO_MACHINE_KEY, machineHexValue.toHexString()))
+                val machine = MachineType.valueOf(machineHexValue) ?: return KorneaResult.errorAsIllegalArgument(
+                    NO_MACHINE,
+                    localise(NO_MACHINE_KEY, machineHexValue.toHexString())
+                )
                 val numberOfSections = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val timeDateStamp = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val pointerToSymbolTable = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -96,7 +122,17 @@ data class COFFHeader(val machine: MachineType, val numberOfSections: Int, val t
                 val sizeOfOptionalHeader = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val characteristics = flow.readInt16LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
-                return KorneaResult.success(COFFHeader(machine, numberOfSections, timeDateStamp, pointerToSymbolTable, numberOfSymbols, sizeOfOptionalHeader, characteristics))
+                return KorneaResult.success(
+                    COFFHeader(
+                        machine,
+                        numberOfSections,
+                        timeDateStamp,
+                        pointerToSymbolTable,
+                        numberOfSymbols,
+                        sizeOfOptionalHeader,
+                        characteristics
+                    )
+                )
             }
         }
     }

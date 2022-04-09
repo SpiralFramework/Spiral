@@ -13,23 +13,22 @@ import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 
-typealias VertexBlock = RSISrdEntry.ResourceIndex
-typealias IndexBlock = RSISrdEntry.ResourceIndex
-typealias FaceBlock = RSISrdEntry.ResourceIndex
+public typealias VertexBlock = RSISrdEntry.ResourceIndex
+public typealias IndexBlock = RSISrdEntry.ResourceIndex
+public typealias FaceBlock = RSISrdEntry.ResourceIndex
 
-@ExperimentalUnsignedTypes
 /** Original Work Do Not Steal */
-data class VTXSrdEntry(
+public data class VTXSrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
     override val unknown: Int
 ) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x24565458
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x24565458
     }
 
-    data class VertexSizePair(val offset: Int, val size: Int)
+    public data class VertexSizePair(val offset: Int, val size: Int)
 
     val vertexBlock: VertexBlock
         get() = rsiEntry.resources[0]

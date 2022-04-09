@@ -11,7 +11,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 import info.spiralframework.formats.common.compression.decompressV3
 
 object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
@@ -20,7 +20,7 @@ object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
         if (source.useInputFlow { flow -> flow.readInt32BE() == info.spiralframework.formats.common.compression.DRV3_COMP_MAGIC_NUMBER }.getOrElse(false))
-            return buildFormatResult(Optional.empty(), 1.0)
+            return ensureFormatSuccess(Optional.empty(), 1.0)
         return KorneaResult.empty()
     }
 
@@ -44,7 +44,7 @@ object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
                 decompressV3(context, data).map { data ->
                     output.write(data)
 
-                    buildFormatResult(cache, 1.0)
+                    ensureFormatSuccess(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -53,7 +53,7 @@ object DRv3CompressionFormat: ReadableSpiralFormat<DataSource<*>> {
                 cache.close()
 
                 decompressV3(context, data).flatMap { decompressed ->
-                    buildFormatResult(BinaryDataSource(decompressed), 1.0)
+                    ensureFormatSuccess(BinaryDataSource(decompressed), 1.0)
                 }
             }
     }

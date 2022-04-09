@@ -1,7 +1,6 @@
 package info.spiralframework.formats.common.archives.srd
 
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.EnumSeekMode
 import dev.brella.kornea.io.common.flow.*
 import dev.brella.kornea.io.common.flow.extensions.*
@@ -9,15 +8,14 @@ import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.text.lazyString
 
-@ExperimentalUnsignedTypes
-data class TRESrdEntry(
+public data class TRESrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
     override val unknown: Int
 ) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
-    sealed class TreeNode {
-        data class Branch internal constructor(
+    public sealed class TreeNode {
+        public data class Branch internal constructor(
             val stringOffset: UInt,
             val leafValueOffset: UInt,
             val leafCount: Int,
@@ -28,7 +26,7 @@ data class TRESrdEntry(
             override val string: String,
             val children: MutableList<TreeNode>
         ) : TreeNode() {
-            companion object {
+            public companion object {
                 internal suspend inline operator fun invoke(
                     flow: SeekableInputFlow,
                     stringOffset: UInt,
@@ -74,7 +72,7 @@ data class TRESrdEntry(
                     )
             }
 
-            infix fun descend(depth: Int): Branch {
+            public infix fun descend(depth: Int): Branch {
                 var node = this
                 repeat(depth - 1) {
                     //TODO: Make sure this is right
@@ -84,7 +82,7 @@ data class TRESrdEntry(
                 return node
             }
 
-            infix fun descend(path: List<String>): Branch {
+            public infix fun descend(path: List<String>): Branch {
                 var node = this
                 path.forEachIndexed { index, seg ->
                     node = node.children.firstOrNull { node -> node.string.split('|').drop(2).getOrNull(index) == seg } as? Branch ?: return node
@@ -93,13 +91,13 @@ data class TRESrdEntry(
                 return node
             }
 
-            infix fun add(child: TreeNode) {
+            public infix fun add(child: TreeNode) {
                 child.parent = this
                 children.add(child)
             }
 
             @Suppress("UNCHECKED_CAST")
-            fun leaves(): List<Leaf> =
+            public fun leaves(): List<Leaf> =
                 if (children.isEmpty()) emptyList()
                 else if (children.all { node -> node is Leaf }) children as List<Leaf>
                 else children.flatMap { node ->
@@ -114,14 +112,14 @@ data class TRESrdEntry(
             }
         }
 
-        data class Leaf(val stringOffset: UInt, val unk: UInt, override val string: String) : TreeNode()
+        public data class Leaf(val stringOffset: UInt, val unk: UInt, override val string: String) : TreeNode()
 
-        var parent: Branch? = null
-        abstract val string: String
+        public var parent: Branch? = null
+        public abstract val string: String
     }
 
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x24545245
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x24545245
     }
 
     var maxTreeDepth: UInt by oneTimeMutableInline()
@@ -164,7 +162,7 @@ data class TRESrdEntry(
             .mapValues { (_, values) -> values.sortedBy(TreeNode.Branch::string) }
             .entries
             .sortedBy(Map.Entry<Int, List<TreeNode.Branch>>::key)
-            .forEach { (depth, branches) ->
+            .forEach { (_, branches) ->
                 branches.forEach { branch ->
                     trace("Descending into {0} -> {1} ({2} -> {3})", tree.string, lazyString { branch.string.split('|').drop(2).take(branch.nodeDepth - 1) }, branch.string, branch.nodeDepth)
                     (tree descend branch.string.split('|').drop(2).take(branch.nodeDepth - 1)).add(branch)
@@ -183,7 +181,7 @@ data class TRESrdEntry(
     }
 }
 
-fun TRESrdEntry.TreeNode.Branch.traverse(list: MutableList<TRESrdEntry.TreeNode> = ArrayList()): List<TRESrdEntry.TreeNode> {
+public fun TRESrdEntry.TreeNode.Branch.traverse(list: MutableList<TRESrdEntry.TreeNode> = ArrayList()): List<TRESrdEntry.TreeNode> {
     list.add(this)
 
     children.forEach { node ->

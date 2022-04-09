@@ -23,13 +23,15 @@ import info.spiralframework.formats.common.scripting.wrd.WrdEntry
  * The Danganronpa Games all share similar properties, which can be accessed here
  * This is only used as a form of abstraction.
  */
-interface DrGame {
-    companion object: ISpiralProperty.PropertyKey<DrGame>, KorneaTypeChecker<DrGame> by KorneaTypeChecker.ClassBased() {
+public interface DrGame {
+    public companion object : ISpiralProperty.PropertyKey<DrGame>,
+        KorneaTypeChecker<DrGame> by KorneaTypeChecker.ClassBased() {
         override val name: String = "DrGame"
 
-        val NAMES = arrayOf(Dr1.NAMES.first(), Dr2.NAMES.first(), UDG.NAMES.first(), DRv3.NAMES.first())
+        public val NAMES: Array<String> =
+            arrayOf(Dr1.PRIMARY_NAME, Dr2.PRIMARY_NAME, UDG.PRIMARY_NAME, DRv3.PRIMARY_NAME)
 
-        val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<DrGame>> =
+        public val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<DrGame>> =
             mutableMapOfAll(
                 Dr1.NAMES to SpiralContext::Dr1,
                 Dr2.NAMES to SpiralContext::Dr2,
@@ -41,15 +43,15 @@ interface DrGame {
         override fun equals(other: Any?): Boolean = defaultEquals(other)
     }
 
-    val names: Array<String>
-    val identifier: String
+    public val names: Array<String>
+    public val identifier: String
         get() = names.firstOrNull() ?: "none"
 
-    val steamID: String?
+    public val steamID: String?
 
     /** Traits */
 
-    interface UnknownGame: DrGame {
+    public interface UnknownGame : DrGame {
         override val names: Array<String>
             get() = arrayOf("Unknown")
 
@@ -60,18 +62,19 @@ interface DrGame {
             get() = null
     }
 
-    interface ScriptOpcodeFactory<P, S> {
-        fun entryFor(opcode: Int, rawArguments: P): S
+    public interface ScriptOpcodeFactory<P, S> {
+        public fun entryFor(opcode: Int, rawArguments: P): S
     }
 
     /** A game that supports lin scripts */
-    interface LinScriptable: DrGame {
-        companion object: ISpiralProperty.PropertyKey<LinScriptable>, KorneaTypeChecker<LinScriptable> by KorneaTypeChecker.ClassBased() {
-            override val name: String = "DrGame"
+    public interface LinScriptable : DrGame {
+        public companion object : ISpiralProperty.PropertyKey<LinScriptable>,
+            KorneaTypeChecker<LinScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "LinScriptable"
 
-            val NAMES = arrayOf(Dr1.NAMES.first(), Dr2.NAMES.first(), UDG.NAMES.first())
+            public val NAMES: Array<String> = arrayOf(Dr1.PRIMARY_NAME, Dr2.PRIMARY_NAME, UDG.PRIMARY_NAME)
 
-            val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<LinScriptable>> =
+            public val VALUES: MutableMap<String, suspend (context: SpiralContext) -> KorneaResult<LinScriptable>> =
                 mutableMapOfAll(
                     Dr1.NAMES to SpiralContext::Dr1,
                     Dr2.NAMES to SpiralContext::Dr2,
@@ -82,148 +85,155 @@ interface DrGame {
             override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
-        object Unknown : LinScriptable, UnknownGame {
+        public object Unknown : LinScriptable, UnknownGame {
             override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = emptyMap()
             override val linCharacterIdentifiers: Map<String, Int> = emptyMap()
             override val linCharacterIDs: Map<Int, String> = emptyMap()
-            override val linBgmNames: Array<String> = emptyArray()
-            override val linItemNames: Array<String> = emptyArray()
-            override val linEvidenceNames: Array<String> = emptyArray()
-            override val linMapNames: Array<String> = emptyArray()
-            override val linMovieNames: Array<String> = emptyArray()
-            override val linSkillNames: Array<String> = emptyArray()
+            override val linBgmNames: List<String> = emptyList()
+            override val linItemNames: List<String> = emptyList()
+            override val linEvidenceNames: List<String> = emptyList()
+            override val linMapNames: List<String> = emptyList()
+            override val linMovieNames: List<String> = emptyList()
+            override val linSkillNames: List<String> = emptyList()
             override val linColourCodes: Map<String, Int> = emptyMap()
             override fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int = -1
             override fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int> = Triple(-1, -1, -1)
         }
 
-        val linOpcodeMap: OpcodeMap<IntArray, LinEntry>
+        public val linOpcodeMap: OpcodeMap<IntArray, LinEntry>
 
         /** Name -> Internal ID */
-        val linCharacterIdentifiers: Map<String, Int>
+        public val linCharacterIdentifiers: Map<String, Int>
 
         /** Internal ID -> Name */
-        val linCharacterIDs: Map<Int, String>
+        public val linCharacterIDs: Map<Int, String>
 
-        val linBgmNames: Array<String>
-        val linItemNames: Array<String>
-        val linEvidenceNames: Array<String>
-        val linSkillNames: Array<String>
-        val linMapNames: Array<String>
-        val linMovieNames: Array<String>
+        public val linBgmNames: List<String>
+        public val linItemNames: List<String>
+        public val linEvidenceNames: List<String>
+        public val linSkillNames: List<String>
+        public val linMapNames: List<String>
+        public val linMovieNames: List<String>
 
         /** A map of the colour to the internal clt number */
-        val linColourCodes: Map<String, Int>
+        public val linColourCodes: Map<String, Int>
 
-        fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int
-        fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>?
+        public fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int
+        public fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>?
 
-        fun getNameOfLinGameParameter(parameter: Int): String? = null
-        fun getNameOfLinGameParameterValue(parameter: Int, value: Int): String? = null
+        public fun getNameOfLinGameParameter(parameter: Int): String? = null
+        public fun getNameOfLinGameParameterValue(parameter: Int, value: Int): String? = null
 
-        fun getNameOfLinUIElement(element: Int): String? = null
+        public fun getNameOfLinUIElement(element: Int): String? = null
 
-        fun getLinFlagName(flagGroup: Int, flagID: Int): String? = null
+        public fun getLinFlagName(flagGroup: Int, flagID: Int): String? = null
+
+        public fun formLinOpcode(name: String, args: IntArray): LinEntry? =
+            linOpcodeMap[name]?.let { opcode -> opcode.entryConstructor(opcode.opcode, args) }
     }
 
     /** TODO: Figure out how to do this full stop */
-    interface LinNonstopScriptable: DrGame {
-        companion object: ISpiralProperty.PropertyKey<LinNonstopScriptable>, KorneaTypeChecker<LinNonstopScriptable> by KorneaTypeChecker.ClassBased() {
-            override val name: String = "DrGame"
+    public interface LinNonstopScriptable : DrGame {
+        public companion object : ISpiralProperty.PropertyKey<LinNonstopScriptable>,
+            KorneaTypeChecker<LinNonstopScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "LinNonstopScriptable"
 
             override fun hashCode(): Int = defaultHashCode()
             override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
-        val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
-        val linNonstopSectionSize: Int
+        public val linNonstopOpcodeNames: OpcodeMap<IntArray, String>
+        public val linNonstopSectionSize: Int
     }
 
     /** TODO: Figure out how to do this for V3 */
-    interface LinTrialSupported {
-        companion object: ISpiralProperty.PropertyKey<LinTrialSupported>, KorneaTypeChecker<LinTrialSupported> by KorneaTypeChecker.ClassBased() {
-            override val name: String = "DrGame"
+    public interface LinTrialSupported {
+        public companion object : ISpiralProperty.PropertyKey<LinTrialSupported>,
+            KorneaTypeChecker<LinTrialSupported> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "LinTrialSupported"
 
             override fun hashCode(): Int = defaultHashCode()
             override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
 
-        val trialCameraNames: Array<String>
-        val evidenceNames: Array<String>
+        public val trialCameraNames: Array<String>
+        public val evidenceNames: Array<String>
     }
 
     /** A game that supports word scripts */
-    interface WordScriptable: DrGame {
-        companion object: ISpiralProperty.PropertyKey<WordScriptable>, KorneaTypeChecker<WordScriptable> by KorneaTypeChecker.ClassBased() {
-            override val name: String = "DrGame"
+    public interface WordScriptable : DrGame {
+        public companion object : ISpiralProperty.PropertyKey<WordScriptable>,
+            KorneaTypeChecker<WordScriptable> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "WordScriptable"
 
             override fun hashCode(): Int = defaultHashCode()
             override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
-        object Unknown : WordScriptable, UnknownGame {
+        public object Unknown : WordScriptable, UnknownGame {
             override val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry> = emptyMap()
             override val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand> = emptyMap()
             override val wrdCharacterIdentifiers: Map<String, String> = emptyMap()
             override val wrdCharacterNames: Map<String, String> = emptyMap()
-            override val wrdItemNames: Array<String> = emptyArray()
+            override val wrdItemNames: List<String> = emptyList()
             override val wrdColourCodes: Map<String, String> = emptyMap()
         }
 
-        val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry>
+        public val wrdOpcodeMap: OpcodeMap<Array<WordScriptValue>, WrdEntry>
 
-        val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand>
+        public val wrdOpcodeCommandType: OpcodeCommandTypeMap<EnumWordScriptCommand>
 
         /** Name -> Internal ID */
-        val wrdCharacterIdentifiers: Map<String, String>
+        public val wrdCharacterIdentifiers: Map<String, String>
 
         /** Internal ID -> Name */
-        val wrdCharacterNames: Map<String, String>
+        public val wrdCharacterNames: Map<String, String>
 
-        val wrdItemNames: Array<String>
+        public val wrdItemNames: List<String>
 
         /** A map of the colour to the internal clt name */
-        val wrdColourCodes: Map<String, String>
+        public val wrdColourCodes: Map<String, String>
     }
 
     /** A game that has subfiles stored within pak archives. */
-    interface PakMapped {
-        companion object: ISpiralProperty.PropertyKey<PakMapped>, KorneaTypeChecker<PakMapped> by KorneaTypeChecker.ClassBased() {
-            override val name: String = "DrGame"
+    public interface PakMapped {
+        public companion object : ISpiralProperty.PropertyKey<PakMapped>,
+            KorneaTypeChecker<PakMapped> by KorneaTypeChecker.ClassBased() {
+            override val name: String = "PakMapped"
 
             override fun hashCode(): Int = defaultHashCode()
             override fun equals(other: Any?): Boolean = defaultEquals(other)
         }
 
-        val pakNames: Map<String, Array<String>>
+        public val pakNames: Map<String, List<String>>
     }
 }
 
-@ExperimentalUnsignedTypes
-fun DrGame.LinScriptable.SpeakerEntry(speaker: Int): LinEntry? =
-        when (this) {
-            is Dr1 -> Dr1SpeakerEntry(speaker)
-            else -> linOpcodeMap["Speaker"]?.let { opcode -> opcode.entryConstructor(opcode.opcode, intArrayOf(speaker)) }
-        }
+@Suppress("FunctionName")
+public fun DrGame.LinScriptable.SpeakerEntry(speaker: Int): LinEntry? =
+    when (this) {
+        is Dr1 -> Dr1SpeakerEntry(speaker)
+        else -> formLinOpcode("Speaker", intArrayOf(speaker))
+    }
 
-@ExperimentalUnsignedTypes
-fun DrGame.LinScriptable.TextEntry(textID: Int): LinEntry? =
-        when (this) {
-            is Dr1 -> Dr1TextEntry(textID)
-            else -> linOpcodeMap["Text"]?.let { opcode -> opcode.entryConstructor(opcode.opcode, intArrayOf(textID)) }
-        }
+@Suppress("FunctionName")
+public fun DrGame.LinScriptable.TextEntry(textID: Int): LinEntry? =
+    when (this) {
+        is Dr1 -> Dr1TextEntry(textID)
+        else -> formLinOpcode("Text", intArrayOf(textID))
+    }
 
-@ExperimentalUnsignedTypes
-fun DrGame.LinScriptable.WaitFrame(): LinEntry? =
-        when (this) {
-            is Dr1 -> Dr1WaitFrameEntry()
-            else -> linOpcodeMap["Wait Frame"]?.let { opcode -> opcode.entryConstructor(opcode.opcode, LinEntry.EMPTY_ARGUMENT_ARRAY) }
-        }
+@Suppress("FunctionName")
+public fun DrGame.LinScriptable.WaitFrame(): LinEntry? =
+    when (this) {
+        is Dr1 -> Dr1WaitFrameEntry()
+        else -> formLinOpcode("Wait Frame", LinEntry.EMPTY_ARGUMENT_ARRAY)
+    }
 
-@ExperimentalUnsignedTypes
-fun DrGame.LinScriptable.WaitForInput(): LinEntry? =
-        when (this) {
-            is Dr1 -> Dr1WaitForInputEntry()
-            else -> linOpcodeMap["Wait for Input"]?.let { opcode -> opcode.entryConstructor(opcode.opcode, LinEntry.EMPTY_ARGUMENT_ARRAY) }
-        }
+@Suppress("FunctionName")
+public fun DrGame.LinScriptable.WaitForInput(): LinEntry? =
+    when (this) {
+        is Dr1 -> Dr1WaitForInputEntry()
+        else -> formLinOpcode("Wait for Input", LinEntry.EMPTY_ARGUMENT_ARRAY)
+    }

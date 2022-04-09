@@ -39,7 +39,7 @@ object TGAFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
         with(context) {
             try {
                 return source.useInputFlowForResult { flow -> flow.readTargaImage() }
-                    .buildFormatResult(1.0)
+                    .ensureFormatSuccess(1.0)
             } catch (io: IOException) {
                 debug("core.formats.tga.invalid", source, io)
 

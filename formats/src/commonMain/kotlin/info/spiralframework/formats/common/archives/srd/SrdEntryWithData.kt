@@ -1,10 +1,6 @@
 package info.spiralframework.formats.common.archives.srd
 
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.filterToInstance
-import dev.brella.kornea.errors.common.flatMap
-import dev.brella.kornea.errors.common.useAndFlatMap
+import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.InputFlow
@@ -13,9 +9,9 @@ import dev.brella.kornea.io.common.flow.readAndClose
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 
-abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown) {
-    abstract class WithRsiSubdata(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int): SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
-        var rsiEntry: RSISrdEntry by oneTimeMutableInline()
+public abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int) : BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown) {
+    public abstract class WithRsiSubdata(classifier: Int, mainDataLength: ULong, subDataLength: ULong, unknown: Int): SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
+        public var rsiEntry: RSISrdEntry by oneTimeMutableInline()
 
         override suspend fun setup(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<WithRsiSubdata> {
             return RSISrdEntry(context, openSubDataSource(dataSource)).flatMap { rsiEntry ->
@@ -27,13 +23,13 @@ abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, subDataL
     }
 
     override suspend fun setup(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<SrdEntryWithData> {
-        val dataSource = openMainDataSource(dataSource)
-        if (dataSource.reproducibility.isRandomAccess())
-            return dataSource.openInputFlow()
+        val mainDataSource = openMainDataSource(dataSource)
+        return if (mainDataSource.reproducibility.isRandomAccess())
+            mainDataSource.openInputFlow()
                 .filterToInstance<InputFlow, SeekableInputFlow> { flow -> KorneaResult.success(BinaryInputFlow(flow.readAndClose())) }
                 .flatMap { flow -> context.setup(flow) }
         else {
-            return dataSource
+            mainDataSource
                 .openInputFlow()
                 .useAndFlatMap { flow -> context.setup(BinaryInputFlow(flow.readAndClose())) }
         }

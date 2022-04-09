@@ -11,89 +11,127 @@ import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.withFormats
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNames
 
-@ExperimentalUnsignedTypes
-open class Dr1(
-        override val linCharacterIDs: Map<Int, String>,
-        override val linCharacterIdentifiers: Map<String, Int>,
-        override val linColourCodes: Map<String, Int>,
-        override val linItemNames: Array<String>,
-        override val linBgmNames: Array<String>,
-        override val linEvidenceNames: Array<String>,
-        override val linSkillNames: Array<String>,
-        override val linMapNames: Array<String>,
-        override val linMovieNames: Array<String>,
-        override val pakNames: Map<String, Array<String>>,
-        val voiceLineArray: IntArray,
-        val gameParameterNames: Map<Int, String>,
-        val gameParameterValues: Map<Int, Map<Int, String>>,
-        val uiElements: Map<Int, String>,
-        val flagNames: Map<Int, Map<Int, String>>,
-        customOpcodes: List<JsonOpcode>
-) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>, DrGame.LinNonstopScriptable {
-    companion object {
+public open class Dr1(
+    override val linCharacterIDs: Map<Int, String>,
+    override val linCharacterIdentifiers: Map<String, Int>,
+    override val linColourCodes: Map<String, Int>,
+    override val linItemNames: List<String>,
+    override val linBgmNames: List<String>,
+    override val linEvidenceNames: List<String>,
+    override val linSkillNames: List<String>,
+    override val linMapNames: List<String>,
+    override val linMovieNames: List<String>,
+    override val pakNames: Map<String, List<String>>,
+    public val voiceLineArray: IntArray,
+    public val gameParameterNames: Map<Int, String>,
+    public val gameParameterValues: Map<Int, Map<Int, String>>,
+    public val uiElements: Map<Int, String>,
+    public val flagNames: Map<Int, Map<Int, String>>,
+    customOpcodes: List<JsonOpcode>
+) : DrGame, DrGame.LinScriptable, DrGame.PakMapped, DrGame.ScriptOpcodeFactory<IntArray, LinEntry>,
+    DrGame.LinNonstopScriptable {
+    public companion object {
         private const val MAXIMUM_CHAPTER = 8
         private const val MAXIMUM_CHARACTER = 33
 
-        const val NONSTOP_DEBATE_SECTION_SIZE = 30
+        public const val NONSTOP_DEBATE_SECTION_SIZE: Int = 30
 
-        const val IDENTIFIER = "dr1"
-        val NAMES = arrayOf("Dr1", "Danganronpa 1", "Danganronpa: Trigger Happy Havoc")
+        public const val IDENTIFIER: String = "dr1"
 
+        public val NAMES: Array<String> =
+            arrayOf("Dr1", "Danganronpa 1", "Danganronpa: Trigger Happy Havoc")
+
+        public val PRIMARY_NAME: String
+            get() = NAMES.first()
+
+        @OptIn(ExperimentalSerializationApi::class)
         @Serializable
-        data class Dr1GameJson(
-                val character_ids: Map<Int, String>,
-                val character_identifiers: Map<String, Int>,
-                val colour_codes: Map<String, Int>,
-                val item_names: Array<String>,
-                val bgm_names: Array<String>,
-                val evidence_names: Array<String>,
-                val skill_names: Array<String>,
-                val map_names: Array<String>,
-                val movie_names: Array<String>,
-                val pak_names: Map<String, Array<String>>,
-                val voice_lines: List<Int> = emptyList(),
-                val game_parameter_names: Map<Int, String> = emptyMap(),
-                val game_parameter_values: Map<Int, Map<Int, String>> = emptyMap(),
-                val ui_elements: Map<Int, String> = emptyMap(),
-                val flag_names: Map<Int, Map<Int, String>> = emptyMap()
+        public data class Dr1GameJson(
+            @JsonNames("character_ids", "characterIds")
+            val characterIDs: Map<Int, String>,
+
+            @JsonNames("character_identifiers")
+            val characterIdentifiers: Map<String, Int>,
+
+            @JsonNames("colour_codes", "color_codes", "colorCodes")
+            val colourCodes: Map<String, Int>,
+
+            @JsonNames("item_names")
+            val itemNames: List<String>,
+
+            @JsonNames("bgm_names")
+            val bgmNames: List<String>,
+
+            @JsonNames("evidence_names")
+            val evidenceNames: List<String>,
+
+            @JsonNames("skill_names")
+            val skillNames: List<String>,
+
+            @JsonNames("map_names")
+            val mapNames: List<String>,
+
+            @JsonNames("movie_names")
+            val movieNames: List<String>,
+
+            @JsonNames("pak_names")
+            val pakNames: Map<String, List<String>>,
+
+            @JsonNames("voice_lines")
+            val voiceLines: List<Int> = emptyList(),
+
+            @JsonNames("game_parameter_names")
+            val gameParameterNames: Map<Int, String> = emptyMap(),
+
+            @JsonNames("game_parameter_values")
+            val gameParameterValues: Map<Int, Map<Int, String>> = emptyMap(),
+
+            @JsonNames("ui_elements")
+            val uiElements: Map<Int, String> = emptyMap(),
+
+            @JsonNames("flag_names")
+            val flagNames: Map<Int, Map<Int, String>> = emptyMap()
         )
 
-        suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr1> {
+        public suspend operator fun invoke(context: SpiralContext): KorneaResult<Dr1> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/dr1.json"))
                 val gameString = loadResource("games/dr1.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .getOrBreak { return it.cast() }
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .getOrBreak { return it.cast() }
+
                 val gameJson = Json.decodeFromString(Dr1GameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/dr1.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
-                        .getOrElse(emptyList())
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
+                    .getOrElse { emptyList() }
 
                 return KorneaResult.success(
-                        Dr1(
-                                gameJson.character_ids,
-                                gameJson.character_identifiers,
-                                gameJson.colour_codes,
-                                gameJson.item_names,
-                                gameJson.bgm_names,
-                                gameJson.evidence_names,
-                                gameJson.skill_names,
-                                gameJson.map_names,
-                                gameJson.movie_names,
-                                gameJson.pak_names,
-                                gameJson.voice_lines.toIntArray(),
-                                gameJson.game_parameter_names,
-                                gameJson.game_parameter_values,
-                                gameJson.ui_elements,
-                                gameJson.flag_names,
-                                customOpcodes
-                        )
+                    Dr1(
+                        gameJson.characterIDs,
+                        gameJson.characterIdentifiers,
+                        gameJson.colourCodes,
+                        gameJson.itemNames,
+                        gameJson.bgmNames,
+                        gameJson.evidenceNames,
+                        gameJson.skillNames,
+                        gameJson.mapNames,
+                        gameJson.movieNames,
+                        gameJson.pakNames,
+                        gameJson.voiceLines.toIntArray(),
+                        gameJson.gameParameterNames,
+                        gameJson.gameParameterValues,
+                        gameJson.uiElements,
+                        gameJson.flagNames,
+                        customOpcodes
+                    )
                 )
             }
         }
@@ -162,7 +200,12 @@ open class Dr1(
         opcode(0x34, argumentCount = 2, names = arrayOf("Go To Label", "Goto Label", "Goto"))
 
         flagCheck(0x35, names = arrayOf("Check Flag", "Check Flag A"), flagGroupLength = 4, endFlagCheckOpcode = 0x3C)
-        flagCheck(0x36, names = arrayOf("Check Game Parameter", "Check Flag B"), flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
+        flagCheck(
+            0x36,
+            names = arrayOf("Check Game Parameter", "Check Flag B"),
+            flagGroupLength = 5,
+            endFlagCheckOpcode = 0x3C
+        )
 //            flagCheck(0x37, names = null,                                               flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
 //            flagCheck(0x38, names = null,                                               flagGroupLength = 5, endFlagCheckOpcode = 0x3C)
 
@@ -222,16 +265,15 @@ open class Dr1(
     }
 
     override fun getLinVoiceFileID(character: Int, originalChapter: Int, voiceID: Int): Int {
-        val chapter: Int
-
-        when (originalChapter) {
-            10 -> chapter = 7
-            99 -> chapter = 8
-            else -> chapter = originalChapter
+        val chapter: Int = when (originalChapter) {
+            10 -> 7
+            99 -> 8
+            else -> originalChapter
         }
 
         if (chapter > MAXIMUM_CHAPTER)
             return -1
+
         if (character > 33)
             return -1
 
@@ -247,7 +289,7 @@ open class Dr1(
         var baseIndex = 0
 
         for (charID in 0 until character) {
-            for (chapID in 1 .. MAXIMUM_CHAPTER) {
+            for (chapID in 1..MAXIMUM_CHAPTER) {
                 val min = voiceLineArray[((charID + chapID + (MAXIMUM_CHAPTER * charID)) * 2) - 1]
                 val max = voiceLineArray[(charID + chapID + (MAXIMUM_CHAPTER * charID)) * 2]
                 if (min != 0xFFFF)
@@ -267,8 +309,8 @@ open class Dr1(
 
     override fun getLinVoiceLineDetails(voiceID: Int): Triple<Int, Int, Int>? {
         var baseIndex = 0
-        for (character in 0 .. MAXIMUM_CHARACTER) {
-            for (chapter in 1 .. MAXIMUM_CHAPTER) {
+        for (character in 0..MAXIMUM_CHARACTER) {
+            for (chapter in 1..MAXIMUM_CHAPTER) {
                 val min = voiceLineArray[((character + chapter + (MAXIMUM_CHAPTER * character)) * 2) - 1]
                 val max = voiceLineArray[(character + chapter + (MAXIMUM_CHAPTER * character)) * 2]
                 if (min != 0xFFFF) {
@@ -285,7 +327,8 @@ open class Dr1(
 
     override fun getNameOfLinGameParameter(parameter: Int): String? = gameParameterNames[parameter]
 
-    override fun getNameOfLinGameParameterValue(parameter: Int, value: Int): String? = gameParameterValues[parameter]?.get(value)
+    override fun getNameOfLinGameParameterValue(parameter: Int, value: Int): String? =
+        gameParameterValues[parameter]?.get(value)
 
     override fun getNameOfLinUIElement(element: Int): String? = uiElements[element]
 
@@ -298,8 +341,8 @@ open class Dr1(
     override val linNonstopSectionSize: Int = NONSTOP_DEBATE_SECTION_SIZE
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr1() = Dr1(this)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.Dr1(): KorneaResult<Dr1> = Dr1(this)
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1(this).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeDr1(): Dr1 = Dr1(this).getOrThrow()

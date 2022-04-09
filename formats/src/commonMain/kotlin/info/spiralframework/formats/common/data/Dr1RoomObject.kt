@@ -1,6 +1,7 @@
 package info.spiralframework.formats.common.data
 
 import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.getOrThrow
 import dev.brella.kornea.errors.common.useAndFlatMap
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.InputFlow
@@ -10,14 +11,26 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 
-@ExperimentalUnsignedTypes
-class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, val y: Float, val z: Float, val width: Float, val height: Float, val perspective: Float, val unk4: Int) {
-    companion object {
-        const val PREFIX = "formats.room_object.dr1"
-        const val NOT_ENOUGH_DATA_KEY = "$PREFIX.not_enough_data"
+public class Dr1RoomObject(
+    public val unk1: Int,
+    public val id: Int,
+    public val modelID: Int,
+    public val x: Float,
+    public val y: Float,
+    public val z: Float,
+    public val width: Float,
+    public val height: Float,
+    public val perspective: Float,
+    public val unk4: Int
+) {
+    public companion object {
+        public const val PREFIX: String = "formats.room_object.dr1"
+        public const val NOT_ENOUGH_DATA_KEY: String = "$PREFIX.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1RoomObject> = dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
-        suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<Dr1RoomObject> {
+        public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<Dr1RoomObject> =
+            dataSource.openInputFlow().useAndFlatMap { flow -> invoke(context, flow) }
+
+        public suspend operator fun invoke(context: SpiralContext, flow: InputFlow): KorneaResult<Dr1RoomObject> {
             withFormats(context) {
                 val unk1 = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
                 val id = flow.readInt32LE() ?: return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -39,14 +52,12 @@ class Dr1RoomObject(val unk1: Int, val id: Int, val modelID: Int, val x: Float, 
     }
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr1RoomObject(dataSource: DataSource<*>) = Dr1RoomObject(this, dataSource)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.Dr1RoomObject(dataSource: DataSource<*>): KorneaResult<Dr1RoomObject> = Dr1RoomObject(this, dataSource)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.Dr1RoomObject(flow: InputFlow): KorneaResult<Dr1RoomObject> = Dr1RoomObject(this, flow)
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.Dr1RoomObject(flow: InputFlow) = Dr1RoomObject(this, flow)
-
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr1RoomObject(dataSource: DataSource<*>) = Dr1RoomObject(this, dataSource).get()
-
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeDr1RoomObject(flow: InputFlow) = Dr1RoomObject(this, flow).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeDr1RoomObject(dataSource: DataSource<*>): Dr1RoomObject = Dr1RoomObject(this, dataSource).getOrThrow()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeDr1RoomObject(flow: InputFlow): Dr1RoomObject = Dr1RoomObject(this, flow).getOrThrow()

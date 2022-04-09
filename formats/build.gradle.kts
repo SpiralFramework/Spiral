@@ -25,7 +25,9 @@ kotlin {
         }
         all {
             languageSettings.apply {
-                enableLanguageFeature("InlineClasses")
+                optIn("kotlin.RequiresOptIn")
+                explicitApi()
+
                 optIn("kotlin.ExperimentalUnsignedTypes")
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.contracts.ExperimentalContracts")

@@ -4,13 +4,12 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.korneaNotEnoughData
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 
-const val DR_VITA_MAGIC = 0xA755AAFCu
-const val DR_VITA_GX3_MAGIC = 0x335847
+public const val DR_VITA_MAGIC: UInt = 0xA755AAFCu
+public const val DR_VITA_GX3_MAGIC: Int = 0x335847
 
-const val DR_VITA_INVALID_MAGIC_NUMBER = 0xE001
+public const val DR_VITA_INVALID_MAGIC_NUMBER: Int = 0xE001
 
-@ExperimentalUnsignedTypes
-fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
+public fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
     var pos = 0
     val magic = data.readUInt32LE(pos) ?: return korneaNotEnoughData()
     if(magic != DR_VITA_MAGIC) {
@@ -85,5 +84,5 @@ fun decompressVita(data: ByteArray): KorneaResult<ByteArray> {
 
 //    require(output.size == rawSize.toInt())
 
-    return KorneaResult.success(output.toByteArray(), null)
+    return KorneaResult.success(output.toByteArray())
 }

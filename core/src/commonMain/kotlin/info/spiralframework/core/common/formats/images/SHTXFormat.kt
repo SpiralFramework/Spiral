@@ -26,7 +26,7 @@ import info.spiralframework.base.common.properties.get
 import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 
 object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
     enum class SHTXType {
@@ -56,7 +56,7 @@ object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
 
     override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<RgbMatrix>> =
         source.useInputFlowForResult { flow ->
-            if (flow.readInt32LE() == SHTXImage.MAGIC_NUMBER) buildFormatResult(Optional.empty(), 0.9)
+            if (flow.readInt32LE() == SHTXImage.MAGIC_NUMBER) ensureFormatSuccess(Optional.empty(), 0.9)
             else KorneaResult.empty()
         }
 

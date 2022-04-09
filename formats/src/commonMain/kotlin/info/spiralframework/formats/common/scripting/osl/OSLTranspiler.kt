@@ -1,34 +1,51 @@
 package info.spiralframework.formats.common.scripting.osl
 
-import info.spiralframework.base.common.concurrent.suspendForEach
+import dev.brella.kornea.toolkit.common.PrintFlow
+import dev.brella.kornea.toolkit.common.freeze
+import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.base.common.text.toHexString
 import info.spiralframework.formats.common.games.DrGame
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.LinScript
 import info.spiralframework.formats.common.scripting.lin.dr1.*
 import info.spiralframework.formats.common.scripting.lin.transpile
-import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.PrintOutputFlow
-import dev.brella.kornea.toolkit.common.freeze
-import dev.brella.kornea.toolkit.common.printLine
-import kotlin.contracts.ExperimentalContracts
 import kotlin.math.min
 
-sealed class TranspileOperation {
-    data class Dialogue(var speakerEntry: Dr1SpeakerEntry, var voiceLineEntry: Dr1VoiceLineEntry? = null, var text: Dr1TextEntry? = null, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
-    data class Text(var text: Dr1TextEntry, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
-    data class CheckFlag(val flagCheck: Dr1CheckFlagEntry, var endFlagCheck: Dr1EndFlagCheckEntry? = null, var whenTrue: Int? = null, var whenTrueData: List<LinEntry>? = null, var whenFalse: Int? = null) : TranspileOperation()
-    data class CheckCharacterOrObject(val checkCharacterEntry: Dr1CheckCharacterEntry?, val checkObjectEntry: Dr1CheckObjectEntry?) : TranspileOperation()
+public sealed class TranspileOperation {
+    public data class Dialogue(
+        var speakerEntry: Dr1SpeakerEntry,
+        var voiceLineEntry: Dr1VoiceLineEntry? = null,
+        var text: Dr1TextEntry? = null,
+        var waitFrame: Dr1WaitFrameEntry? = null
+    ) : TranspileOperation()
 
-    data class PresentSelection(val uiEntry: Dr1ChangeUIEntry, var entryLabel: Dr1GoToLabelEntry? = null, val branchBuffer: MutableList<LinEntry> = ArrayList(), val branches: MutableMap<Int, List<LinEntry>> = HashMap()) : TranspileOperation()
+    public data class Text(var text: Dr1TextEntry, var waitFrame: Dr1WaitFrameEntry? = null) : TranspileOperation()
+    public data class CheckFlag(
+        val flagCheck: Dr1CheckFlagEntry,
+        var endFlagCheck: Dr1EndFlagCheckEntry? = null,
+        var whenTrue: Int? = null,
+        var whenTrueData: List<LinEntry>? = null,
+        var whenFalse: Int? = null
+    ) : TranspileOperation()
+
+    public data class CheckCharacterOrObject(
+        val checkCharacterEntry: Dr1CheckCharacterEntry?,
+        val checkObjectEntry: Dr1CheckObjectEntry?
+    ) : TranspileOperation()
+
+    public data class PresentSelection(
+        val uiEntry: Dr1ChangeUIEntry,
+        var entryLabel: Dr1GoToLabelEntry? = null,
+        val branchBuffer: MutableList<LinEntry> = ArrayList(),
+        val branches: MutableMap<Int, List<LinEntry>> = HashMap()
+    ) : TranspileOperation()
 }
 
-@ExperimentalUnsignedTypes
-class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.game) {
-    companion object {
-        val VARIABLE_NAME_REGEX = "([a-zA-Z0-9_]+)".toRegex()
-        val ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX = "[^a-zA-Z0-9_]".toRegex()
-        val VARIABLE_COMPARATOR: Comparator<String> = Comparator { a, b ->
+public class LinTranspiler(public val lin: LinScript, public val game: DrGame.LinScriptable? = lin.game) {
+    public companion object {
+        public val VARIABLE_NAME_REGEX: Regex = "([a-zA-Z0-9_]+)".toRegex()
+        public val ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX: Regex = "[^a-zA-Z0-9_]".toRegex()
+        public val VARIABLE_COMPARATOR: Comparator<String> = Comparator { a, b ->
             val aComponents = a.split('_')
             val bComponents = b.split('_')
 
@@ -45,55 +62,55 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
             return@Comparator a.compareTo(b)
         }
 
-        fun sortVariableNames(keys: Set<String>): List<List<String>> =
-                keys.groupBy { name -> name.substringBefore('_') }
-                        .mapValues { (_, list) -> list.sortedWith(VARIABLE_COMPARATOR) }
-                        .entries
-                        .sortedBy(Map.Entry<String, *>::key)
-                        .map(Map.Entry<String, List<String>>::value)
+        public fun sortVariableNames(keys: Set<String>): List<List<String>> =
+            keys.groupBy { name -> name.substringBefore('_') }
+                .mapValues { (_, list) -> list.sortedWith(VARIABLE_COMPARATOR) }
+                .entries
+                .sortedBy(Map.Entry<String, *>::key)
+                .map(Map.Entry<String, List<String>>::value)
     }
 
-    val variables: MutableMap<String, TranspilerVariableValue> = HashMap()
-    val variableMappings: MutableMap<Regex, String> = HashMap()
-    val output: MutableList<String> = ArrayList()
+    public val variables: MutableMap<String, TranspilerVariableValue> = HashMap()
+    public val variableMappings: MutableMap<Regex, String> = HashMap()
+    public val output: MutableList<String> = ArrayList()
 
-    @ExperimentalContracts
-    @ExperimentalStdlibApi
-    suspend fun transpile(out: PrintOutputFlow) {
+    public suspend fun transpile(out: PrintFlow) {
         try {
             transpile(lin.scriptData.toList())
         } finally {
             out.printLine("OSL Script")
             out.print('\n')
             sortVariableNames(variables.keys)
-                    .forEach { variableGroup ->
-                        out.printLine(buildString {
-                            variableGroup.forEach { varName ->
-                                append("val ")
-                                append(varName)
-                                append(" = ")
-                                variables[varName]?.represent(this)
-                                appendLine()
-                            }
-                        })
-                    }
-            output.forEach { line -> out.printLine(variableMappings.entries.fold(line) { str, (k, v) -> str.replace(k, v) }) }
+                .forEach { variableGroup ->
+                    out.printLine(buildString {
+                        variableGroup.forEach { varName ->
+                            append("val ")
+                            append(varName)
+                            append(" = ")
+                            variables[varName]?.represent(this)
+                            appendLine()
+                        }
+                    })
+                }
+            output.forEach { line ->
+                out.printLine(variableMappings.entries.fold(line) { str, (k, v) ->
+                    str.replace(k, v)
+                })
+            }
             output.clear()
         }
     }
 
-    fun nameFor(entry: LinEntry) =
-            game?.linOpcodeMap?.get(entry.opcode)?.names?.firstOrNull() ?: entry.opcode.toHexString()
+    public fun nameFor(entry: LinEntry): String =
+        game?.linOpcodeMap?.get(entry.opcode)?.names?.firstOrNull() ?: entry.opcode.toHexString()
 
-    fun addOutput(block: StringBuilder.() -> Unit) {
+    public fun addOutput(block: StringBuilder.() -> Unit) {
         val builder = StringBuilder()
         builder.block()
         output.add(builder.toString())
     }
 
-    @ExperimentalContracts
-    @ExperimentalStdlibApi
-    suspend fun MutableList<LinEntry>.dumpEntries(indent: Int = 0) {
+    private suspend fun MutableList<LinEntry>.dumpEntries(indent: Int = 0) {
         if (size > 1) {
             get(0).transpile(this@LinTranspiler, indent)
             transpile(drop(1), indent)
@@ -104,14 +121,13 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
         clear()
     }
 
-    fun String.sanitise(): String = replace("\"", "\\\"").replace("\n", " &br ")
+    public fun String.sanitise(): String = replace("\"", "\\\"").replace("\n", " &br ")
 
-    @ExperimentalContracts
-    @ExperimentalStdlibApi
     private suspend fun transpile(entries: List<LinEntry>, indent: Int = 0) {
         val buffer: MutableList<LinEntry> = ArrayList()
         var operation: TranspileOperation? = null
         var i = 0
+
         while (i in entries.indices) {
             val entry = entries[i++]
 
@@ -271,9 +287,11 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                 append(") ")
                                                 append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
                                                 append(" ")
-                                                if (condition.value == 0) append("false")
-                                                else if (condition.value == 1) append("true")
-                                                else append(condition.value)
+                                                when (condition.value) {
+                                                    0 -> append("false")
+                                                    1 -> append("true")
+                                                    else -> append(condition.value)
+                                                }
 
                                                 condition.extraConditions.forEach { extraCondition ->
                                                     append(" ")
@@ -285,9 +303,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                     append(") ")
                                                     append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
                                                     append(" ")
-                                                    if (extraCondition.value == 0) append("false")
-                                                    else if (extraCondition.value == 1) append("true")
-                                                    else append(extraCondition.value)
+
+                                                    when (extraCondition.value) {
+                                                        0 -> append("false")
+                                                        1 -> append("true")
+                                                        else -> append(extraCondition.value)
+                                                    }
                                                 }
                                             }
                                             append(") {")
@@ -322,9 +343,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                             append(") ")
                                             append(Dr1CheckFlagEntry.formatEquality(condition.op))
                                             append(" ")
-                                            if (condition.value == 0) append("false")
-                                            else if (condition.value == 1) append("true")
-                                            else append(condition.value)
+
+                                            when (condition.value) {
+                                                0 -> append("false")
+                                                1 -> append("true")
+                                                else -> append(condition.value)
+                                            }
 
                                             condition.extraConditions.forEach { extraCondition ->
                                                 append(" ")
@@ -336,9 +360,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                                 append(") ")
                                                 append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
                                                 append(" ")
-                                                if (extraCondition.value == 0) append("false")
-                                                else if (extraCondition.value == 1) append("true")
-                                                else append(extraCondition.value)
+
+                                                when (extraCondition.value) {
+                                                    0 -> append("false")
+                                                    1 -> append("true")
+                                                    else -> append(extraCondition.value)
+                                                }
                                             }
                                         }
                                         append(") {")
@@ -414,38 +441,38 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                 }
 
                                 op.branches.entries
-                                        .sortedBy(Map.Entry<Int, *>::key)
-                                        .forEach { (branchNum, branchBuffer) ->
-                                            output.add {
-                                                repeat(indent + 1) { append("\t") }
+                                    .sortedBy(Map.Entry<Int, *>::key)
+                                    .forEach { (branchNum, branchBuffer) ->
+                                        output.add {
+                                            repeat(indent + 1) { append("\t") }
 
-                                                val itemName = game?.linItemNames
-                                                        ?.getOrNull(branchNum)
-                                                        ?.toLowerCase()
-                                                        ?.replace(' ', '_')
-                                                        ?.replace(ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+                                            val itemName = game?.linItemNames
+                                                ?.getOrNull(branchNum)
+                                                ?.lowercase()
+                                                ?.replace(' ', '_')
+                                                ?.replace(ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
-                                                if (itemName != null) {
-                                                    val itemVariable = "item_$itemName"
-                                                    if (itemVariable !in variables)
-                                                        variables[itemVariable] = RawNumberValue(branchNum)
+                                            if (itemName != null) {
+                                                val itemVariable = "item_$itemName"
+                                                if (itemVariable !in variables)
+                                                    variables[itemVariable] = RawNumberValue(branchNum)
 
-                                                    append('$')
-                                                    append(itemVariable)
-                                                } else {
-                                                    append(branchNum)
-                                                }
-
-                                                append(" -> {")
+                                                append('$')
+                                                append(itemVariable)
+                                            } else {
+                                                append(branchNum)
                                             }
 
-                                            transpile(branchBuffer, indent + 2)
-
-                                            output.add {
-                                                repeat(indent + 1) { append("\t") }
-                                                append("}")
-                                            }
+                                            append(" -> {")
                                         }
+
+                                        transpile(branchBuffer, indent + 2)
+
+                                        output.add {
+                                            repeat(indent + 1) { append("\t") }
+                                            append("}")
+                                        }
+                                    }
 
                                 output.add {
                                     repeat(indent) { append("\t") }
@@ -488,9 +515,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     append(") ")
                                     append(Dr1CheckFlagEntry.formatInvertedEquality(condition.op))
                                     append(" ")
-                                    if (condition.value == 0) append("false")
-                                    else if (condition.value == 1) append("true")
-                                    else append(condition.value)
+
+                                    when (condition.value) {
+                                        0 -> append("false")
+                                        1 -> append("true")
+                                        else -> append(condition.value)
+                                    }
 
                                     condition.extraConditions.forEach { extraCondition ->
                                         append(" ")
@@ -502,9 +532,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(") ")
                                         append(Dr1CheckFlagEntry.formatInvertedEquality(extraCondition.op))
                                         append(" ")
-                                        if (extraCondition.value == 0) append("false")
-                                        else if (extraCondition.value == 1) append("true")
-                                        else append(extraCondition.value)
+
+                                        when (extraCondition.value) {
+                                            0 -> append("false")
+                                            1 -> append("true")
+                                            else -> append(extraCondition.value)
+                                        }
                                     }
                                 }
                                 append(") {")
@@ -532,9 +565,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                     append(") ")
                                     append(Dr1CheckFlagEntry.formatEquality(condition.op))
                                     append(" ")
-                                    if (condition.value == 0) append("false")
-                                    else if (condition.value == 1) append("true")
-                                    else append(condition.value)
+
+                                    when (condition.value) {
+                                        0 -> append("false")
+                                        1 -> append("true")
+                                        else -> append(condition.value)
+                                    }
 
                                     condition.extraConditions.forEach { extraCondition ->
                                         append(" ")
@@ -546,9 +582,12 @@ class LinTranspiler(val lin: LinScript, val game: DrGame.LinScriptable? = lin.ga
                                         append(") ")
                                         append(Dr1CheckFlagEntry.formatEquality(extraCondition.op))
                                         append(" ")
-                                        if (extraCondition.value == 0) append("false")
-                                        else if (extraCondition.value == 1) append("true")
-                                        else append(extraCondition.value)
+
+                                        when (extraCondition.value) {
+                                            0 -> append("false")
+                                            1 -> append("true")
+                                            else -> append(extraCondition.value)
+                                        }
                                     }
                                 }
                                 append(") {")

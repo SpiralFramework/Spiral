@@ -1,14 +1,14 @@
 package info.spiralframework.formats.common.data
 
-enum class EnumWordScriptCommand {
+public enum class EnumWordScriptCommand {
     LABEL,
     PARAMETER,
     TEXT,
     RAW;
 
-    companion object {
-        operator fun invoke(num: Int): EnumWordScriptCommand {
-            return when (num % 4) {
+    public companion object {
+        public operator fun invoke(num: Int): EnumWordScriptCommand {
+            return when (num and 3) { //num % 4
                 0 -> PARAMETER
                 1 -> RAW
                 2 -> TEXT

@@ -1,4 +1,4 @@
 package info.spiralframework.antlr.osl
 
-sealed class LocaleUnion {
+public sealed class LocaleUnion {
 }

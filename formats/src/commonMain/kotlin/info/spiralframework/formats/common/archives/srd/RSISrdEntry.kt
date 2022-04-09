@@ -7,12 +7,7 @@ import dev.brella.kornea.io.common.EnumSeekMode
 import dev.brella.kornea.io.common.flow.InputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.SeekableInputFlow
-import dev.brella.kornea.io.common.flow.extensions.readInt16LE
-import dev.brella.kornea.io.common.flow.extensions.readInt32LE
-import dev.brella.kornea.io.common.flow.extensions.readNullTerminatedUTF8String
-import dev.brella.kornea.io.common.flow.extensions.readNumBytes
-import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
-import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
+import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.io.common.flow.globalOffset
 import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import dev.brella.kornea.toolkit.common.toHexString
@@ -22,31 +17,39 @@ import info.spiralframework.base.common.alignmentNeededFor
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.logging.SpiralLogger.NoOp.trace
 
-@ExperimentalUnsignedTypes
 /** ResourceInfoEntry? */
-data class RSISrdEntry(
+public data class RSISrdEntry(
     override val classifier: Int,
     override val mainDataLength: ULong,
     override val subDataLength: ULong,
     override val unknown: Int
 ) : SrdEntryWithData(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x24525349
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x24525349
 
-        const val NO_RESOURCE_TYPE = 0xA000
+        public const val NO_RESOURCE_TYPE: Int = 0xA000
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<RSISrdEntry> = BaseSrdEntry(context, dataSource)
-            .also { context.trace("'RSI': {0}", it) }
-            .filterToInstance()
+        public suspend operator fun invoke(
+            context: SpiralContext,
+            dataSource: DataSource<*>
+        ): KorneaResult<RSISrdEntry> =
+            BaseSrdEntry(context, dataSource)
+                .also { context.trace("'RSI': {0}", it) }
+                .filterToInstance()
     }
 
-    sealed class ResourceIndex {
-        data class GlobalModelResource(val start: Int, val length: Int, val unk1: Int, val unk2: Int) : ResourceIndex()
-        data class GlobalTextureResource(val start: Int, val length: Int, val unk1: Int, val unk2: Int) : ResourceIndex()
-        data class LocalLabelledResource(val labelOffset: Int, val start: Int, val length: Int, val unk2: Int) : ResourceIndex()
+    public sealed class ResourceIndex {
+        public data class GlobalModelResource(val start: Int, val length: Int, val unk1: Int, val unk2: Int) :
+            ResourceIndex()
+
+        public data class GlobalTextureResource(val start: Int, val length: Int, val unk1: Int, val unk2: Int) :
+            ResourceIndex()
+
+        public data class LocalLabelledResource(val labelOffset: Int, val start: Int, val length: Int, val unk2: Int) :
+            ResourceIndex()
     }
 
-    data class LocalResource(val label: String, val data: ByteArray)
+    public data class LocalResource(val label: String, val data: ByteArray)
 
     var locationKey: String by oneTimeMutableInline()
     var setupFlow: InputFlow by oneTimeMutableInline()
@@ -111,7 +114,10 @@ data class RSISrdEntry(
                 )
                 else -> {
                     trace("formats.rsi_entry.new_resource_type", type.toHexString())
-                    return KorneaResult.errorAsIllegalState(NO_RESOURCE_TYPE, localise("formats.rsi_entry.no_resource_type", type.toHexString()))
+                    return KorneaResult.errorAsIllegalState(
+                        NO_RESOURCE_TYPE,
+                        localise("formats.rsi_entry.no_resource_type", type.toHexString())
+                    )
                 }
             }
         }
@@ -151,8 +157,9 @@ data class RSISrdEntry(
         val baseStart = 16 + (resources.size * 16)
         val strings: MutableMap<String, ByteArray> = mutableMapOf(name to name.encodeToByteArray())
 
-        var stringTableOffset = baseStart + resources.sumBy {
-            if (it is ResourceIndex.LocalLabelledResource) localResources[it]?.data?.size?.alignedTo(16) ?: 0 else 0
+        var stringTableOffset = baseStart + resources.sumOf {
+            if (it is ResourceIndex.LocalLabelledResource) localResources[it]?.data?.size?.alignedTo(16) ?: 0
+            else 0
         }
 
         out.writeInt32LE(stringTableOffset)
@@ -218,14 +225,14 @@ data class RSISrdEntry(
     }
 }
 
-class RsiSrdEntryBuilder {
-    val resources: MutableList<RSISrdEntry.ResourceIndex> = ArrayList()
-    val localResources: MutableMap<RSISrdEntry.ResourceIndex, RSISrdEntry.LocalResource> = HashMap()
+public class RsiSrdEntryBuilder {
+    public val resources: MutableList<RSISrdEntry.ResourceIndex> = ArrayList()
+    public val localResources: MutableMap<RSISrdEntry.ResourceIndex, RSISrdEntry.LocalResource> = HashMap()
 
-    fun globalTextureResource(start: Int, length: Int, unk1: Int, unk2: Int) =
+    public fun globalTextureResource(start: Int, length: Int, unk1: Int, unk2: Int): Boolean =
         resources.add(RSISrdEntry.ResourceIndex.GlobalTextureResource(start, length, unk1, unk2))
 
-    fun localResource(label: String, data: ByteArray, unk2: Int) {
+    public fun localResource(label: String, data: ByteArray, unk2: Int) {
         val index = RSISrdEntry.ResourceIndex.LocalLabelledResource(resources.size, 0, 0, unk2)
         resources.add(index)
         localResources[index] = RSISrdEntry.LocalResource(label, data)
@@ -233,7 +240,17 @@ class RsiSrdEntryBuilder {
 }
 
 @SrdBuilder
-inline fun buildRsiEntry(unk1: Int, unk2: Int, unk3: Int, unk4: Int, unk5: Int, unk6: Int, unk7: Int, name: String, block: RsiSrdEntryBuilder.() -> Unit): RSISrdEntry {
+public inline fun buildRsiEntry(
+    unk1: Int,
+    unk2: Int,
+    unk3: Int,
+    unk4: Int,
+    unk5: Int,
+    unk6: Int,
+    unk7: Int,
+    name: String,
+    block: RsiSrdEntryBuilder.() -> Unit
+): RSISrdEntry {
     val entry = RSISrdEntry(RSISrdEntry.MAGIC_NUMBER_BE, ULong.MAX_VALUE, ULong.MAX_VALUE, 0)
     entry.unk1 = unk1
     entry.unk2 = unk2

@@ -2,30 +2,29 @@ package info.spiralframework.formats.common.scripting.lin.dr1
 
 import info.spiralframework.formats.common.scripting.lin.MutableLinEntry
 import info.spiralframework.formats.common.scripting.osl.FlagIDValue
-import info.spiralframework.formats.common.scripting.osl.Int16BEValue
 import info.spiralframework.formats.common.scripting.osl.LinTranspiler
 
-inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEntry {
-    constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
-    constructor(flagGroup: Int, flagID: Int, state: Int) : this(intArrayOf(flagGroup, flagID, state))
-    constructor(flagGroup: Int, flagID: Int, enabled: Boolean) : this(intArrayOf(flagGroup, flagID, if (enabled) 1 else 0))
+public class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEntry {
+    public constructor(opcode: Int, rawArguments: IntArray) : this(rawArguments)
+    public constructor(flagGroup: Int, flagID: Int, state: Int) : this(intArrayOf(flagGroup, flagID, state))
+    public constructor(flagGroup: Int, flagID: Int, enabled: Boolean) : this(intArrayOf(flagGroup, flagID, if (enabled) 1 else 0))
 
     override val opcode: Int
         get() = 0x26
 
-    var flagGroup: Int
+    public var flagGroup: Int
         get() = get(0)
         set(value) = set(0, value)
 
-    var flagID: Int
+    public var flagID: Int
         get() = get(1)
         set(value) = set(1, value)
 
-    var state: Int
+    public var state: Int
         get() = get(2)
         set(value) = set(2, value)
 
-    var enabled: Boolean
+    public var enabled: Boolean
         get() = get(2) > 0
         set(value) = set(2, if (value) 1 else 0)
 
@@ -37,9 +36,9 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
                 else append("EnableFlag(")
 
                 val flagName = game?.getLinFlagName(flagGroup, flagID)
-                        ?.toLowerCase()
-                        ?.replace(' ', '_')
-                        ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+                    ?.lowercase()
+                    ?.replace(' ', '_')
+                    ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
                 if (flagName != null) {
                     val flagVariable = "flag_$flagName"
@@ -67,9 +66,9 @@ inline class Dr1SetFlagEntry(override val rawArguments: IntArray) : MutableLinEn
 
     override fun LinTranspiler.transpileArguments(builder: StringBuilder) {
         val flagName = game?.getLinFlagName(flagGroup, flagID)
-                ?.toLowerCase()
-                ?.replace(' ', '_')
-                ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
+            ?.lowercase()
+            ?.replace(' ', '_')
+            ?.replace(LinTranspiler.ILLEGAL_VARIABLE_NAME_CHARACTER_REGEX, "")
 
         if (flagName != null) {
             val flagVariable = "flag_$flagName"

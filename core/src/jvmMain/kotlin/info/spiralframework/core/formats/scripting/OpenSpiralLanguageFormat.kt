@@ -45,7 +45,7 @@ object OpenSpiralLanguageFormat : ReadableSpiralFormat<OpenSpiralBitcodeWrapper>
                     KorneaResult.success(Optional.empty<OpenSpiralBitcodeWrapper>())
                 else
                     KorneaResult.empty()
-            }.buildFormatResult(0.9)
+            }.ensureFormatSuccess(0.9)
 
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<OpenSpiralBitcodeWrapper> =
             source.useInputFlowForResult { flow ->

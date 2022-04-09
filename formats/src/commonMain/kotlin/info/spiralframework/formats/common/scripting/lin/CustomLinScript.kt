@@ -10,30 +10,28 @@ import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.toolkit.common.sumByLong
 import info.spiralframework.base.common.NULL_TERMINATOR
 
-class CustomLinScript {
-    val _textData: MutableList<String> = ArrayList()
-    val textData: List<String>
+public class CustomLinScript {
+    public val _textData: MutableList<String> = ArrayList()
+    public val textData: List<String>
         get() = _textData
 
-    val _scriptData: MutableList<LinEntry> = ArrayList()
-    val scriptData: List<LinEntry>
+    public val _scriptData: MutableList<LinEntry> = ArrayList()
+    public val scriptData: List<LinEntry>
         get() = _scriptData
 
-    var writeMagicNumber: Boolean = false
-    var includeTextByteOrderMarker: Boolean = true
+    public var writeMagicNumber: Boolean = false
+    public var includeTextByteOrderMarker: Boolean = true
 
-    fun addText(text: String): Int {
+    public fun addText(text: String): Int {
         if (text !in _textData) _textData.add(text)
         return _textData.indexOf(text)
     }
 
-    fun addEntry(entry: LinEntry) {
+    public fun addEntry(entry: LinEntry) {
         _scriptData.add(entry)
     }
 
-    @ExperimentalStdlibApi
-    @ExperimentalUnsignedTypes
-    suspend fun compile(output: OutputFlow) {
+    public suspend fun compile(output: OutputFlow) {
         if (writeMagicNumber) output.writeInt32LE(LinScript.MAGIC_NUMBER_LE)
 
         val scriptDataSize = scriptData.sumByLong { entry -> 2 + entry.rawArguments.size }
@@ -87,15 +85,13 @@ class CustomLinScript {
     }
 }
 
-inline fun linScript(block: CustomLinScript.() -> Unit): CustomLinScript {
+public inline fun linScript(block: CustomLinScript.() -> Unit): CustomLinScript {
     val lin = CustomLinScript()
     lin.block()
     return lin
 }
 
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun OutputFlow.compileLinScript(block: CustomLinScript.() -> Unit) {
+public suspend fun OutputFlow.compileLinScript(block: CustomLinScript.() -> Unit) {
     val lin = CustomLinScript()
     lin.block()
     lin.compile(this)

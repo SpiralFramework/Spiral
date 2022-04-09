@@ -1,55 +1,89 @@
 package info.spiralframework.formats.common.games
 
+import dev.brella.kornea.errors.common.*
+import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useAndMapInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.formats.common.OpcodeMap
+import info.spiralframework.formats.common.STEAM_DANGANRONPA_ANOTHER_EPISODE_ULTRA_DESPAIR_GIRLS
 import info.spiralframework.formats.common.data.buildScriptOpcodes
 import info.spiralframework.formats.common.data.json.JsonOpcode
 import info.spiralframework.formats.common.scripting.lin.LinEntry
 import info.spiralframework.formats.common.scripting.lin.UnknownLinEntry
 import info.spiralframework.formats.common.withFormats
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.flow.readBytes
-import dev.brella.kornea.io.common.useAndMapInputFlow
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNames
 
-@ExperimentalUnsignedTypes
-class UDG(
-        override val linCharacterIDs: Map<Int, String>,
-        override val linCharacterIdentifiers: Map<String, Int>,
-        override val linColourCodes: Map<String, Int>,
-        override val linItemNames: Array<String>,
-        customOpcodes: List<JsonOpcode>
+public class UDG(
+    override val linCharacterIDs: Map<Int, String>,
+    override val linCharacterIdentifiers: Map<String, Int>,
+    override val linColourCodes: Map<String, Int>,
+    override val linItemNames: List<String>,
+    customOpcodes: List<JsonOpcode>
 ) : DrGame, DrGame.LinScriptable, DrGame.ScriptOpcodeFactory<IntArray, LinEntry> {
-    companion object {
-        const val IDENTIFIER = "udg"
-        val NAMES = arrayOf("UDG", "Danganronpa Another Episode", "Danganronpa Another Episode: Ultra Despair Girls", "Danganronpa: Ultra Despair Girls", "Ultra Despair Girls")
+    public companion object {
+        public const val IDENTIFIER: String = "udg"
 
+        public val NAMES: Array<String> = arrayOf(
+            "UDG",
+            "Danganronpa Another Episode",
+            "Danganronpa Another Episode: Ultra Despair Girls",
+            "Danganronpa: Ultra Despair Girls",
+            "Ultra Despair Girls"
+        )
+
+        public val PRIMARY_NAME: String
+            get() = NAMES.first()
+
+        @OptIn(ExperimentalSerializationApi::class)
         @Serializable
-        data class UDGGameJson(val character_ids: Map<Int, String>, val character_identifiers: Map<String, Int>, val colour_codes: Map<String, Int>, val item_names: Array<String>)
+        public data class UDGGameJson(
+            @JsonNames("character_ids", "characterIds")
+            val characterIDs: Map<Int, String>,
 
-        suspend operator fun invoke(context: SpiralContext): KorneaResult<UDG> {
+            @JsonNames("character_identifiers")
+            val characterIdentifiers: Map<String, Int>,
+
+            @JsonNames("colour_codes", "color_codes", "colorCodes")
+            val colourCodes: Map<String, Int>,
+
+            @JsonNames("item_names")
+            val itemNames: List<String>
+        )
+
+        public suspend operator fun invoke(context: SpiralContext): KorneaResult<UDG> {
             withFormats(context) {
                 //                if (isCachedShortTerm("games/udg.json"))
-                val gameString = loadResource("games/udg.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .getOrBreak { return it.asType() }
+                val gameString = loadResource("games/udg.json", UDG::class)
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .getOrBreak { return it.asType() }
+
                 val gameJson = Json.decodeFromString(UDGGameJson.serializer(), gameString)
 
                 val customOpcodes: List<JsonOpcode> = loadResource("opcodes/udg.json", Dr1::class)
-                        .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
-                        .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
-                        .getOrElse(emptyList())
+                    .useAndMapInputFlow { flow -> flow.readBytes().decodeToString() }
+                    .map { str -> Json.decodeFromString(ListSerializer(JsonOpcode.serializer()), str) }
+                    .getOrElse { emptyList() }
 
-                return KorneaResult.success(UDG(gameJson.character_ids, gameJson.character_identifiers, gameJson.colour_codes, gameJson.item_names, customOpcodes))
+                return KorneaResult.success(
+                    UDG(
+                        gameJson.characterIDs,
+                        gameJson.characterIdentifiers,
+                        gameJson.colourCodes,
+                        gameJson.itemNames,
+                        customOpcodes
+                    )
+                )
             }
         }
     }
 
     override val names: Array<String> = NAMES
     override val identifier: String = IDENTIFIER
-    override val steamID: String = "555950"
+    override val steamID: String = STEAM_DANGANRONPA_ANOTHER_EPISODE_ULTRA_DESPAIR_GIRLS
 
     override val linOpcodeMap: OpcodeMap<IntArray, LinEntry> = buildScriptOpcodes {
         opcode(0x00, argumentCount = 2, name = "Text Count")
@@ -68,11 +102,11 @@ class UDG(
         fromList(customOpcodes)
     }
 
-    override val linBgmNames: Array<String> = emptyArray()
-    override val linEvidenceNames: Array<String> = emptyArray()
-    override val linMapNames: Array<String> = emptyArray()
-    override val linMovieNames: Array<String> = emptyArray()
-    override val linSkillNames: Array<String> = emptyArray()
+    override val linBgmNames: List<String> = emptyList()
+    override val linEvidenceNames: List<String> = emptyList()
+    override val linMapNames: List<String> = emptyList()
+    override val linMovieNames: List<String> = emptyList()
+    override val linSkillNames: List<String> = emptyList()
 
     override fun entryFor(opcode: Int, rawArguments: IntArray): LinEntry = when (opcode) {
         else -> UnknownLinEntry(opcode, rawArguments)
@@ -87,8 +121,8 @@ class UDG(
     }
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UDG() = UDG(this)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UDG(): KorneaResult<UDG> = UDG(this)
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeUDG() = UDG(this).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeUDG(): UDG = UDG(this).getOrThrow()

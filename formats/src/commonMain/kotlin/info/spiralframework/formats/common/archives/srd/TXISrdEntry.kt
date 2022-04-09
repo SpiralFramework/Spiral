@@ -11,16 +11,15 @@ import dev.brella.kornea.toolkit.common.oneTimeMutableInline
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 
-@ExperimentalUnsignedTypes
 /** Texture Information? */
-data class TXISrdEntry(
+public data class TXISrdEntry(
         override val classifier: Int,
         override val mainDataLength: ULong,
         override val subDataLength: ULong,
         override val unknown: Int
 ) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x24545849
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x24545849
     }
 
     var textureNames: Array<String> by oneTimeMutableInline()

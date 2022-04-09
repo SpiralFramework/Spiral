@@ -1,10 +1,7 @@
 package info.spiralframework.formats.common.audio
 
 import dev.brella.kornea.base.common.closeAfter
-import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.flatMap
-import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BitPoolInput
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.extensions.readFloat32BE
@@ -12,79 +9,79 @@ import dev.brella.kornea.io.common.flow.extensions.readInt16BE
 import dev.brella.kornea.io.common.flow.extensions.readInt24BE
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.toolkit.common.SemanticVersion
+import dev.brella.kornea.toolkit.common.byteArrayOfHex
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 import kotlin.experimental.or
 import kotlin.math.min
 
-@ExperimentalUnsignedTypes
-data class HighCompressionAudio(val version: SemanticVersion, val audioChannels: Array<HcaAudioChannel>, val hfrGroupCount: Int, val headerSize: Int, val sampleRate: Int, val channelCount: Int, val blockSize: Int, val blockCount: Int, val encoderDelay: Int, val encoderPadding: Int, val loopEnabled: Boolean, val loopStartBlock: Int?, val loopEndBlock: Int?, val loopStartDelay: Int?, val loopEndPadding: Int?, val samplesPerBlock: Int, val audioInfo: HcaAudioInfo, val athInfo: HcaAbsoluteThresholdHearingInfo?, val cipherInfo: HcaCipherInfo?, val comment: String?, val encryptionEnabled: Boolean, val dataSource: DataSource<*>) {
-    companion object {
-        const val INVALID_MAGIC = 0x0000
-        const val INVALID_HEADER_SIZE = 0x0001
-        const val INVALID_CHECKSUM = 0x0002
+public data class HighCompressionAudio(val version: SemanticVersion, val audioChannels: Array<HcaAudioChannel>, val hfrGroupCount: Int, val headerSize: Int, val sampleRate: Int, val channelCount: Int, val blockSize: Int, val blockCount: Int, val encoderDelay: Int, val encoderPadding: Int, val loopEnabled: Boolean, val loopStartBlock: Int?, val loopEndBlock: Int?, val loopStartDelay: Int?, val loopEndPadding: Int?, val samplesPerBlock: Int, val audioInfo: HcaAudioInfo, val athInfo: HcaAbsoluteThresholdHearingInfo?, val cipherInfo: HcaCipherInfo?, val comment: String?, val encryptionEnabled: Boolean, val dataSource: DataSource<*>) {
+    public companion object {
+        public const val INVALID_MAGIC: Int = 0x0000
+        public const val INVALID_HEADER_SIZE: Int = 0x0001
+        public const val INVALID_CHECKSUM: Int = 0x0002
 
-        const val INVALID_FORMAT_MAGIC = 0x0010
-        const val INVALID_CHANNEL_COUNT = 0x0011
-        const val INVALID_SAMPLE_RATE = 0x0012
-        const val INVALID_FRAME_COUNT = 0x0013
-        const val INVALID_POSITION = 0x0014
+        public const val INVALID_FORMAT_MAGIC: Int = 0x0010
+        public const val INVALID_CHANNEL_COUNT: Int = 0x0011
+        public const val INVALID_SAMPLE_RATE: Int = 0x0012
+        public const val INVALID_FRAME_COUNT: Int = 0x0013
+        public const val INVALID_POSITION: Int = 0x0014
 
-        const val INVALID_INFO_MAGIC = 0x0020
+        public const val INVALID_INFO_MAGIC: Int = 0x0020
 
-        const val INVALID_LOOP_FRAMES = 0x0030
+        public const val INVALID_LOOP_FRAMES: Int = 0x0030
 
-        const val INVALID_CIPHER_TYPE = 0x0040
+        public const val INVALID_CIPHER_TYPE: Int = 0x0040
 
-        const val NOT_ENOUGH_DATA_KEY = "formats.hca.not_enough_data"
-        const val INVALID_MAGIC_KEY = "formats.hca.invalid_magic"
-        const val INVALID_HEADER_SIZE_KEY = "formats.hca.invalid_header_size"
-        const val INVALID_CHECKSUM_KEY = "formats.hca.invalid_checksum"
+        public const val NOT_ENOUGH_DATA_KEY: String = "formats.hca.not_enough_data"
+        public const val INVALID_MAGIC_KEY: String = "formats.hca.invalid_magic"
+        public const val INVALID_HEADER_SIZE_KEY: String = "formats.hca.invalid_header_size"
+        public const val INVALID_CHECKSUM_KEY: String = "formats.hca.invalid_checksum"
 
-        const val INVALID_FORMAT_MAGIC_KEY = "formats.hca.invalid_format_magic"
-        const val INVALID_CHANNEL_COUNT_KEY = "formats.hca.invalid_channel_count"
-        const val INVALID_SAMPLE_RATE_KEY = "formats.hca.invalid_sample_rate"
-        const val INVALID_FRAME_COUNT_KEY = "formats.hca.invalid_frame_count"
-        const val INVALID_POSITION_KEY = "formats.hca.invalid_position"
+        public const val INVALID_FORMAT_MAGIC_KEY: String = "formats.hca.invalid_format_magic"
+        public const val INVALID_CHANNEL_COUNT_KEY: String = "formats.hca.invalid_channel_count"
+        public const val INVALID_SAMPLE_RATE_KEY: String = "formats.hca.invalid_sample_rate"
+        public const val INVALID_FRAME_COUNT_KEY: String = "formats.hca.invalid_frame_count"
+        public const val INVALID_POSITION_KEY: String = "formats.hca.invalid_position"
 
-        const val INVALID_INFO_MAGIC_KEY = "formats.hca.invalid_info_magic"
+        public const val INVALID_INFO_MAGIC_KEY: String = "formats.hca.invalid_info_magic"
 
-        const val INVALID_LOOP_FRAMES_KEY = "formats.hca.invalid_loop_frames"
+        public const val INVALID_LOOP_FRAMES_KEY: String = "formats.hca.invalid_loop_frames"
 
-        const val INVALID_CIPHER_TYPE_KEY = "formats.hca.invalid_cipher_type"
+        public const val INVALID_CIPHER_TYPE_KEY: String = "formats.hca.invalid_cipher_type"
 
         /** HCA. */
-        const val MAGIC_NUMBER_BE = 0x48434100
+        public const val MAGIC_NUMBER_BE: Int = 0x48434100
 
         /** 'fmt.' */
-        const val FORMAT_MAGIC_NUMBER_BE = 0x666D7400
+        public const val FORMAT_MAGIC_NUMBER_BE: Int = 0x666D7400
 
         /** 'comp' */
-        const val COMPRESSION_MAGIC_NUMBER_BE = 0x636F6D70
+        public const val COMPRESSION_MAGIC_NUMBER_BE: Int = 0x636F6D70
 
         /** 'dec.' */
-        const val DECODE_MAGIC_NUMBER_BE = 0x64656300
+        public const val DECODE_MAGIC_NUMBER_BE: Int = 0x64656300
 
-        const val VBR_MAGIC_NUMBER_BE = 0x76627200
-        const val ATH_MAGIC_NUMBER_BE = 0x61746800
-        const val RVA_MAGIC_NUMBER_BE = 0x72766100
-        const val LOOP_MAGIC_NUMBER_BE = 0x6C6F6F70
-        const val CIPHER_MAGIC_NUMBER_BE = 0x63697068
-        const val COMMENT_MAGIC_NUMBER_BE = 0x636F6D6D
-        const val PADDING_MAGIC_NUMBER_BE = 0x70616400
+        public const val VBR_MAGIC_NUMBER_BE: Int = 0x76627200
+        public const val ATH_MAGIC_NUMBER_BE: Int = 0x61746800
+        public const val RVA_MAGIC_NUMBER_BE: Int = 0x72766100
+        public const val LOOP_MAGIC_NUMBER_BE: Int = 0x6C6F6F70
+        public const val CIPHER_MAGIC_NUMBER_BE: Int = 0x63697068
+        public const val COMMENT_MAGIC_NUMBER_BE: Int = 0x636F6D6D
+        public const val PADDING_MAGIC_NUMBER_BE: Int = 0x70616400
 
-        const val HCA_MASK = 0x7F7F7F7F
-        const val HCA_SUBFRAMES_PER_FRAME = 8
-        const val HCA_SAMPLES_PER_SUBFRAME = 128
-        const val HCA_SAMPLES_PER_FRAME = HCA_SUBFRAMES_PER_FRAME * HCA_SAMPLES_PER_SUBFRAME
-        const val HCA_MDCT_BITS = 7 /* (1<<7) = 128 */
+        public const val HCA_MASK: Int = 0x7F7F7F7F
+        public const val HCA_SUBFRAMES_PER_FRAME: Int = 8
+        public const val HCA_SAMPLES_PER_SUBFRAME: Int = 128
+        public const val HCA_SAMPLES_PER_FRAME: Int = HCA_SUBFRAMES_PER_FRAME * HCA_SAMPLES_PER_SUBFRAME
+        public const val HCA_MDCT_BITS: Int = 7 /* (1<<7) = 128 */
 
-        const val CHANNEL_DISCRETE = 0
-        const val CHANNEL_STEREO_PRIMARY = 1
-        const val CHANNEL_STEREO_SECONDARY = 2
+        public const val CHANNEL_DISCRETE: Int = 0
+        public const val CHANNEL_STEREO_PRIMARY: Int = 1
+        public const val CHANNEL_STEREO_SECONDARY: Int = 2
 
-        val CRC16_LOOKUP_TABLE = intArrayOf(
+        public val CRC16_LOOKUP_TABLE: IntArray = intArrayOf(
                 0x0000, 0x8005, 0x800F, 0x000A, 0x801B, 0x001E, 0x0014, 0x8011, 0x8033, 0x0036, 0x003C, 0x8039, 0x0028, 0x802D, 0x8027, 0x0022,
                 0x8063, 0x0066, 0x006C, 0x8069, 0x0078, 0x807D, 0x8077, 0x0072, 0x0050, 0x8055, 0x805F, 0x005A, 0x804B, 0x004E, 0x0044, 0x8041,
                 0x80C3, 0x00C6, 0x00CC, 0x80C9, 0x00D8, 0x80DD, 0x80D7, 0x00D2, 0x00F0, 0x80F5, 0x80FF, 0x00FA, 0x80EB, 0x00EE, 0x00E4, 0x80E1,
@@ -109,7 +106,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         /* Base ATH (Absolute Threshold of Hearing) curve (for 41856hz).
          * May be a slight modification of the standard Painter & Spanias ATH curve formula.
          */
-        val ATH_BASE_CURVE = intArrayOf(
+        public val ATH_BASE_CURVE: ByteArray = byteArrayOfHex(
                 0x78, 0x5F, 0x56, 0x51, 0x4E, 0x4C, 0x4B, 0x49, 0x48, 0x48, 0x47, 0x46, 0x46, 0x45, 0x45, 0x45,
                 0x44, 0x44, 0x44, 0x44, 0x43, 0x43, 0x43, 0x43, 0x43, 0x43, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
                 0x42, 0x42, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x40, 0x40, 0x40, 0x40,
@@ -151,9 +148,9 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD,
                 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xED, 0xEE,
                 0xEF, 0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFF, 0xFF
-        ).map(Int::toByte).toByteArray()
+        )
 
-        val SCALE_TO_RESOLUTION_CURVE = intArrayOf(
+        public val SCALE_TO_RESOLUTION_CURVE: IntArray = intArrayOf(
                 0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0D, 0x0D,
                 0x0D, 0x0D, 0x0D, 0x0D, 0x0C, 0x0C, 0x0C, 0x0C,
                 0x0C, 0x0C, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B,
@@ -164,7 +161,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         )
 
-        val DEQUANTIZER_SCALING_TABLE = intArrayOf(
+        public val DEQUANTIZER_SCALING_TABLE: FloatArray = intArrayOf(
                 0x342A8D26, 0x34633F89, 0x3497657D, 0x34C9B9BE, 0x35066491, 0x353311C4, 0x356E9910, 0x359EF532,
                 0x35D3CCF1, 0x360D1ADF, 0x363C034A, 0x367A83B3, 0x36A6E595, 0x36DE60F5, 0x371426FF, 0x3745672A,
                 0x37838359, 0x37AF3B79, 0x37E97C38, 0x381B8D3A, 0x384F4319, 0x388A14D5, 0x38B7FBF0, 0x38F5257D,
@@ -175,16 +172,16 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0x3FC238D2, 0x400164D2, 0x402C6897, 0x4065B907, 0x40990B88, 0x40CBEC15, 0x4107DB35, 0x413504F3
         ).map(Float.Companion::fromBits).toFloatArray()
 
-        val QUANTIZER_STEP_SIZE = intArrayOf(
+        public val QUANTIZER_STEP_SIZE: FloatArray = intArrayOf(
                 0x00000000, 0x3F2AAAAB, 0x3ECCCCCD, 0x3E924925, 0x3E638E39, 0x3E3A2E8C, 0x3E1D89D9, 0x3E088889,
                 0x3D842108, 0x3D020821, 0x3C810204, 0x3C008081, 0x3B804020, 0x3B002008, 0x3A801002, 0x3A000801
         ).map(Float.Companion::fromBits).toFloatArray()
 
-        val QUANTIZED_SPECTRUM_MAX_BITS = intArrayOf(
+        public val QUANTIZED_SPECTRUM_MAX_BITS: IntArray = intArrayOf(
                 0, 2, 3, 3, 4, 4, 4, 4, 5, 6, 7, 8, 9, 10, 11, 12
         )
 
-        val QUANTIZED_SPECTRUM_BITS = intArrayOf(
+        public val QUANTIZED_SPECTRUM_BITS: IntArray = intArrayOf(
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 2, 2, 2, 2, 2, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -195,7 +192,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
         )
 
-        val QUANTIZED_SPECTRUM_VALUES = intArrayOf(
+        public val QUANTIZED_SPECTRUM_VALUES: FloatArray = intArrayOf(
                 +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,
                 +0, +0, +1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,
                 +0, +0, +1, +1, -1, -1, +2, -2, +0, +0, +0, +0, +0, +0, +0, +0,
@@ -206,7 +203,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 +0, +0, +1, -1, +2, -2, +3, -3, +4, -4, +5, -5, +6, -6, +7, -7
         ).map(Int::toFloat).toFloatArray()
 
-        val SCALE_CONVERSION_TABLE = intArrayOf(
+        public val SCALE_CONVERSION_TABLE: FloatArray = intArrayOf(
                 0x00000000, 0x00000000, 0x32A0B051, 0x32D61B5E, 0x330EA43A, 0x333E0F68, 0x337D3E0C, 0x33A8B6D5,
                 0x33E0CCDF, 0x3415C3FF, 0x34478D75, 0x3484F1F6, 0x34B123F6, 0x34EC0719, 0x351D3EDA, 0x355184DF,
                 0x358B95C2, 0x35B9FCD2, 0x35F7D0DF, 0x36251958, 0x365BFBB8, 0x36928E72, 0x36C346CD, 0x370218AF,
@@ -226,7 +223,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0x4B11C3D3, 0x4B4238D2, 0x4B8164D2, 0x4BAC6897, 0x4BE5B907, 0x4C190B88, 0x4C4BEC15, 0x00000000
         ).map(Float.Companion::fromBits).toFloatArray()
 
-        val INTENSITY_RATIO_TABLE = intArrayOf(
+        public val INTENSITY_RATIO_TABLE: FloatArray = intArrayOf(
                 0x40000000, 0x3FEDB6DB, 0x3FDB6DB7, 0x3FC92492, 0x3FB6DB6E, 0x3FA49249, 0x3F924925, 0x3F800000,
                 0x3F5B6DB7, 0x3F36DB6E, 0x3F124925, 0x3EDB6DB7, 0x3E924925, 0x3E124925, 0x00000000, 0x00000000,
                 /* v2.0 seems to define indexes over 15, but intensity is packed in 4b thus unused */
@@ -240,7 +237,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0x3E0955EE, 0x3E36FD92, 0x3E73D290, 0x3EA27043, 0x3ED87039, 0x3F1031DC, 0x3F40213B, 0x00000000
         ).map(Float.Companion::fromBits).toFloatArray()
 
-        val SIN_TABLES = arrayOf(
+        public val SIN_TABLES: List<FloatArray> = arrayOf(
                 intArrayOf(
                         0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75,
                         0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75, 0x3DA73D75,
@@ -313,7 +310,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 )
         ).map { ints -> ints.map(Float.Companion::fromBits).toFloatArray() }
 
-        val COS_TABLES = arrayOf(
+        public val COS_TABLES: List<FloatArray> = arrayOf(
                 longArrayOf(
                         0xBD0A8BD4, 0x3D0A8BD4, 0x3D0A8BD4, 0xBD0A8BD4, 0x3D0A8BD4, 0xBD0A8BD4, 0xBD0A8BD4, 0x3D0A8BD4,
                         0x3D0A8BD4, 0xBD0A8BD4, 0xBD0A8BD4, 0x3D0A8BD4, 0xBD0A8BD4, 0x3D0A8BD4, 0x3D0A8BD4, 0xBD0A8BD4,
@@ -386,7 +383,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 )
         ).map { longs -> longs.map(Long::toInt).map(Float.Companion::fromBits).toFloatArray() }
 
-        val IMDCT_WINDOW = longArrayOf(
+        public val IMDCT_WINDOW: FloatArray = longArrayOf(
                 0x3A3504F0, 0x3B0183B8, 0x3B70C538, 0x3BBB9268, 0x3C04A809, 0x3C308200, 0x3C61284C, 0x3C8B3F17,
                 0x3CA83992, 0x3CC77FBD, 0x3CE91110, 0x3D0677CD, 0x3D198FC4, 0x3D2DD35C, 0x3D434643, 0x3D59ECC1,
                 0x3D71CBA8, 0x3D85741E, 0x3D92A413, 0x3DA078B4, 0x3DAEF522, 0x3DBE1C9E, 0x3DCDF27B, 0x3DDE7A1D,
@@ -406,8 +403,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 0xBF7FF688, 0xBF7FF9D0, 0xBF7FFC32, 0xBF7FFDDA, 0xBF7FFEED, 0xBF7FFF8F, 0xBF7FFFDF, 0xBF7FFFFC
         ).map(Long::toInt).map(Float.Companion::fromBits).toFloatArray()
 
-        @ExperimentalStdlibApi
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> =
+        public suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
                     .getOrBreak { return@withFormats it.cast() }
@@ -800,7 +796,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
                 }
             }
 
-        suspend fun athInit(type: Int, sampleRate: Int): ByteArray? {
+        public fun athInit(type: Int, sampleRate: Int): ByteArray? {
             val athCurve = ByteArray(HCA_SAMPLES_PER_SUBFRAME)
             when (type) {
                 0 -> return athCurve
@@ -824,7 +820,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
             }
         }
 
-        suspend fun SpiralContext.cipherInit(type: Int, keycode: Long? = null): ByteArray? {
+        public fun SpiralContext.cipherInit(type: Int, keycode: Long? = null): ByteArray? {
             if (type == 56 && keycode == null)
                 warn("formats.hca.no_key_for_cipher")
 
@@ -920,7 +916,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
             }
         }
 
-        fun cipherInit56CreateTable(table: ByteArray, key: Int) {
+        public fun cipherInit56CreateTable(table: ByteArray, key: Int) {
             val mul = ((key and 1) shl 3) or 5
             val add = (key and 0xE) or 1
 
@@ -932,7 +928,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
             }
         }
 
-        fun calculateCRC16(data: ByteArray): Int {
+        public fun calculateCRC16(data: ByteArray): Int {
             var sum: Int = 0
             for (i in data.indices) {
                 val byte = data[i].toInt().and(0xFF)
@@ -943,7 +939,7 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         }
     }
 
-    suspend fun SpiralContext.readFrame(index: Int): KorneaResult<List<Short>> {
+    public suspend fun SpiralContext.readFrame(index: Int): KorneaResult<List<Short>> {
         val offset = headerSize + (blockSize * index)
         if (index >= blockCount) {
             return localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
@@ -959,22 +955,24 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
         }
     }
 
-    suspend fun SpiralContext.readAudioSamples(): KorneaResult<List<Short>> =
+    public suspend fun SpiralContext.readAudioSamples(): KorneaResult<List<Short>> =
         dataSource.openInputFlow().flatMap { flow ->
             closeAfter(flow) {
                 flow.skip(headerSize.toULong())
                 val rawData = ByteArray(blockSize)
                 val samples: MutableList<Short> = ArrayList(blockCount * samplesPerBlock)
                 for (i in 0 until blockCount) {
-                    if (flow.read(rawData) != blockSize) return@closeAfter localisedNotEnoughData<List<Short>>(NOT_ENOUGH_DATA_KEY)
-                    samples.addAll(decodeBlock(rawData).getOrBreak { return@closeAfter it })
+                    if (flow.read(rawData) != blockSize)
+                        return@closeAfter localisedNotEnoughData<List<Short>>(NOT_ENOUGH_DATA_KEY)
+                    samples.addAll(decodeBlock(rawData)
+                        .getOrBreak { return@closeAfter it.cast() })
                 }
 
                 return@closeAfter KorneaResult.success(samples as List<Short>)
             }
         }
 
-    suspend fun SpiralContext.decodeBlock(block: ByteArray): KorneaResult<List<Short>> {
+    public fun SpiralContext.decodeBlock(block: ByteArray): KorneaResult<List<Short>> {
         val checksum = calculateCRC16(block)
         require(checksum == 0)
         require(block.readInt16BE(0) == 0xFFFF)
@@ -1288,16 +1286,9 @@ data class HighCompressionAudio(val version: SemanticVersion, val audioChannels:
     }
 }
 
-@ExperimentalUnsignedTypes
-suspend fun HighCompressionAudio.readFrame(context: SpiralContext, index: Int) = context.readFrame(index)
-
-@ExperimentalUnsignedTypes
-suspend fun HighCompressionAudio.readAudioSamples(context: SpiralContext) = context.readAudioSamples()
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun SpiralContext.HighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio(this, dataSource)
-
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun SpiralContext.UnsafeHighCompressionAudio(dataSource: DataSource<*>) = HighCompressionAudio(this, dataSource).get()
+public suspend fun HighCompressionAudio.readFrame(context: SpiralContext, index: Int): KorneaResult<List<Short>> = context.readFrame(index)
+public suspend fun HighCompressionAudio.readAudioSamples(context: SpiralContext): KorneaResult<List<Short>> = context.readAudioSamples()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.HighCompressionAudio(dataSource: DataSource<*>): KorneaResult<HighCompressionAudio> = HighCompressionAudio(this, dataSource)
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeHighCompressionAudio(dataSource: DataSource<*>): HighCompressionAudio = HighCompressionAudio(this, dataSource).getOrThrow()

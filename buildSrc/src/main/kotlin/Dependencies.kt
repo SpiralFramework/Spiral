@@ -17,7 +17,7 @@ const val SFL4J_VERSION = "1.7.36"
 
 const val KORNEA_ANNOTATIONS_VERSION = "1.2.0-alpha"
 const val KORNEA_APOLLO_VERSION = "1.1.0-alpha"
-const val KORNEA_ERRORS_VERSION = "3.0.1-alpha"
+const val KORNEA_ERRORS_VERSION = "3.0.2-alpha"
 const val KORNEA_IMG_VERSION = "1.4.0-alpha"
 const val KORNEA_IO_VERSION = "5.5.1-alpha"
 const val KORNEA_MODELLING_VERSION = "1.2.0-alpha"

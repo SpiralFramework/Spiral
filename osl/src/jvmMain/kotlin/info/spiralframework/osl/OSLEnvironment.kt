@@ -1,5 +1,5 @@
 package info.spiralframework.osl
 
-sealed class OSLEnvironment {
+public sealed class OSLEnvironment {
 
 }

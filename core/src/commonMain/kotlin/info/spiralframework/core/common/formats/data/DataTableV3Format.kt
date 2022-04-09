@@ -28,5 +28,5 @@ object DataTableStructureFormat : ReadableSpiralFormat<DataTableStructure> {
      */
     override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataTableStructure> =
         DataTableStructure(context, source)
-            .buildFormatResult(0.7)
+            .ensureFormatSuccess(0.7)
 }

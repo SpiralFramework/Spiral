@@ -10,24 +10,22 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
-@ExperimentalUnsignedTypes
-open class CustomWadArchive {
+public open class CustomWadArchive {
     private val _files: MutableMap<String, DataSource<*>> = LinkedHashMap()
-    val files: List<Map.Entry<String, DataSource<*>>>
+    public val files: List<Map.Entry<String, DataSource<*>>>
         get() = _files.entries.toList()
 
-    var major: Int = 1
-    var minor: Int = 1
+    public var major: Int = 1
+    public var minor: Int = 1
 
-    operator fun set(name: String, dataSource: DataSource<*>) {
+    public operator fun set(name: String, dataSource: DataSource<*>) {
         requireNotNull(dataSource.dataSize)
         //TODO: Automatically cache if not reproducible?
         require(dataSource.reproducibility.isStatic() || dataSource.reproducibility.isDeterministic()) //We want reproducible data only
         _files[name] = dataSource
     }
 
-    @ExperimentalStdlibApi
-    suspend fun compile(output: OutputFlow) {
+    public suspend fun compile(output: OutputFlow) {
         output.writeInt32LE(WadArchive.MAGIC_NUMBER_LE)
 
         output.writeInt32LE(major)
@@ -98,15 +96,13 @@ open class CustomWadArchive {
     }
 }
 
-@ExperimentalUnsignedTypes
-inline fun wadArchive(block: CustomWadArchive.() -> Unit): CustomWadArchive {
+public inline fun wadArchive(block: CustomWadArchive.() -> Unit): CustomWadArchive {
     val wad = CustomWadArchive()
     wad.block()
     return wad
 }
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileWadArchive(block: CustomWadArchive.() -> Unit) {
+
+public suspend fun OutputFlow.compileWadArchive(block: CustomWadArchive.() -> Unit) {
     val wad = CustomWadArchive()
     wad.block()
     wad.compile(this)

@@ -8,21 +8,21 @@ import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
 import dev.brella.kornea.io.common.useInputFlow
 
 @ExperimentalUnsignedTypes
-class CustomPakArchive {
+public class CustomPakArchive {
     private val _files: MutableMap<Int, DataSource<*>> = HashMap()
-    val files: List<Map.Entry<Int, DataSource<*>>>
+    public val files: List<Map.Entry<Int, DataSource<*>>>
         get() = _files.entries.sortedBy(Map.Entry<Int, DataSource<*>>::key)
 
-    fun add(dataSource: DataSource<*>) = set(nextFreeIndex(), dataSource)
-    operator fun set(index: Int, dataSource: DataSource<*>) {
+    public fun add(dataSource: DataSource<*>): Unit = set(nextFreeIndex(), dataSource)
+    public operator fun set(index: Int, dataSource: DataSource<*>) {
         requireNotNull(dataSource.dataSize)
         //TODO: Automatically cache if not reproducible?
         require(dataSource.reproducibility.isStatic() || dataSource.reproducibility.isDeterministic()) //We want reproducible data only
         _files[index] = dataSource
     }
 
-    suspend fun compile(output: OutputFlow) = compileFrom(output, if (output is CountingOutputFlow) output.streamOffset else 0)
-    suspend fun compileFrom(output: OutputFlow, startingOffset: Long) {
+    public suspend fun compile(output: OutputFlow): Unit = compileFrom(output, if (output is CountingOutputFlow) output.streamOffset else 0)
+    public suspend fun compileFrom(output: OutputFlow, startingOffset: Long) {
         output.writeInt32LE(_files.size)
 
         var offset = startingOffset + 4 + (_files.size * 4)
@@ -42,7 +42,7 @@ class CustomPakArchive {
         }
     }
 
-    fun nextFreeIndex(): Int {
+    public fun nextFreeIndex(): Int {
         var prev = 0
         _files.keys.forEach { index ->
             if (index > prev + 1)
@@ -55,13 +55,13 @@ class CustomPakArchive {
 }
 
 @ExperimentalUnsignedTypes
-inline fun pakArchive(block: CustomPakArchive.() -> Unit): CustomPakArchive {
+public inline fun pakArchive(block: CustomPakArchive.() -> Unit): CustomPakArchive {
     val pak = CustomPakArchive()
     pak.block()
     return pak
 }
 @ExperimentalUnsignedTypes
-suspend fun OutputFlow.compilePakArchive(block: CustomPakArchive.() -> Unit) {
+public suspend fun OutputFlow.compilePakArchive(block: CustomPakArchive.() -> Unit) {
     val pak = CustomPakArchive()
     pak.block()
     pak.compile(this)

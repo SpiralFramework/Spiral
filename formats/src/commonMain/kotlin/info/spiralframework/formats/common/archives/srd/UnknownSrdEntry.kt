@@ -5,8 +5,7 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import info.spiralframework.base.common.SpiralContext
 
-@ExperimentalUnsignedTypes
-data class UnknownSrdEntry(override val classifier: Int, override val mainDataLength: ULong, override val subDataLength: ULong, override val unknown: Int) :
+public data class UnknownSrdEntry(override val classifier: Int, override val mainDataLength: ULong, override val subDataLength: ULong, override val unknown: Int) :
     BaseSrdEntry(classifier, mainDataLength, subDataLength, unknown) {
     override suspend fun setup(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<BaseSrdEntry> =
         KorneaResult.success(this@UnknownSrdEntry)

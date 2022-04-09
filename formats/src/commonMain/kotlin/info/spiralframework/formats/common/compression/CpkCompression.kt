@@ -6,12 +6,11 @@ import dev.brella.kornea.io.common.ReversedBitPoolInput
 import dev.brella.kornea.io.common.flow.extensions.readInt64BE
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 
-const val CRILAYLA_MAGIC = 0x4352494C41594C41
+public const val CRILAYLA_MAGIC: Long = 0x4352494C41594C41
 
-const val CRILAYLA_INVALID_MAGIC_NUMBER = 0xE000
+public const val CRILAYLA_INVALID_MAGIC_NUMBER: Int = 0xE000
 
-@ExperimentalUnsignedTypes
-fun decompressCrilayla(data: ByteArray): KorneaResult<ByteArray> {
+public fun decompressCrilayla(data: ByteArray): KorneaResult<ByteArray> {
     var pos = 0
     val magic = data.readInt64BE(pos) ?: return korneaNotEnoughData()
     if (magic != CRILAYLA_MAGIC) {
@@ -27,13 +26,13 @@ fun decompressCrilayla(data: ByteArray): KorneaResult<ByteArray> {
     val output: MutableList<Byte> = ArrayList(data.slice(pos + compressedSize until pos + compressedSize + 0x100))
     output.addAll(deflateCrilayla(data.sliceArray(pos until pos + compressedSize), rawSize, compressedSize))
 
-    return KorneaResult.success(output.toByteArray(), null)
+    return KorneaResult.success(output.toByteArray())
 }
 
-const val CRILAYLA_MINIMAL_REFLEN = 3
-val CRILAYLA_DEFLATE_LEVELS = intArrayOf(2, 3, 5, 8)
+public const val CRILAYLA_MINIMAL_REFLEN: Int = 3
+public val CRILAYLA_DEFLATE_LEVELS: IntArray = intArrayOf(2, 3, 5, 8)
 
-fun deflateCrilayla(compressedData: ByteArray, rawSize: Int, compressedSize: Int): List<Byte> {
+public fun deflateCrilayla(compressedData: ByteArray, rawSize: Int, compressedSize: Int): List<Byte> {
     val bitpool = ReversedBitPoolInput(compressedData, compressedSize)
     val output: MutableList<Byte> = ArrayList(rawSize)
 

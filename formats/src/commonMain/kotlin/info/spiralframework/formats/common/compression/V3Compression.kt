@@ -1,31 +1,30 @@
 package info.spiralframework.formats.common.compression
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
-import info.spiralframework.base.common.text.toHexString
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.korneaNotEnoughData
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32BE
 import dev.brella.kornea.io.common.flow.readExact
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
+import info.spiralframework.base.common.text.toHexString
 
-const val DRV3_COMP_MAGIC_NUMBER = 0x24434D50 //0x504d4324
+public const val DRV3_COMP_MAGIC_NUMBER: Int = 0x24434D50 //0x504d4324
 
-const val INVALID_DRV3_MAGIC_NUMBER = 0xE003
-const val INVALID_DRV3_SHIFT_MODE = 0xE004
+public const val INVALID_DRV3_MAGIC_NUMBER: Int = 0xE003
+public const val INVALID_DRV3_SHIFT_MODE: Int = 0xE004
 
-const val DRV3_NOT_ENOUGH_DATA = "formats.compression.drv3.not_enough_data"
-const val INVALID_DRV3_MAGIC_NUMBER_KEY = "formats.compression.drv3.invalid_magic"
-const val INVALID_DRV3_SHIFT_MODE_KEY = "formats.compression.drv3.invalid_shift"
+public const val DRV3_NOT_ENOUGH_DATA: String = "formats.compression.drv3.not_enough_data"
+public const val INVALID_DRV3_MAGIC_NUMBER_KEY: String = "formats.compression.drv3.invalid_magic"
+public const val INVALID_DRV3_SHIFT_MODE_KEY: String = "formats.compression.drv3.invalid_shift"
 
-const val CLN = 0x4e4c4324
-const val CL1 = 0x314c4324
-const val CL2 = 0x324c4324
-const val CR0 = 0x30524324
+public const val CLN: Int = 0x4e4c4324
+public const val CL1: Int = 0x314c4324
+public const val CL2: Int = 0x324c4324
+public const val CR0: Int = 0x30524324
 
-@ExperimentalUnsignedTypes
-suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<ByteArray> {
+public suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<ByteArray> {
     val flow = BinaryInputFlow(data)
 
     val magic = flow.readInt32BE() ?: return context.localisedNotEnoughData(DRV3_NOT_ENOUGH_DATA)
@@ -64,7 +63,6 @@ suspend fun decompressV3(context: SpiralContext, data: ByteArray): KorneaResult<
     return KorneaResult.success(output.getData())
 }
 
-@ExperimentalUnsignedTypes
 private fun deflateChunkV3(context: SpiralContext, chunk: ByteArray, mode: Int): ByteArray {
     with(context) {
         val output: MutableList<Byte> = ArrayList()

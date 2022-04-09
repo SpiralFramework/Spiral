@@ -1,6 +1,9 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "RedundantSuspendModifier")
+
 package info.spiralframework.osb.common
 
 import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.SpiralFunction
 import info.spiralframework.base.common.SpiralSuspending
@@ -18,13 +21,13 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.EQUALITY_NOT_EQUAL
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_AND
 import info.spiralframework.osb.common.OpenSpiralBitcode.LOGICAL_OR
 import info.spiralframework.osb.common.OpenSpiralBitcode.TREE_TYPE_PRESENT_SELECTION
-import dev.brella.kornea.toolkit.common.SemanticVersion
 
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrGame.LinScriptable) : OpenSpiralBitcodeVisitor {
-    companion object {
-        operator fun invoke(flow: OutputFlow, game: DrGame.LinScriptable): LinCompiler =
+public open class LinCompiler protected constructor(
+    public val flow: OutputFlow,
+    public val game: DrGame.LinScriptable
+) : OpenSpiralBitcodeVisitor {
+    public companion object {
+        public operator fun invoke(flow: OutputFlow, game: DrGame.LinScriptable): LinCompiler =
             when (game) {
                 is Dr1 -> Dr1LinCompiler(flow, game)
                 else -> {
@@ -35,26 +38,27 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             }
     }
 
-    val custom = CustomLinScript()
-    val stack: MutableMap<String, OSLUnion> = HashMap()
-    val registry: MutableMap<String, MutableList<SpiralFunction<OSLUnion>>> = HashMap()
-    val speakerAliases: MutableMap<String, Int> = HashMap()
+    public val custom: CustomLinScript = CustomLinScript()
+    public val stack: MutableMap<String, OSLUnion> = HashMap()
+    public val registry: MutableMap<String, MutableList<SpiralFunction<OSLUnion>>> = HashMap()
+    public val speakerAliases: MutableMap<String, Int> = HashMap()
 
-    var failOnMissingCharacter = false
+    public var failOnMissingCharacter: Boolean = false
 
     override suspend fun setVersion(context: SpiralContext, version: SemanticVersion) {}
     override suspend fun addDialogue(context: SpiralContext, speakerName: String, dialogue: OSLUnion) {
         val speakerID = game.linCharacterIdentifiers[speakerName]
-                        ?: speakerAliases[speakerName]
-                        ?: return if (failOnMissingCharacter) throw IllegalArgumentException("No speaker $speakerName") else Unit
+            ?: speakerAliases[speakerName]
+            ?: return if (failOnMissingCharacter) throw IllegalArgumentException("No speaker $speakerName") else Unit
 
         addDialogue(context, speakerID, dialogue)
     }
 
     override suspend fun addDialogue(context: SpiralContext, speaker: Int, dialogue: OSLUnion) {
         val speakerEntry = game.SpeakerEntry(speaker) ?: return
-        val dialogueResult = if (dialogue is OSLUnion.FunctionCallType) functionCall(context, dialogue.functionName, dialogue.parameters)
-                                                                        ?: OSLUnion.UndefinedType else dialogue
+        val dialogueResult =
+            if (dialogue is OSLUnion.FunctionCallType) functionCall(context, dialogue.functionName, dialogue.parameters)
+                ?: OSLUnion.UndefinedType else dialogue
 
         val textEntry = game.TextEntry(
             if (dialogueResult is OSLUnion.NumberType)
@@ -73,7 +77,11 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         custom.addEntry(waitForInput)
     }
 
-    override suspend fun functionCall(context: SpiralContext, functionName: String, parameters: Array<OSLUnion.FunctionParameterType>): OSLUnion? {
+    override suspend fun functionCall(
+        context: SpiralContext,
+        functionName: String,
+        parameters: Array<OSLUnion.FunctionParameterType>
+    ): OSLUnion? {
         val flattened = parameters.flatMap { (name, value) ->
             if (name != null) listOf(OSLUnion.FunctionParameterType(name, value)) else value.flatten(context)
         }
@@ -83,8 +91,8 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         }
 
         val function = registry[functionName.uppercase().replace("_", "")]
-                           ?.firstOrNull { func -> func.parameterNames.size == flattened.size || (func is SpiralSuspending.FuncX && func.variadicSupported && flattened.size >= func.parameterNames.size) }
-                       ?: return null
+            ?.firstOrNull { func -> func.parameterNames.size == flattened.size || (func is SpiralSuspending.FuncX && func.variadicSupported && flattened.size >= func.parameterNames.size) }
+            ?: return null
 
         val functionParams = function.parameterNames.toMutableList()
         val passedParams: MutableMap<String, Any?> = HashMap()
@@ -96,16 +104,17 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         }
 
         flattened.forEach { union ->
-            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0) else "index_${passedParams.size}"] = union
+            passedParams[if (functionParams.isNotEmpty()) functionParams.removeAt(0) else "index_${passedParams.size}"] =
+                union
         }
 
         return function.suspendInvoke(context, passedParams)
     }
 
-    override suspend fun addPlainOpcode(context: SpiralContext, opcode: Int, arguments: IntArray) =
+    override suspend fun addPlainOpcode(context: SpiralContext, opcode: Int, arguments: IntArray): Unit =
         custom.addEntry(
             game.linOpcodeMap[opcode]?.entryConstructor?.invoke(opcode, arguments)
-            ?: UnknownLinEntry(opcode, arguments)
+                ?: UnknownLinEntry(opcode, arguments)
         )
 
     override suspend fun addPlainOpcodeNamed(context: SpiralContext, opcodeName: String, arguments: IntArray) {
@@ -113,19 +122,36 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         custom.addEntry(opcode.entryConstructor(opcode.opcode, arguments))
     }
 
-    override suspend fun addVariableOpcode(context: SpiralContext, opcode: Int, arguments: Array<OSLUnion>) =
+    override suspend fun addVariableOpcode(context: SpiralContext, opcode: Int, arguments: Array<OSLUnion>): Unit =
         addPlainOpcode(context, opcode, collectArgs(context, arguments))
 
-    override suspend fun addVariableOpcodeNamed(context: SpiralContext, opcodeName: String, arguments: Array<OSLUnion>) =
+    override suspend fun addVariableOpcodeNamed(
+        context: SpiralContext,
+        opcodeName: String,
+        arguments: Array<OSLUnion>
+    ): Unit =
         addPlainOpcodeNamed(context, opcodeName, collectArgs(context, arguments))
 
-    override suspend fun addFlagCheck(context: SpiralContext, mainBranch: OpenSpiralBitcodeFlagBranch, elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>, elseBranch: ByteArray?, level: Int): Unit =
+    override suspend fun addFlagCheck(
+        context: SpiralContext,
+        mainBranch: OpenSpiralBitcodeFlagBranch,
+        elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>,
+        elseBranch: ByteArray?,
+        level: Int
+    ): Unit =
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
     override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int): Unit =
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
-    override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int): Unit =
+    override suspend fun addLoadMap(
+        context: SpiralContext,
+        mapID: OSLUnion,
+        state: OSLUnion,
+        arg3: OSLUnion,
+        scope: ByteArray,
+        level: Int
+    ): Unit =
         TODO("Not yet implemented")
 
     protected suspend fun OSLUnion.flatten(context: SpiralContext): List<OSLUnion> {
@@ -168,8 +194,10 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
                 flattened.add(OSLUnion.Int8NumberType((num shr 8) and 0xFF))
                 flattened.add(OSLUnion.Int8NumberType((num shr 0) and 0xFF))
             }
-            is OSLUnion.FunctionCallType -> functionCall(context, functionName, parameters)?.flatten(context)?.let { flattened.addAll(it) }
-            is OSLUnion.VariableReferenceType -> getData(context, variableName)?.flatten(context)?.let { flattened.addAll(it) }
+            is OSLUnion.FunctionCallType -> functionCall(context, functionName, parameters)?.flatten(context)
+                ?.let { flattened.addAll(it) }
+            is OSLUnion.VariableReferenceType -> getData(context, variableName)?.flatten(context)
+                ?.let { flattened.addAll(it) }
             else -> flattened.add(this)
         }
 
@@ -222,8 +250,14 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
                 add(id and 0xFF)
             }
             is OSLUnion.BooleanType -> add(if (union.boolean) 1 else 0)
-            is OSLUnion.FunctionCallType -> functionCall(context, union.functionName, union.parameters)?.let { addUnion(context, it) }
+            is OSLUnion.FunctionCallType -> functionCall(context, union.functionName, union.parameters)?.let {
+                addUnion(
+                    context,
+                    it
+                )
+            }
             is OSLUnion.VariableReferenceType -> getData(context, union.variableName)?.let { addUnion(context, it) }
+            else -> {}
         }
     }
 
@@ -240,11 +274,11 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             }
             is OSLUnion.FunctionCallType -> addUnionInt8(
                 context, functionCall(context, union.functionName, union.parameters)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             is OSLUnion.VariableReferenceType -> addUnionInt8(
                 context, getData(context, union.variableName)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             else -> add(0)
         }
@@ -302,11 +336,11 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             }
             is OSLUnion.FunctionCallType -> addUnionInt16LE(
                 context, functionCall(context, union.functionName, union.parameters)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             is OSLUnion.VariableReferenceType -> addUnionInt16LE(
                 context, getData(context, union.variableName)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             else -> {
                 add(0)
@@ -367,11 +401,11 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             }
             is OSLUnion.FunctionCallType -> addUnionInt16LE(
                 context, functionCall(context, union.functionName, union.parameters)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             is OSLUnion.VariableReferenceType -> addUnionInt16LE(
                 context, getData(context, union.variableName)
-                         ?: OSLUnion.NullType
+                    ?: OSLUnion.NullType
             )
             else -> {
                 add(0)
@@ -391,7 +425,8 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         stack[name] = data
     }
 
-    override suspend fun colourCodeFor(context: SpiralContext, clt: String): String? = game.linColourCodes[clt]?.toString()
+    override suspend fun colourCodeFor(context: SpiralContext, clt: String): String? =
+        game.linColourCodes[clt]?.toString()
 
     override suspend fun closeLongReference(context: SpiralContext): String? = null
     override suspend fun stringify(context: SpiralContext, data: OSLUnion): String = stringStub(context, data)
@@ -400,13 +435,13 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         custom.compile(flow)
     }
 
-    suspend fun speakerNameStub(context: SpiralContext, param: Any?): Int =
+    public suspend fun speakerNameStub(context: SpiralContext, param: Any?): Int =
         when (val union = requireNotNull(param) as OSLUnion) {
             is OSLUnion.StringType -> game.linCharacterIdentifiers[union.string] ?: union.string.toIntOrNull() ?: 0
             else -> intStub(context, union)
         }
 
-    suspend fun stringStub(context: SpiralContext, param: Any?): String =
+    public suspend fun stringStub(context: SpiralContext, param: Any?): String =
         when (val union = requireNotNull(param) as OSLUnion) {
             is OSLUnion.NumberType -> union.number.toString()
             is OSLUnion.StringType -> union.string
@@ -427,14 +462,14 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             is OSLUnion.FunctionParameterType -> stringStub(context, union.parameterValue)
             is OSLUnion.FunctionCallType -> stringStub(
                 context, (functionCall(context, union.functionName, union.parameters)
-                          ?: OSLUnion.UndefinedType)
+                    ?: OSLUnion.UndefinedType)
             )
             OSLUnion.UndefinedType -> "[UNDEFINED]"
             OSLUnion.NullType -> "[NULL]"
             OSLUnion.NoOpType -> "[NOP]"
         }
 
-    suspend fun intStub(context: SpiralContext, param: Any?): Int =
+    public suspend fun intStub(context: SpiralContext, param: Any?): Int =
         when (val union = requireNotNull(param) as OSLUnion) {
             is OSLUnion.NumberType -> union.number.toInt()
             is OSLUnion.StringType -> union.string.toIntOrNull() ?: 0
@@ -447,14 +482,14 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             is OSLUnion.FunctionParameterType -> intStub(context, union.parameterValue)
             is OSLUnion.FunctionCallType -> intStub(
                 context, (functionCall(context, union.functionName, union.parameters)
-                          ?: OSLUnion.UndefinedType)
+                    ?: OSLUnion.UndefinedType)
             )
             OSLUnion.UndefinedType -> 0
             OSLUnion.NullType -> 0
             OSLUnion.NoOpType -> 0
         }
 
-    suspend fun decimalStub(context: SpiralContext, param: Any?): Double =
+    public suspend fun decimalStub(context: SpiralContext, param: Any?): Double =
         when (val union = requireNotNull(param) as OSLUnion) {
             is OSLUnion.NumberType -> union.number.toDouble()
             is OSLUnion.StringType -> union.string.toDoubleOrNull() ?: 0.0
@@ -467,41 +502,66 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
             is OSLUnion.FunctionParameterType -> decimalStub(context, union.parameterValue)
             is OSLUnion.FunctionCallType -> decimalStub(
                 context, (functionCall(context, union.functionName, union.parameters)
-                          ?: OSLUnion.UndefinedType)
+                    ?: OSLUnion.UndefinedType)
             )
             OSLUnion.UndefinedType -> 0.0
             OSLUnion.NullType -> 0.0
             OSLUnion.NoOpType -> 0.0
         }
 
-    suspend fun fromInt16BEStub(context: SpiralContext, num: Any?) = fromInt16BE(intStub(context, num))
-    suspend fun fromInt16BE(num: Int) = OSLUnion.Int16BENumberType(num)
+    public suspend fun fromInt16BEStub(context: SpiralContext, num: Any?): OSLUnion.Int16BENumberType =
+        fromInt16BE(intStub(context, num))
 
-    suspend fun fromInt16LEStub(context: SpiralContext, num: Any?) = fromInt16LE(intStub(context, num))
-    suspend fun fromInt16LE(num: Int) = OSLUnion.Int16LENumberType(num)
+    public suspend fun fromInt16BE(num: Int): OSLUnion.Int16BENumberType = OSLUnion.Int16BENumberType(num)
 
-    suspend fun toInt16BEStub(context: SpiralContext, a: Any?, b: Any?) = toInt16BE(intStub(context, a), intStub(context, b))
-    suspend fun toInt16BE(a: Int, b: Int) = OSLUnion.Int16BENumberType(b or (a shl 8))
+    public suspend fun fromInt16LEStub(context: SpiralContext, num: Any?): OSLUnion.Int16LENumberType =
+        fromInt16LE(intStub(context, num))
 
-    suspend fun toInt16LEStub(context: SpiralContext, a: Any?, b: Any?) = toInt16LE(intStub(context, a), intStub(context, b))
-    suspend fun toInt16LE(a: Int, b: Int) = OSLUnion.Int16LENumberType(a or (b shl 8))
+    public suspend fun fromInt16LE(num: Int): OSLUnion.Int16LENumberType = OSLUnion.Int16LENumberType(num)
 
-    suspend fun fromInt24BEStub(context: SpiralContext, num: Any?) = fromInt24BE(intStub(context, num))
-    suspend fun fromInt24BE(num: Int) = OSLUnion.Int24BENumberType(num)
+    public suspend fun toInt16BEStub(context: SpiralContext, a: Any?, b: Any?): OSLUnion.Int16BENumberType =
+        toInt16BE(intStub(context, a), intStub(context, b))
 
-    suspend fun fromInt24LEStub(context: SpiralContext, num: Any?) = fromInt24LE(intStub(context, num))
-    suspend fun fromInt24LE(num: Int) = OSLUnion.Int24LENumberType(num)
+    public suspend fun toInt16BE(a: Int, b: Int): OSLUnion.Int16BENumberType =
+        OSLUnion.Int16BENumberType(b or (a shl 8))
 
-    suspend fun toInt24BEStub(context: SpiralContext, a: Any?, b: Any?, c: Any?) = toInt24BE(intStub(context, a), intStub(context, b), intStub(context, c))
-    suspend fun toInt24BE(a: Int, b: Int, c: Int) = OSLUnion.Int24BENumberType(c or (b shl 8) or (a shl 16))
+    public suspend fun toInt16LEStub(context: SpiralContext, a: Any?, b: Any?): OSLUnion.Int16LENumberType =
+        toInt16LE(intStub(context, a), intStub(context, b))
 
-    suspend fun toInt24LEStub(context: SpiralContext, a: Any?, b: Any?, c: Any?) = toInt24LE(intStub(context, a), intStub(context, b), intStub(context, c))
-    suspend fun toInt24LE(a: Int, b: Int, c: Int) = OSLUnion.Int24LENumberType(a or (b shl 8) or (c shl 16))
+    public suspend fun toInt16LE(a: Int, b: Int): OSLUnion.Int16LENumberType =
+        OSLUnion.Int16LENumberType(a or (b shl 8))
 
-    suspend fun secondsStub(context: SpiralContext, seconds: Any?) = seconds(decimalStub(context, seconds))
-    suspend fun seconds(seconds: Double) = OSLUnion.IntegerNumberType(seconds * 60)
+    public suspend fun fromInt24BEStub(context: SpiralContext, num: Any?): OSLUnion.Int24BENumberType =
+        fromInt24BE(intStub(context, num))
 
-    fun register(func: SpiralFunction<OSLUnion>) {
+    public suspend fun fromInt24BE(num: Int): OSLUnion.Int24BENumberType =
+        OSLUnion.Int24BENumberType(num)
+
+    public suspend fun fromInt24LEStub(context: SpiralContext, num: Any?): OSLUnion.Int24LENumberType =
+        fromInt24LE(intStub(context, num))
+
+    public suspend fun fromInt24LE(num: Int): OSLUnion.Int24LENumberType =
+        OSLUnion.Int24LENumberType(num)
+
+    public suspend fun toInt24BEStub(context: SpiralContext, a: Any?, b: Any?, c: Any?): OSLUnion.Int24BENumberType =
+        toInt24BE(intStub(context, a), intStub(context, b), intStub(context, c))
+
+    public suspend fun toInt24BE(a: Int, b: Int, c: Int): OSLUnion.Int24BENumberType =
+        OSLUnion.Int24BENumberType(c or (b shl 8) or (a shl 16))
+
+    public suspend fun toInt24LEStub(context: SpiralContext, a: Any?, b: Any?, c: Any?): OSLUnion.Int24LENumberType =
+        toInt24LE(intStub(context, a), intStub(context, b), intStub(context, c))
+
+    public suspend fun toInt24LE(a: Int, b: Int, c: Int): OSLUnion.Int24LENumberType =
+        OSLUnion.Int24LENumberType(a or (b shl 8) or (c shl 16))
+
+    public suspend fun secondsStub(context: SpiralContext, seconds: Any?): OSLUnion.IntegerNumberType =
+        seconds(decimalStub(context, seconds))
+
+    public suspend fun seconds(seconds: Double): OSLUnion.IntegerNumberType =
+        OSLUnion.IntegerNumberType(seconds * 60)
+
+    public fun register(func: SpiralFunction<OSLUnion>) {
         val functions: MutableList<SpiralFunction<OSLUnion>>
         if (func.name.uppercase().replace("_", "") !in registry) {
             functions = ArrayList()
@@ -513,12 +573,17 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
         functions.add(func)
     }
 
-    suspend fun registerSpeakerAliasStub(context: SpiralContext, speakerName: Any?, characterID: Any?) = registerSpeakerAlias(stringStub(context, speakerName), intStub(context, characterID))
-    suspend fun registerSpeakerAlias(speakerName: String, characterID: Int) = runNoOp {
-        speakerAliases[speakerName] = characterID
-    }
+    public suspend fun registerSpeakerAliasStub(
+        context: SpiralContext,
+        speakerName: Any?,
+        characterID: Any?
+    ): OSLUnion.NoOpType =
+        registerSpeakerAlias(stringStub(context, speakerName), intStub(context, characterID))
 
-    open fun registerDefaults() {
+    public suspend fun registerSpeakerAlias(speakerName: String, characterID: Int): OSLUnion.NoOpType =
+        runNoOp { speakerAliases[speakerName] = characterID }
+
+    public open fun registerDefaults() {
         register(SpiralSuspending.Func1("int16LE", "num", func = this::fromInt16LEStub))
         register(SpiralSuspending.Func1("int16BE", "num", func = this::fromInt16BEStub))
         register(SpiralSuspending.Func1("int24LE", "num", func = this::fromInt24LEStub))
@@ -535,34 +600,47 @@ open class LinCompiler protected constructor(val flow: OutputFlow, val game: DrG
 
         register(SpiralSuspending.Func1("seconds", "s", func = this::secondsStub))
 
-        register(SpiralSuspending.Func2("RegisterSpeakerAlias", "speakerName", "characterID", func = this::registerSpeakerAliasStub))
+        register(
+            SpiralSuspending.Func2(
+                "RegisterSpeakerAlias",
+                "speakerName",
+                "characterID",
+                func = this::registerSpeakerAliasStub
+            )
+        )
     }
 }
 
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : LinCompiler(flow, game) {
-    val labelsUsed: MutableList<Int> = ArrayList()
-    var lastLabelUsed: Int = 0xFFFF //By starting at the end, we give ourselves the best chance of avoiding conflicts
+public open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : LinCompiler(flow, game) {
+    public val labelsUsed: MutableList<Int> = ArrayList()
+    public var lastLabelUsed: Int =
+        0xFFFF //By starting at the end, we give ourselves the best chance of avoiding conflicts
 
-    companion object {
-        operator fun invoke(flow: OutputFlow, game: Dr1): LinCompiler {
+    public companion object {
+        public operator fun invoke(flow: OutputFlow, game: Dr1): LinCompiler {
             val compiler = Dr1LinCompiler(flow, game)
             compiler.registerDefaults()
             return compiler
         }
     }
 
-    fun findLabel(): Int? {
+    public fun findLabel(): Int {
         while (lastLabelUsed in labelsUsed) {
             lastLabelUsed--
         }
+
         labelsUsed.add(lastLabelUsed)
         return lastLabelUsed
     }
 
-    override suspend fun addFlagCheck(context: SpiralContext, mainBranch: OpenSpiralBitcodeFlagBranch, elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>, elseBranch: ByteArray?, level: Int) {
-        val joiningLabel = requireNotNull(findLabel())
+    override suspend fun addFlagCheck(
+        context: SpiralContext,
+        mainBranch: OpenSpiralBitcodeFlagBranch,
+        elseIfBranches: Array<OpenSpiralBitcodeFlagBranch>,
+        elseBranch: ByteArray?,
+        level: Int
+    ) {
+        val joiningLabel = findLabel()
 
         if (elseIfBranches.isEmpty() && elseBranch == null) {
             //This just makes the resulting lin a bit nicer
@@ -595,9 +673,9 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
             custom.addEntry(Dr1CheckFlagEntry(mainBranchArgs.toIntArray()))
             custom.addEntry(Dr1EndFlagCheckEntry())
 
-            val mainBranchLabel = requireNotNull(findLabel())
+            val mainBranchLabel = findLabel()
             custom.addEntry(Dr1GoToLabelEntry(mainBranchLabel))
-            val elseIfBranchLabels = IntArray(elseIfBranches.size) { requireNotNull(findLabel()) }
+            val elseIfBranchLabels = IntArray(elseIfBranches.size) { findLabel() }
             elseIfBranches.forEachIndexed { index, branch ->
                 val branchArgs: MutableList<Int> = ArrayList()
                 branchArgs.addUnionInt16LE(context, branch.condition.checking)
@@ -638,7 +716,7 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
     override suspend fun addTree(context: SpiralContext, treeType: Int, scope: ByteArray, level: Int) {
         when (treeType) {
             TREE_TYPE_PRESENT_SELECTION -> {
-                val label = requireNotNull(findLabel())
+                val label = findLabel()
                 custom.addEntry(Dr1ChangeUIEntry(Dr1ChangeUIEntry.PRESENT_SELECTION, true))
                 custom.addEntry(Dr1GoToLabelEntry(label))
                 OpenSpiralBitcodeParser(BinaryInputFlow(scope), this, level + 1)
@@ -649,7 +727,14 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         }
     }
 
-    override suspend fun addLoadMap(context: SpiralContext, mapID: OSLUnion, state: OSLUnion, arg3: OSLUnion, scope: ByteArray, level: Int) {
+    override suspend fun addLoadMap(
+        context: SpiralContext,
+        mapID: OSLUnion,
+        state: OSLUnion,
+        arg3: OSLUnion,
+        scope: ByteArray,
+        level: Int
+    ) {
         custom.addEntry(Dr1ChangeUIEntry(6, false))
         custom.addEntry(Dr1LoadMapEntry(intStub(context, mapID), intStub(context, state), intStub(context, mapID)))
         OpenSpiralBitcodeParser(BinaryInputFlow(scope), this, level + 1)
@@ -669,7 +754,7 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
     4 -> "<"
     5 -> ">"
      */
-    suspend fun toFlagCheckEqualityOperator(operation: Int): Int =
+    public suspend fun toFlagCheckEqualityOperator(operation: Int): Int =
         when (operation) {
             EQUALITY_EQUAL -> Dr1CheckFlagEntry.EQUALITY_EQUAL
             EQUALITY_NOT_EQUAL -> Dr1CheckFlagEntry.EQUALITY_NOT_EQUAL
@@ -684,21 +769,21 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
      * 6 -> "||"
      * 7 -> "&&"
      */
-    suspend fun toFlagCheckLogicalOperator(operation: Int): Int =
+    public suspend fun toFlagCheckLogicalOperator(operation: Int): Int =
         when (operation) {
             LOGICAL_OR -> Dr1CheckFlagEntry.LOGICAL_OR
             LOGICAL_AND -> Dr1CheckFlagEntry.LOGICAL_AND
             else -> 6
         }
 
-    suspend fun toInvertedFlagCheckLogicalOperator(operation: Int): Int =
+    public suspend fun toInvertedFlagCheckLogicalOperator(operation: Int): Int =
         when (operation) {
             LOGICAL_AND -> Dr1CheckFlagEntry.LOGICAL_OR //AND -> OR
             LOGICAL_OR -> Dr1CheckFlagEntry.LOGICAL_AND //OR -> AND
             else -> 6
         }
 
-    suspend fun toInvertedFlagCheckEqualityOperator(operation: Int): Int =
+    public suspend fun toInvertedFlagCheckEqualityOperator(operation: Int): Int =
         when (operation) {
             EQUALITY_EQUAL -> Dr1CheckFlagEntry.EQUALITY_NOT_EQUAL //Equal -> Not Equal
             EQUALITY_NOT_EQUAL -> Dr1CheckFlagEntry.EQUALITY_EQUAL //Not Equal -> Equal
@@ -709,128 +794,234 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
             else -> 0
         }
 
-    suspend fun textStub(context: SpiralContext, text: Any?) = text(stringStub(context, text))
-    suspend fun text(text: String) = runNoOp {
-        val textEntry = game.TextEntry(custom.addText(text)) ?: return@runNoOp
-        val waitFrame = game.WaitFrame() ?: return@runNoOp
-        val waitForInput = game.WaitForInput() ?: return@runNoOp
+    public suspend fun textStub(context: SpiralContext, text: Any?): OSLUnion.NoOpType =
+        text(stringStub(context, text))
 
-        custom.addEntry(textEntry)
-        custom.addEntry(waitFrame)
-        custom.addEntry(waitForInput)
-    }
+    public suspend fun text(text: String): OSLUnion.NoOpType =
+        runNoOp {
+            val textEntry = game.TextEntry(custom.addText(text)) ?: return@runNoOp
+            val waitFrame = game.WaitFrame() ?: return@runNoOp
+            val waitForInput = game.WaitForInput() ?: return@runNoOp
 
-    suspend fun thinkStub(context: SpiralContext, text: Any?) = think(stringStub(context, text))
-    suspend fun think(text: String) = runNoOp {
-        val textEntry = game.TextEntry(custom.addText("<CLT 4>$text<CLT>")) ?: return@runNoOp
-        val waitFrame = game.WaitFrame() ?: return@runNoOp
-        val waitForInput = game.WaitForInput() ?: return@runNoOp
+            custom.addEntry(textEntry)
+            custom.addEntry(waitFrame)
+            custom.addEntry(waitForInput)
+        }
 
-        custom.addEntry(textEntry)
-        custom.addEntry(waitFrame)
-        custom.addEntry(waitForInput)
-    }
+    public suspend fun thinkStub(context: SpiralContext, text: Any?): OSLUnion.NoOpType =
+        think(stringStub(context, text))
 
-    suspend fun speakStub(context: SpiralContext, voiceID: Any?, volume: Any?) = speak(intStub(context, voiceID), intStub(context, volume))
-    suspend fun speak(voiceID: Int, volume: Int): OSLUnion.NoOpType = runNoOp {
-        val (character, chapter, line) = game.getLinVoiceLineDetails(voiceID)
-                                         ?: return@runNoOp println("(no voice line details for $voiceID)")
-        custom.addEntry((Dr1VoiceLineEntry(character, chapter, line, volume)))
-    }
+    public suspend fun think(text: String): OSLUnion.NoOpType =
+        runNoOp {
+            val textEntry = game.TextEntry(custom.addText("<CLT 4>$text<CLT>")) ?: return@runNoOp
+            val waitFrame = game.WaitFrame() ?: return@runNoOp
+            val waitForInput = game.WaitForInput() ?: return@runNoOp
 
-    suspend fun cameraFocusStub(context: SpiralContext, character: Any?) = cameraFocus(intStub(context, character))
-    suspend fun cameraFocus(character: Int) = runNoOp {
-        custom.addEntry(Dr1ChangeUIEntry(26, character))
-    }
+            custom.addEntry(textEntry)
+            custom.addEntry(waitFrame)
+            custom.addEntry(waitForInput)
+        }
 
-    suspend fun showItemStub(context: SpiralContext, id: Any?) = showItem(intStub(context, id))
-    suspend fun showItem(id: Int) = runNoOp {
-        custom.addEntry(Dr1AnimationEntry(2000 + id, 0, 0, 0, 0, 0, 1))
-    }
+    public suspend fun speakStub(context: SpiralContext, voiceID: Any?, volume: Any?): OSLUnion.NoOpType =
+        speak(intStub(context, voiceID), intStub(context, volume))
 
-    suspend fun hideItemStub(context: SpiralContext, id: Any?) = hideItem(intStub(context, id))
-    suspend fun hideItem(id: Int) = runNoOp {
-        custom.addEntry(Dr1AnimationEntry(2000 + id, 0, 0, 0, 0, 0, 2))
-    }
+    public suspend fun speak(voiceID: Int, volume: Int): OSLUnion.NoOpType =
+        runNoOp {
+            val (character, chapter, line) = game.getLinVoiceLineDetails(voiceID)
+                ?: return@runNoOp println("(no voice line details for $voiceID)")
 
-    suspend fun showCutinStub(context: SpiralContext, id: Any?) = showCutin(intStub(context, id))
-    suspend fun showCutin(id: Int) = runNoOp {
-        custom.addEntry(Dr1AnimationEntry(3000 + id, 0, 0, 0, 0, 0, 1))
-    }
+            custom.addEntry((Dr1VoiceLineEntry(character, chapter, line, volume)))
+        }
 
-    suspend fun hideCutinStub(context: SpiralContext, id: Any?) = hideCutin(intStub(context, id))
-    suspend fun hideCutin(id: Int) = runNoOp {
-        custom.addEntry(Dr1AnimationEntry(3000 + id, 0, 0, 0, 0, 0, 2))
-    }
+    public suspend fun cameraFocusStub(context: SpiralContext, character: Any?): OSLUnion.NoOpType =
+        cameraFocus(intStub(context, character))
 
-    suspend fun showSpriteStub(context: SpiralContext, character: Any?, sprite: Any?) = showSprite(intStub(context, character), intStub(context, sprite), 1, 2)
-    suspend fun showSpriteStub(context: SpiralContext, character: Any?, sprite: Any?, state: Any?) = showSprite(intStub(context, character), intStub(context, sprite), intStub(context, state), 2)
-    suspend fun showSpriteStub(context: SpiralContext, character: Any?, sprite: Any?, state: Any?, transition: Any?) = showSprite(intStub(context, character), intStub(context, sprite), intStub(context, state), intStub(context, transition))
-    suspend fun showSprite(character: Int, sprite: Int, state: Int, transition: Int) = runNoOp {
-        custom.addEntry(Dr1SpriteEntry(0, character, sprite, state, transition))
-    }
+    public suspend fun cameraFocus(character: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ChangeUIEntry(26, character)) }
 
-    suspend fun disableUIStub(context: SpiralContext, element: Any?) = disableUI(intStub(context, element))
-    suspend fun disableUI(element: Int) = runNoOp {
-        custom.addEntry(Dr1ChangeUIEntry(element, 0))
-    }
+    public suspend fun showItemStub(context: SpiralContext, id: Any?): OSLUnion.NoOpType =
+        showItem(intStub(context, id))
 
-    suspend fun enableUIStub(context: SpiralContext, element: Any?) = enableUI(intStub(context, element))
-    suspend fun enableUI(element: Int) = runNoOp {
-        custom.addEntry(Dr1ChangeUIEntry(element, 1))
-    }
+    public suspend fun showItem(id: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1AnimationEntry(2000 + id, 0, 0, 0, 0, 0, 1)) }
+
+    public suspend fun hideItemStub(context: SpiralContext, id: Any?): OSLUnion.NoOpType =
+        hideItem(intStub(context, id))
+
+    public suspend fun hideItem(id: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1AnimationEntry(2000 + id, 0, 0, 0, 0, 0, 2)) }
+
+    public suspend fun showCutinStub(context: SpiralContext, id: Any?): OSLUnion.NoOpType =
+        showCutin(intStub(context, id))
+
+    public suspend fun showCutin(id: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1AnimationEntry(3000 + id, 0, 0, 0, 0, 0, 1)) }
+
+    public suspend fun hideCutinStub(context: SpiralContext, id: Any?): OSLUnion.NoOpType =
+        hideCutin(intStub(context, id))
+
+    public suspend fun hideCutin(id: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1AnimationEntry(3000 + id, 0, 0, 0, 0, 0, 2)) }
+
+    public suspend fun showSpriteStub(context: SpiralContext, character: Any?, sprite: Any?): OSLUnion.NoOpType =
+        showSprite(intStub(context, character), intStub(context, sprite), 1, 2)
+
+    public suspend fun showSpriteStub(
+        context: SpiralContext,
+        character: Any?,
+        sprite: Any?,
+        state: Any?
+    ): OSLUnion.NoOpType =
+        showSprite(intStub(context, character), intStub(context, sprite), intStub(context, state), 2)
+
+    public suspend fun showSpriteStub(
+        context: SpiralContext,
+        character: Any?,
+        sprite: Any?,
+        state: Any?,
+        transition: Any?
+    ): OSLUnion.NoOpType =
+        showSprite(
+            intStub(context, character),
+            intStub(context, sprite),
+            intStub(context, state),
+            intStub(context, transition)
+        )
+
+    public suspend fun showSprite(character: Int, sprite: Int, state: Int, transition: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1SpriteEntry(0, character, sprite, state, transition)) }
+
+    public suspend fun disableUIStub(context: SpiralContext, element: Any?): OSLUnion.NoOpType =
+        disableUI(intStub(context, element))
+
+    public suspend fun disableUI(element: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ChangeUIEntry(element, 0)) }
+
+    public suspend fun enableUIStub(context: SpiralContext, element: Any?): OSLUnion.NoOpType =
+        enableUI(intStub(context, element))
+
+    public suspend fun enableUI(element: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ChangeUIEntry(element, 1)) }
 
     //    suspend fun disableFlagStub(context: SpiralContext, flagID: Any?) = enableFlag(intStub(context, flagID))
-    suspend fun disableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?) = enableFlag(intStub(context, flagGroup), intStub(context, flagID))
+    public suspend fun disableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?): OSLUnion.NoOpType =
+        enableFlag(intStub(context, flagGroup), intStub(context, flagID))
 
-    suspend fun disableFlag(flagGroup: Int, flagID: Int) = runNoOp {
-        custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 0))
-    }
+    public suspend fun disableFlag(flagGroup: Int, flagID: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 0)) }
 
     //    suspend fun enableFlagStub(context: SpiralContext, flagID: Any?) = enableFlag(intStub(context, flagID))
-    suspend fun enableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?) = enableFlag(intStub(context, flagGroup), intStub(context, flagID))
+    public suspend fun enableFlagStub(context: SpiralContext, flagGroup: Any?, flagID: Any?): OSLUnion.NoOpType =
+        enableFlag(intStub(context, flagGroup), intStub(context, flagID))
 
-    suspend fun enableFlag(flagGroup: Int, flagID: Int) = runNoOp {
-        custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 1))
-    }
+    public suspend fun enableFlag(flagGroup: Int, flagID: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1SetFlagEntry(flagGroup, flagID, 1)) }
 
-    suspend fun fadeInFromBlackStub(context: SpiralContext, frameCount: Any?) = fadeInFromBlack(intStub(context, frameCount))
-    suspend fun fadeInFromBlack(frameCount: Int) = runNoOp {
-        custom.addEntry(Dr1ScreenFadeEntry(true, Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, frameCount))
-    }
+    public suspend fun fadeInFromBlackStub(context: SpiralContext, frameCount: Any?): OSLUnion.NoOpType =
+        fadeInFromBlack(intStub(context, frameCount))
 
-    suspend fun fadeOutToBlackStub(context: SpiralContext, frameCount: Any?) = fadeOutToBlack(intStub(context, frameCount))
-    suspend fun fadeOutToBlack(frameCount: Int) = runNoOp {
-        custom.addEntry(Dr1ScreenFadeEntry(false, Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, frameCount))
-    }
+    public suspend fun fadeInFromBlack(frameCount: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ScreenFadeEntry(true, Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, frameCount)) }
 
-    suspend fun fadeInFromWhiteStub(context: SpiralContext, frameCount: Any?) = fadeInFromWhite(intStub(context, frameCount))
-    suspend fun fadeInFromWhite(frameCount: Int) = runNoOp {
-        custom.addEntry(Dr1ScreenFadeEntry(true, Dr1ScreenFadeEntry.FADE_COLOUR_WHITE, frameCount))
-    }
+    public suspend fun fadeOutToBlackStub(context: SpiralContext, frameCount: Any?): OSLUnion.NoOpType =
+        fadeOutToBlack(intStub(context, frameCount))
 
-    suspend fun fadeOutToWhiteStub(context: SpiralContext, frameCount: Any?) = fadeOutToWhite(intStub(context, frameCount))
-    suspend fun fadeOutToWhite(frameCount: Int) = runNoOp {
-        custom.addEntry(Dr1ScreenFadeEntry(false, Dr1ScreenFadeEntry.FADE_COLOUR_WHITE, frameCount))
-    }
+    public suspend fun fadeOutToBlack(frameCount: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ScreenFadeEntry(false, Dr1ScreenFadeEntry.FADE_COLOUR_BLACK, frameCount)) }
 
-    suspend fun flashScreenStub(context: SpiralContext, colour: Any?, fadeInDuration: Any?, fadeOutDuration: Any?) = flashScreen(intStub(context, colour), intStub(context, fadeInDuration), 0, intStub(context, fadeOutDuration), 255)
-    suspend fun flashScreenStub(context: SpiralContext, colour: Any?, fadeInDuration: Any?, holdDuration: Any?, fadeOutDuration: Any?) =
-        flashScreen(intStub(context, colour), intStub(context, fadeInDuration), intStub(context, holdDuration), intStub(context, fadeOutDuration), 255)
+    public suspend fun fadeInFromWhiteStub(context: SpiralContext, frameCount: Any?): OSLUnion.NoOpType =
+        fadeInFromWhite(intStub(context, frameCount))
 
-    suspend fun flashScreenStub(context: SpiralContext, colour: Any?, fadeInDuration: Any?, holdDuration: Any?, fadeOutDuration: Any?, opacity: Any?) =
-        flashScreen(intStub(context, colour), intStub(context, fadeInDuration), intStub(context, holdDuration), intStub(context, fadeOutDuration), intStub(context, opacity))
+    public suspend fun fadeInFromWhite(frameCount: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ScreenFadeEntry(true, Dr1ScreenFadeEntry.FADE_COLOUR_WHITE, frameCount)) }
 
-    suspend fun flashScreen(colour: Int, fadeInDuration: Int, holdDuration: Int, fadeOutDuration: Int, opacity: Int) = runNoOp {
-        custom.addEntry(Dr1ScreenFlashEntry((colour shr 16) and 0xFF, (colour shr 8) and 0xFF, (colour shr 0) and 0xFF, fadeInDuration, holdDuration, fadeOutDuration, opacity))
-    }
+    public suspend fun fadeOutToWhiteStub(context: SpiralContext, frameCount: Any?): OSLUnion.NoOpType =
+        fadeOutToWhite(intStub(context, frameCount))
 
-    suspend fun waitStub(context: SpiralContext, frameCount: Any?) = wait(intStub(context, frameCount))
-    suspend fun wait(frameCount: Int) = runNoOp {
-        custom.addEntry(Dr1SetGameParameterEntry(Dr1SetGameParameterEntry.GAME_PARAMETER_WAIT_FORCE, Dr1SetGameParameterEntry.OPERATOR_SET, frameCount))
-    }
+    public suspend fun fadeOutToWhite(frameCount: Int): OSLUnion.NoOpType =
+        runNoOp { custom.addEntry(Dr1ScreenFadeEntry(false, Dr1ScreenFadeEntry.FADE_COLOUR_WHITE, frameCount)) }
 
-    suspend fun formatted(context: SpiralContext, _parameters: Map<String, Any?>): OSLUnion.Int16BENumberType {
+    public suspend fun flashScreenStub(
+        context: SpiralContext,
+        colour: Any?,
+        fadeInDuration: Any?,
+        fadeOutDuration: Any?
+    ): OSLUnion.NoOpType =
+        flashScreen(
+            intStub(context, colour),
+            intStub(context, fadeInDuration),
+            0,
+            intStub(context, fadeOutDuration),
+            255
+        )
+
+    public suspend fun flashScreenStub(
+        context: SpiralContext,
+        colour: Any?,
+        fadeInDuration: Any?,
+        holdDuration: Any?,
+        fadeOutDuration: Any?
+    ): OSLUnion.NoOpType =
+        flashScreen(
+            intStub(context, colour),
+            intStub(context, fadeInDuration),
+            intStub(context, holdDuration),
+            intStub(context, fadeOutDuration),
+            255
+        )
+
+    public suspend fun flashScreenStub(
+        context: SpiralContext,
+        colour: Any?,
+        fadeInDuration: Any?,
+        holdDuration: Any?,
+        fadeOutDuration: Any?,
+        opacity: Any?
+    ): OSLUnion.NoOpType =
+        flashScreen(
+            intStub(context, colour),
+            intStub(context, fadeInDuration),
+            intStub(context, holdDuration),
+            intStub(context, fadeOutDuration),
+            intStub(context, opacity)
+        )
+
+    public suspend fun flashScreen(
+        colour: Int,
+        fadeInDuration: Int,
+        holdDuration: Int,
+        fadeOutDuration: Int,
+        opacity: Int
+    ): OSLUnion.NoOpType =
+        runNoOp {
+            custom.addEntry(
+                Dr1ScreenFlashEntry(
+                    (colour shr 16) and 0xFF,
+                    (colour shr 8) and 0xFF,
+                    (colour shr 0) and 0xFF,
+                    fadeInDuration,
+                    holdDuration,
+                    fadeOutDuration,
+                    opacity
+                )
+            )
+        }
+
+    public suspend fun waitStub(context: SpiralContext, frameCount: Any?): OSLUnion.NoOpType =
+        wait(intStub(context, frameCount))
+
+    public suspend fun wait(frameCount: Int): OSLUnion.NoOpType =
+        runNoOp {
+            custom.addEntry(
+                Dr1SetGameParameterEntry(
+                    Dr1SetGameParameterEntry.GAME_PARAMETER_WAIT_FORCE,
+                    Dr1SetGameParameterEntry.OPERATOR_SET,
+                    frameCount
+                )
+            )
+        }
+
+    public suspend fun formatted(context: SpiralContext, _parameters: Map<String, Any?>): OSLUnion.Int16BENumberType {
         val parameters = _parameters.mapKeys { (key) -> key.substringAfter("index_").toInt() }
             .entries.sortedBy(Map.Entry<Int, *>::key)
             .map(Map.Entry<Int, Any?>::value)
@@ -874,7 +1065,16 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
 
         register(SpiralSuspending.Func2("ShowSprite", "character", "sprite", func = this::showSpriteStub))
         register(SpiralSuspending.Func3("ShowSprite", "character", "sprite", "state", func = this::showSpriteStub))
-        register(SpiralSuspending.Func4("ShowSprite", "character", "sprite", "state", "transition", func = this::showSpriteStub))
+        register(
+            SpiralSuspending.Func4(
+                "ShowSprite",
+                "character",
+                "sprite",
+                "state",
+                "transition",
+                func = this::showSpriteStub
+            )
+        )
 
         register(SpiralSuspending.Func1("EnableUI", "element", func = this::enableUIStub))
         register(SpiralSuspending.Func1("DisableUI", "element", func = this::disableUIStub))
@@ -890,9 +1090,36 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
         register(SpiralSuspending.Func1("FadeInFromWhite", "frameCount", func = this::fadeInFromWhiteStub))
         register(SpiralSuspending.Func1("FadeOutToWhite", "frameCount", func = this::fadeOutToWhiteStub))
 
-        register(SpiralSuspending.Func3("FlashScreen", "colour", "fadeInDuration", "fadeOutDuration", func = this::flashScreenStub))
-        register(SpiralSuspending.Func4("FlashScreen", "colour", "fadeInDuration", "holdDuration", "fadeOutDuration", func = this::flashScreenStub))
-        register(SpiralSuspending.Func5("FlashScreen", "colour", "fadeInDuration", "holdDuration", "fadeOutDuration", "opacity", func = this::flashScreenStub))
+        register(
+            SpiralSuspending.Func3(
+                "FlashScreen",
+                "colour",
+                "fadeInDuration",
+                "fadeOutDuration",
+                func = this::flashScreenStub
+            )
+        )
+        register(
+            SpiralSuspending.Func4(
+                "FlashScreen",
+                "colour",
+                "fadeInDuration",
+                "holdDuration",
+                "fadeOutDuration",
+                func = this::flashScreenStub
+            )
+        )
+        register(
+            SpiralSuspending.Func5(
+                "FlashScreen",
+                "colour",
+                "fadeInDuration",
+                "holdDuration",
+                "fadeOutDuration",
+                "opacity",
+                func = this::flashScreenStub
+            )
+        )
 
         register(SpiralSuspending.Func1("Wait", "frameCount", func = this::waitStub))
 
@@ -900,8 +1127,10 @@ open class Dr1LinCompiler private constructor(flow: OutputFlow, game: Dr1) : Lin
     }
 }
 
-@ExperimentalUnsignedTypes
-@ExperimentalStdlibApi
-suspend fun OutputFlow.compileLinFromBitcode(context: SpiralContext, game: DrGame.LinScriptable, bitcode: InputFlow) {
+public suspend fun OutputFlow.compileLinFromBitcode(
+    context: SpiralContext,
+    game: DrGame.LinScriptable,
+    bitcode: InputFlow
+) {
     bitcode.parseOpenSpiralBitcode(context, LinCompiler(this, game))
 }

@@ -4,15 +4,7 @@ import dev.brella.kornea.base.common.use
 import dev.brella.kornea.io.common.encodeToUTF8ByteArray
 import dev.brella.kornea.io.common.flow.BinaryOutputFlow
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.writeFloatLE
-import dev.brella.kornea.io.common.flow.extensions.writeInt16BE
-import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
-import dev.brella.kornea.io.common.flow.extensions.writeInt24BE
-import dev.brella.kornea.io.common.flow.extensions.writeInt24LE
-import dev.brella.kornea.io.common.flow.extensions.writeInt32BE
-import dev.brella.kornea.io.common.flow.extensions.writeInt32LE
-import dev.brella.kornea.io.common.flow.extensions.writeInt64LE
-import dev.brella.kornea.io.common.flow.extensions.writeVariableInt16
+import dev.brella.kornea.io.common.flow.extensions.*
 import dev.brella.kornea.toolkit.common.SemanticVersion
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.formats.common.scripting.lin.LinEntry
@@ -61,22 +53,27 @@ import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_TEXT
 import info.spiralframework.osb.common.OpenSpiralBitcode.VARIABLE_VAR_REFERENCE
 import kotlin.math.roundToInt
 
-data class OpenSpiralBitcodeBuilderBranch(val condition: OpenSpiralBitcodeFlagCondition, val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>, val branch: suspend (OpenSpiralBitcodeBuilder) -> Unit)
+public data class OpenSpiralBitcodeBuilderBranch(
+    val condition: OpenSpiralBitcodeFlagCondition,
+    val otherConditions: Array<Pair<Int, OpenSpiralBitcodeFlagCondition>>,
+    val branch: suspend (OpenSpiralBitcodeBuilder) -> Unit
+)
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
-    companion object {
-        suspend operator fun invoke(output: OutputFlow): OpenSpiralBitcodeBuilder {
+public class OpenSpiralBitcodeBuilder private constructor(public val output: OutputFlow) {
+    public companion object {
+        public suspend operator fun invoke(output: OutputFlow): OpenSpiralBitcodeBuilder {
             val builder = OpenSpiralBitcodeBuilder(output)
             builder.writeMagicNumber()
             return builder
         }
     }
 
-    class LongReference private constructor(val output: OutputFlow) {
-        companion object {
-            suspend operator fun invoke(output: OutputFlow, init: suspend LongReference.() -> Unit): LongReference {
+    public class LongReference private constructor(public val output: OutputFlow) {
+        public companion object {
+            public suspend operator fun invoke(
+                output: OutputFlow,
+                init: suspend LongReference.() -> Unit
+            ): LongReference {
                 val ref = LongReference(output)
                 ref.init()
                 output.write(LONG_REFERENCE_END)
@@ -84,28 +81,28 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             }
         }
 
-        suspend fun appendText(text: String) {
+        public suspend fun appendText(text: String) {
             output.write(LONG_REFERENCE_TEXT)
             output.write(text.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        suspend fun appendVariable(variableName: String) {
+        public suspend fun appendVariable(variableName: String) {
             output.write(LONG_REFERENCE_VARIABLE)
             output.write(variableName.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        suspend fun appendColourCode(colourCode: String) {
+        public suspend fun appendColourCode(colourCode: String) {
             output.write(LONG_REFERENCE_COLOUR_CODE)
             output.write(colourCode.encodeToUTF8ByteArray())
             output.write(0x00)
         }
     }
 
-    class Action private constructor(val output: OutputFlow) {
-        companion object {
-            suspend operator fun invoke(output: OutputFlow, init: suspend Action.() -> Unit): Action {
+    public class Action private constructor(public val output: OutputFlow) {
+        public companion object {
+            public suspend operator fun invoke(output: OutputFlow, init: suspend Action.() -> Unit): Action {
                 val ref = Action(output)
                 ref.init()
                 output.write(ACTION_END)
@@ -113,13 +110,13 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
             }
         }
 
-        suspend fun appendText(text: String) {
+        public suspend fun appendText(text: String) {
             output.write(ACTION_TEXT)
             output.write(text.encodeToUTF8ByteArray())
             output.write(0x00)
         }
 
-        suspend fun appendVariable(variableName: String) {
+        public suspend fun appendVariable(variableName: String) {
             output.write(ACTION_VARIABLE)
             output.write(variableName.encodeToUTF8ByteArray())
             output.write(0x00)
@@ -133,21 +130,21 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
 //        }
     }
 
-    suspend fun writeMagicNumber() {
+    public suspend fun writeMagicNumber() {
         output.writeInt32LE(MAGIC_NUMBER_LE)
     }
 
-    suspend fun setVersion(version: SemanticVersion) {
+    public suspend fun setVersion(version: SemanticVersion) {
         output.write(OPERATION_SET_VERSION)
         output.write(version.major)
         output.write(version.minor)
         output.write(version.patch)
     }
 
-    suspend fun addOpcode(entry: LinEntry) = addOpcode(entry.opcode, entry.rawArguments)
+    public suspend fun addOpcode(entry: LinEntry): Unit =
+        addOpcode(entry.opcode, entry.rawArguments)
 
-    @ExperimentalStdlibApi
-    suspend fun addOpcode(entry: WrdEntry) {
+    public suspend fun addOpcode(entry: WrdEntry) {
         output.write(OPERATION_ADD_VARIABLE_OPCODE)
         output.write(entry.opcode)
         output.write(entry.arguments.size)
@@ -177,15 +174,14 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun addOpcode(opcode: Int, rawArguments: IntArray) {
+    public suspend fun addOpcode(opcode: Int, rawArguments: IntArray) {
         output.write(OPERATION_ADD_PLAIN_OPCODE)
         output.write(opcode)
         output.write(rawArguments.size)
         rawArguments.suspendForEach(output::writeVariableInt16)
     }
 
-    @ExperimentalStdlibApi
-    suspend fun addOpcode(opcode: Int, arguments: Array<OSLUnion>) {
+    public suspend fun addOpcode(opcode: Int, arguments: Array<OSLUnion>) {
         if (arguments.all { union -> union is OSLUnion.NumberType || union is OSLUnion.BooleanType }) {
             addOpcode(opcode, collectArgs(arguments))
         } else {
@@ -197,7 +193,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun addOpcode(opcodeName: String, rawArguments: IntArray) {
+    public suspend fun addOpcode(opcodeName: String, rawArguments: IntArray) {
         output.write(OPERATION_ADD_PLAIN_OPCODE_NAMED)
         output.write(opcodeName.encodeToUTF8ByteArray())
         output.write(0x00)
@@ -255,8 +251,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         return args.toIntArray()
     }
 
-    @ExperimentalStdlibApi
-    suspend fun addOpcode(opcodeName: String, arguments: Array<OSLUnion>) {
+    public suspend fun addOpcode(opcodeName: String, arguments: Array<OSLUnion>) {
         if (arguments.all { union -> union is OSLUnion.NumberType || union is OSLUnion.BooleanType }) {
             addOpcode(opcodeName, collectArgs(arguments))
         } else {
@@ -269,30 +264,28 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun setVariable(variableName: String, variableValue: OSLUnion) {
+    public suspend fun setVariable(variableName: String, variableValue: OSLUnion) {
         output.write(OPERATION_SET_VARIABLE)
         output.write(variableName.encodeToUTF8ByteArray())
         output.write(0x00)
         writeArg(variableValue)
     }
 
-    @ExperimentalStdlibApi
-    suspend fun addDialogue(speakerName: String, dialogue: OSLUnion) {
+    public suspend fun addDialogue(speakerName: String, dialogue: OSLUnion) {
         output.write(OPERATION_ADD_DIALOGUE)
         output.write(speakerName.encodeToUTF8ByteArray())
         output.write(0x00)
         writeArg(dialogue)
     }
 
-    @ExperimentalStdlibApi
-    suspend fun addDialogueVariable(speakerVariable: String, dialogue: OSLUnion) {
+    public suspend fun addDialogueVariable(speakerVariable: String, dialogue: OSLUnion) {
         output.write(OPERATION_ADD_DIALOGUE_VARIABLE)
         output.write(speakerVariable.encodeToUTF8ByteArray())
         output.write(0x00)
         writeArg(dialogue)
     }
 
-    suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
+    public suspend fun addFunctionCall(functionName: String, parameters: Array<OSLUnion.FunctionParameterType>) {
         output.write(OPERATION_ADD_FUNCTION_CALL)
         output.write(functionName.encodeToUTF8ByteArray())
         output.write(0x00)
@@ -305,7 +298,11 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
     }
 
 
-    suspend fun addIfCheck(mainBranch: OpenSpiralBitcodeBuilderBranch, elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>, ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?) {
+    public suspend fun addIfCheck(
+        mainBranch: OpenSpiralBitcodeBuilderBranch,
+        elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>,
+        ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?
+    ) {
         output.write(OPERATION_ADD_IF_CHECK)
         output.write(mainBranch.otherConditions.size + 1)
         writeArg(mainBranch.condition.checking)
@@ -349,7 +346,11 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun addCheckFlag(mainBranch: OpenSpiralBitcodeBuilderBranch, elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>, ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?) {
+    public suspend fun addCheckFlag(
+        mainBranch: OpenSpiralBitcodeBuilderBranch,
+        elseIfBranches: List<OpenSpiralBitcodeBuilderBranch>,
+        ifFalse: (suspend (OpenSpiralBitcodeBuilder) -> Unit)?
+    ) {
         output.write(OPERATION_ADD_FLAG_CHECK)
         output.write(mainBranch.otherConditions.size + 1)
         writeArg(mainBranch.condition.checking)
@@ -393,7 +394,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun addPresentSelection(scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
+    public suspend fun addPresentSelection(scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
         output.write(OPERATION_ADD_TREE)
         output.write(TREE_TYPE_PRESENT_SELECTION)
         BinaryOutputFlow().use { data ->
@@ -403,7 +404,10 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    suspend fun addLoadMap(params: List<OSLUnion.FunctionParameterType>, scope: suspend (OpenSpiralBitcodeBuilder) -> Unit) {
+    public suspend fun addLoadMap(
+        params: List<OSLUnion.FunctionParameterType>,
+        scope: suspend (OpenSpiralBitcodeBuilder) -> Unit
+    ) {
         val params = params.toMutableList()
         output.write(OPERATION_ADD_LOAD_MAP)
         val mapID = params.firstOrNull { param -> param.parameterName == "mapID" } ?: params.firstOrNull()
@@ -425,8 +429,7 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
         }
     }
 
-    @ExperimentalStdlibApi
-    suspend fun writeArg(arg: OSLUnion) {
+    public suspend fun writeArg(arg: OSLUnion) {
         when (arg) {
             is OSLUnion.Int8NumberType -> {
                 output.write(VARIABLE_INT8)
@@ -518,26 +521,26 @@ class OpenSpiralBitcodeBuilder private constructor(val output: OutputFlow) {
     }
 }
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun buildOpenSpiralBitcode(init: suspend OpenSpiralBitcodeBuilder.() -> Unit): ByteArray {
+public suspend fun buildOpenSpiralBitcode(init: suspend OpenSpiralBitcodeBuilder.() -> Unit): ByteArray {
     val binary = BinaryOutputFlow()
     val builder = OpenSpiralBitcodeBuilder(binary)
     builder.init()
     return binary.getData()
 }
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun buildLongReference(init: suspend OpenSpiralBitcodeBuilder.LongReference.() -> Unit): ByteArray {
+public suspend fun OutputFlow.compileOpenSpiralBitcode(init: suspend OpenSpiralBitcodeBuilder.() -> Unit) {
+    val builder = OpenSpiralBitcodeBuilder(this)
+    builder.init()
+    flush()
+}
+
+public suspend fun buildLongReference(init: suspend OpenSpiralBitcodeBuilder.LongReference.() -> Unit): ByteArray {
     val binary = BinaryOutputFlow()
     OpenSpiralBitcodeBuilder.LongReference(binary, init)
     return binary.getData()
 }
 
-@ExperimentalStdlibApi
-@ExperimentalUnsignedTypes
-suspend fun buildAction(init: suspend OpenSpiralBitcodeBuilder.Action.() -> Unit): ByteArray {
+public suspend fun buildAction(init: suspend OpenSpiralBitcodeBuilder.Action.() -> Unit): ByteArray {
     val binary = BinaryOutputFlow()
     OpenSpiralBitcodeBuilder.Action(binary, init)
     return binary.getData()

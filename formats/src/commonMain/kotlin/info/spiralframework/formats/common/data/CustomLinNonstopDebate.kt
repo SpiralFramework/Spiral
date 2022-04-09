@@ -1,57 +1,54 @@
 package info.spiralframework.formats.common.data
 
-import info.spiralframework.base.common.SpiralContext
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.formats.common.games.Dr1
 import info.spiralframework.formats.common.games.Dr2
 import info.spiralframework.formats.common.games.DrGame
-import info.spiralframework.formats.common.games.UnsafeDr1
-import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.extensions.writeInt16LE
 import kotlin.math.roundToInt
 
-class CustomLinNonstopDebate(val sectionSize: Int) {
-    constructor(game: DrGame.LinNonstopScriptable) : this(game.linNonstopSectionSize)
+public class CustomLinNonstopDebate(public val sectionSize: Int) {
+    public constructor(game: DrGame.LinNonstopScriptable) : this(game.linNonstopSectionSize)
 
-    val _sections: MutableList<LinNonstopDebateSection> = ArrayList()
-    val sections: List<LinNonstopDebateSection>
+    public val _sections: MutableList<LinNonstopDebateSection> = ArrayList()
+    public val sections: List<LinNonstopDebateSection>
         get() = _sections
 
-    var baseTimeLimit: Int = 300
+    public var baseTimeLimit: Int = 300
 
     /** 2 * timeLimit */
-    var gentleTimeLimit
+    public var gentleTimeLimit: Int
         get() = baseTimeLimit * 2
         set(value) {
             baseTimeLimit = value / 2
         }
 
     /** 1 * timeLimit */
-    var kindTimeLimit
+    public var kindTimeLimit: Int
         get() = baseTimeLimit * 1
         set(value) {
             baseTimeLimit = value / 1
         }
 
     /** 0.8 * timeLimit */
-    var meanTimeLimit
+    public var meanTimeLimit: Int
         get() = (baseTimeLimit * 0.8).roundToInt()
         set(value) {
             baseTimeLimit = (value / 0.8).roundToInt()
         }
 
-    inline fun addSection(block: LinNonstopDebateSection.() -> Unit) {
+    public inline fun addSection(block: LinNonstopDebateSection.() -> Unit) {
         val section = LinNonstopDebateSection(sectionSize)
         section.block()
         _sections.add(section)
     }
 
-    fun addSection(section: LinNonstopDebateSection) {
+    public fun addSection(section: LinNonstopDebateSection) {
         _sections.add(section)
     }
 
-    @ExperimentalUnsignedTypes
-    suspend fun compile(output: OutputFlow) {
+    public suspend fun compile(output: OutputFlow) {
         output.writeInt16LE(baseTimeLimit)
         output.writeInt16LE(_sections.size)
 
@@ -63,30 +60,21 @@ class CustomLinNonstopDebate(val sectionSize: Int) {
     }
 }
 
-@ExperimentalUnsignedTypes
-inline fun dr1NonstopDebate(block: CustomLinNonstopDebate.() -> Unit) = linNonstopDebate(Dr1.NONSTOP_DEBATE_SECTION_SIZE, block)
+public inline fun dr1NonstopDebate(block: CustomLinNonstopDebate.() -> Unit): CustomLinNonstopDebate = linNonstopDebate(Dr1.NONSTOP_DEBATE_SECTION_SIZE, block)
+public inline fun dr2NonstopDebate(block: CustomLinNonstopDebate.() -> Unit): CustomLinNonstopDebate = linNonstopDebate(Dr2.NONSTOP_DEBATE_SECTION_SIZE, block)
 
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileDr1NonstopDebate(block: CustomLinNonstopDebate.() -> Unit) = compileLinNonstopDebate(Dr1.NONSTOP_DEBATE_SECTION_SIZE, block)
+public suspend fun OutputFlow.compileDr1NonstopDebate(block: CustomLinNonstopDebate.() -> Unit): Unit = compileLinNonstopDebate(Dr1.NONSTOP_DEBATE_SECTION_SIZE, block)
+public suspend fun OutputFlow.compileDr2NonstopDebate(block: CustomLinNonstopDebate.() -> Unit): Unit = compileLinNonstopDebate(Dr2.NONSTOP_DEBATE_SECTION_SIZE, block)
 
-@ExperimentalUnsignedTypes
-inline fun dr2NonstopDebate(block: CustomLinNonstopDebate.() -> Unit) = linNonstopDebate(Dr2.NONSTOP_DEBATE_SECTION_SIZE, block)
-
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileDr2NonstopDebate(block: CustomLinNonstopDebate.() -> Unit) = compileLinNonstopDebate(Dr2.NONSTOP_DEBATE_SECTION_SIZE, block)
-
-inline fun linNonstopDebate(game: DrGame.LinNonstopScriptable, block: CustomLinNonstopDebate.() -> Unit) = linNonstopDebate(game.linNonstopSectionSize, block)
-inline fun linNonstopDebate(sectionSize: Int, block: CustomLinNonstopDebate.() -> Unit): CustomLinNonstopDebate {
+public inline fun linNonstopDebate(game: DrGame.LinNonstopScriptable, block: CustomLinNonstopDebate.() -> Unit): CustomLinNonstopDebate = linNonstopDebate(game.linNonstopSectionSize, block)
+public inline fun linNonstopDebate(sectionSize: Int, block: CustomLinNonstopDebate.() -> Unit): CustomLinNonstopDebate {
     val debate = CustomLinNonstopDebate(sectionSize)
     debate.block()
     return debate
 }
 
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileLinNonstopDebate(game: DrGame.LinNonstopScriptable, block: CustomLinNonstopDebate.() -> Unit) = compileLinNonstopDebate(game.linNonstopSectionSize, block)
-
-@ExperimentalUnsignedTypes
-suspend fun OutputFlow.compileLinNonstopDebate(sectionSize: Int, block: CustomLinNonstopDebate.() -> Unit) {
+public suspend fun OutputFlow.compileLinNonstopDebate(game: DrGame.LinNonstopScriptable, block: CustomLinNonstopDebate.() -> Unit): Unit = compileLinNonstopDebate(game.linNonstopSectionSize, block)
+public suspend fun OutputFlow.compileLinNonstopDebate(sectionSize: Int, block: CustomLinNonstopDebate.() -> Unit) {
     val debate = CustomLinNonstopDebate(sectionSize)
     debate.block()
     debate.compile(this)

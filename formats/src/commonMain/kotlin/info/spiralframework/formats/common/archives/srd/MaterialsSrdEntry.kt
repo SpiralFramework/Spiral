@@ -1,28 +1,25 @@
 package info.spiralframework.formats.common.archives.srd
 
-import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.locale.localisedNotEnoughData
 import dev.brella.kornea.errors.common.KorneaResult
-import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.getOrBreak
-import dev.brella.kornea.errors.common.filterToInstance
-import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.EnumSeekMode
-import dev.brella.kornea.io.common.flow.*
+import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.SeekableInputFlow
+import dev.brella.kornea.io.common.flow.bookmark
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.extensions.readNullTerminatedString
-import dev.brella.kornea.toolkit.common.oneTimeMutableInline
+import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.localisedNotEnoughData
 
-@ExperimentalUnsignedTypes
-data class MaterialsSrdEntry(
+public data class MaterialsSrdEntry(
         override val classifier: Int,
         override val mainDataLength: ULong,
         override val subDataLength: ULong,
         override val unknown: Int
 ) : SrdEntryWithData.WithRsiSubdata(classifier, mainDataLength, subDataLength, unknown) {
-    companion object {
-        const val MAGIC_NUMBER_BE = 0x244D4154
+    public companion object {
+        public const val MAGIC_NUMBER_BE: Int = 0x244D4154
     }
+
     private val materialsMutable: MutableMap<String, String> = HashMap()
     val materials: Map<String, String> = materialsMutable
 

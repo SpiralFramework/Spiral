@@ -1,16 +1,16 @@
 package info.spiralframework.formats.common.compression
 
-import info.spiralframework.base.common.reverseBits
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
+import info.spiralframework.base.common.reverseBits
 
-const val SPC_COMPRESSION_MAGIC_NUMBER = 0x53504343
+public const val SPC_COMPRESSION_MAGIC_NUMBER: Int = 0x53504343
 
-const val INVALID_SPC_COMPRESSION_MAGIC_NUMBER = 0xE005
+public const val INVALID_SPC_COMPRESSION_MAGIC_NUMBER: Int = 0xE005
 
-const val SPC_COMPRESSION_NOT_ENOUGH_DATA = "formats.compression.spc.not_enough_data"
+public const val SPC_COMPRESSION_NOT_ENOUGH_DATA: String = "formats.compression.spc.not_enough_data"
 
-fun decompressSpcData(data: ByteArray, size: Int = 0): KorneaResult<ByteArray> {
+public fun decompressSpcData(data: ByteArray, size: Int = 0): KorneaResult<ByteArray> {
     val output = ArrayList<Byte>(size)
     var flag = 1
     var pos = 0
@@ -55,5 +55,5 @@ fun decompressSpcData(data: ByteArray, size: Int = 0): KorneaResult<ByteArray> {
         flag = flag shr 1
     }
 
-    return KorneaResult.success(output.toByteArray(), null)
+    return KorneaResult.success(output.toByteArray())
 }

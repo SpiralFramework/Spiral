@@ -3,7 +3,8 @@ package info.spiralframework.formats.common.data
 import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.cast
-import dev.brella.kornea.errors.common.consumeAndGetOrBreak
+import dev.brella.kornea.errors.common.getOrBreak
+import dev.brella.kornea.errors.common.getOrThrow
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.extensions.readInt16LE
 import dev.brella.kornea.io.common.flow.readExact
@@ -12,19 +13,25 @@ import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.withFormats
 import kotlin.math.roundToInt
 
-@ExperimentalUnsignedTypes
-class LinNonstopDebate(val baseTimeLimit: Int, val sections: Array<LinNonstopDebateSection>) {
-    companion object {
-        const val NOT_ENOUGH_DATA_KEY = "formats.nonstop_debate.lin.not_enough_data"
+public class LinNonstopDebate(
+    public val baseTimeLimit: Int,
+    public val sections: Array<LinNonstopDebateSection>
+) {
+    public companion object {
+        public const val NOT_ENOUGH_DATA_KEY: String = "formats.nonstop_debate.lin.not_enough_data"
 
-        suspend operator fun invoke(context: SpiralContext, dataSource: DataSource<*>): KorneaResult<LinNonstopDebate> =
+        public suspend operator fun invoke(
+            context: SpiralContext,
+            dataSource: DataSource<*>
+        ): KorneaResult<LinNonstopDebate> =
             withFormats(context) {
                 val flow = dataSource.openInputFlow()
-                    .consumeAndGetOrBreak { return it.cast() }
+                    .getOrBreak { return it.cast() }
 
                 closeAfter(flow) {
                     val timeLimit = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
-                    val sectionCount = flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
+                    val sectionCount =
+                        flow.readInt16LE() ?: return@closeAfter localisedNotEnoughData(NOT_ENOUGH_DATA_KEY)
 
                     val sectionBuffer = ByteArray(60)
 
@@ -39,16 +46,19 @@ class LinNonstopDebate(val baseTimeLimit: Int, val sections: Array<LinNonstopDeb
     }
 
     /** 2 * timeLimit */
-    val gentleTimeLimit = baseTimeLimit * 2
+    public val gentleTimeLimit: Int = baseTimeLimit * 2
 
     /** 1 * timeLimit */
-    val kindTimeLimit = baseTimeLimit * 1
+    public val kindTimeLimit: Int = baseTimeLimit * 1
 
     /** 0.8 * timeLimit */
-    val meanTimeLimit = (baseTimeLimit * 0.8).roundToInt()
+    public val meanTimeLimit: Int = (baseTimeLimit * 0.8).roundToInt()
 }
 
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.HopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate(this, dataSource)
-@ExperimentalUnsignedTypes
-suspend fun SpiralContext.UnsafeHopesPeakNonstopDebate(dataSource: DataSource<*>) = LinNonstopDebate(this, dataSource).get()
+@Suppress("FunctionName")
+public suspend fun SpiralContext.HopesPeakNonstopDebate(dataSource: DataSource<*>): KorneaResult<LinNonstopDebate> =
+    LinNonstopDebate(this, dataSource)
+
+@Suppress("FunctionName")
+public suspend fun SpiralContext.UnsafeHopesPeakNonstopDebate(dataSource: DataSource<*>): LinNonstopDebate =
+    LinNonstopDebate(this, dataSource).getOrThrow()

@@ -9,7 +9,7 @@ import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.core.common.formats.buildFormatResult
+import info.spiralframework.core.common.formats.ensureFormatSuccess
 import java.io.File
 
 object AudioFormats {
@@ -20,7 +20,7 @@ object AudioFormats {
     val DEFAULT_WAV = object: SpiralAudioFormat("wav", "wav") {
         override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<File>> {
             if (source.useInputFlow { flow -> flow.readInt32LE() == WAV_MAGIC_NUMBER }.getOrElse(false)) {
-                return buildFormatResult(Optional.empty(), 1.0)
+                return ensureFormatSuccess(Optional.empty(), 1.0)
             }
 
             return KorneaResult.empty()
@@ -29,7 +29,7 @@ object AudioFormats {
     val DEFAULT_OGG = object: SpiralAudioFormat("ogg", "ogg") {
         override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<File>> {
             if (source.useInputFlow { flow -> flow.readInt32LE() == OGG_MAGIC_NUMBER }.getOrElse(false)) {
-                return buildFormatResult(Optional.empty(), 1.0)
+                return ensureFormatSuccess(Optional.empty(), 1.0)
             }
 
             return KorneaResult.empty()
@@ -38,7 +38,7 @@ object AudioFormats {
     val DEFAULT_MP3 = object: SpiralAudioFormat("mp3", "mp3") {
         override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<File>> {
             if (source.useInputFlow { flow -> flow.readInt32LE() == ID3_MAGIC_NUMBER }.getOrElse(false)) {
-                return buildFormatResult(Optional.empty(), 0.8)
+                return ensureFormatSuccess(Optional.empty(), 0.8)
             }
 
             return KorneaResult.empty()

@@ -1,7 +1,5 @@
 package info.spiralframework.osl
 
-import dev.brella.kornea.annotations.ExperimentalKorneaIO
-import dev.brella.kornea.annotations.ExperimentalKorneaToolkit
 import dev.brella.kornea.base.common.use
 import dev.brella.kornea.io.common.BinaryDataSource
 import dev.brella.kornea.io.common.flow.BinaryInputFlow
@@ -10,6 +8,7 @@ import dev.brella.kornea.io.common.flow.BufferedOutputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileDataSource
 import dev.brella.kornea.io.jvm.files.AsyncFileInputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
+import info.spiralframework.antlr.osl.OSLVisitor
 import info.spiralframework.antlr.osl.OpenSpiralLexer
 import info.spiralframework.antlr.osl.OpenSpiralParser
 import info.spiralframework.base.common.SpiralContext
@@ -30,12 +29,9 @@ import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
 import java.io.PrintStream
 
-object OSLProxy {
-    @OptIn(ExperimentalKorneaIO::class, ExperimentalKorneaToolkit::class)
-    @ExperimentalStdlibApi
-    @ExperimentalUnsignedTypes
+public object OSLProxy {
     @JvmStatic
-    fun main(args: Array<String>) {
+    public fun main(args: Array<String>) {
         runBlocking(Dispatchers.IO) {
             with(defaultSpiralContextWithFormats()) {
                 val dr1 = UnsafeDr1()
@@ -69,7 +65,7 @@ object OSLProxy {
                 }
 
                 File("D:\\Games\\Steam\\steamapps\\common\\Danganronpa 2 Goodbye Despair\\dr2_data_us\\Dr2\\data\\us\\script")
-                    ?.listFiles { file -> file.extension == "lin" }
+                    .listFiles { file -> file.extension == "lin" }
                     ?.forEach { file -> transpile(file.parentFile, file.nameWithoutExtension) }
 
 //                var i = 0
@@ -100,10 +96,7 @@ object OSLProxy {
         }
     }
 
-    @OptIn(ExperimentalKorneaIO::class)
-    @ExperimentalUnsignedTypes
-    @ExperimentalStdlibApi
-    suspend fun SpiralContext.convertToOsl(path: String) {
+    public suspend fun SpiralContext.convertToOsl(path: String) {
         val drv3 = UnsafeDRv3()
         val loadedWrd = UnsafeWordScript(drv3, AsyncFileDataSource(File(path)))
         val out = PrintStream(path.replaceAfterLast('.', "osl"))
@@ -123,9 +116,7 @@ object OSLProxy {
         }
     }
 
-    @ExperimentalUnsignedTypes
-    @ExperimentalStdlibApi
-    suspend fun SpiralContext.parseOsl(path: String, resultSpcPath: String) {
+    public suspend fun SpiralContext.parseOsl(path: String, resultSpcPath: String) {
         val input = CharStreams.fromString("OSL Script\n0x01|\"Test\"\nval test = 1.23\nMakoto: \"Hello, world!\"\nText|\"OwO What's \$test?\"")
         val lexer = OpenSpiralLexer(input)
         val tokens = CommonTokenStream(lexer)
