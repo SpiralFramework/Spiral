@@ -1,4 +1,4 @@
 package info.spiralframework.core.formats.images
 
-interface SpiralImageFormat {
+public interface SpiralImageFormat {
 }

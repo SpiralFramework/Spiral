@@ -14,20 +14,17 @@ import info.spiralframework.base.common.events.*
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.get
-import info.spiralframework.core.common.formats.FormatResult
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.SpiralFormat
+import info.spiralframework.core.common.formats.*
 import info.spiralframework.core.common.formats.compression.CrilaylaCompressionFormat
 import info.spiralframework.core.common.formats.compression.DRVitaFormat
 import info.spiralframework.core.common.formats.compression.DRv3CompressionFormat
 import info.spiralframework.core.common.formats.compression.SpcCompressionFormat
-import info.spiralframework.core.common.formats.filterIsIdentifyFormatResultOrNull
-import info.spiralframework.core.common.formats.value
 import java.io.Closeable
 import kotlin.math.abs
 
-object UserAgents {
-    const val DEFAULT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"
+public object UserAgents {
+    public const val DEFAULT: String =
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0"
 }
 
 /**
@@ -60,34 +57,55 @@ public inline fun <T : Closeable?, R> (() -> T).use(block: (T) -> R): R {
     }
 }
 
-typealias ReadableCompressionFormat = ReadableSpiralFormat<DataSource<*>>
+public typealias ReadableCompressionFormat = ReadableSpiralFormat<DataSource<*>>
 
-val COMPRESSION_FORMATS = arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
+public val COMPRESSION_FORMATS: Array<ReadableCompressionFormat> =
+    arrayOf(CrilaylaCompressionFormat, DRVitaFormat, SpcCompressionFormat, DRv3CompressionFormat)
 
-suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableCompressionFormat>?> {
+@Suppress("UNCHECKED_CAST")
+public suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource<*>, List<ReadableCompressionFormat>?> {
     val result = COMPRESSION_FORMATS.map { format -> format.identify(source = dataSource, context = this) }
-                     .filterIsIdentifyFormatResultOrNull<DataSource<*>>()
-                     .maxByOrNull(FormatResult<*, *>::confidence)
-                 ?: return Pair(dataSource, null)
+        .filterSuccesses()
+        .maxByConfidenceOrNull()
+        ?: return Pair(dataSource, null)
 
-    val resultDataSource = result.value().getOrElseRun {
-        result.format().read(source = dataSource, context = this)
+    val format = result.format as ReadableCompressionFormat
+
+    val resultDataSource = result.value.getOrElseRun {
+        format.read(source = dataSource, context = this)
             .getOrBreak { return Pair(dataSource, null) }
+            .value
     }
 
     val (decompressed, list) = decompress(resultDataSource)
 
+
     if (list is MutableList<ReadableCompressionFormat>) {
-        list.add(0, result.format())
+        list.add(0, result.format)
         return Pair(decompressed, list)
-    } else if (list != null) {
+    } else if (list != null) { //compiler flags this as unnecessary which is... weird
         val mutList = list.toMutableList()
-        mutList.add(0, result.format())
+        mutList.add(0, result.format)
         return Pair(decompressed, list)
     } else {
-        return Pair(decompressed, listOf(result.format()))
+        return Pair(decompressed, listOf(result.format))
     }
 }
+
+public inline fun <T> Iterable<KorneaResult<T>>.filterSuccesses(): List<T> =
+    filterSuccessesTo(ArrayList())
+
+public inline fun <T, C: MutableCollection<T>> Iterable<KorneaResult<T>>.filterSuccessesTo(collection: C): C {
+    forEach { result -> result.doOnSuccess(collection::add) }
+
+    return collection
+}
+
+public inline fun <T, F> Iterable<FormatSuccess<T, F>>.sortedByConfidence(): List<FormatSuccess<T, F>> =
+    sortedBy(FormatSuccess<T, F>::confidence)
+
+public inline fun <T, F> Iterable<FormatSuccess<T, F>>.maxByConfidenceOrNull(): FormatSuccess<T, F>? =
+    maxByOrNull(FormatSuccess<T, F>::confidence)
 
 //inline fun <reified T : Any> ObjectMapper.tryReadValue(src: ByteArray): T? {
 //    try {
@@ -126,16 +144,25 @@ suspend fun SpiralContext.decompress(dataSource: DataSource<*>): Pair<DataSource
 //    return null
 //}
 
-suspend fun <T : CancellableSpiralEvent> SpiralEventBus.postCancellable(context: SpiralContext, event: T): Boolean {
+public suspend fun <T : CancellableSpiralEvent> SpiralEventBus.postCancellable(
+    context: SpiralContext,
+    event: T
+): Boolean {
     context.post(event)
 
     return event.cancelled
 }
 
-fun <T> T.identifySelf(): T = this
+public fun <T> T.identifySelf(): T = this
 
-fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
-    register("Logging", SpiralEventPriority.HIGHEST) { event: SpiralEvent -> trace("core.eventbus.logging.event", event) }
+public fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
+    register("Logging", SpiralEventPriority.HIGHEST) { event: SpiralEvent ->
+        trace(
+            "core.eventbus.logging.event",
+            event
+        )
+    }
+
     return this
 }
 
@@ -148,18 +175,35 @@ fun <T : SpiralEventBus> T.installLoggingSubscriber(): T {
  * @sample samples.collections.Collections.Sorting.sortedBy
  */
 public inline fun <T : SpiralFormat> Iterable<T>.sortedAgainst(context: SpiralProperties?): List<T> {
-    return sortedWith(compareBy { format -> abs(format.extension?.compareTo(context[ISpiralProperty.FileName]?.substringAfterLast('.') ?: "") ?: -100) })
+    return sortedWith(compareBy { format ->
+        abs(
+            format.extension?.compareTo(
+                context[ISpiralProperty.FileName]?.substringAfterLast(
+                    '.'
+                ) ?: ""
+            ) ?: -100
+        )
+    })
 }
 
-public inline fun <T, R : KorneaResult<*>> Iterable<T>.mapResults(transform: (T) -> R): List<R> {
-    return mapResultsTo(ArrayList<R>(10), transform)
+public inline fun <T, U, F, R : SpiralFormatResult<U, F>> Iterable<T>.mapFormatResults(
+    threshold: Double = 0.99,
+    transform: (T) -> R
+): List<R> {
+    return mapFormatResultsTo(threshold, ArrayList<R>(10), transform)
 }
 
-public inline fun <T, R : KorneaResult<*>, C : MutableCollection<in R>> Iterable<T>.mapResultsTo(destination: C, transform: (T) -> R): C {
+public inline fun <T, U, F, R : SpiralFormatResult<U, F>, C : MutableCollection<in R>> Iterable<T>.mapFormatResultsTo(
+    threshold: Double = 0.99,
+    destination: C,
+    transform: (T) -> R
+): C {
     for (item in this) {
         val transformed = transform(item)
         destination.add(transformed)
-        if (transformed is FormatResult<*, *> && transformed.confidence() >= 0.99) break
+
+        val confidence = transformed.getOrNull()?.confidence
+        if (confidence != null && confidence >= threshold) break
     }
     return destination
 }

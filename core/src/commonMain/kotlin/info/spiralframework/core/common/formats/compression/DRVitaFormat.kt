@@ -4,46 +4,50 @@ import com.soywiz.krypto.sha256
 import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.*
-import dev.brella.kornea.io.common.*
+import dev.brella.kornea.io.common.BinaryDataSource
+import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.extensions.readUInt32LE
 import dev.brella.kornea.io.common.flow.readBytes
+import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.ensureFormatSuccess
+import info.spiralframework.core.common.formats.SpiralFormatOptionalResult
+import info.spiralframework.core.common.formats.SpiralFormatReturnResult
+import info.spiralframework.core.common.formats.buildFormatSuccess
 import info.spiralframework.formats.common.compression.decompressVita
 
-object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
+public object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "DrVita Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
-        if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC }.getOrElse(false))
-            return ensureFormatSuccess(Optional.empty(), 1.0)
+    override suspend fun identify(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatOptionalResult<DataSource<*>> {
+        if (source.useInputFlow { flow -> flow.readUInt32LE() == info.spiralframework.formats.common.compression.DR_VITA_MAGIC }
+                .getOrDefault(false))
+            return buildFormatSuccess(Optional.empty(), 1.0)
         return KorneaResult.empty()
     }
 
-    /**
-     * Attempts to read the data source as [T]
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     * @param source A function that returns an input stream
-     *
-     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
-     */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
-        val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
+    override suspend fun read(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatReturnResult<DataSource<*>> {
+        val data = source.useInputFlow { flow -> flow.readBytes() }
+            .getOrBreak { return it.cast() }
+
         val cache = context.cacheShortTerm(context, "drvita:${data.sha256().hexLower}")
 
         return cache.openOutputFlow()
             .flatMap { output ->
-                @Suppress("DEPRECATION")
                 decompressVita(data).map { data ->
                     output.write(data)
-                    ensureFormatSuccess(cache, 1.0)
+                    buildFormatSuccess(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -52,7 +56,7 @@ object DRVitaFormat : ReadableSpiralFormat<DataSource<*>> {
                 cache.close()
 
                 decompressVita(data).flatMap { decompressed ->
-                    ensureFormatSuccess(BinaryDataSource(decompressed), 1.0)
+                    buildFormatSuccess(BinaryDataSource(decompressed), 1.0)
                 }
             }
     }

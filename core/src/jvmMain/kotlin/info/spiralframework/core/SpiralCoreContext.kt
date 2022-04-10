@@ -12,23 +12,35 @@ import info.spiralframework.base.common.logging.SpiralLogger
 import info.spiralframework.base.common.serialisation.SpiralSerialisation
 import info.spiralframework.core.plugins.SpiralPluginRegistry
 import info.spiralframework.core.security.SpiralSignatures
+import kotlin.coroutines.CoroutineContext
 
-@ExperimentalUnsignedTypes
-interface SpiralCoreContext: SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralHttp {
-    val socketTimeout: Int
-    val connectTimeout: Int
-    val requestTimeout: Int
+public interface SpiralCoreContext : SpiralContext, SpiralSignatures, SpiralPluginRegistry, SpiralHttp {
+    public val socketTimeout: Int
+    public val connectTimeout: Int
+    public val requestTimeout: Int
 
-    val apiBase: String
-    val jenkinsBase: String
+    public val apiBase: String
+    public val jenkinsBase: String
 
-    val enabledPlugins: Map<String, SemanticVersion>
+    public val enabledPlugins: Map<String, SemanticVersion>
 
-    suspend fun copy(newLocale: SpiralLocale? = null, newLogger: SpiralLogger? = null, newConfig: SpiralConfig? = null, newEnvironment: SpiralEnvironment? = null, newEventBus: SpiralEventBus? = null, newCacheProvider: SpiralCacheProvider? = null, newResourceLoader: SpiralResourceLoader? = null, newSerialisation: SpiralSerialisation? = null, newSignatures: SpiralSignatures? = null, newPluginRegistry: SpiralPluginRegistry? = null, newHttp: SpiralHttp? = null): SpiralContext
+    public suspend fun copy(
+        newLocale: SpiralLocale? = null,
+        newLogger: SpiralLogger? = null,
+        newConfig: SpiralConfig? = null,
+        newEnvironment: SpiralEnvironment? = null,
+        newEventBus: SpiralEventBus? = null,
+        newCacheProvider: SpiralCacheProvider? = null,
+        newResourceLoader: SpiralResourceLoader? = null,
+        newSerialisation: SpiralSerialisation? = null,
+        newParentCoroutineContext: CoroutineContext? = null,
+        newSignatures: SpiralSignatures? = null,
+        newPluginRegistry: SpiralPluginRegistry? = null,
+        newHttp: SpiralHttp? = null
+    ): SpiralContext
 }
 
-@ExperimentalUnsignedTypes
-public inline fun <R> asCore(context: SpiralContext, block: SpiralCoreContext.() -> R): R? = (context as? SpiralCoreContext)?.let(block)
+public inline fun <R> asCore(context: SpiralContext, block: SpiralCoreContext.() -> R): R? =
+    (context as? SpiralCoreContext)?.let(block)
 
-@ExperimentalUnsignedTypes
-fun SpiralContext.core(): SpiralCoreContext? = this as? SpiralCoreContext
+public fun SpiralContext.core(): SpiralCoreContext? = this as? SpiralCoreContext

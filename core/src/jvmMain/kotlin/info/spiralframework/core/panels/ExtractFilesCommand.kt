@@ -1,10 +1,6 @@
 package info.spiralframework.core.panels
 
-import dev.brella.kornea.base.common.Optional
-import dev.brella.kornea.base.common.closeAfter
-import dev.brella.kornea.base.common.filterNotNull
-import dev.brella.kornea.base.common.getOrElseRun
-import dev.brella.kornea.base.common.use
+import dev.brella.kornea.base.common.*
 import dev.brella.kornea.errors.common.filterNotNull
 import dev.brella.kornea.errors.common.getOrBreak
 import dev.brella.kornea.io.common.DataSource
@@ -19,54 +15,94 @@ import info.spiralframework.base.common.logging.trace
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.get
-import info.spiralframework.core.ReadableCompressionFormat
+import info.spiralframework.core.*
 import info.spiralframework.core.common.BufferIOOperation
 import info.spiralframework.core.common.IOBuffer
 import info.spiralframework.core.common.MAX_BUFFER_SIZE
 import info.spiralframework.core.common.MAX_MISSING_DATA_COUNT
-import info.spiralframework.core.common.formats.FormatResult
+import info.spiralframework.core.common.formats.GenericFormatSuccess
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.decompress
-import info.spiralframework.core.mapResults
-import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
 import info.spiralframework.formats.common.archives.getSubfiles
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import java.io.File
 import kotlin.math.pow
 import kotlin.math.roundToLong
-import kotlin.time.ExperimentalTime
 
-interface ExtractFilesCommand {
-    val archiveFormats: List<ReadableSpiralFormat<SpiralArchive>>
+public interface ExtractFilesCommand {
+    public val archiveFormats: List<ReadableSpiralFormat<SpiralArchive>>
 
-    suspend fun noDestinationDirectory(context: SpiralContext)
-    suspend fun destinationNotDirectory(context: SpiralContext, destination: File)
+    public suspend fun noDestinationDirectory(context: SpiralContext)
+    public suspend fun destinationNotDirectory(context: SpiralContext, destination: File)
 
-    suspend fun beginFileAnalysis(context: SpiralContext, formats: List<ReadableSpiralFormat<SpiralArchive>>)
+    public suspend fun beginFileAnalysis(context: SpiralContext, formats: List<ReadableSpiralFormat<SpiralArchive>>)
 
-    suspend fun noFormatForFile(context: SpiralContext, dataSource: DataSource<*>)
-    suspend fun foundFileFormat(context: SpiralContext, result: FormatResult<Optional<SpiralArchive>, SpiralArchive>, compressionFormats: List<ReadableCompressionFormat>?, archive: SpiralArchive)
+    public suspend fun noFormatForFile(context: SpiralContext, dataSource: DataSource<*>)
+    public suspend fun foundFileFormat(
+        context: SpiralContext,
+        result: GenericFormatSuccess<Optional<SpiralArchive>>,
+        compressionFormats: List<ReadableCompressionFormat>?,
+        archive: SpiralArchive
+    )
 
-    suspend fun finishFileAnalysis(context: SpiralContext)
+    public suspend fun finishFileAnalysis(context: SpiralContext)
 
-    suspend fun archiveIsEmpty(context: SpiralContext, archive: SpiralArchive)
+    public suspend fun archiveIsEmpty(context: SpiralContext, archive: SpiralArchive)
 
-    suspend fun beginExtracting(context: SpiralContext, archive: SpiralArchive, destination: File)
+    public suspend fun beginExtracting(context: SpiralContext, archive: SpiralArchive, destination: File)
 
-    suspend fun beginExtractingSubfile(context: SpiralContext, archive: SpiralArchive, destination: File, subfile: String, flow: InputFlow, source: DataSource<*>)
+    public suspend fun beginExtractingSubfile(
+        context: SpiralContext,
+        archive: SpiralArchive,
+        destination: File,
+        subfile: String,
+        flow: InputFlow,
+        source: DataSource<*>
+    )
 
-    suspend fun subfileIsEmpty(context: SpiralContext, archive: SpiralArchive, destination: File, subfile: String, flow: InputFlow, source: DataSource<*>)
-    suspend fun subfileHasNoMoreData(context: SpiralContext, archive: SpiralArchive, destination: File, subfile: String, flow: InputFlow, source: DataSource<*>, waitCount: Int)
+    public suspend fun subfileIsEmpty(
+        context: SpiralContext,
+        archive: SpiralArchive,
+        destination: File,
+        subfile: String,
+        flow: InputFlow,
+        source: DataSource<*>
+    )
 
-    suspend fun finishExtractingSubfile(context: SpiralContext, archive: SpiralArchive, destination: File, subfile: String, flow: InputFlow, source: DataSource<*>)
+    public suspend fun subfileHasNoMoreData(
+        context: SpiralContext,
+        archive: SpiralArchive,
+        destination: File,
+        subfile: String,
+        flow: InputFlow,
+        source: DataSource<*>,
+        waitCount: Int
+    )
 
-    suspend fun finishExtracting(context: SpiralContext, archive: SpiralArchive, destination: File)
+    public suspend fun finishExtractingSubfile(
+        context: SpiralContext,
+        archive: SpiralArchive,
+        destination: File,
+        subfile: String,
+        flow: InputFlow,
+        source: DataSource<*>
+    )
 
-    suspend operator fun invoke(context: SpiralContext, readContext: SpiralProperties, archiveDataSource: DataSource<*>, destDir: String?, filter: String, leaveCompressed: Boolean, extractSubfiles: Boolean, predictive: Boolean, convert: Boolean) {
+    public suspend fun finishExtracting(context: SpiralContext, archive: SpiralArchive, destination: File)
+
+    public suspend operator fun invoke(
+        context: SpiralContext,
+        readContext: SpiralProperties,
+        archiveDataSource: DataSource<*>,
+        destDir: String?,
+        filter: String,
+        leaveCompressed: Boolean,
+        extractSubfiles: Boolean,
+        predictive: Boolean,
+        convert: Boolean
+    ) {
         if (destDir == null) {
             noDestinationDirectory(context)
             return
@@ -86,7 +122,7 @@ interface ExtractFilesCommand {
         }
 
         val result = performFileAnalysis(context, archiveFormats.sortedAgainst(readContext)) { formats ->
-            formats.mapResults { archive -> archive.identify(this, readContext, decompressedDataSource) }
+            formats.mapFormatResults { archive -> archive.identify(this, readContext, decompressedDataSource) }
                 .also { results ->
                     trace {
                         trace("\rResults for \"{0}\":", archiveDataSource.location ?: constNull())
@@ -95,8 +131,8 @@ interface ExtractFilesCommand {
                         }
                     }
                 }
-                .filterIsInstance<FormatResult<Optional<SpiralArchive>, SpiralArchive>>()
-                .sortedBy(FormatResult<*, *>::confidence)
+                .filterSuccesses()
+                .sortedByConfidence()
                 .asReversed()
                 .firstOrNull()
         }
@@ -106,24 +142,33 @@ interface ExtractFilesCommand {
             return
         }
 
-        val archive: SpiralArchive = result.get()
+        val archive: SpiralArchive = result.value
             .filterNotNull()
             .getOrElseRun {
-                result.format().read(context, readContext, decompressedDataSource)
+                result.format.read(context, readContext, decompressedDataSource)
                     .filterNotNull()
                     .getOrBreak {
                         noFormatForFile(context, archiveDataSource)
                         return
-                    }
+                    }.value
             }
 
         foundFileFormat(context, result, archiveCompressionFormats, archive)
 
-        this(context, archive, readContext[ISpiralProperty.FileName], destination, filter.toRegex(), leaveCompressed, extractSubfiles, predictive, convert)
+        this(
+            context,
+            archive,
+            readContext[ISpiralProperty.FileName],
+            destination,
+            filter.toRegex(),
+            leaveCompressed,
+            extractSubfiles,
+            predictive,
+            convert
+        )
     }
 
-    @OptIn(ExperimentalTime::class)
-    suspend operator fun invoke(
+    public suspend operator fun invoke(
         context: SpiralContext,
         archive: SpiralArchive,
         archiveName: String? = null,
@@ -177,8 +222,20 @@ interface ExtractFilesCommand {
                     while (bytes != null) {
                         if (bytes == 0) {
                             if (missingDataCount++ > MAX_MISSING_DATA_COUNT) {
-                                context.error("{0} has no more remaining data, waited {1} times", flow.location ?: source.location ?: "(unknown)", missingDataCount)
-                                subfileHasNoMoreData(context, archive, destination, name, flow, source, missingDataCount)
+                                context.error(
+                                    "{0} has no more remaining data, waited {1} times",
+                                    flow.location ?: source.location ?: "(unknown)",
+                                    missingDataCount
+                                )
+                                subfileHasNoMoreData(
+                                    context,
+                                    archive,
+                                    destination,
+                                    name,
+                                    flow,
+                                    source,
+                                    missingDataCount
+                                )
                                 output.buffer(BufferIOOperation.Close)
                                 return@closeAfter
                             }
@@ -288,7 +345,11 @@ interface ExtractFilesCommand {
     }
 }
 
-suspend inline fun <T> ExtractFilesCommand.performFileAnalysis(context: SpiralContext, formats: List<ReadableSpiralFormat<SpiralArchive>>, operation: SpiralContext.(formats: List<ReadableSpiralFormat<SpiralArchive>>) -> T): T {
+public suspend inline fun <T> ExtractFilesCommand.performFileAnalysis(
+    context: SpiralContext,
+    formats: List<ReadableSpiralFormat<SpiralArchive>>,
+    operation: SpiralContext.(formats: List<ReadableSpiralFormat<SpiralArchive>>) -> T
+): T {
     try {
         beginFileAnalysis(context, formats)
         return operation(context, formats)

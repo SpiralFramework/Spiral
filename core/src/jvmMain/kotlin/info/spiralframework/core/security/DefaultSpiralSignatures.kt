@@ -11,12 +11,11 @@ import java.io.InputStream
 import java.security.PublicKey
 import kotlin.reflect.KClass
 
-@ExperimentalStdlibApi
-class DefaultSpiralSignatures : SpiralSignatures, SpiralCatalyst<SpiralHttp> {
-    companion object {
-        const val LAST_PUBLIC_KEY_SHA256 = "FD3B9DEAF32420F25BCA27B7B0B1F87CC505AFE4556BEFD88DD1869383D02C57"
-        const val MODULE_SIGNATURE_PATH = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Spiral-%s/%s/%s.sig"
-        const val PLUGIN_SIGNATURE_PATH = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Plugins/%s/%s/%s.sig"
+public class DefaultSpiralSignatures : SpiralSignatures, SpiralCatalyst<SpiralHttp> {
+    public companion object {
+        public const val LAST_PUBLIC_KEY_SHA256: String = "FD3B9DEAF32420F25BCA27B7B0B1F87CC505AFE4556BEFD88DD1869383D02C57"
+        public const val MODULE_SIGNATURE_PATH: String = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Spiral-%s/%s/%s.sig"
+        public const val PLUGIN_SIGNATURE_PATH: String = "https://github.com/UnderMybrella/SpiralSignatures/raw/master/Plugins/%s/%s/%s.sig"
 
         private val BUILT_IN_PUBLIC_KEY: PublicKey? by lazy {
             DefaultSpiralSignatures::class.java

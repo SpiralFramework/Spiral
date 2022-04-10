@@ -2,28 +2,27 @@ package info.spiralframework.core.common
 
 import dev.brella.kornea.io.common.flow.OutputFlow
 
-const val MAX_BUFFER_SIZE = 65_536
-const val MAX_BUFFER_ALLOCATION = 16_000_000
-const val MAX_BUFFER_OPERATIONS = MAX_BUFFER_ALLOCATION / MAX_BUFFER_SIZE
+public const val MAX_BUFFER_SIZE: Int = 65_536
+public const val MAX_BUFFER_ALLOCATION: Int = 16_000_000
+public const val MAX_BUFFER_OPERATIONS: Int = MAX_BUFFER_ALLOCATION / MAX_BUFFER_SIZE
 
-const val MAX_MISSING_DATA_COUNT = 8
+public const val MAX_MISSING_DATA_COUNT: Int = 8
 
-sealed class BufferIOOperation {
-    class Open(val flow: OutputFlow) : BufferIOOperation()
-    class Write(val buffer: ByteArray) : BufferIOOperation() {
-        constructor(buffer: ByteArray, offset: Int, length: Int) : this(buffer.copyOfRange(offset, offset + length))
+public sealed class BufferIOOperation {
+    public class Open(public val flow: OutputFlow) : BufferIOOperation()
+    public class Write(public val buffer: ByteArray) : BufferIOOperation() {
+        public constructor(buffer: ByteArray, offset: Int, length: Int) : this(buffer.copyOfRange(offset, offset + length))
     }
 
-    object Close : BufferIOOperation()
-    class CloseAndPerform(val perform: suspend () -> Unit) : BufferIOOperation()
+    public object Close : BufferIOOperation()
+    public class CloseAndPerform(public val perform: suspend () -> Unit) : BufferIOOperation()
 }
 
-class IOBuffer {
+public class IOBuffer {
     private var out: OutputFlow? = null
     private val outputBuffer: MutableList<BufferIOOperation> = ArrayList()
 
-    @ExperimentalUnsignedTypes
-    suspend fun buffer(bufferOP: BufferIOOperation) {
+    public suspend fun buffer(bufferOP: BufferIOOperation) {
         if (outputBuffer.size >= MAX_BUFFER_OPERATIONS) {
             flush()
         }
@@ -31,7 +30,7 @@ class IOBuffer {
         outputBuffer.add(bufferOP)
     }
 
-    suspend fun flush() {
+    public suspend fun flush() {
         outputBuffer.forEach { op ->
             when (op) {
                 is BufferIOOperation.Open -> out = op.flow

@@ -6,7 +6,8 @@ import info.spiralframework.base.common.properties.defaultEquals
 import info.spiralframework.base.common.properties.defaultHashCode
 import info.spiralframework.core.common.formats.WritableSpiralFormat
 
-object PreferredImageFormat: ISpiralProperty.PropertyKey<WritableSpiralFormat>, KorneaTypeChecker<WritableSpiralFormat> by KorneaTypeChecker.ClassBased() {
+public object PreferredImageFormat : ISpiralProperty.PropertyKey<WritableSpiralFormat<*>>,
+    KorneaTypeChecker<WritableSpiralFormat<*>> by KorneaTypeChecker.ClassBased() {
     override val name: String = "PreferredImageFormat"
 
     override fun hashCode(): Int = defaultHashCode()

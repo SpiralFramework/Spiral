@@ -9,12 +9,7 @@ import info.spiralframework.base.common.locale.printlnLocale
 import info.spiralframework.base.jvm.crypto.sha256Hash
 import info.spiralframework.base.jvm.crypto.verify
 import info.spiralframework.core.SpiralCoreContext
-import info.spiralframework.core.plugins.events.BeginLoadingPluginEvent
-import info.spiralframework.core.plugins.events.BeginPluginDiscoveryEvent
-import info.spiralframework.core.plugins.events.DiscoveredPluginEvent
-import info.spiralframework.core.plugins.events.EndPluginDiscoveryEvent
-import info.spiralframework.core.plugins.events.FailedPluginLoadEvent
-import info.spiralframework.core.plugins.events.SuccessfulPluginLoadEvent
+import info.spiralframework.core.plugins.events.*
 import info.spiralframework.core.postCancellable
 import info.spiralframework.core.signaturesCdnOnline
 import info.spiralframework.core.spiralFrameworkOnline
@@ -28,8 +23,8 @@ import java.net.URLClassLoader
 import java.util.*
 import java.util.zip.ZipFile
 
-class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
-    val pojoServiceLoader = ServiceLoader.load(SpiralPluginRegistry.PojoProvider::class.java)
+public class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
+    private val pojoServiceLoader: ServiceLoader<SpiralPluginRegistry.PojoProvider> = ServiceLoader.load(SpiralPluginRegistry.PojoProvider::class.java)
 
     private val loadedPlugins: MutableList<ISpiralPlugin> = ArrayList()
 
@@ -82,7 +77,7 @@ class DefaultSpiralPluginRegistry : SpiralPluginRegistry {
         return plugins
     }
 
-    suspend fun Sequence<File>.discoverPlugins(context: SpiralCoreContext): List<PluginEntry> = this.flatMap { file ->
+    public suspend fun Sequence<File>.discoverPlugins(context: SpiralCoreContext): List<PluginEntry> = this.flatMap { file ->
         try {
             val zip = ZipFile(file)
             zip.entries().asSequence().filter { entry -> entry.name.endsWith("plugin.yaml") || entry.name.endsWith("plugin.yml") || entry.name.endsWith("plugin.json')") }

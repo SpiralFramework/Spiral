@@ -3,7 +3,6 @@ plugins {
     kotlin("plugin.serialization")
     id("com.github.johnrengelman.shadow")
     application
-    antlr
 }
 
 application {
@@ -23,21 +22,30 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
     implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
 
-    implementation("dev.brella:knolus-core:2.7.0")
+    implementation("dev.brella:zshk:1.0.0")
+//    implementation("dev.brella:knolus-core:2.7.0")
 
-    antlr("org.antlr:antlr4:4.9.3")
+//    antlr("org.antlr:antlr4:4.9.3")
+}
+
+kotlin {
+    explicitApi()
 }
 
 tasks.compileKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
-        freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+        val optIns = arrayOf("kotlin.RequiresOptIn")
+
+        freeCompilerArgs = ArrayList(freeCompilerArgs).apply {
+            optIns.forEach { opt -> add("-opt-in=$opt") }
+        }
     }
 }
 
 tasks.jar {
     archiveBaseName.set("spiral-${project.name}")
-    archiveVersion.set(version)
+    archiveVersion.set(project.version.toString())
 }
 
 tasks.shadowJar {
@@ -69,28 +77,28 @@ tasks.shadowJar {
 //    dependencyConfiguration = 'runtimeClasspath'
 //}
 
-tasks.create<de.undercouch.gradle.tasks.download.Download>("downloadKnolus") {
-    group = "knolus"
-
-    src(
-        listOf(
-            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusLexer.g4",
-            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusModesLexer.g4",
-            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusParser.g4",
-            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/LibLexer.g4"
-        )
-    )
-    dest(file("$projectDir/src/main/antlr/"))
-}
-
-tasks.generateGrammarSource {
-    group = "knolus"
-    dependsOn("downloadKnolus")
-
-    arguments.addAll(listOf("-visitor", "-package", "info.spiralframework.antlr.pipeline"))
-    outputDirectory = file("$buildDir/generated-src/antlr/main/info/spiralframework/antlr/pipeline")
-}
-
-tasks.compileKotlin {
-    dependsOn("generateGrammarSource")
-}
+//tasks.create<de.undercouch.gradle.tasks.download.Download>("downloadKnolus") {
+//    group = "knolus"
+//
+//    src(
+//        listOf(
+//            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusLexer.g4",
+//            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusModesLexer.g4",
+//            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/KnolusParser.g4",
+//            "https://raw.githubusercontent.com/UnderMybrella/Knolus/master/core/src/main/antlr/LibLexer.g4"
+//        )
+//    )
+//    dest(file("$projectDir/src/main/antlr/"))
+//}
+//
+//tasks.generateGrammarSource {
+//    group = "knolus"
+//    dependsOn("downloadKnolus")
+//
+//    arguments.addAll(listOf("-visitor", "-package", "info.spiralframework.antlr.pipeline"))
+//    outputDirectory = file("$buildDir/generated-src/antlr/main/info/spiralframework/antlr/pipeline")
+//}
+//
+//tasks.compileKotlin {
+//    dependsOn("generateGrammarSource")
+//}

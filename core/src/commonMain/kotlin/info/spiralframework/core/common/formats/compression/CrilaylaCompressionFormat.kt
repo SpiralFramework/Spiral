@@ -13,30 +13,32 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.io.cacheShortTerm
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.ensureFormatSuccess
+import info.spiralframework.core.common.formats.SpiralFormatOptionalResult
+import info.spiralframework.core.common.formats.SpiralFormatReturnResult
+import info.spiralframework.core.common.formats.buildFormatSuccess
 import info.spiralframework.formats.common.compression.decompressCrilayla
 
-object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
+public object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
     override val name: String = "CRILAYLA Compression"
     override val extension: String = "cmp"
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<DataSource<*>>> {
-        if (source.useInputFlow { flow -> flow.readInt64BE() == info.spiralframework.formats.common.compression.CRILAYLA_MAGIC }.getOrElse(false))
-            return ensureFormatSuccess(Optional.empty(), 1.0)
+    override suspend fun identify(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatOptionalResult<DataSource<*>> {
+        if (source.useInputFlow { flow -> flow.readInt64BE() == info.spiralframework.formats.common.compression.CRILAYLA_MAGIC }
+                .getOrDefault(false))
+            return buildFormatSuccess(Optional.empty(), 1.0)
+
         return KorneaResult.empty()
     }
 
-    /**
-     * Attempts to read the data source as [T]
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     * @param source A function that returns an input stream
-     *
-     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
-     */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataSource<*>> {
+    override suspend fun read(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatReturnResult<DataSource<*>> {
         val data = source.useInputFlow { flow -> flow.readBytes() }.getOrBreak { return it.cast() }
         val cache = context.cacheShortTerm(context, "crilayla:${data.sha256().hexLower}")
 
@@ -46,7 +48,7 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
                 decompressCrilayla(data).map { data ->
                     output.write(data)
 
-                    ensureFormatSuccess(cache, 1.0)
+                    buildFormatSuccess(cache, 1.0)
                 }.doOnFailure {
                     cache.close()
                     output.close()
@@ -55,7 +57,7 @@ object CrilaylaCompressionFormat : ReadableSpiralFormat<DataSource<*>> {
                 cache.close()
 
                 decompressCrilayla(data).flatMap { decompressed ->
-                    ensureFormatSuccess(BinaryDataSource(decompressed), 1.0)
+                    buildFormatSuccess(BinaryDataSource(decompressed), 1.0)
                 }
             }
     }

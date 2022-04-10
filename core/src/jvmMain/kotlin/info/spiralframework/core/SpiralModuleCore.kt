@@ -6,7 +6,7 @@ import info.spiralframework.base.common.SpiralModuleProvider
 import info.spiralframework.base.common.locale.loadBundle
 import dev.brella.kornea.toolkit.common.SemanticVersion
 
-class SpiralModuleCore: SpiralModuleProvider {
+public class SpiralModuleCore: SpiralModuleProvider {
     override val moduleVersion: SemanticVersion = SPIRAL_VERSION
     override val moduleName: String = "spiral-core"
 

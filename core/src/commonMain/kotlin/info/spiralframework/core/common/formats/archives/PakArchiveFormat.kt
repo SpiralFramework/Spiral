@@ -1,32 +1,41 @@
 package info.spiralframework.core.common.formats.archives
 
+import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.DataPool
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
+import info.spiralframework.base.common.locale.errorAsLocalisedIllegalArgument
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
 import info.spiralframework.base.common.properties.get
-import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.*
 import info.spiralframework.formats.common.archives.*
-import dev.brella.kornea.base.common.Optional
 
 
-object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat {
+public object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat<CustomPakArchive> {
     override val name: String = "Pak"
     override val extension: String = "pak"
 
-    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat = ZipFormat
+    override fun preferredConversionFormat(
+        context: SpiralContext,
+        properties: SpiralProperties?
+    ): WritableSpiralFormat<*> = ZipFormat
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<PakArchive>> {
+    override suspend fun identify(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatOptionalResult<PakArchive> {
         val fileName = readContext[ISpiralProperty.FileName]?.substringAfterLast('/')
         if (fileName != null && fileName.contains('.')) {
             if (!fileName.substringAfterLast('.').equals(extension, true)) {
-                return KorneaResult.errorAsIllegalArgument(-1, "Invalid extension ${fileName.substringAfterLast('.')}")
+                return context.errorAsLocalisedIllegalArgument(
+                    -1,
+                    "Invalid extension ${fileName.substringAfterLast('.')}"
+                )
             }
         }
 
@@ -36,53 +45,41 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
     /**
      * Attempts to read the data source as [T]
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
      * @param source A function that returns an input stream
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<PakArchive> =
+    override suspend fun read(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatReturnResult<PakArchive> =
         PakArchive(context, source)
             .filter { pak -> pak.files.isNotEmpty() }
             .ensureFormatSuccess { pak ->
                 when {
-                    readContext[ISpiralProperty.FileName]?.substringAfterLast('.')?.equals(extension, true) == true -> 1.0
-                    pak.files.size == 1 -> 0.75
+                    readContext[ISpiralProperty.FileName]?.substringAfterLast('.')
+                        ?.equals(extension, true) == true -> 0.9
+
+                    pak.files.size == 1 -> 0.7
                     else -> 0.8
                 }
             }
 
-    /**
-     * Does this format support writing [data]?
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     *
-     * @return If we are able to write [data] as this format
-     */
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
         data is AwbArchive ||
-        data is WadArchive ||
-        data is CpkArchive ||
-        data is SpcArchive ||
-        data is PakArchive
+                data is WadArchive ||
+                data is CpkArchive ||
+                data is SpcArchive ||
+                data is PakArchive
 //        || data is ZipFile
 
-    /**
-     * Writes [data] to [stream] in this format
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
-     * @param data The data to wrote
-     * @param stream The stream to write to
-     *
-     * @return An enum for the success of the operation
-     */
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(
+        context: SpiralContext,
+        writeContext: SpiralProperties?,
+        data: Any,
+        flow: OutputFlow
+    ): KorneaResult<CustomPakArchive> {
         val customPak = CustomPakArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
 
@@ -118,11 +115,11 @@ object PakArchiveFormat : ReadableSpiralFormat<PakArchive>, WritableSpiralFormat
 //                        customPak[index] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
 //                    }
 //            }
-            else -> return FormatWriteResponse.WRONG_FORMAT
+            else -> return KorneaResult.spiralWrongFormat()
         }
 
         customPak.compile(flow)
         caches.suspendForEach(DataPool<*, *>::close)
-        return FormatWriteResponse.SUCCESS
+        return KorneaResult.success(customPak)
     }
 }

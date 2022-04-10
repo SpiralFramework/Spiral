@@ -1,6 +1,6 @@
 package info.spiralframework.core.plugins
 
-enum class EventPriority {
+public enum class EventPriority {
     LOWEST,
     LOW,
     MEDIUM,

@@ -1,8 +1,8 @@
 package info.spiralframework.core.common
 
-const val SPIRAL_CORE_MODULE = "Spiral Core"
+public const val SPIRAL_CORE_MODULE: String = "Spiral Core"
 
-const val SPIRAL_ENV_BUILD_KEY = "spiral.build"
-const val SPIRAL_ENV_MODULES_KEY = "spiral.modules"
-const val SPIRAL_ENV_LANG_KEY = "spiral.lang"
-const val SPIRAL_ENV_VERSION_KEY = "spiral.version"
+public const val SPIRAL_ENV_BUILD_KEY: String = "spiral.build"
+public const val SPIRAL_ENV_MODULES_KEY: String = "spiral.modules"
+public const val SPIRAL_ENV_LANG_KEY: String = "spiral.lang"
+public const val SPIRAL_ENV_VERSION_KEY: String = "spiral.version"

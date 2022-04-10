@@ -5,7 +5,7 @@ import info.spiralframework.core.common.serialisation.SemVerSerialiser
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SpiralCoreConfig(
+public data class SpiralCoreConfig(
         val socketTimeout: Int? = null,
         val connectTimeout: Int? = null,
         val requestTimeout: Int? = null,
@@ -14,7 +14,7 @@ data class SpiralCoreConfig(
 
         val enabledPlugins: Map<String, @Serializable(SemVerSerialiser::class) SemanticVersion > ? = null
 ) {
-    constructor(context: SpiralCoreContext) : this(
+    public constructor(context: SpiralCoreContext) : this(
             context.socketTimeout,
             context.connectTimeout,
             context.requestTimeout,

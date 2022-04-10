@@ -7,26 +7,21 @@ import dev.brella.kornea.io.common.flow.OutputFlow
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.*
 import info.spiralframework.formats.common.archives.*
 
-object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat {
+public object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat<CustomCpkArchive> {
     override val name: String = "Cpk"
     override val extension: String = "cpk"
 
     /**
      * Attempts to read the data source as [T]
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
      * @param source A function that returns an input stream
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<CpkArchive> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): SpiralFormatReturnResult<CpkArchive> =
         CpkArchive(context, source)
             .filter { cpk -> cpk.files.isNotEmpty() }
             .ensureFormatSuccess { cpk -> if (cpk.files.size == 1) 0.75 else 1.0 }
@@ -34,8 +29,6 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
     /**
      * Does this format support writing [data]?
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
      * @param context Context that we retrieved this file in
      *
      * @return If we are able to write [data] as this format
@@ -51,15 +44,12 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
     /**
      * Writes [data] to [flow] in this format
      *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
      * @param data The data to wrote
      * @param flow The flow to write to
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): KorneaResult<CustomCpkArchive> {
         val customCpk = CustomCpkArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
         when (data) {
@@ -87,11 +77,11 @@ object CpkArchiveFormat : ReadableSpiralFormat<CpkArchive>, WritableSpiralFormat
 //                        KorneaResult.empty()
 //                    }
 //            }
-            else -> return FormatWriteResponse.WRONG_FORMAT
+            else -> return KorneaResult.failure(SpiralFormatError.WrongFormat)
         }
 
         customCpk.compile(context, flow)
         caches.suspendForEach(DataPool<*, *>::close)
-        return FormatWriteResponse.SUCCESS
+        return KorneaResult.success(customCpk)
     }
 }

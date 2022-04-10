@@ -1,6 +1,6 @@
 package info.spiralframework.core.common.formats
 
-import dev.brella.kornea.base.common.Optional
+import dev.brella.kornea.base.common.*
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.map
 import dev.brella.kornea.io.common.DataSource
@@ -80,8 +80,9 @@ public interface ReadableSpiralFormat<out T> : SpiralFormat {
         context: SpiralContext,
         readContext: SpiralProperties? = null,
         source: DataSource<*>
-    ): SpiralGenericFormatResult<Optional<T>> =
-        read(context, readContext, source).mapGenericFormat(::Optional)
+    ): SpiralFormatOptionalResult<T> =
+        read(context, readContext, source)
+            .mapFormat(::Optional)
 
     /**
      * Attempts to read the data source as [T]
@@ -95,26 +96,48 @@ public interface ReadableSpiralFormat<out T> : SpiralFormat {
         context: SpiralContext,
         readContext: SpiralProperties? = null,
         source: DataSource<*>
-    ): SpiralGenericFormatResult<T>
+    ): SpiralFormatReturnResult<T>
 
     @Suppress("UNCHECKED_CAST")
-    public fun KorneaResult<*>.ensureFormatSuccess(confidence: Double): SpiralGenericFormatResult<T> =
+    public fun <R> KorneaResult<R>.ensureFormatSuccess(confidence: Double): SpiralFormatResult<R, T> =
         map { value ->
             if (value is FormatSuccess<*, *>) {
-                value as FormatSuccess<T, *>
+                value as FormatSuccess<R, T>
             } else {
-                FormatSuccess(value as T, this@ReadableSpiralFormat, confidence)
+                FormatSuccess(value, this@ReadableSpiralFormat, confidence)
             }
         }
 
     @Suppress("UNCHECKED_CAST")
-    public fun KorneaResult<*>.ensureFormatSuccess(confidence: (T) -> Double): SpiralGenericFormatResult<T> =
+    public fun <R> KorneaResult<R>.ensureFormatSuccess(confidence: (R) -> Double): SpiralFormatResult<R, T> =
         map { value ->
             if (value is FormatSuccess<*, *>) {
-                value as FormatSuccess<T, *>
+                value as FormatSuccess<R, T>
             } else {
-                FormatSuccess(value as T, this@ReadableSpiralFormat, confidence(value as T))
+                FormatSuccess(value, this@ReadableSpiralFormat, confidence(value))
             }
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    public fun <R> KorneaResult<Optional<R>>.ensureOptionalFormatSuccess(confidence: (R) -> Double): SpiralFormatResult<Optional<R>, T> =
+        map { value: Optional<R> ->
+            value.doOnPresent { inner ->
+                if (inner is FormatSuccess<*, *>)
+                    return@map inner.map { Optional.of(it) } as FormatSuccess<Optional<R>, T>
+            }
+
+            FormatSuccess(value, this@ReadableSpiralFormat, value.map(confidence).getOrDefault(0.0))
+        }
+
+    @Suppress("UNCHECKED_CAST")
+    public fun <R> KorneaResult<Optional<R>>.ensureOptionalFormatSuccess(ifMissing: Double, confidence: (R) -> Double): SpiralFormatResult<Optional<R>, T> =
+        map { value: Optional<R> ->
+            value.doOnPresent { inner ->
+                if (inner is FormatSuccess<*, *>)
+                    return@map inner.map { Optional.of(it) } as FormatSuccess<Optional<R>, T>
+            }
+
+            FormatSuccess(value, this@ReadableSpiralFormat, value.map(confidence).getOrDefault(ifMissing))
         }
 }
 

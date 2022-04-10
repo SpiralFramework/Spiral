@@ -1,66 +1,49 @@
 package info.spiralframework.core.common.formats.text
 
+import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.success
 import dev.brella.kornea.io.common.flow.OutputFlow
-import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import dev.brella.kornea.toolkit.common.printLine
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.spiralWrongFormat
 import info.spiralframework.formats.common.data.DataTableStructure
 
-object CSVFormat: WritableSpiralFormat {
-    /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
+public object CSVFormat : WritableSpiralFormat<Unit> {
     override val name: String = "CSV"
-
-    /**
-     * The usual extension for this format. Some formats don't have a proper extension, so this can be nullable
-     */
     override val extension: String = "csv"
 
-    /**
-     * Does this format support writing [data]?
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     *
-     * @return If we are able to write [data] as this format
-     */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is DataTableStructure
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
+        data is DataTableStructure
 
-    /**
-     * Writes [data] to [stream] in this format
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     * @param data The data to wrote
-     * @param stream The stream to write to
-     *
-     * @return An enum for the success of the operation
-     */
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
-        val out = flow as? PrintOutputFlow ?: PrintOutputFlowWrapper(flow)
+    override suspend fun write(
+        context: SpiralContext,
+        writeContext: SpiralProperties?,
+        data: Any,
+        flow: OutputFlow
+    ): KorneaResult<Unit> {
         when (data) {
             is DataTableStructure -> {
-                data.variableDetails.forEach { header -> out.print("${header.variableName} ${header.variableType},") }
-                out.printLine()
+                data.variableDetails.forEach { header -> flow.print("${header.variableName} ${header.variableType},") }
+                flow.printLine()
+
                 data.entries.forEach { entry ->
                     entry.forEach { variable ->
                         when (variable) {
-                            is DataTableStructure.DataVariable.UTF8 -> out.print(data.utf8Strings[variable.data])
-                            is DataTableStructure.DataVariable.UTF16 -> out.print(data.utf16Strings[variable.data])
-                            else -> out.print(variable.genericData.toString())
+                            is DataTableStructure.DataVariable.UTF8 -> flow.print(data.utf8Strings[variable.data])
+                            is DataTableStructure.DataVariable.UTF16 -> flow.print(data.utf16Strings[variable.data])
+                            else -> flow.print(variable.genericData.toString())
                         }
-                        out.printLine(',')
+                        flow.printLine(',')
                     }
-                    out.printLine()
+
+                    flow.printLine()
                 }
             }
-            else -> return FormatWriteResponse.WRONG_FORMAT
+            else -> return KorneaResult.spiralWrongFormat()
         }
 
-        return FormatWriteResponse.SUCCESS
+        return KorneaResult.success()
     }
 }

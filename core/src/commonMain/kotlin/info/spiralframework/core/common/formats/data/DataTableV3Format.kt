@@ -1,13 +1,13 @@
 package info.spiralframework.core.common.formats.data
 
-import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.io.common.DataSource
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
 import info.spiralframework.base.common.properties.SpiralProperties
+import info.spiralframework.core.common.formats.ReadableSpiralFormat
+import info.spiralframework.core.common.formats.SpiralFormatReturnResult
 import info.spiralframework.formats.common.data.DataTableStructure
 
-object DataTableStructureFormat : ReadableSpiralFormat<DataTableStructure> {
+public object DataTableStructureFormat : ReadableSpiralFormat<DataTableStructure> {
     /** A **RECOGNISABLE** name, not necessarily the full name. May commonly be the extension */
     override val name: String = "Data Table Structure"
 
@@ -26,7 +26,7 @@ object DataTableStructureFormat : ReadableSpiralFormat<DataTableStructure> {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<DataTableStructure> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): SpiralFormatReturnResult<DataTableStructure> =
         DataTableStructure(context, source)
             .ensureFormatSuccess(0.7)
 }

@@ -27,7 +27,7 @@ import info.spiralframework.console.jvm.pipeline.DataSourceType
 import info.spiralframework.console.jvm.pipeline.registerFunctionWithContextWithoutReturn
 import info.spiralframework.console.jvm.pipeline.spiralContext
 import info.spiralframework.core.common.formats.*
-import info.spiralframework.core.mapResults
+import info.spiralframework.core.mapFormatResults
 import info.spiralframework.core.sortedAgainst
 import info.spiralframework.formats.common.archives.SpiralArchive
 import kotlinx.coroutines.CoroutineScope
@@ -156,7 +156,7 @@ class GurrenConvertPilot(val readableFormats: MutableList<ReadableSpiralFormat<A
             format.identify(context, source = dataSource)
         }.switchIfEmpty {
             readableFormats.sortedAgainst(readContext)
-                .mapResults { archive -> archive.identify(context, readContext, dataSource) }
+                .mapFormatResults { archive -> archive.identify(context, readContext, dataSource) }
                 .filterIsInstance<FormatResult<Optional<SpiralArchive>, SpiralArchive>>()
                 .sortedBy(FormatResult<*, *>::confidence)
                 .asReversed()

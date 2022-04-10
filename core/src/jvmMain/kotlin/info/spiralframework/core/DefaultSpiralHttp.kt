@@ -4,7 +4,8 @@ import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.*
 
-class DefaultSpiralHttp: SpiralHttp {
+public class DefaultSpiralHttp: SpiralHttp {
+    //TODO: Switch to CIO
     override val httpClient: HttpClient = HttpClient(Apache) {
         followRedirects = true
         expectSuccess = false

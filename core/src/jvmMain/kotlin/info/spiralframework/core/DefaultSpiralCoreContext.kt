@@ -28,26 +28,28 @@ import info.spiralframework.core.security.SpiralSignatures
 import info.spiralframework.formats.jvm.SpiralModuleFormats
 import info.spiralframework.osl.jvm.SpiralModuleOSL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
-@ExperimentalUnsignedTypes
-class DefaultSpiralCoreContext private constructor(
-    val core: SpiralCoreConfig,
-    val locale: SpiralLocale,
-    val logger: SpiralLogger,
-    val config: SpiralConfig,
-    val environment: SpiralEnvironment,
-    val eventBus: SpiralEventBus,
-    val cacheProvider: SpiralCacheProvider,
-    val resourceLoader: SpiralResourceLoader,
-    val serialisation: SpiralSerialisation,
-    val signatures: SpiralSignatures,
-    val pluginRegistry: SpiralPluginRegistry,
-    val http: SpiralHttp,
+public class DefaultSpiralCoreContext private constructor(
+    public val core: SpiralCoreConfig,
+    public val locale: SpiralLocale,
+    public val logger: SpiralLogger,
+    public val config: SpiralConfig,
+    public val environment: SpiralEnvironment,
+    public val eventBus: SpiralEventBus,
+    public val cacheProvider: SpiralCacheProvider,
+    public val resourceLoader: SpiralResourceLoader,
+    public val serialisation: SpiralSerialisation,
+    public val parentCoroutineContext: CoroutineContext?,
+    public val signatures: SpiralSignatures,
+    public val pluginRegistry: SpiralPluginRegistry,
+    public val http: SpiralHttp,
 ) : SpiralCoreContext, SuspendInit0, SpiralCatalyst<SpiralCoreContext>,
     SpiralLocale by locale,
     SpiralLogger by logger,
@@ -60,17 +62,17 @@ class DefaultSpiralCoreContext private constructor(
     SpiralSignatures by signatures,
     SpiralPluginRegistry by pluginRegistry,
     SpiralHttp by http {
-    companion object {
-        const val DEFAULT_SOCKET_TIMEOUT = 10_000
-        const val DEFAULT_CONNECT_TIMEOUT = 10_000
-        const val DEFAULT_REQUEST_TIMEOUT = 20_000
+    public companion object {
+        public const val DEFAULT_SOCKET_TIMEOUT: Int = 10_000
+        public const val DEFAULT_CONNECT_TIMEOUT: Int = 10_000
+        public const val DEFAULT_REQUEST_TIMEOUT: Int = 20_000
 
-        const val DEFAULT_API_BASE = "https://api.abimon.org/api"
-        const val DEFAULT_JENKINS_BASE = "https://jenkins.abimon.org"
+        public const val DEFAULT_API_BASE: String = "https://api.abimon.org/api"
+        public const val DEFAULT_JENKINS_BASE: String = "https://jenkins.abimon.org"
 
-        val DEFAULT_ENABLED_PLUGINS = emptyMap<String, SemanticVersion>()
+        public val DEFAULT_ENABLED_PLUGINS: Map<String, SemanticVersion> = emptyMap()
 
-        suspend operator fun invoke(
+        public suspend operator fun invoke(
             core: SpiralCoreConfig,
             locale: SpiralLocale,
             logger: SpiralLogger,
@@ -80,16 +82,46 @@ class DefaultSpiralCoreContext private constructor(
             cacheProvider: SpiralCacheProvider,
             resourceLoader: SpiralResourceLoader,
             serialisation: SpiralSerialisation,
+            parentCoroutineContext: CoroutineContext?,
             signatures: SpiralSignatures,
             pluginRegistry: SpiralPluginRegistry,
             http: SpiralHttp
-        ): DefaultSpiralCoreContext = init(DefaultSpiralCoreContext(core, locale, logger, config, environment, eventBus, cacheProvider, resourceLoader, serialisation, signatures, pluginRegistry, http))
+        ): DefaultSpiralCoreContext =
+            init(
+                DefaultSpiralCoreContext(
+                    core,
+                    locale,
+                    logger,
+                    config,
+                    environment,
+                    eventBus,
+                    cacheProvider,
+                    resourceLoader,
+                    serialisation,
+                    parentCoroutineContext,
+                    signatures,
+                    pluginRegistry,
+                    http
+                )
+            )
 
-        suspend operator fun invoke(core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, http: SpiralHttp): DefaultSpiralCoreContext =
+        public suspend operator fun invoke(
+            core: SpiralCoreConfig,
+            parent: SpiralContext,
+            signatures: SpiralSignatures,
+            pluginRegistry: SpiralPluginRegistry,
+            http: SpiralHttp
+        ): DefaultSpiralCoreContext =
             init(DefaultSpiralCoreContext(core, parent, signatures, pluginRegistry, http))
     }
 
-    private constructor(core: SpiralCoreConfig, parent: SpiralContext, signatures: SpiralSignatures, pluginRegistry: SpiralPluginRegistry, http: SpiralHttp) : this(
+    private constructor(
+        core: SpiralCoreConfig,
+        parent: SpiralContext,
+        signatures: SpiralSignatures,
+        pluginRegistry: SpiralPluginRegistry,
+        http: SpiralHttp
+    ) : this(
         core,
         parent,
         parent,
@@ -99,10 +131,13 @@ class DefaultSpiralCoreContext private constructor(
         parent,
         parent,
         parent,
+        parent.coroutineContext,
         signatures,
         pluginRegistry,
         http
     )
+
+    override val coroutineContext: CoroutineContext = parentCoroutineContext?.plus(SupervisorJob()) ?: SupervisorJob()
 
     override val socketTimeout: Int = core.socketTimeout ?: DEFAULT_SOCKET_TIMEOUT
     override val connectTimeout: Int = core.connectTimeout ?: DEFAULT_CONNECT_TIMEOUT
@@ -113,7 +148,7 @@ class DefaultSpiralCoreContext private constructor(
 
     override val enabledPlugins: Map<String, SemanticVersion> = core.enabledPlugins ?: DEFAULT_ENABLED_PLUGINS
 
-    val moduleLoader = ServiceLoader.load(SpiralModuleProvider::class.java)
+    private val moduleLoader = ServiceLoader.load(SpiralModuleProvider::class.java)
     override val klass: KClass<SpiralCoreContext> = SpiralCoreContext::class
     private var primed: Boolean = false
     override val loadedModules: Map<String, SemanticVersion> = moduleLoader.iterator()
@@ -123,7 +158,7 @@ class DefaultSpiralCoreContext private constructor(
 
     override fun subcontext(module: String): SpiralCoreContext = this
 
-    override suspend fun copy(
+    public override suspend fun copy(
         newLocale: SpiralLocale?,
         newLogger: SpiralLogger?,
         newConfig: SpiralConfig?,
@@ -132,6 +167,7 @@ class DefaultSpiralCoreContext private constructor(
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?,
         newSerialisation: SpiralSerialisation?,
+        newParentCoroutineContext: CoroutineContext?,
     ): SpiralContext {
         val instance = DefaultSpiralCoreContext(
             core,
@@ -143,6 +179,7 @@ class DefaultSpiralCoreContext private constructor(
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
             newSerialisation ?: serialisation,
+            newParentCoroutineContext ?: parentCoroutineContext,
             signatures,
             pluginRegistry,
             http
@@ -160,6 +197,7 @@ class DefaultSpiralCoreContext private constructor(
         newCacheProvider: SpiralCacheProvider?,
         newResourceLoader: SpiralResourceLoader?,
         newSerialisation: SpiralSerialisation?,
+        newParentCoroutineContext: CoroutineContext?,
         newSignatures: SpiralSignatures?,
         newPluginRegistry: SpiralPluginRegistry?,
         newHttp: SpiralHttp?
@@ -174,6 +212,7 @@ class DefaultSpiralCoreContext private constructor(
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
             newSerialisation ?: serialisation,
+            newParentCoroutineContext ?: parentCoroutineContext,
             newSignatures ?: signatures,
             newPluginRegistry ?: pluginRegistry,
             newHttp ?: http
@@ -182,7 +221,7 @@ class DefaultSpiralCoreContext private constructor(
         return instance
     }
 
-    suspend fun copy(
+    public suspend fun copy(
         newCore: SpiralCoreConfig? = null,
         newLocale: SpiralLocale? = null,
         newLogger: SpiralLogger? = null,
@@ -192,6 +231,7 @@ class DefaultSpiralCoreContext private constructor(
         newCacheProvider: SpiralCacheProvider? = null,
         newResourceLoader: SpiralResourceLoader? = null,
         newSerialisation: SpiralSerialisation? = null,
+        newParentCoroutineContext: CoroutineContext? = null,
         newSignatures: SpiralSignatures? = null,
         newPluginRegistry: SpiralPluginRegistry? = null,
         newHttp: SpiralHttp? = null
@@ -206,6 +246,7 @@ class DefaultSpiralCoreContext private constructor(
             newCacheProvider ?: cacheProvider,
             newResourceLoader ?: resourceLoader,
             newSerialisation ?: serialisation,
+            newParentCoroutineContext ?: parentCoroutineContext,
             newSignatures ?: signatures,
             newPluginRegistry ?: pluginRegistry,
             newHttp ?: http
@@ -244,7 +285,9 @@ class DefaultSpiralCoreContext private constructor(
         prime(this)
 
         this.storeStaticValue(SPIRAL_MODULE_KEY, SPIRAL_CORE_MODULE)
-        this.storeStaticValue(SPIRAL_ENV_MODULES_KEY, this.loadedModules.entries.joinToString { (moduleName, moduleVersion) -> "$moduleName v$moduleVersion" })
+        this.storeStaticValue(
+            SPIRAL_ENV_MODULES_KEY,
+            this.loadedModules.entries.joinToString { (moduleName, moduleVersion) -> "$moduleName v$moduleVersion" })
 
         this.storeDynamicValue(SPIRAL_ENV_BUILD_KEY) {
             if (this !is SpiralCoreContext) {

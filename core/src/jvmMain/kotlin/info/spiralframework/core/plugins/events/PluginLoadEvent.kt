@@ -5,6 +5,6 @@ import info.spiralframework.base.common.events.SpiralEvent
 import info.spiralframework.core.plugins.LoadPluginResult
 import info.spiralframework.core.plugins.PluginEntry
 
-data class BeginLoadingPluginEvent(val plugin: PluginEntry, override var cancelled: Boolean = false): CancellableSpiralEvent
-data class SuccessfulPluginLoadEvent(val plugin: PluginEntry, val resultCode: LoadPluginResult): SpiralEvent
-data class FailedPluginLoadEvent(val plugin: PluginEntry, val result: LoadPluginResult): SpiralEvent
+public data class BeginLoadingPluginEvent(val plugin: PluginEntry, override var cancelled: Boolean = false): CancellableSpiralEvent
+public data class SuccessfulPluginLoadEvent(val plugin: PluginEntry, val resultCode: LoadPluginResult): SpiralEvent
+public data class FailedPluginLoadEvent(val plugin: PluginEntry, val result: LoadPluginResult): SpiralEvent

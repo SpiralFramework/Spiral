@@ -3,33 +3,20 @@ package info.spiralframework.core.common.formats.images
 import dev.brella.kornea.base.common.Optional
 import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.KorneaResult
+import dev.brella.kornea.errors.common.success
 import dev.brella.kornea.img.RgbMatrix
-import dev.brella.kornea.img.dr.SHTXImage
-import dev.brella.kornea.img.dr.readSHTXImage
-import dev.brella.kornea.img.dr.writeSHTXFFImage
-import dev.brella.kornea.img.dr.writeSHTXFSImage
-import dev.brella.kornea.img.dr.writeSHTXFfImage
-import dev.brella.kornea.img.dr.writeSHTXFsImage
-import dev.brella.kornea.img.dr.writeSHTXImage
-import dev.brella.kornea.img.dr.writeSHTXUnkImage
+import dev.brella.kornea.img.dr.*
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import dev.brella.kornea.io.common.useInputFlowForResult
 import dev.brella.kornea.toolkit.common.KorneaTypeChecker
 import info.spiralframework.base.common.SpiralContext
-import info.spiralframework.base.common.properties.ISpiralProperty
-import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.base.common.properties.defaultEquals
-import info.spiralframework.base.common.properties.defaultHashCode
-import info.spiralframework.base.common.properties.get
-import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.ensureFormatSuccess
+import info.spiralframework.base.common.properties.*
+import info.spiralframework.core.common.formats.*
 
-object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
-    enum class SHTXType {
+public object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat<Unit> {
+    public enum class SHTXType {
         NONE,
         ARGB_PALETTE,
         BGRA_PALETTE,
@@ -39,7 +26,7 @@ object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
         LITTLE_ENDIAN,
         BIG_ENDIAN;
 
-        companion object: ISpiralProperty.PropertyKey<SHTXType>, KorneaTypeChecker<SHTXType> by KorneaTypeChecker.ClassBased() {
+        public companion object: ISpiralProperty.PropertyKey<SHTXType>, KorneaTypeChecker<SHTXType> by KorneaTypeChecker.ClassBased() {
             override val name: String = "SHTX Type"
 
             override fun hashCode(): Int = defaultHashCode()
@@ -52,11 +39,11 @@ object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
     override val extension: String = "shtx"
 
     override fun requiredPropertiesForConversionSelection(context: SpiralContext, properties: SpiralProperties?): List<ISpiralProperty.PropertyKey<*>> = listOf(PreferredImageFormat)
-    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat? = properties[PreferredImageFormat]
+    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat<*>? = properties[PreferredImageFormat]
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<RgbMatrix>> =
+    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): SpiralFormatOptionalResult<RgbMatrix> =
         source.useInputFlowForResult { flow ->
-            if (flow.readInt32LE() == SHTXImage.MAGIC_NUMBER) ensureFormatSuccess(Optional.empty(), 0.9)
+            if (flow.readInt32LE() == SHTXImage.MAGIC_NUMBER) buildFormatSuccess(Optional.empty(), 0.9)
             else KorneaResult.empty()
         }
 
@@ -70,13 +57,14 @@ object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
      *
      * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
      */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<RgbMatrix> =
+    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): SpiralFormatReturnResult<RgbMatrix> =
         source.useInputFlowForResult { flow -> flow.readSHTXImage() }
+            .ensureFormatSuccess(1.0)
 
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
         data is RgbMatrix
 
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): KorneaResult<Unit> {
         when (data) {
             is RgbMatrix -> {
                 when (writeContext[SHTXType]) {
@@ -89,9 +77,9 @@ object SHTXFormat : ReadableSpiralFormat<RgbMatrix>, WritableSpiralFormat {
                     SHTXType.BIG_ENDIAN -> flow.writeSHTXImage(data, preferBigEndian = true)
                     null -> flow.writeSHTXImage(data)
                 }
-                return FormatWriteResponse.SUCCESS
+                return KorneaResult.success()
             }
-            else -> return FormatWriteResponse.WRONG_FORMAT
+            else -> return KorneaResult.spiralWrongFormat()
         }
     }
 }

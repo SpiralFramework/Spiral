@@ -9,74 +9,65 @@ import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.common.flow.extensions.readInt32LE
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.concurrent.suspendForEach
+import info.spiralframework.base.common.locale.errorAsLocalisedIllegalArgument
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.core.common.formats.FormatWriteResponse
-import info.spiralframework.core.common.formats.ReadableSpiralFormat
-import info.spiralframework.core.common.formats.WritableSpiralFormat
-import info.spiralframework.core.common.formats.ensureFormatSuccess
+import info.spiralframework.core.common.formats.*
 import info.spiralframework.formats.common.archives.*
 
-object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat {
+public object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat<CustomSpcArchive> {
     override val name: String = "Spc"
     override val extension: String = "spc"
 
-    override fun preferredConversionFormat(context: SpiralContext, properties: SpiralProperties?): WritableSpiralFormat? = ZipFormat
+    override fun preferredConversionFormat(
+        context: SpiralContext,
+        properties: SpiralProperties?
+    ): WritableSpiralFormat<*>? = ZipFormat
 
-    override suspend fun identify(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<Optional<SpcArchive>> =
+    override suspend fun identify(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatOptionalResult<SpcArchive> =
         source.openInputFlow().useAndFlatMap { flow ->
-            val magic = flow.readInt32LE() ?: return@useAndFlatMap context.localisedNotEnoughData(SpcArchive.NOT_ENOUGH_DATA_KEY)
+            val magic = flow.readInt32LE()
+                ?: return@useAndFlatMap context.localisedNotEnoughData(SpcArchive.NOT_ENOUGH_DATA_KEY)
+
             if (magic != SpcArchive.SPC_MAGIC_NUMBER_LE) {
-                return@useAndFlatMap KorneaResult.errorAsIllegalArgument(SpcArchive.INVALID_MAGIC_NUMBER, context.localise(SpcArchive.INVALID_MAGIC_NUMBER_KEY, "0x${magic.toString(16)}", "0x${SpcArchive.SPC_MAGIC_NUMBER_LE.toString(16)}"))
+                return@useAndFlatMap context.errorAsLocalisedIllegalArgument(
+                    SpcArchive.INVALID_MAGIC_NUMBER,
+                    SpcArchive.INVALID_MAGIC_NUMBER_KEY,
+                    "0x${magic.toString(16)}",
+                    "0x${SpcArchive.SPC_MAGIC_NUMBER_LE.toString(16)}"
+                )
             }
 
-            return@useAndFlatMap ensureFormatSuccess(Optional.empty(), 1.0)
+            return@useAndFlatMap buildFormatSuccess(Optional.empty(), 1.0)
         }
 
-    /**
-     * Attempts to read the data source as [T]
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
-     * @param source A function that returns an input stream
-     *
-     * @return a FormatResult containing either [T] or null, if the stream does not contain the data to form an object of type [T]
-     */
-    override suspend fun read(context: SpiralContext, readContext: SpiralProperties?, source: DataSource<*>): KorneaResult<SpcArchive> =
+    override suspend fun read(
+        context: SpiralContext,
+        readContext: SpiralProperties?,
+        source: DataSource<*>
+    ): SpiralFormatReturnResult<SpcArchive> =
         SpcArchive(context, source)
             .filter { spc -> spc.files.isNotEmpty() }
             .ensureFormatSuccess { spc -> if (spc.files.size == 1) 0.75 else 1.0 }
 
-    /**
-     * Does this format support writing [data]?
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param context Context that we retrieved this file in
-     *
-     * @return If we are able to write [data] as this format
-     */
     override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
         data is AwbArchive
-        || data is WadArchive
-        || data is CpkArchive
-        || data is SpcArchive
-        || data is PakArchive
+                || data is WadArchive
+                || data is CpkArchive
+                || data is SpcArchive
+                || data is PakArchive
 //        || data is ZipFile
 
-    /**
-     * Writes [data] to [stream] in this format
-     *
-     * @param name Name of the data, if any
-     * @param game Game relevant to this data
-     * @param dataContext Context that we retrieved this file in
-     * @param data The data to wrote
-     * @param stream The stream to write to
-     *
-     * @return An enum for the success of the operation
-     */
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    override suspend fun write(
+        context: SpiralContext,
+        writeContext: SpiralProperties?,
+        data: Any,
+        flow: OutputFlow
+    ): KorneaResult<CustomSpcArchive> {
         val customSpc = CustomSpcArchive()
         val caches: MutableList<DataPool<*, *>> = ArrayList()
 
@@ -104,11 +95,11 @@ object SpcArchiveFormat : ReadableSpiralFormat<SpcArchive>, WritableSpiralFormat
 //                        customSpc[entry.name] = BinaryDataSource(data.getInputStream(entry).use(InputStream::readBytes))
 //                    }
 //            }
-            else -> return FormatWriteResponse.WRONG_FORMAT
+            else -> return KorneaResult.spiralWrongFormat()
         }
 
         customSpc.compile(flow)
         caches.suspendForEach(DataPool<*, *>::close)
-        return FormatWriteResponse.SUCCESS
+        return KorneaResult.success(customSpc)
     }
 }

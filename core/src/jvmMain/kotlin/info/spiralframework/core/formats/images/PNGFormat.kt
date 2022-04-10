@@ -1,20 +1,23 @@
 package info.spiralframework.core.formats.images
 
+import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.img.RgbMatrix
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.asOutputStream
 import info.spiralframework.base.common.SpiralContext
+import info.spiralframework.base.common.locale.errorAsLocalisedIllegalArgument
 import info.spiralframework.base.common.properties.SpiralProperties
-import info.spiralframework.core.common.formats.FormatWriteResponse
 import info.spiralframework.core.common.formats.WritableSpiralFormat
+import info.spiralframework.core.common.formats.spiralWrongFormat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
 import javax.imageio.ImageIO
 
-object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
+public object PNGFormat : SpiralImageIOFormat("png"), WritableSpiralFormat<BufferedImage> {
     override val name: String = "png"
     override val extension: String = "png"
 
@@ -27,7 +30,8 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
      *
      * @return If we are able to write [data] as this format
      */
-    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean = data is Image || data is RgbMatrix
+    override fun supportsWriting(context: SpiralContext, writeContext: SpiralProperties?, data: Any): Boolean =
+        data is Image || data is RgbMatrix
 
     /**
      * Writes [data] to [stream] in this format
@@ -40,7 +44,13 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
      *
      * @return An enum for the success of the operation
      */
-    override suspend fun write(context: SpiralContext, writeContext: SpiralProperties?, data: Any, flow: OutputFlow): FormatWriteResponse {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override suspend fun write(
+        context: SpiralContext,
+        writeContext: SpiralProperties?,
+        data: Any,
+        flow: OutputFlow
+    ): KorneaResult<BufferedImage> {
         with(context) {
             val png: BufferedImage
             when (data) {
@@ -49,7 +59,12 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
                     val height = data.getHeight(null)
 
                     if (width < 0 || height < 0)
-                        return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", width, height)))
+                        return context.errorAsLocalisedIllegalArgument(
+                            -1,
+                            "core.formats.img.invalid_dimensions",
+                            width,
+                            height
+                        )
 
                     png = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
                     val g = png.graphics
@@ -61,12 +76,17 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
                 }
                 is RgbMatrix -> {
                     if (data.width < 0 || data.height < 0)
-                        return FormatWriteResponse.FAIL(IllegalArgumentException(localise("core.formats.img.invalid_dimensions", data.width, data.height)))
+                        return context.errorAsLocalisedIllegalArgument(
+                            -1,
+                            "core.formats.img.invalid_dimensions",
+                            data.width,
+                            data.height
+                        )
 
                     png = BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB)
                     png.setRGB(0, 0, data.width, data.height, data.rgb, 0, data.width)
                 }
-                else -> return FormatWriteResponse.WRONG_FORMAT
+                else -> return KorneaResult.spiralWrongFormat()
             }
 
             try {
@@ -76,9 +96,9 @@ object PNGFormat: SpiralImageIOFormat("png"), WritableSpiralFormat {
                     }
                 }
 
-                return FormatWriteResponse.SUCCESS
+                return KorneaResult.success(png)
             } catch (io: IOException) {
-                return FormatWriteResponse.FAIL(io)
+                return KorneaResult.thrown(io)
             }
         }
     }
