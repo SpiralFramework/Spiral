@@ -1,0 +1,348 @@
+@use "sass:map";
+@use "sass:color";
+
+$darkTheme: (
+        "labelColor": rgba(255, 255, 255, 216),
+        "secondaryLabelColor": rgba(255, 255, 255, 140),
+        "tertiaryLabelColor": rgba(255, 255, 255, 63),
+        "quaternaryLabelColor": rgba(255, 255, 255, 25),
+        "textColor": rgba(255, 255, 255, 255),
+        "placeholderTextColor": rgba(255, 255, 255, 63),
+        "selectedTextColor": rgba(255, 255, 255, 255),
+        "textBackgroundColor": rgba(30, 30, 30, 255),
+        "selectedTextBackgroundColor": rgba(63, 99, 139, 255),
+        "keyboardFocusIndicatorColor": rgba(26, 169, 255, 76),
+        "unemphasizedSelectedTextColor": rgba(255, 255, 255, 255),
+        "unemphasizedSelectedTextBackgroundColor": rgba(70, 70, 70, 255),
+        "linkColor": rgba(65, 156, 255, 255),
+        "separatorColor": rgba(255, 255, 255, 25),
+        "selectedContentBackgroundColor": rgba(0, 88, 208, 255),
+        "selectedMenuItemTextColor": rgba(255, 255, 255, 255),
+        "gridColor": rgba(255, 255, 255, 25),
+        "headerTextColor": rgba(255, 255, 255, 255),
+        "alternatingContentBackgroundColors": (
+                rgba(30, 30, 30, 255),
+                rgba(255, 255, 255, 12)
+        ),
+        "controlAccentColor": rgba(0, 122, 255, 255),
+        "controlColor": rgba(255, 255, 255, 63),
+        "controlBackgroundColor": rgba(30, 30, 30, 255),
+        "controlTextColor": rgba(255, 255, 255, 216),
+        "disabledControlTextColor": rgba(255, 255, 255, 63),
+        "selectedControlColor": rgba(63, 99, 139, 255),
+        "selectedControlTextColor": rgba(255, 255, 255, 216),
+        "alternateSelectedControlTextColor": rgba(255, 255, 255, 255),
+        "windowBackgroundColor": rgba(50, 50, 50, 255),
+        "windowFrameTextColor": rgba(255, 255, 255, 216),
+        "underPageBackgroundColor": rgba(40, 40, 40, 255),
+        "findHighlightColor": rgba(255, 255, 0, 255),
+        "highlightColor": rgba(180, 180, 180, 255),
+        "shadowColor": rgba(0, 0, 0, 255),
+        "knobColor": rgba(153, 153, 187, 255),
+        "selectedKnobColor": rgba(102, 102, 153, 255),
+        "scrollBarColor": rgba(170, 170, 170, 255),
+        "systemRed": rgba(255, 69, 58, 255),
+        "systemGreen": rgba(50, 215, 75, 255),
+        "systemBlue": rgba(10, 132, 255, 255),
+        "systemOrange": rgba(255, 159, 10, 255),
+        "systemYellow": rgba(255, 214, 10, 255),
+        "systemBrown": rgba(172, 142, 104, 255),
+        "systemPink": rgba(255, 55, 95, 255),
+        "systemPurple": rgba(191, 90, 242, 255),
+        "systemGray": rgba(152, 152, 157, 255)
+);
+$lightTheme: (
+        "labelColor": rgba(0, 0, 0, 216),
+        "secondaryLabelColor": rgba(0, 0, 0, 127),
+        "tertiaryLabelColor": rgba(0, 0, 0, 63),
+        "quaternaryLabelColor": rgba(0, 0, 0, 25),
+        "textColor": rgba(0, 0, 0, 255),
+        "placeholderTextColor": rgba(0, 0, 0, 63),
+        "selectedTextColor": rgba(0, 0, 0, 255),
+        "textBackgroundColor": rgba(255, 255, 255, 255),
+        "selectedTextBackgroundColor": rgba(179, 215, 255, 255),
+        "keyboardFocusIndicatorColor": rgba(0, 103, 244, 63),
+        "unemphasizedSelectedTextColor": rgba(0, 0, 0, 255),
+        "unemphasizedSelectedTextBackgroundColor": rgba(220, 220, 220, 255),
+        "linkColor": rgba(0, 104, 218, 255),
+        "separatorColor": rgba(0, 0, 0, 25),
+        "selectedContentBackgroundColor": rgba(0, 99, 225, 255),
+        "selectedMenuItemTextColor": rgba(255, 255, 255, 255),
+        "gridColor": rgba(204, 204, 204, 255),
+        "headerTextColor": rgba(0, 0, 0, 216),
+        "alternatingContentBackgroundColors": (
+                rgba(255, 255, 255, 255),
+                rgba(244, 245, 245, 255)
+        ),
+        "controlAccentColor": rgba(0, 122, 255, 255),
+        "controlColor": rgba(255, 255, 255, 255),
+        "controlBackgroundColor": rgba(255, 255, 255, 255),
+        "controlTextColor": rgba(0, 0, 0, 216),
+        "disabledControlTextColor": rgba(0, 0, 0, 63),
+        "selectedControlColor": rgba(179, 215, 255, 255),
+        "selectedControlTextColor": rgba(0, 0, 0, 216),
+        "alternateSelectedControlTextColor": rgba(255, 255, 255, 255),
+        "windowBackgroundColor": rgba(236, 236, 236, 255),
+        "windowFrameTextColor": rgba(0, 0, 0, 216),
+        "underPageBackgroundColor": rgba(150, 150, 150, 229),
+        "findHighlightColor": rgba(255, 255, 0, 255),
+        "highlightColor": rgba(255, 255, 255, 255),
+        "shadowColor": rgba(0, 0, 0, 255),
+        "knobColor": rgba(153, 153, 187, 255),
+        "selectedKnobColor": rgba(102, 102, 153, 255),
+        "scrollBarColor": rgba(170, 170, 170, 255),
+        "systemRed": rgba(255, 59, 48, 255),
+        "systemGreen": rgba(40, 205, 65, 255),
+        "systemBlue": rgba(0, 122, 255, 255),
+        "systemOrange": rgba(255, 149, 0, 255),
+        "systemYellow": rgba(255, 204, 0, 255),
+        "systemBrown": rgba(162, 132, 94, 255),
+        "systemPink": rgba(255, 45, 85, 255),
+        "systemPurple": rgba(175, 82, 222, 255),
+        "systemGray": rgba(142, 142, 147, 255)
+);
+
+$themes: (
+        "dark": $darkTheme,
+        "light": $lightTheme
+);
+
+@function labelColor($theme) {
+  @return map.get($theme, "labelColor");
+}
+
+@function secondaryLabelColor($theme) {
+  @return map.get($theme, "secondaryLabelColor")
+}
+
+@function tertiaryLabelColor($theme) {
+  @return map.get($theme, "tertiaryLabelColor")
+}
+
+@function quaternaryLabelColor($theme) {
+  @return map.get($theme, "quaternaryLabelColor")
+}
+
+@function textColor($theme) {
+  @return map.get($theme, "textColor")
+}
+
+@function placeholderTextColor($theme) {
+  @return map.get($theme, "placeholderTextColor")
+}
+
+@function selectedTextColor($theme) {
+  @return map.get($theme, "selectedTextColor")
+}
+
+@function textBackgroundColor($theme) {
+  @return map.get($theme, "textBackgroundColor")
+}
+
+@function selectedTextBackgroundColor($theme) {
+  @return map.get($theme, "selectedTextBackgroundColor")
+}
+
+@function keyboardFocusIndicatorColor($theme) {
+  @return map.get($theme, "keyboardFocusIndicatorColor")
+}
+
+@function unemphasizedSelectedTextColor($theme) {
+  @return map.get($theme, "unemphasizedSelectedTextColor")
+}
+
+@function unemphasizedSelectedTextBackgroundColor($theme) {
+  @return map.get($theme, "unemphasizedSelectedTextBackgroundColor")
+}
+
+@function linkColor($theme) {
+  @return map.get($theme, "linkColor")
+}
+
+@function separatorColor($theme) {
+  @return map.get($theme, "separatorColor")
+}
+
+@function selectedContentBackgroundColor($theme) {
+  @return map.get($theme, "selectedContentBackgroundColor")
+}
+
+@function selectedMenuItemTextColor($theme) {
+  @return map.get($theme, "selectedMenuItemTextColor")
+}
+
+@function gridColor($theme) {
+  @return map.get($theme, "gridColor")
+}
+
+@function headerTextColor($theme) {
+  @return map.get($theme, "headerTextColor");
+}
+
+@function alternatingContentBackgroundColors($theme) {
+  @return map.get($theme, "alternatingContentBackgroundColors")
+}
+
+@function controlAccentColor($theme) {
+  @return map.get($theme, "controlAccentColor")
+}
+
+@function controlColor($theme) {
+  @return map.get($theme, "controlColor")
+}
+
+@function controlBackgroundColor($theme) {
+  @return map.get($theme, "controlBackgroundColor")
+}
+
+@function controlTextColor($theme) {
+  @return map.get($theme, "controlTextColor")
+}
+
+@function disabledControlTextColor($theme) {
+  @return map.get($theme, "disabledControlTextColor")
+}
+
+@function selectedControlColor($theme) {
+  @return map.get($theme, "selectedControlColor")
+}
+
+@function selectedControlTextColor($theme) {
+  @return map.get($theme, "selectedControlTextColor")
+}
+
+@function alternateSelectedControlTextColor($theme) {
+  @return map.get($theme, "alternateSelectedControlTextColor")
+}
+
+@function windowBackgroundColor($theme) {
+  @return map.get($theme, "windowBackgroundColor")
+}
+
+@function windowFrameTextColor($theme) {
+  @return map.get($theme, "windowFrameTextColor")
+}
+
+@function underPageBackgroundColor($theme) {
+  @return map.get($theme, "underPageBackgroundColor")
+}
+
+@function findHighlightColor($theme) {
+  @return map.get($theme, "findHighlightColor")
+}
+
+@function highlightColor($theme) {
+  @return map.get($theme, "highlightColor")
+}
+
+@function shadowColor($theme) {
+  @return map.get($theme, "shadowColor")
+}
+
+@function knobColor($theme) {
+  @return map.get($theme, "knobColor")
+}
+
+@function selectedKnobColor($theme) {
+  @return map.get($theme, "selectedKnobColor")
+}
+
+@function scrollBarColor($theme) {
+  @return map.get($theme, "scrollBarColor")
+}
+
+@function systemRed($theme) {
+  @return map.get($theme, "systemRed")
+}
+
+@function systemGreen($theme) {
+  @return map.get($theme, "systemGreen")
+}
+
+@function systemBlue($theme) {
+  @return map.get($theme, "systemBlue")
+}
+
+@function systemOrange($theme) {
+  @return map.get($theme, "systemOrange")
+}
+
+@function systemYellow($theme) {
+  @return map.get($theme, "systemYellow")
+}
+
+@function systemBrown($theme) {
+  @return map.get($theme, "systemBrown")
+}
+
+@function systemPink($theme) {
+  @return map.get($theme, "systemPink")
+}
+
+@function systemPurple($theme) {
+  @return map.get($theme, "systemPurple")
+}
+
+@function systemGray($theme) {
+  @return map.get($theme, "systemGray")
+}
+
+@function accent($theme) {
+  @return systemPink($theme);
+}
+
+@function disabledColour($color, $rate: 25%) {
+  @return color.scale($color, $lightness: -$rate);
+}
+
+@mixin style($themes: $themes) {
+  @each $name, $theme in $themes {
+    .#{$name}-theme {
+      @content($theme);
+    }
+  }
+}
+
+@mixin styleFrame($themes: $themes) {
+  @include style($themes) using($theme) {
+    -fx-color: textColor($theme);
+    -fx-background: textBackgroundColor($theme);
+    -fx-border-color: accent($theme);
+    -fx-icon-color: textColor($theme);
+
+    :disabled {
+      -fx-color: disabledColour(textColor($theme), 25%);
+      -fx-background-color: disabledColour(textBackgroundColor($theme), 25%);
+      -fx-border-color: disabledColour(accent($theme), 25%);
+      -fx-icon-color: disabledColour(textColor($theme), 25%);
+    }
+  }
+}
+
+@mixin styleText($themes: $themes) {
+  @include style($themes) using($theme) {
+    -fx-color: textColor($theme);
+    -fx-background-color: textBackgroundColor($theme);
+    -fx-border-color: accent($theme);
+    -fx-icon-color: textColor($theme);
+
+    :disabled {
+      -fx-color: disabledColour(textColor($theme), 25%);
+      -fx-background-color: disabledColour(textBackgroundColor($theme), 25%);
+      -fx-border-color: disabledColour(accent($theme), 25%);
+      -fx-icon-color: disabledColour(textColor($theme), 25%);
+    }
+  }
+}
+
+@mixin styleIcon($themes: $themes) {
+  @each $name, $theme in $themes {
+    -fx-fill: textColor($theme);
+    -fx-icon-color: textColor($theme);
+
+    :disabled {
+      -fx-fill: disabledColour(textColor($theme));
+      -fx-icon-color: disabledColour(textColor($theme));
+    }
+  }
+}

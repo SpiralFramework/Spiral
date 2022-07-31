@@ -5,7 +5,6 @@ plugins {
     id("org.openjfx.javafxplugin")
 }
 
-
 application {
     mainClassName = "info.spiralframework.gui.jvm.CockpitKt"
 }
@@ -20,7 +19,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$KOTLINX_COROUTINES_VERSION")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
 
-    api(project(":spiral-antlr-pipeline"))
+    implementation("org.kordamp.ikonli:ikonli-javafx:12.3.1")
+    implementation("org.kordamp.ikonli:ikonli-bootstrapicons-pack:12.3.1")
+
+    implementation("uk.co.caprica:vlcj:4.7.3")
+    implementation("uk.co.caprica:vlcj-javafx:1.0.3")
+
     api(project(":spiral-bst"))
     api(project(":spiral-core"))
 

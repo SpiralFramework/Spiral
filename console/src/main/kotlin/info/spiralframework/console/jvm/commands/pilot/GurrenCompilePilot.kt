@@ -10,6 +10,7 @@ import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
 import dev.brella.kornea.io.jvm.files.AsyncFileOutputFlow
 import dev.brella.kornea.toolkit.coroutines.ascii.arbitraryProgressBar
+import dev.brella.zshk.common.ShellEnvironment
 import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.properties.ISpiralProperty
 import info.spiralframework.base.common.properties.SpiralProperties
@@ -29,15 +30,16 @@ import kotlinx.coroutines.SupervisorJob
 import java.io.File
 import kotlin.coroutines.CoroutineContext
 
-@OptIn(ExperimentalUnsignedTypes::class, ExperimentalCoroutinesApi::class)
 class GurrenCompilePilot(val readableFormats: MutableList<ReadableSpiralFormat<Any>>, val writableFormats: MutableList<WritableSpiralFormat>) : CoroutineScope {
-    companion object : CommandRegistrar {
-        const val NO_MATCHING_FORMAT_NAME = 0
-        const val NO_FORMAT_IDENTIFIED = 1
-        const val URI_IS_NOT_FILE = 2
+    public companion object : CommandRegistrar {
+        public const val NO_MATCHING_FORMAT_NAME: Int = 0
+        public const val NO_FORMAT_IDENTIFIED: Int = 1
+        public const val URI_IS_NOT_FILE: Int = 2
 
-        override suspend fun register(spiralContext: SpiralContext, knolusContext: KnolusContext) {
-            with(knolusContext) {
+        override suspend fun register(spiralContext: SpiralContext, env: ShellEnvironment) {
+//            env.registerFunction("compile") { args, env ->
+//            }
+
                 registerFunctionWithContextWithoutReturn(
                     "compile",
                     stringTypeParameter("path"),
@@ -48,7 +50,6 @@ class GurrenCompilePilot(val readableFormats: MutableList<ReadableSpiralFormat<A
 
                     GurrenCompilePilot(spiralContext, Folder(File(path)), to, saveAs)
                 }
-            }
 
             GurrenPilot.help("compile")
         }

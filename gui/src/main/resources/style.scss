@@ -1,0 +1,65 @@
+@use "themes";
+@use "sass:color";
+
+$theme: themes.$lightTheme;
+
+@mixin rounded($radius) {
+  -fx-border-radius: $radius;
+  -fx-background-radius: $radius;
+}
+
+@mixin circle($radius) {
+  -fx-border-radius: $radius;
+  -fx-background-radius: $radius;
+  -fx-min-width: $radius;
+  -fx-min-height: $radius;
+  -fx-max-width: $radius;
+  -fx-max-height: $radius;
+}
+
+body {
+  @include themes.styleFrame();
+}
+
+.frame {
+  @include themes.styleFrame();
+
+  -fx-border-width: .25em;
+}
+
+.control {
+  @include themes.styleFrame();
+
+  -fx-border-width: .25em;
+}
+
+.menu-bar {
+  @include themes.style() using($theme) {
+    //-fx-background-color: themes.windowBackgroundColor($theme);
+  }
+}
+
+.text {
+  @include themes.styleText();
+}
+
+.ikonli-font-icon {
+  @include themes.styleIcon();
+}
+
+.logo-pane {
+  $font-size: 36;
+  -fx-font-size: $font-size;
+
+  .top-icon-layer {
+    -fx-icon-size: $font-size * 6;
+  }
+
+  .bottom-icon-layer {
+    -fx-icon-size: $font-size * 8;
+  }
+
+  .label {
+    -fx-translate-y: 1em;
+  }
+}
