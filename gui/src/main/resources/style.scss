@@ -1,7 +1,6 @@
 @use "themes";
+@use "utils";
 @use "sass:color";
-
-$theme: themes.$lightTheme;
 
 @mixin rounded($radius) {
   -fx-border-radius: $radius;
@@ -17,8 +16,8 @@ $theme: themes.$lightTheme;
   -fx-max-height: $radius;
 }
 
-body {
-  @include themes.styleFrame();
+@include themes.styleRoot using($theme) {
+  -fx-background-color: themes.underPageBackgroundColor($theme);
 }
 
 .frame {
@@ -34,12 +33,67 @@ body {
 }
 
 .menu-bar {
+  -fx-border-width: utils.border($bottom: 1px);
+  -fx-padding: 0;
+
   @include themes.style() using($theme) {
-    //-fx-background-color: themes.windowBackgroundColor($theme);
+    -fx-background-color: themes.windowBackgroundColor($theme);
+    -fx-border-color: themes.gridColor($theme);
   }
 }
 
-.text {
+.tool-bar {
+  -fx-border-width: utils.border($top: 1px);
+
+  @include themes.style() using($theme) {
+    -fx-background-color: themes.windowBackgroundColor($theme);
+    -fx-border-color: themes.gridColor($theme);
+  }
+}
+
+.menu-button {
+  @include themes.style(themes.$themes) using($theme) {
+    -fx-background-color: themes.controlBackgroundColor($theme);
+    //-fx-border-color: themes.gridColor($theme);
+    -fx-icon-color: themes.textColor($theme);
+
+    &:hover {
+      -fx-background-color: themes.selectedControlColor($theme);
+    }
+
+    &:disabled {
+      -fx-background-color: themes.disabledColour(themes.textBackgroundColor($theme), 25%);
+      //-fx-border-color: themes.gridColor($theme);
+      -fx-icon-color: themes.disabledColour(themes.textColor($theme), 25%);
+    }
+  }
+}
+
+.menu-item {
+  @include themes.style(themes.$themes) using($theme) {
+    -fx-background-color: themes.controlBackgroundColor($theme);
+
+    &:hover {
+      -fx-background-color: themes.selectedControlColor($theme);
+
+      .label {
+        -fx-text-fill: themes.selectedControlTextColor($theme);
+      }
+    }
+
+    &:disabled {
+      -fx-background-color: themes.disabledColour(themes.textBackgroundColor($theme), 25%);
+    }
+  }
+}
+
+.context-menu {
+  @include themes.style(themes.$themes) using($theme) {
+    -fx-background-color: themes.controlBackgroundColor($theme);
+  }
+}
+
+.label {
   @include themes.styleText();
 }
 

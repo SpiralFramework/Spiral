@@ -3,7 +3,6 @@ package info.spiralframework.gui.javafx
 import info.spiralframework.gui.javafx.controls.StatusBar
 import info.spiralframework.gui.javafx.controls.content.ContentPane
 import javafx.application.Application
-import javafx.collections.FXCollections
 import javafx.scene.Scene
 import javafx.scene.control.Menu
 import javafx.scene.control.MenuBar
@@ -20,7 +19,6 @@ import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
 import org.kordamp.ikonli.javafx.FontIcon
 import java.io.File
 import kotlin.coroutines.CoroutineContext
-import kotlin.random.Random
 
 class Lagann : Application() {
     object IO : CoroutineScope {
@@ -32,6 +30,8 @@ class Lagann : Application() {
     companion object {
         val STYLESHEET_SET = setOf(File("gui/src/main/resources/style.css").toURI())
         val STYLESHEETS = ReloadingStylesheets(STYLESHEET_SET, UI, IO)
+
+        val THEMED = ThemeHolder("light")
     }
 
     val rootPane = BorderPane()
@@ -83,6 +83,7 @@ class Lagann : Application() {
     init {
         scene = Scene(rootPane, 1280.0, 720.0)
         STYLESHEETS.addScene(scene)
+        THEMED.scenes.add(scene)
 
         rootPane.top = mainMenuBar
         rootPane.center = contentPane
@@ -92,18 +93,5 @@ class Lagann : Application() {
         fileMenu.items.addAll(openFile)
 
         mainMenuBar.menus.addAll(fileMenu)
-
-        val list = FXCollections.observableArrayList<Int>()
-        repeat(1000) { list.add(Random.nextInt()) }
-
-        val secondList = ArrayList(list)
-
-        list.addListener(baseListChangeListener(onPermutations = { change ->
-            val slice = secondList.slice(change.from until change.to)
-            for (i in change.from until change.to) {
-                secondList[change.getPermutation(i)] = slice[i]
-            }
-        }))
-        FXCollections.sort(list)
     }
 }

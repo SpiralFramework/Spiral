@@ -297,7 +297,15 @@ $themes: (
 
 @mixin style($themes: $themes) {
   @each $name, $theme in $themes {
-    .#{$name}-theme {
+    @at-root .root.#{$name}-theme & {
+      @content($theme);
+    }
+  }
+}
+
+@mixin styleRoot($themes: $themes) {
+  @each $name, $theme in $themes {
+    @at-root .root.#{$name}-theme {
       @content($theme);
     }
   }
@@ -305,15 +313,15 @@ $themes: (
 
 @mixin styleFrame($themes: $themes) {
   @include style($themes) using($theme) {
-    -fx-color: textColor($theme);
-    -fx-background: textBackgroundColor($theme);
-    -fx-border-color: accent($theme);
+    -fx-background-color: textBackgroundColor($theme);
+    -fx-border-color: gridColor($theme);
+    //-fx-border-color: accent($theme);
     -fx-icon-color: textColor($theme);
 
-    :disabled {
-      -fx-color: disabledColour(textColor($theme), 25%);
+    &:disabled {
       -fx-background-color: disabledColour(textBackgroundColor($theme), 25%);
-      -fx-border-color: disabledColour(accent($theme), 25%);
+      -fx-border-color: gridColor($theme);
+      //-fx-border-color: disabledColour(accent($theme), 25%);
       -fx-icon-color: disabledColour(textColor($theme), 25%);
     }
   }
@@ -321,26 +329,20 @@ $themes: (
 
 @mixin styleText($themes: $themes) {
   @include style($themes) using($theme) {
-    -fx-color: textColor($theme);
-    -fx-background-color: textBackgroundColor($theme);
-    -fx-border-color: accent($theme);
-    -fx-icon-color: textColor($theme);
+    -fx-text-fill: textColor($theme);
 
-    :disabled {
-      -fx-color: disabledColour(textColor($theme), 25%);
-      -fx-background-color: disabledColour(textBackgroundColor($theme), 25%);
-      -fx-border-color: disabledColour(accent($theme), 25%);
-      -fx-icon-color: disabledColour(textColor($theme), 25%);
+    &:disabled {
+      -fx-text-fill: disabledColour(textColor($theme), 25%);
     }
   }
 }
 
 @mixin styleIcon($themes: $themes) {
-  @each $name, $theme in $themes {
+  @include style($themes) using($theme) {
     -fx-fill: textColor($theme);
     -fx-icon-color: textColor($theme);
 
-    :disabled {
+    &:disabled {
       -fx-fill: disabledColour(textColor($theme));
       -fx-icon-color: disabledColour(textColor($theme));
     }
