@@ -18,10 +18,10 @@ public actual class DefaultSpiralEnvironment : SpiralEnvironment {
     private val staticEnvironment: MutableMap<String, String> = HashMap()
     private val dynamicEnvironment: MutableMap<String, DynamicEnvironmentFunction> = HashMap()
     private val environmentalVariables: MutableSet<String> = hashSetOf(
-            "os.name", "os.version", "os.arch",
-            "java.vendor", "java.version", "java.vendor.url",
-            "file.separator", "path.separator", "line.separator",
-            "path"
+        "os.name", "os.version", "os.arch",
+        "java.vendor", "java.version", "java.vendor.url",
+        "file.separator", "path.separator", "line.separator",
+        "path"
     )
     private val moduleProviders: MutableMap<String, SpiralModuleProvider> = HashMap()
     private val enabledModules: MutableSet<String> = HashSet()
@@ -47,10 +47,16 @@ public actual class DefaultSpiralEnvironment : SpiralEnvironment {
 
     override suspend fun retrieveStaticValue(key: String): String? = staticEnvironment[key]
     override suspend fun retrieveEnvironmentalValue(key: String): String? = System.getenv(key)
-    override suspend fun SpiralContext.retrieveDynamicValue(key: String): String? = dynamicEnvironment[key]?.invoke(this, key)
+    override suspend fun SpiralContext.retrieveDynamicValue(key: String): String? =
+        dynamicEnvironment[key]?.invoke(this, key)
 
     init {
-        val jarFile = File(DefaultSpiralEnvironment::class.java.protectionDomain.codeSource.location.path).takeIf(File::isFile)
+        val jarFile = DefaultSpiralEnvironment::class.java.protectionDomain
+            ?.codeSource
+            ?.location
+            ?.path
+            ?.let(::File)
+            ?.takeIf(File::isFile)
 
         if (jarFile != null) {
             staticEnvironment[SPIRAL_FILE_NAME_KEY] = jarFile.name
