@@ -1,0 +1,78 @@
+[versions]
+
+kotlin = "1.8.21"
+
+#libraries
+antlr = "4.7.2"
+
+kotlinx-coroutines = "1.7.0"
+kotlinx-serialization = "1.5.1"
+
+ktor = "2.3.1"
+
+kornea-annotations = "1.4.2-alpha"
+kornea-errors = "4.0.1-alpha"
+kornea-io = "5.5.1-alpha"
+kornea-img = "1.4.1-alpha"
+kornea-toolkit = "3.5.1-alpha"
+
+slf4j = "2.0.7"
+logback = "1.3.8"
+directories-jvm = "26" # https://github.com/dirs-dev/directories-jvm
+
+twelvemonkeys-imageio = "3.9.4" # https://github.com/haraldk/TwelveMonkeys
+
+korlibs-krypto = "4.0.6"
+
+
+# Temporarily Disabled Libs
+#zshk = "1.0.0"
+
+# plugins
+kornea-gradle = "2.1.0"
+shadow = "8.1.1"
+openjfx = "0.0.14"
+jlink = "2.26.0"
+#undercoach-download
+licenseCheck = "0.16.1"
+
+[libraries]
+antlr4 = { group = "org.antlr", name = "antlr4", version.ref = "antlr" }
+
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+kornea-annotations = { group = "dev.brella", name = "kornea-annotations", version.ref = "kornea-annotations" }
+kornea-errors = { group = "dev.brella", name = "kornea-errors", version.ref = "kornea-errors" }
+kornea-io = { group = "dev.brella", name = "kornea-io", version.ref = "kornea-io" }
+kornea-img = { group = "dev.brella", name = "kornea-img", version.ref = "kornea-img" }
+kornea-toolkit = { group = "dev.brella", name = "kornea-toolkit", version.ref = "kornea-toolkit" }
+
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+directories = { group = "dev.dirs", name = "directories", version.ref = "directories-jvm" }
+
+twelvemonkeys-imageio-bmp = { group = "com.twelvemonkeys.imageio", name = "imageio-bmp", version.ref = "twelvemonkeys-imageio" }
+twelvemonkeys-imageio-jpeg = { group = "com.twelvemonkeys.imageio", name = "imageio-jpeg", version.ref = "twelvemonkeys-imageio" }
+twelvemonkeys-imageio-tga = { group = "com.twelvemonkeys.imageio", name = "imageio-tga", version.ref = "twelvemonkeys-imageio" }
+
+korlibs-krypto = { group = "com.soywiz.korlibs.krypto", name = "krypto", version.ref = "korlibs-krypto" }
+
+[bundles]
+twelvemonkeys-imageio = ["twelvemonkeys-imageio-bmp", "twelvemonkeys-imageio-jpeg", "twelvemonkeys-imageio-tga"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-mpp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+openjfx = { id = "org.openjfx.javafxplugin", version.ref = "openjfx" }
+jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
+licenseCheck = { id = "com.github.hierynomus.license", version.ref = "licenseCheck" }
+
+kornea = { id = "dev.brella.kornea", version.ref = "kornea-gradle" }

@@ -5,6 +5,7 @@ import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.success
 import dev.brella.kornea.io.common.DataSource
 import dev.brella.kornea.io.common.flow.OutputFlow
+import dev.brella.kornea.io.common.flow.PrintOutputFlow
 import dev.brella.kornea.io.common.flow.extensions.copyToOutputFlow
 import dev.brella.kornea.io.common.useInputFlow
 import info.spiralframework.base.common.SpiralContext

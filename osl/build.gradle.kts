@@ -10,25 +10,19 @@ kotlin {
             }
         }
     }
-    js()
+    js(IR) {
+        browser()
+        nodejs()
+    }
 
-//    js {
-//        browser {
-//        }
-//        nodejs {
-//        }
-//    }
-//    // For ARM, should be changed to iosArm32 or iosArm64
-//    // For Linux, should be changed to e.g. linuxX64
-//    // For MacOS, should be changed to e.g. macosX64
-//    // For Windows, should be changed to e.g. mingwX64
-//    mingwX64("mingw") {
-//    }
     sourceSets {
         val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
+            dependencies(libs) {
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
+//                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
+
+                api { kotlinx.coroutines.core }
+                api { kotlinx.serialization.json }
 
                 implementation(project(":spiral-base"))
                 implementation(project(":spiral-formats"))
@@ -36,11 +30,12 @@ kotlin {
             }
         }
         val jvmMain by getting {
-            dependencies {
+            dependencies(libs) {
 //                implementation kotlin('stdlib-jdk8')
 
                 api(project(":spiral-antlr-osl-java"))
-                implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
+                implementation { logback.classic }
+//                implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
             }
         }
 

@@ -6,10 +6,10 @@ plugins {
 }
 
 application {
-    mainClassName = "info.spiralframework.console.jvm.Cockpit"
+    mainClass.set("info.spiralframework.console.jvm.Cockpit")
 }
 
-dependencies {
+dependencies(libs) {
 //    implementation project(":spiral-antlr-pipeline")
     implementation(project(":spiral-base"))
     implementation(project(":spiral-bst"))
@@ -18,9 +18,9 @@ dependencies {
     implementation(project(":spiral-core"))
     implementation(project(":spiral-updater"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
-    implementation("ch.qos.logback:logback-classic:$LOGBACK_VERSION")
+    implementation { kotlinx.coroutines.core }
+    implementation { kotlinx.serialization.json }
+    implementation { logback.classic }
 
     implementation("dev.brella:zshk:1.0.0")
 //    implementation("dev.brella:knolus-core:2.7.0")

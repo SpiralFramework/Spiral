@@ -11,14 +11,18 @@ kotlin {
             }
         }
     }
-    js()
+    js(IR) {
+        browser()
+        nodejs()
+    }
+
     sourceSets {
         commonMain {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$KOTLINX_COROUTINES_VERSION")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$KOTLINX_SERIALISATION_VERSION")
+            dependencies(libs) {
+                implementation { kotlinx.coroutines.core }
+                implementation { kotlinx.serialization.json }
 
-                api("com.soywiz.korlibs.krypto:krypto:2.2.0")
+                api { korlibs.krypto }
 
                 api(project(":spiral-base"))
             }

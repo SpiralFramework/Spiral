@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.config.LanguageFeature
+
 repositories {
     mavenCentral()
     gradlePluginPortal()
@@ -6,13 +8,14 @@ repositories {
 
 plugins {
     `kotlin-dsl`
-//    id("org.jetbrains.kotlin.multiplatform") apply false
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:${libs.versions.kotlin.get()}")
 }
 
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
-}
+//kotlin.sourceSets.all {
+//    languageSettings {
+//        enableLanguageFeature(LanguageFeature.ContextReceivers.name)
+//    }
+//}

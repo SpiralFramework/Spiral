@@ -1,12 +1,11 @@
 package info.spiralframework.core
 
 import io.ktor.client.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.features.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
 
 public class DefaultSpiralHttp: SpiralHttp {
-    //TODO: Switch to CIO
-    override val httpClient: HttpClient = HttpClient(Apache) {
+    override val httpClient: HttpClient = HttpClient(CIO) {
         followRedirects = true
         expectSuccess = false
 

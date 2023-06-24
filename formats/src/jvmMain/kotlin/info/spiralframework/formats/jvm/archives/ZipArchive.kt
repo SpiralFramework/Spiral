@@ -1,6 +1,6 @@
 package info.spiralframework.formats.jvm.archives
 
-import com.soywiz.krypto.sha256
+import korlibs.crypto.sha256
 import dev.brella.kornea.errors.common.doOnFailure
 import dev.brella.kornea.errors.common.getOrElseRun
 import dev.brella.kornea.errors.common.useAndMap

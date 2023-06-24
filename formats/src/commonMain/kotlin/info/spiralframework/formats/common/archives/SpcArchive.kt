@@ -1,6 +1,6 @@
 package info.spiralframework.formats.common.archives
 
-import com.soywiz.krypto.sha256
+import korlibs.crypto.sha256
 import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource

@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlin.mpp)
 }
 
 kotlin {
@@ -10,24 +10,16 @@ kotlin {
             }
         }
     }
-    js()
-//    js {
-//        browser {
-//        }
-//        nodejs {
-//        }
-//    }
-//    // For ARM, should be changed to iosArm32 or iosArm64
-//    // For Linux, should be changed to e.g. linuxX64
-//    // For MacOS, should be changed to e.g. macosX64
-//    // For Windows, should be changed to e.g. mingwX64
-//    mingwX64("mingw") {
-//    }
+    js(IR) {
+        browser()
+        nodejs()
+    }
+
     sourceSets {
         val commonMain by getting {
-            dependencies {
+            dependencies(libs) {
                 implementation(kotlin("reflect"))
-                implementation(KOTLINX_COROUTINES_CORE)
+                implementation { kotlinx.coroutines.core }
 
                 api(project(":spiral-formats"))
             }

@@ -1,7 +1,6 @@
 package info.spiralframework.core.formats.audio
 
 import dev.brella.kornea.base.common.Optional
-import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.getOrDefault
 import dev.brella.kornea.io.common.DataSource

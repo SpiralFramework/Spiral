@@ -2,7 +2,6 @@ package info.spiralframework.base.common.serialisation
 
 import dev.brella.kornea.errors.common.KorneaResult
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
@@ -10,8 +9,7 @@ import kotlinx.serialization.serializer
 
 public interface SpiralSerialisation {
     public object NoOp : SpiralSerialisation {
-        @OptIn(ExperimentalSerializationApi::class)
-        override val jsonSerialisersModule: SerializersModule = EmptySerializersModule
+        override val jsonSerialisersModule: SerializersModule = EmptySerializersModule()
 
         override fun <T> decodeFromJsonString(deserialiser: DeserializationStrategy<T>, string: String): KorneaResult<T> =
             KorneaResult.empty()

@@ -7,6 +7,7 @@ import info.spiralframework.base.jvm.crypto.matchesSha256
 import info.spiralframework.core.SpiralHttp
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.io.InputStream
 import java.security.PublicKey
 import kotlin.reflect.KClass
@@ -43,25 +44,25 @@ public class DefaultSpiralSignatures : SpiralSignatures, SpiralCatalyst<SpiralHt
     private var primed: Boolean = false
 
     override suspend fun SpiralHttp.signatureForModule(module: String, version: String, file: String): ByteArray? =
-        httpClient.get<HttpResponse>(String.format(MODULE_SIGNATURE_PATH, module, version, file))
-            .takeIf { response -> response.status.value < 400 }
+        httpClient.get(String.format(MODULE_SIGNATURE_PATH, module, version, file))
+            .takeIf { response -> response.status.isSuccess() }
             ?.readBytes()
 
     override suspend fun SpiralHttp.signatureForPlugin(plugin: String, version: String, file: String): ByteArray? =
-        httpClient.get<HttpResponse>(String.format(PLUGIN_SIGNATURE_PATH, plugin, version, file))
-            .takeIf { response -> response.status.value < 400 }
+        httpClient.get(String.format(PLUGIN_SIGNATURE_PATH, plugin, version, file))
+            .takeIf { response -> response.status.isSuccess() }
             ?.readBytes()
 
     override suspend fun prime(catalyst: SpiralHttp) {
         if (!primed) {
-            cdnLastPublicKeySha256 = catalyst.httpClient.get<HttpResponse>("https://cdn.spiralframework.info/signatures/public.key.sha256")
-                .takeIf { response -> response.status.value < 400 }
-                ?.readText()
+            cdnLastPublicKeySha256 = catalyst.httpClient.get("https://cdn.spiralframework.info/signatures/public.key.sha256")
+                .takeIf { response -> response.status.isSuccess() }
+                ?.bodyAsText()
 
             lastPublicKeySha256 = cdnLastPublicKeySha256 ?: LAST_PUBLIC_KEY_SHA256
 
-            spiralFrameworkKey = catalyst.httpClient.get<HttpResponse>("https://spiralframework.info/public.key?time=${System.nanoTime()}")
-                .takeIf { response -> response.status.value < 400 }
+            spiralFrameworkKey = catalyst.httpClient.get("https://spiralframework.info/public.key?time=${System.nanoTime()}")
+                .takeIf { response -> response.status.isSuccess() }
                 ?.readBytes()
                 ?.takeIf(lastPublicKeySha256::matchesSha256)
                 ?.let { data ->

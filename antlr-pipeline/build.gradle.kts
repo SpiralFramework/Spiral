@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    antlr("org.antlr:antlr4:4.7.2")
+    antlr(libs.antlr4)
 }
 
 tasks.generateGrammarSource {

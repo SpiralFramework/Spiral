@@ -40,6 +40,7 @@ public class CustomWordScript {
                 is WordScriptValue.Label -> addLabel(value.label)
                 is WordScriptValue.Parameter -> addParameter(value.param)
                 is WordScriptValue.InternalText -> addText(value.text)
+                else -> TODO()
             }
         }
 

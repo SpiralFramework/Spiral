@@ -1,7 +1,6 @@
 package info.spiralframework.core.common.formats.images
 
 import dev.brella.kornea.base.common.Optional
-import dev.brella.kornea.base.common.empty
 import dev.brella.kornea.errors.common.KorneaResult
 import dev.brella.kornea.errors.common.success
 import dev.brella.kornea.img.RgbMatrix

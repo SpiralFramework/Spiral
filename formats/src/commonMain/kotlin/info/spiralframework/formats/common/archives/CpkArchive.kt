@@ -1,6 +1,5 @@
 package info.spiralframework.formats.common.archives
 
-import com.soywiz.krypto.sha256
 import dev.brella.kornea.base.common.closeAfter
 import dev.brella.kornea.errors.common.*
 import dev.brella.kornea.io.common.BinaryDataSource
@@ -16,6 +15,7 @@ import info.spiralframework.base.common.SpiralContext
 import info.spiralframework.base.common.locale.localisedNotEnoughData
 import info.spiralframework.formats.common.compression.decompressCrilayla
 import info.spiralframework.formats.common.withFormats
+import korlibs.crypto.sha256
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.mapNotNull

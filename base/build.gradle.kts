@@ -1,6 +1,6 @@
 plugins {
-    kotlinMultiplatform()
-    kotlinSerialisation()
+    alias(libs.plugins.kotlin.mpp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -11,35 +11,27 @@ kotlin {
             }
         }
     }
-    js()
-//    js {
-//        browser {
-//        }
-//        nodejs {
-//        }
-//    }
-//    // For ARM, should be changed to iosArm32 or iosArm64
-//    // For Linux, should be changed to e.g. linuxX64
-//    // For MacOS, should be changed to e.g. macosX64
-//    // For Windows, should be changed to e.g. mingwX64
-//    mingwX64("mingw") {
-//    }
+    js(IR) {
+        browser()
+        nodejs()
+    }
+
     sourceSets {
         val commonMain by getting {
-            dependencies {
-                implementation(KOTLINX_COROUTINES_CORE)
-                implementation(KOTLINX_SERIALISATION_JSON)
+            dependencies(libs) {
+                implementation { kotlinx.coroutines.core }
+                implementation { kotlinx.serialization.json }
 
-                api("dev.brella:kornea-annotations:$KORNEA_ANNOTATIONS_VERSION")
-                api("dev.brella:kornea-errors:$KORNEA_ERRORS_VERSION")
-                api("dev.brella:kornea-io:$KORNEA_IO_VERSION")
-                api("dev.brella:kornea-toolkit:$KORNEA_TOOLKIT_VERSION")
+                api { kornea.annotations }
+                api { kornea.errors }
+                api { kornea.io }
+                api { kornea.toolkit }
             }
         }
         val jvmMain by getting {
-            dependencies {
-                api("org.slf4j:slf4j-api:$SFL4J_VERSION")
-                api("dev.dirs:directories:21")
+            dependencies(libs) {
+                api { slf4j.api }
+                api { directories }
             }
         }
 

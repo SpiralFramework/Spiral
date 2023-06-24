@@ -26,7 +26,7 @@ public abstract class SrdEntryWithData(classifier: Int, mainDataLength: ULong, s
         val mainDataSource = openMainDataSource(dataSource)
         return if (mainDataSource.reproducibility.isRandomAccess())
             mainDataSource.openInputFlow()
-                .filterToInstanceTyped<SeekableInputFlow, InputFlow> { flow ->
+                .filterToInstanceTyped<InputFlow, SeekableInputFlow> { flow ->
                     KorneaResult.success(BinaryInputFlow(flow.readAndClose()))
                 }.flatMap { flow -> context.setup(flow) }
         else {

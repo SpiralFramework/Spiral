@@ -1,18 +1,32 @@
 plugins {
 //    id 'java' apply false
-    kotlin("jvm") apply false
-    kotlin("multiplatform") apply false
-    kotlin("plugin.serialization") version "1.6.0" apply false
-    id("com.github.johnrengelman.shadow") version "6.0.0" apply false
-    id("org.openjfx.javafxplugin") version "0.0.8" apply false
-    id("org.beryx.jlink") version "2.12.0" apply false
-    id("de.undercouch.download") apply false
-    id("com.github.hierynomus.license") version "0.15.0" apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.mpp) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.shadow) apply false
+    alias(libs.plugins.openjfx) apply false
+    alias(libs.plugins.jlink) apply false
+    alias(libs.plugins.licenseCheck) apply false
+    alias(libs.plugins.kornea) apply false
+
+    `maven-publish`
 }
 
+val GIT_VERSION = parseProcess { ProcessBuilder("git", "rev-parse", "--short", "HEAD") }().decodeToString().trim()
+
 allprojects {
+    apply<MavenPublishPlugin>()
+    group = "info.spiralframework"
+    version = GIT_VERSION
+    
     repositories {
         mavenCentral()
         maven("https://maven.brella.dev")
+    }
+
+    configure<PublishingExtension> {
+        repositories {
+            maven(url = "${rootProject.buildDir}/repo")
+        }
     }
 }
