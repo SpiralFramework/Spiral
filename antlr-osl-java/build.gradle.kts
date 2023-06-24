@@ -15,3 +15,11 @@ tasks.generateGrammarSource {
 tasks.compileKotlin {
     dependsOn("generateGrammarSource")
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+}
